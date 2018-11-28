@@ -615,7 +615,7 @@ class HighLevelDataSafe(DataTestObject):
         for v in viewIter:
             toCheck.append(v)
 
-        assert len(toCheck) == toTest.points
+        assert len(toCheck) == toTest.pts
 
         assert toCheck[0][0] == 0
         assert toCheck[0][1] == 0
@@ -709,7 +709,7 @@ class HighLevelDataSafe(DataTestObject):
         for v in viewIter:
             toCheck.append(v)
 
-        assert len(toCheck) == toTest.features
+        assert len(toCheck) == toTest.fts
         assert toCheck[0][0] == 0
         assert toCheck[0][1] == 0
         assert toCheck[0][2] == 0
@@ -951,10 +951,10 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, teX = toTest.trainAndTestSets(.5)
 
-        assert trX.points == 2
-        assert trX.features == 5
-        assert teX.points == 2
-        assert teX.features == 5
+        assert trX.pts == 2
+        assert trX.fts == 5
+        assert teX.pts == 2
+        assert teX.fts == 5
 
     # simple sucess - single label
     def test_trainAndTestSets_simple_singlelabel(self):
@@ -964,14 +964,14 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
 
-        assert trX.points == 2
-        assert trX.features == 4
-        assert trY.points == 2
-        assert trY.features == 1
-        assert teX.points == 2
-        assert teX.features == 4
-        assert teY.points == 2
-        assert teY.features == 1
+        assert trX.pts == 2
+        assert trX.fts == 4
+        assert trY.pts == 2
+        assert trY.fts == 1
+        assert teX.pts == 2
+        assert teX.fts == 4
+        assert teY.pts == 2
+        assert teY.fts == 1
 
     # simple sucess - multi label
     def test_trainAndTestSets_simple_multilabel(self):
@@ -981,14 +981,14 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=[0, 'labs2'])
 
-        assert trX.points == 2
-        assert trX.features == 3
-        assert trY.points == 2
-        assert trY.features == 2
-        assert teX.points == 2
-        assert teX.features == 3
-        assert teY.points == 2
-        assert teY.features == 2
+        assert trX.pts == 2
+        assert trX.fts == 3
+        assert trY.pts == 2
+        assert trY.fts == 2
+        assert teX.pts == 2
+        assert teX.fts == 3
+        assert teY.pts == 2
+        assert teY.fts == 2
 
     # edge cases 0/1 test portions
     def test_trainAndTestSets_0or1_testFraction(self):
@@ -997,17 +997,17 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(0, 0)
 
-        assert trX.points == 4
-        assert trY.points == 4
-        assert teX.points == 0
-        assert teY.points == 0
+        assert trX.pts == 4
+        assert trY.pts == 4
+        assert teX.pts == 0
+        assert teY.pts == 0
 
         trX, trY, teX, teY = toTest.trainAndTestSets(1, 0)
 
-        assert trX.points == 0
-        assert trY.points == 0
-        assert teX.points == 4
-        assert teY.points == 4
+        assert trX.pts == 0
+        assert trY.pts == 0
+        assert teX.pts == 4
+        assert teY.pts == 4
 
     # each returned set independant of calling set
     def test_trainAndTestSets_unconnectedReturn(self):
@@ -1244,7 +1244,7 @@ class HighLevelModifying(DataTestObject):
         if toTest.getTypeString() == 'List':
             toTest.addPoints(toAdd)
             toTest.dropFeaturesContainingType(six.string_types)
-            assert toTest.features == 1
+            assert toTest.fts == 1
 
     def test_dropFeaturesContainingType_NamePath_preservation(self):
         data = [[1.0], [2.0]]
@@ -1442,7 +1442,7 @@ class HighLevelModifying(DataTestObject):
         retExp = self.constructor(data)
         while True:
             ret = toTest.extractPointsByCoinToss(.99)
-            if ret.points == 1:
+            if ret.pts == 1:
                 break
 
         assert retExp.isIdentical(ret)
@@ -1469,21 +1469,21 @@ class HighLevelModifying(DataTestObject):
                 assert v1[i] == v2[i]
 
         # everything in ret is in orig
-        for pIndex in range(ret.points):
+        for pIndex in range(ret.pts):
             currRetPoint = ret.pointView(pIndex)
             currName = ret.getPointName(pIndex)
             currOrigPoint = orig.pointView(currName)
             checkEqual(currRetPoint, currOrigPoint)
 
         # everything in toTest is in orig
-        for pIndex in range(toTest.points):
+        for pIndex in range(toTest.pts):
             currToTestPoint = toTest.pointView(pIndex)
             currName = toTest.getPointName(pIndex)
             currOrigPoint = orig.pointView(currName)
             checkEqual(currToTestPoint, currOrigPoint)
 
         # everything in orig in either ret or toTest
-        for pIndex in range(orig.points):
+        for pIndex in range(orig.pts):
             currOrigPoint = orig.pointView(pIndex)
             currName = orig.getPointName(pIndex)
             if currName in ret.getPointNames():

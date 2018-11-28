@@ -248,18 +248,18 @@ def testShogunScoreModeMulti():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert ret.pts == 2
+    assert ret.fts == 1
 
     ret = UML.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={},
                             scoreMode='bestScore')
-    assert ret.points == 2
-    assert ret.features == 2
+    assert ret.pts == 2
+    assert ret.fts == 2
 
     ret = UML.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={},
                             scoreMode='allScores')
-    assert ret.points == 2
-    assert ret.features == 3
+    assert ret.pts == 2
+    assert ret.fts == 3
 
 
 def testShogunScoreModeBinary():
@@ -273,18 +273,18 @@ def testShogunScoreModeBinary():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert ret.pts == 2
+    assert ret.fts == 1
 
     ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={},
                             scoreMode='bestScore')
-    assert ret.points == 2
-    assert ret.features == 2
+    assert ret.pts == 2
+    assert ret.fts == 2
 
     ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={},
                             scoreMode='allScores')
-    assert ret.points == 2
-    assert ret.features == 2
+    assert ret.pts == 2
+    assert ret.fts == 2
 
 
 def TODO_onlineLearneres():

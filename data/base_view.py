@@ -169,22 +169,22 @@ class BaseView(Base):
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
 
-        if self.points != self._source.points and self._source._pointNamesCreated():
+        if self.pts != self._source.pts and self._source._pointNamesCreated():
             if self._pStart != 0:
                 CopyObj.pointNames = {}
                 for idx, name in enumerate(CopyObj.pointNamesInverse):
                     CopyObj.pointNames[name] = idx
             else:
-                for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
+                for name in self._source.pointNamesInverse[self._pEnd:self._source.pts + 1]:
                     del CopyObj.pointNames[name]
 
-        if self.features != self._source.features and self._source._featureNamesCreated():
+        if self.fts != self._source.fts and self._source._featureNamesCreated():
             if self._fStart != 0:
                 CopyObj.featureNames = {}
                 for idx, name in enumerate(CopyObj.featureNamesInverse):
                     CopyObj.featureNames[name] = idx
             else:
-                for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
+                for name in self._source.featureNamesInverse[self._fEnd:self._source.fts + 1]:
                     del CopyObj.featureNames[name]
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
@@ -193,25 +193,25 @@ class BaseView(Base):
         # -1 because _pEnd and _fEnd are exclusive indices, but view takes inclusive
 
         if pointStart is None:
-            psAdj = None if self._source.points == 0 else self._pStart
+            psAdj = None if self._source.pts == 0 else self._pStart
         else:
             psIndex = self._source._getIndex(pointStart, 'point')
             psAdj = psIndex + self._pStart
 
         if pointEnd is None:
-            peAdj = None if self._source.points == 0 else self._pEnd - 1
+            peAdj = None if self._source.pts == 0 else self._pEnd - 1
         else:
             peIndex = self._source._getIndex(pointEnd, 'point')
             peAdj = peIndex + self._pStart
 
         if featureStart is None:
-            fsAdj = None if self._source.features == 0 else self._fStart
+            fsAdj = None if self._source.fts == 0 else self._fStart
         else:
             fsIndex = self._source._getIndex(featureStart, 'feature')
             fsAdj = fsIndex + self._fStart
 
         if featureEnd is None:
-            feAdj = None if self._source.features == 0 else self._fEnd - 1
+            feAdj = None if self._source.fts == 0 else self._fEnd - 1
         else:
             feIndex = self._source._getIndex(featureEnd, 'feature')
             feAdj = feIndex + self._fStart

@@ -198,7 +198,7 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
     """
     # remove from categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.points
+    beforePointCount = categoriesByQName.pts
     catToRemove = ["Annoyable", "Non-Resilient To Illness", "Non-Resilient To Stress", "Non-Image Conscious", "Optimistic", "Talkative", "Power Avoidant"]
 
     for cat in catToRemove:
@@ -208,7 +208,7 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
         return point[0] in catToRemove
 
     categoriesByQName.extractPoints(removeFunc)
-    afterPointCount = categoriesByQName.points
+    afterPointCount = categoriesByQName.pts
     assert beforePointCount - afterPointCount == 28
     for cat in catToRemove:
         assert cat not in categoriesByQName.featureView(0)
@@ -221,9 +221,9 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
         if cat in catToRemove:
             qsToRemove += qs
 
-    responsesPCBefore = responses.features
+    responsesPCBefore = responses.fts
     responses.extractFeatures(qsToRemove)
-    responsesPCAfter = responses.features
+    responsesPCAfter = responses.fts
     assert responsesPCBefore - responsesPCAfter == 28
 
     # Remove from namesByCategory, a dict mapping category names to lists of questions
@@ -253,9 +253,9 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
                     "I often experience intense emotions."]
 
     # remove from categoriesByQName, a UML object where questions are point names
-    beforePointCount = categoriesByQName.points
+    beforePointCount = categoriesByQName.pts
     categoriesByQName.extractPoints(qsToRemove)
-    afterPointCount = categoriesByQName.points
+    afterPointCount = categoriesByQName.pts
     assert beforePointCount - afterPointCount == 6
 
 
@@ -272,9 +272,9 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
     assert removed == 6
 
     # Remove from responses, where each feature is scores for a particular question
-    responsesPCBefore = responses.features
+    responsesPCBefore = responses.fts
     responses.extractFeatures(qsToRemove)
-    responsesPCAfter = responses.features
+    responsesPCAfter = responses.fts
     assert responsesPCBefore - responsesPCAfter == 6
 
 
@@ -288,7 +288,7 @@ def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
     """
     # adjust categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.points
+    beforePointCount = categoriesByQName.pts
     catToMerge = [("Non-Manipulative", 'Altruistic')]
 
     def changeFunc(val):
@@ -299,7 +299,7 @@ def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
                 return None
 
     categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
-    afterPointCount = categoriesByQName.points
+    afterPointCount = categoriesByQName.pts
     assert beforePointCount - afterPointCount == 0
     for pair in catToMerge:
         assert pair[0] not in categoriesByQName.featureView(0)
@@ -322,7 +322,7 @@ def renameResultantCategories(categoriesByQName, namesByCategory, responses, sel
     """
     # adjust categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.points
+    beforePointCount = categoriesByQName.pts
     # Old:New
     rename = {'Non-Eloquent':'Improvisational',
                 'Risk Avoidant':'Risk Averse',
@@ -341,7 +341,7 @@ def renameResultantCategories(categoriesByQName, namesByCategory, responses, sel
             return None
 
     categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
-    afterPointCount = categoriesByQName.points
+    afterPointCount = categoriesByQName.pts
     assert beforePointCount - afterPointCount == 0
     for oldName in rename.keys():
         assert oldName not in categoriesByQName.featureView(0)
@@ -666,7 +666,7 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
     avgCorr = (corrsM + corrsF) / 2.0
     basePartialCorr = UML.createData("Matrix", outFileBase)
 
-    signMatrix = numpy.empty((avgCorr.points, avgCorr.features), dtype=int)
+    signMatrix = numpy.empty((avgCorr.pts, avgCorr.fts), dtype=int)
     for i in range(signMatrix.shape[0]):
         for j in range(signMatrix.shape[1]):
             if abs(avgCorr[i,j]) <= 0.02 and abs(basePartialCorr[i,j]) <= 0.02:
@@ -858,7 +858,7 @@ def setupCategoryScaleTypes(categoriesByQName, selected, includeMale):
     catScaleFeature = categoriesByQName.calculateForEachPoint(unpack)
     catScaleFeature.setFeatureName(0, 'genderHigherAvgOfCat')
 
-    if categoriesByQName.features == 3:
+    if categoriesByQName.fts == 3:
         categoriesByQName.extractFeatures('genderHigherAvgOfCat')
     categoriesByQName.addFeatures(catScaleFeature)
 
@@ -869,7 +869,7 @@ def addNoiseToResponses(responses):
 #   print responses[0,0]
 #   print responses[1,1]
 
-    size = (responses.points, responses.features)
+    size = (responses.pts, responses.fts)
 
     npr = UML.randomness.numpyRandom
 
@@ -1075,7 +1075,7 @@ if __name__ == '__main__':
 #       scaleType = setupCategoryScaleTypes(categoriesByQName, None, False)
 
     # Split gender / response data for subscore selection training and visualziation
-    testFraction = float(responses.points - TRAIN_NUMBER) / responses.points
+    testFraction = float(responses.pts - TRAIN_NUMBER) / responses.pts
     UML.setRandomSeed(SPLITSEED)
     responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1", randomOrder=True)
     selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain, forcedSelections)

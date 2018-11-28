@@ -39,10 +39,10 @@ def rSquared(knownValues, predictedValues):
 
 
 def varianceFractionRemaining(knownValues, predictedValues):
-    if knownValues.points != predictedValues.points: raise Exception("Objects had different numbers of points")
-    if knownValues.features != predictedValues.features: raise Exception(
+    if knownValues.pts != predictedValues.pts: raise Exception("Objects had different numbers of points")
+    if knownValues.fts != predictedValues.fts: raise Exception(
         "Objects had different numbers of features. Known values had " + str(
-            knownValues.features) + " and predicted values had " + str(predictedValues.features))
+            knownValues.fts) + " and predicted values had " + str(predictedValues.fts))
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copyAs("numpy array")
     rawKnowns = knownValues.copyAs("numpy array")
@@ -75,7 +75,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
         featuresWithLabels.addFeatures(currentLabels)
-        labelFeatureNum = featuresWithLabels.features - 1
+        labelFeatureNum = featuresWithLabels.fts - 1
 
         #get the training and testing data for this label
         trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting,
@@ -89,9 +89,9 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
     #confirm the training X sets all have the same number of features (even though they may not have the same number of points)
     for trainX, trainY in zip(trainXs, trainYs):
-        assert trainX.features == trainXs[0].features
-        assert trainY.points == trainX.points
-        assert trainY.features == 1
+        assert trainX.fts == trainXs[0].fts
+        assert trainY.pts == trainX.pts
+        assert trainY.fts == 1
 
     return trainXs, trainYs, testXs, testYs
 
@@ -107,14 +107,14 @@ def testBuildTrainingAndTestingSetsForPredictions():
                                                                                  featuresToPredict,
                                                                                  functionsToExcludePoints)
     assert (len(trainXs)) == 2
-    assert trainXs[0].features == 4
-    assert trainXs[1].features == 4
+    assert trainXs[0].fts == 4
+    assert trainXs[1].fts == 4
     assert trainXs[0].getFeatureNames() == ["x1", "x2", "x3", "x4"]
     assert trainXs[1].getFeatureNames() == ["x1", "x2", "x3", "x4"]
-    assert trainXs[0].points == 2
-    assert testXs[0].points == 1
-    assert trainXs[1].points == 4
-    assert testXs[1].points == 2
+    assert trainXs[0].pts == 2
+    assert testXs[0].pts == 1
+    assert trainXs[1].pts == 4
+    assert testXs[1].pts == 2
     jointXs0 = trainXs[0].copy()
     jointXs0.addPoints(testXs[0])
     jointXs0.sortPoints("x1")
@@ -159,20 +159,20 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         testXs[i] = testXs[i].copy()
         testYs[i] = testYs[i].copy()
 
-    if numFeaturesToKeep > trainXs[0].features: raise Exception(
+    if numFeaturesToKeep > trainXs[0].fts: raise Exception(
         "Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(
-            trainXs[0].features) + " features.")
+            trainXs[0].fts) + " features.")
 
     droppedFeatureErrorsListOutSample = []
     droppedFeatureErrorsListInSample = []
 
-    while trainXs[0].features > numFeaturesToKeep:
-        print(str(trainXs[0].features) + " features left")
+    while trainXs[0].fts > numFeaturesToKeep:
+        print(str(trainXs[0].fts) + " features left")
 
         errorForEachFeatureDropped = []
 
         #try dropping each feature one by one
-        for featureNumToDrop in range(trainXs[0].features):
+        for featureNumToDrop in range(trainXs[0].fts):
             #sys.stdout.write(" " + str(trainXs[0].getFeatureNames()[featureNumToDrop]))
             errorsForThisFeatureDrop = []
             #for each label we're predicting
@@ -215,7 +215,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                                                                        predictionAlgorithms, featuresToPredict)
         mostUselessFeatureErrorOutSample = outSampleErrorsHash["Combined Error"]
         droppedFeatureErrorsListOutSample.append(mostUselessFeatureErrorOutSample)
-    #print "viableFeaturesLeft", trainXs[0].features
+    #print "viableFeaturesLeft", trainXs[0].fts
 
     if plot:
         pylab.plot(droppedFeatureErrorsListOutSample, ".", color="green")
@@ -297,7 +297,7 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
         trainYsTemp = copy.copy(trainYs)
         testXsTemp = copy.copy(testXs)
         testYsTemp = copy.copy(testYs)
-        numFeatures = trainXs[0].features
+        numFeatures = trainXs[0].fts
         featuresToKeep = random.sample(list(range(numFeatures)), numFeaturesToKeep)
         #print "featuresToKeep", featuresToKeep
         for datasetNum in range(len(trainXsTemp)):
@@ -520,8 +520,8 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 def pointsToZScores(data):
     means = data.pointStatistics("mean")
     stddevs = data.pointStatistics("standarddeviation")
-    #identity = UML.createData("Matrix", numpy.ones(data.features))
-    rawIdentity = numpy.atleast_2d(numpy.ones(data.features))
+    #identity = UML.createData("Matrix", numpy.ones(data.fts))
+    rawIdentity = numpy.atleast_2d(numpy.ones(data.fts))
     onesPoint = UML.createData("Matrix", rawIdentity)
     means *= onesPoint
     stddevs *= onesPoint

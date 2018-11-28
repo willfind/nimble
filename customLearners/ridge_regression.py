@@ -12,7 +12,7 @@ class RidgeRegression(CustomLearner):
         self.lamb = lamb
 
         # setup for intercept term
-        #		ones = UML.createData("Matrix", numpy.ones(trainX.points))
+        #		ones = UML.createData("Matrix", numpy.ones(trainX.pts))
         #		ones.transpose()
         #		trainX = trainX.copy()
         #		trainX.addFeatures(ones)
@@ -26,15 +26,15 @@ class RidgeRegression(CustomLearner):
         rawYPxF = trainY.copyAs("numpymatrix")
 
         featureSpace = rawXFxP * rawXPxF
-        lambdaMatrix = lamb * numpy.identity(trainX.features)
-        #		lambdaMatrix[trainX.features-1][trainX.features-1] = 0
+        lambdaMatrix = lamb * numpy.identity(trainX.fts)
+        #		lambdaMatrix[trainX.fts-1][trainX.fts-1] = 0
 
         inv = numpy.linalg.inv(featureSpace + lambdaMatrix)
         self.w = inv * rawXFxP * rawYPxF
 
     def apply(self, testX):
     # setup intercept
-    #		ones = UML.createData("Matrix", numpy.ones(testX.points))
+    #		ones = UML.createData("Matrix", numpy.ones(testX.pts))
     #		ones.transpose()
     #		testX = testX.copy()
     #		testX.addFeatures(ones)

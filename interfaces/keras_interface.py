@@ -283,7 +283,7 @@ class Keras(UniversalInterface):
                 trainX = trainX.copyAs('numpy matrix')
 
         if trainY is not None:
-            if trainY.features > 1:
+            if trainY.fts > 1:
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)
@@ -366,7 +366,7 @@ class Keras(UniversalInterface):
         if isinstance(trainX, UML.data.Sparse):
             def sparseGenerator():
                 while True:
-                    for i in range(trainX.points):
+                    for i in range(trainX.pts):
                         tmpData = (trainX.pointView(i).copyAs('numpy matrix'), numpy.matrix(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
@@ -484,7 +484,7 @@ class Keras(UniversalInterface):
             fitParams = {}
             def sparseGenerator():
                 while True:
-                    for i in range(testX.points):
+                    for i in range(testX.pts):
                         tmpData = testX.pointView(i).copyAs('numpy matrix')
                         yield tmpData
             fitParams['generator'] = sparseGenerator()

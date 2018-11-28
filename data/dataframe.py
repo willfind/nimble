@@ -206,9 +206,9 @@ class DataFrame(Base):
         these are managed separately by each frontend function.
         """
         if structure == 'copy':
-            return self.pointsOrFeaturesVectorized(targetList, axis, 'copy', True)
+            return self.ptsOrFeaturesVectorized(targetList, axis, 'copy', True)
         else:
-            return self.pointsOrFeaturesVectorized(targetList, axis, 'extract', True)
+            return self.ptsOrFeaturesVectorized(targetList, axis, 'extract', True)
 
 
     def _mapReducePoints_implementation(self, mapper, reducer):
@@ -254,9 +254,9 @@ class DataFrame(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
             return False
-        if self.points != other.points:
+        if self.pts != other.pts:
             return False
-        if self.features != other.features:
+        if self.fts != other.fts:
             return False
 
         try:
@@ -383,7 +383,7 @@ class DataFrame(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
-            if len(currRet) != self.features:
+            if len(currRet) != self.fts:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
@@ -394,7 +394,7 @@ class DataFrame(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
-            if len(currRet) != self.points:
+            if len(currRet) != self.pts:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
@@ -410,7 +410,7 @@ class DataFrame(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.points), range(self.features))
+        IDs = itertools.product(range(self.pts), range(self.fts))
         for (i, j) in IDs:
             currVal = self.data.iloc[i, j]
 
@@ -488,7 +488,7 @@ class DataFrame(Base):
                 raise ArgumentException(msg)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            if len(featuresList) == self.features:
+            if len(featuresList) == self.fts:
                 #if we consider all features
                 if arguments is None or arguments.lower() == 'any':
                     self.data.dropna(axis=1, how='any', inplace=True)
@@ -540,7 +540,7 @@ class DataFrame(Base):
             else:
                 msg = 'for method = "interpolate", the arguments must be None or a dict.'
                 raise ArgumentException(msg)
-            if len(featuresList) == self.features:
+            if len(featuresList) == self.fts:
                     self.data.interpolate(inplace=True, **arguments)
             else:
                 self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
@@ -614,20 +614,20 @@ class DataFrame(Base):
         self._updateName('feature')
 
     def _flattenToOnePoint_implementation(self):
-        numElements = self.points * self.features
+        numElements = self.pts * self.fts
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
 
     def _flattenToOneFeature_implementation(self):
-        numElements = self.points * self.features
+        numElements = self.pts * self.fts
         self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
 
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.features // numPoints
+        numFeatures = self.fts // numPoints
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.points // numFeatures
+        numPoints = self.pts // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
@@ -664,8 +664,8 @@ class DataFrame(Base):
 
     def _validate_implementation(self, level):
         shape = self.data.shape
-        assert shape[0] == self.points
-        assert shape[1] == self.features
+        assert shape[0] == self.pts
+        assert shape[1] == self.fts
 
     def _containsZero_implementation(self):
         """
@@ -680,9 +680,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self
@@ -711,9 +711,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self

@@ -123,7 +123,7 @@ class List(Base):
         tempFeatures = len(self.data)
         transposed = []
         #load the new data with an empty point for each feature in the original
-        for i in range(self.features):
+        for i in range(self.fts):
             transposed.append([])
         for point in self.data:
             for i in range(len(point)):
@@ -139,8 +139,8 @@ class List(Base):
         the inserted points
 
         """
-        insertedLength = self.points + toAdd.points
-        insertRange = range(insertBefore, insertBefore + toAdd.points)
+        insertedLength = self.pts + toAdd.pts
+        insertRange = range(insertBefore, insertBefore + toAdd.pts)
         insertIndex = 0
         selfIndex = 0
         allData = []
@@ -160,12 +160,12 @@ class List(Base):
         will continue to the right of the inserted points
 
         """
-        for i in range(self.points):
+        for i in range(self.pts):
             startData = self.data[i][:insertBefore]
             endData = self.data[i][insertBefore:]
             allPointData = startData + list(toAdd.data[i]) + endData
             self.data[i] = allPointData
-        self._numFeatures = self._numFeatures + toAdd.features
+        self._numFeatures = self._numFeatures + toAdd.fts
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
@@ -281,7 +281,7 @@ class List(Base):
         data = numpy.matrix(self.data, dtype=object)
 
         if axis == 'point':
-            keepList = [idx for idx in range(self.points) if idx not in targetList]
+            keepList = [idx for idx in range(self.pts) if idx not in targetList]
             satisfying = data[targetList, :]
             if structure != 'copy':
                 keep = data[keepList, :]
@@ -294,9 +294,9 @@ class List(Base):
         else:
             if self.data == []:
                 # create empty matrix with correct shape
-                data = numpy.matrix(numpy.empty((self.points,self.features)), dtype=object)
+                data = numpy.matrix(numpy.empty((self.pts,self.fts)), dtype=object)
 
-            keepList = [idx for idx in range(self.features) if idx not in targetList]
+            keepList = [idx for idx in range(self.fts) if idx not in targetList]
             satisfying = data[:, targetList]
             if structure != 'copy':
                 keep = data[:, keepList]
@@ -315,7 +315,7 @@ class List(Base):
     def _mapReducePoints_implementation(self, mapper, reducer):
         mapResults = {}
         # apply the mapper to each point in the data
-        for i in range(self.points):
+        for i in range(self.pts):
             currResults = mapper(self.pointView(i))
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
@@ -342,11 +342,11 @@ class List(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, List):
             return False
-        if self.points != other.points:
+        if self.pts != other.pts:
             return False
-        if self.features != other.features:
+        if self.fts != other.fts:
             return False
-        for index in range(self.points):
+        for index in range(self.pts):
             if self.data[index] != other.data[index]:
                 return False
         return True
@@ -433,10 +433,10 @@ class List(Base):
         else:
             outFile.write('%#\n')
 
-        outFile.write(str(self.points) + " " + str(self.features) + "\n")
+        outFile.write(str(self.pts) + " " + str(self.fts) + "\n")
 
-        for j in range(self.features):
-            for i in range(self.points):
+        for j in range(self.fts):
+            for i in range(self.pts):
                 value = self.data[i][j]
                 outFile.write(str(value) + '\n')
         outFile.close()
@@ -451,38 +451,38 @@ class List(Base):
     def _copyAs_implementation(self, format):
 
         if format == 'Sparse':
-            if self.points == 0 or self.features == 0:
-                emptyData = numpy.empty(shape=(self.points, self.features))
+            if self.pts == 0 or self.fts == 0:
+                emptyData = numpy.empty(shape=(self.pts, self.fts))
                 return UML.createData('Sparse', emptyData)
             return UML.createData('Sparse', self.data)
 
         if format is None or format == 'List':
-            if self.points == 0 or self.features == 0:
-                emptyData = numpy.empty(shape=(self.points, self.features))
+            if self.pts == 0 or self.fts == 0:
+                emptyData = numpy.empty(shape=(self.pts, self.fts))
                 return UML.createData('List', emptyData)
             else:
                 return UML.createData('List', self.data)
         if format == 'Matrix':
-            if self.points == 0 or self.features == 0:
-                emptyData = numpy.empty(shape=(self.points, self.features))
+            if self.pts == 0 or self.fts == 0:
+                emptyData = numpy.empty(shape=(self.pts, self.fts))
                 return UML.createData('Matrix', emptyData)
             else:
                 return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            if self.points == 0 or self.features == 0:
-                emptyData = numpy.empty(shape=(self.points, self.features))
+            if self.pts == 0 or self.fts == 0:
+                emptyData = numpy.empty(shape=(self.pts, self.fts))
                 return UML.createData('DataFrame', emptyData)
             else:
                 return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
-            if self.points == 0 or self.features == 0:
-                return numpy.empty(shape=(self.points, self.features))
+            if self.pts == 0 or self.fts == 0:
+                return numpy.empty(shape=(self.pts, self.fts))
             return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
-            if self.points == 0 or self.features == 0:
-                return numpy.matrix(numpy.empty(shape=(self.points, self.features)))
+            if self.pts == 0 or self.fts == 0:
+                return numpy.matrix(numpy.empty(shape=(self.pts, self.fts)))
             return numpy.matrix(self.data)
         if format == 'scipycsc':
             if not scipy:
@@ -508,7 +508,7 @@ class List(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
-            if len(currRet) != self.features:
+            if len(currRet) != self.fts:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
@@ -519,11 +519,11 @@ class List(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
-            if len(currRet) != self.points:
+            if len(currRet) != self.pts:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
-            for i in range(self.points):
+            for i in range(self.pts):
                 self.data[i][j] = currRet[i]
 
     def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
@@ -536,7 +536,7 @@ class List(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.points), range(self.features))
+        IDs = itertools.product(range(self.pts), range(self.fts))
         for (i, j) in IDs:
             currVal = self.data[i][j]
 
@@ -596,8 +596,8 @@ class List(Base):
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in featuresList}
-        missingIdxDictPoint = {i: [] for i in range(self.points)}
-        for i in range(self.points):
+        missingIdxDictPoint = {i: [] for i in range(self.pts)}
+        for i in range(self.pts):
             for j in featuresList:
                 tmpV = self.data[i][j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
@@ -624,10 +624,10 @@ class List(Base):
             if arguments is None or arguments.lower() == 'any':
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.fts]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.points) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.pts) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -641,10 +641,10 @@ class List(Base):
             if arguments is None or arguments.lower() == 'any':
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.pts]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.features) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.fts) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -684,7 +684,7 @@ class List(Base):
             for tmpItem in missingIdxDictFeature.items():
                     j = tmpItem[0]
                     for i in sorted(tmpItem[1], reverse=True):
-                        if i < self.points - 1:
+                        if i < self.pts - 1:
                             self.data[i][j] = self.data[i+1][j]
         elif method == 'interpolate':
             for tmpItem in missingIdxDictFeature.items():
@@ -693,7 +693,7 @@ class List(Base):
                 if len(interpX) == 0:
                     continue
                 if arguments is None:
-                    xp = [i for i in range(self.points) if i not in interpX]
+                    xp = [i for i in range(self.pts) if i not in interpX]
                     fp = [self.data[i][j] for i in xp]
                     tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
@@ -719,7 +719,7 @@ class List(Base):
 
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
-        for i in range(1,self.points):
+        for i in range(1,self.pts):
             onto += self.data[1]
             del self.data[1]
 
@@ -727,7 +727,7 @@ class List(Base):
 
     def _flattenToOneFeature_implementation(self):
         result = []
-        for i in range(self.features):
+        for i in range(self.fts):
             for p in self.data:
                 result.append([p[i]])
 
@@ -736,7 +736,7 @@ class List(Base):
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         result = []
-        numFeatures = self.features // numPoints
+        numFeatures = self.fts // numPoints
         for i in range(numPoints):
             temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
             result.append(temp)
@@ -746,12 +746,12 @@ class List(Base):
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         result = []
-        numPoints = self.points // numFeatures
+        numPoints = self.pts // numFeatures
         # reconstruct the shape we want, point by point. We access the singleton
         # values from the current data in an out of order iteration
         for i in range(numPoints):
             temp = []
-            for j in range(i, self.points, numPoints):
+            for j in range(i, self.pts, numPoints):
                 temp += self.data[j]
             result.append(temp)
 
@@ -778,8 +778,8 @@ class List(Base):
                 else:
                     fNames = False
 
-                if (self.points == 0 or self.features == 0) and format != 'List':
-                    emptyStandin = numpy.empty((self.points, self.features))
+                if (self.pts == 0 or self.fts == 0) and format != 'List':
+                    emptyStandin = numpy.empty((self.pts, self.fts))
                     intermediate = UML.createData('Matrix', emptyStandin)
                     return intermediate.copyAs(format)
 
@@ -866,8 +866,8 @@ class List(Base):
         return ListView(**kwds)
 
     def _validate_implementation(self, level):
-        assert len(self.data) == self.points
-        assert self._numFeatures == self.features
+        assert len(self.data) == self.pts
+        assert self._numFeatures == self.fts
 
         if level > 0:
             if len(self.data) > 0:
@@ -893,9 +893,9 @@ class List(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self
@@ -924,9 +924,9 @@ class List(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self
@@ -974,7 +974,7 @@ class List(Base):
             retP = []
             for oFeature in other.featureIterator():
                 runningTotal = 0
-                for index in range(other.points):
+                for index in range(other.pts):
                     runningTotal += sPoint[index] * oFeature[index]
                 retP.append(runningTotal)
             ret.append(retP)
@@ -990,8 +990,8 @@ class List(Base):
         be the inplace modification of the calling object.
 
         """
-        for pNum in range(self.points):
-            for fNum in range(self.features):
+        for pNum in range(self.pts):
+            for fNum in range(self.fts):
                 # Divided by 1 to make it raise if it involves non-numeric types ('str')
                 self.data[pNum][fNum] *= other[pNum, fNum] / 1
 

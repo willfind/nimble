@@ -69,7 +69,7 @@ def testKerasIncremental():
     mym.incrementalTrain(x_train, y_train)
 
     x = mym.apply(testX=x_train)
-    assert x.points == x_train.points
+    assert x.pts == x_train.pts
 
 def testKeras_Sparse_FitGenerator():
     """
@@ -92,4 +92,4 @@ def testKeras_Sparse_FitGenerator():
                     steps_per_epoch=20, max_queue_size=1, shuffle=False, steps=20)
 
     x = mym.apply(testX=x_train)
-    assert x.points == x_train.points
+    assert x.pts == x_train.pts

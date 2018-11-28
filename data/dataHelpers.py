@@ -281,9 +281,9 @@ def indicesSplit(allowed, total):
 
 def hasNonDefault(obj, axis):
     if axis == 'point':
-        possibleIndices = range(obj.points)
+        possibleIndices = range(obj.pts)
     else:
-        possibleIndices = range(obj.features)
+        possibleIndices = range(obj.fts)
 
     getter = obj.getPointName if axis == 'point' else obj.getFeatureName
 

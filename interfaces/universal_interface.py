@@ -194,7 +194,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
                     trainX.addFeatures(trainY)
-                    trainY = trainX.features - 1
+                    trainY = trainX.fts - 1
 
                 # Get set of unique class labels, then generate list of all 2-combinations of
                 # class labels
@@ -245,7 +245,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, UML.data.Base):
-            has2dOutput = outputData.features > 1
+            has2dOutput = outputData.fts > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
@@ -668,7 +668,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         order = self._getScoresOrder(learner)
         numLabels = len(order)
-        if numLabels == 2 and rawScores.features == 1:
+        if numLabels == 2 and rawScores.fts == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
             return UML.createData("Matrix", ret)
 
@@ -676,7 +676,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             applyResults = self._applier(learner, testX, arguments, customDict)
             applyResults = self._outputTransformation(learnerName, applyResults, arguments, "match", "label",
                                                       customDict)
-        if rawScores.features != 3:
+        if rawScores.fts != 3:
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(self, learnerName, arguments)
@@ -684,7 +684,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # check the strategy, and modify it if necessary
         if not strategy:
             scores = []
-            for i in range(rawScores.points):
+            for i in range(rawScores.pts):
                 combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
@@ -1179,7 +1179,7 @@ class TrainedLearner(object):
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, UML.data.Base):
-            has2dOutput = outputData.features > 1
+            has2dOutput = outputData.fts > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 

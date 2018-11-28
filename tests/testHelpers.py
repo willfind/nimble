@@ -84,8 +84,8 @@ class FoldIteratorTester(object):
         except StopIteration:
             pass
 
-        assert fold1Train.points + fold1Test.points == 5
-        assert fold2Train.points + fold2Test.points == 5
+        assert fold1Train.pts + fold1Test.pts == 5
+        assert fold2Train.pts + fold2Test.pts == 5
 
         fold1Train.addPoints(fold1Test)
         fold2Train.addPoints(fold2Test)
@@ -106,8 +106,8 @@ class FoldIteratorTester(object):
         except StopIteration:
             pass
 
-        assert fold1Train.points + fold1Test.points == 5
-        assert fold2Train.points + fold2Test.points == 5
+        assert fold1Train.pts + fold1Test.pts == 5
+        assert fold2Train.pts + fold2Test.pts == 5
 
         fold1Train.addPoints(fold1Test)
         fold2Train.addPoints(fold2Test)
@@ -143,14 +143,14 @@ class FoldIteratorTester(object):
             pass
 
         # check that the partitions are the right size (ie, no overlap in training and testing)
-        assert fold0Train0.points + fold0Test0.points == 7
-        assert fold1Train0.points + fold1Test0.points == 7
+        assert fold0Train0.pts + fold0Test0.pts == 7
+        assert fold1Train0.pts + fold1Test0.pts == 7
 
-        assert fold0Train1.points + fold0Test1.points == 7
-        assert fold1Train1.points + fold1Test1.points == 7
+        assert fold0Train1.pts + fold0Test1.pts == 7
+        assert fold1Train1.pts + fold1Test1.pts == 7
 
-        assert fold0Train2.points + fold0Test2.points == 7
-        assert fold1Train2.points + fold1Test2.points == 7
+        assert fold0Train2.pts + fold0Test2.pts == 7
+        assert fold1Train2.pts + fold1Test2.pts == 7
 
         # check that the data is in the same order accross objects, within
         # the training or testing sets of a single fold
@@ -162,13 +162,13 @@ class FoldIteratorTester(object):
                 testList.append(test)
 
             for train in trainList:
-                assert train.points == trainList[0].points
-                for index in range(train.points):
+                assert train.pts == trainList[0].pts
+                for index in range(train.pts):
                     assert fabs(train[index, 0]) == fabs(trainList[0][index, 0])
 
             for test in testList:
-                assert test.points == testList[0].points
-                for index in range(test.points):
+                assert test.pts == testList[0].pts
+                for index in range(test.pts):
                     assert fabs(test[index, 0]) == fabs(testList[0][index, 0])
 
 
@@ -260,13 +260,13 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=True, addLabelNoise=True,
                                                                   addLabelColumn=True)
-    pts, feats = noiselessLabels.points, noiselessLabels.features
+    pts, feats = noiselessLabels.pts, noiselessLabels.fts
     for i in range(pts):
         for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
-    pts, feats = dataset.points, dataset.features
+    pts, feats = dataset.pts, dataset.fts
     for i in range(pts):
         for j in range(feats):
             #assert dataset has noise for all entries
@@ -275,13 +275,13 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=False, addLabelNoise=False,
                                                                   addLabelColumn=True)
-    pts, feats = noiselessLabels.points, noiselessLabels.features
+    pts, feats = noiselessLabels.pts, noiselessLabels.fts
     for i in range(pts):
         for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
-    pts, feats = dataset.points, dataset.features
+    pts, feats = dataset.pts, dataset.fts
     for i in range(pts):
         for j in range(feats):
             #assert dataset has no noise for all entries
@@ -291,7 +291,7 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=False, addLabelNoise=False,
                                                                   addLabelColumn=False)
-    labelColumnlessRows, labelColumnlessCols = dataset.points, dataset.features
+    labelColumnlessRows, labelColumnlessCols = dataset.pts, dataset.fts
     #columnLess should have one less column in the DATASET, rows should be the same
     assert (labelColumnlessCols - feats == -1)
     assert (labelColumnlessRows - pts == 0)
@@ -301,7 +301,7 @@ def testGenerateClusteredPoints():
     allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                         addFeatureNoise=True, addLabelNoise=True,
                                                                         addLabelColumn=True)
-    pts, feats = allNoiseDataset.points, allNoiseDataset.features
+    pts, feats = allNoiseDataset.pts, allNoiseDataset.fts
     for curRow in range(pts):
         for curCol in range(feats):
             #assert dataset has no noise for all entries

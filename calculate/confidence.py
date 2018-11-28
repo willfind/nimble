@@ -16,7 +16,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
         msg = 'To call this function, scipy must be installed.'
         raise PackageException(msg)
 
-    if errors.features != 1:
+    if errors.fts != 1:
         raise ArgumentException("The errors vector may only have one feature")
 
     if transform is None:
@@ -25,7 +25,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
     halfConfidence = 1 - ((1 - confidence) / 2.0)
     boundaryOnNormalScale = scipy.stats.norm.ppf(halfConfidence)
 
-    sqrtN = float(math.sqrt(errors.points))
+    sqrtN = float(math.sqrt(errors.pts))
     mean = errors.featureStatistics('mean')[0, 0]
     std = errors.featureStatistics('SampleStandardDeviation')[0, 0]
 

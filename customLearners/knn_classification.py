@@ -36,7 +36,7 @@ class KNNClassifier(CustomLearner):
 
             results.sortPoints(sortHelper=scoreHelperDecending)
             # only one label received votes
-            if results.points == 1:
+            if results.pts == 1:
                 prediction = results[0, 0]
             # there is a tie between labels, fall back to k=1
             elif results[0, 1] == results[1, 1]:

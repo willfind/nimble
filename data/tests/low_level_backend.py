@@ -804,7 +804,7 @@ class LowLevelBackend(object):
         expNames = ["zero", "three"]
         orig._adjustCountAndNames('point', other)
 
-        assert orig.points == 2
+        assert orig.pts == 2
         assert orig.getPointNames() == expNames
 
     def test_adjustCountAndNames_featureCountAndNames(self):
@@ -814,7 +814,7 @@ class LowLevelBackend(object):
         expNames = ["zero", "three"]
         orig._adjustCountAndNames('feature', other)
 
-        assert orig.features == 2
+        assert orig.fts == 2
         assert orig.getFeatureNames() == expNames
 
 
@@ -1184,7 +1184,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=fnames, pointNames=pnames)
 
         pByGetAll = toTest.getPointNames()
-        pByIndex = [toTest.getPointName(i) for i in range(toTest.points)]
+        pByIndex = [toTest.getPointName(i) for i in range(toTest.pts)]
         assert pByIndex == pByGetAll
 
         pnamesShuffle = pythonRandom.sample(pnames, len(pnames))
@@ -1193,7 +1193,7 @@ class LowLevelBackend(object):
         assert pByName == pByPyIndex
 
         fByGetAll = toTest.getFeatureNames()
-        fByIndex = [toTest.getFeatureName(i) for i in range(toTest.features)]
+        fByIndex = [toTest.getFeatureName(i) for i in range(toTest.fts)]
         assert fByIndex == fByGetAll
 
         fnamesShuffle = pythonRandom.sample(fnames, len(fnames))

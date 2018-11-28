@@ -39,8 +39,8 @@ def rSquared(knownValues, predictedValues):
 
 
 def varianceFractionRemaining(knownValues, predictedValues):
-    if knownValues.points != predictedValues.points: raise Exception("Objects had different numbers of points")
-    if knownValues.features != predictedValues.features: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.features) + " and predicted values had " + str(predictedValues.features))
+    if knownValues.pts != predictedValues.pts: raise Exception("Objects had different numbers of points")
+    if knownValues.fts != predictedValues.fts: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.fts) + " and predicted values had " + str(predictedValues.fts))
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copyAs("numpy array")
     rawKnowns = knownValues.copyAs("numpy array")
@@ -78,7 +78,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
         featuresWithLabels.addFeatures(currentLabels)
-        labelFeatureNum = featuresWithLabels.features-1
+        labelFeatureNum = featuresWithLabels.fts-1
 
         #get the training and testing data for this label
         trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting, labels=labelFeatureNum)
@@ -91,9 +91,9 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
     #confirm the training X sets all have the same number of features (even though they may not have the same number of points)
     for trainX, trainY in zip(trainXs, trainYs):
-        assert trainX.features == trainXs[0].features
-        assert trainY.points == trainX.points
-        assert trainY.features == 1
+        assert trainX.fts == trainXs[0].fts
+        assert trainY.pts == trainX.pts
+        assert trainY.fts == 1
 
     return trainXs, trainYs, testXs, testYs
 
@@ -106,14 +106,14 @@ def testBuildTrainingAndTestingSetsForPredictions():
     functionsToExcludePoints = [lambda r: r["x2"] < 3, lambda r: False]
     trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, featuresToPredict, functionsToExcludePoints)
     assert(len(trainXs)) == 2
-    assert trainXs[0].features == 4
-    assert trainXs[1].features == 4
+    assert trainXs[0].fts == 4
+    assert trainXs[1].fts == 4
     assert trainXs[0].getFeatureNames() == ["x1","x2","x3","x4"]
     assert trainXs[1].getFeatureNames() == ["x1","x2","x3","x4"]
-    assert trainXs[0].points == 2
-    assert testXs[0].points == 1
-    assert trainXs[1].points == 4
-    assert testXs[1].points == 2
+    assert trainXs[0].pts == 2
+    assert testXs[0].pts == 1
+    assert trainXs[1].pts == 4
+    assert testXs[1].pts == 2
     jointXs0 = trainXs[0].copy()
     jointXs0.addPoints(testXs[0])
     jointXs0.sortPoints("x1")
@@ -151,7 +151,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     if mode not in modes:
         raise Exception("The mode must be in " + str(modes))
 
-    if numFeaturesToKeep > trainXs[0].features: raise Exception("Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(trainXs[0].features) + " features.")
+    if numFeaturesToKeep > trainXs[0].fts: raise Exception("Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(trainXs[0].fts) + " features.")
 
     for i in range(len(trainXs)):
         trainYs[i] = trainYs[i].copy()
@@ -167,9 +167,9 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         origTestXs = copy.copy(testXs)
         #start off with just a constant term
         for i in range(len(trainXs)):
-            ones = numpy.ones((trainYs[i].points, 1))
+            ones = numpy.ones((trainYs[i].pts, 1))
             trainXs[i] = UML.createData("Matrix", ones)
-            ones = numpy.ones((testYs[i].points, 1))
+            ones = numpy.ones((testYs[i].pts, 1))
             testXs[i] = UML.createData("Matrix", ones)
     else: raise Exception("Unknown mode!")
 
@@ -178,24 +178,24 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     droppedFeatureErrorsListInSample = []
     namesUsedForEachLabel = [set({}) for i in range(len(trainXs))]
 
-    print("trainXs[0].features", trainXs[0].features)
+    print("trainXs[0].fts", trainXs[0].fts)
     print("numFeaturesToKeep", numFeaturesToKeep)
-    while trainXs[0].features != numFeaturesToKeep:
+    while trainXs[0].fts != numFeaturesToKeep:
 
         #if mode == "remove features":
-        #   if trainXs[0].features <= numFeaturesToKeep: break
+        #   if trainXs[0].fts <= numFeaturesToKeep: break
         #elif mode == "add features":
-        #   if trainXs[0].features >= numFeaturesToKeep: break
+        #   if trainXs[0].fts >= numFeaturesToKeep: break
 
-        print(str(trainXs[0].features) + " features left")
+        print(str(trainXs[0].fts) + " features left")
 
         errorForEachFeatureDropped = []
 
         #try dropping each feature one by one if mode ="remove features" (or adding each feature one by one if mode = "add features")
         if mode == "remove features":
-            featuresNumbersToIterate = trainXs[0].features
+            featuresNumbersToIterate = trainXs[0].fts
         elif mode == "add features":
-            featuresNumbersToIterate = origTrainXs[0].features
+            featuresNumbersToIterate = origTrainXs[0].fts
         else: raise Exception("Unknown mode!")
 
         #print "running feature drop loop over " + str(xrange(featuresNumbersToIterate))
@@ -282,7 +282,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
             print("features: " + str(curFeatureNames))
             print("parameters: " + str(outSampleParamsHash))
             print("errors: " + str(outSampleErrorsHash))
-        #print "viableFeaturesLeft", trainXs[0].features
+        #print "viableFeaturesLeft", trainXs[0].fts
 
     if plot:
         pylab.plot(droppedFeatureErrorsListOutSample, ".", color="green")
@@ -359,7 +359,7 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
         trainYsTemp = copy.copy(trainYs)
         testXsTemp = copy.copy(testXs)
         testYsTemp = copy.copy(testYs)
-        numFeatures = trainXs[0].features
+        numFeatures = trainXs[0].fts
         featuresToKeep = random.sample(list(range(numFeatures)), numFeaturesToKeep)
         #print "featuresToKeep", featuresToKeep
         for datasetNum in range(len(trainXsTemp)):
@@ -619,8 +619,8 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 def pointsToZScores(data):
     means = data.pointStatistics("mean")
     stddevs = data.pointStatistics("standarddeviation")
-    #identity = UML.createData("Matrix", numpy.ones(data.features))
-    rawIdentity = numpy.atleast_2d(numpy.ones(data.features))
+    #identity = UML.createData("Matrix", numpy.ones(data.fts))
+    rawIdentity = numpy.atleast_2d(numpy.ones(data.fts))
     onesPoint = UML.createData("Matrix", rawIdentity)
     means *= onesPoint
     stddevs *= onesPoint
@@ -646,8 +646,8 @@ if __name__ == "__main__":
     pathIn = os.path.join(UML.UMLPath, "datasets/", fileName)
     allFeatures = createData("Matrix", pathIn, featureNames=True)
 
-    print("# lying people: ", allFeatures.copy().extractPoints(lambda x: x["inLyingGroup"] == 1).points)
-    print("# honest people: ", allFeatures.copy().extractPoints(lambda x: x["inLyingGroup"] == 0).points)
+    print("# lying people: ", allFeatures.copy().extractPoints(lambda x: x["inLyingGroup"] == 1).pts)
+    print("# honest people: ", allFeatures.copy().extractPoints(lambda x: x["inLyingGroup"] == 0).pts)
     print("")
 
     #applyPointFilterThenPlotDistribution(allFeatures, "AcademicScore", lambda x: x["inLyingGroup"] == 1)

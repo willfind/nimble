@@ -38,16 +38,16 @@ if __name__ == "__main__":
     (trainOutPlace, testOutPlace) = full.trainAndTestSets(testFraction)
 
     # demonstrate splitting the data into train and test sets in place
-    total = full.points
+    total = full.pts
     num = int(round(testFraction * total))
     testInPlace = full.extractPoints(start=0, end=total-1, number=num, randomize=True)
     trainInPlace = full
 
     # the two methods yield comparable results
-    assert testInPlace.points == num
-    assert trainInPlace.points == total - num
-    assert testInPlace.points == testOutPlace.points
-    assert trainInPlace.points == trainOutPlace.points
+    assert testInPlace.pts == num
+    assert trainInPlace.pts == total - num
+    assert testInPlace.pts == testOutPlace.pts
+    assert trainInPlace.pts == trainOutPlace.pts
 
     # output the split and normalized sets for later usage
     trainInPlace.writeFile(pathTrain, format='csv', includeNames=True)

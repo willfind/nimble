@@ -122,10 +122,10 @@ def runSequence(objectList):
         currFunc = availableMethods[index]
         print(currFunc)
         # exclude operation we know are not runnabel given certain configurations
-        if objectList[0].points == 0:
+        if objectList[0].pts == 0:
             if currFunc in unavailableNoPoints:
                 continue
-        if objectList[0].features == 0:
+        if objectList[0].fts == 0:
             if currFunc in unavailableNoFeatures:
                 continue
 
@@ -233,7 +233,7 @@ def addingReducer(identifier, valuesList):
 
 def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False):
     random.seed(seed)
-    shape = (dataObj.points, dataObj.features)
+    shape = (dataObj.pts, dataObj.fts)
     if matchType:
         dataType = dataObj.getTypeString()
     else:
@@ -296,10 +296,10 @@ def genID(dataObj, seed, axis):
     random.seed(seed)
     retIntID = random.randint(0, 1)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = dataObj.pts
         source = dataObj.getPointName
     else:
-        numInAxis = dataObj.features
+        numInAxis = dataObj.fts
         source = dataObj.getFeatureName
 
     intID = random.randint(0, numInAxis - 1)
@@ -318,10 +318,10 @@ def genID(dataObj, seed, axis):
 def genIDList(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = dataObj.pts
         source = dataObj.getPointName
     else:
-        numInAxis = dataObj.features
+        numInAxis = dataObj.fts
         source = dataObj.getFeatureName
 
     numToSample = random.randint(1, numInAxis)
@@ -342,9 +342,9 @@ genFIDList = functools.partial(genIDList, axis='feature')
 def genPermArr(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = dataObj.pts
     else:
-        numInAxis = dataObj.features
+        numInAxis = dataObj.fts
 
     permArr = random.sample(list(range(numInAxis)), numInAxis)
 
@@ -381,9 +381,9 @@ def genCopyAsFormat(dataObj, seed):
 def genStartEnd(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = dataObj.pts
     else:
-        numInAxis = dataObj.features
+        numInAxis = dataObj.fts
 
     start = random.randint(0, numInAxis - 1)
     end = random.randint(start, numInAxis - 1)
@@ -397,9 +397,9 @@ genStartEndFeatures = functools.partial(genStartEnd, axis='feature')
 def genNumLimit(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = dataObj.pts
     else:
-        numInAxis = dataObj.features
+        numInAxis = dataObj.fts
 
     return random.randint(1, numInAxis - 1)
 
@@ -411,10 +411,10 @@ genFNumLim = functools.partial(genNumLimit, axis='faeture')
 def checkNameNums(dataObj, axis):
     if axis == 'point':
         source = dataObj.getPointName
-        length = dataObj.points
+        length = dataObj.pts
     else:
         source = dataObj.getFeatureName
-        length = dataObj.features
+        length = dataObj.fts
 
     maxNum = 0
     for i in range(length):
@@ -447,10 +447,10 @@ genFName = functools.partial(genName, axis='feature')
 
 def genNameList(dataObj, seed, axis):
     if axis == 'point':
-        retLen = dataObj.points
+        retLen = dataObj.pts
         name = 'PNAME'
     else:
-        retLen = dataObj.features
+        retLen = dataObj.fts
         name = 'FNAME'
 
     ret = []

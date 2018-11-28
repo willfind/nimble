@@ -275,9 +275,9 @@ class Matrix(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Matrix):
             return False
-        if self.points != other.points:
+        if self.pts != other.pts:
             return False
-        if self.features != other.features:
+        if self.fts != other.fts:
             return False
 
         try:
@@ -354,12 +354,12 @@ class Matrix(Base):
 
         header = ''
         if includePointNames:
-            header = makeNameString(self.points, self.getPointName)
+            header = makeNameString(self.pts, self.getPointName)
             header += '\n'
         else:
             header += '#\n'
         if includeFeatureNames:
-            header += makeNameString(self.features, self.getFeatureName)
+            header += makeNameString(self.fts, self.getFeatureName)
         else:
             header += '#\n'
 
@@ -415,22 +415,22 @@ class Matrix(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
-            if len(currRet) != self.features:
+            if len(currRet) != self.fts:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
-            self.data[i, :] = numpy.array(currRet).reshape(1, self.features)
+            self.data[i, :] = numpy.array(currRet).reshape(1, self.fts)
 
     def _transformEachFeature_implementation(self, function, features):
         for j, f in enumerate(self.featureIterator()):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
-            if len(currRet) != self.points:
+            if len(currRet) != self.pts:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
-            self.data[:, j] = numpy.array(currRet).reshape(self.points, 1)
+            self.data[:, j] = numpy.array(currRet).reshape(self.pts, 1)
 
     def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
@@ -442,7 +442,7 @@ class Matrix(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.points), range(self.features))
+        IDs = itertools.product(range(self.pts), range(self.fts))
         for (i, j) in IDs:
             currVal = self.data[i, j]
 
@@ -500,9 +500,9 @@ class Matrix(Base):
                     self.data[i, j] = featureMean[0, j]
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
-        missingIdxDictFeature = {i: [] for i in featuresList}#{i: [] for i in xrange(self.features)}
-        missingIdxDictPoint = {i: [] for i in range(self.points)}
-        for i in range(self.points):
+        missingIdxDictFeature = {i: [] for i in featuresList}#{i: [] for i in xrange(self.fts)}
+        missingIdxDictPoint = {i: [] for i in range(self.pts)}
+        for i in range(self.pts):
             for j in featuresList:
                 tmpV = self.data[i, j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
@@ -519,7 +519,7 @@ class Matrix(Base):
             extraDummy = []
             for tmpItem in missingIdxDictFeature.items():
                 extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
-                extraDummy.append([True if i in tmpItem[1] else False for i in range(self.points)])
+                extraDummy.append([True if i in tmpItem[1] else False for i in range(self.pts)])
 
             extraDummy = numpy.matrix(extraDummy).transpose()
 
@@ -529,10 +529,10 @@ class Matrix(Base):
             if arguments is None or arguments.lower() == 'any':
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.fts]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.points) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.pts) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -546,10 +546,10 @@ class Matrix(Base):
             if arguments is None or arguments.lower() == 'any':
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.pts]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.features) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.fts) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -595,7 +595,7 @@ class Matrix(Base):
             for tmpItem in missingIdxDictFeature.items():
                     j = tmpItem[0]
                     for i in sorted(tmpItem[1], reverse=True):
-                        if i < self.points - 1:
+                        if i < self.pts - 1:
                             self.data[i, j] = self.data[i+1, j]
         elif method == 'interpolate':
             for tmpItem in missingIdxDictFeature.items():
@@ -604,7 +604,7 @@ class Matrix(Base):
                 if len(interpX) == 0:
                     continue
                 if arguments is None:
-                    xp = [i for i in range(self.points) if i not in interpX]
+                    xp = [i for i in range(self.pts) if i not in interpX]
                     fp = self.data[xp, j].reshape(1, -1).tolist()[0]
                     tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
@@ -628,19 +628,19 @@ class Matrix(Base):
         self.setPointNames(pointNames)
 
     def _flattenToOnePoint_implementation(self):
-        numElements = self.points * self.features
+        numElements = self.pts * self.fts
         self.data = self.data.reshape((1, numElements), order='C')
 
     def _flattenToOneFeature_implementation(self):
-        numElements = self.points * self.features
+        numElements = self.pts * self.fts
         self.data = self.data.reshape((numElements,1), order='F')
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.features // numPoints
+        numFeatures = self.fts // numPoints
         self.data = self.data.reshape((numPoints, numFeatures), order='C')
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.points // numFeatures
+        numPoints = self.pts // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
     def _getitem_implementation(self, x, y):
@@ -664,8 +664,8 @@ class Matrix(Base):
 
     def _validate_implementation(self, level):
         shape = numpy.shape(self.data)
-        assert shape[0] == self.points
-        assert shape[1] == self.features
+        assert shape[0] == self.pts
+        assert shape[1] == self.fts
 
     def _containsZero_implementation(self):
         """
@@ -680,9 +680,9 @@ class Matrix(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self
@@ -711,9 +711,9 @@ class Matrix(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.points
+                self._pStop = source.pts
                 self._fIndex = 0
-                self._fStop = source.features
+                self._fStop = source.fts
 
             def __iter__(self):
                 return self

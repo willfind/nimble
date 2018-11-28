@@ -10,7 +10,7 @@ from UML.calculate import varianceFractionRemaining
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):
         raise ArgumentException("predictedValues must be derived class of UML.data.Base")
-    if predictedValues.features > 1:
+    if predictedValues.fts > 1:
         raise ArgumentException("predictedValues must be labels only; this has more than one feature")
 
 
@@ -59,7 +59,7 @@ def covariance(X, X_T=None, sample=True):
         X_T = X.copy()
         X_T.transpose()
     pointMeansVector = X.pointStatistics('mean')
-    fill = lambda x: [x[0]] * X.features
+    fill = lambda x: [x[0]] * X.fts
     pointMeans = pointMeansVector.calculateForEachPoint(fill)
     pointMeans_T = pointMeans.copy()
     pointMeans_T.transpose()
@@ -69,10 +69,10 @@ def covariance(X, X_T=None, sample=True):
 
     # doing sample covariance calculation
     if sample:
-        divisor = X.features - 1
+        divisor = X.fts - 1
     # doing population covariance calculation
     else:
-        divisor = X.features
+        divisor = X.fts
 
     ret = (XminusEofX * X_TminusEofX_T) / divisor
     return ret

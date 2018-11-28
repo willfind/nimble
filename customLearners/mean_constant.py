@@ -12,7 +12,7 @@ class MeanConstant(CustomLearner):
         self.mean = trainY.featureStatistics('mean')[0, 0]
 
     def apply(self, testX):
-        raw = numpy.zeros(testX.points)
+        raw = numpy.zeros(testX.pts)
         numpy.ndarray.fill(raw, self.mean)
 
         ret = UML.createData("Matrix", raw)

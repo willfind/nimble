@@ -49,8 +49,8 @@ def testReturnsFundamentalsCorrect():
             for curSparsity in sparsities:
                 returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
 
-                assert (returned.points == nPoints)
-                assert (returned.features == nFeatures)
+                assert (returned.pts == nPoints)
+                assert (returned.fts == nFeatures)
 
                 #assert that the requested numerical type was returned
                 assert type(returned[0, 0] == curType)
@@ -190,8 +190,8 @@ def back_constant_correctSizeAndContents(toTest, value):
             ret = toTest(t, size[0], size[1])
             assert t == ret.getTypeString()
 
-            assert ret.points == size[0]
-            assert ret.features == size[1]
+            assert ret.pts == size[0]
+            assert ret.fts == size[1]
 
             for p in range(size[0]):
                 for f in range(size[1]):

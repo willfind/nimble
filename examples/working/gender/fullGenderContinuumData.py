@@ -41,7 +41,7 @@ class MissingAwareSVD(CustomLearner):
         pass
 
     def train(self, trainX, trainY, k):
-        if k < 0 or k > trainX.features:
+        if k < 0 or k > trainX.fts:
             msg = "k must be greater than 0 and less than or equal to "
             msg += "the number of features."
             raise ValueError(msg)
@@ -50,7 +50,7 @@ class MissingAwareSVD(CustomLearner):
         csrFormated = trainX.copyAs("scipycsr", rowsArePoints=False)
 
         covMatrix = missing.covarianceOfRows(csrFormated)
-        
+
         (w, vr) = scipy.linalg.eig(covMatrix)
 
         # we want to find the largest eigen values so we know which
@@ -391,7 +391,7 @@ def printInAndOutSampleError(trainedLearner, trainX, testX, testY):
 def writeOutCoefficientsAndNames(trainedLearner, trialType):
     coefs = trainedLearner.getAttributes()['origCoefs'].flatten()
     coefsObj = UML.createData("List", coefs)
-    if coefsObj.points == 1:
+    if coefsObj.pts == 1:
         coefsObj.transpose()
 
     namesObj = UML.createData("List", [trainX.getFeatureNames()])
@@ -454,7 +454,7 @@ def trial_LogRegL2(trainX, trainY, testX, testY):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -473,7 +473,7 @@ def trial_RegularizationSelection(trainX, trainY, testX, testY, wantedNZcoefs):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -486,7 +486,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
     UML.registerCustomLearner("custom", LogisticRegressionSelectByOmission)
 
-    numToOmit = trainX.features - wantedNZcoefs
+    numToOmit = trainX.fts - wantedNZcoefs
 
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
@@ -498,7 +498,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -517,7 +517,7 @@ def trial_SVMClassifier_linear(trainX, trainY, testX, testY):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -540,7 +540,7 @@ def trial_SVMClassifier_poly(trainX, trainY, testX, testY, degree):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -557,11 +557,11 @@ if __name__ == "__main__":
     allData = fileLoadHelper(retType, defaultFile, allowRemLess50Load)
 
 #       wantedData = allData.extractPoints(end=ptsSel)
-        # separate train and test data.     
-#       numPoints = wantedData.points
+        # separate train and test data.
+#       numPoints = wantedData.pts
     #   testPortion = 3000./numPoints
     #   testPortion = 1500./numPoints
-#       print "total Data: " + str(numPoints) + " x " + str(wantedData.features)
+#       print "total Data: " + str(numPoints) + " x " + str(wantedData.fts)
 #       print "test portion: " + str(testPortion)
 
 #       trainX, trainY, testX, testY = wantedData.trainAndTestSets(
@@ -580,11 +580,11 @@ if __name__ == "__main__":
     for ptsSel in [2500,5000,10000]:
 #   for ptsSel in [250,500,1000]:
 #   for ptsSel in [20000]:
-        print("total Data: " + str(ptsSel) + " x " + str(allData.features))
+        print("total Data: " + str(ptsSel) + " x " + str(allData.fts))
 
         trainX = allData.copyPoints(end=ptsSel)
         trainY = trainX.extractFeatures("gender")
-        testX = allData.copyPoints(start=allData.points-3000)
+        testX = allData.copyPoints(start=allData.pts - 3000)
         testY = testX.extractFeatures("gender")
 
         trainX.name = "Training Data"
@@ -645,7 +645,7 @@ if __name__ == "__main__":
 
 
 
-    
+
     # lasso?
     # pca preprocess, with mean norm? into LogReg, SVM with RBF
 
