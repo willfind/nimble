@@ -5,32 +5,33 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 
 from __future__ import division
 from __future__ import absolute_import
-import numpy
 import copy
 from collections import defaultdict
-
-import UML
-
-from UML.exceptions import ArgumentException, PackageException
-from six.moves import range
 from functools import reduce
+import warnings
+
+import numpy
+from six.moves import range
+
+from . import dataHelpers
+from .base import Base, cmp_to_key
+from .base_view import BaseView
+from .dataHelpers import inheritDocstringsFactory
+from .sparsePoints import SparsePoints
+from .sparseFeatures import SparseFeatures
+from .sparseElements import SparseElements
+import UML
+import UML.data
+from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import ImproperActionException
+from UML.exceptions import PackageException
+from UML.randomness import pythonRandom
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
     from scipy.io import mmwrite
-
-import UML.data
-from . import dataHelpers
-from .base import Base, cmp_to_key
-from .base_view import BaseView
-from .dataHelpers import inheritDocstringsFactory
-
-from UML.exceptions import ImproperActionException
-from UML.exceptions import PackageException
-from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
-import warnings
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -64,10 +65,23 @@ class Sparse(Base):
         kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
+    def _getPoints(self):
+        return SparsePoints(self)
+
+    points = property(_getPoints, doc="TODO")
+
+    def _getFeatures(self):
+        return SparseFeatures(self)
+
+    features = property(_getFeatures, doc="TODO")
+
+    def _getElements(self):
+        return SparseElements(self)
+
+    elements = property(_getElements, doc="TODO")
 
     def getdata(self):
         return self.data
-
 
     def _features_implementation(self):
         (points, cols) = scipy.shape(self.data)

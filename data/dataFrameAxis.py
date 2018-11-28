@@ -10,7 +10,4 @@ class DataFrameAxis(Axis):
     TODO
     """
     def __init__(self):
-        self.source = source
-        self.axis = 'point'
         super(DataFrameAxis, self).__init__()
-        

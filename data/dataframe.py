@@ -4,24 +4,26 @@ Class extending Base, using a pandas DataFrame to store data.
 
 from __future__ import division
 from __future__ import absolute_import
-import UML
-from UML.exceptions import ArgumentException, PackageException
-from six.moves import range
-
-import numpy
-
-pd = UML.importModule('pandas')
-
-from .base import Base, cmp_to_key
-import numpy as np
-scipy = UML.importModule('scipy.sparse')
-
 import itertools
 import copy
 import re
+
+import numpy
+import numpy as np
+from six.moves import range
+
+from .base import Base, cmp_to_key
 from .base_view import BaseView
+from .dataframePoints import DataFramePoints
+from .dataframeFeatures import DataFrameFeatures
+from .dataframeElements import DataFrameElements
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
+import UML
+from UML.exceptions import ArgumentException, PackageException
+
+pd = UML.importModule('pandas')
+scipy = UML.importModule('scipy.sparse')
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -56,6 +58,20 @@ class DataFrame(Base):
         kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
 
+    def _getPoints(self):
+        return DataFramePoints(self)
+
+    points = property(_getPoints, doc="TODO")
+
+    def _getFeatures(self):
+        return DataFrameFeatures(self)
+
+    features = property(_getFeatures, doc="TODO")
+
+    def _getElements(self):
+        return DataFrameElements(self)
+
+    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """
@@ -206,9 +222,9 @@ class DataFrame(Base):
         these are managed separately by each frontend function.
         """
         if structure == 'copy':
-            return self.ptsOrFeaturesVectorized(targetList, axis, 'copy', True)
+            return self.pointsOrFeaturesVectorized(targetList, axis, 'copy', True)
         else:
-            return self.ptsOrFeaturesVectorized(targetList, axis, 'extract', True)
+            return self.pointsOrFeaturesVectorized(targetList, axis, 'extract', True)
 
 
     def _mapReducePoints_implementation(self, mapper, reducer):
@@ -869,7 +885,7 @@ class DataFrame(Base):
                 ret = self.data.values.__truediv__(other.data)
         else:
             ret = self.data.values.__itruediv__(other)
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.values.__rtruediv__(other)
@@ -894,7 +910,7 @@ class DataFrame(Base):
                 ret = self.data.values // other.data
         else:
             ret = self.data.values // other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
@@ -920,12 +936,12 @@ class DataFrame(Base):
                 ret = self.data.values % other.data
         else:
             ret = self.data.values % other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _imod__implementation(self, other):

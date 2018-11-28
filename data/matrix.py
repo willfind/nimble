@@ -5,24 +5,26 @@ Class extending Base, using a numpy dense matrix to store data.
 
 from __future__ import division
 from __future__ import absolute_import
-import numpy
 import sys
 import itertools
 import copy
+from functools import reduce
 
-import UML
+import numpy
+from six.moves import range
+from six.moves import zip
+
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints
 from .matrixFeatures import MatrixFeatures
 from .matrixElements import MatrixElements
 from .dataHelpers import inheritDocstringsFactory
+import UML
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
-from six.moves import range
-from six.moves import zip
-from functools import reduce
+
 scipy = UML.importModule('scipy.io')
 
 @inheritDocstringsFactory(Base)
@@ -72,7 +74,7 @@ class Matrix(Base):
     features = property(_getFeatures, doc="TODO")
 
     def _getElements(self):
-        return Elements(self)
+        return MatrixElements(self)
 
     elements = property(_getElements, doc="TODO")
 

@@ -12,5 +12,5 @@ class SparseFeatures(SparseAxis, Axis):
     """
     def __init__(self):
         self.source = source
-        self.axis = 'point'
+        self.axis = 'feature'
         super(SparseFeatures, self).__init__()

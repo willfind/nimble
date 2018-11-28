@@ -6,20 +6,24 @@ Class extending Base, using a list of lists to store data.
 from __future__ import division
 from __future__ import absolute_import
 import copy
-import numpy
 import numbers
 import itertools
+from functools import reduce
 
-import UML
-from .base import Base, cmp_to_key
-from .base_view import BaseView
-from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import reorderToMatchList
-from UML.exceptions import ArgumentException, PackageException
-from UML.randomness import pythonRandom
+import numpy
 import six
 from six.moves import range
-from functools import reduce
+
+from .base import Base, cmp_to_key
+from .base_view import BaseView
+from .listPoints import ListPoints
+from .listFeatures import ListFeatures
+from .listElements import ListElements
+from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import reorderToMatchList
+import UML
+from UML.exceptions import ArgumentException, PackageException
+from UML.randomness import pythonRandom
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -113,6 +117,20 @@ class List(Base):
         kwds['shape'] = shape
         super(List, self).__init__(**kwds)
 
+    def _getPoints(self):
+        return ListPoints(self)
+
+    points = property(_getPoints, doc="TODO")
+
+    def _getFeatures(self):
+        return ListFeatures(self)
+
+    features = property(_getFeatures, doc="TODO")
+
+    def _getElements(self):
+        return ListElements(self)
+
+    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """

@@ -9,17 +9,48 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+import sys
+import warnings
+import math
+import numbers
+import itertools
+import copy
+import os.path
+import inspect
+import operator
+from multiprocessing import Process
+
+import numpy
 import six
 from six.moves import map
 from six.moves import range
 from six.moves import zip
-import sys
-import warnings
 
-import __main__ as main
+import UML
+from . import dataHelpers
+# the prefix for default point and feature names
+from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from .dataHelpers import DEFAULT_NAME_PREFIX
+from .dataHelpers import formatIfNeeded
+from .dataHelpers import makeConsistentFNamesAndData
+from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import ImproperActionException
+from UML.logger import produceFeaturewiseReport
+from UML.logger import produceAggregateReport
+from UML.randomness import pythonRandom
+
+pd = UML.importModule('pandas')
+
+cython = UML.importModule('cython')
+if cython is None or not cython.compiled:
+    from math import sin, cos
+
+cloudpickle = UML.importModule('cloudpickle')
+
 mplError = None
 try:
     import matplotlib
+    import __main__ as main
     # for .show() to work in interactive sessions
     # a backend different than Agg needs to be use
     # The interactive session can choose by default e.g.,
@@ -31,50 +62,10 @@ try:
         # Open matplotlib issue here: https://github.com/matplotlib/matplotlib/issues/8795
         # It applies for both for python 2 and 3
         matplotlib.use('Agg')
-
 except ImportError as e:
     mplError = e
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
-
-import math
-import numbers
-import itertools
-import copy
-import numpy
-import os.path
-import inspect
-import operator
-from multiprocessing import Process
-
-import UML
-
-pd = UML.importModule('pandas')
-
-cython = UML.importModule('cython')
-if cython is None or not cython.compiled:
-    from math import sin, cos
-
-cloudpickle = UML.importModule('cloudpickle')
-
-from .axis import Axis
-from .elements import Elements
-from UML.exceptions import ArgumentException, PackageException
-from UML.exceptions import ImproperActionException
-from UML.logger import produceFeaturewiseReport
-from UML.logger import produceAggregateReport
-from UML.randomness import pythonRandom
-
-from . import dataHelpers
-
-# the prefix for default point and feature names
-from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
-
-from .dataHelpers import DEFAULT_NAME_PREFIX
-
-from .dataHelpers import formatIfNeeded
-
-from .dataHelpers import makeConsistentFNamesAndData
 
 def to2args(f):
     """
@@ -208,7 +199,6 @@ class Base(object):
 
         # call for safety
         super(Base, self).__init__(**kwds)
-
 
     #######################
     # Property Attributes #
@@ -1721,10 +1711,10 @@ class Base(object):
 
         if not singleX:
             if x.__class__ is slice:
-                start = self._getIndex(x.start, 'point') if x.start is not None else 0
+                start = x.start if x.start is not None else 0
                 if start < 0:
                     start += self.pts
-                stop = self._getIndex(x.stop, 'point') if x.stop is not None else self.pts
+                stop = x.stop if x.stop is not None else self.pts
                 if stop < 0:
                     stop += self.pts
                 step = x.step if x.step is not None else 1
@@ -1734,10 +1724,10 @@ class Base(object):
 
         if not singleY:
             if y.__class__ is slice:
-                start = self._getIndex(y.start, 'feature') if y.start is not None else 0
+                start = y.start if y.start is not None else 0
                 if start < 0:
                     start += self.fts
-                stop = self._getIndex(y.stop, 'feature') if y.stop is not None else self.fts
+                stop = y.stop if y.stop is not None else self.fts
                 if stop < 0:
                     stop += self.fts
                 step = y.step if y.step is not None else 1

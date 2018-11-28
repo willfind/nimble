@@ -4,7 +4,7 @@ TODO
 from __future__ import absolute_import
 
 from .axis import Axis
-from .dataFrameAxis import DataFrameAxis
+from .dataframeAxis import DataFrameAxis
 
 class DataFrameFeatures(DataFrameAxis, Axis):
     """
@@ -12,6 +12,5 @@ class DataFrameFeatures(DataFrameAxis, Axis):
     """
     def __init__(self):
         self.source = source
-        self.axis = 'point'
+        self.axis = 'feature'
         super(DataFrameFeatures, self).__init__()
-        

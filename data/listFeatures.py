@@ -12,6 +12,5 @@ class ListFeatures(ListAxis, Axis):
     """
     def __init__(self):
         self.source = source
-        self.axis = 'point'
+        self.axis = 'feature'
         super(ListFeatures, self).__init__()
-        

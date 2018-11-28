@@ -3,10 +3,6 @@ TODO
 """
 from __future__ import absolute_import
 
-import six
-
-import UML
-
 class Axis(object):
     """
     TODO
