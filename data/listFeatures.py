@@ -6,9 +6,12 @@ from __future__ import absolute_import
 from .axis import Axis
 from .listAxis import ListAxis
 
-class ListPointsAxis(ListAxis, Axis):
+class ListFeatures(ListAxis, Axis):
     """
     TODO
     """
     def __init__(self):
-        pass
+        self.source = source
+        self.axis = 'point'
+        super(ListFeatures, self).__init__()
+        

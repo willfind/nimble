@@ -13,6 +13,9 @@ import copy
 import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
+from .matrixPoints import MatrixPoints
+from .matrixFeatures import MatrixFeatures
+from .matrixElements import MatrixElements
 from .dataHelpers import inheritDocstringsFactory
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
@@ -58,6 +61,20 @@ class Matrix(Base):
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 
+    def _getPoints(self):
+        return MatrixPoints(self)
+
+    points = property(_getPoints, doc="TODO")
+
+    def _getFeatures(self):
+        return MatrixFeatures(self)
+
+    features = property(_getFeatures, doc="TODO")
+
+    def _getElements(self):
+        return Elements(self)
+
+    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """

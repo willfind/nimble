@@ -10,4 +10,5 @@ class ListElements(Elements):
     TODO
     """
     def __init__(self):
-        pass
+        super(ListElements, self).__init__()
+        

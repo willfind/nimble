@@ -10,4 +10,5 @@ class MatrixElements(Elements):
     TODO
     """
     def __init__(self):
-        pass
+        super(MatrixElements, self).__init__()
+        

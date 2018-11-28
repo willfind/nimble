@@ -10,4 +10,7 @@ class ListAxis(Axis):
     TODO
     """
     def __init__(self):
-        pass
+        self.source = source
+        self.axis = 'point'
+        super(ListAxis, self).__init__()
+        

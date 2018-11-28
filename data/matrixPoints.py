@@ -4,13 +4,14 @@ TODO
 from __future__ import absolute_import
 
 from .axis import Axis
+from .matrixAxis import MatrixAxis
 
-class DataFrameAxis(Axis):
+class MatrixPoints(MatrixAxis, Axis):
     """
     TODO
     """
-    def __init__(self):
+    def __init__(self, source):
         self.source = source
         self.axis = 'point'
-        super(DataFrameAxis, self).__init__()
+        super(MatrixPoints, self).__init__()
         

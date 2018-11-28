@@ -10,4 +10,4 @@ class SparseElements(Elements):
     TODO
     """
     def __init__(self):
-        pass
+        super(SparseElements, self).__init__()

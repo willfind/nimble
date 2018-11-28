@@ -10,4 +10,5 @@ class DataFrameElements(Elements):
     TODO
     """
     def __init__(self):
-        pass
+        super(DataFrameElements, self).__init__()
+        
