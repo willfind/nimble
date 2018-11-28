@@ -559,7 +559,6 @@ generators = {'addFeatures': [genObjMatchPoints],
               'extractFeatures': [genFIDList, None, None, genFNumLim, genBool],
               #TODO!!!! first arg can also be function!!!!
               'extractPoints': [genPIDList, None, None, genPNumLim, genBool],
-              'extractPointsByCoinToss': [genProb],
               'featureView': [genFID],
               'hashCode': [],
               'isApproximatelyEqual': [genObj],
@@ -585,14 +584,14 @@ generators = {'addFeatures': [genObjMatchPoints],
               'validate': [genOne],
 }
 
-untested = ['dropFeaturesContainingType', # how can you choose the type?
-            'featureIterator', 'pointIterator', #iterator equality isn't a sensible thing to check
+untested = ['featureIterator', 'pointIterator', #iterator equality isn't a sensible thing to check
             'writeFile', # lets not test this yet
             'getTypeString', # won't actually be equal
             'summaryReport', # do we really care about testing this?
             'featureReport', # floating point equality errors? / do we care?
             'pointCount', 'featureCount', # not callable
             'toString' # different underlying types will produce different outputs
+            'fillUsingPoints', 'fillUsingFeatures', 'fillUsingAllData'
 ]
 
 

@@ -142,6 +142,9 @@ def median(values):
     #Filter out None/NaN values from list of values
     sortedValues = [x for x in values if not _isMissing(x)]
 
+    if len(sortedValues) == 0:
+        return None
+
     sortedValues = sorted(sortedValues)
 
     numValues = len(sortedValues)

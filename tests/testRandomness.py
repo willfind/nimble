@@ -56,14 +56,14 @@ def testSetRandomSeedPropagate():
     toTest3 = toTest1.copy()
 
     UML.setRandomSeed(1337)
-    ret1 = toTest1.extractPointsByCoinToss(0.5)
+    toTest1.shufflePoints()
 
     UML.setRandomSeed(1336)
-    ret2 = toTest2.extractPointsByCoinToss(0.5)
+    toTest2.shufflePoints()
 
     UML.setRandomSeed(1337)
-    ret3 = toTest3.extractPointsByCoinToss(0.5)
+    toTest3.shufflePoints()
 
-    assert ret1 == ret3
-    assert ret1 != ret2
+    assert toTest1 == toTest3
+    assert toTest1 != toTest2
 

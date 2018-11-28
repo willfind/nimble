@@ -13,10 +13,10 @@ featureIterator, calculateForEachElement, isApproximatelyEqual,
 trainAndTestSets, countEachUniqueValue
 
 In object HighLevelModifying:
-dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
-transformFeatureToIntegers, extractPointsByCoinToss,
-shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
-
+replaceFeatureWithBinaryFeatures, transformFeatureToIntegers,
+shufflePoints, shuffleFeatures,
+normalizePoints, normalizeFeatures,
+fillUsingPoints, fillUsingFeatures, fillUsingAllData
 
 """
 
@@ -35,6 +35,8 @@ import tempfile
 import inspect
 
 import UML
+from UML import match
+from UML import fill
 from UML.exceptions import ArgumentException, ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
@@ -1210,56 +1212,6 @@ class HighLevelDataSafe(DataTestObject):
         assert unique[3] == 2
 
 class HighLevelModifying(DataTestObject):
-    ##############################
-    # dropFeaturesContainingType #
-    ##############################
-
-    def test_dropFeaturesContainingType_emptyTest(self):
-        """ Test dropFeaturesContainingType() when the data is empty """
-        data = []
-        toTest = self.constructor(data)
-        unchanged = self.constructor(data)
-        ret = toTest.dropFeaturesContainingType(six.string_types) # RET CHECK
-        assert toTest.isIdentical(unchanged)
-        assert ret is None
-
-    def test_dropFeaturesContainingType_intoFEmpty(self):
-        """ Test dropFeaturesContainingType() when dropping all features """
-        data = [[1.0], [2.0]]
-        toTest = self.constructor(data)
-        toTest.dropFeaturesContainingType(float)
-
-        exp = numpy.array([[], []])
-        exp = numpy.array(exp)
-        exp = self.constructor(exp)
-
-        assert toTest.isIdentical(exp)
-
-    def test_dropFeaturesContainingType_ListOnlyTest(self):
-        """ Test dropFeaturesContainingType() only on List data """
-        data = [[1, 2], [3, 4]]
-        toTest = self.constructor(data)
-        stringData = [[5, 'six']]
-        toAdd = UML.createData('List', stringData)
-        if toTest.getTypeString() == 'List':
-            toTest.addPoints(toAdd)
-            toTest.dropFeaturesContainingType(six.string_types)
-            assert toTest.features == 1
-
-    def test_dropFeaturesContainingType_NamePath_preservation(self):
-        data = [[1.0], [2.0]]
-        toTest = self.constructor(data)
-
-        toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
-
-        toTest.dropFeaturesContainingType(float)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
-
 
     #################################
     # replaceFeatureWithBinaryFeatures #
@@ -1396,126 +1348,6 @@ class HighLevelModifying(DataTestObject):
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
-
-    #########################
-    # extractPointsByCoinToss #
-    #########################
-
-    #	@raises(ImproperActionException)
-    #	def test_extractPointsByCoinToss_exceptionEmpty(self):
-    #		""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
-    #		data = []
-    #		toTest = self.constructor(data)
-    #		toTest.extractPointsByCoinToss(0.5)
-
-    @raises(ArgumentException)
-    def test_extractPointsByCoinToss_exceptionNoneProbability(self):
-        """ Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        featureNames = ['1', '2', '3']
-        pointNames = ['1', '4', '7']
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.extractPointsByCoinToss(None)
-
-    @raises(ArgumentException)
-    def test_extractPointsByCoinToss_exceptionLEzero(self):
-        """ Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        featureNames = ['1', '2', '3']
-        pointNames = ['1', '4', '7']
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.extractPointsByCoinToss(0)
-
-    @raises(ArgumentException)
-    def test_extractPointsByCoinToss_exceptionGEone(self):
-        """ Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        featureNames = ['1', '2', '3']
-        pointNames = ['1', '4', '7']
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.extractPointsByCoinToss(1)
-
-    def test_extractPointsByCoinToss_intoPEmpty(self):
-        """ Test extractPointsByCoinToss() when it removes all points """
-        data = [[1]]
-        toTest = self.constructor(data)
-        retExp = self.constructor(data)
-        while True:
-            ret = toTest.extractPointsByCoinToss(.99)
-            if ret.points == 1:
-                break
-
-        assert retExp.isIdentical(ret)
-
-        data = [[]]
-        data = numpy.array(data).T
-        exp = self.constructor(data)
-
-        assert toTest.isIdentical(exp)
-
-
-    def test_extractPointsByCoinToss_handmade(self):
-        """ Test extractPointsByCoinToss() produces sane results (ie a partition) """
-        data = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]
-        featureNames = ['a', 'b', 'c']
-        pointNames = ['1', '2', '3', '4', '5', '6']
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        orig = toTest.copy()
-        ret = toTest.extractPointsByCoinToss(0.5)
-
-        def checkEqual(v1, v2):
-            assert len(v1) == len(v2)
-            for i in range(len(v1)):
-                assert v1[i] == v2[i]
-
-        # everything in ret is in orig
-        for pIndex in range(ret.points):
-            currRetPoint = ret.pointView(pIndex)
-            currName = ret.getPointName(pIndex)
-            currOrigPoint = orig.pointView(currName)
-            checkEqual(currRetPoint, currOrigPoint)
-
-        # everything in toTest is in orig
-        for pIndex in range(toTest.points):
-            currToTestPoint = toTest.pointView(pIndex)
-            currName = toTest.getPointName(pIndex)
-            currOrigPoint = orig.pointView(currName)
-            checkEqual(currToTestPoint, currOrigPoint)
-
-        # everything in orig in either ret or toTest
-        for pIndex in range(orig.points):
-            currOrigPoint = orig.pointView(pIndex)
-            currName = orig.getPointName(pIndex)
-            if currName in ret.getPointNames():
-                assert currName not in toTest.getPointNames()
-                checkPoint = ret.pointView(currName)
-            else:
-                assert currName in toTest.getPointNames()
-                assert currName not in ret.getPointNames()
-                checkPoint = toTest.pointView(currName)
-
-            checkEqual(checkPoint, currOrigPoint)
-
-
-    def test_extractPointsByCoinToss_NamePath_preservation(self):
-        data = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6]]
-        featureNames = ['a', 'b', 'c']
-        pointNames = ['1', '2', '3', '4', '5', '6']
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
-
-        ret = toTest.extractPointsByCoinToss(0.5)
-
-        assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
-
-        assert ret.nameIsDefault()
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
 
 
     ###################
@@ -1933,177 +1765,667 @@ class HighLevelModifying(DataTestObject):
         assert expAlsoL == alsoLess
         assert expAlsoM == alsoMore
 
-    #######################
-    # handleMissingValues #
-    #######################
 
-    @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_handleMissingValues_calls_constructIndicesList1(self, mockFunc):
-        toTest = self.constructor([[1,2,3],[4,5,None],[7,8,9]], pointNames=['a', 'b','c'])
+    #####################
+    # fillUsingFeatures #
+    #####################
 
-        def noChange(point):
-            return point
-
-        toTest.handleMissingValues('remove points', features=['c'])
-
-    def test_handleMissingValues_remove_points(self):
+    def test_fillUsingFeatures_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
         obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove points')
-        ret1 = self.constructor([[1, 2, 3], [7, 8, 9]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
+        ret = obj1.fillUsingFeatures(match.missing, fill.mean) #RET CHECK
+        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp1.setFeatureNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+        assert ret is None
 
         obj2 = obj0.copy()
-        obj2.handleMissingValues(method='remove points', arguments='all', alsoTreatAsMissing=[11])
-        ret2 = self.constructor([[1, 2, 3], [7, numpy.NaN, None], [7, 8, 9]])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        assert obj2 == ret2
-
-        obj3 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj3.handleMissingValues(method='remove points', arguments='all', alsoTreatAsMissing=[1, 2, 3], markMissing=True)
-        ret3 = self.constructor([[None, 11, None, True, False, True], [7, 11, None, False, False, True], [7, 8, 9, False, False, False]])
-        ret3.setPointNames(['_DEFAULT_#1', '_DEFAULT_#2', '_DEFAULT_#3'])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        try:
-            obj3.data = obj3.data.astype(float)
-        except Exception:
-            pass
-        assert obj3 == ret3
-
-    def test_handleMissingValues_remove_features(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove features')
-        ret1 = self.constructor([[2], [11], [11], [8]])
-        ret1.setFeatureNames(['b'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.handleMissingValues(method='remove features', arguments='all', alsoTreatAsMissing=[3, 9])
-        ret2 = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
-        ret2.setFeatureNames(['a', 'b'])
-        assert obj2 == ret2
+        obj2.fillUsingFeatures([3, 7], None)
+        obj2.fillUsingFeatures(match.missing, fill.mean)
+        exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
+        exp2.setFeatureNames(['a', 'b', 'c'])
+        assert obj2 == exp2
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='remove features', arguments='all', alsoTreatAsMissing=[1, 7], markMissing=True)
-        ret3 = self.constructor([[2, 3, False, False], [11, None, False, True], [11, None, False, True], [8, 9, False, False]])
-        ret3.setFeatureNames(['b', 'c', 'b_missing', 'c_missing'])
-        try:
-            obj3.data = obj3.data.astype(float)
-        except Exception:
-            pass
-        assert obj3 == ret3
+        ret = obj3.fillUsingFeatures(match.missing, fill.mean, returnModified=True)
+        exp3 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp3.setFeatureNames(['a', 'b', 'c'])
+        expRet = self.constructor([[False, False, False], [True, False, True], [False, False, True], [False, False, False]])
+        expRet.setFeatureNames(['a_modified', 'b_modified', 'c_modified'])
+        assert obj3 == exp3
+        assert ret == expRet
+
+    def test_fillUsingFeatures_mean_nonNumeric(self):
+        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.fillUsingFeatures(match.nonNumeric, fill.mean)
+        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp1.setFeatureNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+
+        obj2 = obj0.copy()
+        obj2.fillUsingFeatures([3, 7], 'na')
+        obj2.fillUsingFeatures(match.nonNumeric, fill.mean)
+        exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
+        exp2.setFeatureNames(['a', 'b', 'c'])
+        assert obj2 == exp2
+
+        obj3 = obj0.copy()
+        ret = obj3.fillUsingFeatures(match.nonNumeric, fill.mean, features=['b',2], returnModified=True)
+        exp3 = self.constructor([[1, 2, 3], ['na', 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp3.setFeatureNames(['a', 'b', 'c'])
+        expRet = self.constructor([[False, False], [False, True], [False, True], [False, False]])
+        expRet.setFeatureNames(['b_modified', 'c_modified'])
+        assert obj3 == exp3
+        assert ret == expRet
 
     @raises(ArgumentException)
-    def test_handleMissingValues_remove_points2(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    def test_fillUsingFeatures_mean_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.mean)
 
-        obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove points', alsoTreatAsMissing=[2, 9])
+    def test_fillUsingFeatures_median_missing(self):
+        obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(11, None)
+        obj.fillUsingFeatures(match.missing, fill.median)
+        exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    def test_fillUsingFeatures_median_nonNumeric(self):
+        obj = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(11, 'na')
+        obj.fillUsingFeatures(match.nonNumeric, fill.median)
+        exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
 
     @raises(ArgumentException)
-    def test_handleMissingValues_remove_features2(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    def test_fillUsingFeatures_median_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.median)
 
-        obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove features', alsoTreatAsMissing=2)
-
-    def test_handleMissingValues_feature_mean(self):
+    def test_fillUsingFeatures_mode(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj0.fillUsingFeatures(9, None)
+        obj0.fillUsingFeatures(match.missing, fill.mode)
+        exp0 = self.constructor([[1, 2, 3], [7, 11, 3], [7, 11, 3], [7, 8, 3]])
+        exp0.setFeatureNames(['a', 'b', 'c'])
+        assert obj0 == exp0
+
+        obj1 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d','c'], ['e','f','g']], featureNames=['a', 'b', 'c'])
+        obj1.fillUsingFeatures('c', None)
+        obj1.fillUsingFeatures(match.missing, fill.mode)
+        exp1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
+        exp1.setFeatureNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_mode_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.mode)
+
+    def test_fillUsingFeatures_zero(self):
+        obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(11, None)
+        obj.fillUsingFeatures(match.missing, 0, features=['b', 'c'])
+        exp = self.constructor([[1, 2, 3], [None, 0, 0], [7, 0, 0], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    def test_fillUsingFeatures_constant(self):
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(0, 100)
+        exp = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    def test_fillUsingFeatures_forwardFill(self):
+        obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(match.missing, fill.forwardFill)
+        exp = self.constructor([[1, 2, 3], [1, 11, 3], [7, 11, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_forwardFill_firstFeatureValueMissing(self):
+        obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(match.missing, fill.forwardFill)
+
+    def test_fillUsingFeatures_backwardFill(self):
+        obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(11, None)
+        obj.fillUsingFeatures(match.missing, fill.backwardFill)
+        exp = self.constructor([[1, 2, 3], [7, 8, 9], [7, 8, 9], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_backwardFill_lastFeatureValueMissing(self):
+        obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, None, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(match.missing, fill.backwardFill)
+
+    def test_fillUsingFeatures_interpolate(self):
+        obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(match.missing, fill.interpolate)
+        exp = self.constructor([[1, 2, 3], [4, 11, 5], [7, 11, 7], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    def test_fillUsingFeatures_custom_match(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        toTest.fillUsingFeatures(negative, 0)
+        assert toTest == exp
+
+    def test_fillUsingFeatures_custom_fill(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, -3, 4], [5, 2, -3, 8], [9, 10, 11, 4]]
+        exp = self.constructor(expData)
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingFeatures(match.negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingFeatures_custom_fillAndMatch(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, -3, 4], [5, 2, -3, 8], [9, 10, 11, 4]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingFeatures(negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingFeatures_fillValuesWithNaN_constant(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj1 = self.constructor(data)
+        obj2 = self.constructor(data)
+        obj3 = self.constructor(data)
+        obj1.fillUsingFeatures(999, float('nan'))
+        obj2.fillUsingFeatures(999, None)
+        obj3.fillUsingFeatures(999, numpy.nan)
+        obj1.fillUsingFeatures(None, 0)
+        obj2.fillUsingFeatures(numpy.nan, 0)
+        obj3.fillUsingFeatures(float('nan'), 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj1 == exp
+        assert obj2 == obj1
+        assert obj3 == obj1
+
+    def test_fillUsingFeatures_fillValuesWithNaN_list(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, None)
+        obj.fillUsingFeatures([1, numpy.nan], 0)
+
+        exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingFeatures_fillValuesWithNaN_function(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, None)
+        obj.fillUsingFeatures(match.missing, 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingFeatures_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, 'na')
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
+
+    def test_fillUsingFeatures_NamePath_preservation(self):
+        data = [['a'], ['b'], [1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.fillUsingFeatures(match.nonNumeric, 0)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+
+    ###################
+    # fillUsingPoints #
+    ###################
+
+    def test_fillUsingPoints_mean_missing(self):
+        obj0 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
-        obj1.handleMissingValues(method='feature mean')
-        ret1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
+        ret = obj1.fillUsingPoints(match.missing, fill.mean) # RET CHECK
+        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+        assert ret is None
 
         obj2 = obj0.copy()
-        obj2.handleMissingValues(method='feature mean', alsoTreatAsMissing=[3, 7])
-        ret2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        assert obj2 == ret2
+        obj2.fillUsingPoints([4, 8], None)
+        obj2.fillUsingPoints(match.missing, fill.mean)
+        exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
+        exp2.setPointNames(['a', 'b', 'c'])
+        assert obj2 == exp2
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature mean', alsoTreatAsMissing=[3, 7], markMissing=True)
-        ret3 = self.constructor([[1, 2, 9, False, False, True], [1, 11, 9, True, False, True], [1, 11, 9, True, False, True], [1, 8, 9, True, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
+        ret = obj3.fillUsingPoints(match.missing, fill.mean, returnModified=True)
+        exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        expRet = self.constructor([[False, False, False, False], [True, False, True, False], [False, False, False, True]])
+        exp3.setPointNames(['a', 'b', 'c'])
+        expRet.setPointNames(['a_modified', 'b_modified', 'c_modified'])
+        assert obj3 == exp3
+        assert ret == expRet
 
-    def test_handleMissingValues_feature_median(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    def test_fillUsingPoints_mean_nonNumeric(self):
+        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.fillUsingPoints(match.nonNumeric, fill.mean)
+        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == exp1
 
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature median', alsoTreatAsMissing=11, markMissing=True)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 5, 6, True, True, True], [7, 5, 6, False, True, True], [7, 8, 9, False, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
-
-    def test_handleMissingValues_feature_mode(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature mode', alsoTreatAsMissing=9, markMissing=True)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 11, 3, True, False, True], [7, 11, 3, False, False, True], [7, 8, 3, False, False, True]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
-
-        obj2 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d',None], ['e','f','g']], featureNames=['a', 'b', 'c'])
-        obj2.handleMissingValues(method='feature mode', markMissing=True, alsoTreatAsMissing=['c'])
-        ret2 = self.constructor([['a','b','g', 0, 0, 1], ['e','d', 'g', 1, 0, 1], ['e','d', 'g', 0, 0, 1], ['e','f', 'g', 0, 0, 0]])
-        ret2.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj2 == ret2
-
-    def test_handleMissingValues_zero(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj2 = obj0.copy()
+        obj2.fillUsingPoints([4, 8], 'na')
+        obj2.fillUsingPoints(match.nonNumeric, fill.mean)
+        exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
+        exp2.setPointNames(['a', 'b', 'c'])
+        assert obj2 == exp2
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='zero', alsoTreatAsMissing=11, markMissing=True, features=['b', 2])
-        ret3 = self.constructor([[1, 2, 3, False, False], [None, 0, 0, True, True], [7, 0, 0, True, True], [7, 8, 9, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'b_missing', 'c_missing'])
-        try:
-            obj3.data = obj3.data.astype(float)
-        except Exception:
-            pass
-        assert obj3 == ret3
+        ret = obj3.fillUsingPoints(match.nonNumeric, fill.mean, points=['b', 2], returnModified=True)
+        exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        expRet = self.constructor([[True, False, True, False], [False, False, False, True]])
+        exp3.setPointNames(['a', 'b', 'c'])
+        expRet.setPointNames(['b_modified', 'c_modified'])
+        assert obj3 == exp3
+        assert ret == expRet
 
-    def test_handleMissingValues_constant(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 0, None], [7, 0, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    @raises(ArgumentException)
+    def test_fillUsingPoints_mean_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.mean)
 
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='constant', alsoTreatAsMissing=[0], markMissing=True, arguments=100)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [100, 100, 100, True, True, True], [7, 100, 100, False, True, True], [7, 8, 9, False, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
+    def test_fillUsingPoints_median_missing(self):
+        obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.median)
+        exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 9]])
+        exp.setPointNames(['a', 'b', 'c'])
+        assert obj == exp
 
-    def test_handleMissingValues_forward_fill(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    def test_fillUsingPoints_median_nonNumeric(self):
+        obj = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(11, 'na')
+        obj.fillUsingPoints(match.nonNumeric, fill.median)
+        exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 5, 5]])
+        exp.setPointNames(['a', 'b', 'c'])
+        assert obj == exp
 
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='forward fill', alsoTreatAsMissing=[11], markMissing=True)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [1, 2, 3, True, True, True], [7, 2, 3, False, True, True], [7, 8, 9, False, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
+    @raises(ArgumentException)
+    def test_fillUsingPoints_median_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.median)
 
-    def test_handleMissingValues_backward_fill(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    def test_fillUsingPoints_mode(self):
+        obj0 = self.constructor([[1, 2, 3, 3], [None, 6, 8, 8], [9, 9, 11, None]], pointNames=['a', 'b', 'c'])
+        obj0.fillUsingPoints(9, None)
+        obj0.fillUsingPoints(match.missing, fill.mode)
+        exp0 = self.constructor([[1, 2, 3, 3], [8, 6, 8, 8], [11, 11, 11, 11]], pointNames=['a', 'b', 'c'])
+        exp0.setPointNames(['a', 'b', 'c'])
+        assert obj0 == exp0
 
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='backward fill', alsoTreatAsMissing=[11], markMissing=True)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 8, 9, True, True, True], [7, 8, 9, False, True, True], [7, 8, 9, False, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
+        obj1 = self.constructor([['a', 'b', 'c', 'c'], [None, 'f', 'h', 'h'], ['i', 'i', 'k', None]], pointNames=['a', 'b', 'c'])
+        obj1.fillUsingPoints('b', None)
+        obj1.fillUsingPoints(match.missing, fill.mode)
+        exp1 = self.constructor([['a', 'c', 'c', 'c'], ['h', 'f', 'h', 'h'], ['i', 'i', 'k', 'i']], pointNames=['a', 'b', 'c'])
+        exp1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == exp1
 
-    def test_handleMissingValues_interpolate(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+    @raises(ArgumentException)
+    def test_fillUsingPoints_mode_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.mode)
 
-        obj3 = obj0.copy()
-        obj3.handleMissingValues(method='interpolate', markMissing=True)
-        ret3 = self.constructor([[1, 2, 3, False, False, False], [4, 11, 5, True, False, True], [7, 11, 7, False, False, True], [7, 8, 9, False, False, False]])
-        ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
-        assert obj3 == ret3
+    def test_fillUsingPoints_zero(self):
+        obj = self.constructor([[1, 2, None], [None, 11, 6], [7, 11, None], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillUsingPoints(11, None)
+        obj.fillUsingPoints(match.missing, 0, points=['b', 'c'])
+        exp = self.constructor([[1, 2, None], [0, 0, 6], [7, 0, 0], [7, 8, 9]])
+        exp.setPointNames(['a', 'b', 'c', 'd'])
+        assert obj == exp
+
+    def test_fillUsingPoints_constant(self):
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillUsingPoints(0, 100)
+        exp = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
+        exp.setPointNames(['a', 'b', 'c', 'd'])
+        assert obj == exp
+
+    def test_fillUsingPoints_forwardFill(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.forwardFill)
+        exp = self.constructor([[1, 2, 3, 4], [5, 5, 5, 8], [9, 1, 11, 11]])
+        exp.setPointNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_forwardFill_firstFeatureValueMissing(self):
+        obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.forwardFill)
+
+    def test_fillUsingPoints_backwardFill(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [None, 1, 11, 2]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(11, None)
+        obj.fillUsingPoints(match.missing, fill.backwardFill)
+        exp = self.constructor([[1, 2, 3, 4], [5, 8, 8, 8], [1, 1, 2, 2]])
+        exp.setPointNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_backwardFill_lastFeatureValueMissing(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.backwardFill)
+
+    def test_fillUsingPoints_interpolate(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [None, 1, None, 5]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.interpolate)
+        exp = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [1, 1, 3, 5]])
+        exp.setPointNames(['a', 'b', 'c'])
+        assert obj == exp
+
+    def test_fillUsingPoints_custom_match(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        toTest.fillUsingPoints(negative, 0)
+        assert toTest == exp
+
+    def test_fillUsingPoints_custom_fill(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 1, 4], [5, 5, 5, 8], [9, 10, 11, 9]]
+        exp = self.constructor(expData)
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingPoints(match.negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingPoints_custom_fillAndMatch(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 1, 4], [5, 5, 5, 8], [9, 10, 11, 9]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingPoints(negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingPoints_fillValuesWithNaN_constant(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj1 = self.constructor(data)
+        obj2 = self.constructor(data)
+        obj3 = self.constructor(data)
+        obj1.fillUsingPoints(999, float('nan'))
+        obj2.fillUsingPoints(999, None)
+        obj3.fillUsingPoints(999, numpy.nan)
+        obj1.fillUsingPoints(None, 0)
+        obj2.fillUsingPoints(numpy.nan, 0)
+        obj3.fillUsingPoints(float('nan'), 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj1 == exp
+        assert obj2 == obj1
+        assert obj3 == obj1
+
+    def test_fillUsingPoints_fillValuesWithNaN_list(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, None)
+        obj.fillUsingPoints([1, numpy.nan], 0)
+
+        exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingPoints_fillValuesWithNaN_function(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, None)
+        obj.fillUsingPoints(match.missing, 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingPoints_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, 'na')
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
+
+    def test_fillUsingPoints_NamePath_preservation(self):
+        data = [['a', 'b', 1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.fillUsingPoints(match.nonNumeric, 0)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+    #######################
+    # fillUsingAllData #
+    #######################
+
+    def test_fillUsingAllData_kNeighborsRegressor_missing(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        ret = toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments) # RET CHECK
+        assert toTest == expTest
+        assert ret is None
+
+    def test_fillUsingAllData_kNeighborsRegressor_returnModified_all(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        ret = toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, returnModified=True)
+        expRet = self.constructor([[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]])
+        expRet.setFeatureNames([name + "_modified" for name in expRet.getFeatureNames()])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_fillUsingAllData_kNeighborsRegressor_nonNumeric(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, 'na', 'x'], [1, 3, 9], [2, 1, 6], [3, 2, 3], ['na', 3, 'x']]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.nonNumeric, fill.kNeighborsRegressor, arguments)
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsRegressor_pointsLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, points=[2, 3, 4])
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsRegressor_featuresLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, None]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, features=[1,0])
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsRegressor_pointsFeaturesLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, points=0, features=2)
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsClassifier_missing(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsClassifier, arguments)
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsClassifier_nonNumeric(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.nonNumeric, fill.kNeighborsClassifier, arguments)
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsClassifier_pointsLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsClassifier, arguments, points=[2, 3, 4])
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsClassifier_featuresLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 3, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, None]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsClassifier, arguments, features=[1,0])
+        assert toTest == expTest
+
+    def test_fillUsingAllData_kNeighborsClassifier_pointsFeaturesLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        arguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsClassifier, arguments, points=0, features=2)
+        assert toTest == expTest
+
+    def test_fillUsingAllData_NamePath_preservation(self):
+        data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
 
 class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
     pass
