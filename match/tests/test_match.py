@@ -12,46 +12,46 @@ def backend_match_value(toMatch, true, false):
     for f in false:
         assert not toMatch(f)
 
-missingTypes = [None, float('nan'), numpy.nan]
-stringTypes = ['a', str(1)]
-zeroTypes = [0, float(0), numpy.int(0), numpy.float(0)]
-positiveTypes = [3, float(3), numpy.int(3), numpy.float(3)]
-negativeTypes = [-3, float(-3), numpy.int(-3), numpy.float(-3)]
-numericTypes = positiveTypes + negativeTypes + zeroTypes + [numpy.nan]
+misingValues = [None, float('nan'), numpy.nan]
+stringValues = ['a', str(1)]
+zeroValues = [0, float(0), numpy.int(0), numpy.float(0)]
+positiveValues = [3, float(3), numpy.int(3), numpy.float(3)]
+negativeValues = [-3, float(-3), numpy.int(-3), numpy.float(-3)]
+numericValues = positiveValues + negativeValues + zeroValues + [numpy.nan]
 
 def test_match_missing():
-    true = missingTypes
-    false = numericTypes[:-1] + stringTypes
+    true = misingValues
+    false = numericValues[:-1] + stringValues
     backend_match_value(match.missing, true, false)
 
 def test_match_numeric():
-    true = numericTypes
-    false = stringTypes + [None]
+    true = numericValues
+    false = stringValues + [None]
     backend_match_value(match.numeric, true, false)
 
 def test_match_nonNumeric():
-    true = stringTypes + [None]
-    false = numericTypes
+    true = stringValues + [None]
+    false = numericValues
     backend_match_value(match.nonNumeric, true, false)
 
 def test_match_zero():
-    true = zeroTypes
-    false = positiveTypes + negativeTypes + stringTypes + missingTypes
+    true = zeroValues
+    false = positiveValues + negativeValues + stringValues + misingValues
     backend_match_value(match.zero, true, false)
 
 def test_match_nonZero():
-    true = positiveTypes + negativeTypes + stringTypes + missingTypes
-    false = zeroTypes
+    true = positiveValues + negativeValues + stringValues + misingValues
+    false = zeroValues
     backend_match_value(match.nonZero, true, false)
 
 def test_match_positive():
-    true = positiveTypes
-    false = negativeTypes + zeroTypes + stringTypes + missingTypes
+    true = positiveValues
+    false = negativeValues + zeroValues + stringValues + misingValues
     backend_match_value(match.positive, true, false)
 
 def test_match_negative():
-    true = negativeTypes
-    false = positiveTypes + zeroTypes + stringTypes + missingTypes
+    true = negativeValues
+    false = positiveValues + zeroValues + stringValues + misingValues
     backend_match_value(match.negative, true, false)
 
 def backend_match_anyAll(anyOrAll, func, data):

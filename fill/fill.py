@@ -119,7 +119,8 @@ def backwardFill(vector, match):
     Fill matched values with the next known unmatched value in the point or
     feature
     """
-    if match(vector[len(vector) - 1]):
+
+    if match(vector[-1]):
         msg = "Unable to provide a backward fill value for the {0} at "
         msg += "index {1} because the last value is a match"
         # return so msg can be formatted before being raised

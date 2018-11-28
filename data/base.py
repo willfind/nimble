@@ -3260,7 +3260,7 @@ class Base(object):
     def fillUsingAllData(self, match, fill, arguments=None, points=None,
                            features=None, returnModified=False):
         """
-        Fill matching values with values based on the points nearest neighbors
+        Fill matching values with values based on the context of the entire dataset.
 
         match: A single value, list of values, or function. If a function, it
           must accept a single value and return True if the value is a match.

@@ -691,7 +691,9 @@ class List(Base):
             def __eq__(self, other):
                 for i, sVal in enumerate(self):
                     oVal = other[i]
-                    if sVal != oVal and not (sVal != sVal and oVal != oVal):
+                    # check element equality - which is only relevant if one of the elements
+                    # is non-NaN
+                    if sVal != oVal and (sVal == sVal or oVal == oVal):
                         return False
                 return True
 

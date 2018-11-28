@@ -67,30 +67,28 @@ def negative(value):
     except Exception:
         return False
 
-def anyAllValuesBackend(anyOrAll, data, match):
+def anyAllValuesBackend(quantity, data, match):
     """
     Backend function for determining if the data contains any matching values
     or all matching values
+
+    quantity may only be the function any or the function all
     """
-    if anyOrAll == 'any':
-        test = any
-    else:
-        test = all
     try:
         # 1D data
-        return test([match(val) for val in data])
+        return quantity([match(val) for val in data])
     except ArgumentException:
         # 2D data
-        if anyOrAll == 'any':
+        if quantity is any:
             # if any feature contains a match we can return True
             for i in range(data.features):
-                if test([match(val) for val in data[:, i]]):
+                if quantity([match(val) for val in data[:, i]]):
                     return True
             return False
         else:
             # if any feature does not have all matches we can return False
             for i in range(data.features):
-                if not test([match(val) for val in data[:, i]]):
+                if not quantity([match(val) for val in data[:, i]]):
                     return False
             return True
 
@@ -128,7 +126,7 @@ def anyValues(match):
     """
     match = convertMatchToFunction(match)
     def anyValueFinder(data):
-        return anyAllValuesBackend('any', data, match)
+        return anyAllValuesBackend(any, data, match)
     return anyValueFinder
 
 def allValues(match):
@@ -141,89 +139,89 @@ def allValues(match):
     """
     match = convertMatchToFunction(match)
     def allValueFinder(data):
-        return anyAllValuesBackend('all', data, match)
+        return anyAllValuesBackend(all, data, match)
     return allValueFinder
 
 def anyMissing(data):
     """
     Determines if any values in the data are missing
     """
-    return anyAllValuesBackend('any', data, missing)
+    return anyAllValuesBackend(any, data, missing)
 
 def allMissing(data):
     """
     Determines if all values in the data are missing
     """
-    return anyAllValuesBackend('all', data, missing)
+    return anyAllValuesBackend(all, data, missing)
 
 def anyNumeric(data):
     """
     Determines if any values in the data are numeric
     """
-    return anyAllValuesBackend('any', data, numeric)
+    return anyAllValuesBackend(any, data, numeric)
 
 def allNumeric(data):
     """
     Determines if all values in the data are numeric
     """
-    return anyAllValuesBackend('all', data, numeric)
+    return anyAllValuesBackend(all, data, numeric)
 
 def anyNonNumeric(data):
     """
     Determines if any values in the data are non-numeric
     """
-    return anyAllValuesBackend('any', data, nonNumeric)
+    return anyAllValuesBackend(any, data, nonNumeric)
 
 def allNonNumeric(data):
     """
     Determines if all values in the data are non-numeric
     """
-    return anyAllValuesBackend('all', data, nonNumeric)
+    return anyAllValuesBackend(all, data, nonNumeric)
 
 def anyZero(data):
     """
     Determines if any values in the data are equal to zero
     """
-    return anyAllValuesBackend('any', data, zero)
+    return anyAllValuesBackend(any, data, zero)
 
 def allZero(data):
     """
     Determines if all values in the data are equal to zero
     """
-    return anyAllValuesBackend('all', data, zero)
+    return anyAllValuesBackend(all, data, zero)
 
 def anyNonZero(data):
     """
     Determines if any values in the data are not equal to zero
     """
-    return anyAllValuesBackend('any', data, nonZero)
+    return anyAllValuesBackend(any, data, nonZero)
 
 def allNonZero(data):
     """
     Determines if all values in the data are not equal to zero
     """
-    return anyAllValuesBackend('all', data, nonZero)
+    return anyAllValuesBackend(all, data, nonZero)
 
 def anyPositive(data):
     """
     Determines if any values in the data are greater than zero
     """
-    return anyAllValuesBackend('any', data, positive)
+    return anyAllValuesBackend(any, data, positive)
 
 def allPositive(data):
     """
     Determines if all values in the data are greater than zero
     """
-    return anyAllValuesBackend('all', data, positive)
+    return anyAllValuesBackend(all, data, positive)
 
 def anyNegative(data):
     """
     Determines if any values in the data are less than zero
     """
-    return anyAllValuesBackend('any', data, negative)
+    return anyAllValuesBackend(any, data, negative)
 
 def allNegative(data):
     """
     Determines if all values in the data are less than zero
     """
-    return anyAllValuesBackend('all', data, negative)
+    return anyAllValuesBackend(all, data, negative)

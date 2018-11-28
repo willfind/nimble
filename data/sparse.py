@@ -1736,7 +1736,9 @@ class SparseView(BaseView, Sparse):
             oPoint = next(oIt)
             for i, sVal in enumerate(sPoint):
                 oVal = oPoint[i]
-                if sVal != oVal and not (sVal != sVal and oVal != oVal):
+                # check element equality - which is only relevant if one of the elements
+                # is non-NaN
+                if sVal != oVal and (sVal == sVal or oVal == oVal):
                     return False
         return True
 
