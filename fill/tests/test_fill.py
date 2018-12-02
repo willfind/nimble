@@ -123,13 +123,15 @@ def backend_fill(func, data, match, expected=None):
     "backend for fill functions that do not require additional arguments"
     for t in UML.data.available:
         toTest = UML.createData(t, data)
-        if expected:
-            # if no matches, the return may be a UML object otherwise a list
-            expObj = UML.createData(t, expected)
-            assert func(toTest, match) == expected
-        # for ArgumentException
-        else:
-            assert isinstance(func(toTest, match), ArgumentException)
+        assert func(toTest, match) == expected
+        # if expected:
+        #     # if no matches, the return may be a UML object otherwise a list
+        #     # expObj = UML.createData(t, expected)
+        #     print(func(toTest, match))
+        #
+        # # for ArgumentException
+        # else:
+        #     assert isinstance(func(toTest, match), ArgumentException)
 
 def test_mean_noMatches():
     data = [1, 2, 2, 9]
@@ -143,11 +145,13 @@ def test_mean_ignoreMatch():
     expected = [1, 5, 5, 9]
     backend_fill(fill.mean, data, match, expected)
 
+@raises(ArgumentException)
 def test_mean_allMatches():
     data = [1, 2, 2, 9]
     match = lambda x: x in [1, 2, 2, 9]
     backend_fill(fill.mean, data, match)
 
+@raises(ArgumentException)
 def test_mean_cannotCalculate():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
@@ -165,11 +169,13 @@ def test_median_ignoreMatch():
     expected = [1, 5, 9, 5]
     backend_fill(fill.median, data, match, expected)
 
+@raises(ArgumentException)
 def test_median_allMatches():
     data = [1, 2, 9, 2]
     match = lambda x: x in [1, 2, 9]
     backend_fill(fill.median, data, match)
 
+@raises(ArgumentException)
 def test_median_cannotCalculate():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
@@ -187,6 +193,7 @@ def test_mode_ignoreMatch():
     expected = [1, 9, 9, 9, 9, 9]
     backend_fill(fill.mode, data, match, expected)
 
+@raises(ArgumentException)
 def test_mode_allMatches():
     data = [1, 2, 2, 9, 9]
     match = lambda x: x in [1, 2, 9]
@@ -210,6 +217,7 @@ def test_forwardFill_consecutiveMatches():
     expected = [1, 1, 1, 1, 3, 4, 5]
     backend_fill(fill.forwardFill, data, match, expected)
 
+@raises(ArgumentException)
 def test_forwardFill_InitialContainsMatch():
     data = [1, 2, 3, 4]
     match = lambda x: x == 1
@@ -233,6 +241,7 @@ def test_backwardFill_consecutiveMatches():
     expected = [1, 3, 3, 3, 3, 4, 5]
     backend_fill(fill.backwardFill, data, match, expected)
 
+@raises(ArgumentException)
 def test_backwardFill_InitialContainsMatch():
     data = [1, 2, 3, 4]
     match = lambda x: x == 4

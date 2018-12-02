@@ -1,4 +1,8 @@
+"""
+TODO
+"""
 from __future__ import absolute_import
+
 import numpy
 import six
 
@@ -85,12 +89,11 @@ def anyAllValuesBackend(quantity, data, match):
                 if quantity([match(val) for val in data[:, i]]):
                     return True
             return False
-        else:
-            # if any feature does not have all matches we can return False
-            for i in range(data.features):
-                if not quantity([match(val) for val in data[:, i]]):
-                    return False
-            return True
+        # if any feature does not have all matches we can return False
+        for i in range(data.features):
+            if not quantity([match(val) for val in data[:, i]]):
+                return False
+        return True
 
 def convertMatchToFunction(match):
     """
@@ -99,8 +102,8 @@ def convertMatchToFunction(match):
     """
     if not hasattr(match, '__call__'):
         # case1: list-like
-        if ((hasattr(match, '__iter__') or hasattr(match, '__getitem__')) and
-           not isinstance(match, six.string_types)):
+        if ((hasattr(match, '__iter__') or hasattr(match, '__getitem__'))
+                and not isinstance(match, six.string_types)):
             matchList = match
             # if nans in the list, need to include separate check in function
             if not all([val == val for val in matchList]):

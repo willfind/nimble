@@ -1,7 +1,11 @@
-import UML
-import numpy
-import copy
+"""
+TODO
+"""
+from __future__ import absolute_import
 
+import numpy
+
+import UML
 from UML.match import convertMatchToFunction
 from UML.match import anyValues
 from UML.exceptions import ArgumentException
@@ -39,62 +43,21 @@ def mean(vector, match):
     Calculates the mean of the point or feature, ignoring any matching values,
     and fills matching values with the mean
     """
-    unmatched = UML.createData('List', [val for val in vector if not match(val)])
-    if len(unmatched) == len(vector):
-        return list(vector)
-    if len(unmatched) == 0:
-        msg = "Cannot calculate mean. The mean is calculated based on "
-        msg += "unmatched values and all values for the {0} at index {1} "
-        msg += "returned a match"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
-    mean = UML.calculate.mean(unmatched)
-    if mean is None:
-        msg = "Cannot calculate mean. The {0} at index {1} "
-        msg += "contains non-numeric values or is all NaN values"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
-    return [mean if match(val) else val for val in vector]
-
+    return _statsBackend(vector, match, 'mean', UML.calculate.mean)
 
 def median(vector, match):
     """
     Calculates the median of the point or feature, ignoring any matching
     values, and fills matching values with the median
     """
-    unmatched = UML.createData('List', [val for val in vector if not match(val)])
-    if len(unmatched) == len(vector):
-        return list(vector)
-    if len(unmatched) == 0:
-        msg = "Cannot calculate median. The median is calculated based on "
-        msg += "unmatched values and all values for the {0} at index {1} "
-        msg += "returned a match"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
-    median = UML.calculate.median(unmatched)
-    if median is None:
-        msg = "Cannot calculate median. The {0} at index {1} "
-        msg += "contains non-numeric values or is all NaN values"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
-    return [median if match(val) else val for val in vector]
+    return _statsBackend(vector, match, 'median', UML.calculate.median)
 
 def mode(vector, match):
     """
     Calculates the mode of the point or feature, ignoring any matching values,
     and fills matching values with the mode
     """
-    unmatched = UML.createData('List', [val for val in vector if not match(val)])
-    if len(unmatched) == len(vector):
-        return list(vector)
-    if len(unmatched) == 0:
-        msg = "Cannot calculate mode. The mode is calculated based on "
-        msg += "unmatched values and all values for the {0} at index {1} "
-        msg += "returned a match"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
-    mode = UML.calculate.mode(unmatched)
-    return [mode if match(val) else val for val in vector]
+    return _statsBackend(vector, match, 'mode', UML.calculate.mode)
 
 def forwardFill(vector, match):
     """
@@ -102,16 +65,14 @@ def forwardFill(vector, match):
     or feature
     """
     if match(vector[0]):
-        msg = "Unable to provide a forward fill value for the {0} at "
-        msg += "index {1} because the first value is a match"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        msg = _directionError('forward fill', vector)
+        raise ArgumentException(msg)
     ret = []
-    for v in vector:
-        if match(v):
+    for val in vector:
+        if match(val):
             ret.append(ret[-1])
         else:
-            ret.append(v)
+            ret.append(val)
     return ret
 
 def backwardFill(vector, match):
@@ -119,19 +80,16 @@ def backwardFill(vector, match):
     Fill matched values with the next known unmatched value in the point or
     feature
     """
-
     if match(vector[-1]):
-        msg = "Unable to provide a backward fill value for the {0} at "
-        msg += "index {1} because the last value is a match"
-        # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        msg = _directionError('backward fill', vector)
+        raise ArgumentException(msg)
     ret = []
-    for v in reversed(vector):
+    for val in reversed(vector):
         # prepend since we are working backward
-        if match(v):
+        if match(val):
             ret.insert(0, ret[0])
         else:
-            ret.insert(0, v)
+            ret.insert(0, val)
     return ret
 
 def interpolate(vector, match, arguments=None):
@@ -142,7 +100,7 @@ def interpolate(vector, match, arguments=None):
     data points. Otherwise the arguments for numpy.interp can be passed as
     dictionary
     """
-    x = [i for i,v in enumerate(vector) if match(v)]
+    x = [i for i, val in enumerate(vector) if match(val)]
     if arguments is not None:
         try:
             tmpArguments = arguments.copy()
@@ -151,20 +109,19 @@ def interpolate(vector, match, arguments=None):
             msg = 'for fill.interpolate, arguments must be None or a dict.'
             raise ArgumentException(msg)
     else:
-        xp = [i for i,v in enumerate(vector) if not match(v)]
-        fp = [v for i,v in enumerate(vector) if not match(v)]
+        xp = [i for i, val in enumerate(vector) if not match(val)]
+        fp = [val for i, val in enumerate(vector) if not match(val)]
         tmpArguments = {'x': x, 'xp': xp, 'fp': fp}
     tmpV = numpy.interp(**tmpArguments)
     ret = []
     j = 0
-    for i in range(len(vector)):
+    for i, val in enumerate(vector):
         if i in x:
             ret.append(tmpV[j])
             j += 1
         else:
-            ret.append(vector[i])
+            ret.append(val)
     return ret
-
 
 def kNeighborsRegressor(data, match, arguments=None):
     return kNeighborsBackend("skl.KNeighborsRegressor", data, match, arguments)
@@ -194,8 +151,9 @@ def kNeighborsBackend(method, data, match, arguments):
                 # training data includes not matching features and this feature
                 notMatchFts.append(fID)
                 trainingData = data[:, notMatchFts]
-                # training data includes only points that have valid data at each feature
-                # this will also remove the point we are evaluating from the training data
+                # training data includes only points that have valid data at
+                # each feature this will also remove the point we are
+                # evaluating from the training data
                 trainingData.deletePoints(anyValues(match))
                 pred = UML.trainAndApply(method, trainingData, -1, predictData,
                                          arguments=arguments)
@@ -213,3 +171,75 @@ def kNeighborsBackend(method, data, match, arguments):
     data.transformEachElement(transform)
 
     return data
+
+###########
+# Helpers #
+###########
+
+def _statsBackend(vector, match, funcString, statisticsFunction):
+    unmatched = [val for val in vector if not match(val)]
+    if len(unmatched) == len(vector):
+        return list(vector)
+    if not unmatched:
+        msg = _statsError1(funcString, vector)
+        raise ArgumentException(msg)
+    unmatched = UML.createData('List', unmatched)
+    stat = statisticsFunction(unmatched)
+    if stat is None:
+        msg = _statsError2(funcString, vector)
+        raise ArgumentException(msg)
+
+    return constant(vector, match, stat)
+
+def _getAxis(vector):
+    return 'point' if vector.points == 1 else 'feature'
+
+def _getNameAndIndex(axis, vector):
+    name = None
+    index = 0
+    if axis == 'point':
+        if vector._pointNamesCreated():
+            name = vector.getPointName(0)
+        if isinstance(vector, UML.data.BaseView):
+            index = vector._pStart
+    else:
+        if vector._featureNamesCreated():
+            name = vector.getFeatureName(0)
+        if isinstance(vector, UML.data.BaseView):
+            index = vector._fStart
+
+    return name, index
+
+def _getLocationMsg(name, index):
+    if name is not None:
+        location = "'{0}'".format(name)
+    else:
+        location = "at index '{0}'".format(index)
+
+    return location
+
+def _errorMsgFormatter(msg, funcString, vector):
+    axis = _getAxis(vector)
+    name, index = _getNameAndIndex(axis, vector)
+    location = _getLocationMsg(name, index)
+
+    return msg.format(funcString=funcString, axis=axis, location=location)
+
+def _statsError1(funcString, vector):
+    msg = "Cannot calculate {funcString}. The {funcString} is calculated "
+    msg += "using only unmatched values. All values for the {axis} {location} "
+    msg += "returned a match."
+
+    return _errorMsgFormatter(msg, funcString, vector)
+
+def _statsError2(funcString, vector):
+    msg = "Cannot calculate {funcString}. The {axis} {location} "
+    msg += "contains non-numeric values or is all NaN values"
+
+    return _errorMsgFormatter(msg, funcString, vector)
+
+def _directionError(funcString, vector):
+    msg = "Unable to provide a {funcString} value for the {axis} {location} "
+    msg += "because the first value is a match"
+
+    return _errorMsgFormatter(msg, funcString, vector)
