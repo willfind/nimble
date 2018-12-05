@@ -366,14 +366,15 @@ def backwardFill(vector, match):
     if match(vector[-1]):
         msg = directionError('backward fill', vector)
         raise ArgumentException(msg)
-    ret = []
-    for val in reversed(vector):
-        # prepend since we are working backward
+    ret = numpy.empty_like(vector)
+    numValues = len(vector)
+    for i, val in enumerate(reversed(vector)):
+        idx = numValues - i - 1
         if match(val):
-            ret.insert(0, ret[0])
+            ret[idx] = ret[idx + 1]
         else:
-            ret.insert(0, val)
-    return ret
+            ret[idx] = val
+    return ret.tolist()
 
 def interpolate(vector, match, **kwarguments):
     """
