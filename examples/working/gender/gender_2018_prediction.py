@@ -94,8 +94,10 @@ def discardToParityGender(toParity):
     else:  # if already equal, we don't need to do anything.
         return
 
+    parityCount = min(totalMen, totalWomen)
+
     numerous = toParity.extractPoints(lambda x: x["femaleAs1MaleAs0"] == extractValue)
-    equalCount = numerous.extractPoints(number=totalMen, randomize=True)
+    equalCount = numerous.extractPoints(number=parityCount, randomize=True)
 
     assert equalCount.points == toParity.points
     assert len(equalCount.countUniqueFeatureValues("femaleAs1MaleAs0")) == 1
@@ -103,19 +105,25 @@ def discardToParityGender(toParity):
     toParity.appendPoints(equalCount)
 
 
-def addSquaredFeatures(toExpand):
+def addNonLinearFeatures(toExpand):
     nonQ = toExpand.extractFeatures(lambda x: x.getFeatureName(0)[:2] != 'q_')
 
     squares = toExpand.copy()
-    squares.elementwisePower(3)
-    squares.setFeatureNames([name + "^3" for name in toExpand.getFeatureNames()])
+    squares.elementwisePower(2)
+    squares.setFeatureNames([name + "^2" for name in toExpand.getFeatureNames()])
+
+    cubes = toExpand.copy()
+    cubes.elementwisePower(3)
+    cubes.setFeatureNames([name + "^3" for name in toExpand.getFeatureNames()])
 
 #    print(squares[0,:])
 
     toExpand.appendFeatures(squares)
+    toExpand.appendFeatures(cubes)
 
-    assert toExpand.points == squares.points
-    assert toExpand.features == (squares.features * 2)
+#    assert toExpand.points == squares.points
+#    assert toExpand.points == cubes.points
+#    assert toExpand.features == (squares.features * 2) + cubes.features
 
     offset = squares.features
     def checkValidity(toCheckP):
@@ -130,7 +138,9 @@ def addSquaredFeatures(toExpand):
 #        print (n)
 
 
-def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions_path):
+
+def predict_decisionTree(trainX, trainY, testX, testY, ):
+
     train_pIDs = trainX.extractFeatures("participant_id")
     if "participant_id" in testX.getFeatureNames():
         test_pIDs = testX.extractFeatures("participant_id")
@@ -138,13 +148,65 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
         test_pIDs = train_pIDs
     assert "participant_id" not in testX.getFeatureNames()
 
-#    print(trainX.getPointNames())
+    cvargs = {}
+#    cvargs['splitter'] = ("best", 'random')
+    cvargs['max_depth'] = tuple([math.ceil(2**(x*.5)) for x in range(10)])
+#    cvargs['min_samples_split'] = tuple([.66**x for x in range(2,14)])
+#    cvargs['min_samples_leaf'] = tuple([.66**x for x in range(2, 14)])
 
+#    print(cvargs['max_depth'])
+#    print (cvargs['min_samples_split'])
+#    print (cvargs['min_samples_leaf'])
+
+
+    learner = UML.train("SKL.DecisionTreeClassifier", trainX, trainY,
+                        performanceFunction=fractionCorrect,random_state=422, **cvargs)
+    print (learner.test(testX, testY, performanceFunction=fractionCorrect))
+    print ("\n")
+    for k in cvargs.keys():
+        print("{0}=".format(k) + str(learner.getAttributes()[k]))
+
+
+def predict_knnClassifier(trainX, trainY, testX, testY, ):
+
+    train_pIDs = trainX.extractFeatures("participant_id")
+    if "participant_id" in testX.getFeatureNames():
+        test_pIDs = testX.extractFeatures("participant_id")
+    else:
+        test_pIDs = train_pIDs
+    assert "participant_id" not in testX.getFeatureNames()
+
+    cvargs = {}
+    cvargs['n_neighbors'] = (1,2,3,5,7,11,17,26,39,59)
+
+#    for n_neighbors in (1,2,3,5,7,11,17,26,39,59):
+#    learner = UML.train("SKL.KNeighborsClassifier", trainX, trainY,
+#                        performanceFunction=fractionCorrect, n_neighbors=n_neighbors)  # , **cvargs)
+
+    learner = UML.train("SKL.KNeighborsClassifier", trainX, trainY,
+                        performanceFunction=fractionCorrect, **cvargs)
+    print (learner.test(testX, testY, performanceFunction=fractionCorrect))
+    print ("\n")
+    for k in cvargs.keys():
+        print("{0}=".format(k) + str(learner.getAttributes()[k]))
+
+
+
+def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions_path):
+    train_pIDs = trainX.extractFeatures("participant_id")
+
+    if "participant_id" in testX.getFeatureNames():
+        test_pIDs = testX.extractFeatures("participant_id")
+    else:
+        test_pIDs = train_pIDs
+    assert "participant_id" not in testX.getFeatureNames()
+
+#    print(trainX.getPointNames())
 #    for n in trainY.getFeatureNames():
 #        print(n)
 
     C = [3**(i-10) for i in range(0,20)]
-    print(C)
+#    print(C)
     C = tuple(C)
 
     trainY = UML.createData("Matrix", trainY.data, elementType=int, featureNames=["femaleAs1MaleAs0"])
@@ -167,6 +229,28 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
     test_pIDs.sortPoints(sortHelper=(lambda x: int(x.getPointName(0))))
 
     test_pIDs.writeFile(predictions_path, 'csv')
+
+#    print(test_pIDs.getFeatureNames())
+
+    def confidenceCheckerFactory(confidence):
+        def foo(p):
+            probM = p['prob_Male']
+            probF = p['prob_Female']
+            assert probM == (1-probF)
+            highConf = probM > confidence or probF > confidence
+            correct = p["predicted-femaleAs1MaleAs0"] == p["femaleAs1MaleAs0"]
+            both = correct if highConf else 0
+            return (highConf, both)
+        return foo
+
+#    possibleConfs = test_pIDs.countEachUniqueValue(features=p['prob_Male'])
+
+#    for conf in [x/10.0 for x in range(1,10)]:
+#        confidenceResults = test_pIDs.calculateForEachPoint(confidenceCheckerFactory(conf))
+#        confidenceResults.setFeatureNames(["highConf", "highConf_and_correct"])
+#        total = sum(confidenceResults[:,"highConf"])
+#        confCorrect = sum(confidenceResults[:,"highConf_and_correct"])
+#        print("confidence={0}: total={1}, correct={2}".format(conf, total, confCorrect))
 
     rawCoef = learner.getAttributes()['coef_']
     coefObj = UML.createData("Matrix", rawCoef)
@@ -624,30 +708,33 @@ if __name__ == "__main__":
     UML.registerCustomLearner("custom", LogisticRegressionNoTraining)
 
     # Constants controlling input data
-    USETRAINGDATA = False
+    USETRAINGDATA = True
     TRAINGDATA_QUANTITY_ASSERT = 999
-    TESTDATA_QUANTITY_ASSERT = 1306
-    INDATA_QUANTITY_ASSERT = TRAINGDATA_QUANTITY_ASSERT if USETRAINGDATA else TESTDATA_QUANTITY_ASSERT
+    FULLDATA_QUANTITY_ASSERT = 1306
+    INDATA_QUANTITY_ASSERT = TRAINGDATA_QUANTITY_ASSERT if USETRAINGDATA else FULLDATA_QUANTITY_ASSERT
 
     # Constants controlling how the data is split in train and test sets
-    TEST_NUMBER = 0
+    ALREADYSPLIT = False
+    TEST_NUMBER = INDATA_QUANTITY_ASSERT * .2
     SPLIT_SEED = 42
 
     # Constants controlling which tasks we do when running this script
     # NOTE: some of these may be mutually exclusive.
     PLOT_RESPONSES = False
-    PLOT_MAKE_LABELS =True
-    PARITY_GENDER_TRAINING = False
+    PLOT_MAKE_LABELS = False
+    PARITY_GENDER_TRAINING = True
     ADD_SQUARED_FEATURES = False
-    OUTPUT_PLOT_COMPANION_CORRELATION_MATRIX = True
+    OUTPUT_PLOT_COMPANION_CORRELATION_MATRIX = False
 
     # Source Data
     sourceDir = sys.argv[1]
     if USETRAINGDATA:
-        path_responses = os.path.join(sourceDir, "inData", "gender_personality_final_training_data_999_people.csv")
+        trainingDataFileName = "gender_personality_final_training_data_999_people.csv"
     else:
-        path_responses = os.path.join(sourceDir, "inData", "gender_personality_final_combined_data_1306_people.csv")
+        trainingDataFileName = "gender_personality_final_combined_data_1306_people.csv"
+    path_responses = os.path.join(sourceDir, "inData", trainingDataFileName)
     path_metadata = os.path.join(sourceDir, "inData", "gender_Q_Cat_meta.csv")
+    path_FinalTest_responses = os.path.join(sourceDir, "inData", "trainingDataFileNameGENDER STUDY VALIDATION DATA 308 SUBJECTS")
 
     # Output location for transformed data
     outpath_pred_coefs = os.path.join(sourceDir, "outData", "coefs.csv")
@@ -682,12 +769,18 @@ if __name__ == "__main__":
         plotCompanionCorrelationMatrix(safeResponses, safeGender, categories, qParity,outpath_plotCompanion_correlation)
 
     if ADD_SQUARED_FEATURES:
-        addSquaredFeatures(predictionData)
+        addNonLinearFeatures(predictionData)
 
+    if ALREADYSPLIT:
+        assert USETRAINGDATA  # were we using the full data, the data could not have been already split
+        responseTest = loadPredictionData(path_FinalTest_responses)
+        genderTest = responseTest.extractFeatures("femaleAs1MaleAs0")
+        (responseTrain, genderTrain, _, _) = splitDataForTrial(predictionData, 0, SPLIT_SEED)
+    else:
+        splits = splitDataForTrial(predictionData, TEST_NUMBER, SPLIT_SEED)
+        (responseTrain, genderTrain, responseTest, genderTest) = splits
 
-    splits = splitDataForTrial(predictionData, TEST_NUMBER, SPLIT_SEED)
-    (responseTrain, genderTrain, responseTest, genderTest) = splits
-
+    print ("train: {0} | test: {1}".format(responseTrain.points, responseTest.points))
 
     if PARITY_GENDER_TRAINING:
         if TEST_NUMBER == 0:
@@ -697,12 +790,19 @@ if __name__ == "__main__":
         discardToParityGender(responseTrain)
         genderAdjusted = responseTrain.extractFeatures("femaleAs1MaleAs0")
         genderTrain.referenceDataFrom(genderAdjusted)
+        print("parity size={0}".format(str(genderTrain.points / 2)))
 
 #    print(genderTrain.countUniqueFeatureValues("femaleAs1MaleAs0"))
 #    print (genderTest.countUniqueFeatureValues("femaleAs1MaleAs0"))
 
-#    predict_logReg_L2(responseTrain, genderTrain, responseTest, genderTest, outpath_pred_coefs, outpath_pred_class_and_prob)
+    print("\nlogReg_L2")
+    predict_logReg_L2(responseTrain.copy(), genderTrain.copy(), responseTest.copy(), genderTest.copy(), outpath_pred_coefs, outpath_pred_class_and_prob)
 
+#    print("\ndecision tree")
+#    predict_decisionTree(responseTrain.copy(), genderTrain.copy(), responseTest.copy(), genderTest.copy(),)
+
+#    print("\nknnclassifier")
+#    predict_knnClassifier(responseTrain.copy(), genderTrain.copy(), responseTest.copy(), genderTest.copy(),)
 
     print(time.asctime(time.localtime()))
 
