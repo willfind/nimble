@@ -102,7 +102,7 @@ def discardToParityGender(toParity):
     assert equalCount.points == toParity.points
     assert len(equalCount.countUniqueFeatureValues("femaleAs1MaleAs0")) == 1
 
-    toParity.appendPoints(equalCount)
+    toParity.addPoints(equalCount)
 
 
 def addNonLinearFeatures(toExpand):
@@ -118,8 +118,8 @@ def addNonLinearFeatures(toExpand):
 
 #    print(squares[0,:])
 
-    toExpand.appendFeatures(squares)
-    toExpand.appendFeatures(cubes)
+    toExpand.addFeatures(squares)
+    toExpand.addFeatures(cubes)
 
 #    assert toExpand.points == squares.points
 #    assert toExpand.points == cubes.points
@@ -132,7 +132,7 @@ def addNonLinearFeatures(toExpand):
 
 #    toExpand.calculateForEachPoint(checkValidity)
 
-    toExpand.appendFeatures(nonQ)
+    toExpand.addFeatures(nonQ)
 
 #    for n in toExpand.getFeatureNames():
 #        print (n)
@@ -218,14 +218,14 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
     predictions = learner.apply(testX)
     predictions.setFeatureNames(["predicted-femaleAs1MaleAs0"])
-    test_pIDs.appendFeatures(predictions)
-    test_pIDs.appendFeatures(testY)
+    test_pIDs.addFeatures(predictions)
+    test_pIDs.addFeatures(testY)
 
     raw = testX.copyAs("numpyarray")
     probabilities = learner.backend.predict_proba(raw)
 
     probabilitiesObj = UML.createData("Matrix", probabilities, featureNames=["prob_Male", "prob_Female"])
-    test_pIDs.appendFeatures(probabilitiesObj)
+    test_pIDs.addFeatures(probabilitiesObj)
     test_pIDs.sortPoints(sortHelper=(lambda x: int(x.getPointName(0))))
 
     test_pIDs.writeFile(predictions_path, 'csv')
@@ -268,7 +268,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
     interceptObj = UML.createData("Matrix", [raw_intercept])
     interceptObj.setFeatureNames(["intercept"])
-    interceptObj.appendFeatures(coefObj)
+    interceptObj.addFeatures(coefObj)
     interceptObj.transpose()
 
     interceptObj.writeFile(pred_coefs_path, 'csv')
@@ -786,7 +786,7 @@ if __name__ == "__main__":
         if TEST_NUMBER == 0:
             responseTest = responseTrain.copy()
             genderTest = genderTrain.copy()
-        responseTrain.appendFeatures(genderTrain)
+        responseTrain.addFeatures(genderTrain)
         discardToParityGender(responseTrain)
         genderAdjusted = responseTrain.extractFeatures("femaleAs1MaleAs0")
         genderTrain.referenceDataFrom(genderAdjusted)
