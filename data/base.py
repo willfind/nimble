@@ -3159,32 +3159,83 @@ class Base(object):
         self.validate()
 
 
-    def fillUsingPoints(self, match, fill, arguments=None, points=None,
-                        returnModified=False):
+    def fillUsingPoints(self, match, fill, points=None,
+                        returnModified=False, **kwarguments):
         """
-        Fill matching values within each point with a specified value based on
-        the values in that point. fillUsingPoints can also be used for filling
-        with any constant value
+        Fill matching values in each point with another value.
 
-        match: A single value, list of values, or function. If a function, it
-          must accept a single value and return True if the value is a match.
-          Certain match types can be imported from UML's match module:
-          missing, nonNumeric, zero, etc.
+        Transform the values satisfying the ``match`` parameter in each
+        point by replacing them with the value determined by the
+        ``fill`` function.
 
-        fill: A single value or function. If a function, it must be in the
-          format fill(point, match) or fill(point, match, arguments) and
-          return the transformed point as a list of values.
-          Certain fill methods can be imported from UML's fill module:
-          mean, median, mode, forwardFill, backwardFill, interpolation
+        Parameters
+        ----------
+        match : value, list of values, or function
+            * value - A value to test equality with other values.
+            * list of values - A list of values to test equality with
+              other values. Another value is equal if it equal to any of
+              the values in the list.
+            * function - Input a value and return True if that value is
+              a match, otherwise False. UML offers common use-case
+              functions in the match module.
+        fill : value or function
+            * value - The value which will replace any matching values.
+            * function - Input a value and return the value which will
+              replace the input value. UML offers common use-case
+              functions in the fill module.
+        points : None, identifier, list
+            * None - all points will be used
+            * identifier - a name or index
+            * list - names and/or indexes
+        returnModified : bool
+            Return an object containing True for the modified
+            values in each point and False for unmodified values.
+        kwarguments
+            Collection of extra key:value argument pairs to pass to
+            fill function.
 
-        arguments: Any additional arguments being passed to the fill function
+        See Also
+        --------
+        fillUsingFeatures, fillUsingAllData, UML.fill, UML.match
 
-        points: Select specific points to apply fill to. If points is None, the
-          fill will be applied to all points.  Otherwise, points may be a
-          single identifier or list of identifiers
+        Examples
+        --------
+        Fill a value with another value.
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingPoints('na', -1)
+        >>> data
+        Matrix(
+            [[1.000  1.000 1.000 ]
+             [1.000  1.000 1.000 ]
+             [1.000  1.000 -1.000]
+             [2.000  2.000 2.000 ]
+             [-1.000 2.000 2.000 ]]
+            )
 
-        returnModified: return an object containing True for the modified
-          values in each point and False for unmodified values
+        Fill using UML's match and fill modules.
+        Note: None is converted to numpy.nan in UML.
+        >>> from UML import match
+        >>> from UML import fill
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, None],
+        ...        [2, 2, 2],
+        ...        [None, 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingPoints(match.missing, fill.mode, points=4)
+        >>> data
+        Matrix(
+            [[  1     1     1  ]
+             [  1     1     1  ]
+             [  1     1     na ]
+             [  2     2     2  ]
+             [2.000 2.000 2.000]]
+            )
         """
         if returnModified:
             def bools(values):
@@ -3198,37 +3249,89 @@ class Base(object):
         else:
             modified = None
 
-        self._genericFillUsingAxisFrontend('point', match, fill, arguments, points, None)
+        self._genericFillUsingAxisFrontend('point', match, fill, points, None,
+                                            **kwarguments)
         self.validate()
 
         return modified
 
-    def fillUsingFeatures(self, match, fill, arguments=None, features=None,
-                          returnModified=False):
+    def fillUsingFeatures(self, match, fill, features=None,
+                          returnModified=False, **kwarguments):
         """
-        Fill matching values within each feature with a specified value based
-        on the values in that feature. fillUsingFeatures can also be used for
-        filling with any constant value
+        Fill matching values in each feature with another value.
 
-        match: A single value, list of values, or function. If a function, it
-          must accept a single value and return True if the value is a match.
-          Certain match types can be imported from UML's match module:
-          missing, nonNumeric, zero, etc.
+        Transform the values satisfying the ``match`` parameter in each
+        feature by replacing them with the value determined by the
+        ``fill`` function.
 
-        fill: A single value or function. If a function, it must be in the
-          format fill(feature, match) or fill(feature, match, arguments)
-          and return the transformed feature as a list of values.
-          Certain fill methods can be imported from UML's fill module:
-          mean, median, mode, forwardFill, backwardFill, interpolation
+        Parameters
+        ----------
+        match : value, list of values, or function
+            * value - A value to test equality with other values.
+            * list of values - A list of values to test equality with
+              other values. Another value is equal if it equal to any of
+              the values in the list.
+            * function - Input a value and return True if that value is
+              a match, otherwise False. UML offers common use-case
+              functions in the match module.
+        fill : value or function
+            * value - The value which will replace any matching values.
+            * function - Input a value and return the value which will
+              replace the input value. UML offers common use-case
+              functions in the fill module.
+        features : None, identifier, list
+            * None - all feature will be used
+            * identifier - a name or index
+            * list - names and/or indexes
+        returnModified : bool
+            Return an object containing True for the modified
+            values in each feature and False for unmodified values.
+        kwarguments
+            Collection of extra key:value argument pairs to pass to
+            fill function.
 
-        arguments: Any additional arguments being passed to the fill function
+        See Also
+        --------
+        fillUsingPoints, fillUsingAllData, UML.fill, UML.match
 
-        features: Select specific features to apply fill to. If features is
-          None, the fill will be applied to all features.  Otherwise, features
-          may be a single identifier or list of identifiers
+        Examples
+        --------
+        Fill a value with another value.
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingFeatures('na', -1)
+        >>> data
+        Matrix(
+            [[1.000  1.000 1.000 ]
+             [1.000  1.000 1.000 ]
+             [1.000  1.000 -1.000]
+             [2.000  2.000 2.000 ]
+             [-1.000 2.000 2.000 ]]
+            )
 
-        returnModified: return an object containing True for the modified
-          values in each feature and False for unmodified values
+        Fill using UML's match and fill modules.
+        Note: None is converted to numpy.nan in UML.
+        >>> from UML import match
+        >>> from UML import fill
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, None],
+        ...        [2, 2, 2],
+        ...        [None, 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingFeatures(match.missing, fill.mean, features=0)
+        >>> data
+        Matrix(
+            [[1.000 1 1 ]
+             [1.000 1 1 ]
+             [1.000 1 na]
+             [2.000 2 2 ]
+             [1.250 2 2 ]]
+            )
         """
         if returnModified:
             def bools(values):
@@ -3237,58 +3340,97 @@ class Base(object):
                 modified = self.calculateForEachFeature(bools)
             else:
                 modified = self[:, features].calculateForEachFeature(bools)
-            modNames = [name + "_modified" for name in modified.getFeatureNames()]
+            modNames = [n + "_modified" for n in modified.getFeatureNames()]
             modified.setFeatureNames(modNames)
         else:
             modified = None
 
-        self._genericFillUsingAxisFrontend('feature', match, fill, arguments,
-                                           None, features)
+        self._genericFillUsingAxisFrontend('feature', match, fill, None,
+                                            features, **kwarguments)
         self.validate()
 
         return modified
 
-    def _genericFillUsingAxisFrontend(self, axis, toMatch, toFill, arguments,
-                                      points, features):
+    def _genericFillUsingAxisFrontend(self, axis, toMatch, toFill,
+                                      points, features, **kwarguments):
+        """
+        Generic frontend for fillUsingPoints and fillUsingFeatures
+        """
         self._validateAxis(axis)
-        toTransform = fill.factory(toMatch, toFill, arguments)
+        toTransform = fill.factory(toMatch, toFill, **kwarguments)
         if axis == 'point':
             self.transformEachPoint(toTransform, points)
         else:
             self.transformEachFeature(toTransform, features)
 
-    def fillUsingAllData(self, match, fill, arguments=None, points=None,
-                           features=None, returnModified=False):
+    def fillUsingAllData(self, match, fill, points=None, features=None,
+                         returnModified=False, **kwarguments):
         """
-        Fill matching values with values based on the context of the entire dataset.
+        Fill matching values in the data with other values.
+.
+        Transform the values satisfying the ``match`` parameter in the
+        data by replacing them with the value determined by a
+        ``fill`` function which requires access to all the data.
 
-        match: A single value, list of values, or function. If a function, it
-          must accept a single value and return True if the value is a match.
-          Common match types can be imported from UML's match module (missing,
-          nonNumeric, zero, etc.)
+        Parameters
+        ----------
+        match : value, list of values, or function
+            * value - A value to test equality with other values.
+            * list of values - A list of values to test equality with
+              other values. Another value is equal if it equal to any of
+              the values in the list.
+            * function - Input a value and return True if that value is
+              a match, otherwise False. UML offers common use-case
+              functions in the match module.
+        fill : function
+            * function - Input a value and return the value which will
+              replace the input value. UML offers common use-case
+              functions in the fill module.
+        points : None, identifier, list
+            * None - all feature will be used
+            * identifier - a name or index
+            * list - names and/or indexes
+        features : None, identifier, list
+            * None - all feature will be used
+            * identifier - a name or index
+            * list - names and/or indexes
+        returnModified : bool
+            Return an object containing True for the modified
+            values in each feature and False for unmodified values.
+        kwarguments
+            Collection of extra key:value argument pairs to pass to
+            fill function.
 
-        fill: A function in the format fill(data, match) or
-          fill(data, match, arguments) where data is the entire UML data object
-          and the transformed data object is being returned.
-          Certain fill methods can be imported from UML's fill module:
-          kNeighborsRegressor, kNeighborsClassifier
+        See Also
+        --------
+        fillUsingPoints, fillUsingFeatures, UML.fill, UML.match
 
-        arguments: Any additional arguments being passed to the fill function
-
-        points: Select specific points to apply fill to. If points is None, the
-          fill will be applied to all points.  Otherwise, points may be a
-          single identifier or list of identifiers
-
-        features: Select specific features to apply fill to. If features is
-          None, the fill will be applied to all features.  Otherwise, features
-          may be a single identifier or list of identifiers
-
-        returnModified: return an object containing True for the modified
-          values in each feature and False for unmodified values
+        Examples
+        --------
+        Fill using the value that occurs most often in each points
+        3 nearest neighbors.
+        from UML.fill import kNeighborsClassifier
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingAllData('na', kNeighborsClassifier,
+        ...                       n_neighbors=3)
+        >>> data
+        Matrix(
+            [[  1   1   1  ]
+             [  1   1   1  ]
+             [  1   1 1.000]
+             [  2   2   2  ]
+             [1.000 2   2  ]]
+            )
         """
         if returnModified:
-            modified = self.calculateForEachElement(match, points=points, features=features)
-            modNames = [name + "_modified" for name in modified.getFeatureNames()]
+            modified = self.calculateForEachElement(match, points=points,
+                                                    features=features)
+            modNames = [n + "_modified" for n in modified.getFeatureNames()]
             modified.setFeatureNames(modNames)
             if points is not None and features is not None:
                 modified = modified[points, features]
@@ -3299,7 +3441,12 @@ class Base(object):
         else:
             modified = None
 
-        tmpData = fill(self.copy(), match, arguments)
+        if not callable(fill):
+            msg = "fill must be callable. If attempting to modify all "
+            msg += "matching values to a constant, use either "
+            msg += "fillUsingPoints or fillUsingFeatures."
+            raise ArgumentException(msg)
+        tmpData = fill(self.copy(), match, **kwarguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData)
         else:
@@ -4066,7 +4213,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import numpy
 from nose.tools import raises
 
@@ -124,14 +125,6 @@ def backend_fill(func, data, match, expected=None):
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         assert func(toTest, match) == expected
-        # if expected:
-        #     # if no matches, the return may be a UML object otherwise a list
-        #     # expObj = UML.createData(t, expected)
-        #     print(func(toTest, match))
-        #
-        # # for ArgumentException
-        # else:
-        #     assert isinstance(func(toTest, match), ArgumentException)
 
 def test_mean_noMatches():
     data = [1, 2, 2, 9]
@@ -263,7 +256,6 @@ def test_interpolate_withMatch():
 def test_interpolate_withArguments():
     data = [1, "na", "na", 5]
     arguments = {}
-    arguments['x'] = [1]
     # linear function y = 2x + 5
     arguments['xp'] = [0, 4, 8]
     arguments['fp'] = [5, 13, 21]
@@ -271,17 +263,22 @@ def test_interpolate_withArguments():
     expected = [1, 7, 9, 5]
     for t in UML.data.available:
         toTest = UML.createData(t, data)
-        assert fill.interpolate(toTest, match, arguments) == expected
+        assert fill.interpolate(toTest, match, **arguments) == expected
 
-@raises(ArgumentException)
-def test_interpolate_badArguments():
-    data = [1,2,5]
-    arguments = 11
-    match = lambda x: x == 2
-    expected = [1, 3, 5]
+def test_interpolate_xKwargIncluded():
+    data = [1, "na", "na", 5]
+    arguments = {}
+    arguments['x'] = [1]
+    # linear function y = 2x + 5
+    arguments['xp'] = [0, 4, 8]
+    arguments['fp'] = [5, 13, 21]
+    match = lambda x: x == "na"
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        assert fill.interpolate(toTest, match, arguments) == expected
+        try:
+            toTest = UML.createData(t, data)
+            ret = fill.interpolate(toTest, match, **arguments)
+        except ArgumentException:
+            pass
 
 def test_kNeighborsRegressor_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
@@ -299,7 +296,7 @@ def test_kNeighborsRegressor_withMatch_K1():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsRegressor(toTest, match, arguments) == expTest
+        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 def test_kNeighborsRegressor_withMatch_K3():
     data = [[1, 1, 5], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [5, 3, 3]]
@@ -309,7 +306,7 @@ def test_kNeighborsRegressor_withMatch_K3():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsRegressor(toTest, match, arguments) == expTest
+        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 def test_kNeighborsRegressor_multipleMatch_K1():
     data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
@@ -319,7 +316,7 @@ def test_kNeighborsRegressor_multipleMatch_K1():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsRegressor(toTest, match, arguments) == expTest
+        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 def test_kNeighborsRegressor_multipleMatch_K3():
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
@@ -329,7 +326,7 @@ def test_kNeighborsRegressor_multipleMatch_K3():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsRegressor(toTest, match, arguments) == expTest
+        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 def test_kNeighborsClassifier_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
@@ -347,7 +344,7 @@ def test_kNeighborsClassifier_withMatch_K1():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsClassifier(toTest, match, arguments) == expTest
+        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 def test_kNeighborsClassifier_withMatch_K3():
     data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
@@ -357,7 +354,7 @@ def test_kNeighborsClassifier_withMatch_K3():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsClassifier(toTest, match, arguments) == expTest
+        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 def test_kNeighborsClassifier_multipleMatch_K1():
     data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
@@ -367,7 +364,7 @@ def test_kNeighborsClassifier_multipleMatch_K1():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsClassifier(toTest, match, arguments) == expTest
+        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 def test_kNeighborsClassifier_multipleMatch_K3():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
@@ -377,4 +374,4 @@ def test_kNeighborsClassifier_multipleMatch_K3():
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         expTest = UML.createData(t, expData)
-        assert fill.kNeighborsClassifier(toTest, match, arguments) == expTest
+        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
