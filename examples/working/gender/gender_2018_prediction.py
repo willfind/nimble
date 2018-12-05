@@ -82,7 +82,7 @@ def checkResponseData(toCheck):
 
 
 def discardToParityGender(toParity):
-    counts = toParity.countUniqueFeatureValues("femaleAs1MaleAs0")
+    counts = toParity.countEachUniqueValue(features="femaleAs1MaleAs0")
 
     totalMen = counts[0]
     totalWomen = counts[1]
@@ -100,7 +100,7 @@ def discardToParityGender(toParity):
     equalCount = numerous.extractPoints(number=parityCount, randomize=True)
 
     assert equalCount.points == toParity.points
-    assert len(equalCount.countUniqueFeatureValues("femaleAs1MaleAs0")) == 1
+    assert len(equalCount.countEachUniqueValue(features="femaleAs1MaleAs0")) == 1
 
     toParity.addPoints(equalCount)
 
@@ -218,6 +218,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
     predictions = learner.apply(testX)
     predictions.setFeatureNames(["predicted-femaleAs1MaleAs0"])
+    predictions.setPointNames(testX.getPointNames())
     test_pIDs.addFeatures(predictions)
     test_pIDs.addFeatures(testY)
 
@@ -225,6 +226,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
     probabilities = learner.backend.predict_proba(raw)
 
     probabilitiesObj = UML.createData("Matrix", probabilities, featureNames=["prob_Male", "prob_Female"])
+    probabilitiesObj.setPointNames(testX.getPointNames())
     test_pIDs.addFeatures(probabilitiesObj)
     test_pIDs.sortPoints(sortHelper=(lambda x: int(x.getPointName(0))))
 
@@ -232,25 +234,26 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
 #    print(test_pIDs.getFeatureNames())
 
-    def confidenceCheckerFactory(confidence):
+    def confidenceCheckerFactory(lower, upper):
         def foo(p):
             probM = p['prob_Male']
             probF = p['prob_Female']
             assert probM == (1-probF)
-            highConf = probM > confidence or probF > confidence
+            highConf = (probM > lower and probM < upper) or (probF > lower and probF < upper)
             correct = p["predicted-femaleAs1MaleAs0"] == p["femaleAs1MaleAs0"]
             both = correct if highConf else 0
             return (highConf, both)
         return foo
 
-#    possibleConfs = test_pIDs.countEachUniqueValue(features=p['prob_Male'])
+    for conf in [.95, .9, .85, .8, .75, .7, .65, .6, .55, .5]:
+        confidenceResults = test_pIDs.calculateForEachPoint(confidenceCheckerFactory(conf, conf+.05))
+        confidenceResults.setFeatureNames(["highConf", "highConf_and_correct"])
+        total = sum(confidenceResults[:, "highConf"])
+        confCorrect = sum(confidenceResults[:, "highConf_and_correct"])
+        percent = int(confCorrect/float(total) * 1000) / 10.0
+        print("confidence={0}: total={1}, correct={2}, {3}%".format(conf, total, confCorrect,percent))
 
-#    for conf in [x/10.0 for x in range(1,10)]:
-#        confidenceResults = test_pIDs.calculateForEachPoint(confidenceCheckerFactory(conf))
-#        confidenceResults.setFeatureNames(["highConf", "highConf_and_correct"])
-#        total = sum(confidenceResults[:,"highConf"])
-#        confCorrect = sum(confidenceResults[:,"highConf_and_correct"])
-#        print("confidence={0}: total={1}, correct={2}".format(conf, total, confCorrect))
+    return
 
     rawCoef = learner.getAttributes()['coef_']
     coefObj = UML.createData("Matrix", rawCoef)
@@ -260,6 +263,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
     independentModel = UML.train("custom.LogisticRegressionNoTraining", trainX, trainY, coefs=coefObj, intercept=raw_intercept)
     independentPredictions = independentModel.apply(testX)
     independentPredictions.setFeatureNames(["predicted-femaleAs1MaleAs0"])
+    independentPredictions.setPointNames(testX.getPointNames())
 
     assert predictions.isIdentical(independentPredictions)
     assert learner.test(testX, testY, fractionCorrect) == independentModel.test(testX, testY, fractionCorrect)
@@ -336,7 +340,7 @@ def responsesToScorePercents(responses):
     :return: a list mapping range(-6,7) to percent of responses for that value
     """
     total = float(responses.points)
-    uDict = responses.countUniqueFeatureValues(0)
+    uDict = responses.countEachUniqueValue(features=0)
     responseValues = [i for i in range(-6,7)]
     for num in responseValues:
         if num not in uDict:
@@ -792,8 +796,8 @@ if __name__ == "__main__":
         genderTrain.referenceDataFrom(genderAdjusted)
         print("parity size={0}".format(str(genderTrain.points / 2)))
 
-#    print(genderTrain.countUniqueFeatureValues("femaleAs1MaleAs0"))
-#    print (genderTest.countUniqueFeatureValues("femaleAs1MaleAs0"))
+    print(genderTrain.countEachUniqueValue(features="femaleAs1MaleAs0"))
+    print(genderTest.countEachUniqueValue(features="femaleAs1MaleAs0"))
 
     print("\nlogReg_L2")
     predict_logReg_L2(responseTrain.copy(), genderTrain.copy(), responseTest.copy(), genderTest.copy(), outpath_pred_coefs, outpath_pred_class_and_prob)
