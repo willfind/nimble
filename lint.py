@@ -69,7 +69,6 @@ def printWarningSummary(warnings):
         else:
             reqCount += 1
             required.append(w)
-    # required.extend(errFix)
 
     warning = "{module}:{line}: {message} ({symbol})"
     if consider:
@@ -132,7 +131,8 @@ if __name__ == '__main__':
             Run(configOptions)
         if arg.startswith('--rcfile'):
             hasConfig = True
-            configOptions[i] = os.path.abspath(arg[len('--rcfile='):])
+            absPath = os.path.abspath(arg[len('--rcfile='):])
+            configOptions[i] = '--rcfile=' + absPath
         if not arg.startswith("-"):
             configOptions[i] = os.path.abspath(arg)
     if not hasConfig:
