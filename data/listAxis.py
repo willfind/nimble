@@ -9,5 +9,5 @@ class ListAxis(Axis):
     """
     TODO
     """
-    def __init__(self):
-        super(ListAxis, self).__init__()
+    def __init__(self, **kwds):
+        super(ListAxis, self).__init__(**kwds)

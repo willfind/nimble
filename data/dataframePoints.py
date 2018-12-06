@@ -10,7 +10,10 @@ class DataFramePoints(DataFrameAxis, Axis):
     """
     TODO
     """
-    def __init__(self):
+    def __init__(self, source):
         self.source = source
         self.axis = 'point'
-        super(DataFramePoints, self).__init__()
+        kwds = {}
+        kwds['source'] = self.source
+        kwds['axis'] = self.axis
+        super(DataFramePoints, self).__init__(**kwds)

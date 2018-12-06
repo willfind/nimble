@@ -10,7 +10,10 @@ class DataFrameFeatures(DataFrameAxis, Axis):
     """
     TODO
     """
-    def __init__(self):
+    def __init__(self, source):
         self.source = source
         self.axis = 'feature'
-        super(DataFrameFeatures, self).__init__()
+        kwds = {}
+        kwds['source'] = self.source
+        kwds['axis'] = self.axis
+        super(DataFrameFeatures, self).__init__(**kwds)

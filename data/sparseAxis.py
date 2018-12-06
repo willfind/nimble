@@ -9,5 +9,5 @@ class SparseAxis(Axis):
     """
     TODO
     """
-    def __init__(self):
-        super(SparseAxis, self).__init__()
+    def __init__(self, **kwds):
+        super(SparseAxis, self).__init__(**kwds)

@@ -9,6 +9,5 @@ class MatrixAxis(Axis):
     """
     TODO
     """
-    def __init__(self):
-        super(MatrixAxis, self).__init__()
-
+    def __init__(self, **kwds):
+        super(MatrixAxis, self).__init__(**kwds)

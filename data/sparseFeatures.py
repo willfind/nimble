@@ -10,7 +10,10 @@ class SparseFeatures(SparseAxis, Axis):
     """
     TODO
     """
-    def __init__(self):
+    def __init__(self, source):
         self.source = source
         self.axis = 'feature'
-        super(SparseFeatures, self).__init__()
+        kwds = {}
+        kwds['source'] = self.source
+        kwds['axis'] = self.axis
+        super(SparseFeatures, self).__init__(**kwds)

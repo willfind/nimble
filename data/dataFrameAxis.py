@@ -9,5 +9,5 @@ class DataFrameAxis(Axis):
     """
     TODO
     """
-    def __init__(self):
-        super(DataFrameAxis, self).__init__()
+    def __init__(self, **kwds):
+        super(DataFrameAxis, self).__init__(**kwds)
