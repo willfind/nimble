@@ -20,8 +20,8 @@ from pylint import epylint as lint
 # pylint symbols that can be ignored for minimum linter requirements
 REQ_IGNORE = [
     'invalid-name',
+    'too-many-lines',
     'too-many-locals',
-    'too-many-nested-blocks',
     'too-many-branches',
     'too-many-statements',
     'too-many-return-statements',
