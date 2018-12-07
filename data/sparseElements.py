@@ -1,12 +1,12 @@
 """
-TODO
+
 """
 from __future__ import absolute_import
 
 import numpy
 
-from .elements import Elements
 import UML
+from .elements import Elements
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -14,13 +14,11 @@ if scipy is not None:
 
 class SparseElements(Elements):
     """
-    TODO
+
     """
     def __init__(self, source):
         self.source = source
-        kwds = {}
-        kwds['source'] = self.source
-        super(SparseElements, self).__init__(**kwds)
+        super(SparseElements, self).__init__()
 
     ################################
     # Higher Order implementations #
@@ -52,11 +50,11 @@ class SparseElements(Elements):
             dataSubset = []
             rowSubset = []
             colSubset = []
-            for idx in range(len(data)):
+            for idx, val in enumerate(data):
                 if row[idx] in points and col[idx] in features:
                     rowSubset.append(row[idx])
                     colSubset.append(col[idx])
-                    dataSubset.append(data[idx])
+                    dataSubset.append(val)
             dataSubset = function(dataSubset)
             values = coo_matrix((dataSubset, (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
@@ -64,4 +62,4 @@ class SparseElements(Elements):
             return UML.createData(outputType, values)
         # zeros not preserved
         return self._calculateForEachElementGenericVectorized(
-               function, points, features, outputType)
+            function, points, features, outputType)

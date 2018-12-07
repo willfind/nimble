@@ -1,5 +1,5 @@
 """
-TODO
+
 """
 from __future__ import absolute_import
 
@@ -9,10 +9,9 @@ import UML
 
 class Elements(object):
     """
-    TODO
+
     """
-    def __init__(self, **kwds):
-        self.source = kwds['source']
+    def __init__(self):
         super(Elements, self).__init__()
 
     # TODO iterator???
@@ -21,26 +20,44 @@ class Elements(object):
                   preserveZeros=False, skipNoneReturnValues=False,
                   outputType=None):
         """
-        Returns a new object containing the results of calling function(elementValue)
-        or function(elementValue, pointNum, featureNum) for each element.
+        Return a new object with a calculation applied to each element.
 
-        points: Limit to only elements of the specified points; may be None for
-        all points, a single identifier (name or index), or an iterable,
-        list-like container of identifiers; this will affect the shape of the
-        returned object.
+        Calculates the results of the given function on the specified
+        elements in this object, with output values collected into a new
+        object that is returned upon completion.
 
-        features: Limit to only elements of the specified features; may be None
-        for all features, a single identifier (name or index), or an iterable,
-        list-like container of identifiers; this will affect the shape of the
-        returned object.
+        Parameters
+        ----------
+        function : function
+            Accepts a view of a member as an argument and returns the
+            new values in that member.
+        points : point, list of points
+            The subset of points to limit the calculation to. If None,
+            the calculation will apply to all points.
+        features : feature, list of features
+            The subset of features to limit the calculation to. If None,
+            the calculation will apply to all features.
+        preserveZeros : bool
+            Bypass calculation on zero values
+        skipNoneReturnValues : bool
+            Bypass values when ``function`` returns None. If False, the
+            value None will replace the value if None is returned.
+        outputType: UML data type
+            Return an object of the specified type. If None, the
+            returned object will have the same type as the calling
+            object.
 
-        preserveZeros: If True it does not apply the function to elements in
-        the data that are 0 and a 0 is placed in its place in the output.
+        Returns
+        -------
+        UML object
 
-        skipNoneReturnValues: If True, any time function() returns None, the
-        value that was input to the function will be put in the output in place
-        of None.
+        See also
+        --------
+        transform : calculate inplace
 
+        Examples
+        --------
+        TODO
         """
         oneArg = False
         try:
@@ -69,8 +86,8 @@ class Elements(object):
                 currRet = function(value)
                 if skipNoneReturnValues and currRet is None:
                     return value
-                else:
-                    return currRet
+
+                return currRet
 
             vectorized = numpy.vectorize(functionWrap)
             ret = self._calculate_implementation(vectorized, points, features,
@@ -122,18 +139,19 @@ class Elements(object):
             features = numpy.array(range(self.source.fts))
         toCalculate = self.source.copyAs('numpyarray')
         # array with only desired points and features
-        toCalculate = toCalculate[points[:,None], features]
+        toCalculate = toCalculate[points[:, None], features]
         try:
             values = function(toCalculate)
             # check if values has numeric dtype
             if numpy.issubdtype(values.dtype, numpy.number):
                 return UML.createData(outputType, values)
-            else:
-                return UML.createData(outputType, values,
-                                      elementType=numpy.object_)
+
+            return UML.createData(outputType, values,
+                                  elementType=numpy.object_)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
             values = function(toCalculate)
-            return UML.createData(outputType, values, elementType=numpy.object_)
+            return UML.createData(outputType, values,
+                                  elementType=numpy.object_)
