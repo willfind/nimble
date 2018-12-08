@@ -21,29 +21,28 @@ class SparseAxis(Axis):
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
-        Backend for .points/.features.extract .points/.features.delete,
-        .points/.features.retain, and .points/.features.copy. Returns a
-        new object containing only the members in targetList and
-        performs some modifications to the original object if necessary.
-        This function does not perform all of the modification or
-        process how each function handles the returned value, these are
-        managed separately by each frontend function.
+        Backend for points/features.extract points/features.delete,
+        points/features.retain, and points/features.copy. Returns a new
+        object containing only the members in targetList and performs
+        some modifications to the original object if necessary. This
+        function does not perform all of the modification or process how
+        each function handles the returned value, these are managed
+        separately by each frontend function.
         """
         # SparseView or object dtype
         if (self.source.data.data is None
-                or self.source.data.data.dtype != numpy.object_):
+                or self.source.data.data.dtype == numpy.object_):
             return self._structuralIterative_implementation(
                 structure, targetList)
         # nonview numeric objects
         return self._structuralVectorized_implementation(
             structure, targetList)
 
-
-
     def _structuralVectorized_implementation(self, structure, targetList):
         """
         Use scipy csr or csc matrices for indexing targeted values
         """
+        print('here')
         axisNames = []
         if self.axis == 'point':
             getAxisName = self.source.getPointName
@@ -63,7 +62,7 @@ class SparseAxis(Axis):
             targeted = data[:, targetList]
             if structure != 'copy':
                 notTarget = []
-                for idx in range(self.source.pts):
+                for idx in range(self.source.fts):
                     if idx not in targetList:
                         notTarget.append(idx)
                 notTargeted = data[:, notTarget]
@@ -84,6 +83,7 @@ class SparseAxis(Axis):
             return UML.data.Sparse(ret, pointNames=axisNames,
                                    featureNames=otherNames,
                                    reuseData=True)
+
         return UML.data.Sparse(ret, pointNames=otherNames,
                                featureNames=axisNames,
                                reuseData=True)

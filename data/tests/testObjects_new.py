@@ -29,45 +29,45 @@ from UML.data.tests.structure_backend_new import StructureDataSafe
 
 # from UML.data.tests.view_access_backend import ViewAccess
 
-viewClasses = [HighLevelDataSafe, StructureDataSafe]
-baseClasses = [HighLevelAll, StructureAll]
+viewClasses = []
+baseClasses = []
 
-class TestListView(*viewClasses):
+class TestListView(HighLevelDataSafe, StructureDataSafe):
     def __init__(self):
         super(TestListView, self).__init__('ListView')
 
 
-class TestMatrixView(*viewClasses):
+class TestMatrixView(HighLevelDataSafe, StructureDataSafe):
     def __init__(self):
         super(TestMatrixView, self).__init__('MatrixView')
 
 
-class TestSparseView(*viewClasses):
+class TestSparseView(HighLevelDataSafe, StructureDataSafe):
     def __init__(self):
         super(TestSparseView, self).__init__('SparseView')
 
 
-class TestDataFrameView(*viewClasses):
+class TestDataFrameView(HighLevelDataSafe, StructureDataSafe):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
 
 
-class TestList(*baseClasses):
+class TestList(HighLevelAll, StructureAll):
     def __init__(self):
         super(TestList, self).__init__('List')
 
 
-class TestMatrix(*baseClasses):
+class TestMatrix(HighLevelAll, StructureAll):
     def __init__(self):
         super(TestMatrix, self).__init__('Matrix')
 
 
-class TestSparse(*baseClasses):
+class TestSparse(HighLevelAll, StructureAll):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
 
 
-class TestDataFrame(*baseClasses):
+class TestDataFrame(HighLevelAll, StructureAll):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 

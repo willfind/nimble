@@ -51,10 +51,9 @@ class Axis(object):
         """
         Return a copy of certain members of this object.
 
-        Offers a variety of methods for specifying the members to copy
-        based on the provided parameters. If toCopy is not None, start
-        and end must be None. If start or end is not None, toCopy must
-        be None.
+        A variety of methods for specifying the members to copy based on
+        the provided parameters. If toCopy is not None, start and end
+        must be None. If start or end is not None, toCopy must be None.
 
         Parameters
         ----------
@@ -68,17 +67,18 @@ class Axis(object):
             operator between a point name and a value (i.e 'member1<10')
         start, end : identifier
             Parameters indicating range based copying. Begin the copying
-            at the location of ``start``. Finish copying by including
-            the ``end`` location. If only one of start and end are
-            non-None, the other default to 0 and self.fts, respectively.
+            at the location of ``start``. Finish copying at the
+            inclusive ``end`` location. If only one of start and end are
+            non-None, the other default to 0 and the number of values in
+            each member, respectively.
         number : int
-            the quantity of features that are to be copied, the default
+            The quantity of features that are to be copied, the default
             None means unrestricted copying. This can be provided on its
             own (toCopy, start and end are None) to the first ``number``
             of members, or in conjuction with toCopy or  start and end,
             to limit their output.
         randomize : bool
-            indicates whether random sampling is to be used in
+            Indicates whether random sampling is to be used in
             conjunction with the number parameter. If randomize is
             False, the chosen members are determined by member order,
             otherwise it is uniform random across the space of possible
@@ -90,14 +90,14 @@ class Axis(object):
 
         See Also
         --------
-        data.copy, data.copyAs
+        extract, retain, delete, data.copy, data.copyAs
 
         Examples
         --------
         TODO
         """
-        ret = self._genericStructuralFrontend('copy', toCopy, start,
-                                              end, number, randomize)
+        ret = self._genericStructuralFrontend('copy', toCopy, start, end,
+                                              number, randomize)
 
         if self.axis == 'point':
             ret.setFeatureNames(self.source.getFeatureNames())
@@ -108,6 +108,194 @@ class Axis(object):
         ret._relPath = self.source.relativePath
 
         return ret
+
+    def extract(self, toExtract=None, start=None, end=None, number=None,
+                randomize=False):
+        """
+        Move certain members of this object into their own object.
+
+        A variety of methods for specifying the members to extract based
+        on the provided parameters. If toExtract is not None, start and
+        end must be None. If start or end is not None, toExtract must be
+        None.
+
+        Parameters
+        ----------
+        toExtract : identifier, list of identifiers, function
+          * identifier - a name or index
+          * list of identifiers - an iterable container of identifiers
+          * function - may take two forms:
+            a) a function that when given a feature will return True if
+            it is to be extracted
+            b) a filter function, as a string, containing a comparison
+            operator between a point name and a value (i.e 'member1<10')
+        start, end : identifier
+            Parameters indicating range based extraction. Begin the
+            extraction at the location of ``start``. Finish extracting
+            at the inclusive ``end`` location. If only one of start and
+            end are non-None, the other default to 0 and the number of
+            values in each member, respectively.
+        number : int
+            The quantity of features that are to be extracted, the
+            default None means unrestricted extraction. This can be
+            provided on its own (toExtract, start and end are None) to
+            the first ``number`` of members, or in conjuction with
+            toExtract or  start and end, to limit their output.
+        randomize : bool
+            Indicates whether random sampling is to be used in
+            conjunction with the number parameter. If randomize is
+            False, the chosen members are determined by member order,
+            otherwise it is uniform random across the space of possible
+            members.
+
+        Returns
+        -------
+        UML object
+
+        See Also
+        --------
+        retain, delete
+
+        Examples
+        --------
+        TODO
+        """
+        ret = self._genericStructuralFrontend('extract', toExtract, start, end,
+                                              number, randomize)
+
+        if self.axis == 'point':
+            ret.setFeatureNames(self.source.getFeatureNames())
+        else:
+            ret.setPointNames(self.source.getPointNames())
+        _adjustCountAndNames(self.source, self.axis, ret)
+
+        ret._relPath = self.source.relativePath
+        ret._absPath = self.source.absolutePath
+
+        self.source.validate()
+
+        return ret
+
+    def delete(self, toDelete=None, start=None, end=None, number=None,
+               randomize=False):
+        """
+        Move certain members of this object into their own object.
+
+        A variety of methods for specifying members to delete based on
+        the provided parameters. If toDelete is not None, start and end
+        must be None. If start or end is not None, toDelete must be
+        None.
+
+        Parameters
+        ----------
+        toDelete : identifier, list of identifiers, function
+          * identifier - a name or index
+          * list of identifiers - an iterable container of identifiers
+          * function - may take two forms:
+            a) a function that when given a feature will return True if
+            it is to be deleted
+            b) a filter function, as a string, containing a comparison
+            operator between a point name and a value (i.e 'member1<10')
+        start, end : identifier
+            Parameters indicating range based deletion. Begin the
+            deletion at the location of ``start``. Finish deleting at
+            the inclusive ``end`` location. If only one of start and
+            end are non-None, the other default to 0 and the number of
+            values in each member, respectively.
+        number : int
+            The quantity of features that are to be deleted, the
+            default None means unrestricted deletion. This can be
+            provided on its own (toDelete, start and end are None) to
+            the first ``number`` of members, or in conjuction with
+            toDelete or  start and end, to limit their output.
+        randomize : bool
+            Indicates whether random sampling is to be used in
+            conjunction with the number parameter. If randomize is
+            False, the chosen members are determined by member order,
+            otherwise it is uniform random across the space of possible
+            members.
+
+        Returns
+        -------
+        UML object
+
+        See Also
+        --------
+        extract, retain
+
+        Examples
+        --------
+        TODO
+        """
+        ret = self._genericStructuralFrontend('delete', toDelete, start, end,
+                                              number, randomize)
+        _adjustCountAndNames(self.source, self.axis, ret)
+        self.source.validate()
+
+    def retain(self, toRetain=None, start=None, end=None, number=None,
+               randomize=False):
+        """
+        Move certain members of this object into their own object.
+
+        A variety of methods for specifying members to delete based on
+        the provided parameters. If toRetain is not None, start and end
+        must be None. If start or end is not None, toRetain must be
+        None.
+
+        Parameters
+        ----------
+        toRetain : identifier, list of identifiers, function
+          * identifier - a name or index
+          * list of identifiers - an iterable container of identifiers
+          * function - may take two forms:
+            a) a function that when given a feature will return True if
+            it is to be retained
+            b) a filter function, as a string, containing a comparison
+            operator between a point name and a value (i.e 'member1<10')
+        start, end : identifier
+            Parameters indicating range based retention. Begin the
+            retention at the location of ``start``. Finish retaining at
+            the inclusive ``end`` location. If only one of start and
+            end are non-None, the other default to 0 and the number of
+            values in each member, respectively.
+        number : int
+            The quantity of features that are to be retained, the
+            default None means unrestricted retained. This can be
+            provided on its own (toRetain, start and end are None) to
+            the first ``number`` of members, or in conjuction with
+            toRetain or  start and end, to limit their output.
+        randomize : bool
+            Indicates whether random sampling is to be used in
+            conjunction with the number parameter. If randomize is
+            False, the chosen members are determined by member order,
+            otherwise it is uniform random across the space of possible
+            members.
+
+        Returns
+        -------
+        UML object
+
+        See Also
+        --------
+        extract, retain
+
+        Examples
+        --------
+        TODO
+        """
+        ref = self._genericStructuralFrontend('retain', toRetain, start, end,
+                                              number, randomize)
+        if self.axis == 'point':
+            ref.setFeatureNames(self.source.getFeatureNames())
+        else:
+            ref.setPointNames(self.source.getPointNames())
+
+        ref._relPath = self.source.relativePath
+        ref._absPath = self.source.absolutePath
+
+        self.source.referenceDataFrom(ref)
+
+        self.source.validate()
 
     ###########################
     # Higher Order Operations #
@@ -392,3 +580,34 @@ def _stringToFunction(string, axis, nameChecker):
         raise ArgumentException(msg)
 
     return target
+
+def _adjustCountAndNames(source, axis, other):
+    """
+    Adjust the count and names (when names have been generated) for this object,
+    removing the names that have been extracted to the other object
+    """
+    if axis == 'point':
+        source._pointCount -= other.pts
+        if source._pointNamesCreated():
+            idxList= []
+            for name in other.getPointNames():
+                idxList.append(source.pointNames[name])
+            idxList= sorted(idxList)
+            for i in range(len(idxList)):
+                del source.pointNamesInverse[idxList[i] - i]
+            source.pointNames = {}
+            for idx, pt in enumerate(source.pointNamesInverse):
+                source.pointNames[pt] = idx
+
+    else:
+        source._featureCount -= other.fts
+        if source._featureNamesCreated():
+            idxList= []
+            for name in other.getFeatureNames():
+                idxList.append(source.featureNames[name])
+            idxList= sorted(idxList)
+            for i in range(len(idxList)):
+                del source.featureNamesInverse[idxList[i] - i]
+            source.featureNames = {}
+            for idx, ft in enumerate(source.featureNamesInverse):
+                source.featureNames[ft] = idx
