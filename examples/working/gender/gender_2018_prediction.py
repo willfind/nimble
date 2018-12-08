@@ -234,26 +234,54 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
 #    print(test_pIDs.getFeatureNames())
 
-    def confidenceCheckerFactory(lower, upper):
-        def foo(p):
-            probM = p['prob_Male']
-            probF = p['prob_Female']
-            assert probM == (1-probF)
-            highConf = (probM > lower and probM < upper) or (probF > lower and probF < upper)
-            correct = p["predicted-femaleAs1MaleAs0"] == p["femaleAs1MaleAs0"]
-            both = correct if highConf else 0
-            return (highConf, both)
-        return foo
+    confObj = test_pIDs.copy()
 
-    for conf in [.95, .9, .85, .8, .75, .7, .65, .6, .55, .5]:
-        confidenceResults = test_pIDs.calculateForEachPoint(confidenceCheckerFactory(conf, conf+.05))
-        confidenceResults.setFeatureNames(["highConf", "highConf_and_correct"])
-        total = sum(confidenceResults[:, "highConf"])
-        confCorrect = sum(confidenceResults[:, "highConf_and_correct"])
-        percent = int(confCorrect/float(total) * 1000) / 10.0
-        print("confidence={0}: total={1}, correct={2}, {3}%".format(conf, total, confCorrect,percent))
+    def makeConf(p):
+        return max(p['prob_Male'], p['prob_Female'])
 
-    return
+    confFeat = confObj.calculateForEachPoint(makeConf)
+    confFeat.setFeatureNames(['confidence'])
+    confObj.addFeatures(confFeat)
+    confObj.sortPoints('confidence')
+
+    def isCorrect(p):
+        return p["predicted-femaleAs1MaleAs0"] == p["femaleAs1MaleAs0"]
+
+    isC = confObj.calculateForEachPoint(isCorrect)
+    isC.setFeatureNames(['isCorrect'])
+    confObj.addFeatures(isC)
+
+    boundary = .05
+    lowerIndex = 0
+    upperIndex = 0
+    perPointCorrectnessNeighborhood = numpy.empty((confObj.points,1))
+
+    for i, val in enumerate(confObj[:, 'confidence']):
+        lower = val - boundary
+        upper = val + boundary
+
+        # go until you're inside the lower range - inclusive index
+        while confObj[lowerIndex, "confidence"] < lower:
+            lowerIndex += 1
+        # go until you're outside the upper range - exclusive index
+        while upperIndex < confObj.points and confObj[upperIndex, "confidence"] < upper:
+            upperIndex += 1
+
+        # but we want inclusive indices
+        if upperIndex > i:
+            upperIndex -= 1
+
+#        print("l={0} i={1} u={2}".format(lowerIndex, i, upperIndex))
+
+        correctRato = sum(confObj[lowerIndex:upperIndex, 'isCorrect'])/ ((upperIndex - lowerIndex) + 1)
+        perPointCorrectnessNeighborhood[i] = correctRato
+
+    cNObj = UML.createData("Matrix", perPointCorrectnessNeighborhood)
+    cNObj.setPointNames(confObj.getPointNames())
+    cNObj.setFeatureNames(['rollingAverageCorrectness'])
+    confObj.addFeatures(cNObj)
+
+    confObj.plotFeatureAgainstFeature("confidence", 'rollingAverageCorrectness', xMin=.4,xMax=1,yMin=.4,yMax=1)
 
     rawCoef = learner.getAttributes()['coef_']
     coefObj = UML.createData("Matrix", rawCoef)
@@ -711,16 +739,26 @@ if __name__ == "__main__":
 
     UML.registerCustomLearner("custom", LogisticRegressionNoTraining)
 
-    # Constants controlling input data
-    USETRAINGDATA = True
-    TRAINGDATA_QUANTITY_ASSERT = 999
-    FULLDATA_QUANTITY_ASSERT = 1306
-    INDATA_QUANTITY_ASSERT = TRAINGDATA_QUANTITY_ASSERT if USETRAINGDATA else FULLDATA_QUANTITY_ASSERT
+    # Constants controlling the source of the input data
+    USETRAINGDATA = False
 
     # Constants controlling how the data is split in train and test sets
     ALREADYSPLIT = False
-    TEST_NUMBER = INDATA_QUANTITY_ASSERT * .2
+    SPLITTEST_QUANTITY = 307
+#    TEST_NUMBER = SPLITTEST_QUANTITY if ALREADYSPLIT else INDATA_QUANTITY_ASSERT * .2
+    TEST_NUMBER = 0
     SPLIT_SEED = 42
+
+    # Constants controlling validation of the input given the previous variables
+    TRAINGDATA_QUANTITY_ASSERT = 999
+    FULLDATA_QUANTITY_ASSERT = 1306
+    if USETRAINGDATA:
+        INDATA_QUANTITY_ASSERT = TRAINGDATA_QUANTITY_ASSERT
+    else:
+        if ALREADYSPLIT:
+            INDATA_QUANTITY_ASSERT = TRAINGDATA_QUANTITY_ASSERT
+        else:
+            INDATA_QUANTITY_ASSERT = FULLDATA_QUANTITY_ASSERT
 
     # Constants controlling which tasks we do when running this script
     # NOTE: some of these may be mutually exclusive.
@@ -738,7 +776,7 @@ if __name__ == "__main__":
         trainingDataFileName = "gender_personality_final_combined_data_1306_people.csv"
     path_responses = os.path.join(sourceDir, "inData", trainingDataFileName)
     path_metadata = os.path.join(sourceDir, "inData", "gender_Q_Cat_meta.csv")
-    path_FinalTest_responses = os.path.join(sourceDir, "inData", "trainingDataFileNameGENDER STUDY VALIDATION DATA 308 SUBJECTS")
+    path_FinalTest_responses = os.path.join(sourceDir, "inData", "GENDER STUDY VALIDATION DATA 308 SUBJECTS.csv")
 
     # Output location for transformed data
     outpath_pred_coefs = os.path.join(sourceDir, "outData", "coefs.csv")
