@@ -8,9 +8,9 @@ objects provided.
 Methods tested in this file:
 
 In object HighLevelDataSafe:
-points.calculate, features.calculate, mapReducePoints, pointIterator,
-featureIterator, elements_calculate, isApproximatelyEqual,
-trainAndTestSets, countEachUniqueValue
+points.calculate, features.calculate, elements.calculate, points.count,
+features.count, countEachUniqueValue, mapReducePoints, pointIterator,
+featureIterator, isApproximatelyEqual, trainAndTestSets
 
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
@@ -863,45 +863,45 @@ class HighLevelDataSafe(DataTestObject):
 #
 #
 #
-#     #############################
-#     # countElements() #
-#     #############################
-#
-#     def test_countElements(self):
-#         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-#         toTest = self.constructor(data)
-#         ret = toTest.countElements('>=5')
-#         assert ret == 5
-#
-#         ret = toTest.countElements(lambda x: x % 2 == 1)
-#         assert ret == 5
-#
-#     #############################
-#     # countPoints() #
-#     #############################
-#
-#     def test_countPoints(self):
-#         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-#         toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
-#         ret = toTest.countPoints('b>=5')
-#         assert ret == 2
-#
-#         ret = toTest.countPoints(lambda x: x['b'] >= 5)
-#         assert ret == 2
-#
-#
-#     #############################
-#     # countFeatures() #
-#     #############################
-#
-#     def test_countFeatures(self):
-#         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-#         toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
-#         ret = toTest.countFeatures('two>=5')
-#         assert ret == 2
-#
-#         ret = toTest.countFeatures(lambda x: x['two'] >= 5)
-#         assert ret == 2
+    ####################
+    # elements.count() #
+    ####################
+
+    def test_elements_count(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret = toTest.elements.count('>=5')
+        assert ret == 5
+
+        ret = toTest.elements.count(lambda x: x % 2 == 1)
+        assert ret == 5
+
+    ##################
+    # points.count() #
+    ##################
+
+    def test_points_count(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.count('b>=5')
+        assert ret == 2
+
+        ret = toTest.points.count(lambda x: x['b'] >= 5)
+        assert ret == 2
+
+
+    #############################
+    # countFeatures() #
+    #############################
+
+    def test_features_count(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.count('two>=5')
+        assert ret == 2
+
+        ret = toTest.features.count(lambda x: x['two'] >= 5)
+        assert ret == 2
 #
 #     ########################
 #     # isApproximatelyEqual() #

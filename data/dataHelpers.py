@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import copy
 import math
 import inspect
+import operator
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -23,6 +24,11 @@ DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
 DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 
 DEFAULT_NAME_PREFIX = "OBJECT_#"
+
+OPTRLIST = ['<=', '>=', '!=', '==', '=', '<', '>']
+OPTRDICT = {'<=': operator.le, '>=': operator.ge,
+            '!=': operator.ne, '==': operator.eq,
+            '<': operator.lt, '>': operator.gt}
 
 defaultObjectNumber = 0
 

@@ -3,13 +3,13 @@ TODO
 """
 from __future__ import absolute_import
 import copy
-import operator
 
 import six
 
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
+from .dataHelpers import OPTRLIST, OPTRDICT
 
 class Axis(object):
     """
@@ -58,13 +58,13 @@ class Axis(object):
         Parameters
         ----------
         toCopy : identifier, list of identifiers, function
-          * identifier - a name or index
-          * list of identifiers - an iterable container of identifiers
-          * function - may take two forms:
-            a) a function that when given a feature will return True if
-            it is to be copied
-            b) a filter function, as a string, containing a comparison
-            operator between a point name and a value (i.e 'member1<10')
+            * identifier - a name or index
+            * list of identifiers - an iterable container of identifiers
+            * function - may take two forms:
+              a) a function that when given a member will return True if
+              it is to be copied
+              b) a filter function, as a string, containing a comparison
+              operator between a point name and a value
         start, end : identifier
             Parameters indicating range based copying. Begin the copying
             at the location of ``start``. Finish copying at the
@@ -72,7 +72,7 @@ class Axis(object):
             non-None, the other default to 0 and the number of values in
             each member, respectively.
         number : int
-            The quantity of features that are to be copied, the default
+            The quantity of members that are to be copied, the default
             None means unrestricted copying. This can be provided on its
             own (toCopy, start and end are None) to the first ``number``
             of members, or in conjuction with toCopy or  start and end,
@@ -122,13 +122,13 @@ class Axis(object):
         Parameters
         ----------
         toExtract : identifier, list of identifiers, function
-          * identifier - a name or index
-          * list of identifiers - an iterable container of identifiers
-          * function - may take two forms:
-            a) a function that when given a feature will return True if
-            it is to be extracted
-            b) a filter function, as a string, containing a comparison
-            operator between a point name and a value (i.e 'member1<10')
+            * identifier - a name or index
+            * list of identifiers - an iterable container of identifiers
+            * function - may take two forms:
+              a) a function that when given a member will return True if
+              it is to be extracted
+              b) a filter function, as a string, containing a comparison
+              operator between a point name and a value
         start, end : identifier
             Parameters indicating range based extraction. Begin the
             extraction at the location of ``start``. Finish extracting
@@ -136,7 +136,7 @@ class Axis(object):
             end are non-None, the other default to 0 and the number of
             values in each member, respectively.
         number : int
-            The quantity of features that are to be extracted, the
+            The quantity of members that are to be extracted, the
             default None means unrestricted extraction. This can be
             provided on its own (toExtract, start and end are None) to
             the first ``number`` of members, or in conjuction with
@@ -179,7 +179,7 @@ class Axis(object):
     def delete(self, toDelete=None, start=None, end=None, number=None,
                randomize=False):
         """
-        Move certain members of this object into their own object.
+        Remove certain members from this object.
 
         A variety of methods for specifying members to delete based on
         the provided parameters. If toDelete is not None, start and end
@@ -189,13 +189,13 @@ class Axis(object):
         Parameters
         ----------
         toDelete : identifier, list of identifiers, function
-          * identifier - a name or index
-          * list of identifiers - an iterable container of identifiers
-          * function - may take two forms:
-            a) a function that when given a feature will return True if
-            it is to be deleted
-            b) a filter function, as a string, containing a comparison
-            operator between a point name and a value (i.e 'member1<10')
+            * identifier - a name or index
+            * list of identifiers - an iterable container of identifiers
+            * function - may take two forms:
+              a) a function that when given a member will return True if
+              it is to be deleted
+              b) a filter function, as a string, containing a comparison
+              operator between a point name and a value
         start, end : identifier
             Parameters indicating range based deletion. Begin the
             deletion at the location of ``start``. Finish deleting at
@@ -203,7 +203,7 @@ class Axis(object):
             end are non-None, the other default to 0 and the number of
             values in each member, respectively.
         number : int
-            The quantity of features that are to be deleted, the
+            The quantity of members that are to be deleted, the
             default None means unrestricted deletion. This can be
             provided on its own (toDelete, start and end are None) to
             the first ``number`` of members, or in conjuction with
@@ -214,10 +214,6 @@ class Axis(object):
             False, the chosen members are determined by member order,
             otherwise it is uniform random across the space of possible
             members.
-
-        Returns
-        -------
-        UML object
 
         See Also
         --------
@@ -235,7 +231,7 @@ class Axis(object):
     def retain(self, toRetain=None, start=None, end=None, number=None,
                randomize=False):
         """
-        Move certain members of this object into their own object.
+        Keep only certain members of this object.
 
         A variety of methods for specifying members to delete based on
         the provided parameters. If toRetain is not None, start and end
@@ -245,13 +241,13 @@ class Axis(object):
         Parameters
         ----------
         toRetain : identifier, list of identifiers, function
-          * identifier - a name or index
-          * list of identifiers - an iterable container of identifiers
-          * function - may take two forms:
-            a) a function that when given a feature will return True if
-            it is to be retained
-            b) a filter function, as a string, containing a comparison
-            operator between a point name and a value (i.e 'member1<10')
+            * identifier - a name or index
+            * list of identifiers - an iterable container of identifiers
+            * function - may take two forms:
+              a) a function that when given a member will return True if
+              it is to be retained
+              b) a filter function, as a string, containing a comparison
+              operator between a point name and a value
         start, end : identifier
             Parameters indicating range based retention. Begin the
             retention at the location of ``start``. Finish retaining at
@@ -259,7 +255,7 @@ class Axis(object):
             end are non-None, the other default to 0 and the number of
             values in each member, respectively.
         number : int
-            The quantity of features that are to be retained, the
+            The quantity of members that are to be retained, the
             default None means unrestricted retained. This can be
             provided on its own (toRetain, start and end are None) to
             the first ``number`` of members, or in conjuction with
@@ -270,10 +266,6 @@ class Axis(object):
             False, the chosen members are determined by member order,
             otherwise it is uniform random across the space of possible
             members.
-
-        Returns
-        -------
-        UML object
 
         See Also
         --------
@@ -296,6 +288,33 @@ class Axis(object):
         self.source.referenceDataFrom(ref)
 
         self.source.validate()
+
+    def count(self, condition):
+        """
+        The number of members which satisfy the condition.
+
+        Parameters
+        ----------
+        condition : function
+            function - may take two forms:
+            a) a function that when given a member will return True if
+            it is to be counted
+            b) a filter function, as a string, containing a comparison
+            operator between a point name and a value
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        elements.count, elements.countEachUniqueValue
+
+        Examples
+        --------
+        TODO
+        """
+        return self._genericStructuralFrontend('count', condition)
 
     ###########################
     # Higher Order Operations #
@@ -483,7 +502,7 @@ class Axis(object):
 def _validateStructuralArguments(structure, axis, target, start, end,
                                  number, randomize):
     """
-    Check for conflicting and co-dependent arguments
+    Check for conflicting and co-dependent arguments.
     """
     targetName = 'to' + structure.capitalize()
     if all(param is None for param in [target, start, end, number]):
@@ -506,7 +525,7 @@ def _validateStructuralArguments(structure, axis, target, start, end,
 
 def _validateStartEndRange(start, end, axis, axisLength):
     """
-    Check that the start and end values are valid
+    Check that the start and end values are valid.
     """
     if start < 0 or start > axisLength:
         msg = "start must be a valid index, in the range of possible "
@@ -522,19 +541,16 @@ def _validateStartEndRange(start, end, axis, axisLength):
 
 def _stringToFunction(string, axis, nameChecker):
     """
-    Convert a query string into a python function
+    Convert a query string into a python function.
     """
-    optrDict = {'<=': operator.le, '>=': operator.ge,
-                '!=': operator.ne, '==': operator.eq,
-                '<': operator.lt, '>': operator.gt}
     # to set in for loop
     nameOfMember = None
     valueOfMember = None
     optrOperator = None
-    for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
+    for optr in OPTRLIST:
         if optr in string:
             targetList = string.split(optr)
-            # user can use '=' but optrDict only contains '=='
+            # user can use '=' but OPTRDICT only contains '=='
             optr = '==' if optr == '=' else optr
             #after splitting at the optr, list must have 2 items
             if len(targetList) != 2:
@@ -557,7 +573,7 @@ def _stringToFunction(string, axis, nameChecker):
                 msg += "'{0}' doesn't exist".format(nameOfMember)
                 raise ArgumentException(msg)
 
-            optrOperator = optrDict[optr]
+            optrOperator = OPTRDICT[optr]
             # convert valueOfMember from a string, if possible
             try:
                 valueOfMember = float(valueOfMember)
@@ -583,18 +599,19 @@ def _stringToFunction(string, axis, nameChecker):
 
 def _adjustCountAndNames(source, axis, other):
     """
-    Adjust the count and names (when names have been generated) for this object,
-    removing the names that have been extracted to the other object
+    Adjust the count and names (when names have been generated) for this
+    object, removing the names that have been extracted to the other
+    object.
     """
     if axis == 'point':
         source._pointCount -= other.pts
         if source._pointNamesCreated():
-            idxList= []
+            idxList = []
             for name in other.getPointNames():
                 idxList.append(source.pointNames[name])
-            idxList= sorted(idxList)
-            for i in range(len(idxList)):
-                del source.pointNamesInverse[idxList[i] - i]
+            idxList = sorted(idxList)
+            for i, val in enumerate(idxList):
+                del source.pointNamesInverse[val - i]
             source.pointNames = {}
             for idx, pt in enumerate(source.pointNamesInverse):
                 source.pointNames[pt] = idx
@@ -602,12 +619,12 @@ def _adjustCountAndNames(source, axis, other):
     else:
         source._featureCount -= other.fts
         if source._featureNamesCreated():
-            idxList= []
+            idxList = []
             for name in other.getFeatureNames():
                 idxList.append(source.featureNames[name])
-            idxList= sorted(idxList)
-            for i in range(len(idxList)):
-                del source.featureNamesInverse[idxList[i] - i]
+            idxList = sorted(idxList)
+            for i, val in enumerate(idxList):
+                del source.featureNamesInverse[val - i]
             source.featureNames = {}
             for idx, ft in enumerate(source.featureNamesInverse):
                 source.featureNames[ft] = idx

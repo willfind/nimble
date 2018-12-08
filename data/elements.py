@@ -4,8 +4,11 @@
 from __future__ import absolute_import
 
 import numpy
+import six
 
 import UML
+from UML.exceptions import ArgumentException
+from .dataHelpers import OPTRLIST, OPTRDICT
 
 class Elements(object):
     """
@@ -15,6 +18,10 @@ class Elements(object):
         super(Elements, self).__init__()
 
     # TODO iterator???
+
+    ###########################
+    # Higher Order Operations #
+    ###########################
 
     def calculate(self, function, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
@@ -125,6 +132,51 @@ class Elements(object):
         self.source.validate()
 
         return ret
+
+    def count(self, condition):
+        """
+        The number of values which satisfy the condition.
+
+        Parameters
+        ----------
+        condition : function
+            function - may take two forms:
+            a) a function that when given a member will return True if
+            it is to be retained
+            b) a filter function, as a string, containing a comparison
+            operator and a value
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        points.count, features.count
+
+        Examples
+        --------
+        TODO
+        """
+        if callable(condition):
+            ret = self.calculate(function=condition, outputType='Matrix')
+        elif isinstance(condition, six.string_types):
+            for optr in OPTRLIST:
+                if optr in condition:
+                    value = float(condition[len(optr):])
+                    optr = '==' if optr == '=' else optr
+                    optrOperator = OPTRDICT[optr]
+                    break
+            func = lambda x: optrOperator(x, value)
+            ret = self.calculate(function=func, outputType='Matrix')
+        else:
+            msg = 'function can only be a function or str, not else'
+            raise ArgumentException(msg)
+        return int(numpy.sum(ret.data))
+
+    ########################
+    # Higher Order Helpers #
+    ########################
 
     def _calculateForEachElementGenericVectorized(
             self, function, points, features, outputType):
