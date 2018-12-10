@@ -30,6 +30,7 @@ except:
 from copy import deepcopy
 
 import UML
+from UML import match
 from UML import createData
 from UML.data import List
 from UML.data import Matrix
@@ -1120,6 +1121,76 @@ class StructureDataSafe(StructureShared):
     def test_copyPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
+    ### using match module ###
+
+    def test_copyPoints_match_missing(self):
+        data = [[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyMissing)
+        expRet = self.constructor([[None, 11, None], [7, 11, None]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allMissing)
+        expRet = self.constructor([[None, None, None]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_nonNumeric(self):
+        data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyNonNumeric)
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allNonNumeric)
+        expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_list(self):
+        data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyValues(['a', 'c', 'x']))
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allValues(['a', 'c', 'x']))
+        expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_function(self):
+        data = [[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyValues(lambda x: x < 0))
+        expRet = self.constructor([[-1, 11, -3], [7, 11, -3]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allValues(lambda x: x < 0))
+        expRet = self.constructor([[-1, -2, -3]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     #######################
     # copy common backend #
     #######################
@@ -1832,6 +1903,68 @@ class StructureDataSafe(StructureShared):
     @raises(ArgumentException)
     def test_copyFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
+
+    # using match module
+
+    def test_copyFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyMissing)
+        expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allMissing)
+        expRet = self.constructor([[None], [None], [None], [None]], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyNonNumeric)
+        expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allNonNumeric)
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyValues(['a', 'c', 'x']))
+        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allValues(['a', 'c', 'x']))
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyValues(lambda x: x < 0))
+        expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allValues(lambda x: x < 0))
+        expRet = self.constructor([[-3], [-3], [-3], [-3]], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
 
 
 class StructureModifying(StructureShared):
@@ -3744,6 +3877,84 @@ class StructureModifying(StructureShared):
     def test_extractPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
+    ### using match module ###
+
+    def test_extractPoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyMissing)
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([[None, 11, None], [7, 11, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allMissing)
+        expTest = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
+        expRet = self.constructor([[None, None, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyNonNumeric)
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allNonNumeric)
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        expRet = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        expRet = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([[-1, 11, -3], [7, 11, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
+        expRet = self.constructor([[-1, -2, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     ##########################
     # extract common backend #
     ##########################
@@ -4477,6 +4688,84 @@ class StructureModifying(StructureShared):
     def test_extractFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
+    # using match module
+
+    def test_extractFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyMissing)
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allMissing)
+        expTest = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
+        expRet = self.constructor([[None], [None], [None], [None]])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyNonNumeric)
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allNonNumeric)
+        expTest = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
+        expRet = self.constructor([[-3], [-3], [-3], [-3]])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     ################
     # deletePoints #
     ################
@@ -4935,6 +5224,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_deletePoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
+
+    ### using match module ###
+
+    def test_deletePoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyMissing)
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allMissing)
+        exp = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyNonNumeric)
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allNonNumeric)
+        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyValues(['a', 'c', 'x']))
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allValues(['a', 'c', 'x']))
+        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyValues(lambda x: x < 0))
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allValues(lambda x: x < 0))
+        exp = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
 
     #########################
     # delete common backend #
@@ -5549,6 +5892,60 @@ class StructureModifying(StructureShared):
     def test_deleteFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
+    # using match module
+
+    def test_deleteFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyMissing)
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allMissing)
+        exp = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyNonNumeric)
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allNonNumeric)
+        exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyValues(['a', 'c', 'x']))
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allValues(['a', 'c', 'x']))
+        exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyValues(lambda x: x < 0))
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allValues(lambda x: x < 0))
+        exp = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
     ################
     # retainPoints #
     ################
@@ -6052,6 +6449,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_retainPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
+
+    ### using match module ###
+
+    def test_retainPoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyMissing)
+        expTest = self.constructor([[None, 11, None], [7, 11, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allMissing)
+        expTest = self.constructor([[None, None, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyNonNumeric)
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allNonNumeric)
+        expTest = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, 11, -3], [7, 11, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, -2, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
 
     #########################
     # retain common backend #
@@ -6697,6 +7148,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_retainFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
+
+    # using match module
+
+    def test_retainFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.retainFeatures(match.anyMissing)
+        expTest = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allMissing)
+        expTest = self.constructor([[None], [None], [None], [None]])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyNonNumeric)
+        expTest = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allNonNumeric)
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-3], [-3], [-3], [-3]])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
 
     #####################
     # referenceDataFrom #

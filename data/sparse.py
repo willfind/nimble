@@ -420,7 +420,6 @@ class Sparse(Base):
             self._sortInternal(axis)
 
         ret = targeted.tocoo()
-
         if axis == 'point':
             return Sparse(ret, pointNames=axisNames, featureNames=otherNames, reuseData=True)
         else:
@@ -476,7 +475,7 @@ class Sparse(Base):
         # instantiate return data
         (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
         if structure != 'copy':
-            otherData = numpy.array(keepData, dtype=dtype)
+            keepData = numpy.array(keepData, dtype=dtype)
             self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
         # coo_matrix will force list to simplest numpy dtype unless converted to an array
         targetData = numpy.array(targetData, dtype=dtype)
@@ -782,6 +781,11 @@ class Sparse(Base):
                 currOut = list(view)
             else:
                 currOut = function(view)
+                # currRet might return an ArgumentException with a message which needs to be
+                # formatted with the axis and current index before being raised
+                if isinstance(currOut, ArgumentException):
+                    currOut.value = currOut.value.format(axis, viewID)
+                    raise currOut
 
             # easy way to reuse code if we have a singular return
             if not hasattr(currOut, '__iter__'):
@@ -798,6 +802,10 @@ class Sparse(Base):
                     modOther.append(i)
 
         if len(modData) != 0:
+            try:
+                modData = numpy.array(modData, dtype=numpy.float)
+            except Exception:
+                modData = numpy.array(modData, dtype=numpy.object_)
             self.data = coo_matrix((modData, (modRow, modCol)), shape=(self.pts, self.fts))
             self._sorted = None
 
@@ -1115,141 +1123,6 @@ class Sparse(Base):
         newData = (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex]))
         self.data = scipy.sparse.coo_matrix(newData, (self.pts, self.fts))
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        """
-        This function is to
-        1. drop points or features with missing values
-        2. fill missing values with mean, median, mode, or zero or a constant value
-        3. fill missing values by forward or backward filling
-        4. imput missing values via linear interpolation
-
-        Detailed steps are:
-        1. from alsoTreatAsMissing, generate a Set for elements which are not None nor NaN but should be considered as missing
-        2. from featuresList, generate 2 dicts missingIdxDictFeature and missingIdxDictPoint to store locations of missing values
-        3. replace missing values in features in the featuresList with NaN
-        4. based on method and arguments, process self.data
-        5. update points and features information.
-        """
-        def featureMeanMedianMode(func):
-            featureMean = self.calculateForEachFeature(func, features=featuresList)
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                for i in tmpItem[1]:
-                    self.fillWith(featureMean[0, j], i, j, i, j)
-
-        alsoTreatAsMissingSet = set(alsoTreatAsMissing)
-        missingIdxDictFeature = {i: [] for i in featuresList}
-        missingIdxDictPoint = {i: [] for i in range(self.pts)}
-        for i in range(self.pts):
-            for j in featuresList:
-                tmpV = self[i, j]
-                if tmpV in alsoTreatAsMissingSet or (tmpV != tmpV) or tmpV is None:
-                    self.fillWith(numpy.NaN, i, j, i, j)
-                    missingIdxDictPoint[i].append(j)
-                    missingIdxDictFeature[j].append(i)
-        #import pdb; pdb.set_trace()
-        if markMissing:
-            #add extra columns to indicate if the original value was missing or not
-            extraFeatureNames = []
-            extraDummy = []
-            for tmpItem in missingIdxDictFeature.items():
-                extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
-            for tmpItem in missingIdxDictPoint.items():
-                extraDummy.append([True if i in tmpItem[1] else False for i in featuresList])
-
-        #from now, based on method and arguments, process self.data
-        if method == 'remove points':
-            msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
-            if arguments is None or arguments.lower() == 'any':
-                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
-            elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.fts]
-            else:
-                raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.pts) if i not in missingIdx]
-            if len(nonmissingIdx) == 0:
-                msg = 'All data are removed. Please use another method or other arguments.'
-                raise ArgumentException(msg)
-
-            if len(missingIdx) > 0:
-                self.extractPoints(toExtract=missingIdx)
-                if markMissing:
-                    extraDummy = [extraDummy[i] for i in nonmissingIdx]
-        elif method == 'remove features':
-            msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            if arguments is None or arguments.lower() == 'any':
-                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
-            elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.pts]
-            else:
-                raise ArgumentException(msg)
-            nonmissingIdx = [i for i in range(self.fts) if i not in missingIdx]
-            if len(nonmissingIdx) == 0:
-                msg = 'All data are removed. Please use another method or other arguments.'
-                raise ArgumentException(msg)
-
-            if len(missingIdx) > 0:
-                self.extractFeatures(toExtract=missingIdx)
-                if markMissing:
-                    extraDummy = [[i[j] for j in nonmissingIdx] for i in extraDummy]
-                    extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
-        elif method == 'feature mean':
-            featureMeanMedianMode(UML.calculate.mean)
-        elif method == 'feature median':
-            featureMeanMedianMode(UML.calculate.median)
-        elif method == 'feature mode':
-            featureMeanMedianMode(UML.calculate.mode)
-        elif method == 'zero':
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                for i in tmpItem[1]:
-                    self.fillWith(0, i, j, i, j)
-        elif method == 'constant':
-            msg = 'for method = "constant", the arguments must be the constant.'
-            if arguments is not None:
-                for tmpItem in missingIdxDictFeature.items():
-                    j = tmpItem[0]
-                    for i in tmpItem[1]:
-                        self.fillWith(arguments, i, j, i, j)
-            else:
-                raise ArgumentException(msg)
-        elif method == 'forward fill':
-            for tmpItem in missingIdxDictFeature.items():
-                    j = tmpItem[0]
-                    for i in tmpItem[1]:
-                        if i > 0:
-                            self.fillWith(self[i-1, j], i, j, i, j)
-        elif method == 'backward fill':
-            for tmpItem in missingIdxDictFeature.items():
-                    j = tmpItem[0]
-                    for i in sorted(tmpItem[1], reverse=True):
-                        if i < self.pts - 1:
-                            self.fillWith(self[i+1, j], i, j, i, j)
-        elif method == 'interpolate':
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                interpX = tmpItem[1]
-                if len(interpX) == 0:
-                    continue
-                if arguments is None:
-                    xp = [i for i in range(self.pts) if i not in interpX]
-                    fp = [self[i, j] for i in xp]
-                    tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
-                elif isinstance(arguments, dict):
-                    tmpArguments = arguments.copy()
-                    tmpArguments['x'] = interpX
-                else:
-                    msg = 'for method = "interpolate", the arguments must be None or a dict.'
-                    raise ArgumentException(msg)
-
-                tmpV = numpy.interp(**tmpArguments)
-                for k, i in enumerate(interpX):
-                    self.fillWith(tmpV[k], i, j, i, j)
-
-        if markMissing:
-            toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())
-            self._sorted = None#need to reset this, o.w. may fail in validate
-            self.addFeatures(toAppend)
 
     def _binarySearch(self, x, y):
             if self._sorted == 'point':
@@ -1875,11 +1748,12 @@ class SparseView(BaseView, Sparse):
         oIt = other.pointIterator()
         for sPoint in sIt:
             oPoint = next(oIt)
-
-            for i, val in enumerate(sPoint):
-                if val != oPoint[i]:
+            for i, sVal in enumerate(sPoint):
+                oVal = oPoint[i]
+                # check element equality - which is only relevant if one of the elements
+                # is non-NaN
+                if sVal != oVal and (sVal == sVal or oVal == oVal):
                     return False
-
         return True
 
     def _containsZero_implementation(self):

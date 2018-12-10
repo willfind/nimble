@@ -245,8 +245,19 @@ class BaseView(Base):
     ###########################
 
     @exception_docstring
-    def dropFeaturesContainingType(self, typeToDrop):
-        self._readOnlyException("dropFeaturesContainingType")
+    def fillUsingPoints(self, match, fill, arguments=None, points=None,
+                        returnModified=False):
+        self._readOnlyException("fillUsingPoints")
+
+    @exception_docstring
+    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
+                          returnModified=False):
+        self._readOnlyException("fillUsingFeatures")
+
+    @exception_docstring
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
+                          features=None, returnModified=False):
+        self._readOnlyException("fillUsingAllData")
 
     @exception_docstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
@@ -255,10 +266,6 @@ class BaseView(Base):
     @exception_docstring
     def transformFeatureToIntegers(self, featureToConvert):
         self._readOnlyException("transformFeatureToIntegers")
-
-    @exception_docstring
-    def extractPointsByCoinToss(self, extractionProbability):
-        self._readOnlyException("extractPointsByCoinToss")
 
     @exception_docstring
     def shufflePoints(self):
@@ -361,10 +368,6 @@ class BaseView(Base):
     @exception_docstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         self._readOnlyException("fillWith")
-
-    @exception_docstring
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        self._readOnlyException("handleMissingValues")
 
     @exception_docstring
     def flattenToOnePoint(self):

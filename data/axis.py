@@ -759,6 +759,10 @@ def _validateInsertableData(axis, caller, toAdd):
             caller._validateReorderedNames('point', 'addFeatures', toAdd)
 
 def _setAddedCountAndNames(axis, caller, addedObj, insertedBefore):
+    """
+    Modify the point or feature count to include the addedObj. If one or
+    both objects have names, names will be set as well.
+    """
     caller._validateAxis(axis)
     if axis == 'point':
         # only adjust count if no names in either object

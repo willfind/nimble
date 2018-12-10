@@ -399,6 +399,11 @@ class DataFrame(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('point', i)
+                raise currRet
             if len(currRet) != self.fts:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
@@ -410,6 +415,11 @@ class DataFrame(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('feature', j)
+                raise currRet
             if len(currRet) != self.pts:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
@@ -463,171 +473,6 @@ class DataFrame(Base):
 
         self.data.iloc[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        """
-        This function is to
-        1. drop points or features with missing values
-        2. fill missing values with mean, median, mode, or zero or a constant value
-        3. fill missing values by forward or backward filling
-        4. input missing values via linear interpolation
-
-        Detailed steps are:
-        1. from alsoTreatAsMissing, generate a dict for elements which are not None or NaN but should be treated as missing
-        2. from featuresList, generate a dict for each element
-        3. replace missing values in features in the featuresList with NaN
-        4. based on method and arguments, process self.data
-        5. update points and features information.
-        """
-        if featuresList is not None:
-            featuresList = self.getFeatureIndices(featuresList)
-
-        alsoTreatAsMissingDict = {i: np.NaN for i in alsoTreatAsMissing if (i is not None) and i == i}
-        if alsoTreatAsMissingDict:
-            myd = {i: alsoTreatAsMissingDict for i in featuresList}
-            self.data.replace(myd, inplace=True)
-
-        if markMissing:
-            # construct extra columns to indicate if the original value was missing or not
-            extraDf = self.data[featuresList].isnull()
-        #from now, based on method and arguments, process self.data
-        if method == 'remove points':
-            msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
-            if arguments is None or arguments.lower() == 'any':
-                self.data.dropna(subset=featuresList, how='any', inplace=True)
-            elif arguments.lower() == 'all':
-                self.data.dropna(subset=featuresList, how='all', inplace=True)
-            else:
-                raise ArgumentException(msg)
-
-            if 0 in self.data.shape:
-                msg = 'All data are removed. Please use another method or other arguments.'
-                raise ArgumentException(msg)
-        elif method == 'remove features':
-            msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            if len(featuresList) == self.fts:
-                #if we consider all features
-                if arguments is None or arguments.lower() == 'any':
-                    self.data.dropna(axis=1, how='any', inplace=True)
-                elif arguments.lower() == 'all':
-                    self.data.dropna(axis=1, how='all', inplace=True)
-                else:
-                    raise ArgumentException(msg)
-            else:
-                #if only some features are considered
-                if arguments is None or arguments.lower() == 'any':
-                    cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
-                elif arguments.lower() == 'all':
-                    cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
-                else:
-                    raise ArgumentException(msg)
-                dropCols = list(set(featuresList) - set(cols))
-                self.data.drop(labels=dropCols, axis=1, inplace=True)
-
-            if 0 in self.data.shape:
-                msg = 'All data are removed. Please use another method or other arguments.'
-                raise ArgumentException(msg)
-        elif method == 'feature mean':
-            self.data.fillna(self.data[featuresList].mean(), inplace=True)
-        elif method == 'feature median':
-            self.data.fillna(self.data[featuresList].median(), inplace=True)
-        elif method == 'feature mode':
-            #pd.DataFrame.mode is faster, but to make sure behavior consistent, let's use our own UML.calculate.mode
-            featureMode = self.calculateForEachFeature(UML.calculate.mode, features=featuresList).data.iloc[0]
-            self.data.fillna(featureMode, inplace=True)
-        elif method == 'zero':
-            myd = {i: 0 for i in featuresList}
-            self.data.fillna(myd, inplace=True)
-        elif method == 'constant':
-            msg = 'for method = "constant", the arguments must be the constant.'
-            if arguments is not None:
-                myd = {i: arguments for i in featuresList}
-                self.data.fillna(myd, inplace=True)
-            else:
-                raise ArgumentException(msg)
-        elif method == 'forward fill':
-            self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
-        elif method == 'backward fill':
-            self.data[featuresList] = self.data[featuresList].fillna(method='bfill')
-        elif method == 'interpolate':
-            if arguments is None:
-                arguments = {}
-            elif isinstance(arguments, dict):
-                pass
-            else:
-                msg = 'for method = "interpolate", the arguments must be None or a dict.'
-                raise ArgumentException(msg)
-            if len(featuresList) == self.fts:
-                    self.data.interpolate(inplace=True, **arguments)
-            else:
-                self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
-        elif hasattr(method, '__name__') and 'KNeighbors' in method.__name__:
-            if arguments is None:
-                arguments = {}
-            neigh = method(**arguments)
-            tmpList = []#store idx, col and values for missing values
-            for col in featuresList:
-                colBln = (self.data.columns == col)
-                for idx in self.data.index:
-                    #do KNN point by point
-                    if pd.isnull(self.data.iloc[idx, colBln].values[0]):
-                        #prepare training data
-                        notNullCols = ~self.data.iloc[idx, :].isnull()
-                        predictData = self.data.iloc[idx, notNullCols]
-                        notNullCols[col] = True
-                        trainingData = self.data.iloc[:, notNullCols].dropna(how='any')
-                        #train
-                        neigh.fit(trainingData.iloc[:, ~colBln], trainingData.iloc[:, colBln])
-                        #predict
-                        tmpList.append([idx, col, neigh.predict(predictData.reshape(1, -1))[0][0] ])
-            for idx, col, v in tmpList:
-                self.data.iloc[idx, col] = v
-        else:
-            msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
-            "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy", "interpolate", \
-                  sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
-            raise ArgumentException(msg)
-
-        # add the constructed columns marking missing values into the object now that it won't
-        # interfere with the rest of the processing.
-        if markMissing:
-            self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
-
-        # there are no other structure changes to self.data beyond this point, so we can update our record
-        # of shape. We must do this before setting point/feature names.
-        pCount, fCount = self.data.shape
-        self._featureCount = fCount
-        self._pointCount = pCount
-
-        # if we've removed features or added new features to mark missing values, and we have not
-        # deferred name creation, then we must assign corrected feature names. Deferred names will
-        # take care of the adjusted size upon assignment
-        if (method == 'remove features' or markMissing) and self._featureNamesCreated():
-            # Get the correct names. In the case of column removal, data.columns uses the indices
-            # keyed to the original shape of the object, so we can easily access only the names for
-            # columns that remain. In the case of column addition, we have to convert the indices
-            # (either stand alone, or in a missing tag) to actual names.
-            def fix_name(x):
-                x = str(x)
-                search_res = re.search('^(.+)_missing', x)
-                if search_res:
-                    name = self.getFeatureNames()[int(search_res.group(1))] + '_missing'
-                else:
-                    name = self.getFeatureNames()[int(x)]
-                return name
-
-            fNames = [fix_name(i) for i in self.data.columns]
-            self.setFeatureNames(fNames)
-
-        # if we've removed points, and we have not deferred name creation,
-        # then we must assign corrected point names. Deferred names will
-        # take care of the adjusted size upon assignment
-        if method == 'remove points' and self._pointNamesCreated():
-            pNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
-            self.setPointNames(pNames)
-
-        # reset index and column to values matching self.data's current size
-        self._updateName('point')
-        self._updateName('feature')
 
     def _flattenToOnePoint_implementation(self):
         numElements = self.pts * self.fts
