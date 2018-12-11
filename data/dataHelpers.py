@@ -15,6 +15,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+import numpy
 
 from UML.exceptions import ArgumentException
 
@@ -441,3 +442,23 @@ def inheritDocstringsFactory(toInherit):
 
         return cls
     return inheritDocstring
+
+def valuesToPythonList(values, argName):
+    """
+    Create a python list of values from an integer (python or numpy),
+    string, or an iterable container object
+    """
+    if isinstance(values, list):
+        return values
+    if isinstance(values, (int, numpy.integer, six.string_types)):
+        return [values]
+    valuesList = []
+    try:
+        for val in values:
+            valuesList.append(val)
+    except TypeError:
+        msg = "The argument '{0}' is not an integer ".format(argName)
+        msg += "(python or numpy), string, or an iterable container object."
+        raise ArgumentException(msg)
+
+    return valuesList

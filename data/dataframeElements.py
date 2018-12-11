@@ -3,18 +3,23 @@
 """
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
-import UML
 from .elements import Elements
 
-class MatrixElements(Elements):
+import UML
+
+pd = UML.importModule('pandas')
+if pd:
+    import pandas as pd
+
+class DataFrameElements(Elements):
     """
 
     """
     def __init__(self, source):
         self.source = source
-        super(MatrixElements, self).__init__()
+        super(DataFrameElements, self).__init__()
 
     ################################
     # Higher Order implementations #
@@ -35,9 +40,10 @@ class MatrixElements(Elements):
         modification of the calling object.
         """
         if isinstance(other, UML.data.Sparse):
-            result = other.data.multiply(self.source.data)
+            result = other.data.multiply(self.source.data.values)
             if hasattr(result, 'todense'):
                 result = result.todense()
-            self.source.data = numpy.matrix(result)
+            self.source.data = pd.DataFrame(result)
         else:
-            self.source.data = numpy.multiply(self.source.data, other.data)
+            self.source.data = pd.DataFrame(
+                np.multiply(self.source.data.values, other.data))

@@ -35,6 +35,7 @@ from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
+from .dataHelpers import valuesToPythonList
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
@@ -81,28 +82,6 @@ def to2args(f):
 
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
-
-
-def valuesToPythonList(values, argName):
-    """
-    Create a python list of values from an integer (python or numpy),
-    string, or an iterable container object
-
-    """
-    if isinstance(values, list):
-        return values
-    if isinstance(values, (int, numpy.integer, six.string_types)):
-        return [values]
-    valuesList = []
-    try:
-        for val in values:
-            valuesList.append(val)
-    except TypeError:
-        msg = "The argument '{0}' is not an integer ".format(argName)
-        msg += "(python or numpy), string, or an iterable container object."
-        raise ArgumentException(msg)
-
-    return valuesList
 
 
 class Base(object):

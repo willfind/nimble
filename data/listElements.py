@@ -21,3 +21,18 @@ class ListElements(Elements):
                                   preserveZeros, outputType):
         return self._calculateForEachElementGenericVectorized(
             function, points, features, outputType)
+
+    def _multiply_implementation(self, other):
+        """
+        Perform element wise multiplication of this UML data object
+        against the provided other UML data object. Both objects must
+        contain only numeric data. The pointCount and featureCount of
+        both objects must be equal. The types of the two objects may be
+        different, but the returned object will be the inplace
+        modification of the calling object.
+        """
+        for pNum in range(self.source.pts):
+            for fNum in range(self.source.fts):
+                # Divided by 1 to make it raise if it involves non-numeric
+                # types ('str')
+                self.source.data[pNum][fNum] *= other[pNum, fNum] / 1

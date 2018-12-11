@@ -7,8 +7,10 @@ import numpy
 import six
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, ImproperActionException
+from . import dataHelpers
 from .dataHelpers import OPTRLIST, OPTRDICT
+from .dataHelpers import valuesToPythonList
 
 class Elements(object):
     """
@@ -173,6 +175,167 @@ class Elements(object):
             msg = 'function can only be a function or str, not else'
             raise ArgumentException(msg)
         return int(numpy.sum(ret.data))
+
+    def countUnique(self, points=None, features=None):
+        """
+        Count of each unique value in the data.
+
+        Returns a dictionary containing each unique value as a key and
+        the number of times that value occurs as the value.
+
+        Parameters
+        ----------
+        points
+            May be None indicating application to all points, a single
+            name or index or an iterable of points and/or indices.
+        features : identifier, list of identifiers
+            May be None indicating application to all features, a single
+            name or index or an iterable of names and/or indices.
+
+        Returns
+        -------
+        dict
+
+        See Also
+        --------
+        calculate.uniqueCount
+
+        Examples
+        --------
+        TODO
+        """
+        uniqueCount = {}
+        if points is None:
+            points = [i for i in range(self.source.pts)]
+        if features is None:
+            features = [i for i in range(self.source.fts)]
+        points = valuesToPythonList(points, 'points')
+        features = valuesToPythonList(features, 'features')
+        for i in points:
+            for j in features:
+                val = self.source[i, j]
+                temp = uniqueCount.get(val,0)
+                uniqueCount[val] = temp + 1
+
+        return uniqueCount
+
+    def multiply(self, other):
+        """
+        Multiply objects element-wise.
+
+        Perform element-wise multiplication of this UML data object
+        against the provided ``other`` UML data object, with the result
+        being stored in-place in the calling object. Both objects must
+        contain only numeric data. The pointCount and featureCount of
+        both objects must be equal. The types of the two objects may be
+        different.
+
+        Parameters
+        ----------
+        other : UML object
+            The object containing the elements to multiply with the
+            elements in this object.
+
+        Examples
+        --------
+        TODO
+        """
+        if not isinstance(other, UML.data.Base):
+            msg = "'other' must be an instance of a UML data object"
+            raise ArgumentException(msg)
+
+        if self.source.pts != other.pts:
+            msg = "The number of points in each object must be equal."
+            raise ArgumentException(msg)
+        if self.source.fts != other.fts:
+            msg = "The number of features in each object must be equal."
+            raise ArgumentException(msg)
+
+        if self.source.pts == 0 or self.source.fts == 0:
+            msg = "Cannot do elements.multiply with empty points or features"
+            raise ImproperActionException(msg)
+
+        self.source._validateEqualNames('point', 'point',
+                                        'elements.multiply', other)
+        self.source._validateEqualNames('feature', 'feature',
+                                        'elements.multiply', other)
+
+        try:
+            self._multiply_implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self.source._numericValidation()
+            other._numericValidation()
+            raise(e)
+
+        retNames = dataHelpers.mergeNonDefaultNames(self.source, other)
+        retPNames = retNames[0]
+        retFNames = retNames[1]
+        self.source.setPointNames(retPNames)
+        self.source.setFeatureNames(retFNames)
+        self.source.validate()
+
+    def power(self, other):
+        """
+        Raise the elements of this object to a power.
+
+        The power to raise each element to can be either a UML object or
+        a single numerical value. If ``other`` is an object, both must
+        contain only numeric data. The pointCount and featureCount of
+        both objects must be equal. The types of the two objects may be
+        different.
+
+        Parameters
+        ----------
+        other : numerical value, UML object
+            * numerical value - the power to raise each element to
+            * The object containing the elements to raise the elements
+              in this object to
+
+        Examples
+        --------
+        TODO
+        """
+        # other is UML or single numerical value
+        singleValue = dataHelpers._looksNumeric(other)
+        if not singleValue and not isinstance(other, UML.data.Base):
+            msg = "'other' must be an instance of a UML data object "
+            msg += "or a single numeric value"
+            raise ArgumentException(msg)
+
+        if isinstance(other, UML.data.Base):
+            # same shape
+            if self.source.pts != other.pts:
+                msg = "The number of points in each object must be equal."
+                raise ArgumentException(msg)
+            if self.source.fts != other.fts:
+                msg = "The number of features in each object must be equal."
+                raise ArgumentException(msg)
+
+        if self.source.pts == 0 or self.source.fts == 0:
+            msg = "Cannot do elements.power when points or features is emtpy"
+            raise ImproperActionException(msg)
+
+        if isinstance(other, UML.data.Base):
+            def powFromRight(val, pnum, fnum):
+                try:
+                    return val ** other[pnum, fnum]
+                except Exception as e:
+                    self.source._numericValidation()
+                    other._numericValidation()
+                    raise(e)
+            self.source.transformEachElement(powFromRight)
+        else:
+            def powFromRight(val, pnum, fnum):
+                try:
+                    return val ** other
+                except Exception as e:
+                    self.source._numericValidation()
+                    other._numericValidation()
+                    raise(e)
+            self.source.transformEachElement(powFromRight)
+
+        self.source.validate()
 
     ########################
     # Higher Order Helpers #

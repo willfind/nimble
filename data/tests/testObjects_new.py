@@ -14,8 +14,8 @@ defined in this file.
 from __future__ import absolute_import
 import UML
 
-# from UML.data.tests.numerical_backend import AllNumerical
-# from UML.data.tests.numerical_backend import NumericalDataSafe
+from UML.data.tests.numerical_backend_new import AllNumerical
+from UML.data.tests.numerical_backend_new import NumericalDataSafe
 
 # from UML.data.tests.query_backend import QueryBackend
 
@@ -32,42 +32,42 @@ from UML.data.tests.structure_backend_new import StructureDataSafe
 viewClasses = []
 baseClasses = []
 
-class TestListView(HighLevelDataSafe, StructureDataSafe):
+class TestListView(HighLevelDataSafe, StructureDataSafe, NumericalDataSafe):
     def __init__(self):
         super(TestListView, self).__init__('ListView')
 
 
-class TestMatrixView(HighLevelDataSafe, StructureDataSafe):
+class TestMatrixView(HighLevelDataSafe, StructureDataSafe, NumericalDataSafe):
     def __init__(self):
         super(TestMatrixView, self).__init__('MatrixView')
 
 
-class TestSparseView(HighLevelDataSafe, StructureDataSafe):
+class TestSparseView(HighLevelDataSafe, StructureDataSafe, NumericalDataSafe):
     def __init__(self):
         super(TestSparseView, self).__init__('SparseView')
 
 
-class TestDataFrameView(HighLevelDataSafe, StructureDataSafe):
+class TestDataFrameView(HighLevelDataSafe, StructureDataSafe, NumericalDataSafe):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
 
 
-class TestList(HighLevelAll, StructureAll):
+class TestList(HighLevelAll, StructureAll, AllNumerical):
     def __init__(self):
         super(TestList, self).__init__('List')
 
 
-class TestMatrix(HighLevelAll, StructureAll):
+class TestMatrix(HighLevelAll, StructureAll, AllNumerical):
     def __init__(self):
         super(TestMatrix, self).__init__('Matrix')
 
 
-class TestSparse(HighLevelAll, StructureAll):
+class TestSparse(HighLevelAll, StructureAll, AllNumerical):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
 
 
-class TestDataFrame(HighLevelAll, StructureAll):
+class TestDataFrame(HighLevelAll, StructureAll, AllNumerical):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 
