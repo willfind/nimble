@@ -13,15 +13,17 @@ import warnings
 import numpy
 from six.moves import range
 
+import UML
+import UML.data
 from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
+from .points import Points
+from .features import Features
 from .sparsePoints import SparsePoints
 from .sparseFeatures import SparseFeatures
 from .sparseElements import SparseElements
-import UML
-import UML.data
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -66,12 +68,12 @@ class Sparse(Base):
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
-        return SparsePoints(self)
+        return Points(SparsePoints, self)
 
     points = property(_getPoints, doc="TODO")
 
     def _getFeatures(self):
-        return SparseFeatures(self)
+        return Features(SparseFeatures, self)
 
     features = property(_getFeatures, doc="TODO")
 

@@ -38,8 +38,7 @@ class Elements(object):
         Parameters
         ----------
         function : function
-            Accepts a view of a member as an argument and returns the
-            new values in that member.
+            Take a value as input and return the desired value.
         points : point, list of points
             The subset of points to limit the calculation to. If None,
             the calculation will apply to all points.
@@ -143,8 +142,8 @@ class Elements(object):
         ----------
         condition : function
             function - may take two forms:
-            a) a function that when given a member will return True if
-            it is to be retained
+            a) a function that accepts an element value as input and
+            will return True if it is to be counted
             b) a filter function, as a string, containing a comparison
             operator and a value
 

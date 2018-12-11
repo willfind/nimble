@@ -23,11 +23,11 @@ class SparseAxis(Axis):
         """
         Backend for points/features.extract points/features.delete,
         points/features.retain, and points/features.copy. Returns a new
-        object containing only the members in targetList and performs
-        some modifications to the original object if necessary. This
-        function does not perform all of the modification or process how
-        each function handles the returned value, these are managed
-        separately by each frontend function.
+        object containing only the points or features in targetList and
+        performs some modifications to the original object if necessary.
+        This function does not perform all of the modification or
+        process how each function handles the returned value, these are
+        managed separately by each frontend function.
         """
         # SparseView or object dtype
         if (self.source.data.data is None

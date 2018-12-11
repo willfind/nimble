@@ -16,6 +16,8 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
+from .points import Points
+from .features import Features
 from .listPoints import ListPoints
 from .listFeatures import ListFeatures
 from .listElements import ListElements
@@ -118,12 +120,12 @@ class List(Base):
         super(List, self).__init__(**kwds)
 
     def _getPoints(self):
-        return ListPoints(self)
+        return Points(ListPoints, self)
 
     points = property(_getPoints, doc="TODO")
 
     def _getFeatures(self):
-        return ListFeatures(self)
+        return Features(ListFeatures, self)
 
     features = property(_getFeatures, doc="TODO")
 

@@ -16,6 +16,8 @@ from six.moves import zip
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
+from .points import Points
+from .features import Features
 from .matrixPoints import MatrixPoints
 from .matrixFeatures import MatrixFeatures
 from .matrixElements import MatrixElements
@@ -64,12 +66,12 @@ class Matrix(Base):
         super(Matrix, self).__init__(**kwds)
 
     def _getPoints(self):
-        return MatrixPoints(self)
+        return Points(MatrixPoints, self)
 
     points = property(_getPoints, doc="TODO")
 
     def _getFeatures(self):
-        return MatrixFeatures(self)
+        return Features(MatrixFeatures, self)
 
     features = property(_getFeatures, doc="TODO")
 

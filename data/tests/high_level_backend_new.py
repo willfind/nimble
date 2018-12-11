@@ -139,7 +139,7 @@ class HighLevelDataSafe(DataTestObject):
     def test_points_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
-        ret = toTest.points.calculate(noChange, limitTo=['a', 'b'])
+        ret = toTest.points.calculate(noChange, points=['a', 'b'])
 
     def test_points_calculate_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -188,7 +188,7 @@ class HighLevelDataSafe(DataTestObject):
         def emitLower(point):
             return point[origObj.getFeatureIndex('deci')]
 
-        lowerCounts = origObj.points.calculate(emitLower, limitTo=['three', 2])
+        lowerCounts = origObj.points.calculate(emitLower, points=['three', 2])
 
         expectedOut = [[0.1], [0.2]]
         expPnames = ['two', 'three']
@@ -260,7 +260,7 @@ class HighLevelDataSafe(DataTestObject):
     def test_features_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
-        ret = toTest.features.calculate(noChange, limitTo=['a', 'b'])
+        ret = toTest.features.calculate(noChange, features=['a', 'b'])
 
     def test_features_calculate_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -319,7 +319,7 @@ class HighLevelDataSafe(DataTestObject):
                     return 0
             return 1
 
-        lowerCounts = origObj.features.calculate(emitAllEqual, limitTo=[0, 'centi'])
+        lowerCounts = origObj.features.calculate(emitAllEqual, features=[0, 'centi'])
         expectedOut = [[1, 0]]
         expFNames = ['number', 'centi']
         exp = self.constructor(expectedOut, featureNames=expFNames)

@@ -14,6 +14,8 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
+from .points import Points
+from .features import Features
 from .dataframePoints import DataFramePoints
 from .dataframeFeatures import DataFrameFeatures
 from .dataframeElements import DataFrameElements
@@ -59,12 +61,12 @@ class DataFrame(Base):
         super(DataFrame, self).__init__(**kwds)
 
     def _getPoints(self):
-        return DataFramePoints(self)
+        return Points(DataFramePoints, self)
 
     points = property(_getPoints, doc="TODO")
 
     def _getFeatures(self):
-        return DataFrameFeatures(self)
+        return Features(DataFrameFeatures, self)
 
     features = property(_getFeatures, doc="TODO")
 
