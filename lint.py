@@ -25,10 +25,16 @@ REQ_IGNORE = [
     'too-many-branches',
     'too-many-statements',
     'too-many-return-statements',
+    'too-many-instance-attributes',
     'comparison-with-itself',
     'protected-access',
     'pointless-statement',
     'broad-except',
+    'no-else-return',
+    'len-as-condition',
+    'consider-using-enumerate',
+    'no-member',
+    'protected-member',
 ]
 
 def getOutputs(commandString):
@@ -38,15 +44,15 @@ def getOutputs(commandString):
 
 def jsonToDict(file):
     dictionary = {}
-    with file:
-        lines = file.readlines()
-        if lines:
-            try:
-                dictionary = json.loads("".join(lines))
-            except Exception:
-                # if can't load json format, stdout contains reason this failed
-                print(lines)
-                sys.exit()
+
+    lines = file.readlines()
+    if lines:
+        try:
+            dictionary = json.loads("".join(lines))
+        except Exception:
+            # if can't load json format, stdout contains reason this failed
+            print(lines)
+            sys.exit()
 
     return dictionary
 
@@ -117,23 +123,25 @@ def printWarningSummary(warnings):
         print('*This code satisfies the UML minimum linter requirements*')
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        msg = 'missing path to a module or file. python lint.py <path>'
-        raise AttributeError(msg)
-
     hasConfig = False
     # sort and reverse so paths precede other arguments
     # this is necessary for using lint.py_run
     configOptions = list(reversed(sorted(sys.argv[1:])))
+    if all(arg.startswith('-') for arg in sys.argv[1:]):
+        # default to cwd if no path specified
+        configOptions.insert(0, '.')
     for i, arg in enumerate(configOptions):
-        # Run will generate pylint output if --output-format specified
         if arg.startswith("--output-format"):
+            # Use pylint output if --output-format specified
             Run(configOptions)
-        if arg.startswith('--rcfile'):
+        elif arg in ['--version','-h', '--help', '--long-help']:
+            # use of Run prints these correctly
+            Run([arg])
+        elif arg.startswith('--rcfile'):
             hasConfig = True
             absPath = os.path.abspath(arg[len('--rcfile='):])
             configOptions[i] = '--rcfile=' + absPath
-        if not arg.startswith("-"):
+        elif not arg.startswith("-"):
             configOptions[i] = os.path.abspath(arg)
     if not hasConfig:
         config = os.path.abspath('.pylintrc')
