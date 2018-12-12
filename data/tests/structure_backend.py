@@ -7,7 +7,7 @@ copyAs, copyPoints, copyFeatures
 
 
 In object StructureModifying:
-__init__,  transpose, appendPoints, appendFeatures, sortPoints, sortFeatures,
+__init__,  transpose, addPoints, addFeatures, sortPoints, sortFeatures,
 extractPoints, extractFeatures, deletePoints, deleteFeatures, retainPoints,
 retainFeatures, referenceDataFrom, transformEachPoint, transformEachFeature,
 transformEachElement, fillWith, flattenToOnePoint, flattenToOneFeature,
@@ -30,6 +30,7 @@ except:
 from copy import deepcopy
 
 import UML
+from UML import match
 from UML import createData
 from UML.data import List
 from UML.data import Matrix
@@ -1120,6 +1121,76 @@ class StructureDataSafe(StructureShared):
     def test_copyPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
+    ### using match module ###
+
+    def test_copyPoints_match_missing(self):
+        data = [[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyMissing)
+        expRet = self.constructor([[None, 11, None], [7, 11, None]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allMissing)
+        expRet = self.constructor([[None, None, None]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_nonNumeric(self):
+        data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyNonNumeric)
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allNonNumeric)
+        expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_list(self):
+        data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyValues(['a', 'c', 'x']))
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allValues(['a', 'c', 'x']))
+        expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyPoints_match_function(self):
+        data = [[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.anyValues(lambda x: x < 0))
+        expRet = self.constructor([[-1, 11, -3], [7, 11, -3]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
+        ret = toTest.copyPoints(match.allValues(lambda x: x < 0))
+        expRet = self.constructor([[-1, -2, -3]], featureNames=['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     #######################
     # copy common backend #
     #######################
@@ -1833,6 +1904,68 @@ class StructureDataSafe(StructureShared):
     def test_copyFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
+    # using match module
+
+    def test_copyFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyMissing)
+        expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allMissing)
+        expRet = self.constructor([[None], [None], [None], [None]], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyNonNumeric)
+        expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allNonNumeric)
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyValues(['a', 'c', 'x']))
+        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allValues(['a', 'c', 'x']))
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_copyFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.anyValues(lambda x: x < 0))
+        expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]], featureNames=['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        expTest = toTest.copy()
+        ret = toTest.copyFeatures(match.allValues(lambda x: x < 0))
+        expRet = self.constructor([[-3], [-3], [-3], [-3]], featureNames=['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
 
 class StructureModifying(StructureShared):
 
@@ -2258,149 +2391,114 @@ class StructureModifying(StructureShared):
 
 
     #####################################
-    # appendPoints() / appendFeatures() #
+    # addPoints() / addFeatures() #
     #####################################
 
-    def backend_append_exceptionNone(self, axis):
+    def backend_insert_exceptionNone(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
         if axis == 'point':
-            toTest.appendPoints(None)
+            toTest.addPoints(None)
         else:
-            toTest.appendFeatures(None)
+            toTest.addFeatures(None)
 
     @raises(ArgumentException)
-    def test_appendPoints_exceptionNone(self):
-        """ Test appendPoints() for ArgumentException when toAppend is None"""
-        self.backend_append_exceptionNone('point')
+    def test_addPoints_exceptionNone(self):
+        """ Test addPoints() for ArgumentException when toInsert is None"""
+        self.backend_insert_exceptionNone('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exceptionNone(self):
-        """ Test appendFeatures() for ArgumentException when toAppend is None """
-        self.backend_append_exceptionNone('feature')
+    def test_addFeatures_exceptionNone(self):
+        """ Test addFeatures() for ArgumentException when toInsert is None """
+        self.backend_insert_exceptionNone('feature')
 
 
-    def backend_append_exceptionWrongSize(self, axis):
+    def backend_insert_exceptionWrongSize(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toAppend = self.constructor([[2, 3, 4, 5, 6]])
+        toInsert = self.constructor([[2, 3, 4, 5, 6]])
 
         if axis == 'point':
-            toTest.appendPoints(toAppend)
+            toTest.addPoints(toInsert)
         else:
-            toTest.appendFeatures(toAppend)
+            toInsert.transpose()
+            toTest.addFeatures(toInsert)
 
     @raises(ArgumentException)
-    def test_appendPoints_exceptionWrongSize(self):
-        """ Test appendPoints() for ArgumentException when toAppend has too many features """
-        self.backend_append_exceptionWrongSize('point')
+    def test_addPoints_exceptionWrongSize(self):
+        """ Test addPoints() for ArgumentException when toInsert has too many features """
+        self.backend_insert_exceptionWrongSize('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exceptionWrongSize(self):
-        """ Test appendFeatures() for ArgumentException when toAppend has too many points """
-        self.backend_append_exceptionWrongSize('feature')
+    def test_addFeatures_exceptionWrongSize(self):
+        """ Test addFeatures() for ArgumentException when toInsert has too many points """
+        self.backend_insert_exceptionWrongSize('feature')
 
 
-    def backend_append_exception_extendAxis_SameName(self, axis):
+    def backend_insert_exception_extendAxis_SameName(self, axis):
         toTest1 = self.constructor([[1, 2]], pointNames=["hello"])
         toTest2 = self.constructor([[1, 2], [5, 6]], pointNames=["hello", "goodbye"])
 
         if axis == 'point':
-            toTest2.appendPoints(toTest1)
+            toTest2.addPoints(toTest1)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest2.appendFeatures(toTest1)
+            toTest2.addFeatures(toTest1)
 
     @raises(ArgumentException)
-    def test_appendPoints_exceptionSamePointName(self):
-        """ Test appendPoints() for ArgumentException when toAppend and self have a pointName in common """
-        self.backend_append_exception_extendAxis_SameName('point')
+    def test_addPoints_exceptionSamePointName(self):
+        """ Test addPoints() for ArgumentException when toInsert and self have a pointName in common """
+        self.backend_insert_exception_extendAxis_SameName('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exceptionSameFeatureName(self):
-        """ Test appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
-        self.backend_append_exception_extendAxis_SameName('feature')
+    def test_addFeatures_exceptionSameFeatureName(self):
+        """ Test addFeatures() for ArgumentException when toInsert and self have a featureName in common """
+        self.backend_insert_exception_extendAxis_SameName('feature')
 
 
-    def backend_append_exception_sharedAxis_unsharedName(self, axis):
+    def backend_insert_exception_sharedAxis_unsharedName(self, axis):
         toTest1 = self.constructor([[1, 2]], featureNames=['1', '2'])
         toTest2 = self.constructor([[2, 1], [6, 5]], featureNames=['6', '1'])
 
         if axis == 'point':
-            toTest2.appendPoints(toTest1)
+            toTest2.addPoints(toTest1)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest2.appendFeatures(toTest1)
+            toTest2.addFeatures(toTest1)
 
     @raises(ArgumentException)
-    def test_appendPoints_exception_unsharedFeatureName(self):
-        """ Test appendPoints() for ArgumentException when toAppend and self have a featureName not in common """
-        self.backend_append_exception_sharedAxis_unsharedName('point')
+    def test_addPoints_exception_unsharedFeatureName(self):
+        """ Test addPoints() for ArgumentException when toInsert and self have a featureName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exception_unsharedPointName(self):
-        """ Test appendFeatures() for ArgumentException when toAppend and self have a pointName not in common """
-        self.backend_append_exception_sharedAxis_unsharedName('feature')
+    def test_addFeatures_exception_unsharedPointName(self):
+        """ Test addFeatures() for ArgumentException when toInsert and self have a pointName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('feature')
 
 
-    def backend_append_exceptionNonUMLDataType(self, axis):
+    def backend_insert_exceptionNonUMLDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
         if axis == 'point':
-            toTest.appendPoints([[1, 1, 1]])
+            toTest.addPoints([[1, 1, 1]])
         else:
-            toTest.appendFeatures([[1], [1], [1]])
+            toTest.addFeatures([[1], [1], [1]])
 
     @raises(ArgumentException)
-    def test_appendPoints_exceptionNonUMLDataType(self):
-        self.backend_append_exceptionNonUMLDataType('point')
+    def test_addPoints_exceptionNonUMLDataType(self):
+        self.backend_insert_exceptionNonUMLDataType('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exceptionNonUMLDataType(self):
-        self.backend_append_exceptionNonUMLDataType('feature')
+    def test_addFeatures_exceptionNonUMLDataType(self):
+        self.backend_insert_exceptionNonUMLDataType('feature')
 
 
-    def backend_append_allPossibleUMLDataType(self, axis):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        exp = self.constructor(data)
-        toAppend = self.constructor(data)
-        if axis == 'point':
-            exp.appendPoints(toAppend)
-            assert exp.points == 6
-        else:
-            exp.appendFeatures(toAppend)
-            assert exp.features == 6
-
-        currType = exp.getTypeString()
-        availableTypes = UML.data.available
-        otherTypes = [retType for retType in availableTypes if retType != currType]
-        appended = []
-        for other in otherTypes:
-            toTest = self.constructor(data)
-            otherTest = UML.createData(other, data)
-            if axis == 'point':
-                toTest.appendPoints(otherTest)
-                appended.append(toTest)
-            else:
-                toTest.appendFeatures(otherTest)
-                appended.append(toTest)
-
-        assert all(exp == obj for obj in appended)
-
-
-    def test_appendPoints_allPossibleUMLDataType(self):
-        self.backend_append_allPossibleUMLDataType('point')
-
-
-    def test_appendFeatures_allPossibleUMLDataType(self):
-        self.backend_append_allPossibleUMLDataType('feature')
-
-
-    def backend_append_exception_outOfOrder_with_defaults(self, axis):
+    def backend_insert_exception_outOfOrder_with_defaults(self, axis):
         toTest1 = self.constructor([[1, 2, 3]])
         toTest2 = self.constructor([[1, 3, 2]])
 
@@ -2410,23 +2508,25 @@ class StructureModifying(StructureShared):
         toTest2.setFeatureName(2, '2')
 
         if axis == 'point':
-            toTest1.appendPoints(toTest2)
+            toTest1.addPoints(toTest2)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest1.appendFeatures(toTest2)
+            toTest1.addFeatures(toTest2)
 
 
     @raises(ArgumentException)
-    def test_appendPoints_exception_outOfOrder_with_defaults(self):
-        self.backend_append_exception_outOfOrder_with_defaults('point')
+    def test_addPoints_exception_outOfOrder_with_defaults(self):
+        """ Test addPoints() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('point')
 
     @raises(ArgumentException)
-    def test_appendFeatures_exception_outOfOrder_with_defaults(self):
-        self.backend_append_exception_outOfOrder_with_defaults('feature')
+    def test_addFeatures_exception_outOfOrder_with_defaults(self):
+        """ Test addFeatures() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('feature')
 
 
-    def backend_append_emptyObject(self, axis):
+    def backend_insert_emptyObject(self, axis, insertBefore=None):
         empty = [[], []]
 
         if axis == 'point':
@@ -2437,129 +2537,167 @@ class StructureModifying(StructureShared):
             data = [[1], [2]]
 
         toTest = self.constructor(empty)
-        toAdd = self.constructor(data)
+        toInsert = self.constructor(data)
         toExp = self.constructor(data)
 
         if axis == 'point':
-            toTest.appendPoints(toAdd)
+            toTest.addPoints(toInsert, insertBefore)
         else:
-            toTest.appendFeatures(toAdd)
+            toTest.addFeatures(toInsert, insertBefore)
 
         assert toTest.isIdentical(toExp)
 
-    def test_appendPoints_fromEmpty(self):
-        """ Test appendPoints() when the calling object is point empty """
-        self.backend_append_emptyObject('point')
+    def test_addPoints_fromEmpty_bottom(self):
+        """ Test addPoints() to bottom when the calling object is point empty """
+        self.backend_insert_emptyObject('point')
 
-    def test_appendFeatures_fromEmpty(self):
-        """ Test appendFeatures() when the calling object is feature empty """
-        self.backend_append_emptyObject('feature')
+    def test_addFeatures_fromEmpty_right(self):
+        """ Test addFeatures() to right when the calling object is feature empty """
+        self.backend_insert_emptyObject('feature')
+
+    @raises(ArgumentException)
+    def test_addPoints_fromEmpty_top(self):
+        """ Test addPoints() with an appendBefore ID when the calling object is point empty raises exception """
+        self.backend_insert_emptyObject('point', 0)
+
+    @raises(ArgumentException)
+    def test_addFeatures_fromEmpty_left(self):
+        """ Test addFeatures() with an appendBefore ID when the calling object is feature empty raises exception """
+        self.backend_insert_emptyObject('feature', 0)
 
 
-    def backend_append_handmadeSingle(self, axis):
+    def backend_insert_handmadeSingle(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
         addName = ['new']
-        namesExp = ['one', 'two', 'three', 'new']
 
         if axis == 'point':
-            dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                dataExpected = [[-1, -2, -3], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
+                namesExp = ['one', 'new', 'two', 'three']
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            toAppend = self.constructor([[-1, -2, -3]], pointNames=addName, featureNames=offNames)
+            toInsert = self.constructor([[-1, -2, -3]], pointNames=addName, featureNames=offNames)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            ret = toTest.appendPoints(toAppend)  # RET CHECK
+            ret = toTest.addPoints(toInsert, insertBefore)  # RET CHECK
         else:
-            dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                dataExpected = [[-1, 1, 2, 3], [-2, 4, 5, 6], [-3, 7, 8, 9]]
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
+                namesExp = ['one', 'new', 'two', 'three']
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toAppend = self.constructor([[-1], [-2], [-3]], pointNames=offNames, featureNames=addName)
+            toInsert = self.constructor([[-1], [-2], [-3]], pointNames=offNames, featureNames=addName)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            ret = toTest.appendFeatures(toAppend)  # RET CHECK
+            ret = toTest.addFeatures(toInsert, insertBefore)  # RET CHECK
 
         assert toTest.isIdentical(expected)
         assert ret is None
 
-    def test_appendPoints_handmadeSingle(self):
-        """ Test appendPoints() against handmade output for a single added point """
-        self.backend_append_handmadeSingle('point')
+    def test_addPoints_handmadeSingle_bottom(self):
+        """ Test addPoints() against handmade output for a single added point to the bottom"""
+        self.backend_insert_handmadeSingle('point')
 
-    def test_appendFeatures_handmadeSingle(self):
-        """ Test appendFeatures() against handmade output for a single added feature"""
-        self.backend_append_handmadeSingle('feature')
+    def test_addFeatures_handmadeSingle_right(self):
+        """ Test addFeatures() against handmade output for a single added feature to the right"""
+        self.backend_insert_handmadeSingle('feature')
+
+    def test_addPoints_handmadeSingle_top(self):
+        """ Test addPoints() against handmade output for a single added point the the top"""
+        self.backend_insert_handmadeSingle('point', 0)
+
+    def test_addFeatures_handmadeSingle_left(self):
+        """ Test addFeatures() against handmade output for a single added feature to the left"""
+        self.backend_insert_handmadeSingle('feature', 0)
+
+    def test_addPoints_handmadeSingle_mid(self):
+        """ Test addPoints() against handmade output for a single added point in the middle"""
+        self.backend_insert_handmadeSingle('point', 1)
+
+    def test_addFeatures_handmadeSingle_mid(self):
+        """ Test addFeatures() against handmade output for a single added feature in the middle"""
+        self.backend_insert_handmadeSingle('feature', 1)
 
 
-    def backend_append_handmadeSequence(self, axis):
+    def backend_insert_handmadeSequence(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
         newNames = ['a1', 'b1', 'b2', 'c1']
-        namesExp = names + newNames
-        toAppend = [[0.1, 0.2, 0.3], [0.01, 0.02, 0.03], [0, 0, 0], [10, 11, 12]]
-        toAppend = self.constructor(toAppend, pointNames=newNames, featureNames=offNames)
+        toInsert = [[0.1, 0.2, 0.3], [0.01, 0.02, 0.03], [0, 0, 0], [10, 11, 12]]
+        toInsert = self.constructor(toInsert, pointNames=newNames, featureNames=offNames)
 
         if axis == 'point':
-            dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0.1, 0.2, 0.3], [0.01, 0.02, 0.03], [0, 0, 0],
-                            [10, 11, 12]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0.1, 0.2, 0.3],
+                                [0.01, 0.02, 0.03], [0, 0, 0], [10, 11, 12]]
+                namesExp = names + newNames
+            elif insertBefore == 0:
+                dataExpected = [[10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03], [0.1, 0.2, 0.3],
+                                [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+                namesExp = list(reversed(newNames)) + names
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03],
+                                [0.1, 0.2, 0.3], [4, 5, 6], [7, 8, 9]]
+                namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            for nextAdd in toAppend.pointIterator():
-                toTest.appendPoints(nextAdd)
+            for nextAdd in toInsert.pointIterator():
+                toTest.addPoints(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
         else:
-            dataExpected = [[1, 2, 3, 0.1, 0.01, 0, 10], [4, 5, 6, 0.2, 0.02, 0, 11], [7, 8, 9, 0.3, 0.03, 0, 12]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, 0.1, 0.01, 0, 10], [4, 5, 6, 0.2, 0.02, 0, 11], [7, 8, 9, 0.3, 0.03, 0, 12]]
+                namesExp = names + newNames
+            elif insertBefore == 0:
+                dataExpected = [[10, 0, 0.01, 0.1, 1, 2, 3], [11, 0, 0.02, 0.2, 4, 5, 6], [12, 0, 0.03, 0.3, 7, 8, 9]]
+                namesExp = list(reversed(newNames)) + names
+            elif insertBefore == 1:
+                dataExpected = [[1, 10, 0, 0.01, 0.1, 2, 3], [4, 11, 0, 0.02, 0.2, 5, 6], [7, 12, 0, 0.03, 0.3, 8, 9]]
+                namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toAppend.transpose()
-            for nextAdd in toAppend.featureIterator():
-                toTest.appendFeatures(nextAdd)
+            toInsert.transpose()
+            for nextAdd in toInsert.featureIterator():
+                toTest.addFeatures(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
 
         assert toTest.isIdentical(expected)
 
-    def test_appendPoints_handmadeSequence(self):
-        """ Test appendPoints() against handmade output for a sequence of additions"""
-        self.backend_append_handmadeSequence('point')
+    def test_addPoints_handmadeSequence_bottom(self):
+        """ Test addPoints() against handmade output for a sequence of additions to the bottom"""
+        self.backend_insert_handmadeSequence('point')
 
-    def test_appendFeatures_handmadeSequence(self):
-        """ Test appendFeatures() against handmade output for a sequence of additions"""
-        self.backend_append_handmadeSequence('feature')
+    def test_addFeatures_handmadeSequence_right(self):
+        """ Test addFeatures() against handmade output for a sequence of additions to the right"""
+        self.backend_insert_handmadeSequence('feature')
 
+    def test_addPoints_handmadeSequence_top(self):
+        """ Test addPoints() against handmade output for a sequence of additions to the top"""
+        self.backend_insert_handmadeSequence('point', 0)
 
-    def backend_append_NamePath_preservation(self, axis):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    def test_addFeatures_handmadeSequence_left(self):
+        """ Test addFeatures() against handmade output for a sequence of additions to the left"""
+        self.backend_insert_handmadeSequence('feature', 0)
 
-        names = ['one', 'two', 'three']
+    def test_addPoints_handmadeSequence_mid(self):
+        """ Test addPoints() against handmade output for a sequence of additions in the middle"""
+        self.backend_insert_handmadeSequence('point', 1)
 
-        if axis == 'point':
-            toTest = self.constructor(data, pointNames=names)
-            toAppend = self.constructor([[-1, -2, -3]], pointNames=['new'])
-        else:
-            toTest = self.constructor(data, featureNames=names)
-            toAppend = self.constructor([[-1], [-2], [-3]], featureNames=['new'])
-
-        toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
-
-        toAppend._name = "TestNameOther"
-        toAppend._absPath = "TestAbsPathOther"
-        toAppend._relPath = "testRelPathOther"
-
-        if axis == 'point':
-            toTest.appendPoints(toAppend)
-        else:
-            toTest.appendFeatures(toAppend)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
-
-    def test_appendPoints_NamePath_preservation(self):
-        self.backend_append_NamePath_preservation('point')
-
-    def test_appendFeatures_NamePath_preservation(self):
-        self.backend_append_NamePath_preservation('feature')
+    def test_addFeatures_handmadeSequence_mid(self):
+        """ Test addFeatures() against handmade output for a sequence of additions in the middle"""
+        self.backend_insert_handmadeSequence('feature', 1)
 
 
-    def backend_append_selfAppend(self, axis):
+    def backend_insert_selfInsert(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
 
@@ -2574,38 +2712,66 @@ class StructureModifying(StructureShared):
             dupNames = dup.getPointNames()
             assert orig.getPointNames() == dupNames
 
-            orig.appendPoints(orig)
+            orig.addPoints(orig, insertBefore)
 
-            dataExp = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            if insertBefore is None or insertBefore == 0:
+                dataExp = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            elif insertBefore == 1:
+                dataExp = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [7, 8, 9], [4, 5, 6], [7, 8, 9]]
             expected = self.constructor(dataExp, featureNames=names)
         else:
             dupNames = dup.getFeatureNames()
             assert orig.getFeatureNames() == dupNames
 
-            orig.appendFeatures(orig)
+            orig.addFeatures(orig, insertBefore)
 
-            dataExp = [[1, 2, 3, 1, 2, 3], [4, 5, 6, 4, 5, 6], [7, 8, 9, 7, 8, 9]]
+            if insertBefore is None or insertBefore == 0:
+                dataExp = [[1, 2, 3, 1, 2, 3], [4, 5, 6, 4, 5, 6], [7, 8, 9, 7, 8, 9]]
+            elif insertBefore == 1:
+                dataExp = [[1, 1, 2, 3, 2, 3], [4, 4, 5, 6, 5, 6], [7, 7, 8, 9, 8, 9]]
             expected = self.constructor(dataExp, pointNames=names)
 
         assert orig == expected
 
         checkNames = orig.getPointNames() if axis == 'point' else orig.getFeatureNames()
-        assert checkNames[:3] == dupNames
-
         lastDefIndex = int(dupNames[2][-1])
+        if insertBefore is None:
+            assert checkNames[:3] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 3, 4, 5
+        elif insertBefore == 0:
+            assert checkNames[3:] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 0, 1, 2
+        elif insertBefore == 1:
+            assert [checkNames[0]] + checkNames[4:] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 1, 2, 3
 
-        assert checkNames[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
-        assert checkNames[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
-        assert checkNames[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
+        assert checkNames[idx1] == DEFAULT_PREFIX + str(lastDefIndex + 1)
+        assert checkNames[idx2] == DEFAULT_PREFIX + str(lastDefIndex + 2)
+        assert checkNames[idx3] == DEFAULT_PREFIX + str(lastDefIndex + 3)
 
-    def test_appendPoints_selfAppend(self):
-        self.backend_append_selfAppend('point')
+    def test_addPoints_selfInsert_bottom(self):
+        self.backend_insert_selfInsert('point')
 
-    def test_appendFeatures_selfAppend(self):
-        self.backend_append_selfAppend('feature')
+    def test_addFeatures_selfInsert_right(self):
+        self.backend_insert_selfInsert('feature')
+
+    def test_addPoints_selfInsert_top(self):
+        self.backend_insert_selfInsert('point', 0)
+
+    def test_addFeatures_selfInsert_left(self):
+        self.backend_insert_selfInsert('feature', 0)
+
+    def test_addPoints_selfInsert_mid(self):
+        self.backend_insert_selfInsert('point', 1)
+
+    def test_addFeatures_selfInsert_mid(self):
+        self.backend_insert_selfInsert('feature', 1)
 
 
-    def backend_append_automaticReorder(self, axis, defPrimaryNames):
+    def backend_insert_automaticReorder(self, axis, defPrimaryNames, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['off1', 'off2', 'off3']
         addOffName = ['off3', 'off2', 'off1']
@@ -2616,37 +2782,195 @@ class StructureModifying(StructureShared):
         else:
             names = ['one', 'two', 'three']
             addName = ['new']
-            namesExp = ['one', 'two', 'three', 'new']
+            if insertBefore is None:
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                namesExp = ['one', 'new', 'two', 'three']
 
         if axis == 'point':
             toAddData = [[-3, -2, -1]]
-            dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+            elif insertBefore == 0:
+                dataExpected = [[-1, -2, -3], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            toAppend = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+            toInsert = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+            expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            toTest.appendPoints(toAppend)
+            toTest.addPoints(toInsert, insertBefore)
         else:
             toAddData = [[-3], [-2], [-1]]
-            dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+            elif insertBefore == 0:
+                dataExpected = [[-1, 1, 2, 3], [-2, 4, 5, 6], [-3, 7, 8, 9]]
+            elif insertBefore == 1:
+                dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toAppend = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+            toInsert = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+            expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            toTest.appendFeatures(toAppend)
+            toTest.addFeatures(toInsert, insertBefore)
 
+        # check that toInsert object was not modified when reordering occurred
+        assert toInsert.isIdentical(expInsert)
         assert toTest.isIdentical(expected)
 
 
-    def test_appendPoints_automaticReorder_fullySpecifiedNames(self):
-        self.backend_append_automaticReorder('point', False)
+    def test_addPoints_automaticReorder_fullySpecifiedNames_bottom(self):
+        self.backend_insert_automaticReorder('point', False)
 
-    def test_appendFeatures_automaticReorder_fullySpecifiedNames(self):
-        self.backend_append_automaticReorder('feature', False)
+    def test_addFeatures_automaticReorder_fullySpecifiedNames_right(self):
+        self.backend_insert_automaticReorder('feature', False)
 
-    def test_appendPoints_automaticReorder_defaultPointNames(self):
-        self.backend_append_automaticReorder('point', True)
+    def test_addPoints_automaticReorder_defaultPointNames_bottom(self):
+        self.backend_insert_automaticReorder('point', True)
 
-    def test_appendFeatures_automaticReorder_defaultFeatureNames(self):
-        self.backend_append_automaticReorder('feature', True)
+    def test_addFeatures_automaticReorder_defaultFeatureNames_right(self):
+        self.backend_insert_automaticReorder('feature', True)
+
+    def test_addPoints_automaticReorder_fullySpecifiedNames_top(self):
+        self.backend_insert_automaticReorder('point', False, 0)
+
+    def test_addFeatures_automaticReorder_fullySpecifiedNames_left(self):
+        self.backend_insert_automaticReorder('feature', False, 0)
+
+    def test_addPoints_automaticReorder_defaultPointNames_top(self):
+        self.backend_insert_automaticReorder('point', True, 0)
+
+    def test_addFeatures_automaticReorder_defaultFeatureNames_left(self):
+        self.backend_insert_automaticReorder('feature', True, 0)
+
+    def test_addPoints_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('point', False, 1)
+
+    def test_addFeatures_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('feature', False, 1)
+
+    def test_addPoints_automaticReorder_defaultPointNames_mid(self):
+        self.backend_insert_automaticReorder('point', True, 1)
+
+    def test_addFeatures_automaticReorder_defaultFeatureNames_mid(self):
+        self.backend_insert_automaticReorder('feature', True, 1)
+
+    def backend_insert_allPossibleUMLDataType(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        currType = self.constructor([]).getTypeString()
+        availableTypes = UML.data.available
+        otherTypes = [retType for retType in availableTypes if retType != currType]
+        inserted = []
+        for other in otherTypes:
+            toTest = self.constructor(data)
+            if axis == 'point':
+                insertData = [[-1, -2, -3]]
+                otherTest = UML.createData(other, insertData)
+                exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+                toTest.addPoints(otherTest)
+                inserted.append(toTest)
+            else:
+                insertData = [[-1], [-2], [-3]]
+                otherTest = UML.createData(other, insertData)
+                exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+                toTest.addFeatures(otherTest)
+                inserted.append(toTest)
+
+        assert all(exp == obj for obj in inserted)
+
+    def test_addPoints_allPossibleUMLDataType(self):
+        self.backend_insert_allPossibleUMLDataType('point')
+
+    def test_addFeatures_allPossibleUMLDataType(self):
+        self.backend_insert_allPossibleUMLDataType('feature')
+
+
+    def backend_insert_noReorderWithAllDefaultNames(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # assign names to be the reverse of toTest's default names
+            fNames = list(reversed(toTest.getFeatureNames()))
+            toInsert = self.constructor(insertData, featureNames=fNames)
+            assert toTest.getFeatureNames() != toInsert.getFeatureNames()
+
+            exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+            toTest.addPoints(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # assign names to be the reverse of toTest's default names
+            pNames = list(reversed(toTest.getPointNames()))
+            toInsert = self.constructor(insertData, pointNames=pNames)
+            assert toTest.getPointNames() != toInsert.getPointNames()
+
+            exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+            toTest.addFeatures(toInsert)
+
+        assert toTest == exp
+
+    def test_addPoints_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('point')
+
+    def test_addFeatures_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('feature')
+
+    def backend_insert_NamePath_preservation(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        names = ['one', 'two', 'three']
+
+        if axis == 'point':
+            toTest = self.constructor(data, pointNames=names)
+            toInsert = self.constructor([[-1, -2, -3]], pointNames=['new'])
+        else:
+            toTest = self.constructor(data, featureNames=names)
+            toInsert = self.constructor([[-1], [-2], [-3]], featureNames=['new'])
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toInsert._name = "TestNameOther"
+        toInsert._absPath = "TestAbsPathOther"
+        toInsert._relPath = "testRelPathOther"
+
+        if axis == 'point':
+            toTest.addPoints(toInsert)
+        else:
+            toTest.addFeatures(toInsert)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+    def test_addPoints_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('point')
+
+    def test_addFeatures_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('feature')
+
+    def test_addPoints_noNamesCreated(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[-1, -2, -3]])
+        toTest.addPoints(toInsert)
+
+        assert not toTest._pointNamesCreated()
+        assert not toTest._featureNamesCreated()
+
+    def test_addFeatures_noNamesCreated(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[-1], [-2], [-3]])
+        toTest.addFeatures(toInsert)
+
+        assert not toTest._featureNamesCreated()
+        assert not toTest._pointNamesCreated()
 
 
     ##############
@@ -3553,6 +3877,84 @@ class StructureModifying(StructureShared):
     def test_extractPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
+    ### using match module ###
+
+    def test_extractPoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyMissing)
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([[None, 11, None], [7, 11, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allMissing)
+        expTest = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
+        expRet = self.constructor([[None, None, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyNonNumeric)
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allNonNumeric)
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        expRet = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        expRet = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractPoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
+        expRet = self.constructor([[-1, 11, -3], [7, 11, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractPoints(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
+        expRet = self.constructor([[-1, -2, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        expRet.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     ##########################
     # extract common backend #
     ##########################
@@ -4286,6 +4688,84 @@ class StructureModifying(StructureShared):
     def test_extractFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
+    # using match module
+
+    def test_extractFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyMissing)
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allMissing)
+        expTest = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
+        expRet = self.constructor([[None], [None], [None], [None]])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyNonNumeric)
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allNonNumeric)
+        expTest = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+    def test_extractFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[2], [11], [11], [8]])
+        expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
+        expTest.setFeatureNames(['b'])
+        expRet.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+        assert ret == expRet
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        ret = toTest.extractFeatures(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
+        expRet = self.constructor([[-3], [-3], [-3], [-3]])
+        expTest.setFeatureNames(['a', 'b'])
+        expRet.setFeatureNames(['c'])
+        assert toTest == expTest
+        assert ret == expRet
+
     ################
     # deletePoints #
     ################
@@ -4744,6 +5224,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_deletePoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
+
+    ### using match module ###
+
+    def test_deletePoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyMissing)
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allMissing)
+        exp = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyNonNumeric)
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allNonNumeric)
+        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyValues(['a', 'c', 'x']))
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allValues(['a', 'c', 'x']))
+        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+    def test_deletePoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.anyValues(lambda x: x < 0))
+        exp = self.constructor([[1, 2, 3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deletePoints(match.allValues(lambda x: x < 0))
+        exp = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
+        exp.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == exp
 
     #########################
     # delete common backend #
@@ -5358,6 +5892,60 @@ class StructureModifying(StructureShared):
     def test_deleteFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
+    # using match module
+
+    def test_deleteFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyMissing)
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allMissing)
+        exp = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyNonNumeric)
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allNonNumeric)
+        exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyValues(['a', 'c', 'x']))
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allValues(['a', 'c', 'x']))
+        exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
+    def test_deleteFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.anyValues(lambda x: x < 0))
+        exp = self.constructor([[2], [11], [11], [8]])
+        exp.setFeatureNames(['b'])
+        assert toTest == exp
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        toTest.deleteFeatures(match.allValues(lambda x: x < 0))
+        exp = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
+        exp.setFeatureNames(['a', 'b'])
+        assert toTest == exp
+
     ################
     # retainPoints #
     ################
@@ -5861,6 +6449,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_retainPoints_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
+
+    ### using match module ###
+
+    def test_retainPoints_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyMissing)
+        expTest = self.constructor([[None, 11, None], [7, 11, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allMissing)
+        expTest = self.constructor([[None, None, None]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyNonNumeric)
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allNonNumeric)
+        expTest = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['a', 'x', 'c']])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+    def test_retainPoints_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, 11, -3], [7, 11, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainPoints(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-1, -2, -3]])
+        expTest.setFeatureNames(['a', 'b', 'c'])
+        assert toTest == expTest
 
     #########################
     # retain common backend #
@@ -6506,6 +7148,60 @@ class StructureModifying(StructureShared):
     @raises(ArgumentException)
     def test_retainFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
+
+    # using match module
+
+    def test_retainFeatures_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.retainFeatures(match.anyMissing)
+        expTest = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allMissing)
+        expTest = self.constructor([[None], [None], [None], [None]])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyNonNumeric)
+        expTest = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allNonNumeric)
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
+
+    def test_retainFeatures_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
+        expTest.setFeatureNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        ret = toTest.retainFeatures(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-3], [-3], [-3], [-3]])
+        expTest.setFeatureNames(['c'])
+        assert toTest == expTest
 
     #####################
     # referenceDataFrom #
