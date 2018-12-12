@@ -637,15 +637,6 @@ class List(Base):
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
-                if self._pointNamesCreated():
-                    pNames = self.getPointNames()
-                else:
-                    pNames = False
-                if self._featureNamesCreated():
-                    fNames = self.getFeatureNames()
-                else:
-                    fNames = False
-
                 if (self.points == 0 or self.features == 0) and format != 'List':
                     emptyStandin = numpy.empty((self.points, self.features))
                     intermediate = UML.createData('Matrix', emptyStandin)
@@ -664,8 +655,8 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return UML.createData('List', listForm, pointNames=pNames,
-                                          featureNames=fNames)
+                    return List(listForm, pointNames=self._getPointNames(),
+                                featureNames=self._getFeatureNames())
                 else:
                     return listForm
 

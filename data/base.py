@@ -397,6 +397,11 @@ class Base(object):
             self._setAllDefault('point')
         return copy.copy(self.pointNamesInverse)
 
+    def _getPointNames(self):
+        if not self._pointNamesCreated():
+            return None
+        return self.getPointNames()
+
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
         in the list is the same as the index of the feature they
@@ -406,6 +411,11 @@ class Base(object):
         if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return copy.copy(self.featureNamesInverse)
+
+    def _getFeatureNames(self):
+        if not self._featureNamesCreated():
+            return None
+        return self.getFeatureNames()
 
     def getPointName(self, index):
         if not self._pointNamesCreated():
@@ -510,7 +520,7 @@ class Base(object):
 
     def transformFeatureToIntegers(self, featureToConvert):
         """
-        Modify this object so that the chosen feature in removed, and a new integer
+        Modify this object so that the chosen feature is removed, and a new integer
         valued feature is added with values 0 to n-1, one for each of n values present
         in the original feature. None is always returned.
 
@@ -548,7 +558,8 @@ class Base(object):
             return mapping[point[0]]
 
         converted = toConvert.calculateForEachPoint(lookup)
-        converted.setPointNames(toConvert.getPointNames())
+
+        converted.setPointNames(toConvert._getPointNames())
         converted.setFeatureName(0, toConvert.getFeatureName(0))
 
         self.addFeatures(converted)
@@ -585,7 +596,7 @@ class Base(object):
             setNames = [self.getPointName(x) for x in sorted(points)]
             ret.setPointNames(setNames)
         else:
-            ret.setPointNames(self.getPointNames())
+            ret.setPointNames(self._getPointNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -624,7 +635,7 @@ class Base(object):
             setNames = [self.getFeatureName(x) for x in sorted(features)]
             ret.setFeatureNames(setNames)
         else:
-            ret.setFeatureNames(self.getFeatureNames())
+            ret.setFeatureNames(self._getFeatureNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -2329,24 +2340,9 @@ class Base(object):
         self._transpose_implementation()
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
-
-        if self._pointNamesCreated() and self._featureNamesCreated():
-            self.pointNames, self.featureNames = self.featureNames, self.pointNames
-            self.setFeatureNames(self.featureNames)
-            self.setPointNames(self.pointNames)
-        elif self._pointNamesCreated():
-            self.featureNames = self.pointNames
-            self.pointNames = None
-            self.pointNamesInverse = None
-            self.setFeatureNames(self.featureNames)
-        elif self._featureNamesCreated():
-            self.pointNames = self.featureNames
-            self.featureNames = None
-            self.featureNamesInverse = None
-            self.setPointNames(self.pointNames)
-        else:
-            pass
-
+        self.pointNames, self.featureNames = self._getFeatureNames(), self._getPointNames()
+        self.setFeatureNames(self.featureNames)
+        self.setPointNames(self.pointNames)
         self.validate()
 
 
@@ -2539,10 +2535,10 @@ class Base(object):
         across the space of possible points.
 
         """
+
         ret = self._genericStructuralFrontend('extract', 'point', toExtract,
                                               start, end, number, randomize)
 
-        ret.setFeatureNames(self.getFeatureNames())
         self._adjustCountAndNames('point', ret)
 
         ret._relPath = self.relativePath
@@ -2585,7 +2581,6 @@ class Base(object):
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract,
                                               start, end, number, randomize)
 
-        ret.setPointNames(self.getPointNames())
         self._adjustCountAndNames('feature', ret)
 
         ret._relPath = self.relativePath
@@ -2909,23 +2904,10 @@ class Base(object):
         return ret
 
     def _copyNames (self, CopyObj):
-        if self._pointNamesCreated():
-            CopyObj.pointNamesInverse = self.getPointNames()
-            CopyObj.pointNames = copy.copy(self.pointNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.index = self.getPointNames()
-        else:
-            CopyObj.pointNamesInverse = None
-            CopyObj.pointNames = None
-
-        if self._featureNamesCreated():
-            CopyObj.featureNamesInverse = self.getFeatureNames()
-            CopyObj.featureNames = copy.copy(self.featureNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.columns = self.getFeatureNames()
-        else:
-            CopyObj.featureNamesInverse = None
-            CopyObj.featureNames = None
+        CopyObj.pointNamesInverse = self._getPointNames()
+        CopyObj.pointNames = copy.copy(self.pointNames)
+        CopyObj.featureNamesInverse = self._getFeatureNames()
+        CopyObj.featureNames = copy.copy(self.featureNames)
 
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
@@ -4898,11 +4880,15 @@ class Base(object):
         or requires reordering in the presence of default names.
         """
         if axis == 'point':
+            if not self._pointNamesCreated() and not other._pointNamesCreated():
+                return False
             lnames = self.getPointNames()
             rnames = other.getPointNames()
             lGetter = self.getPointIndex
             rGetter = other.getPointIndex
         else:
+            if not self._featureNamesCreated() and not other._featureNamesCreated():
+                return False
             lnames = self.getFeatureNames()
             rnames = other.getFeatureNames()
             lGetter = self.getFeatureIndex

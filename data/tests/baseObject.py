@@ -66,14 +66,15 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if orig.points != 0:
             firstPRaw = [[0] * orig.features]
+            fnamesParam = orig.getFeatureNames() if orig._featureNamesCreated() else 'automatic'
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
+                                                    pointNames=['firstPNonView'], featureNames=fnamesParam,
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                     elementType=elementType)
 
             lastPRaw = [[3] * orig.features]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
+                                                   pointNames=['lastPNonView'], featureNames=fnamesParam,
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                    elementType=elementType)
 
@@ -92,10 +93,12 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if orig.features != 0:
             lastFRaw = [[1] * full.points]
+            fnames = full.getPointNames() if full._pointNamesCreated() else 'automatic'
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=full.getPointNames(), pointNames=['lastFNonView'],
+                                                     featureNames=fnames, pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
+
             lastFeature.transpose()
 
             full.addFeatures(lastFeature)
