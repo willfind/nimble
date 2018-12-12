@@ -2314,8 +2314,10 @@ class HighLevelModifying(DataTestObject):
         expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
         expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
         ret = toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, returnModified=True)
-        expRet = self.constructor([[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]])
-        expRet.setFeatureNames([name + "_modified" for name in expRet.getFeatureNames()])
+        expData = [[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]]
+        expFNames = [name + "_modified" for name in toTest.getFeatureNames()]
+        expPNames = toTest.getPointNames()
+        expRet = self.constructor(expData, featureNames=expFNames, pointNames=expPNames)
         assert toTest == expTest
         assert ret == expRet
 
