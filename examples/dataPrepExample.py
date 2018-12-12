@@ -19,6 +19,7 @@ if __name__ == "__main__":
     import UML
 
     from UML import createData
+    from UML import match
 
     # string manipulation to get and make paths
     pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     processed.transformFeatureToIntegers('income')
 
     # scrub the rest of the string valued data -- the ones we converted are the non-redundant ones
-    processed.dropFeaturesContainingType(six.string_types)
+    processed.deleteFeatures(match.anyNonNumeric)
 
     # output the cleaned data set for later usage
     processed.writeFile(pathOut, includeNames=True)

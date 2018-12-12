@@ -156,7 +156,7 @@ class BaseView(Base):
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
 
-        if self.points != self._source.points:
+        if self.points != self._source.points and self._pointNamesCreated():
             if self._pStart != 0:
                 CopyObj.pointNames = {}
                 for idx, name in enumerate(CopyObj.pointNamesInverse):
@@ -165,7 +165,7 @@ class BaseView(Base):
                 for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
                     del CopyObj.pointNames[name]
 
-        if self.features != self._source.features:
+        if self.features != self._source.features and self._featureNamesCreated():
             if self._fStart != 0:
                 CopyObj.featureNames = {}
                 for idx, name in enumerate(CopyObj.featureNamesInverse):
@@ -232,8 +232,19 @@ class BaseView(Base):
     ###########################
 
     @exception_docstring
-    def dropFeaturesContainingType(self, typeToDrop):
-        self._readOnlyException("dropFeaturesContainingType")
+    def fillUsingPoints(self, match, fill, arguments=None, points=None,
+                        returnModified=False):
+        self._readOnlyException("fillUsingPoints")
+
+    @exception_docstring
+    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
+                          returnModified=False):
+        self._readOnlyException("fillUsingFeatures")
+
+    @exception_docstring
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
+                          features=None, returnModified=False):
+        self._readOnlyException("fillUsingAllData")
 
     @exception_docstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
@@ -242,10 +253,6 @@ class BaseView(Base):
     @exception_docstring
     def transformFeatureToIntegers(self, featureToConvert):
         self._readOnlyException("transformFeatureToIntegers")
-
-    @exception_docstring
-    def extractPointsByCoinToss(self, extractionProbability):
-        self._readOnlyException("extractPointsByCoinToss")
 
     @exception_docstring
     def shufflePoints(self):
@@ -289,12 +296,12 @@ class BaseView(Base):
         self._readOnlyException("transpose")
 
     @exception_docstring
-    def appendPoints(self, toAppend):
-        self._readOnlyException("appendPoints")
+    def addPoints(self, toAdd, insertBefore=None):
+        self._readOnlyException("addPoints")
 
     @exception_docstring
-    def appendFeatures(self, toAppend):
-        self._readOnlyException("appendFeatures")
+    def addFeatures(self, toAdd, insertBefore=None):
+        self._readOnlyException("addFeatures")
 
     @exception_docstring
     def sortPoints(self, sortBy=None, sortHelper=None):
@@ -348,10 +355,6 @@ class BaseView(Base):
     @exception_docstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         self._readOnlyException("fillWith")
-
-    @exception_docstring
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        self._readOnlyException("handleMissingValues")
 
     @exception_docstring
     def flattenToOnePoint(self):

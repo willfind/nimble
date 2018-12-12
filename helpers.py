@@ -397,14 +397,37 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
 
     # 4. if type(data) doesn't match returnType, then convert data to numpy matrix or coo_matrix.
     # if elementType is not None, then convert each element in data to elementType.
-    if (elementType is None) and (\
-        (isinstance(rawData, list) and returnType == 'List' and len(rawData) != 0 and (\
-            #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
-            #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
-            isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
-        (pd and isinstance(rawData, pd.DataFrame) and not isinstance(rawData, pd.SparseDataFrame) and returnType == 'DataFrame') or \
-        (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
-        ):
+    if (elementType is None and
+       isinstance(rawData, list) and
+       returnType == 'List' and
+       len(rawData) != 0 and (
+       #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
+       #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
+       isAllowedSingleElement(rawData[0]) or
+       isinstance(rawData[0], list) or
+       hasattr(rawData[0], 'setLimit'))):
+        # attempt to convert the list to floats to remain consistent with other
+        # UML types if unsuccessful we will keep the list as is
+        try:
+            # 1D list
+            rawData = list(map(numpy.float, rawData))
+        except (TypeError, ValueError):
+            try:
+                #2D list
+                convertedData = []
+                for point in rawData:
+                    convertedData.append(list(map(numpy.float, point)))
+                rawData = convertedData
+            except (ValueError, TypeError):
+                pass
+    elif (elementType is None and
+         pd and isinstance(rawData, pd.DataFrame) and
+         not isinstance(rawData, pd.SparseDataFrame) and
+         returnType == 'DataFrame'):
+        pass
+    elif (elementType is None and
+         scipy and scipy.sparse.isspmatrix(rawData) and
+         returnType == 'Sparse'):
         pass
     elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
         #if the input data is a np matrix, then convert it anyway to make sure try dtype=float 1st.
@@ -2570,7 +2593,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.appendPoints(curTestingY)
+                collectedY.addPoints(curTestingY)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2585,7 +2608,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].appendPoints(results[resultIndex])
+                results[0].addPoints(results[resultIndex])
 
             # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
             finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
@@ -3314,7 +3337,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     # we want the data and the labels together in one object or this method
     if isinstance(trainY, Base):
         trainX = trainX.copy()
-        trainX.appendFeatures(trainY)
+        trainX.addFeatures(trainY)
         trainY = trainX.features - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations of
@@ -3356,9 +3379,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
             rawPredictions = partialResults.copyAs(format="List")
         else:
             partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-            rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
-        pairData.appendFeatures(pairTrueLabels)
-        trainX.appendPoints(pairData)
+            rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+        pairData.addFeatures(pairTrueLabels)
+        trainX.addPoints(pairData)
         predictionFeatureID += 1
 
     if useLog:
@@ -3497,7 +3520,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         else:
             #as it's added to results object, rename each column with its corresponding class label
             oneLabelResults.setFeatureName(0, str(label))
-            rawPredictions.appendFeatures(oneLabelResults)
+            rawPredictions.addFeatures(oneLabelResults)
 
     if useLog:
         timer.stop('train')
