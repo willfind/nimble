@@ -709,32 +709,45 @@ class Sparse(Base):
         else:
             # initiate generic implementation for view types
             preserveZeros = False
-        # all data
-        if preserveZeros and points is None and features is None:
-            try:
-                data = function(data)
-            except Exception:
-                function.otypes = [numpy.object_]
-                data = function(data)
-            values = coo_matrix((data, (row, col)), shape=self.data.shape)
-            # note: even if function transforms nonzero values into zeros
-            # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values)
-        # subset of data
+
         if preserveZeros:
-            dataSubset = []
-            rowSubset = []
-            colSubset = []
-            for idx in range(len(data)):
-                if row[idx] in points and col[idx] in features:
-                    rowSubset.append(row[idx])
-                    colSubset.append(col[idx])
-                    dataSubset.append(data[idx])
-            dataSubset = function(dataSubset)
-            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
-            # note: even if function transforms nonzero values into zeros
-            # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values)
+            # all data
+            if len(points) == self.points and len(features) == self.features:
+                try:
+                    data = function(data)
+                except Exception:
+                    function.otypes = [numpy.object_]
+                    data = function(data)
+                values = coo_matrix((data, (row, col)), shape=self.data.shape)
+                # note: even if function transforms nonzero values into zeros
+                # our init methods will filter them out from the data attribute
+                return UML.createData(outputType, values)
+            # subset of data
+            else:
+                # sort points and features for row/column reassignment
+                points = sorted(points)
+                features = sorted(features)
+                retShape = (len(points), len(features))
+                dataSubset = []
+                rowSubset = []
+                colSubset = []
+                cooDict = {}
+                for v, r, c in zip(data, row, col):
+                    cooDict[(r, c)] = v
+                for i, pt in enumerate(points):
+                    for j, ft in enumerate(features):
+                        try:
+                            dataSubset.append(cooDict[(pt, ft)])
+                            rowSubset.append(i)
+                            colSubset.append(j)
+                        except KeyError:
+                            pass
+
+                dataSubset = function(dataSubset)
+                values = coo_matrix((dataSubset, (rowSubset, colSubset)), shape=retShape)
+                # note: even if function transforms nonzero values into zeros
+                # our init methods will filter them out from the data attribute
+                return UML.createData(outputType, values)
         # zeros not preserved
         return self._calculateForEachElementGenericVectorized(
                function, points, features, outputType)

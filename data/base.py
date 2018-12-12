@@ -906,8 +906,12 @@ class Base(object):
 
         if points is not None:
             points = self._constructIndicesList('point', points)
+        else:
+            points = list(range(self.points))
         if features is not None:
             features = self._constructIndicesList('feature', features)
+        else:
+            features = list(range(self.features))
 
         if outputType is not None:
             optType = outputType
@@ -933,9 +937,6 @@ class Base(object):
                      vectorized, points, features, preserveZeros, optType)
 
         else:
-            # if unable to vectorize, iterate over each point
-            points = points if points else list(range(self.points))
-            features = features if features else list(range(self.features))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
@@ -954,6 +955,13 @@ class Base(object):
                 p += 1
 
             ret = UML.createData(optType, valueArray)
+
+        if self._pointNamesCreated():
+            ptNames = [self.getPointName(p) for p in points]
+            ret.setPointNames(ptNames)
+        if self._featureNamesCreated():
+            ftNames = [self.getFeatureName(f) for f in features]
+            ret.setFeatureNames(ftNames)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
