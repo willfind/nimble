@@ -46,7 +46,7 @@ class MajorityVote(CustomLearner):
         self.mode = mostCommonKey
 
     def apply(self, testX):
-        raw = numpy.zeros(testX.pts)
+        raw = numpy.zeros(len(testX.points))
         numpy.ndarray.fill(raw, self.mode)
 
         ret = UML.createData("Matrix", raw)

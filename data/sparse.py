@@ -19,8 +19,6 @@ from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
-from .points import Points
-from .features import Features
 from .sparsePoints import SparsePoints
 from .sparseFeatures import SparseFeatures
 from .sparseElements import SparseElements
@@ -68,19 +66,13 @@ class Sparse(Base):
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
-        return Points(SparsePoints, self)
-
-    points = property(_getPoints, doc="TODO")
+        return SparsePoints(self)
 
     def _getFeatures(self):
-        return Features(SparseFeatures, self)
-
-    features = property(_getFeatures, doc="TODO")
+        return SparseFeatures(self)
 
     def _getElements(self):
         return SparseElements(self)
-
-    elements = property(_getElements, doc="TODO")
 
     def getdata(self):
         return self.data
@@ -108,7 +100,7 @@ class Sparse(Base):
                 return self
 
             def next(self):
-                if self._nextID >= self._outer.pts:
+                if self._nextID >= len(self._outer.points):
                     raise StopIteration
                 if self._outer._sorted != "point" or not self._stillSorted:
                 #					print "actually called"
@@ -145,7 +137,7 @@ class Sparse(Base):
                 return self
 
             def next(self):
-                if self._nextID >= self._outer.fts:
+                if self._nextID >= len(self._outer.features):
                     raise StopIteration
                 if self._outer._sorted != "feature" or not self._stillSorted:
                 #					print "actually called"
@@ -201,7 +193,7 @@ class Sparse(Base):
             newData.append(toAdd.data.data[i])
         # add remaining original data with adjusted row
         for i, row in enumerate(self.data.row[splitLength:]):
-            newRow.append(row + toAdd.pts)
+            newRow.append(row + len(toAdd.points))
             newCol.append(self.data.col[splitLength:][i])
             newData.append(self.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
@@ -209,8 +201,8 @@ class Sparse(Base):
             newData = numpy.array(newData, dtype=self.data.dtype)
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
-        numNewRows = self.pts + toAdd.pts
-        self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, self.fts))
+        numNewRows = len(self.points) + len(toAdd.points)
+        self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, len(self.features)))
         self._sorted = None
 
 
@@ -242,7 +234,7 @@ class Sparse(Base):
         # add remaining original data with adjusted col
         for i, col in enumerate(self.data.col[splitLength:]):
             newRow.append(self.data.row[splitLength:][i])
-            newCol.append(col + toAdd.fts)
+            newCol.append(col + len(toAdd.features))
             newData.append(self.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
         try:
@@ -250,8 +242,8 @@ class Sparse(Base):
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
 
-        numNewCols = self.fts + toAdd.fts
-        self.data = coo_matrix((newData, (newRow, newCol)), shape=(self.pts, numNewCols))
+        numNewCols = len(self.features) + len(toAdd.features)
+        self.data = coo_matrix((newData, (newRow, newCol)), shape=(len(self.points), numNewCols))
         self._sorted = None
 
 
@@ -400,7 +392,7 @@ class Sparse(Base):
             data = self.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
-                notTarget = [idx for idx in range(self.pts) if idx not in targetList]
+                notTarget = [idx for idx in range(len(self.points)) if idx not in targetList]
                 notTargeted = data[notTarget, :]
         else:
             getAxisName = self.getFeatureName
@@ -408,7 +400,7 @@ class Sparse(Base):
             data = self.data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
-                notTarget = [idx for idx in range(self.fts) if idx not in targetList]
+                notTarget = [idx for idx in range(len(self.features)) if idx not in targetList]
                 notTargeted = data[:, notTarget]
 
         self._validateAxis(axis)
@@ -436,10 +428,10 @@ class Sparse(Base):
         dtype = numpy.object_
         if axis == 'point':
             viewIterator = self.pointIterator
-            targetCount = self.pts
+            targetCount = len(self.points)
         else:
             viewIterator = self.featureIterator
-            targetCount = self.fts
+            targetCount = len(self.features)
 
         targetLength = len(targetList)
         targetData = []
@@ -512,7 +504,7 @@ class Sparse(Base):
     def _mapReducePoints_implementation(self, mapper, reducer):
         self._sortInternal("point")
         mapperResults = {}
-        maxVal = self.fts
+        maxVal = len(self.features)
 
         # consume zeroed vectors, up to the first nonzero value
         if self.data.data[0] != 0:
@@ -542,7 +534,7 @@ class Sparse(Base):
                 if i < len(self.data.data) - 1:
                     nextValue = self.data.row[i + 1]
                 else:
-                    nextValue = self.pts
+                    nextValue = len(self.points)
                 for j in range(targetValue + 1, nextValue):
                     currResults = mapper(self.pointView(j))
                     for (k, v) in currResults:
@@ -618,12 +610,12 @@ class Sparse(Base):
 
         pointer = 0
         pmax = len(self.data.data)
-        for i in range(self.pts):
+        for i in range(len(self.points)):
             currPname = self.getPointName(i)
             if includePointNames:
                 outFile.write(currPname)
                 outFile.write(',')
-            for j in range(self.fts):
+            for j in range(len(self.features)):
                 if pointer < pmax and i == self.data.row[pointer] and j == self.data.col[pointer]:
                     value = self.data.data[pointer]
                     pointer = pointer + 1
@@ -668,12 +660,12 @@ class Sparse(Base):
 
         header = ''
         if includePointNames:
-            header = makeNameString(self.pts, self.getPointNames())
+            header = makeNameString(len(self.points), self.getPointNames())
             header += '\n'
         else:
             header += '#\n'
         if includeFeatureNames:
-            header += makeNameString(self.fts, self.getFeatureNames())
+            header += makeNameString(len(self.features), self.getFeatureNames())
             header += '\n'
         else:
             header += '#\n'
@@ -808,7 +800,7 @@ class Sparse(Base):
                 modData = numpy.array(modData, dtype=numpy.float)
             except Exception:
                 modData = numpy.array(modData, dtype=numpy.object_)
-            self.data = coo_matrix((modData, (modRow, modCol)), shape=(self.pts, self.fts))
+            self.data = coo_matrix((modData, (modRow, modCol)), shape=(len(self.points), len(self.features)))
             self._sorted = None
 
         ret = None
@@ -1036,7 +1028,7 @@ class Sparse(Base):
         newCol = numpy.empty(copyIndex + len(toAddCol))
         newCol[:copyIndex] = self.data.col[:copyIndex]
         newCol[copyIndex:] = toAddCol
-        self.data = scipy.sparse.coo_matrix((newData, (newRow, newCol)), (self.pts, self.fts))
+        self.data = scipy.sparse.coo_matrix((newData, (newRow, newCol)), (len(self.points), len(self.features)))
 
         if len(toAddData) != 0:
             self._sorted = None
@@ -1044,8 +1036,8 @@ class Sparse(Base):
 
     def _flattenToOnePoint_implementation(self):
         self._sortInternal('point')
-        pLen = self.fts
-        numElem = self.pts * self.fts
+        pLen = len(self.features)
+        numElem = len(self.points) * len(self.features)
         for i in range(len(self.data.data)):
             if self.data.row[i] > 0:
                 self.data.col[i] += (self.data.row[i] * pLen)
@@ -1055,8 +1047,8 @@ class Sparse(Base):
 
     def _flattenToOneFeature_implementation(self):
         self._sortInternal('feature')
-        fLen = self.pts
-        numElem = self.pts * self.fts
+        fLen = len(self.points)
+        numElem = len(self.points) * len(self.features)
         for i in range(len(self.data.data)):
             if self.data.col[i] > 0:
                 self.data.row[i] += (self.data.col[i] * fLen)
@@ -1070,7 +1062,7 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('point')
 
-        numFeatures = self.fts // numPoints
+        numFeatures = len(self.features) // numPoints
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
@@ -1086,7 +1078,7 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('feature')
 
-        numPoints = self.pts // numFeatures
+        numPoints = len(self.points) // numFeatures
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
@@ -1123,7 +1115,7 @@ class Sparse(Base):
         # reinstantiate self
         # (cannot reshape coo matrices, so cannot do this in place)
         newData = (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex]))
-        self.data = scipy.sparse.coo_matrix(newData, (self.pts, self.fts))
+        self.data = scipy.sparse.coo_matrix(newData, (len(self.points), len(self.features)))
 
 
     def _binarySearch(self, x, y):
@@ -1172,9 +1164,9 @@ class Sparse(Base):
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
 
-        allPoints = pointStart == 0 and pointEnd == self.pts
+        allPoints = pointStart == 0 and pointEnd == len(self.points)
         singlePoint = pointEnd - pointStart == 1
-        allFeats = featureStart == 0 and featureEnd == self.fts
+        allFeats = featureStart == 0 and featureEnd == len(self.features)
         singleFeat = featureEnd - featureStart == 1
         # singleFeat = singlePoint = False
         if singleFeat or singlePoint:
@@ -1235,8 +1227,8 @@ class Sparse(Base):
             return SparseView(**kwds)
 
     def _validate_implementation(self, level):
-        assert self.data.shape[0] == self.pts
-        assert self.data.shape[1] == self.fts
+        assert self.data.shape[0] == len(self.points)
+        assert self.data.shape[1] == len(self.features)
         assert scipy.sparse.isspmatrix_coo(self.data)
 
         if level > 0:
@@ -1361,7 +1353,7 @@ class Sparse(Base):
             self.data.data = scaled
             self.data.data = scaled
         else:
-            self.data = coo_matrix(([], ([], [])), shape=(self.pts, self.fts))
+            self.data = coo_matrix(([], ([], [])), shape=(len(self.points), len(self.features)))
 
     def _mul__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1501,7 +1493,7 @@ class Sparse(Base):
         if axis != 'point' and axis != 'feature':
             raise ArgumentException("invalid axis type")
 
-        if self._sorted == axis or self.pts == 0 or self.fts == 0:
+        if self._sorted == axis or len(self.points) == 0 or len(self.features) == 0:
             return
 
         sortAsParam = 'row-major' if axis == 'point' else 'col-major'
@@ -1678,14 +1670,14 @@ class SparseView(BaseView, Sparse):
     def _generic_iterator(self, axis):
         source = self._source
         if axis == 'point':
-            positionLimit = self._pStart + self.pts
+            positionLimit = self._pStart + len(self.points)
             sourceStart = self._pStart
             # Needs to be None if we're dealing with a fully empty point
             fixedStart = self._fStart if self._fStart != 0 else None
             # self._fEnd is exclusive, but view takes inclusive indices
             fixedEnd = (self._fEnd - 1) if self._fEnd != 0 else None
         else:
-            positionLimit = self._fStart + self.fts
+            positionLimit = self._fStart + len(self.features)
             sourceStart = self._fStart
             # Needs to be None if we're dealing with a fully empty feature
             fixedStart = self._pStart if self._pStart != 0 else None
@@ -1716,8 +1708,8 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
-        if self.pts == 0 or self.fts == 0:
-            emptyStandin = numpy.empty((self.pts, self.fts))
+        if len(self.points) == 0 or len(self.features) == 0:
+            emptyStandin = numpy.empty((len(self.points), len(self.features)))
             intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
 

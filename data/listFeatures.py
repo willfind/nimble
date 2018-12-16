@@ -5,14 +5,16 @@ from __future__ import absolute_import
 
 from .axis import Axis
 from .listAxis import ListAxis
+from .features import Features
 
-class ListFeatures(ListAxis, Axis):
+class ListFeatures(ListAxis, Axis, Features):
     """
 
     """
     def __init__(self, source):
         self.source = source
         self.axis = 'feature'
+
         super(ListFeatures, self).__init__()
 
     def _add_implementation(self, toAdd, insertBefore):
@@ -21,9 +23,9 @@ class ListFeatures(ListAxis, Axis):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        for i in range(self.source.pts):
+        for i in range(len(self.source.points)):
             startData = self.source.data[i][:insertBefore]
             endData = self.source.data[i][insertBefore:]
             allPointData = startData + list(toAdd.data[i]) + endData
             self.source.data[i] = allPointData
-        self.source._numFeatures = self.source._numFeatures + toAdd.fts
+        self.source._numFeatures = self.source._numFeatures + len(toAdd.features)

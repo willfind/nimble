@@ -7,8 +7,9 @@ import numpy
 
 from .axis import Axis
 from .matrixAxis import MatrixAxis
+from .features import Features
 
-class MatrixFeatures(MatrixAxis, Axis):
+class MatrixFeatures(MatrixAxis, Axis, Features):
     """
 
     """

@@ -14,8 +14,6 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .points import Points
-from .features import Features
 from .dataframePoints import DataFramePoints
 from .dataframeFeatures import DataFrameFeatures
 from .dataframeElements import DataFrameElements
@@ -61,19 +59,13 @@ class DataFrame(Base):
         super(DataFrame, self).__init__(**kwds)
 
     def _getPoints(self):
-        return Points(DataFramePoints, self)
-
-    points = property(_getPoints, doc="TODO")
+        return DataFramePoints(self)
 
     def _getFeatures(self):
-        return Features(DataFrameFeatures, self)
-
-    features = property(_getFeatures, doc="TODO")
+        return DataFrameFeatures(self)
 
     def _getElements(self):
         return DataFrameElements(self)
-
-    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """
@@ -272,9 +264,9 @@ class DataFrame(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
             return False
-        if self.pts != other.pts:
+        if len(self.points) != len(other.points):
             return False
-        if self.fts != other.fts:
+        if len(self.features) != len(other.features):
             return False
 
         try:
@@ -406,7 +398,7 @@ class DataFrame(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('point', i)
                 raise currRet
-            if len(currRet) != self.fts:
+            if len(currRet) != len(self.features):
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
@@ -422,7 +414,7 @@ class DataFrame(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
-            if len(currRet) != self.pts:
+            if len(currRet) != len(self.points):
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
@@ -438,7 +430,7 @@ class DataFrame(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.pts), range(self.fts))
+        IDs = itertools.product(range(len(self.points)), range(len(self.features)))
         for (i, j) in IDs:
             currVal = self.data.iloc[i, j]
 
@@ -477,20 +469,20 @@ class DataFrame(Base):
 
 
     def _flattenToOnePoint_implementation(self):
-        numElements = self.pts * self.fts
+        numElements = len(self.points) * len(self.features)
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
 
     def _flattenToOneFeature_implementation(self):
-        numElements = self.pts * self.fts
+        numElements = len(self.points) * len(self.features)
         self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
 
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.fts // numPoints
+        numFeatures = len(self.features) // numPoints
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.pts // numFeatures
+        numPoints = len(self.points) // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
@@ -527,8 +519,8 @@ class DataFrame(Base):
 
     def _validate_implementation(self, level):
         shape = self.data.shape
-        assert shape[0] == self.pts
-        assert shape[1] == self.fts
+        assert shape[0] == len(self.points)
+        assert shape[1] == len(self.features)
 
     def _containsZero_implementation(self):
         """
@@ -543,9 +535,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self
@@ -574,9 +566,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self

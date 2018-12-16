@@ -8,12 +8,13 @@ import numpy
 import UML
 from .axis import Axis
 from .sparseAxis import SparseAxis
+from .features import Features
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
-class SparseFeatures(SparseAxis, Axis):
+class SparseFeatures(SparseAxis, Axis, Features):
     """
 
     """
@@ -49,7 +50,7 @@ class SparseFeatures(SparseAxis, Axis):
         # add remaining original data with adjusted col
         for i, col in enumerate(self.source.data.col[splitLength:]):
             newRow.append(self.source.data.row[splitLength:][i])
-            newCol.append(col + toAdd.fts)
+            newCol.append(col + len(toAdd.features))
             newData.append(self.source.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
         try:
@@ -57,7 +58,7 @@ class SparseFeatures(SparseAxis, Axis):
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
 
-        numNewCols = self.source.fts + toAdd.fts
+        numNewCols = len(self.source.features) + len(toAdd.features)
         self.source.data = coo_matrix((newData, (newRow, newCol)),
-                                      shape=(self.source.pts, numNewCols))
+                                      shape=(len(self.source.points), numNewCols))
         self.source._sorted = None

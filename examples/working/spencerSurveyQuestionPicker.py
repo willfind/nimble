@@ -39,8 +39,8 @@ def rSquared(knownValues, predictedValues):
 
 
 def varianceFractionRemaining(knownValues, predictedValues):
-    if knownValues.pts != predictedValues.pts: raise Exception("Objects had different numbers of points")
-    if knownValues.fts != predictedValues.fts: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.fts) + " and predicted values had " + str(predictedValues.fts))
+    if len(knownValues.points) != len(predictedValues.points): raise Exception("Objects had different numbers of points")
+    if len(knownValues.features) != len(predictedValues.features): raise Exception("Objects had different numbers of features. Known values had " + str(len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copyAs("numpy array")
     rawKnowns = knownValues.copyAs("numpy array")
@@ -78,7 +78,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
         featuresWithLabels.addFeatures(currentLabels)
-        labelFeatureNum = featuresWithLabels.fts-1
+        labelFeatureNum = len(featuresWithLabels.features)-1
 
         #get the training and testing data for this label
         trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting, labels=labelFeatureNum)
@@ -91,9 +91,9 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
     #confirm the training X sets all have the same number of features (even though they may not have the same number of points)
     for trainX, trainY in zip(trainXs, trainYs):
-        assert trainX.fts == trainXs[0].fts
-        assert trainY.pts == trainX.pts
-        assert trainY.fts == 1
+        assert len(trainX.features) == trainXs[0].fts
+        assert len(trainY.points) == len(trainX.points)
+        assert len(trainY.features) == 1
 
     return trainXs, trainYs, testXs, testYs
 
@@ -619,8 +619,8 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 def pointsToZScores(data):
     means = data.pointStatistics("mean")
     stddevs = data.pointStatistics("standarddeviation")
-    #identity = UML.createData("Matrix", numpy.ones(data.fts))
-    rawIdentity = numpy.atleast_2d(numpy.ones(data.fts))
+    #identity = UML.createData("Matrix", numpy.ones(len(data.features)))
+    rawIdentity = numpy.atleast_2d(numpy.ones(len(data.features)))
     onesPoint = UML.createData("Matrix", rawIdentity)
     means *= onesPoint
     stddevs *= onesPoint

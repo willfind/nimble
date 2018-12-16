@@ -150,18 +150,18 @@ def testSciKitLearnScoreMode():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.pts == 2
-    assert ret.fts == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.pts == 2
-    assert bestScores.fts == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.pts == 2
-    assert allScores.fts == 3
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 3
 
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
@@ -177,18 +177,18 @@ def testSciKitLearnScoreModeBinary():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.pts == 2
-    assert ret.fts == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.pts == 2
-    assert bestScores.fts == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.pts == 2
-    assert allScores.fts == 2
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 2
 
     checkLabelOrderingAndScoreAssociations([1, 2], bestScores, allScores)
 

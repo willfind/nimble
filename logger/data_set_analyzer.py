@@ -43,8 +43,8 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         label = func.__name__.rstrip('_')
         columnLabels.append(label)
 
-    resultsTable = [None] * dataContainer.fts
-    for index in range(dataContainer.fts):
+    resultsTable = [None] * len(dataContainer.features)
+    for index in range(len(dataContainer.features)):
         resultsTable[index] = dataContainer.getFeatureName(index)
 
     transposeRow(resultsTable)
@@ -68,8 +68,8 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     Inputs
         dataContainer - object of a type that inherits from Base.
-        
-        supplementalFunctions - additional functions that should be applied to each feature in 
+
+        supplementalFunctions - additional functions that should be applied to each feature in
             the data set.  Arg signature must expect one iterable feature vector, any other parameters
             must be optional.
 
@@ -87,7 +87,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
         functionsToApply.extend(supplementalFunctions)
 
     #If the data object is too big to print out info about each feature,
-    #extract a subset of features from the data set and 
+    #extract a subset of features from the data set and
     if shape[1] > maxFeaturesToCover:
         if maxFeaturesToCover % 2 == 0:
             leftIndicesToSelect = list(range(maxFeaturesToCover / 2))
@@ -151,7 +151,7 @@ def produceAggregateTable(dataContainer):
 def produceAggregateReport(dataContainer, displayDigits):
     """
     Calculate various aggregate statistics about the data set held in dataContainer and return
-    them as a string containing a table, with descriptors in the first row and numerical results 
+    them as a string containing a table, with descriptors in the first row and numerical results
     of those descriptors in the second row of the table.
 
     Statistics gathered:  proportion of zero values, proportion of missing values, number of Points
@@ -209,9 +209,9 @@ def transposeRow(row):
 
 def appendColumns(appendTo, appendFrom):
     """
-        Append the columns of one 2D matrix (lists of lists) into another.  
-        They must have the same number of rows, but can have different numbers 
-        of columns.  I.e. len(appendTo) == len(appendFrom), but 
+        Append the columns of one 2D matrix (lists of lists) into another.
+        They must have the same number of rows, but can have different numbers
+        of columns.  I.e. len(appendTo) == len(appendFrom), but
         len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
         If they do not have the same number of rows, an ArgumentException is
         raised.

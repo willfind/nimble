@@ -304,10 +304,10 @@ class Shogun(UniversalInterface):
         # check something that we know won't work, but shogun will not report intelligently
         if trainX is not None or testX is not None:
             if 'pointLen' not in customDict:
-                customDict['pointLen'] = trainX.fts if trainX is not None else testX.fts
-            if trainX is not None and trainX.fts != customDict['pointLen']:
+                customDict['pointLen'] = len(trainX.features) if trainX is not None else len(testX.features)
+            if trainX is not None and len(trainX.features) != customDict['pointLen']:
                 raise ArgumentException("Length of points in the training data and testing data must be the same")
-            if testX is not None and testX.fts != customDict['pointLen']:
+            if testX is not None and len(testX.features) != customDict['pointLen']:
                 raise ArgumentException("Length of points in the training data and testing data must be the same")
 
         trainXTrans = None
@@ -868,8 +868,8 @@ def _remapLabelsRange(toRemap):
     value originally in toRemap that was replaced with the value i.
 
     """
-    assert toRemap.fts == 1
-    assert toRemap.fts > 0
+    assert len(toRemap.features) == 1
+    assert len(toRemap.features) > 0
 
     mapping = {}
     inverse = []
@@ -908,8 +908,8 @@ def _remapLabelsSpecific(toRemap, space):
     Raises: ArgumentException if there are more than unique values than values in space
 
     """
-    assert toRemap.pts > 0
-    assert toRemap.fts == 1
+    assert len(toRemap.points) > 0
+    assert len(toRemap.features) == 1
 
     mapping = {}
     inverse = []

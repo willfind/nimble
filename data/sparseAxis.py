@@ -51,7 +51,7 @@ class SparseAxis(Axis):
             targeted = data[targetList, :]
             if structure != 'copy':
                 notTarget = []
-                for idx in range(self.source.pts):
+                for idx in range(len(self.source.points)):
                     if idx not in targetList:
                         notTarget.append(idx)
                 notTargeted = data[notTarget, :]
@@ -62,7 +62,7 @@ class SparseAxis(Axis):
             targeted = data[:, targetList]
             if structure != 'copy':
                 notTarget = []
-                for idx in range(self.source.fts):
+                for idx in range(len(self.source.features)):
                     if idx not in targetList:
                         notTarget.append(idx)
                 notTargeted = data[:, notTarget]

@@ -6,12 +6,13 @@ from __future__ import absolute_import
 import UML
 from .axis import Axis
 from .dataframeAxis import DataFrameAxis
+from .points import Points
 
 pd = UML.importModule('pandas')
 if pd:
     import pandas as pd
 
-class DataFramePoints(DataFrameAxis, Axis):
+class DataFramePoints(DataFrameAxis, Axis, Points):
     """
 
     """

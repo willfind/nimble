@@ -64,14 +64,14 @@ def viewConstructorMaker(concreteType):
 
         # generate points of data to be present before and after the viewable
         # data in the concrete object
-        if orig.pts != 0:
-            firstPRaw = [[0] * orig.fts]
+        if len(orig.points) != 0:
+            firstPRaw = [[0] * len(orig.features)]
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
                                                     pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                     elementType=elementType)
 
-            lastPRaw = [[3] * orig.fts]
+            lastPRaw = [[3] * len(orig.features)]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
                                                    pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
@@ -82,7 +82,7 @@ def viewConstructorMaker(concreteType):
             full.addPoints(lastPoint)
 
             pStart = 1
-            pEnd = full.pts - 2
+            pEnd = len(full.points) - 2
         else:
             full = orig
             pStart = None
@@ -90,8 +90,8 @@ def viewConstructorMaker(concreteType):
 
         # generate features of data to be present before and after the viewable
         # data in the concrete object
-        if orig.fts != 0:
-            lastFRaw = [[1] * full.pts]
+        if len(orig.features) != 0:
+            lastFRaw = [[1] * len(full.points)]
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
                                                      featureNames=full.getPointNames(), pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
@@ -100,7 +100,7 @@ def viewConstructorMaker(concreteType):
 
             full.addFeatures(lastFeature)
             fStart = None
-            fEnd = full.fts - 2
+            fEnd = len(full.features) - 2
         else:
             fStart = None
             fEnd = None

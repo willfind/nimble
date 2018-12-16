@@ -7,8 +7,9 @@ import numpy
 
 from .axis import Axis
 from .matrixAxis import MatrixAxis
+from .points import Points
 
-class MatrixPoints(MatrixAxis, Axis):
+class MatrixPoints(MatrixAxis, Axis, Points):
     """
 
     """

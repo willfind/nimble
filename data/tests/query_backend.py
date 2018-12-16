@@ -68,8 +68,8 @@ class QueryBackend(DataTestObject):
         objPEmpty = self.constructor(dataPEmpty)
         objFEmpty = self.constructor(dataFEmpty)
 
-        assert objPEmpty.pts == 0
-        assert objFEmpty.pts == 2
+        assert len(objPEmpty.points) == 0
+        assert len(objFEmpty.points) == 2
 
 
     def test_pointCount_vectorTest(self):
@@ -80,8 +80,8 @@ class QueryBackend(DataTestObject):
         toTestR = self.constructor(dataR)
         toTestC = self.constructor(dataC)
 
-        rPoints = toTestR.pts
-        cPoints = toTestC.pts
+        rPoints = len(toTestR.points)
+        cPoints = len(toTestC.points)
 
         assert rPoints == 1
         assert cPoints == 3
@@ -101,8 +101,8 @@ class QueryBackend(DataTestObject):
         pEmpty = self.constructor(dataPEmpty)
         fEmpty = self.constructor(dataFEmpty)
 
-        assert pEmpty.fts == 2
-        assert fEmpty.fts == 0
+        assert len(pEmpty.features) == 2
+        assert len(fEmpty.features) == 0
 
 
     def test_featureCount_vectorTest(self):
@@ -113,8 +113,8 @@ class QueryBackend(DataTestObject):
         toTestR = self.constructor(dataR)
         toTestC = self.constructor(dataC)
 
-        rFeatures = toTestR.fts
-        cFeatures = toTestC.fts
+        rFeatures = len(toTestR.features)
+        cFeatures = len(toTestC.features)
 
         assert rFeatures == 3
         assert cFeatures == 1
@@ -227,7 +227,7 @@ class QueryBackend(DataTestObject):
                     setter = exclude._source.setPointNames
                 else:
                     setter = exclude.setPointNames
-                count = exclude.pts
+                count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
                 getter = 'getFeatureName'
@@ -235,7 +235,7 @@ class QueryBackend(DataTestObject):
                     setter = exclude._source.setFeatureNames
                 else:
                     setter = exclude.setFeatureNames
-                count = exclude.fts
+                count = len(exclude.features)
 
             # increase the index of the default point name so that it will be
             # recognizable when we read in from the file.
@@ -525,7 +525,7 @@ class QueryBackend(DataTestObject):
 
         v = toTest.pointView(0)
 
-        assert v.fts == 0
+        assert len(v.features) == 0
 
 
     def test_pointView_isinstance(self):
@@ -538,9 +538,9 @@ class QueryBackend(DataTestObject):
 
         assert isinstance(pView, BaseView)
         assert pView.name != toTest.name
-        assert pView.pts == 1
-        assert pView.fts == 3
-        assert len(pView) == toTest.fts
+        assert len(pView.points) == 1
+        assert len(pView.features) == 3
+        assert len(pView) == len(toTest.features)
         assert pView[0] == 1
         assert pView['two'] == 2
         assert pView['three'] == 3
@@ -557,7 +557,7 @@ class QueryBackend(DataTestObject):
 
         v = toTest.featureView(0)
 
-        assert v.pts == 0
+        assert len(v.points) == 0
 
     def test_featureView_isinstance(self):
         """ Test featureView() returns an instance of the BaseView """
@@ -570,9 +570,9 @@ class QueryBackend(DataTestObject):
 
         assert isinstance(fView, BaseView)
         assert fView.name != toTest.name
-        assert fView.pts == 3
-        assert fView.fts == 1
-        assert len(fView) == toTest.pts
+        assert len(fView.points) == 3
+        assert len(fView.features) == 1
+        assert len(fView) == len(toTest.points)
         assert fView[0] == 1
         assert fView['4'] == 4
         assert fView['7'] == 7
@@ -1467,8 +1467,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("max ")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[2], [-1], [0]]
         expObj = self.constructor(expRaw, featureNames=["max"], pointNames=pnames)
@@ -1512,8 +1512,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics(" MEAN")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [2. / 3], [1. / 3]]
         expObj = self.constructor(expRaw, featureNames=["mean"], pointNames=pnames)
@@ -1546,8 +1546,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("median")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [1], [0]]
         expObj = self.constructor(expRaw, featureNames=["median"], pointNames=pnames)
@@ -1581,8 +1581,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("min")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [-21], [-1]]
         expObj = self.constructor(expRaw, featureNames=['min'], pointNames=pnames)
@@ -1615,8 +1615,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("UniqueCount")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [2], [3]]
         expObj = self.constructor(expRaw, featureNames=['uniquecount'], pointNames=pnames)
@@ -1649,8 +1649,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("proportionmissing")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1. / 3], [1. / 3], [2. / 3]]
         expObj = self.constructor(expRaw, featureNames=['proportionmissing'], pointNames=pnames)
@@ -1681,12 +1681,12 @@ class QueryBackend(DataTestObject):
             ret = orig.pointStatistics("proportionZero")
         else:
             ret = trans.featureStatistics("proportion Zero")
-            assert ret.pts == 1
-            assert ret.fts == 3
+            assert len(ret.points) == 1
+            assert len(ret.features) == 3
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[0], [1. / 3], [2. / 3]]
         expObj = self.constructor(expRaw, featureNames=['proportionzero'], pointNames=pnames)
@@ -1719,8 +1719,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("standard deviation")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         npExpRaw = numpy.std(data, axis=1, ddof=1, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
@@ -1763,8 +1763,8 @@ class QueryBackend(DataTestObject):
             ret = trans.featureStatistics("population standarddeviation")
             ret.transpose()
 
-        assert ret.pts == 3
-        assert ret.fts == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         npExpRaw = numpy.std(data, axis=1, ddof=0, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
@@ -1959,10 +1959,10 @@ def checkToStringRet(ret, data, includeNames):
             if len(val) != 0:
                 fnames.append(val)
         # -1 for the fnames,  -1 for the blank row
-        assert len(rows) - 2 <= data.pts
+        assert len(rows) - 2 <= len(data.points)
     else:
         rowOffset = 0
-        assert len(rows) <= data.pts
+        assert len(rows) <= len(data.points)
 
     for r in range(rowOffset, len(rows)):
         row = rows[r]
@@ -1984,7 +1984,7 @@ def checkToStringRet(ret, data, includeNames):
             rDataIndex = -(len(rows) - r)
 
         negCol = False
-        assert len(vals) <= data.fts
+        assert len(vals) <= len(data.features)
         if includeNames:
             assert len(fnames) == len(vals)
         for c in range(len(vals)):
@@ -2003,10 +2003,10 @@ def checkToStringRet(ret, data, includeNames):
 
             if includeNames:
                 # generate name from indices
-                offset = data.pts if negRow else 0
+                offset = len(data.points) if negRow else 0
                 fromIndexPname = data.getPointName(offset + rDataIndex)
                 assert fromIndexPname == pname
 
-                offset = data.fts if negCol else 0
+                offset = len(data.features) if negCol else 0
                 fromIndexFname = data.getFeatureName(offset + cDataIndex)
                 assert fromIndexFname == fnames[cDataIndex]

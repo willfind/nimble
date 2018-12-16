@@ -33,8 +33,8 @@ def test_createData_raw_stringConversion():
     for t in returnTypes:
         values = []
         toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
-        for i in range(toTest.pts):
-            for j in range(toTest.fts):
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
@@ -44,8 +44,8 @@ def test_createData_raw_noStringConversion():
     for t in returnTypes:
         values = []
         toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']], elementType=object)
-        for i in range(toTest.pts):
-            for j in range(toTest.fts):
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
 
@@ -1094,7 +1094,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.fts == 4
+            assert len(fromCSV.features) == 4
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
@@ -1116,7 +1116,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.fts == 5
+            assert len(fromCSV.features) == 5
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
@@ -1138,7 +1138,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.fts == 5
+            assert len(fromCSV.features) == 5
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
@@ -1157,7 +1157,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
             assert fromList == fromCSV
 
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.fts == 4
+            assert len(fromCSV.features) == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():

@@ -252,14 +252,14 @@ def testCustomLearnerGetScores():
 
     name = 'Custom.LoveAtFirstSightClassifier'
     preds = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
-    assert preds.pts == 3
-    assert preds.fts == 1
+    assert len(preds.points) == 3
+    assert len(preds.features) == 1
     best = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='bestScore')
-    assert best.pts == 3
-    assert best.fts == 2
+    assert len(best.points) == 3
+    assert len(best.features) == 2
     allScores = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='allScores')
-    assert allScores.pts == 3
-    assert allScores.fts == 3
+    assert len(allScores.points) == 3
+    assert len(allScores.features) == 3
 
 
 @configSafetyWrapper
@@ -276,8 +276,8 @@ def testCustomLearnerIncTrainCheck():
     UML.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
 
     def verifyScores(scores, currPredIndex):
-        for rowNum in range(scores.pts):
-            for featNum in range(scores.fts):
+        for rowNum in range(len(scores.points)):
+            for featNum in range(len(scores.features)):
                 value = scores[rowNum, featNum]
                 if featNum == currPredIndex:
                     assert value == 1

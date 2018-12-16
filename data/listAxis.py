@@ -31,7 +31,7 @@ class ListAxis(Axis):
 
         if self.axis == 'point':
             keepList = []
-            for idx in range(self.source.pts):
+            for idx in range(len(self.source.points)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[targetList, :]
@@ -46,11 +46,11 @@ class ListAxis(Axis):
         else:
             if self.source.data == []:
                 # create empty matrix with correct shape
-                empty = numpy.empty((self.source.pts, self.source.fts))
+                empty = numpy.empty((len(self.source.points), len(self.source.features)))
                 data = numpy.matrix(empty, dtype=numpy.object_)
 
             keepList = []
-            for idx in range(self.source.fts):
+            for idx in range(len(self.source.features)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[:, targetList]

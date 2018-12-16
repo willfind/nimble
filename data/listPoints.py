@@ -5,8 +5,9 @@ from __future__ import absolute_import
 
 from .axis import Axis
 from .listAxis import ListAxis
+from .points import Points
 
-class ListPoints(ListAxis, Axis):
+class ListPoints(ListAxis, Axis, Points):
     """
 
     """
@@ -21,8 +22,8 @@ class ListPoints(ListAxis, Axis):
         in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        insertedLength = self.source.pts + toAdd.pts
-        insertRange = range(insertBefore, insertBefore + toAdd.pts)
+        insertedLength = len(self.source.points) + len(toAdd.points)
+        insertRange = range(insertBefore, insertBefore + len(toAdd.points))
         insertIndex = 0
         selfIndex = 0
         allData = []

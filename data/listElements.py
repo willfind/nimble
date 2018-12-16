@@ -31,8 +31,8 @@ class ListElements(Elements):
         different, but the returned object will be the inplace
         modification of the calling object.
         """
-        for pNum in range(self.source.pts):
-            for fNum in range(self.source.fts):
+        for pNum in range(len(self.source.points)):
+            for fNum in range(len(self.source.features)):
                 # Divided by 1 to make it raise if it involves non-numeric
                 # types ('str')
                 self.source.data[pNum][fNum] *= other[pNum, fNum] / 1

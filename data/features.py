@@ -12,8 +12,8 @@ class Features(object):
     """
 
     """
-    def __init__(self, axisObj, source):
-        self.obj = axisObj(source)
+    def __init__(self):
+        pass
 
     #########################
     # Structural Operations #
@@ -69,7 +69,7 @@ class Features(object):
         --------
         TODO
         """
-        return self.obj._copy(toCopy, start, end, number, randomize)
+        return self._copy(toCopy, start, end, number, randomize)
 
     def extract(self, toExtract=None, start=None, end=None, number=None,
                 randomize=False):
@@ -122,7 +122,7 @@ class Features(object):
         --------
         TODO
         """
-        return self.obj._extract(toExtract, start, end, number, randomize)
+        return self._extract(toExtract, start, end, number, randomize)
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
                randomize=False):
@@ -171,7 +171,7 @@ class Features(object):
         --------
         TODO
         """
-        self.obj._delete(toDelete, start, end, number, randomize)
+        self._delete(toDelete, start, end, number, randomize)
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
                randomize=False):
@@ -220,7 +220,7 @@ class Features(object):
         --------
         TODO
         """
-        self.obj._retain(toRetain, start, end, number, randomize)
+        self._retain(toRetain, start, end, number, randomize)
 
     def count(self, condition):
         """
@@ -247,7 +247,7 @@ class Features(object):
         --------
         TODO
         """
-        return self.obj._count(condition)
+        return self._count(condition)
 
     ###########################
     # Higher Order Operations #
@@ -282,7 +282,7 @@ class Features(object):
         --------
         TODO
         """
-        return self.obj._calculate(function, features)
+        return self._calculate(function, features)
 
     def add(self, toAdd, insertBefore=None):
         """
@@ -317,4 +317,4 @@ class Features(object):
         --------
         TODO
         """
-        self.obj._add(toAdd, insertBefore)
+        self._add(toAdd, insertBefore)

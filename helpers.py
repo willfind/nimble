@@ -621,7 +621,7 @@ def initDataObject(
             converted = ret._getPointIndex(val)
             if converted not in cleaned:
                 cleaned.append(converted)
-        if len(cleaned) == ret.pts:
+        if len(cleaned) == len(ret.points):
             pCmp = makeCmp(cleaned, ret, 'point')
             ret.sortPoints(sortHelper=pCmp)
         else:
@@ -633,7 +633,7 @@ def initDataObject(
             if converted not in cleaned:
                 cleaned.append(converted)
 
-        if len(cleaned) == ret.fts:
+        if len(cleaned) == len(ret.features):
             fCmp = makeCmp(cleaned, ret, 'feature')
             ret.sortFeatures(sortHelper=fCmp)
         else:
@@ -2296,10 +2296,10 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
     # the value we don't want to split from the training set
     nonSplit = allData[endTrain, orderedFeature]
     # we're doing a lookahead here, thus -1 from the last possible index, and  +1 to our lookup
-    while (endTrain < allData.pts - 1 and allData[endTrain + 1, orderedFeature] == nonSplit):
+    while (endTrain < len(allData.points) - 1 and allData[endTrain + 1, orderedFeature] == nonSplit):
         endTrain += 1
 
-    if endTrain == allData.pts - 1:
+    if endTrain == len(allData.points) - 1:
         return None
 
     # we get the start for training by counting back from endTrain
@@ -2313,12 +2313,12 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
     # we get the start and end of the test set by counting forward from endTrain
     # speciffically, we go forward by one, and as much more forward as specified by gap
     startTest = _jumpForward(allData, orderedFeature, endTrain + 1, gap)
-    if startTest >= allData.pts:
+    if startTest >= len(allData.points):
         return None
 
     endTest = _jumpForward(allData, orderedFeature, startTest, maxTestSize, -1)
-    if endTest >= allData.pts:
-        endTest = allData.pts - 1
+    if endTest >= len(allData.points):
+        endTest = len(allData.points) - 1
     if _diffLessThan(allData, orderedFeature, startTest, endTest, minTestSize):
     #		return _incrementTrialWindows(allData, orderedFeature, currEndTrain+1, minTrainSize, maxTrainSize, stepSize, gap, minTestSize, maxTestSize)
         return None
@@ -2346,7 +2346,7 @@ def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
         endPoint = start
         startVal = datetime.timedelta(float(allData[start, orderedFeature]))
         # loop as long as we don't run off the end of the data
-        while (endPoint < allData.pts - 1):
+        while (endPoint < len(allData.points) - 1):
             if (datetime.timedelta(float(allData[endPoint + 1, orderedFeature])) - startVal > delta):
                 break
             endPoint = endPoint + 1
@@ -2515,12 +2515,12 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             X = X.copy()
             Y = X.extractFeatures(Y)
 
-        if Y.fts > 1 and scoreMode != 'label':
+        if len(Y.features) > 1 and scoreMode != 'label':
             msg = "When dealing with multi dimentional outputs / predictions, "
             msg += "then the scoreMode flag is required to be set to 'label'"
             raise ArgumentException(msg)
 
-        if not X.pts == Y.pts:
+        if not len(X.points) == len(Y.points):
             #todo support indexing if Y is an index for X instead
             raise ArgumentException("X and Y must contain the same number of points.")
 
@@ -2643,10 +2643,10 @@ def makeFoldIterator(dataList, folds):
     points = dataList[0].pts
     for data in dataList:
         if data is not None:
-            if data.pts == 0:
+            if len(data.points) == 0:
                 raise ArgumentException(
                     "One of the objects has 0 points, it is impossible to specify a valid number of folds")
-            if data.pts != dataList[0].pts:
+            if len(data.points) != dataList[0].pts:
                 raise ArgumentException("All data objects in the list must have the same number of points and features")
 
     # note: we want truncation here
@@ -2948,10 +2948,10 @@ def sumAbsoluteDifference(dataOne, dataTwo):
     """
 
     #compare shapes of data to make sure a comparison is sensible.
-    if dataOne.fts != dataTwo.fts:
+    if len(dataOne.features) != len(dataTwo.features):
         raise ArgumentException(
             "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of features.")
-    if dataOne.pts != dataTwo.pts:
+    if len(dataOne.points) != len(dataTwo.points):
         raise ArgumentException(
             "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of points.")
 
@@ -3117,12 +3117,12 @@ class LearnerInspector:
         #so pass back that labels are repeated
         # if runResults are all in trainLabels, then it's repeating:
         alreadySeenLabelsList = []
-        for curPointIndex in range(trainLabels.pts):
+        for curPointIndex in range(len(trainLabels.points)):
             alreadySeenLabelsList.append(trainLabels[curPointIndex, 0])
 
         #check if the learner generated any new label (one it hadn't seen in training)
         unseenLabelFound = False
-        for curResultPointIndex in range(runResults.pts):
+        for curResultPointIndex in range(len(runResults.points)):
             if runResults[curResultPointIndex, 0] not in alreadySeenLabelsList:
                 unseenLabelFound = True
                 break
@@ -3236,9 +3236,9 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             raise ArgumentException(
                 "trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
         if isinstance(trainY, Base):
-        #			if not trainY.fts == 1:
+        #			if not len(trainY.features) == 1:
         #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
-            if not trainY.pts == trainX.pts:
+            if not len(trainY.points) == len(trainX.points):
                 raise ArgumentException(
                     "If trainY is a Data object, then it must have the same number of points as trainX")
 
@@ -3257,9 +3257,9 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             raise ArgumentException(
                 "testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
         if isinstance(trainY, Base):
-        #			if not trainY.fts == 1:
+        #			if not len(trainY.features) == 1:
         #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
-            if not trainY.pts == trainX.pts:
+            if not len(trainY.points) == len(trainX.points):
                 raise ArgumentException(
                     "If trainY is a Data object, then it must have the same number of points as trainX")
 
@@ -3267,7 +3267,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
 def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
     outputData = X if Y is None else Y
     if isinstance(outputData, Base):
-        needToCheck = outputData.fts > 1
+        needToCheck = len(outputData.features) > 1
     elif isinstance(outputData, (list, tuple)):
         needToCheck = len(outputData) > 1
     elif isinstance(outputData, bool):
@@ -3338,7 +3338,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     if isinstance(trainY, Base):
         trainX = trainX.copy()
         trainX.addFeatures(trainY)
-        trainY = trainX.fts - 1
+        trainY = len(trainX.features) - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations of
     # class labels

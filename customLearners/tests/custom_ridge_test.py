@@ -19,8 +19,8 @@ def testRidgeRegressionShapes():
     name = 'Custom.RidgeRegression'
     ret = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb': 0})
 
-    assert ret.pts == 2
-    assert ret.fts == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
     numpy.testing.assert_approx_equal(ret[0, 0], 10.5, significant=3)
     numpy.testing.assert_approx_equal(ret[1, 0], 18, significant=2)
 

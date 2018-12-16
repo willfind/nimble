@@ -16,8 +16,6 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .points import Points
-from .features import Features
 from .listPoints import ListPoints
 from .listFeatures import ListFeatures
 from .listElements import ListElements
@@ -120,19 +118,13 @@ class List(Base):
         super(List, self).__init__(**kwds)
 
     def _getPoints(self):
-        return Points(ListPoints, self)
-
-    points = property(_getPoints, doc="TODO")
+        return ListPoints(self)
 
     def _getFeatures(self):
-        return Features(ListFeatures, self)
-
-    features = property(_getFeatures, doc="TODO")
+        return ListFeatures(self)
 
     def _getElements(self):
         return ListElements(self)
-
-    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """
@@ -143,7 +135,7 @@ class List(Base):
         tempFeatures = len(self.data)
         transposed = []
         #load the new data with an empty point for each feature in the original
-        for i in range(self.fts):
+        for i in range(len(self.features)):
             transposed.append([])
         for point in self.data:
             for i in range(len(point)):
@@ -159,8 +151,8 @@ class List(Base):
         the inserted points
 
         """
-        insertedLength = self.pts + toAdd.pts
-        insertRange = range(insertBefore, insertBefore + toAdd.pts)
+        insertedLength = len(self.points) + len(toAdd.points)
+        insertRange = range(insertBefore, insertBefore + len(toAdd.points))
         insertIndex = 0
         selfIndex = 0
         allData = []
@@ -180,12 +172,12 @@ class List(Base):
         will continue to the right of the inserted points
 
         """
-        for i in range(self.pts):
+        for i in range(len(self.points)):
             startData = self.data[i][:insertBefore]
             endData = self.data[i][insertBefore:]
             allPointData = startData + list(toAdd.data[i]) + endData
             self.data[i] = allPointData
-        self._numFeatures = self._numFeatures + toAdd.fts
+        self._numFeatures = self._numFeatures + len(toAdd.features)
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
@@ -301,7 +293,7 @@ class List(Base):
         data = numpy.matrix(self.data, dtype=object)
 
         if axis == 'point':
-            keepList = [idx for idx in range(self.pts) if idx not in targetList]
+            keepList = [idx for idx in range(len(self.points)) if idx not in targetList]
             satisfying = data[targetList, :]
             if structure != 'copy':
                 keep = data[keepList, :]
@@ -314,9 +306,9 @@ class List(Base):
         else:
             if self.data == []:
                 # create empty matrix with correct shape
-                data = numpy.matrix(numpy.empty((self.pts,self.fts)), dtype=object)
+                data = numpy.matrix(numpy.empty((len(self.points),len(self.features))), dtype=object)
 
-            keepList = [idx for idx in range(self.fts) if idx not in targetList]
+            keepList = [idx for idx in range(len(self.features)) if idx not in targetList]
             satisfying = data[:, targetList]
             if structure != 'copy':
                 keep = data[:, keepList]
@@ -335,7 +327,7 @@ class List(Base):
     def _mapReducePoints_implementation(self, mapper, reducer):
         mapResults = {}
         # apply the mapper to each point in the data
-        for i in range(self.pts):
+        for i in range(len(self.points)):
             currResults = mapper(self.pointView(i))
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
@@ -362,11 +354,11 @@ class List(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, List):
             return False
-        if self.pts != other.pts:
+        if len(self.points) != len(other.points):
             return False
-        if self.fts != other.fts:
+        if len(self.features) != len(other.features):
             return False
-        for index in range(self.pts):
+        for index in range(len(self.points)):
             sPoint = self.data[index]
             oPoint = other.data[index]
             if sPoint != oPoint:
@@ -455,10 +447,10 @@ class List(Base):
         else:
             outFile.write('%#\n')
 
-        outFile.write(str(self.pts) + " " + str(self.fts) + "\n")
+        outFile.write(str(len(self.points)) + " " + str(len(self.features)) + "\n")
 
-        for j in range(self.fts):
-            for i in range(self.pts):
+        for j in range(len(self.features)):
+            for i in range(len(self.points)):
                 value = self.data[i][j]
                 outFile.write(str(value) + '\n')
         outFile.close()
@@ -473,38 +465,38 @@ class List(Base):
     def _copyAs_implementation(self, format):
 
         if format == 'Sparse':
-            if self.pts == 0 or self.fts == 0:
-                emptyData = numpy.empty(shape=(self.pts, self.fts))
+            if len(self.points) == 0 or len(self.features) == 0:
+                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
                 return UML.createData('Sparse', emptyData)
             return UML.createData('Sparse', self.data)
 
         if format is None or format == 'List':
-            if self.pts == 0 or self.fts == 0:
-                emptyData = numpy.empty(shape=(self.pts, self.fts))
+            if len(self.points) == 0 or len(self.features) == 0:
+                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
                 return UML.createData('List', emptyData)
             else:
                 return UML.createData('List', self.data)
         if format == 'Matrix':
-            if self.pts == 0 or self.fts == 0:
-                emptyData = numpy.empty(shape=(self.pts, self.fts))
+            if len(self.points) == 0 or len(self.features) == 0:
+                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
                 return UML.createData('Matrix', emptyData)
             else:
                 return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            if self.pts == 0 or self.fts == 0:
-                emptyData = numpy.empty(shape=(self.pts, self.fts))
+            if len(self.points) == 0 or len(self.features) == 0:
+                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
                 return UML.createData('DataFrame', emptyData)
             else:
                 return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
-            if self.pts == 0 or self.fts == 0:
-                return numpy.empty(shape=(self.pts, self.fts))
+            if len(self.points) == 0 or len(self.features) == 0:
+                return numpy.empty(shape=(len(self.points), len(self.features)))
             return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
-            if self.pts == 0 or self.fts == 0:
-                return numpy.matrix(numpy.empty(shape=(self.pts, self.fts)))
+            if len(self.points) == 0 or len(self.features) == 0:
+                return numpy.matrix(numpy.empty(shape=(len(self.points), len(self.features))))
             return numpy.matrix(self.data)
         if format == 'scipycsc':
             if not scipy:
@@ -535,7 +527,7 @@ class List(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('point', i)
                 raise currRet
-            if len(currRet) != self.fts:
+            if len(currRet) != len(self.features):
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
@@ -551,11 +543,11 @@ class List(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
-            if len(currRet) != self.pts:
+            if len(currRet) != len(self.points):
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
-            for i in range(self.pts):
+            for i in range(len(self.points)):
                 self.data[i][j] = currRet[i]
 
     def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
@@ -568,7 +560,7 @@ class List(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.pts), range(self.fts))
+        IDs = itertools.product(range(len(self.points)), range(len(self.features)))
         for (i, j) in IDs:
             currVal = self.data[i][j]
 
@@ -607,7 +599,7 @@ class List(Base):
 
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
-        for i in range(1,self.pts):
+        for i in range(1,len(self.points)):
             onto += self.data[1]
             del self.data[1]
 
@@ -615,7 +607,7 @@ class List(Base):
 
     def _flattenToOneFeature_implementation(self):
         result = []
-        for i in range(self.fts):
+        for i in range(len(self.features)):
             for p in self.data:
                 result.append([p[i]])
 
@@ -624,7 +616,7 @@ class List(Base):
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         result = []
-        numFeatures = self.fts // numPoints
+        numFeatures = len(self.features) // numPoints
         for i in range(numPoints):
             temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
             result.append(temp)
@@ -634,12 +626,12 @@ class List(Base):
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         result = []
-        numPoints = self.pts // numFeatures
+        numPoints = len(self.points) // numFeatures
         # reconstruct the shape we want, point by point. We access the singleton
         # values from the current data in an out of order iteration
         for i in range(numPoints):
             temp = []
-            for j in range(i, self.pts, numPoints):
+            for j in range(i, len(self.points), numPoints):
                 temp += self.data[j]
             result.append(temp)
 
@@ -666,8 +658,8 @@ class List(Base):
                 else:
                     fNames = False
 
-                if (self.pts == 0 or self.fts == 0) and format != 'List':
-                    emptyStandin = numpy.empty((self.pts, self.fts))
+                if (len(self.points) == 0 or len(self.features) == 0) and format != 'List':
+                    emptyStandin = numpy.empty((len(self.points), len(self.features)))
                     intermediate = UML.createData('Matrix', emptyStandin)
                     return intermediate.copyAs(format)
 
@@ -757,8 +749,8 @@ class List(Base):
         return ListView(**kwds)
 
     def _validate_implementation(self, level):
-        assert len(self.data) == self.pts
-        assert self._numFeatures == self.fts
+        assert len(self.data) == len(self.points)
+        assert self._numFeatures == len(self.features)
 
         if level > 0:
             if len(self.data) > 0:
@@ -784,9 +776,9 @@ class List(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self
@@ -815,9 +807,9 @@ class List(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self
@@ -865,7 +857,7 @@ class List(Base):
             retP = []
             for oFeature in other.featureIterator():
                 runningTotal = 0
-                for index in range(other.pts):
+                for index in range(len(other.points)):
                     runningTotal += sPoint[index] * oFeature[index]
                 retP.append(runningTotal)
             ret.append(retP)
@@ -881,8 +873,8 @@ class List(Base):
         be the inplace modification of the calling object.
 
         """
-        for pNum in range(self.pts):
-            for fNum in range(self.fts):
+        for pNum in range(len(self.points)):
+            for fNum in range(len(self.features)):
                 # Divided by 1 to make it raise if it involves non-numeric types ('str')
                 self.data[pNum][fNum] *= other[pNum, fNum] / 1
 

@@ -320,10 +320,10 @@ def residuals(toPredict, controlVars):
         msg = "controlVars must be a UML data object"
         raise ArgumentException(msg)
 
-    tpP = toPredict.pts
-    tpF = toPredict.fts
-    cvP = controlVars.pts
-    cvF = controlVars.fts
+    tpP = len(toPredict.points)
+    tpF = len(toPredict.features)
+    cvP = len(controlVars.points)
+    cvF = len(controlVars.features)
 
     if tpP != cvP:
         msg = "toPredict and controlVars must have the same number of points: ("

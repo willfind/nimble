@@ -16,8 +16,6 @@ from six.moves import zip
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .points import Points
-from .features import Features
 from .matrixPoints import MatrixPoints
 from .matrixFeatures import MatrixFeatures
 from .matrixElements import MatrixElements
@@ -66,19 +64,13 @@ class Matrix(Base):
         super(Matrix, self).__init__(**kwds)
 
     def _getPoints(self):
-        return Points(MatrixPoints, self)
-
-    points = property(_getPoints, doc="TODO")
+        return MatrixPoints(self)
 
     def _getFeatures(self):
-        return Features(MatrixFeatures, self)
-
-    features = property(_getFeatures, doc="TODO")
+        return MatrixFeatures(self)
 
     def _getElements(self):
         return MatrixElements(self)
-
-    elements = property(_getElements, doc="TODO")
 
     def _transpose_implementation(self):
         """
@@ -296,9 +288,9 @@ class Matrix(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Matrix):
             return False
-        if self.pts != other.pts:
+        if len(self.points) != len(other.points):
             return False
-        if self.fts != other.fts:
+        if len(self.features) != len(other.features):
             return False
 
         try:
@@ -375,12 +367,12 @@ class Matrix(Base):
 
         header = ''
         if includePointNames:
-            header = makeNameString(self.pts, self.getPointName)
+            header = makeNameString(len(self.points), self.getPointName)
             header += '\n'
         else:
             header += '#\n'
         if includeFeatureNames:
-            header += makeNameString(self.fts, self.getFeatureName)
+            header += makeNameString(len(self.features), self.getFeatureName)
         else:
             header += '#\n'
 
@@ -441,7 +433,7 @@ class Matrix(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('point', i)
                 raise currRet
-            if len(currRet) != self.fts:
+            if len(currRet) != len(self.features):
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
             try:
@@ -451,7 +443,7 @@ class Matrix(Base):
                 # need self.data to be object dtype if inserting object dtype
                 if numpy.issubdtype(self.data.dtype, numpy.number):
                     self.data = self.data.astype(numpy.object_)
-            self.data[i, :] = numpy.array(currRet).reshape(1, self.fts)
+            self.data[i, :] = numpy.array(currRet).reshape(1, len(self.features))
 
     def _transformEachFeature_implementation(self, function, features):
         for j, f in enumerate(self.featureIterator()):
@@ -463,7 +455,7 @@ class Matrix(Base):
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
-            if len(currRet) != self.pts:
+            if len(currRet) != len(self.points):
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
             try:
@@ -473,7 +465,7 @@ class Matrix(Base):
                 # need self.data to be object dtype if inserting object dtype
                 if numpy.issubdtype(self.data.dtype, numpy.number):
                     self.data = self.data.astype(numpy.object_)
-            self.data[:, j] = numpy.array(currRet).reshape(self.pts, 1)
+            self.data[:, j] = numpy.array(currRet).reshape(len(self.points), 1)
 
     def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
@@ -485,7 +477,7 @@ class Matrix(Base):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(self.pts), range(self.fts))
+        IDs = itertools.product(range(len(self.points)), range(len(self.features)))
         for (i, j) in IDs:
             currVal = self.data[i, j]
 
@@ -522,19 +514,19 @@ class Matrix(Base):
 
 
     def _flattenToOnePoint_implementation(self):
-        numElements = self.pts * self.fts
+        numElements = len(self.points) * len(self.features)
         self.data = self.data.reshape((1, numElements), order='C')
 
     def _flattenToOneFeature_implementation(self):
-        numElements = self.pts * self.fts
+        numElements = len(self.points) * len(self.features)
         self.data = self.data.reshape((numElements,1), order='F')
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.fts // numPoints
+        numFeatures = len(self.features) // numPoints
         self.data = self.data.reshape((numPoints, numFeatures), order='C')
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.pts // numFeatures
+        numPoints = len(self.points) // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
     def _getitem_implementation(self, x, y):
@@ -558,8 +550,8 @@ class Matrix(Base):
 
     def _validate_implementation(self, level):
         shape = numpy.shape(self.data)
-        assert shape[0] == self.pts
-        assert shape[1] == self.fts
+        assert shape[0] == len(self.points)
+        assert shape[1] == len(self.features)
 
     def _containsZero_implementation(self):
         """
@@ -574,9 +566,9 @@ class Matrix(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self
@@ -605,9 +597,9 @@ class Matrix(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pts
+                self._pStop = len(source.points)
                 self._fIndex = 0
-                self._fStop = source.fts
+                self._fStop = len(source.features)
 
             def __iter__(self):
                 return self

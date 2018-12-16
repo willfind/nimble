@@ -41,7 +41,7 @@ class MissingAwareSVD(CustomLearner):
         pass
 
     def train(self, trainX, trainY, k):
-        if k < 0 or k > trainX.fts:
+        if k < 0 or k > len(trainX.features):
             msg = "k must be greater than 0 and less than or equal to "
             msg += "the number of features."
             raise ValueError(msg)
@@ -391,7 +391,7 @@ def printInAndOutSampleError(trainedLearner, trainX, testX, testY):
 def writeOutCoefficientsAndNames(trainedLearner, trialType):
     coefs = trainedLearner.getAttributes()['origCoefs'].flatten()
     coefsObj = UML.createData("List", coefs)
-    if coefsObj.pts == 1:
+    if len(coefsObj.points) == 1:
         coefsObj.transpose()
 
     namesObj = UML.createData("List", [trainX.getFeatureNames()])
@@ -486,7 +486,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
     UML.registerCustomLearner("custom", LogisticRegressionSelectByOmission)
 
-    numToOmit = trainX.fts - wantedNZcoefs
+    numToOmit = len(trainX.features) - wantedNZcoefs
 
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
@@ -558,10 +558,10 @@ if __name__ == "__main__":
 
 #       wantedData = allData.extractPoints(end=ptsSel)
         # separate train and test data.
-#       numPoints = wantedData.pts
+#       numPoints = len(wantedData.points)
     #   testPortion = 3000./numPoints
     #   testPortion = 1500./numPoints
-#       print "total Data: " + str(numPoints) + " x " + str(wantedData.fts)
+#       print "total Data: " + str(numPoints) + " x " + str(len(wantedData.features))
 #       print "test portion: " + str(testPortion)
 
 #       trainX, trainY, testX, testY = wantedData.trainAndTestSets(
@@ -580,11 +580,11 @@ if __name__ == "__main__":
     for ptsSel in [2500,5000,10000]:
 #   for ptsSel in [250,500,1000]:
 #   for ptsSel in [20000]:
-        print("total Data: " + str(ptsSel) + " x " + str(allData.fts))
+        print("total Data: " + str(ptsSel) + " x " + str(len(allData.features)))
 
         trainX = allData.copyPoints(end=ptsSel)
         trainY = trainX.extractFeatures("gender")
-        testX = allData.copyPoints(start=allData.pts - 3000)
+        testX = allData.copyPoints(start=len(allData.points) - 3000)
         testY = testX.extractFeatures("gender")
 
         trainX.name = "Training Data"

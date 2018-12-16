@@ -28,13 +28,13 @@ class Axis(object):
         Get next item
         """
         if self.axis == 'point':
-            while self._position < self.source.pts:
+            while self._position < len(self.source.points):
                 value = self.source.pointView(self._position)
                 self._position += 1
                 return value
             raise StopIteration
         else:
-            while self._position < self.source.fts:
+            while self._position < len(self.source.features):
                 value = self.source.featureView(self._position)
                 self._position += 1
                 return value
@@ -42,6 +42,12 @@ class Axis(object):
 
     def __next__(self):
         return self.next()
+
+    def __len__(self):
+        if self.axis == 'point':
+            return self.source._pointCount
+        else:
+            return self.source._featureCount
 
     #########################
     # Structural Operations #
@@ -110,10 +116,10 @@ class Axis(object):
         if limitTo is not None:
             limitTo = copy.copy(limitTo)
             limitTo = self.source._constructIndicesList(self.axis, limitTo)
-        if self.source.pts == 0:
+        if len(self.source.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperActionException(msg)
-        if self.source.fts == 0:
+        if len(self.source.features) == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperActionException(msg)
         if function is None:
@@ -157,11 +163,11 @@ class Axis(object):
                                    randomize=False):
         axis = self.axis
         if axis == 'point':
-            axisLength = self.source.pts
+            axisLength = len(self.source.points)
             hasNameChecker1 = self.source.hasPointName
             hasNameChecker2 = self.source.hasFeatureName
         else:
-            axisLength = self.source.fts
+            axisLength = len(self.source.features)
             hasNameChecker1 = self.source.hasFeatureName
             hasNameChecker2 = self.source.hasPointName
 
@@ -266,9 +272,9 @@ class Axis(object):
             toAdd = toAdd.copyAs(self.source.getTypeString())
 
         if axis == 'point' and insertBefore is None:
-            insertBefore = self.source.pts
+            insertBefore = len(self.source.points)
         elif axis == 'feature' and insertBefore is None:
-            insertBefore = self.source.fts
+            insertBefore = len(self.source.features)
         else:
             insertBefore = self.source._getIndex(insertBefore, axis)
 
@@ -389,7 +395,7 @@ def _adjustCountAndNames(source, axis, other):
     object.
     """
     if axis == 'point':
-        source._pointCount -= other.pts
+        source._pointCount -= len(other.points)
         if source._pointNamesCreated():
             idxList = []
             for name in other.getPointNames():
@@ -402,7 +408,7 @@ def _adjustCountAndNames(source, axis, other):
                 source.pointNames[pt] = idx
 
     else:
-        source._featureCount -= other.fts
+        source._featureCount -= len(other.features)
         if source._featureNamesCreated():
             idxList = []
             for name in other.getFeatureNames():
@@ -491,22 +497,22 @@ def _setAddedCountAndNames(axis, caller, addedObj, insertedBefore):
         # only adjust count if no names in either object
         if not (caller._pointNamesCreated()
                 or addedObj._pointNamesCreated()):
-            caller._setpointCount(caller.pts + addedObj.pts)
+            caller._setpointCount(len(caller.points) + len(addedObj.points))
             return
         callerNames = caller.getPointNames()
         insertedNames = addedObj.getPointNames()
         setSelfNames = caller.setPointNames
-        caller._setpointCount(caller.pts + addedObj.pts)
+        caller._setpointCount(len(caller.points) + len(addedObj.points))
     else:
         # only adjust count if no names in either object
         if not (caller._featureNamesCreated()
                 or addedObj._featureNamesCreated()):
-            caller._setfeatureCount(caller.fts + addedObj.fts)
+            caller._setfeatureCount(len(caller.features) + len(addedObj.features))
             return
         callerNames = caller.getFeatureNames()
         insertedNames = addedObj.getFeatureNames()
         setSelfNames = caller.setFeatureNames
-        caller._setfeatureCount(caller.fts + addedObj.fts)
+        caller._setfeatureCount(len(caller.features) + len(addedObj.features))
     # ensure no collision with default names
     adjustedNames = []
     for name in insertedNames:

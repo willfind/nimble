@@ -851,8 +851,8 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         ret = toTest.copyPoints(start=0, end=2, number=2, randomize=True)
 
-        assert ret.pts == 2
-        assert toTest.pts == 3
+        assert len(ret.points) == 2
+        assert len(toTest.points) == 3
 
 
     def test_copyPoints_handmadeRangeDefaults(self):
@@ -1273,9 +1273,9 @@ class StructureDataSafe(StructureShared):
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert ret.pts == 3
+            assert len(ret.points) == 3
         else:
-            assert ret.fts == 3
+            assert len(ret.features) == 3
 
         assert ret.isIdentical(retList)
         assert ret.isIdentical(retRange)
@@ -3608,8 +3608,8 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
 
-        assert ret.pts == 2
-        assert toTest.pts == 1
+        assert len(ret.points) == 2
+        assert len(toTest.points) == 1
 
     def test_extractPoints_handmadeRangeDefaults(self):
         """ Test extractPoints uses the correct defaults in the case of range based extraction """
@@ -4036,11 +4036,11 @@ class StructureModifying(StructureShared):
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert ret.pts == 3
-            assert toTest1.pts == 1
+            assert len(ret.points) == 3
+            assert len(toTest1.points) == 1
         else:
-            assert ret.fts == 3
-            assert toTest1.fts == 1
+            assert len(ret.features) == 3
+            assert len(toTest1.features) == 1
 
         assert ret.isIdentical(retList)
         assert ret.isIdentical(retRange)
@@ -5009,7 +5009,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.deletePoints(start=0, end=2, number=2, randomize=True)
 
-        assert toTest.pts == 1
+        assert len(toTest.points) == 1
 
     def test_deletePoints_handmadeRangeDefaults(self):
         """ Test deletePoints uses the correct defaults in the case of range based deletion """
@@ -5354,9 +5354,9 @@ class StructureModifying(StructureShared):
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert toTest1.pts == 1
+            assert len(toTest1.points) == 1
         else:
-            assert toTest1.fts == 1
+            assert len(toTest1.features) == 1
 
         assert toTest1.isIdentical(toTest2)
         assert toTest1.isIdentical(toTest3)
@@ -6104,7 +6104,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest.retainPoints(evenOnly, number=3, randomize=True)
-        assert toTest.pts == 3
+        assert len(toTest.points) == 3
 
     def test_retainPoints_handmadeFunction(self):
         """ Test retainPoints() against handmade output for function retention """
@@ -6221,7 +6221,7 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.retainPoints(start=0, end=2, number=2, randomize=True)
-        assert toTest.pts == 2
+        assert len(toTest.points) == 2
 
     def test_retainPoints_handmadeRangeDefaults(self):
         """ Test retainPoints uses the correct defaults in the case of range based retention """
@@ -6579,9 +6579,9 @@ class StructureModifying(StructureShared):
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert toTest1.pts == 3
+            assert len(toTest1.points) == 3
         else:
-            assert toTest1.fts == 3
+            assert len(toTest1.features) == 3
 
         assert toTest1.isIdentical(toTest2)
         assert toTest1.isIdentical(toTest3)
@@ -6810,7 +6810,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest.retainFeatures(evenOnly, number=2, randomize=True)
-        assert toTest.fts == 2
+        assert len(toTest.features) == 2
 
     def test_retainFeatures_handmadeFunction(self):
         """ Test retainFeatures() against handmade output for function retention """
@@ -7285,8 +7285,8 @@ class StructureModifying(StructureShared):
 
         orig.referenceDataFrom(other)
 
-        assert orig._pointCount == other.pts
-        assert orig._featureCount == other.fts
+        assert orig._pointCount == len(other.points)
+        assert orig._featureCount == len(other.features)
 
         assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
         assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
@@ -7905,7 +7905,7 @@ class StructureModifying(StructureShared):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.fillWith(arg, 0, 0, toTest.pts - 1, toTest.fts - 1)
+        ret = toTest.fillWith(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
         assert ret is None
 
         arg *= 10

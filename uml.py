@@ -898,7 +898,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             timer = None
 
         #modify numFolds if needed
-        numFolds = trainX.pts if trainX.pts < 10 else 10
+        numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
                                                               numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)

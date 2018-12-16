@@ -103,8 +103,8 @@ class Elements(object):
 
         else:
             # if unable to vectorize, iterate over each point
-            points = points if points else list(range(self.source.pts))
-            features = features if features else list(range(self.source.fts))
+            points = points if points else list(range(len(self.source.points)))
+            features = features if features else list(range(len(self.source.features)))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
@@ -205,9 +205,9 @@ class Elements(object):
         """
         uniqueCount = {}
         if points is None:
-            points = [i for i in range(self.source.pts)]
+            points = [i for i in range(len(self.source.points))]
         if features is None:
-            features = [i for i in range(self.source.fts)]
+            features = [i for i in range(len(self.source.features))]
         points = valuesToPythonList(points, 'points')
         features = valuesToPythonList(features, 'features')
         for i in points:
@@ -243,14 +243,14 @@ class Elements(object):
             msg = "'other' must be an instance of a UML data object"
             raise ArgumentException(msg)
 
-        if self.source.pts != other.pts:
+        if len(self.source.points) != len(other.points):
             msg = "The number of points in each object must be equal."
             raise ArgumentException(msg)
-        if self.source.fts != other.fts:
+        if len(self.source.features) != len(other.features):
             msg = "The number of features in each object must be equal."
             raise ArgumentException(msg)
 
-        if self.source.pts == 0 or self.source.fts == 0:
+        if len(self.source.points) == 0 or len(self.source.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperActionException(msg)
 
@@ -304,14 +304,14 @@ class Elements(object):
 
         if isinstance(other, UML.data.Base):
             # same shape
-            if self.source.pts != other.pts:
+            if len(self.source.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
                 raise ArgumentException(msg)
-            if self.source.fts != other.fts:
+            if len(self.source.features) != len(other.features):
                 msg = "The number of features in each object must be equal."
                 raise ArgumentException(msg)
 
-        if self.source.pts == 0 or self.source.fts == 0:
+        if len(self.source.points) == 0 or len(self.source.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperActionException(msg)
 
@@ -346,11 +346,11 @@ class Elements(object):
         if points:
             points = numpy.array(points)
         else:
-            points = numpy.array(range(self.source.pts))
+            points = numpy.array(range(len(self.source.points)))
         if features:
             features = numpy.array(features)
         else:
-            features = numpy.array(range(self.source.fts))
+            features = numpy.array(range(len(self.source.features)))
         toCalculate = self.source.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]

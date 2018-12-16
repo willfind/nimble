@@ -136,17 +136,17 @@ def test_crossValidate_reasonable_results():
     #assert error essentially zero since there's no noise
     assert result < .001
 
-    index = X.fts
+    index = len(X.features)
     X.addFeatures(Y)
     result = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, numFolds=5)
     #assert error essentially zero since there's no noise
     assert result < .001
 
     # ensures nonmodification of X data object when getting Y data
-    assert X.fts == 4
+    assert len(X.features) == 4
     X.setFeatureNames(['X1', 'X2', 'X3', 'Y'])
     result = crossValidate(regressionAlgo, X, 'Y', meanAbsoluteError, {}, numFolds=5)
-    assert X.fts == 4
+    assert len(X.features) == 4
     #assert error essentially zero since there's no noise
     assert result < .001
 
@@ -175,7 +175,7 @@ def test_crossValidate_2d_api_check():
     assert isinstance(result, float)
     assert result < .001
 
-    index = X.fts
+    index = len(X.features)
     combined = X.copy()
     combined.addFeatures(Y)
     combined.setFeatureNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
@@ -352,7 +352,7 @@ def test_crossValidateReturnBest():
             self.flip = flip
 
         def apply(self, testX):
-            num = int(math.floor(testX.pts * self.flip))
+            num = int(math.floor(len(testX.points) * self.flip))
             ret = self.trained.apply(testX).copyAs('pythonList')
             for i in range(num):
                 if ret[i][0] == 0:
