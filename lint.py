@@ -34,8 +34,9 @@ REQ_IGNORE = [
     'no-else-return',
     'len-as-condition',
     'consider-using-enumerate',
-    'no-member',
     'protected-member',
+    'unused-argument',
+    'duplicate-code'
 ]
 
 def getOutputs(commandString):
