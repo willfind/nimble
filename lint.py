@@ -9,6 +9,7 @@ and pylint's json output to provide a custom output of the results.
 --output-format=<format> at the command line will override the custom
 format and provide pylint's output.
 """
+from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys
@@ -39,8 +40,9 @@ REQ_IGNORE = [
 
 def getOutputs(commandString):
     pylint_stdout, pylint_stderr = lint.py_run(commandString, return_std=True)
-    if pylint_stderr.readlines():
-        print("\n".join(pylint_stderr.readlines()))
+    stderr = pylint_stderr.readlines()
+    if stderr:
+        print("".join(stderr), file=sys.stderr)
         sys.exit()
     return pylint_stdout
 
@@ -53,7 +55,7 @@ def jsonToDict(file):
             dictionary = json.loads("".join(lines))
         except Exception:
             # if can't load json format, stdout contains reason this failed
-            print("\n".join(lines))
+            print("".join(lines), file=sys.stderr)
             sys.exit()
 
     return dictionary
