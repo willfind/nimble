@@ -1,5 +1,7 @@
 """
-TODO
+Methods and helpers responsible for determining how each function
+will operate depending on whether it is being called along the points or
+the features axis.
 """
 from __future__ import absolute_import
 import copy
@@ -17,7 +19,18 @@ from .dataHelpers import valuesToPythonList
 
 class Axis(object):
     """
-    TODO
+    Differentiate how methods act dependent on the axis.
+
+    Also provides abstract methods which will be required to perform
+    data-type and axis specific operations.
+
+    Parameters
+    ----------
+    axis : str
+        The axis ('point' or 'feature') which the function will be
+        applied to.
+    source : UML data object
+        The object containing point and feature data.
     """
     def __init__(self, axis, source):
         self.axis = axis
@@ -150,7 +163,7 @@ class Axis(object):
 
         return [namesDict[n] for n in names]
 
-    def hasName(self, name):
+    def _hasName(self, name):
         try:
             self.source.getIndex(name)
             return True
@@ -260,6 +273,22 @@ class Axis(object):
 
         newNameOrder = self._sort_implementation(sortBy, sortHelper)
         setNames(newNameOrder)
+
+        self.source.validate()
+
+    def _transform(self, function, included):
+        if self.source._pointCount == 0:
+            msg = "We disallow this function when there are 0 points"
+            raise ImproperActionException(msg)
+        if self.source._featureCount == 0:
+            msg = "We disallow this function when there are 0 features"
+            raise ImproperActionException(msg)
+        if function is None:
+            raise ArgumentException("function must not be None")
+        if included is not None:
+            included = self.source._constructIndicesList(self.axis, included)
+
+        self._transform_implementation(function, included)
 
         self.source.validate()
 
@@ -672,6 +701,10 @@ class Axis(object):
 
     @abstractmethod
     def _add_implementation(self, toAdd, insertBefore):
+        pass
+
+    @abstractmethod
+    def _transform_implementation(self, function, included):
         pass
 
 ###########

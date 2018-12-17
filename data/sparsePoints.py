@@ -1,5 +1,6 @@
 """
-
+Method implementations and helpers acting specifically on points in a
+Sparse object.
 """
 from __future__ import absolute_import
 
@@ -16,7 +17,12 @@ if scipy is not None:
 
 class SparsePoints(SparseAxis, Axis, Points):
     """
+    Sparse method implementations performed on the points axis.
 
+    Parameters
+    ----------
+    source : UML data object
+        The object containing the points data.
     """
     def __init__(self, source, **kwds):
         self.source = source
@@ -24,6 +30,10 @@ class SparsePoints(SparseAxis, Axis, Points):
         kwds['axis'] = self.axis
         kwds['source'] = self.source
         super(SparsePoints, self).__init__(**kwds)
+
+    ##############################
+    # Structural implementations #
+    ##############################
 
     def _add_implementation(self, toAdd, insertBefore):
         """

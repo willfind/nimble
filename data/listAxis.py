@@ -1,5 +1,6 @@
 """
-
+Implementations and helpers specific to performing axis-generic
+operations on a UML List object.
 """
 from __future__ import absolute_import
 import copy
@@ -14,7 +15,18 @@ from .base import cmp_to_key
 
 class ListAxis(Axis):
     """
+    Differentiate how List methods act dependent on the axis.
 
+    Also provides abstract methods which will be required to perform
+    axis-specific operations.
+
+    Parameters
+    ----------
+    axis : str
+        The axis ('point' or 'feature') which the function will be
+        applied to.
+    source : UML data object
+        The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
         self.axis = axis
@@ -22,6 +34,10 @@ class ListAxis(Axis):
         kwds['axis'] = self.axis
         kwds['source'] = self.source
         super(ListAxis, self).__init__(**kwds)
+
+    ##############################
+    # Structural implementations #
+    ##############################
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
@@ -178,4 +194,8 @@ class ListAxis(Axis):
 
     @abstractmethod
     def _add_implementation(self, toAdd, insertBefore):
+        pass
+
+    @abstractmethod
+    def _transform_implementation(self, function, included):
         pass

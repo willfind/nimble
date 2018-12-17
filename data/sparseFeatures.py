@@ -1,5 +1,6 @@
 """
-
+Method implementations and helpers acting specifically on features in a
+Sparse object.
 """
 from __future__ import absolute_import
 
@@ -16,7 +17,12 @@ if scipy is not None:
 
 class SparseFeatures(SparseAxis, Axis, Features):
     """
+    Sparse method implementations performed on the feature axis.
 
+    Parameters
+    ----------
+    source : UML data object
+        The object containing features data.
     """
     def __init__(self, source, **kwds):
         self.source = source
@@ -24,6 +30,10 @@ class SparseFeatures(SparseAxis, Axis, Features):
         kwds['axis'] = self.axis
         kwds['source'] = self.source
         super(SparseFeatures, self).__init__(**kwds)
+
+    ##############################
+    # Structural implementations #
+    ##############################
 
     def _add_implementation(self, toAdd, insertBefore):
         """

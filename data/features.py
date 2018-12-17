@@ -11,7 +11,7 @@ from abc import abstractmethod
 
 class Features(object):
     """
-
+    Methods that can be called on the a UML data objects feature axis.
     """
     def __init__(self):
         pass
@@ -164,6 +164,25 @@ class Features(object):
         TODO
         """
         return self._getIndices(names)
+
+    def hasName(self, name):
+        """
+        Determine if feature name exists.
+
+        Parameters
+        ----------
+        names : str
+            The name of a feature.
+
+        Returns
+        -------
+        bool
+
+        Examples
+        --------
+        TODO
+        """
+        return self._hasName(name)
 
     #########################
     # Structural Operations #
@@ -422,6 +441,34 @@ class Features(object):
         """
         self._sort(sortBy, sortHelper)
 
+    def transform(self, function, features=None):
+        """
+        Modify this object by applying a function to each feature.
+
+        Perform an inplace modification of the data in this object
+        through the application of the provided ``function`` to the
+        features or subset of features in this object.
+
+        Parameters
+        ----------
+        function
+            Must accept the view of a feature as an argument.
+
+        features : identifier, list of identifiers
+            May be a single feature name or index, an iterable,
+            container of feature names and/or indices. None indicates
+            application to all features.
+
+        See Also
+        --------
+        calculate : return a new object instead of performing inplace
+
+        Examples
+        --------
+        TODO
+        """
+        self._transform(function, features)
+
     ###########################
     # Higher Order Operations #
     ###########################
@@ -560,6 +607,10 @@ class Features(object):
         pass
 
     @abstractmethod
+    def _hasName(self, name):
+        pass
+
+    @abstractmethod
     def _copy(self, toCopy, start, end, number, randomize):
         pass
 
@@ -584,7 +635,11 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _calculate(self, function, points):
+    def _transform(self, function, features):
+        pass
+
+    @abstractmethod
+    def _calculate(self, function, features):
         pass
 
     @abstractmethod

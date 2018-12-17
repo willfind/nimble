@@ -11,7 +11,7 @@ from abc import abstractmethod
 
 class Points(object):
     """
-
+    Methods that can be called on the a UML data objects point axis.
     """
     def __init__(self):
         pass
@@ -164,6 +164,25 @@ class Points(object):
         TODO
         """
         return self._getIndices(names)
+
+    def hasName(self, name):
+        """
+        Determine if point name exists.
+
+        Parameters
+        ----------
+        names : str
+            The name of a point.
+
+        Returns
+        -------
+        bool
+
+        Examples
+        --------
+        TODO
+        """
+        return self._hasName(name)
 
     #########################
     # Structural Operations #
@@ -422,6 +441,34 @@ class Points(object):
         """
         self._sort(sortBy, sortHelper)
 
+    def transform(self, function, points=None):
+        """
+        Modify this object by applying a function to each point.
+
+        Perform an inplace modification of the data in this object
+        through the application of the provided ``function`` to the
+        points or subset of points in this object.
+
+        Parameters
+        ----------
+        function
+            Must accept the view of a point as an argument.
+
+        points : identifier, list of identifiers
+            May be a single point name or index, an iterable,
+            container of point names and/or indices. None indicates
+            application to all points.
+
+        See Also
+        --------
+        calculate : return a new object instead of performing inplace
+
+        Examples
+        --------
+        TODO
+        """
+        self._transform(function, points)
+
     ###########################
     # Higher Order Operations #
     ###########################
@@ -559,6 +606,10 @@ class Points(object):
         pass
 
     @abstractmethod
+    def _hasName(self, name):
+        pass
+
+    @abstractmethod
     def _copy(self, toCopy, start, end, number, randomize):
         pass
 
@@ -580,6 +631,10 @@ class Points(object):
 
     @abstractmethod
     def _sort(self, sortBy, sortHelper):
+        pass
+
+    @abstractmethod
+    def _transform(self, function, points):
         pass
 
     @abstractmethod

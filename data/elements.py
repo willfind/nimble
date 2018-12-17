@@ -1,5 +1,6 @@
 """
-
+Methods and helpers responsible for determining how each function
+will operate over each element.
 """
 from __future__ import absolute_import
 from abc import abstractmethod
@@ -15,13 +16,73 @@ from .dataHelpers import valuesToPythonList
 
 class Elements(object):
     """
+    Differentiate how methods act on each element.
 
+    Also provides abstract methods which will be required to perform
+    data-type specific operations.
+
+    Parameters
+    ----------
+    source : UML data object
+        The object containing the elements.
     """
     def __init__(self, source):
         self.source = source
         super(Elements, self).__init__()
 
     # TODO iterator???
+
+    #########################
+    # Structural Operations #
+    #########################
+
+    def transform(self, toTransform, points=None, features=None,
+                  preserveZeros=False, skipNoneReturnValues=False):
+        """
+        Modify each element using a function or mapping.
+
+        Perform an inplace modification of the elements or subset of
+        elements in this object.
+
+        Parameters
+        ----------
+        toTransform : function, dict
+            * function - in the form of toTransform(elementValue)
+              or toTransform(elementValue, pointNum, featureNum)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
+        points : identifier, list of identifiers
+            May be a single point name or index, an iterable,
+            container of point names and/or indices. None indicates
+            application to all points.
+        features : identifier, list of identifiers
+            May be a single feature name or index, an iterable,
+            container of feature names and/or indices. None indicates
+            application to all features.
+        preserveZeros : bool
+            If True it does not apply toTransform to elements in the
+            data that are 0, and that 0 is not modified.
+        skipNoneReturnValues : bool
+            If True, any time toTransform() returns None, the value
+            originally in the data will remain unmodified.
+
+        See Also
+        --------
+        points.transform, features.transform
+
+        Examples
+        --------
+        TODO
+        """
+        if points is not None:
+            points = self.source._constructIndicesList('point', points)
+        if features is not None:
+            features = self.source._constructIndicesList('feature', features)
+
+        self._transform_implementation(toTransform, points, features,
+                                       preserveZeros, skipNoneReturnValues)
+
+        self.source.validate()
 
     ###########################
     # Higher Order Operations #
@@ -222,6 +283,10 @@ class Elements(object):
 
         return uniqueCount
 
+    ########################
+    # Numerical Operations #
+    ########################
+
     def multiply(self, other):
         """
         Multiply objects element-wise.
@@ -385,4 +450,9 @@ class Elements(object):
 
     @abstractmethod
     def _multiply_implementation(self, other):
+        pass
+
+    @abstractmethod
+    def _transform_implementation(self, toTransform, points, features,
+                                  preserveZeros, skipNoneReturnValues):
         pass

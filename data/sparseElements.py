@@ -1,5 +1,6 @@
 """
-
+Method implementations and helpers acting specifically on each element
+Sparse object.
 """
 from __future__ import absolute_import
 
@@ -14,12 +15,42 @@ if scipy is not None:
 
 class SparseElements(Elements):
     """
+    Sparse method implementations performed on each element.
 
+    Parameters
+    ----------
+    source : UML data object
+        The object containing features data.
     """
     def __init__(self, source, **kwds):
         self.source = source
         kwds['source'] = source
         super(SparseElements, self).__init__(**kwds)
+
+    ##############################
+    # Structural implementations #
+    ##############################
+
+    def _transform_implementation(self, toTransform, points, features,
+                                  preserveZeros, skipNoneReturnValues):
+        oneArg = False
+        try:
+            toTransform(0, 0, 0)
+        except TypeError:
+            if isinstance(toTransform, dict):
+                oneArg = None
+            else:
+                oneArg = True
+
+        if oneArg and toTransform(0) == 0:
+            preserveZeros = True
+
+        if preserveZeros:
+            self._transformEachElement_zeroPreserve_implementation(
+                toTransform, points, features, skipNoneReturnValues, oneArg)
+        else:
+            self._transformEachElement_noPreserve_implementation(
+                toTransform, points, features, skipNoneReturnValues, oneArg)
 
     ################################
     # Higher Order implementations #
@@ -65,6 +96,10 @@ class SparseElements(Elements):
         return self._calculateForEachElementGenericVectorized(
             function, points, features, outputType)
 
+    #############################
+    # Numerical implementations #
+    #############################
+
     def _multiply_implementation(self, other):
         """
         Perform element wise multiplication of this UML data object
@@ -88,3 +123,66 @@ class SparseElements(Elements):
             self.source.data = raw.tocoo()
         else:
             self.source.data = coo_matrix(raw, shape=self.source.data.shape)
+
+    ######################
+    # Structural helpers #
+    ######################
+
+    def _transformEachElement_noPreserve_implementation(
+            self, toTransform, points, features, skipNoneReturnValues, oneArg):
+        # returns None if outside of the specified points and feature so that
+        # when calculateForEach is called we are given a full data object
+        # with only certain values modified.
+        def wrapper(value, pID, fID):
+            if points is not None and pID not in points:
+                return None
+            if features is not None and fID not in features:
+                return None
+
+            if oneArg is None:
+                if value in toTransform:
+                    return toTransform[value]
+                else:
+                    return None
+            elif oneArg:
+                return toTransform(value)
+            else:
+                return toTransform(value, pID, fID)
+
+        # perserveZeros is always False in this helper, skipNoneReturnValues
+        # is being hijacked by the wrapper: even if it was False, Sparse can't
+        # contain None values.
+        ret = self.calculate(wrapper, None, None, preserveZeros=False,
+                             skipNoneReturnValues=True)
+
+        pnames = self.source.getPointNames()
+        fnames = self.source.getFeatureNames()
+        self.source.referenceDataFrom(ret)
+        self.source.setPointNames(pnames)
+        self.source.setFeatureNames(fnames)
+
+
+    def _transformEachElement_zeroPreserve_implementation(
+            self, toTransform, points, features, skipNoneReturnValues, oneArg):
+        for index, val in enumerate(self.source.data.data):
+            pID = self.source.data.row[index]
+            fID = self.source.data.col[index]
+            if points is not None and pID not in points:
+                continue
+            if features is not None and fID not in features:
+                continue
+
+            if oneArg is None:
+                if val in toTransform:
+                    currRet = toTransform[val]
+                else:
+                    continue
+            elif oneArg:
+                currRet = toTransform(val)
+            else:
+                currRet = toTransform(val, pID, fID)
+
+            if skipNoneReturnValues and currRet is None:
+                continue
+
+            self.source.data.data[index] = currRet

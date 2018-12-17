@@ -1,5 +1,6 @@
 """
-
+Implementations and helpers specific to performing axis-generic
+operations on a UML DataFrame object.
 """
 from __future__ import absolute_import
 from abc import abstractmethod
@@ -13,7 +14,18 @@ from .base import cmp_to_key
 
 class DataFrameAxis(Axis):
     """
+    Differentiate how DataFrame methods act dependent on the axis.
 
+    Also provides abstract methods which will be required to perform
+    axis-specific operations.
+
+    Parameters
+    ----------
+    axis : str
+        The axis ('point' or 'feature') which the function will be
+        applied to.
+    source : UML data object
+        The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
         self.axis = axis
@@ -21,6 +33,10 @@ class DataFrameAxis(Axis):
         kwds['axis'] = self.axis
         kwds['source'] = self.source
         super(DataFrameAxis, self).__init__(**kwds)
+
+    ##############################
+    # Structural implementations #
+    ##############################
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
@@ -157,4 +173,8 @@ class DataFrameAxis(Axis):
 
     @abstractmethod
     def _add_implementation(self, toAdd, insertBefore):
+        pass
+
+    @abstractmethod
+    def _transform_implementation(self, function, included):
         pass
