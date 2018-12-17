@@ -39,7 +39,9 @@ REQ_IGNORE = [
 
 def getOutputs(commandString):
     pylint_stdout, pylint_stderr = lint.py_run(commandString, return_std=True)
-
+    if pylint_stderr.readlines():
+        print("\n".join(pylint_stderr.readlines()))
+        sys.exit()
     return pylint_stdout
 
 def jsonToDict(file):
@@ -51,7 +53,7 @@ def jsonToDict(file):
             dictionary = json.loads("".join(lines))
         except Exception:
             # if can't load json format, stdout contains reason this failed
-            print(lines)
+            print("\n".join(lines))
             sys.exit()
 
     return dictionary
