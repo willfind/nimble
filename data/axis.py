@@ -5,12 +5,14 @@ from __future__ import absolute_import
 import copy
 
 import six
+import numpy
 
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .dataHelpers import OPTRLIST, OPTRDICT
-from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
+from .dataHelpers import valuesToPythonList
 
 class Axis(object):
     """
@@ -48,6 +50,110 @@ class Axis(object):
             return self.source._pointCount
         else:
             return self.source._featureCount
+
+    ########################
+    # Low Level Operations #
+    ########################
+
+    def _getName(self, index):
+        if self.axis == 'point':
+            hasNames = self.source._pointNamesCreated()
+        else:
+            hasNames = self.source._featureNamesCreated()
+
+        if not hasNames:
+            self.source._setAllDefault(self.axis)
+
+        if self.axis == 'point':
+            namesList = self.source.pointNamesInverse
+        else:
+            namesList = self.source.featureNamesInverse
+
+        return namesList[index]
+
+    def _getNames(self):
+        if self.axis == 'point':
+            hasNames = self.source._pointNamesCreated()
+        else:
+            hasNames = self.source._featureNamesCreated()
+
+        if not hasNames:
+            self.source._setAllDefault(self.axis)
+
+        if self.axis == 'point':
+            namesList = self.source.pointNamesInverse
+        else:
+            namesList = self.source.featureNamesInverse
+
+        return copy.copy(namesList)
+
+    def _setName(self, oldIdentifier, newName):
+        if self.axis == 'point':
+            count = len(self.source.points)
+            namesDict = self.source.pointNames
+        else:
+            count = len(self.source.features)
+            namesDict = self.source.featureNames
+        if count == 0:
+            msg = "Cannot set any {0} names; this object has no {0}s"
+            msg = msg.format(self.axis)
+            raise ArgumentException(msg)
+        if namesDict is None:
+            self.source._setAllDefault(self.axis)
+        self._setName_implementation(oldIdentifier, newName)
+
+    def _setNames(self, assignments=None):
+        if self.axis == 'point':
+            if assignments is None:
+                self.source.pointNames = None
+                self.source.pointNamesInverse = None
+                return
+            count = len(self.source.points)
+        else:
+            if assignments is None:
+                self.source.featureNames = None
+                self.source.featureNamesInverse = None
+                return
+            count = len(self.source.features)
+        if isinstance(assignments, dict):
+            self._setNamesFromDict(assignments, count)
+        else:
+            assignments = valuesToPythonList(assignments, 'assignments')
+            self._setNamesFromList(assignments, count)
+
+    def _getIndex(self, name):
+        if self.axis == 'point':
+            hasNames = self.source._pointNamesCreated()
+            namesDict = self.source.pointNames
+        else:
+            hasNames = self.source._featureNamesCreated()
+            namesDict = self.source.featureNames
+
+        if not hasNames:
+            self.source._setAllDefault(self.axis)
+
+        return namesDict[name]
+
+    def _getIndices(self, names):
+        if self.axis == 'point':
+            hasNames = self.source._pointNamesCreated()
+            namesDict = self.source.pointNames
+        else:
+            hasNames = self.source._featureNamesCreated()
+            namesDict = self.source.featureNames
+
+        if not hasNames:
+            self.source._setAllDefault(self.axis)
+
+        return [namesDict[n] for n in names]
+
+    def hasName(self, name):
+        try:
+            self.getIndex(name)
+            return True
+        # keyError if not in dict, TypeError if names is None
+        except (KeyError, TypeError):
+            return False
 
     #########################
     # Structural Operations #
@@ -108,6 +214,53 @@ class Axis(object):
     def _count(self, condition):
         return self._genericStructuralFrontend('count', condition)
 
+    def _sort(self, sortBy, sortHelper):
+        if sortBy is not None and sortHelper is not None:
+            msg = "Cannot specify a feature to sort by and a helper function"
+            raise ArgumentException(msg)
+        if sortBy is None and sortHelper is None:
+            msg = "Either sortBy or sortHelper must not be None"
+            raise ArgumentException(msg)
+
+        if self.axis == 'point':
+            otherAxis = 'feature'
+            axisCount = self.source._pointCount
+            otherCount = self.source._featureCount
+            namesCreated = self.source._pointNamesCreated()
+            setNames = self.source.setPointNames
+        else:
+            otherAxis = 'point'
+            axisCount = self.source._featureCount
+            otherCount = self.source._pointCount
+            namesCreated = self.source._featureNamesCreated()
+            setNames = self.source.setFeatureNames
+
+        if sortBy is not None and isinstance(sortBy, six.string_types):
+            sortBy = self.source._getIndex(sortBy, otherAxis)
+
+        if sortHelper is not None and not hasattr(sortHelper, '__call__'):
+            indices = self.source._constructIndicesList(self.axis, sortHelper)
+            if len(indices) != axisCount:
+                msg = "This object contains {0} {1}s, ".format(axisCount, self.axis)
+                msg += "but sortHelper has {0} identifiers".format(len(indices))
+                raise ArgumentException(msg)
+            if len(indices) != len(set(indices)):
+                msg = "This object contains {0} {1}s, ".format(axisCount, self.axis)
+                msg += "but sortHelper has {0} ".format(len(set(indices)))
+                msg += "unique identifiers"
+                raise ArgumentException(msg)
+
+            sortHelper = indices
+
+        # its already sorted in these cases
+        if otherCount == 0 or axisCount == 0 or axisCount == 1:
+            return
+
+        newNameOrder = self._sort_implementation(sortBy, sortHelper)
+        setNames(newNameOrder)
+
+        self.source.validate()
+
     ###########################
     # Higher Order Operations #
     ###########################
@@ -153,6 +306,223 @@ class Axis(object):
 
     def _add(self, toAdd, insertBefore):
         self._genericAddFrontend(self.axis, toAdd, insertBefore)
+
+    def _mapReduce(self, mapper, reducer):
+        if self.axis == 'point':
+            targetCount = len(self.source.points)
+            otherCount = len(self.source.features)
+            valueIterator = self.source.pointIterator
+            otherAxis = 'feature'
+        else:
+            targetCount = len(self.source.features)
+            otherCount = len(self.source.points)
+            valueIterator = self.source.featureIterator
+            otherAxis = 'point'
+
+        if targetCount == 0:
+            return UML.createData(self.source.getTypeString(),
+                                  numpy.empty(shape=(0, 0)))
+        if otherCount == 0:
+            msg = "We do not allow operations over {0}s if there are 0 {1}s"
+            msg = msg.format(self.axis, otherAxis)
+            raise ImproperActionException(msg)
+
+        if mapper is None or reducer is None:
+            raise ArgumentException("The arguments must not be none")
+        if not hasattr(mapper, '__call__'):
+            raise ArgumentException("The mapper must be callable")
+        if not hasattr(reducer, '__call__'):
+            raise ArgumentException("The reducer must be callable")
+
+        self.source.validate()
+
+        mapResults = {}
+        # apply the mapper to each point in the data
+        for value in valueIterator():
+            currResults = mapper(value)
+            # the mapper will return a list of key value pairs
+            for (k, v) in currResults:
+                # if key is new, we must add an empty list
+                if k not in mapResults:
+                    mapResults[k] = []
+                # append this value to the list of values associated with the key
+                mapResults[k].append(v)
+
+        # apply the reducer to the list of values associated with each key
+        ret = []
+        for mapKey in mapResults.keys():
+            mapValues = mapResults[mapKey]
+            # the reducer will return a tuple of a key to a value
+            redRet = reducer(mapKey, mapValues)
+            if redRet is not None:
+                (redKey, redValue) = redRet
+                ret.append([redKey, redValue])
+        ret = UML.createData(self.source.getTypeString(), ret)
+
+        ret._absPath = self.source.absolutePath
+        ret._relPath = self.source.relativePath
+
+        return ret
+
+    def _shuffle(self):
+        if self.axis == 'point':
+            values = len(self.source.points)
+            sorter = self.source.sortPoints
+        else:
+            values = len(self.source.features)
+            sorter = self.source.sortFeatures
+
+        indices = list(range(values))
+        pythonRandom.shuffle(indices)
+
+        sorter(sortHelper=indices)
+
+    #####################
+    # Low Level Helpers #
+    #####################
+
+    def _setName_implementation(self, oldIdentifier, newName):
+        if self.axis == 'point':
+            names = self.source.pointNames
+            invNames = self.source.pointNamesInverse
+            index = self.source._getPointIndex(oldIdentifier)
+        else:
+            names = self.source.featureNames
+            invNames = self.source.featureNamesInverse
+            index = self.source._getFeatureIndex(oldIdentifier)
+
+        if newName is not None:
+            if not isinstance(newName, six.string_types):
+                msg = "The new name must be either None or a string"
+                raise ArgumentException(msg)
+
+        if newName in names:
+            if invNames[index] == newName:
+                return
+            msg = "This name '" + newName + "' is already in use"
+            raise ArgumentException(msg)
+
+        if newName is None:
+            newName = self.source._nextDefaultName(self.axis)
+
+        #remove the current featureName
+        oldName = invNames[index]
+        del names[oldName]
+
+        # setup the new featureName
+        invNames[index] = newName
+        names[newName] = index
+        self.source._incrementDefaultIfNeeded(newName, self.axis)
+
+    def _setNamesFromList(self, assignments, count):
+        if self.axis == 'point':
+            def checkAndSet(val):
+                if val >= self.source._nextDefaultValuePoint:
+                    self.source._nextDefaultValuePoint = val + 1
+        else:
+            def checkAndSet(val):
+                if val >= self.source._nextDefaultValueFeature:
+                    self.source._nextDefaultValueFeature = val + 1
+
+        if assignments is None:
+            self.source._setAllDefault(self.axis)
+            return
+
+        if count == 0:
+            if len(assignments) > 0:
+                msg = "assignments is too large (" + str(len(assignments))
+                msg += "); this axis is empty"
+                raise ArgumentException(msg)
+            self._setNamesFromDict({}, count)
+            return
+        if len(assignments) != count:
+            msg = "assignments may only be an ordered container type, with as "
+            msg += "many entries (" + str(len(assignments)) + ") as this axis "
+            msg += "is long (" + str(count) + ")"
+            raise ArgumentException(msg)
+
+        for name in assignments:
+            if name is not None and not isinstance(name, six.string_types):
+                msg = 'assignments must contain only string values'
+                raise ArgumentException(msg)
+            if name is not None and name.startswith(DEFAULT_PREFIX):
+                try:
+                    num = int(name[DEFAULT_PREFIX_LENGTH:])
+                # Case: default prefix with non-integer suffix. This cannot
+                # cause a future integer suffix naming collision, so we
+                # can ignore it.
+                except ValueError:
+                    continue
+                checkAndSet(num)
+
+        #convert to dict so we only write the checking code once
+        temp = {}
+        for index in range(len(assignments)):
+            name = assignments[index]
+            # take this to mean fill it in with a default name
+            if name is None:
+                name = self.source._nextDefaultName(self.axis)
+            if name in temp:
+                msg = "Cannot input duplicate names: " + str(name)
+                raise ArgumentException(msg)
+            temp[name] = index
+        assignments = temp
+
+        self._setNamesFromDict(assignments, count)
+
+    def _setNamesFromDict(self, assignments, count):
+        if assignments is None:
+            self.source._setAllDefault(self.axis)
+            return
+        if not isinstance(assignments, dict):
+            msg = "assignments may only be a dict"
+            msg += "with as many entries as this axis is long"
+            raise ArgumentException(msg)
+        if count == 0:
+            if len(assignments) > 0:
+                msg = "assignments is too large; this axis is empty"
+                raise ArgumentException(msg)
+            if self.axis == 'point':
+                self.source.pointNames = {}
+                self.source.pointNamesInverse = []
+            else:
+                self.source.featureNames = {}
+                self.source.featureNamesInverse = []
+            return
+        if len(assignments) != count:
+            msg = "assignments may only be a dict, "
+            msg += "with as many entries as this axis is long"
+            raise ArgumentException(msg)
+
+        # at this point, the input must be a dict
+        #check input before performing any action
+        for name in assignments.keys():
+            if not None and not isinstance(name, six.string_types):
+                raise ArgumentException("Names must be strings")
+            if not isinstance(assignments[name], int):
+                raise ArgumentException("Indices must be integers")
+            if assignments[name] < 0 or assignments[name] >= count:
+                if self.axis == 'point':
+                    countName = 'points'
+                else:
+                    countName = 'features'
+                msg = "Indices must be within 0 to "
+                msg += "len(self." + countName + ") - 1"
+                raise ArgumentException(msg)
+
+        reverseMap = [None] * len(assignments)
+        for name in assignments.keys():
+            self.source._incrementDefaultIfNeeded(name, self.axis)
+            reverseMap[assignments[name]] = name
+
+        # have to copy the input, could be from another object
+        if self.axis == 'point':
+            self.source.pointNames = copy.deepcopy(assignments)
+            self.source.pointNamesInverse = reverseMap
+        else:
+            self.source.featureNames = copy.deepcopy(assignments)
+            self.source.featureNamesInverse = reverseMap
+
 
     ########################
     #  Structural Helpers  #

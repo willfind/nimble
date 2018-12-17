@@ -294,17 +294,17 @@ class Base(object):
     def __len__(self):
         # ordered such that the larger axis is always printed, even
         # if they are both in the range [0,1]
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        if len(self.points) == 1:
-            return len(self.features)
-        if len(self.features) == 1:
-            return len(self.points)
+        if self._pointCount == 1:
+            return self._featureCount
+        if self._featureCount == 1:
+            return self._pointCount
 
         msg = "len() is undefined when the number of points ("
-        msg += str(len(self.points))
+        msg += str(self._pointCount)
         msg += ") and the number of features ("
-        msg += str(len(self.features))
+        msg += str(self._featureCount)
         msg += ") are both greater than 1"
         raise ImproperActionException(msg)
 
@@ -321,7 +321,7 @@ class Base(object):
         None is always returned.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ArgumentException("Cannot set any point names; this object has no points ")
         if self.pointNames is None:
             self._setAllDefault('point')
@@ -339,7 +339,7 @@ class Base(object):
         None is always returned.
 
         """
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
         if self.featureNames is None:
             self._setAllDefault('feature')
@@ -362,10 +362,10 @@ class Base(object):
             self.pointNames = None
             self.pointNamesInverse = None
         elif isinstance(assignments, dict):
-            self._setNamesFromDict(assignments, len(self.points), 'point')
+            self._setNamesFromDict(assignments, self._pointCount, 'point')
         else:
             assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesFromList(assignments, len(self.points), 'point')
+            self._setNamesFromList(assignments, self._pointCount, 'point')
 
     def setFeatureNames(self, assignments=None):
         """
@@ -383,10 +383,10 @@ class Base(object):
             self.featureNames = None
             self.featureNamesInverse = None
         elif isinstance(assignments, dict):
-            self._setNamesFromDict(assignments, len(self.features), 'feature')
+            self._setNamesFromDict(assignments, self._featureCount, 'feature')
         else:
             assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesFromList(assignments, len(self.features), 'feature')
+            self._setNamesFromList(assignments, self._featureCount, 'feature')
 
 
     def nameIsDefault(self):
@@ -468,7 +468,7 @@ class Base(object):
         None is always returned.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("This action is impossible, the object has 0 points")
 
         index = self._getFeatureIndex(featureToReplace)
@@ -521,7 +521,7 @@ class Base(object):
         in the original feature. None is always returned.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("This action is impossible, the object has 0 points")
 
         index = self._getFeatureIndex(featureToConvert)
@@ -575,9 +575,9 @@ class Base(object):
         if points is not None:
             points = copy.copy(points)
             points = self._constructIndicesList('point', points)
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
@@ -614,9 +614,9 @@ class Base(object):
         if features is not None:
             features = copy.copy(features)
             features = self._constructIndicesList('feature', features)
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
@@ -699,13 +699,13 @@ class Base(object):
 
     def _mapReduce_implementation(self, axis, mapper, reducer):
         if axis == 'point':
-            targetCount = len(self.points)
-            otherCount = len(self.features)
+            targetCount = self._pointCount
+            otherCount = self._featureCount
             valueIterator = self.pointIterator
             otherAxis = 'feature'
         else:
-            targetCount = len(self.features)
-            otherCount = len(self.points)
+            targetCount = self._featureCount
+            otherCount = self._pointCount
             valueIterator = self.featureIterator
             otherAxis = 'point'
 
@@ -806,9 +806,9 @@ class Base(object):
         """
         uniqueCount = {}
         if points is None:
-            points = [i for i in range(len(self.points))]
+            points = [i for i in range(self._pointCount)]
         if features is None:
-            features = [i for i in range(len(self.features))]
+            features = [i for i in range(self._featureCount)]
         points = valuesToPythonList(points, 'points')
         features = valuesToPythonList(features, 'features')
         for i in points:
@@ -820,7 +820,7 @@ class Base(object):
         return uniqueCount
 
     def pointIterator(self):
-    #		if len(self.features) == 0:
+    #		if self._featureCount == 0:
     #			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 
         class pointIt():
@@ -844,7 +844,7 @@ class Base(object):
         return pointIt(self)
 
     def featureIterator(self):
-    #		if len(self.points) == 0:
+    #		if self._pointCount == 0:
     #			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
         class featureIt():
@@ -928,8 +928,8 @@ class Base(object):
 
         else:
             # if unable to vectorize, iterate over each point
-            points = points if points else list(range(len(self.points)))
-            features = features if features else list(range(len(self.features)))
+            points = points if points else list(range(self._pointCount))
+            features = features if features else list(range(self._featureCount))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
@@ -959,8 +959,8 @@ class Base(object):
     def _calculateForEachElementGenericVectorized(self, function, points, features,
                                                   outputType):
         # need points/features as arrays for indexing
-        points = numpy.array(points) if points else numpy.array(range(len(self.points)))
-        features = numpy.array(features) if features else numpy.array(range(len(self.features)))
+        points = numpy.array(points) if points else numpy.array(range(self._pointCount))
+        features = numpy.array(features) if features else numpy.array(range(self._featureCount))
         toCalculate = self.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:,None], features]
@@ -997,11 +997,11 @@ class Base(object):
     def hashCode(self):
         """returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
         that should almost always change when the values of the matrix are changed by a substantive amount"""
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return 0
         valueObj = self.calculateForEachElement(hashCodeFunc, preserveZeros=True, outputType='Matrix')
         valueList = valueObj.copyAs(format="python list")
-        avg = sum(itertools.chain.from_iterable(valueList)) / float(len(self.points) * len(self.features))
+        avg = sum(itertools.chain.from_iterable(valueList)) / float(self._pointCount * self._featureCount)
         bigNum = 1000000000
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
@@ -1014,8 +1014,8 @@ class Base(object):
         passed are of the same type (Matrix, Sparse, etc.)"""
         self.validate()
         #first check to make sure they have the same number of rows and columns
-        if len(self.points) != len(other.points): return False
-        if len(self.features) != len(other.features): return False
+        if self._pointCount != len(other.points): return False
+        if self._featureCount != len(other.features): return False
         #now check if the hashes of each matrix are the same
         if self.hashCode() != other.hashCode(): return False
         return True
@@ -1049,10 +1049,10 @@ class Base(object):
 
         """
         if axis == 'point':
-            values = len(self.points)
+            values = self._pointCount
             sorter = self.sortPoints
         else:
-            values = len(self.features)
+            values = self._featureCount
             sorter = self.sortFeatures
 
         indices = list(range(values))
@@ -1099,8 +1099,8 @@ class Base(object):
         if randomOrder:
             toSplit.shufflePoints()
 
-        testXSize = int(round(testFraction * len(self.points)))
-        startIndex = len(self.points) - testXSize
+        testXSize = int(round(testFraction * self._pointCount))
+        startIndex = self._pointCount - testXSize
 
         #pull out a testing set
         if testXSize == 0:
@@ -1238,8 +1238,8 @@ class Base(object):
         def validateInObjectSize(argname, argval):
             inPC = len(argval.points)
             inFC = len(argval.features)
-            selfPC = len(self.points)
-            selfFC = len(self.features)
+            selfPC = self._pointCount
+            selfFC = self._featureCount
 
             inMainLen = inPC if axis == "point" else inFC
             inOffLen = inFC if axis == "point" else inPC
@@ -1253,7 +1253,7 @@ class Base(object):
                 vecErr += str(inFC) + "), "
                 vecErr += "but the length of long axis did not match "
                 vecErr += "the number of " + axis + "s in this object ("
-                vecErr += str(len(self.points)) + ")."
+                vecErr += str(self._pointCount) + ")."
                 # treat it as a vector
                 if inMainLen == 1:
                     if inOffLen != selfMainLen:
@@ -1460,7 +1460,7 @@ class Base(object):
         place names in a comment.
 
         """
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
 
         self.validate()
@@ -1673,10 +1673,10 @@ class Base(object):
             if x.__class__ is slice:
                 start = x.start if x.start is not None else 0
                 if start < 0:
-                    start += len(self.points)
-                stop = x.stop if x.stop is not None else len(self.points)
+                    start += self._pointCount
+                stop = x.stop if x.stop is not None else self._pointCount
                 if stop < 0:
-                    stop += len(self.points)
+                    stop += self._pointCount
                 step = x.step if x.step is not None else 1
                 x = [self._processSingleX(xi)[0] for xi in range(start, stop, step)]
             else:
@@ -1686,10 +1686,10 @@ class Base(object):
             if y.__class__ is slice:
                 start = y.start if y.start is not None else 0
                 if start < 0:
-                    start += len(self.features)
-                stop = y.stop if y.stop is not None else len(self.features)
+                    start += self._featureCount
+                stop = y.stop if y.stop is not None else self._featureCount
                 if stop < 0:
-                    stop += len(self.features)
+                    stop += self._featureCount
                 step = y.step if y.step is not None else 1
                 y = [self._processSingleY(yi)[0] for yi in range(start, stop, step)]
             else:
@@ -1704,7 +1704,7 @@ class Base(object):
         to the shape or ordering of the internal data. After such a modification, there is
         no guarantee to the validity of the results.
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("ID is invalid, This object contains no points")
 
         index = self._getPointIndex(ID)
@@ -1717,7 +1717,7 @@ class Base(object):
         to the shape or ordering of the internal data. After such a modification, there is
         no guarantee to the validity of the results.
         """
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ImproperActionException("ID is invalid, This object contains no features")
 
         index = self._getFeatureIndex(ID)
@@ -1764,7 +1764,7 @@ class Base(object):
             pointStart = self._getIndex(pointStart, 'point')
 
         if pointEnd is None:
-            pointEnd = len(self.points)
+            pointEnd = self._pointCount
         else:
             pointEnd = self._getIndex(pointEnd, 'point')
             # this is the only case that could be problematic and needs
@@ -1779,7 +1779,7 @@ class Base(object):
             featureStart = self._getIndex(featureStart, 'feature')
 
         if featureEnd is None:
-            featureEnd = len(self.features)
+            featureEnd = self._featureCount
         else:
             featureEnd = self._getIndex(featureEnd, 'feature')
             # this is the only case that could be problematic and needs
@@ -1797,9 +1797,9 @@ class Base(object):
         that our objects enforce.
         """
         if self._pointNamesCreated():
-            assert len(self.points) == len(self.getPointNames())
+            assert self._pointCount == len(self.getPointNames())
         if self._featureNamesCreated():
-            assert len(self.features) == len(self.getFeatureNames())
+            assert self._featureCount == len(self.getFeatureNames())
 
         if level > 0:
             if self._pointNamesCreated():
@@ -1819,7 +1819,7 @@ class Base(object):
 
         """
         # trivially False.
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return False
         return self._containsZero_implementation()
 
@@ -1833,7 +1833,7 @@ class Base(object):
     def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19):
 
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return ""
 
         # setup a bundle of fixed constants
@@ -1848,9 +1848,9 @@ class Base(object):
         fNameOrientation = 'center'
 
         #setup a bundle of default values
-        maxHeight = len(self.points) + 2 if maxHeight is None else maxHeight
+        maxHeight = self._pointCount + 2 if maxHeight is None else maxHeight
         maxWidth = float('inf') if maxWidth is None else maxWidth
-        maxRows = min(maxHeight, len(self.points))
+        maxRows = min(maxHeight, self._pointCount)
         maxDataRows = maxRows
         includePNames = False
         includeFNames = False
@@ -1861,7 +1861,7 @@ class Base(object):
             if includeFNames:
                 # plus or minus 2 because we will be dealing with both
                 # feature names and a gap row
-                maxRows = min(maxHeight, len(self.points) + 2)
+                maxRows = min(maxHeight, self._pointCount + 2)
                 maxDataRows = maxRows - 2
 
         # Set up point Names and determine how much space they take up
@@ -1932,9 +1932,9 @@ class Base(object):
         newLines = (']\n' + indent + ' [').join(byLine)
         ret += (indent + '[[%s]]\n') % newLines
 
-        numRows = min(len(self.points), maxW)
+        numRows = min(self._pointCount, maxW)
         # if exists non default point names, print all (truncated) point names
-        ret += dataHelpers.makeNamesLines(indent, maxW, numRows, len(self.points),
+        ret += dataHelpers.makeNamesLines(indent, maxW, numRows, self._pointCount,
                                           self.getPointNames(), 'pointNames')
         # if exists non default feature names, print all (truncated) feature names
         numCols = 0
@@ -1943,18 +1943,18 @@ class Base(object):
             for val in splited:
                 if val != '' and val != '...':
                     numCols += 1
-        elif len(self.features) > 0:
+        elif self._featureCount > 0:
             # if the container is empty, then roughly compute length of
             # the string of feature names, and then calculate numCols
             strLength = len("___".join(self.getFeatureNames())) + \
-                        len(''.join([str(i) for i in range(len(self.features))]))
-            numCols = int(min(1, maxW / float(strLength)) * len(self.features))
+                        len(''.join([str(i) for i in range(self._featureCount)]))
+            numCols = int(min(1, maxW / float(strLength)) * self._featureCount)
         # because of how dataHelers.indicesSplit works, we need this to be plus one
         # in some cases this means one extra feature name is displayed. But that's
         # acceptable
-        if numCols <= len(self.features):
+        if numCols <= self._featureCount:
             numCols += 1
-        ret += dataHelpers.makeNamesLines(indent, maxW, numCols, len(self.features),
+        ret += dataHelpers.makeNamesLines(indent, maxW, numCols, self._featureCount,
                                           self.getFeatureNames(), 'featureNames')
 
         # if name not None, print
@@ -2025,8 +2025,8 @@ class Base(object):
             context = self.name + " : "
         else:
             context = ""
-        context += str(len(self.points)) + "pt x "
-        context += str(len(self.features)) + "ft"
+        context += str(self._pointCount) + "pt x "
+        context += str(self._featureCount) + "ft"
         print(context)
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, maxColumnWidth))
 
@@ -2303,12 +2303,12 @@ class Base(object):
             def __next__(self):
                 return self.next()
 
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return EmptyIt()
 
-        if len(self.points) == 1:
+        if self._pointCount == 1:
             return self._nonZeroIteratorPointGrouped_implementation()
-        if len(self.features) == 1:
+        if self._featureCount == 1:
             return self._nonZeroIteratorFeatureGrouped_implementation()
 
         if iterateBy == 'points':
@@ -2412,9 +2412,9 @@ class Base(object):
             toAdd = toAdd.copyAs(self.getTypeString())
 
         if axis == 'point' and insertBefore is None:
-            insertBefore = len(self.points)
+            insertBefore = self._pointCount
         elif axis == 'feature' and insertBefore is None:
-            insertBefore = len(self.features)
+            insertBefore = self._featureCount
         else:
             insertBefore = self._getIndex(insertBefore, axis)
 
@@ -2422,14 +2422,14 @@ class Base(object):
             toAdd = self._alignNames('feature', toAdd)
             self._addPoints_implementation(toAdd, insertBefore)
             if not self._pointNamesCreated() and not toAdd._pointNamesCreated():
-                self._setpointCount(len(self.points) + len(toAdd.points))
+                self._setpointCount(self._pointCount + len(toAdd.points))
             else:
                 self._setAddedCountAndNames('point', toAdd, insertBefore)
         else:
             toAdd = self._alignNames('point', toAdd)
             self._addFeatures_implementation(toAdd, insertBefore)
             if not self._featureNamesCreated() and not toAdd._featureNamesCreated():
-                self._setfeatureCount(len(self.features) + len(toAdd.features))
+                self._setfeatureCount(self._featureCount + len(toAdd.features))
             else:
                 self._setAddedCountAndNames('feature', toAdd, insertBefore)
 
@@ -2475,15 +2475,15 @@ class Base(object):
 
         if axis == 'point':
             otherAxis = 'feature'
-            axisCount = len(self.points)
-            otherCount = len(self.features)
+            axisCount = self._pointCount
+            otherCount = self._featureCount
             sort_implementation = self._sortPoints_implementation
             namesCreated = self._pointNamesCreated()
             setNames = self.setPointNames
         else:
             otherAxis = 'point'
-            axisCount = len(self.features)
-            otherCount = len(self.points)
+            axisCount = self._featureCount
+            otherCount = self._pointCount
             sort_implementation = self._sortFeatures_implementation
             namesCreated = self._featureNamesCreated()
             setNames = self.setFeatureNames
@@ -2533,7 +2533,7 @@ class Base(object):
         start and end: parameters indicating range based extraction. If range
         based extraction is employed, toExtract must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.points), respectively.
+        self._pointCount, respectively.
 
         number: the quantity of points that are to be extracted, the default
         None means unrestricted extraction.
@@ -2576,7 +2576,7 @@ class Base(object):
         start and end: parameters indicating range based extraction. If range
         based extraction is employed, toExtract must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.features), respectively.
+        self._featureCount, respectively.
 
         number: the quantity of features that are to be extracted, the default
         None means unrestricted extraction.
@@ -2617,7 +2617,7 @@ class Base(object):
         start and end: parameters indicating range based deletion. If range
         based deletion is employed, toDelete must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.points), respectively.
+        self._pointCount, respectively.
 
         number: the quantity of points that are to be deleted, the default
         None means unrestricted deletion.
@@ -2651,7 +2651,7 @@ class Base(object):
         start and end: parameters indicating range based deletion. If range
         based deletion is employed, toDelete must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.features), respectively.
+        self._featureCount, respectively.
 
         number: the quantity of features that are to be deleted, the default
         None means unrestricted deletion.
@@ -2685,7 +2685,7 @@ class Base(object):
         start and end: parameters indicating range based retention. If range
         based retention is employed, toRetain must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.points), respectively.
+        self._pointCount, respectively.
 
         number: the quantity of points that are to be retained, the default
         None means unrestricted retention.
@@ -2724,7 +2724,7 @@ class Base(object):
         start and end: parameters indicating range based retention. If range
         based retention is employed, toRetain must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.features), respectively.
+        self._featureCount, respectively.
 
         number: the quantity of features that are to be retained, the default
         None means unrestricted retention.
@@ -2820,12 +2820,12 @@ class Base(object):
         if outputAs1D:
             if format != 'numpyarray' and format != 'pythonlist':
                 raise ArgumentException("Cannot output as 1D if format != 'numpy array' or 'python list'")
-            if len(self.points) != 1 and len(self.features) != 1:
+            if self._pointCount != 1 and self._featureCount != 1:
                 raise ArgumentException("To output as 1D there may either be only one point or one feature")
 
         # certain shapes and formats are incompatible
         if format.startswith('scipy'):
-            if len(self.points) == 0 or len(self.features) == 0:
+            if self._pointCount == 0 or self._featureCount == 0:
                 raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
 
         ret = self._copyAs_implementation_base(format, rowsArePoints, outputAs1D)
@@ -2840,7 +2840,7 @@ class Base(object):
     def _copyAs_implementation_base(self, format, rowsArePoints, outputAs1D):
         # in copyAs, we've already limited outputAs1D to the 'numpyarray' and 'python list' formats
         if outputAs1D:
-            if len(self.points) == 0 or len(self.features) == 0:
+            if self._pointCount == 0 or self._featureCount == 0:
                 if format == 'numpyarray':
                     return numpy.array([])
                 if format == 'pythonlist':
@@ -2853,11 +2853,11 @@ class Base(object):
         # we enforce very specific shapes in the case of emptiness along one
         # or both axes
         if format == 'pythonlist':
-            if len(self.points) == 0:
+            if self._pointCount == 0:
                 return []
-            if len(self.features) == 0:
+            if self._featureCount == 0:
                 ret = []
-                for i in range(len(self.points)):
+                for i in range(self._pointCount):
                     ret.append([])
                 return ret
 
@@ -2899,7 +2899,7 @@ class Base(object):
                 return ret
             elif format == 'dictoflist':
                 ret = ret.transpose()
-                ret = _createDictOfList(data=ret, featureNames=self.getPointNames(), nFeatures=len(self.points))
+                ret = _createDictOfList(data=ret, featureNames=self.getPointNames(), nFeatures=self._pointCount)
                 return ret
             elif format != 'pythonlist':
                 ret = ret.transpose()
@@ -2909,7 +2909,7 @@ class Base(object):
         if format == 'listofdict':
             ret = _createListOfDict(data=ret, featureNames=self.getFeatureNames())
         if format == 'dictoflist':
-            ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=len(self.features))
+            ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self._featureCount)
 
         return ret
 
@@ -2951,7 +2951,7 @@ class Base(object):
         start and end: parameters indicating range based copying. If range
         based copying is employed, toCopy must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.points), respectively.
+        self._pointCount, respectively.
 
         number: the quantity of points that are to be copied, the default
         None means unrestricted copying.
@@ -2990,7 +2990,7 @@ class Base(object):
         start and end: parameters indicating range based copying. If range
         based copying is employed, toCopy must be None, and vice versa. If
         only one of start and end are non-None, the other defaults to 0 and
-        len(self.features), respectively.
+        self._featureCount, respectively.
 
         number: the quantity of features that are to be copied, the default
         None means unrestricted copying.
@@ -3024,9 +3024,9 @@ class Base(object):
         point identifiers to limit application only to those specified.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
@@ -3050,9 +3050,9 @@ class Base(object):
         of feature identifiers to limit application only to those specified.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
@@ -3350,11 +3350,11 @@ class Base(object):
         Raises: ImproperActionException if an axis has length 0
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more points. " \
                   "This object has 0 points."
             raise ImproperActionException(msg)
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
@@ -3367,7 +3367,7 @@ class Base(object):
 
         self._flattenToOnePoint_implementation()
 
-        self._featureCount = len(self.points) * len(self.features)
+        self._featureCount = self._pointCount * self._featureCount
         self._pointCount = 1
         self.setFeatureNames(self._flattenNames('point'))
         self.setPointNames(['Flattened'])
@@ -3389,11 +3389,11 @@ class Base(object):
         Raises: ImproperActionException if an axis has length 0
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
                   "This object has 0 points."
             raise ImproperActionException(msg)
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             msg = "Can only flattenToOneFeature when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
@@ -3406,7 +3406,7 @@ class Base(object):
 
         self._flattenToOneFeature_implementation()
 
-        self._pointCount = len(self.points) * len(self.features)
+        self._pointCount = self._pointCount * self._featureCount
         self._featureCount = 1
         self.setPointNames(self._flattenNames('feature'))
         self.setFeatureNames(['Flattened'])
@@ -3420,11 +3420,11 @@ class Base(object):
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
             both = self.getFeatureNames()
-            keptAxisLength = len(self.features) // addedAxisLength
+            keptAxisLength = self._featureCount // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
         else:
             both = self.getPointNames()
-            keptAxisLength = len(self.points) // addedAxisLength
+            keptAxisLength = self._pointCount // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
 
         if allDefault:
@@ -3532,17 +3532,17 @@ class Base(object):
         point, or the names are inconsistent with a previous call to flattenToOnePoint.
 
         """
-        if len(self.features) == 0:
+        if self._featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
-        if len(self.points) != 1:
+        if self._pointCount != 1:
             msg = "Can only unflattenFromOnePoint when there is only one point. " \
-                  "This object has " + str(len(self.points)) + " points."
+                  "This object has " + str(self._pointCount) + " points."
             raise ImproperActionException(msg)
-        if len(self.features) % numPoints != 0:
+        if self._featureCount % numPoints != 0:
             msg = "The argument numPoints (" + str(numPoints) + ") must be a divisor of " \
-                  "this object's featureCount (" + str(len(self.features)) + ") otherwise " \
+                  "this object's featureCount (" + str(self._featureCount) + ") otherwise " \
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of points."
             raise ArgumentException(msg)
@@ -3554,7 +3554,7 @@ class Base(object):
 
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
-        self._featureCount = len(self.features) // numPoints
+        self._featureCount = self._featureCount // numPoints
         self._pointCount = numPoints
         self.setPointNames(ret[0])
         self.setFeatureNames(ret[1])
@@ -3578,18 +3578,18 @@ class Base(object):
         point, or the names are inconsistent with a previous call to flattenToOnePoint.
 
         """
-        if len(self.points) == 0:
+        if self._pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more points. " \
                   "This object has 0 points."
             raise ImproperActionException(msg)
-        if len(self.features) != 1:
+        if self._featureCount != 1:
             msg = "Can only unflattenFromOneFeature when there is only one feature. " \
-                  "This object has " + str(len(self.features)) + " features."
+                  "This object has " + str(self._featureCount) + " features."
             raise ImproperActionException(msg)
 
-        if len(self.points) % numFeatures != 0:
+        if self._pointCount % numFeatures != 0:
             msg = "The argument numFeatures (" + str(numFeatures) + ") must be a divisor of " \
-                  "this object's pointCount (" + str(len(self.points)) + ") otherwise " \
+                  "this object's pointCount (" + str(self._pointCount) + ") otherwise " \
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
@@ -3601,7 +3601,7 @@ class Base(object):
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
-        self._pointCount = len(self.points) // numFeatures
+        self._pointCount = self._pointCount // numFeatures
         self._featureCount = numFeatures
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
@@ -3625,12 +3625,12 @@ class Base(object):
         if not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object")
 
-        if len(self.points) != len(other.points):
+        if self._pointCount != len(other.points):
             raise ArgumentException("The number of points in each object must be equal.")
-        if len(self.features) != len(other.features):
+        if self._featureCount != len(other.features):
             raise ArgumentException("The number of features in each object must be equal.")
 
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
         self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
@@ -3657,12 +3657,12 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             # same shape
-            if len(self.points) != len(other.points):
+            if self._pointCount != len(other.points):
                 raise ArgumentException("The number of points in each object must be equal.")
-            if len(self.features) != len(other.features):
+            if self._featureCount != len(other.features):
                 raise ArgumentException("The number of features in each object must be equal.")
 
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
         if isinstance(other, UML.data.Base):
@@ -3696,7 +3696,7 @@ class Base(object):
             return NotImplemented
 
         # Test element type self
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("Cannot do a multiplication when points or features is empty")
 
         # test element type other
@@ -3704,7 +3704,7 @@ class Base(object):
             if len(other.points) == 0 or len(other.features) == 0:
                 raise ImproperActionException("Cannot do a multiplication when points or features is empty")
 
-            if len(self.features) != len(other.points):
+            if self._featureCount != len(other.points):
                 raise ArgumentException("The number of features in the calling object must "
                                         + "match the point in the callee object.")
 
@@ -3909,7 +3909,7 @@ class Base(object):
         by a scalar if other is some kind of numeric value.
 
         """
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("Cannot do ** when points or features is empty")
         if not dataHelpers._looksNumeric(other):
             raise ArgumentException("'other' must be an instance of a scalar")
@@ -3936,7 +3936,7 @@ class Base(object):
         if other == 0 or other % 2 == 0:
             identityPNames = 'automatic' if retPNames is None else retPNames
             identityFNames = 'automatic' if retFNames is None else retFNames
-            identity = UML.createData(self.getTypeString(), numpy.eye(len(self.points)),
+            identity = UML.createData(self.getTypeString(), numpy.eye(self._pointCount),
                                       pointNames=identityPNames, featureNames=identityFNames)
         if other == 0:
             return identity
@@ -4014,22 +4014,22 @@ class Base(object):
         return ret
 
     def _numericValidation(self):
-        if len(self.points) > 0:
+        if self._pointCount > 0:
             try:
                 self.calculateForEachElement(dataHelpers._checkNumeric)
             except ValueError:
                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
     def _genericNumericBinary_sizeValidation(self, opName, other):
-        if len(self.points) != len(other.points):
+        if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
-            msg += "(self=" + str(len(self.points)) + " vs other="
+            msg += "(self=" + str(self._pointCount) + " vs other="
             msg += str(len(other.points)) + ")"
             raise ArgumentException(msg)
-        if len(self.features) != len(other.features):
+        if self._featureCount != len(other.features):
             raise ArgumentException("The number of features in each object must be equal.")
 
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
 
 
@@ -4260,11 +4260,11 @@ class Base(object):
     def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
                                    end=None, number=None, randomize=False):
         if axis == 'point':
-            axisLength = len(self.points)
+            axisLength = self._pointCount
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
             viewIterator = self.pointIterator
         else:
-            axisLength = len(self.features)
+            axisLength = self._featureCount
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
             viewIterator = self.featureIterator
 
@@ -4422,8 +4422,8 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = len(self.features) // 2
-        if len(self.features) % 2 == 1:
+        endIndex = self._featureCount // 2
+        if self._featureCount % 2 == 1:
             endIndex *= -1
             endIndex -= 1
         currIndex = 0
@@ -4431,7 +4431,7 @@ class Base(object):
         while totalWidth < maxWidth and currIndex != endIndex:
             nameIndex = currIndex
             if currIndex < 0:
-                nameIndex = len(self.features) + currIndex
+                nameIndex = self._featureCount + currIndex
 
             currName = self.getFeatureName(nameIndex)
 
@@ -4447,7 +4447,7 @@ class Base(object):
             # test: total width is under max without column holder
             rawStillUnder = totalWidth - (colHoldTotal) < maxWidth
             # test: the column we are trying to add is the last one possible
-            allCols = rawStillUnder and (numAdded == (len(self.features) - 1))
+            allCols = rawStillUnder and (numAdded == (self._featureCount - 1))
             # only add this column if it won't put us over the limit,
             # OR if it is the last one (and under the limit without the col
             # holder)
@@ -4464,7 +4464,7 @@ class Base(object):
         # combine the tables. Have to reverse rTable because entries were appended
         # in a right to left order
         rNames.reverse()
-        if numAdded == len(self.features):
+        if numAdded == self._featureCount:
             lNames += rNames
         else:
             lNames += [colHold] + rNames
@@ -4481,14 +4481,14 @@ class Base(object):
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows, len(self.points))
+        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows, self._pointCount)
 
         # we pull indices from two lists: tRowIDs and bRowIDs
         for sourceIndex in range(2):
             source = list([tRowIDs, bRowIDs])[sourceIndex]
 
             # add in the rowHolder, if needed
-            if sourceIndex == 1 and len(bRowIDs) + len(tRowIDs) < len(self.points):
+            if sourceIndex == 1 and len(bRowIDs) + len(tRowIDs) < self._pointCount:
                 names.append(rowHolder)
 
             for i in source:
@@ -4524,10 +4524,10 @@ class Base(object):
         equal to maxWidth - ((n-1) * len(colSep)).
 
         """
-        if len(self.points) == 0 or len(self.features) == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return [[]], []
 
-        if maxHeight < 2 and maxHeight != len(self.points):
+        if maxHeight < 2 and maxHeight != self._pointCount:
             msg = "If the number of points in this object is two or greater, "
             msg += "then we require that the input argument maxHeight also "
             msg += "be greater than or equal to two."
@@ -4539,16 +4539,16 @@ class Base(object):
 
         #setup a bundle of default values
         if maxHeight is None:
-            maxHeight = len(self.points)
+            maxHeight = self._pointCount
         if maxWidth is None:
             maxWidth = float('inf')
 
-        maxRows = min(maxHeight, len(self.points))
+        maxRows = min(maxHeight, self._pointCount)
         maxDataRows = maxRows
 
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows, len(self.points))
+        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows, self._pointCount)
         combinedRowIDs = tRowIDs + bRowIDs
-        if len(combinedRowIDs) < len(self.points):
+        if len(combinedRowIDs) < self._pointCount:
             rowHolderIndex = len(tRowIDs)
         else:
             rowHolderIndex = sys.maxsize
@@ -4566,8 +4566,8 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = len(self.features) // 2
-        if len(self.features) % 2 == 1:
+        endIndex = self._featureCount // 2
+        if self._featureCount % 2 == 1:
             endIndex *= -1
             endIndex -= 1
         currIndex = 0
@@ -4597,7 +4597,7 @@ class Base(object):
             # test: total width is under max without column holder
             allCols = totalWidth - (cHoldTotal) < maxWidth
             # test: the column we are trying to add is the last one possible
-            allCols = allCols and (numAdded == (len(self.features) - 1))
+            allCols = allCols and (numAdded == (self._featureCount - 1))
             # only add this column if it won't put us over the limit
             if totalWidth < maxWidth or allCols:
                 numAdded += 1
@@ -4618,7 +4618,7 @@ class Base(object):
         # combine the tables. Have to reverse rTable because entries were appended
         # in a right to left order
         rColWidths.reverse()
-        if numAdded == len(self.features):
+        if numAdded == self._featureCount:
             lColWidths += rColWidths
         else:
             lColWidths += [cHoldWidth] + rColWidths
@@ -4629,7 +4629,7 @@ class Base(object):
             else:
                 toAdd = []
 
-            if numAdded == len(self.features):
+            if numAdded == self._featureCount:
                 lTable[rowIndex] += toAdd
             else:
                 lTable[rowIndex] += [colHold] + toAdd
@@ -4953,7 +4953,7 @@ class Base(object):
         return self._getIndex(identifier, 'feature')
 
     def _getIndex(self, identifier, axis):
-        num = len(self.points) if axis == 'point' else len(self.features)
+        num = self._pointCount if axis == 'point' else self._featureCount
         nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
         accepted = (six.string_types, int, numpy.integer)
 
@@ -5313,9 +5313,9 @@ class Base(object):
             raise ArgumentException(msg)
 
     def _shapeCompareString(self, argName, argValue):
-        selfPoints = len(self.points)
+        selfPoints = self._pointCount
         sps = "" if selfPoints == 1 else "s"
-        selfFeats = len(self.features)
+        selfFeats = self._featureCount
         sfs = "" if selfFeats == 1 else "s"
         argPoints = len(argValue.points)
         aps = "" if argPoints == 1 else "s"
@@ -5332,7 +5332,7 @@ class Base(object):
         return ret
 
     def _validateObjHasSameNumberOfFeatures(self, argName, argValue):
-        selfFeats = len(self.features)
+        selfFeats = self._featureCount
         argFeats = len(argValue.features)
 
         if selfFeats != argFeats:
@@ -5342,7 +5342,7 @@ class Base(object):
             raise ArgumentException(msg)
 
     def _validateObjHasSameNumberOfPoints(self, argName, argValue):
-        selfPoints = len(self.points)
+        selfPoints = self._pointCount
         argValuePoints = len(argValue.points)
         if selfPoints != argValuePoints:
             msg = "The argument named " + argName + " must have the same number "
@@ -5388,12 +5388,12 @@ class Base(object):
             selfNames = self.getPointNames()
             insertedNames = addedObj.getPointNames()
             setSelfNames = self.setPointNames
-            self._setpointCount(len(self.points) + len(addedObj.points))
+            self._setpointCount(self._pointCount + len(addedObj.points))
         else:
             selfNames = self.getFeatureNames()
             insertedNames = addedObj.getFeatureNames()
             setSelfNames = self.setFeatureNames
-            self._setfeatureCount(len(self.features) + len(addedObj.features))
+            self._setfeatureCount(self._featureCount + len(addedObj.features))
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:

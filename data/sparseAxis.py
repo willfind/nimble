@@ -7,6 +7,7 @@ import numpy
 
 import UML
 from .axis import Axis
+from .base import cmp_to_key
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -157,6 +158,113 @@ class SparseAxis(Axis):
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)
+
+    def _sort_implementation(self, sortBy, sortHelper):
+        scorer = None
+        comparator = None
+        if self.axis == 'point':
+            viewMaker = self.source.pointView
+            getViewIter = self.source.pointIterator
+            targetAxis = self.source.data.row
+            indexGetter = self.source.getPointIndex
+            nameGetter = self.source.getPointName
+            nameGetterStr = 'getPointName'
+            names = self.source.getPointNames()
+        else:
+            viewMaker = self.source.featureView
+            targetAxis = self.source.data.col
+            getViewIter = self.source.featureIterator
+            indexGetter = self.source.getFeatureIndex
+            nameGetter = self.source.getFeatureName
+            nameGetterStr = 'getFeatureName'
+            names = self.source.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            sortedData = []
+            idxDict = {val: idx for idx, val in enumerate(sortHelper)}
+            if self.axis == 'point':
+                sortedData = [idxDict[val] for val in self.source.data.row]
+                self.source.data.row = numpy.array(sortedData)
+            else:
+                sortedData = [idxDict[val] for val in self.source.data.col]
+                self.source.data.col = numpy.array(sortedData)
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
+
+        test = viewMaker(0)
+        try:
+            sortHelper(test)
+            scorer = sortHelper
+        except TypeError:
+            pass
+        try:
+            sortHelper(test, test)
+            comparator = sortHelper
+        except TypeError:
+            pass
+
+        if sortHelper is not None and scorer is None and comparator is None:
+            raise ArgumentException("sortHelper is neither a scorer or a comparator")
+
+        if comparator is not None:
+            # make array of views
+            viewArray = []
+            viewIter = getViewIter()
+            for v in viewIter:
+                viewArray.append(v)
+
+            viewArray.sort(key=cmp_to_key(comparator))
+            indexPosition = []
+            for i in range(len(viewArray)):
+                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+                indexPosition.append(index)
+            indexPosition = numpy.array(indexPosition)
+        elif hasattr(scorer, 'permuter'):
+            scoreArray = scorer.indices
+            indexPosition = numpy.argsort(scoreArray)
+        else:
+            # make array of views
+            viewArray = []
+            viewIter = getViewIter()
+            for v in viewIter:
+                viewArray.append(v)
+
+            scoreArray = viewArray
+            if scorer is not None:
+                # use scoring function to turn views into values
+                for i in range(len(viewArray)):
+                    scoreArray[i] = scorer(viewArray[i])
+            else:
+                for i in range(len(viewArray)):
+                    scoreArray[i] = viewArray[i][sortBy]
+
+            # use numpy.argsort to make desired index array
+            # this results in an array whose ith entry contains the the
+            # index into the data of the value that should be in the ith
+            # position.
+            indexPosition = numpy.argsort(scoreArray)
+
+        # since we want to access with with positions in the original
+        # data, we reverse the 'map'
+        reverseIndexPosition = numpy.empty(indexPosition.shape[0])
+        for i in range(indexPosition.shape[0]):
+            reverseIndexPosition[indexPosition[i]] = i
+
+        if self.axis == 'point':
+            self.source.data.row[:] = reverseIndexPosition[self.source.data.row]
+        else:
+            self.source.data.col[:] = reverseIndexPosition[self.source.data.col]
+
+        # we need to return an array of the feature names in their new order.
+        # we convert the indices of the their previous location into their names
+        newNameOrder = []
+        for i in range(len(indexPosition)):
+            oldIndex = indexPosition[i]
+            newName = nameGetter(oldIndex)
+            newNameOrder.append(newName)
+
+        self.source._sorted = None
+        return newNameOrder
 
 ###################
 # Generic Helpers #

@@ -22,7 +22,7 @@ from UML.data.tests.numerical_backend_new import NumericalDataSafe
 from UML.data.tests.high_level_backend_new import HighLevelAll
 from UML.data.tests.high_level_backend_new import HighLevelDataSafe
 
-# from UML.data.tests.low_level_backend import LowLevelBackend
+from UML.data.tests.low_level_backend_new import LowLevelBackend
 
 from UML.data.tests.structure_backend_new import StructureAll
 from UML.data.tests.structure_backend_new import StructureDataSafe
@@ -72,20 +72,20 @@ class TestDataFrame(HighLevelAll, StructureAll, AllNumerical):
         super(TestDataFrame, self).__init__('DataFrame')
 
 
-# class TestBaseOnly(LowLevelBackend):
-#     def __init__(self):
-#         def makeConst(num):
-#             def const(dummy=2):
-#                 return num
-#
-#             return const
-#
-#         def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):
-#             """ Make a base data object that will think it has as many features as it has featureNames,
-#             even though it has no actual data """
-#             rows = psize if pointNames is None else len(pointNames)
-#             cols = fsize if featureNames is None else len(featureNames)
-#             ret = UML.data.Base((rows, cols), pointNames=pointNames, featureNames=featureNames)
-#             return ret
-#
-#         self.constructor = makeAndDefine
+class TestBaseOnly(LowLevelBackend):
+    def __init__(self):
+        def makeConst(num):
+            def const(dummy=2):
+                return num
+
+            return const
+
+        def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):
+            """ Make a base data object that will think it has as many features as it has featureNames,
+            even though it has no actual data """
+            rows = psize if pointNames is None else len(pointNames)
+            cols = fsize if featureNames is None else len(featureNames)
+            ret = UML.data.Base((rows, cols), pointNames=pointNames, featureNames=featureNames)
+            return ret
+
+        self.constructor = makeAndDefine

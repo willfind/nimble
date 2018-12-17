@@ -15,6 +15,155 @@ class Points(object):
     def __init__(self):
         pass
 
+    ########################
+    # Low Level Operations #
+    ########################
+
+    def getName(self, index):
+        """
+        The name of the point at the provided index.
+
+        Parameters
+        ----------
+        index : int
+
+        Returns
+        -------
+        str
+
+        See Also
+        --------
+        getNames, setName, setNames
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getName(index)
+
+    def getNames(self):
+        """
+        The point names ordered by index.
+
+        Returns
+        -------
+        lst
+
+        See Also
+        --------
+        getName, setName, setNames
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getNames()
+
+    def setName(self, oldIdentifier, newName):
+        """
+        Set or change a pointName.
+
+        Set the name of the point at ``oldIdentifier`` with the value of
+        ``newName``.
+
+        Parameters
+        ----------
+        oldIdentifier : str, int
+            A string or integer, specifying either a current pointName
+            or the index of a current pointName.
+        newName : str
+            May be either a string not currently in the pointName set,
+            or None for an default pointName. newName cannot begin with
+            the default prefix.
+
+        See Also
+        --------
+        setNames
+
+        Examples
+        --------
+        TODO
+        """
+        self._setName(oldIdentifier, newName)
+
+    def setNames(self, assignments=None):
+        """
+        Set or rename all of the point names of this object.
+
+        Set the point names of this object according to the values
+        specified by the ``assignments`` parameter. If assignments is
+        None, then all point names will be given new default values.
+
+        Parameters
+        ----------
+        assignments : iterable, dict
+            * iterable - Given a list-like container, the mapping
+              between names and array indices will be used to define the
+              point names.
+            * dict - The mapping for each point name in the format
+              {name:index}
+
+        See Also
+        --------
+        setName
+
+        Examples
+        --------
+        TODO
+        """
+        self._setNames(assignments)
+
+    def getIndex(self, name):
+        """
+        The index of a point name.
+
+        Return the index location of the provided point ``name``.
+
+        Parameters
+        ----------
+        name : str
+            The name of a point.
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        indices
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getIndex(name)
+
+    def getIndices(self, names):
+        """
+        The indices of a list of point names.
+
+        Return a list of the the index locations of the provided point
+        ``names``.
+
+        Parameters
+        ----------
+        names : list
+            The names of points.
+
+        Returns
+        -------
+        list
+
+        See Also
+        --------
+        index
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getIndices(names)
+
     #########################
     # Structural Operations #
     #########################
@@ -249,6 +398,29 @@ class Points(object):
         """
         return self._count(condition)
 
+    def sort(self, sortBy=None, sortHelper=None):
+        """
+        Arrange the points in this object.
+
+        A variety of methods to sort the points. May define either
+        ``sortBy`` or ``sortHelper`` parameter, not both.
+
+        Parameters
+        ----------
+        sortBy : str
+            May indicate the feature to sort by or None if the entire
+            point is to be taken as a key.
+        sortHelper : list, function
+            Either an iterable, list-like object of identifiers (names
+            and/or indices), a comparator or a scoring function, or None
+            to indicate the natural ordering.
+
+        Examples
+        --------
+        TODO
+        """
+        self._sort(sortBy, sortHelper)
+
     ###########################
     # Higher Order Operations #
     ###########################
@@ -318,3 +490,41 @@ class Points(object):
         TODO
         """
         self._add(toAdd, insertBefore)
+
+    def mapReduce(self, mapper, reducer):
+        """
+        Apply a mapper and reducer function to this object.
+
+        Return a new object containing the results of the given mapper
+        and reducer functions
+
+        Parameters
+        ----------
+        mapper : function
+            Input a point and output an iterable containing two-tuple(s)
+            of mapping identifiers and feature values.
+        reducer : function
+            Input the ``mapper`` output and output a two-tuple
+            containing the identifier and the reduced value.
+
+        Examples
+        --------
+        TODO
+        """
+        return self._mapReduce(mapper, reducer)
+
+    def shuffle(self):
+        """
+        Permute the indexing of the points to a random order.
+
+        Notes
+        -----
+        This relies on python's random.shuffle() so may not be
+        sufficiently random for large number of points.
+        See random.shuffle()'s documentation.
+
+        Examples
+        --------
+        TODO
+        """
+        self._shuffle()

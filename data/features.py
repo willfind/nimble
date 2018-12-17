@@ -15,6 +15,155 @@ class Features(object):
     def __init__(self):
         pass
 
+    ########################
+    # Low Level Operations #
+    ########################
+
+    def getName(self, index):
+        """
+        The name of the feature at the provided index.
+
+        Parameters
+        ----------
+        index : int
+
+        Returns
+        -------
+        str
+
+        See Also
+        --------
+        getNames, setName, setNames
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getName(index)
+
+    def getNames(self):
+        """
+        The feature names ordered by index.
+
+        Returns
+        -------
+        lst
+
+        See Also
+        --------
+        getName, setName, setNames
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getNames()
+
+    def setName(self, oldIdentifier, newName):
+        """
+        Set or change a featureName.
+
+        Set the name of the feature at ``oldIdentifier`` with the value
+        of ``newName``.
+
+        Parameters
+        ----------
+        oldIdentifier : str, int
+            A string or integer, specifying either a current featureName
+            or the index of a current featureName.
+        newName : str
+            May be either a string not currently in the featureName set,
+            or None for an default featureName. newName cannot begin
+            with the default prefix.
+
+        See Also
+        --------
+        setNames
+
+        Examples
+        --------
+        TODO
+        """
+        self._setName(oldIdentifier, newName)
+
+    def setNames(self, assignments=None):
+        """
+        Set or rename all of the feature names of this object.
+
+        Set the feature names of this object according to the values
+        specified by the ``assignments`` parameter. If assignments is
+        None, then all feature names will be given new default values.
+
+        Parameters
+        ----------
+        assignments : iterable, dict
+            * iterable - Given a list-like container, the mapping
+              between names and array indices will be used to define the
+              feature names.
+            * dict - The mapping for each feature name in the format
+              {name:index}
+
+        See Also
+        --------
+        setName
+
+        Examples
+        --------
+        TODO
+        """
+        self._setNames(assignments)
+
+    def getIndex(self, name):
+        """
+        The index of a feature name.
+
+        Return the index location of the provided feature ``name``.
+
+        Parameters
+        ----------
+        name : str
+            The name of a feature.
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        indices
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getIndex(name)
+
+    def getIndices(self, names):
+        """
+        The indices of a list of feature names.
+
+        Return a list of the the index locations of the provided feature
+        ``names``.
+
+        Parameters
+        ----------
+        names : list
+            The names of features.
+
+        Returns
+        -------
+        list
+
+        See Also
+        --------
+        index
+
+        Examples
+        --------
+        TODO
+        """
+        return self._getIndices(names)
+
     #########################
     # Structural Operations #
     #########################
@@ -249,6 +398,29 @@ class Features(object):
         """
         return self._count(condition)
 
+    def sort(self, sortBy=None, sortHelper=None):
+        """
+        Arrange the features in this object.
+
+        A variety of methods to sort the features. May define either
+        ``sortBy`` or ``sortHelper`` parameter, not both.
+
+        Parameters
+        ----------
+        sortBy : str
+            May indicate the feature to sort by or None if the entire
+            feature is to be taken as a key.
+        sortHelper : list, function
+            Either an iterable, list-like object of identifiers (names
+            and/or indices), a comparator or a scoring function, or None
+            to indicate the natural ordering.
+
+        Examples
+        --------
+        TODO
+        """
+        self._sort(sortBy, sortHelper)
+
     ###########################
     # Higher Order Operations #
     ###########################
@@ -318,3 +490,42 @@ class Features(object):
         TODO
         """
         self._add(toAdd, insertBefore)
+
+
+    def mapReduce(self, mapper, reducer):
+        """
+        Apply a mapper and reducer function to this object.
+
+        Return a new object containing the results of the given mapper
+        and reducer functions
+
+        Parameters
+        ----------
+        mapper : function
+            Input a feature and output an iterable containing
+            two-tuple(s) of mapping identifiers and feature values.
+        reducer : function
+            Input the ``mapper`` output and output a two-tuple
+            containing the identifier and the reduced value.
+
+        Examples
+        --------
+        TODO
+        """
+        return self._mapReduce(mapper, reducer)
+
+    def shuffle(self):
+        """
+        Permute the indexing of the features to a random order.
+
+        Notes
+        -----
+        This relies on python's random.shuffle() so may not be
+        sufficiently random for large number of features.
+        See random.shuffle()'s documentation.
+
+        Examples
+        --------
+        TODO
+        """
+        self._shuffle()
