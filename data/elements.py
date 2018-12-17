@@ -2,6 +2,7 @@
 
 """
 from __future__ import absolute_import
+from abc import abstractmethod
 
 import numpy
 import six
@@ -16,7 +17,8 @@ class Elements(object):
     """
 
     """
-    def __init__(self):
+    def __init__(self, source):
+        self.source = source
         super(Elements, self).__init__()
 
     # TODO iterator???
@@ -103,8 +105,10 @@ class Elements(object):
 
         else:
             # if unable to vectorize, iterate over each point
-            points = points if points else list(range(len(self.source.points)))
-            features = features if features else list(range(len(self.source.features)))
+            if not points:
+                points = list(range(len(self.source.points)))
+            if not features:
+                features = list(range(len(self.source.features)))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
@@ -213,7 +217,7 @@ class Elements(object):
         for i in points:
             for j in features:
                 val = self.source[i, j]
-                temp = uniqueCount.get(val,0)
+                temp = uniqueCount.get(val, 0)
                 uniqueCount[val] = temp + 1
 
         return uniqueCount
@@ -265,7 +269,7 @@ class Elements(object):
             #TODO: improve how the exception is catch
             self.source._numericValidation()
             other._numericValidation()
-            raise(e)
+            raise e
 
         retNames = dataHelpers.mergeNonDefaultNames(self.source, other)
         retPNames = retNames[0]
@@ -322,7 +326,7 @@ class Elements(object):
                 except Exception as e:
                     self.source._numericValidation()
                     other._numericValidation()
-                    raise(e)
+                    raise e
             self.source.transformEachElement(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
@@ -331,7 +335,7 @@ class Elements(object):
                 except Exception as e:
                     self.source._numericValidation()
                     other._numericValidation()
-                    raise(e)
+                    raise e
             self.source.transformEachElement(powFromRight)
 
         self.source.validate()
@@ -369,3 +373,16 @@ class Elements(object):
             values = function(toCalculate)
             return UML.createData(outputType, values,
                                   elementType=numpy.object_)
+
+    #####################
+    # Abstract Methods  #
+    #####################
+
+    @abstractmethod
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        pass
+
+    @abstractmethod
+    def _multiply_implementation(self, other):
+        pass

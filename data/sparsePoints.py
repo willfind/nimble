@@ -18,10 +18,12 @@ class SparsePoints(SparseAxis, Axis, Points):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'point'
-        super(SparsePoints, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(SparsePoints, self).__init__(**kwds)
 
     def _add_implementation(self, toAdd, insertBefore):
         """
@@ -58,6 +60,7 @@ class SparsePoints(SparseAxis, Axis, Points):
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
         numNewRows = len(self.source.points) + len(toAdd.points)
+        shape = (numNewRows, len(self.source.features))
         self.source.data = coo_matrix((newData, (newRow, newCol)),
-                                      shape=(numNewRows, len(self.source.features)))
+                                      shape=shape)
         self.source._sorted = None

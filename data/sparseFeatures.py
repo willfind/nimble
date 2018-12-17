@@ -18,10 +18,12 @@ class SparseFeatures(SparseAxis, Axis, Features):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'feature'
-        super(SparseFeatures, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(SparseFeatures, self).__init__(**kwds)
 
     def _add_implementation(self, toAdd, insertBefore):
         """
@@ -59,6 +61,7 @@ class SparseFeatures(SparseAxis, Axis, Features):
             newData = numpy.array(newData, dtype=numpy.object_)
 
         numNewCols = len(self.source.features) + len(toAdd.features)
+        shape = (len(self.source.points), numNewCols)
         self.source.data = coo_matrix((newData, (newRow, newCol)),
-                                      shape=(len(self.source.points), numNewCols))
+                                      shape=shape)
         self.source._sorted = None

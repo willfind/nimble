@@ -11,10 +11,12 @@ class ListPoints(ListAxis, Axis, Points):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'point'
-        super(ListPoints, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(ListPoints, self).__init__(**kwds)
 
     def _add_implementation(self, toAdd, insertBefore):
         """

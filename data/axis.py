@@ -3,6 +3,7 @@ TODO
 """
 from __future__ import absolute_import
 import copy
+from abc import abstractmethod
 
 import six
 import numpy
@@ -18,7 +19,9 @@ class Axis(object):
     """
     TODO
     """
-    def __init__(self):
+    def __init__(self, axis, source):
+        self.axis = axis
+        self.source = source
         self._position = 0
         super(Axis, self).__init__()
 
@@ -149,7 +152,7 @@ class Axis(object):
 
     def hasName(self, name):
         try:
-            self.getIndex(name)
+            self.source.getIndex(name)
             return True
         # keyError if not in dict, TypeError if names is None
         except (KeyError, TypeError):
@@ -226,13 +229,11 @@ class Axis(object):
             otherAxis = 'feature'
             axisCount = self.source._pointCount
             otherCount = self.source._featureCount
-            namesCreated = self.source._pointNamesCreated()
             setNames = self.source.setPointNames
         else:
             otherAxis = 'point'
             axisCount = self.source._featureCount
             otherCount = self.source._pointCount
-            namesCreated = self.source._featureNamesCreated()
             setNames = self.source.setFeatureNames
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
@@ -241,13 +242,14 @@ class Axis(object):
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
             indices = self.source._constructIndicesList(self.axis, sortHelper)
             if len(indices) != axisCount:
-                msg = "This object contains {0} {1}s, ".format(axisCount, self.axis)
-                msg += "but sortHelper has {0} identifiers".format(len(indices))
+                msg = "This object contains {0} {1}s, "
+                msg += "but sortHelper has {2} identifiers"
+                msg = msg.format(axisCount, self.axis, len(indices))
                 raise ArgumentException(msg)
             if len(indices) != len(set(indices)):
-                msg = "This object contains {0} {1}s, ".format(axisCount, self.axis)
-                msg += "but sortHelper has {0} ".format(len(set(indices)))
-                msg += "unique identifiers"
+                msg = "This object contains {0} {1}s, "
+                msg += "but sortHelper has {2} unique identifiers"
+                msg = msg.format(axisCount, self.axis, len(set(indices)))
                 raise ArgumentException(msg)
 
             sortHelper = indices
@@ -345,12 +347,12 @@ class Axis(object):
                 # if key is new, we must add an empty list
                 if k not in mapResults:
                     mapResults[k] = []
-                # append this value to the list of values associated with the key
+                # append value to the list of values associated with the key
                 mapResults[k].append(v)
 
         # apply the reducer to the list of values associated with each key
         ret = []
-        for mapKey in mapResults.keys():
+        for mapKey in mapResults:
             mapValues = mapResults[mapKey]
             # the reducer will return a tuple of a key to a value
             redRet = reducer(mapKey, mapValues)
@@ -656,6 +658,22 @@ class Axis(object):
 
         self.source.validate()
 
+    ####################
+    # Abstract Methods #
+    ####################
+
+    @abstractmethod
+    def _sort_implementation(self, sortBy, sortHelper):
+        pass
+
+    @abstractmethod
+    def _structuralBackend_implementation(self, structure, targetList):
+        pass
+
+    @abstractmethod
+    def _add_implementation(self, toAdd, insertBefore):
+        pass
+
 ###########
 # Helpers #
 ###########
@@ -877,7 +895,8 @@ def _setAddedCountAndNames(axis, caller, addedObj, insertedBefore):
         # only adjust count if no names in either object
         if not (caller._featureNamesCreated()
                 or addedObj._featureNamesCreated()):
-            caller._setfeatureCount(len(caller.features) + len(addedObj.features))
+            newFtCount = len(caller.features) + len(addedObj.features)
+            caller._setfeatureCount(newFtCount)
             return
         callerNames = caller.getFeatureNames()
         insertedNames = addedObj.getFeatureNames()

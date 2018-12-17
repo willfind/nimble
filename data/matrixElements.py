@@ -12,9 +12,10 @@ class MatrixElements(Elements):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
-        super(MatrixElements, self).__init__()
+        kwds['source'] = source
+        super(MatrixElements, self).__init__(**kwds)
 
     ################################
     # Higher Order implementations #

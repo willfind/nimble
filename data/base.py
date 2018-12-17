@@ -88,21 +88,26 @@ def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
 class BasePoints(Axis, Points):
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'point'
-        super(BasePoints, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(BasePoints, self).__init__(**kwds)
 
 class BaseFeatures(Axis, Features):
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'feature'
-        super(BaseFeatures, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(BaseFeatures, self).__init__(**kwds)
 
 class BaseElements(Elements):
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
-        super(BaseElements, self).__init__()
+        kwds['source'] = self.source
+        super(BaseElements, self).__init__(**kwds)
 
 class Base(object):
     """

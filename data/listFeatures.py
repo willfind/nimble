@@ -11,11 +11,12 @@ class ListFeatures(ListAxis, Axis, Features):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
         self.axis = 'feature'
-
-        super(ListFeatures, self).__init__()
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(ListFeatures, self).__init__(**kwds)
 
     def _add_implementation(self, toAdd, insertBefore):
         """
@@ -28,4 +29,4 @@ class ListFeatures(ListAxis, Axis, Features):
             endData = self.source.data[i][insertBefore:]
             allPointData = startData + list(toAdd.data[i]) + endData
             self.source.data[i] = allPointData
-        self.source._numFeatures = self.source._numFeatures + len(toAdd.features)
+        self.source._numFeatures += len(toAdd.features)

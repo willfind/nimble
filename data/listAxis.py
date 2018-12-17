@@ -3,10 +3,12 @@
 """
 from __future__ import absolute_import
 import copy
+from abc import abstractmethod
 
 import numpy
 
 import UML
+from UML.exceptions import ArgumentException
 from .axis import Axis
 from .base import cmp_to_key
 
@@ -14,8 +16,12 @@ class ListAxis(Axis):
     """
 
     """
-    def __init__(self):
-        super(ListAxis, self).__init__()
+    def __init__(self, axis, source, **kwds):
+        self.axis = axis
+        self.source = source
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(ListAxis, self).__init__(**kwds)
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
@@ -48,7 +54,8 @@ class ListAxis(Axis):
         else:
             if self.source.data == []:
                 # create empty matrix with correct shape
-                empty = numpy.empty((len(self.source.points), len(self.source.features)))
+                shape = (len(self.source.points), len(self.source.features))
+                empty = numpy.empty(shape)
                 data = numpy.matrix(empty, dtype=numpy.object_)
 
             keepList = []
@@ -111,7 +118,8 @@ class ListAxis(Axis):
             pass
 
         if sortHelper is not None and scorer is None and comparator is None:
-            raise ArgumentException("sortHelper is neither a scorer or a comparator")
+            msg = "sortHelper is neither a scorer or a comparator"
+            raise ArgumentException(msg)
 
         # make array of views
         viewArray = []
@@ -156,10 +164,18 @@ class ListAxis(Axis):
                 for j in range(len(indexPosition)):
                     currPoint[j] = temp[indexPosition[j]]
 
-        # we convert the indices of the their previous location into their feature names
+        # convert indices of their previous location into their feature names
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
+
+    ####################
+    # Abstract Methods #
+    ####################
+
+    @abstractmethod
+    def _add_implementation(self, toAdd, insertBefore):
+        pass

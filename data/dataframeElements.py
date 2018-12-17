@@ -5,9 +5,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .elements import Elements
-
 import UML
+from .elements import Elements
 
 pd = UML.importModule('pandas')
 if pd:
@@ -17,9 +16,10 @@ class DataFrameElements(Elements):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
-        super(DataFrameElements, self).__init__()
+        kwds['source'] = source
+        super(DataFrameElements, self).__init__(**kwds)
 
     ################################
     # Higher Order implementations #

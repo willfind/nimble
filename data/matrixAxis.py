@@ -2,10 +2,12 @@
 
 """
 from __future__ import absolute_import
+from abc import abstractmethod
 
 import numpy
 
 import UML
+from UML.exceptions import ArgumentException
 from .axis import Axis
 from .base import cmp_to_key
 
@@ -13,8 +15,12 @@ class MatrixAxis(Axis):
     """
 
     """
-    def __init__(self):
-        super(MatrixAxis, self).__init__()
+    def __init__(self, axis, source, **kwds):
+        self.axis = axis
+        self.source = source
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(MatrixAxis, self).__init__(**kwds)
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
@@ -89,7 +95,8 @@ class MatrixAxis(Axis):
             pass
 
         if sortHelper is not None and scorer is None and comparator is None:
-            raise ArgumentException("sortHelper is neither a scorer or a comparator")
+            msg = "sortHelper is neither a scorer or a comparator"
+            raise ArgumentException(msg)
 
         if comparator is not None:
             # make array of views
@@ -133,10 +140,18 @@ class MatrixAxis(Axis):
         else:
             self.source.data = self.source.data[:, indexPosition]
 
-        # we convert the indices of the their previous location into their feature names
+        # convert indices of their previous location into their feature names
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
+
+    ####################
+    # Abstract Methods #
+    ####################
+
+    @abstractmethod
+    def _add_implementation(self, toAdd, insertBefore):
+        pass

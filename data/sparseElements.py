@@ -16,9 +16,10 @@ class SparseElements(Elements):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
-        super(SparseElements, self).__init__()
+        kwds['source'] = source
+        super(SparseElements, self).__init__(**kwds)
 
     ################################
     # Higher Order implementations #
@@ -76,8 +77,7 @@ class SparseElements(Elements):
         # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
         # for other.data as any dense or sparse matrix
         toMul = None
-        directMul = (isinstance(other, UML.data.Sparse)
-                     or isinstance(other, UML.data.Matrix))
+        directMul = isinstance(other, (UML.data.Sparse, UML.data.Matrix))
         notView = not isinstance(other, UML.data.BaseView)
         if directMul and notView:
             toMul = other.data

@@ -7,6 +7,7 @@ the code which provides the functionality for the function. The
 functionality component is located in axis.py.
 """
 from __future__ import absolute_import
+from abc import abstractmethod
 
 class Points(object):
     """
@@ -528,3 +529,71 @@ class Points(object):
         TODO
         """
         self._shuffle()
+
+    ####################
+    # Abstract Methods #
+    ####################
+
+    @abstractmethod
+    def _getName(self, index):
+        pass
+
+    @abstractmethod
+    def _getNames(self):
+        pass
+
+    @abstractmethod
+    def _setName(self, oldIdentifier, newName):
+        pass
+
+    @abstractmethod
+    def _setNames(self, assignments):
+        pass
+
+    @abstractmethod
+    def _getIndex(self, name):
+        pass
+
+    @abstractmethod
+    def _getIndices(self, names):
+        pass
+
+    @abstractmethod
+    def _copy(self, toCopy, start, end, number, randomize):
+        pass
+
+    @abstractmethod
+    def _extract(self, toExtract, start, end, number, randomize):
+        pass
+
+    @abstractmethod
+    def _delete(self, toDelete, start, end, number, randomize):
+        pass
+
+    @abstractmethod
+    def _retain(self, toRetain, start, end, number, randomize):
+        pass
+
+    @abstractmethod
+    def _count(self, condition):
+        pass
+
+    @abstractmethod
+    def _sort(self, sortBy, sortHelper):
+        pass
+
+    @abstractmethod
+    def _calculate(self, function, points):
+        pass
+
+    @abstractmethod
+    def _add(self, toAdd, insertBefore):
+        pass
+
+    @abstractmethod
+    def _mapReduce(self, mapper, reducer):
+        pass
+
+    @abstractmethod
+    def _shuffle(self):
+        pass

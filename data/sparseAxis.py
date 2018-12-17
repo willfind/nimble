@@ -2,10 +2,12 @@
 
 """
 from __future__ import absolute_import
+from abc import abstractmethod
 
 import numpy
 
 import UML
+from UML.exceptions import ArgumentException
 from .axis import Axis
 from .base import cmp_to_key
 
@@ -17,8 +19,12 @@ class SparseAxis(Axis):
     """
 
     """
-    def __init__(self):
-        super(SparseAxis, self).__init__()
+    def __init__(self, axis, source, **kwds):
+        self.axis = axis
+        self.source = source
+        kwds['axis'] = self.axis
+        kwds['source'] = self.source
+        super(SparseAxis, self).__init__(**kwds)
 
     def _structuralBackend_implementation(self, structure, targetList):
         """
@@ -165,14 +171,12 @@ class SparseAxis(Axis):
         if self.axis == 'point':
             viewMaker = self.source.pointView
             getViewIter = self.source.pointIterator
-            targetAxis = self.source.data.row
             indexGetter = self.source.getPointIndex
             nameGetter = self.source.getPointName
             nameGetterStr = 'getPointName'
             names = self.source.getPointNames()
         else:
             viewMaker = self.source.featureView
-            targetAxis = self.source.data.col
             getViewIter = self.source.featureIterator
             indexGetter = self.source.getFeatureIndex
             nameGetter = self.source.getFeatureName
@@ -204,7 +208,8 @@ class SparseAxis(Axis):
             pass
 
         if sortHelper is not None and scorer is None and comparator is None:
-            raise ArgumentException("sortHelper is neither a scorer or a comparator")
+            msg = "sortHelper is neither a scorer or a comparator"
+            raise ArgumentException(msg)
 
         if comparator is not None:
             # make array of views
@@ -246,17 +251,17 @@ class SparseAxis(Axis):
 
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
-        reverseIndexPosition = numpy.empty(indexPosition.shape[0])
+        reverseIdxPosition = numpy.empty(indexPosition.shape[0])
         for i in range(indexPosition.shape[0]):
-            reverseIndexPosition[indexPosition[i]] = i
+            reverseIdxPosition[indexPosition[i]] = i
 
         if self.axis == 'point':
-            self.source.data.row[:] = reverseIndexPosition[self.source.data.row]
+            self.source.data.row[:] = reverseIdxPosition[self.source.data.row]
         else:
-            self.source.data.col[:] = reverseIndexPosition[self.source.data.col]
+            self.source.data.col[:] = reverseIdxPosition[self.source.data.col]
 
         # we need to return an array of the feature names in their new order.
-        # we convert the indices of the their previous location into their names
+        # convert indices of their previous location into their names
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
@@ -265,6 +270,14 @@ class SparseAxis(Axis):
 
         self.source._sorted = None
         return newNameOrder
+
+    ####################
+    # Abstract Methods #
+    ####################
+
+    @abstractmethod
+    def _add_implementation(self, toAdd, insertBefore):
+        pass
 
 ###################
 # Generic Helpers #

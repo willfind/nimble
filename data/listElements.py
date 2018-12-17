@@ -9,9 +9,10 @@ class ListElements(Elements):
     """
 
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwds):
         self.source = source
-        super(ListElements, self).__init__()
+        kwds['source'] = source
+        super(ListElements, self).__init__(**kwds)
 
     ################################
     # Higher Order implementations #
