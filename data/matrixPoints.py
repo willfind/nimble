@@ -65,3 +65,14 @@ class MatrixPoints(MatrixAxis, Axis, Points):
                     self.source.data = self.source.data.astype(numpy.object_)
             reshape = (1, len(self.source.features))
             self.source.data[i, :] = numpy.array(currRet).reshape(reshape)
+
+    def _flattenToOne_implementation(self):
+        numElements = len(self.source.points) * len(self.source.features)
+        self.source.data = self.source.data.reshape((1, numElements),
+                                                    order='C')
+
+    def _unflattenFromOne_implementation(self, divideInto):
+        numPoints = divideInto
+        numFeatures = len(self.source.features) // numPoints
+        self.source.data = self.source.data.reshape((numPoints, numFeatures),
+                                                    order='C')

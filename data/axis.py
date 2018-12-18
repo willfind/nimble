@@ -4,6 +4,7 @@ will operate depending on whether it is being called along the points or
 the features axis.
 """
 from __future__ import absolute_import
+from __future__ import division
 import copy
 from abc import abstractmethod
 
@@ -275,6 +276,93 @@ class Axis(object):
         setNames(newNameOrder)
 
         self.source.validate()
+
+    def _flattenToOne(self):
+        if self.source._pointCount == 0 or self.source._featureCount == 0:
+            msg = "Can only flattenToOne when there is one or more {0}s. "
+            msg += "This object has 0 {0}s."
+            msg = msg.format(self.axis)
+            raise ImproperActionException(msg)
+
+        # TODO: flatten nameless Objects without the need to generate default
+        # names for them.
+        if not self.source._pointNamesCreated():
+            self.source._setAllDefault('point')
+        if not self.source._featureNamesCreated():
+            self.source._setAllDefault('feature')
+
+        self._flattenToOne_implementation()
+
+        if self.axis == 'point':
+            axisCount = self.source._pointCount
+            offAxisCount = self.source._featureCount
+            setAxisCount = self.source._setpointCount
+            setOffAxisCount = self.source._setfeatureCount
+            setAxisNames = self.source.setPointNames
+            setOffAxisNames = self.source.setFeatureNames
+        else:
+            axisCount = self.source._featureCount
+            offAxisCount = self.source._pointCount
+            setAxisCount = self.source._setfeatureCount
+            setOffAxisCount = self.source._setpointCount
+            setAxisNames = self.source.setFeatureNames
+            setOffAxisNames = self.source.setPointNames
+
+        setOffAxisCount(axisCount * offAxisCount)
+        setAxisCount(1)
+        setOffAxisNames(self._flattenNames(self.axis))
+        setAxisNames(['Flattened'])
+
+    def _unflattenFromOne(self, divideInto):
+        if self.axis == 'point':
+            offAxis = 'feature'
+            axisCount = self.source._pointCount
+            offAxisCount = self.source._featureCount
+            setAxisCount = self.source._setpointCount
+            setOffAxisCount = self.source._setfeatureCount
+            setAxisNames = self.source.setPointNames
+            setOffAxisNames = self.source.setFeatureNames
+        else:
+            offAxis = 'point'
+            axisCount = self.source._featureCount
+            offAxisCount = self.source._pointCount
+            setAxisCount = self.source._setfeatureCount
+            setOffAxisCount = self.source._setpointCount
+            setAxisNames = self.source.setFeatureNames
+            setOffAxisNames = self.source.setPointNames
+
+        if offAxisCount == 0:
+            msg = "Can only unflattenFromOne when there is one or more "
+            msg = "{offAxis}s. This object has 0 {offAxis}s."
+            msg = msg.format(offAxis=offAxis)
+            raise ImproperActionException(msg)
+        if axisCount != 1:
+            msg = "Can only unflattenFromOne when there is only one {axis}. "
+            msg += "This object has {axisCount} {axis}s."
+            msg += msg.format(axis=self.axis, axisCount=axisCount)
+            raise ImproperActionException(msg)
+        if offAxisCount % divideInto != 0:
+            msg = "The argument num{axisCap}s ({divideInto}) must be a "
+            msg += "divisor of this object's {offAxis}Count ({offAxisCount}) "
+            msg += "otherwise it will not be possible to equally divide the "
+            msg += "elements into the desired number of {axis}s."
+            msg = msg.format(axisCap=self.axis.capitalize(),
+                             divideInto=divideInto, offAxis=offAxis,
+                             offAxisCount=offAxisCount, axis=self.axis)
+            raise ArgumentException(msg)
+
+        if not self.source._pointNamesCreated():
+            self.source._setAllDefault('point')
+        if not self.source._featureNamesCreated():
+            self.source._setAllDefault('feature')
+
+        self._unflattenFromOne_implementation(divideInto)
+        ret = self._unflattenNames(divideInto)
+
+        setOffAxisCount(offAxisCount // divideInto)
+        setAxisCount(divideInto)
+        setAxisNames(ret[0])
+        setOffAxisNames(ret[1])
 
     def _transform(self, function, included):
         if self.source._pointCount == 0:
@@ -554,7 +642,6 @@ class Axis(object):
             self.source.featureNames = copy.deepcopy(assignments)
             self.source.featureNamesInverse = reverseMap
 
-
     ########################
     #  Structural Helpers  #
     ########################
@@ -627,6 +714,127 @@ class Axis(object):
         if structure == 'count':
             return len(targetList)
         return self._structuralBackend_implementation(structure, targetList)
+
+    def _flattenNames(self, discardAxis):
+        """
+        Axis names for the unflattened axis after a flatten operation.
+        """
+        if discardAxis == 'point':
+            keepNames = self.source.getFeatureNames()
+            dropNames = self.source.getPointNames()
+        else:
+            keepNames = self.source.getPointNames()
+            dropNames = self.source.getFeatureNames()
+
+        ret = []
+        for d in dropNames:
+            for k in keepNames:
+                ret.append(k + ' | ' + d)
+
+        return ret
+
+    def _unflattenNames(self, addedAxisLength):
+        """
+        New axis names after an unflattening operation.
+        """
+        if self.axis == 'point':
+            both = self.source.getFeatureNames()
+            keptAxisLength = self.source._featureCount // addedAxisLength
+        else:
+            both = self.source.getPointNames()
+            keptAxisLength = self.source._pointCount // addedAxisLength
+        allDefault = self._namesAreFlattenFormatConsistent(addedAxisLength,
+                                                           keptAxisLength)
+
+        if allDefault:
+            addedAxisName = None
+            keptAxisName = None
+        else:
+            # we consider the split of the elements into keptAxisLength chunks
+            # (of which there will be addedAxisLength number of chunks), and
+            # want the index of the first of each chunk. We allow that first
+            # name to be representative for that chunk: all will have the same
+            # stuff past the vertical bar.
+            locations = range(0, len(both), keptAxisLength)
+            addedAxisName = [both[n].split(" | ")[1] for n in locations]
+            keptAxisName = [n.split(" | ")[0] for n in both[:keptAxisLength]]
+
+        return addedAxisName, keptAxisName
+
+    def _namesAreFlattenFormatConsistent(self, newFLen, newUFLen):
+        """
+        Validate the formatting of axis names prior to unflattening.
+
+        Will raise ImproperActionException if an inconsistency with the
+        formatting done by the flatten operations is discovered. Returns
+        True if all the names along the unflattend axis are default, False
+        otherwise.
+        """
+        if self.axis == 'point':
+            flat = self.source.getPointNames()
+            formatted = self.source.getFeatureNames()
+        else:
+            flat = self.source.getFeatureNames()
+            formatted = self.source.getPointNames()
+
+        def checkIsDefault(axisName):
+            ret = False
+            try:
+                if axisName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                    int(axisName[DEFAULT_PREFIX_LENGTH:])
+                    ret = True
+            except ValueError:
+                ret = False
+            return ret
+
+        # check the contents of the names along the flattened axis
+        isDefault = checkIsDefault(flat[0])
+        isExact = flat == ['Flattened']
+        msg = "In order to unflatten this object, the names must be "
+        msg += "consistent with the results from a flatten call. "
+        if not (isDefault or isExact):
+            msg += "Therefore, the {axis} name for this object ('{axisName}')"
+            msg += "must either be a default name or the string 'Flattened'"
+            msg = msg.format(axis=self.axis, axisName=flat[0])
+            raise ImproperActionException(msg)
+
+        # check the contents of the names along the unflattend axis
+        msg += "Therefore, the {axis} names for this object must either be "
+        msg += "all default, or they must be ' | ' split names with name "
+        msg += "values consistent with the positioning from a flatten call."
+        msg.format(axis=self.axis)
+        # each name - default or correctly formatted
+        allDefaultStatus = None
+        for name in formatted:
+            isDefault = checkIsDefault(name)
+            formatCorrect = len(name.split(" | ")) == 2
+            if allDefaultStatus is None:
+                allDefaultStatus = isDefault
+            else:
+                if isDefault != allDefaultStatus:
+                    raise ImproperActionException(msg)
+
+            if not (isDefault or formatCorrect):
+                raise ImproperActionException(msg)
+
+        # consistency only relevant if we have non-default names
+        if not allDefaultStatus:
+            # seen values - consistent wrt original flattend axis names
+            for i in range(newFLen):
+                same = formatted[newUFLen*i].split(' | ')[1]
+                for name in formatted[newUFLen*i:newUFLen*(i+1)]:
+                    if same != name.split(' | ')[1]:
+                        raise ImproperActionException(msg)
+
+            # seen values - consistent wrt original unflattend axis names
+            for i in range(newUFLen):
+                same = formatted[i].split(' | ')[0]
+                for j in range(newFLen):
+                    name = formatted[i + (j * newUFLen)]
+                    if same != name.split(' | ')[0]:
+                        raise ImproperActionException(msg)
+
+        return allDefaultStatus
 
     ##########################
     #  Higher Order Helpers  #
@@ -701,6 +909,14 @@ class Axis(object):
 
     @abstractmethod
     def _add_implementation(self, toAdd, insertBefore):
+        pass
+
+    @abstractmethod
+    def _flattenToOne_implementation(self):
+        pass
+
+    @abstractmethod
+    def _unflattenFromOne_implementation(self, divideInto):
         pass
 
     @abstractmethod

@@ -179,7 +179,6 @@ class List(Base):
             self.data[i] = allPointData
         self._numFeatures = self._numFeatures + len(toAdd.features)
 
-
     def _sortPoints_implementation(self, sortBy, sortHelper):
         return self._sort_generic_implementation(sortBy, sortHelper, 'point')
 

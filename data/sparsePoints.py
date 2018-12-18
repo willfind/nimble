@@ -74,3 +74,36 @@ class SparsePoints(SparseAxis, Axis, Points):
         self.source.data = coo_matrix((newData, (newRow, newCol)),
                                       shape=shape)
         self.source._sorted = None
+
+    def _flattenToOne_implementation(self):
+        self.source._sortInternal('point')
+        pLen = len(self.source.features)
+        numElem = len(self.source.points) * len(self.source.features)
+        data = self.source.data.data
+        row = self.source.data.row
+        col = self.source.data.col
+        for i in range(len(data)):
+            if row[i] > 0:
+                col[i] += (row[i] * pLen)
+                row[i] = 0
+
+        self.source.data = coo_matrix((data, (row, col)), (1, numElem))
+
+    def _unflattenFromOne_implementation(self, divideInto):
+        # only one feature, so both sorts are the same order
+        if self.source._sorted is None:
+            self.source._sortInternal('point')
+
+        numPoints = divideInto
+        numFeatures = len(self.source.features) // numPoints
+        newShape = (numPoints, numFeatures)
+        data = self.source.data.data
+        row = self.source.data.row
+        col = self.source.data.col
+        for i in range(len(data)):
+            # must change the row entry before modifying the col entry
+            row[i] = col[i] / numFeatures
+            col[i] = col[i] % numFeatures
+
+        self.source.data = coo_matrix((data, (row, col)), newShape)
+        self.source._sorted = 'point'

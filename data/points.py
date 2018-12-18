@@ -441,6 +441,46 @@ class Points(object):
         """
         self._sort(sortBy, sortHelper)
 
+    def flattenToOne(self):
+        """
+        Modify this object so that its values are in a single point.
+
+        Each feature in the result maps to exactly one value from the
+        original object. The order of values respects the point order
+        from the original object, if there were n features in the
+        original, the first n values in the result will exactly match
+        the first point, the nth to (2n-1)th values will exactly match
+        the original second point, etc. The feature names will be
+        transformed such that the value at the intersection of the
+        "pn_i" named point and "fn_j" named feature from the original
+        object will have a feature name of "fn_j | pn_i". The single
+        point will have a name of "Flattened". This is an inplace
+        operation.
+
+        See Also
+        --------
+        unflattenFromOne
+
+        Examples
+        --------
+        TODO
+        """
+        self._flattenToOne()
+
+    def unflattenFromOne(self, numPoints):
+        """
+
+
+        See Also
+        --------
+        flattenToOne
+
+        Examples
+        --------
+        TODO
+        """
+        self._unflattenFromOne(numPoints)
+
     def transform(self, function, points=None):
         """
         Modify this object by applying a function to each point.
@@ -631,6 +671,14 @@ class Points(object):
 
     @abstractmethod
     def _sort(self, sortBy, sortHelper):
+        pass
+
+    @abstractmethod
+    def _flattenToOne(self):
+        pass
+
+    @abstractmethod
+    def _unflattenFromOne(self, divideInto):
         pass
 
     @abstractmethod

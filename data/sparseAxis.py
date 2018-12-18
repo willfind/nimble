@@ -351,6 +351,14 @@ class SparseAxis(Axis):
     def _add_implementation(self, toAdd, insertBefore):
         pass
 
+    @abstractmethod
+    def _flattenToOne_implementation(self):
+        pass
+
+    @abstractmethod
+    def _unflattenFromOne_implementation(self, divideInto):
+        pass
+
 ###################
 # Generic Helpers #
 ###################

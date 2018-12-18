@@ -9,8 +9,8 @@ In object StructureModifying:
 __init__,  transpose, points.add, features.add, points.sort, features.sort,
 points.extract, features.extract, deletePoints, features.delete,
 retainPoints, features.retain, referenceDataFrom, points.transform,
-features.transform, elements.transform, fillWith, flattenToOnePoint,
-flattenToOneFeature, unflattenFromOnePoint, unflattenFromOneFeature
+features.transform, elements.transform, fillWith, points.flattenToOne,
+features.flattenToOne, points.unflattenFromOne, features.unflattenFromOne
 """
 
 from __future__ import absolute_import
@@ -7480,360 +7480,363 @@ class StructureModifying(StructureShared):
 #             arg = UML.createData(t, fill)
 #             toTest.fillWith(arg, 0, 0, 1, 1)
 #             assert toTest == exp
-#
-#
-#     ###########################################
-#     # flattenToOnePoint | flattenToOneFeature #
-#     ###########################################
-#
-#     # exception: either axis empty
-#     def test_flattenToOnePoint_empty(self):
-#         self.back_flatten_empty('point')
-#
-#     def test_flattenToOneFeature_empty(self):
-#         self.back_flatten_empty('feature')
-#
-#     def back_flatten_empty(self, axis):
-#         checkMsg = True
-#         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-#
-#         pempty = self.constructor(numpy.empty((0,2)))
-#         exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
-#
-#         fempty = self.constructor(numpy.empty((4,0)))
-#         exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
-#
-#         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
-#
-#
-#     # flatten single p/f - see name changes
-#     def test_flattenToOnePoint_vector(self):
-#         self.back_flatten_vector('point')
-#
-#     def test_flattenToOneFeature_vector(self):
-#         self.back_flatten_vector('feature')
-#
-#     def back_flatten_vector(self, axis):
-#         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-#         raw = [1, -1, 2, -2, 3, -3, 4, -4]
-#         vecNames = ['vector']
-#         longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
-#
-#         testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
-#
-#         expLongNames = ['one+ | vector', 'one- | vector',
-#                         'two+ | vector', 'two- | vector',
-#                         'three+ | vector', 'three- | vector',
-#                         'four+ | vector', 'four- | vector']
-# #        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
-#         expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
-#
-#         if axis != 'point':
-#             testObj.transpose()
-#             expObj.transpose()
-#
-#         ret = getattr(testObj, target)()
-#
-#         assert testObj == expObj
-#         assert ret is None  # in place op, nothing returned
-#
-#
-#     def test_flattenToOnePoint_handMade_valuesOnly(self):
-#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
-#         expRaw = [["p1,f1", "p1,f2", "p2,f1", "p2,f2"]]
-#         testObj = self.constructor(dataRaw)
-#
-#         testObj.flattenToOnePoint()
-#
-#         expObj = self.constructor(expRaw, pointNames=["Flattened"])
-#         assert testObj == expObj
-#
-#     def test_flattenToOneFeature_handMade_valuesOnly(self):
-#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
-#         expRaw = [["p1,f1"], ["p2,f1"], ["p1,f2"], ["p2,f2"]]
-#         testObj = self.constructor(dataRaw)
-#
-#         testObj.flattenToOneFeature()
-#
-#         expObj = self.constructor(expRaw, featureNames=["Flattened"])
-#
-#         assert testObj == expObj
-#
-#
-#     # flatten rectangular object
-#     def test_flattenToOnePoint_rectangleRandom(self):
-#         self.back_flatten_rectangleRandom('point')
-#
-#     def test_flattenToOneFeature_rectangleRandom(self):
-#         self.back_flatten_rectangleRandom('feature')
-#
-#     def back_flatten_rectangleRandom(self, axis):
-#         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-#         order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
-#         discardAxisLen = 30
-#         keptAxisLen = 50
-#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-#         endLength = discardAxisLen * keptAxisLen
-#         targetShape = (1, endLength) if axis == 'point' else (endLength, 1)
-#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-#         expRaw = numpy.reshape(origRaw, targetShape, order)
-#
-#         testObj = self.constructor(origRaw)
-#         copyObj = testObj.copy()  # freeze the default axis names to check against later
-#         if axis == 'point':
-#             expObj = self.constructor(expRaw, pointNames=['Flattened'])
-#         else:
-#             expObj = self.constructor(expRaw, featureNames=['Flattened'])
-#
-#         getattr(testObj, target)()
-#         assert testObj == expObj
-#
-#         # default names are ignored by ==, so we explicitly check them in this test
-#         keptAxisNames = copyObj.getFeatureNames() if axis == 'point' else copyObj.getPointNames()
-#         discardAxisNames = copyObj.getPointNames() if axis == 'point' else copyObj.getFeatureNames()
-#         check = testObj.getFeatureNames() if axis == 'point' else testObj.getPointNames()
-#
-#         for i,name in enumerate(check):
-#             splitName = name.split(' | ')
-#             assert len(splitName) == 2
-#             # we cycle through the names from the kept axis
-#             assert splitName[0] == keptAxisNames[i % keptAxisLen]
-#             # we have to go through all of the names of the kept axis before we increment
-#             # the name from the discarded axis
-#             assert splitName[1] == discardAxisNames[i // keptAxisLen]
-#
-#
-#     ###################################################
-#     # unflattenFromOnePoint | unflattenFromOneFeature #
-#     ###################################################
-#
-#     # excpetion: either axis empty
-#     def test_unflattenFromOnePoint_empty(self):
-#         self.back_unflatten_empty('point')
-#
-#     def test_unflattenFromOneFeature_empty(self):
-#         self.back_unflatten_empty('feature')
-#
-#     def back_unflatten_empty(self, axis):
-#         checkMsg = True
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         single = (0,2) if axis == 'point' else (2,0)
-#
-#         singleEmpty = self.constructor(numpy.empty(single))
-#         exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
-#
-#         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
-#
-#
-#     # exceptions: opposite vector, 2d data
-#     def test_unflattenFromOnePoint_wrongShape(self):
-#         self.back_unflatten_wrongShape('point')
-#
-#     def test_unflattenFromOneFeature_wrongShape(self):
-#         self.back_unflatten_wrongShape('feature')
-#
-#     def back_unflatten_wrongShape(self, axis):
-#         checkMsg = True
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         vecShape = (4,1) if axis == 'point' else (1,4)
-#
-#         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-#         exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
-#
-#         rectangle = self.constructor(numpyRandom.rand(4,4))
-#         exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
-#
-#
-#     # excpetion: numPoints / numFeatures does not divide length of mega P/F
-#     def test_unflattenFromOnePoint_doesNotDivide(self):
-#         self.back_unflatten_doesNotDivide('point')
-#
-#     def test_unflattenFromOneFeature_doesNotDivide(self):
-#         self.back_unflatten_doesNotDivide('feature')
-#
-#     def back_unflatten_doesNotDivide(self, axis):
-#         checkMsg = True
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         primeLength = (1,7) if axis == 'point' else (7,1)
-#         divisableLength = (1,8) if axis == 'point' else (8,1)
-#
-#         undivisable = self.constructor(numpyRandom.rand(*primeLength))
-#         exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
-#
-#         divisable = self.constructor(numpyRandom.rand(*divisableLength))
-#         exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
-#
-#
-#     # exception: unflattening would destroy an axis name
-#     def test_unflattenFromOnePoint_nameDestroyed(self):
-#         self.back_unflatten_nameDestroyed('point')
-#
-#     def test_unflattenFromOneFeature_nameDestroyed(self):
-#         self.back_unflatten_nameDestroyed('feature')
-#
-#     def back_unflatten_nameDestroyed(self, axis):
-#         checkMsg = True
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         vecShape = (1,4) if axis == 'point' else (4,1)
-#         data = numpyRandom.rand(*vecShape)
-#
-#         # non-default name, flattened axis
-#         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#         # all non-default names, unflattened axis
-#         names = ["a", "b", "c", "d"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#         # single non-default name, unflattened axis
-#         testObj = self.constructor(data)
-#         if axis == 'point':
-#             testObj.setFeatureName(1, "non-default")
-#         else:
-#             testObj.setPointName(2, "non-default")
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#     # exception: unflattening would destroy an axis name
-#     def test_unflattenFromOnePoint_nameFormatInconsistent(self):
-#         self.back_unflatten_nameFormatInconsistent('point')
-#
-#     def test_unflattenFromOneFeature_nameFormatInconsistent(self):
-#         self.back_unflatten_nameFormatInconsistent('feature')
-#
-#     def back_unflatten_nameFormatInconsistent(self, axis):
-#         checkMsg = True
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         vecShape = (1,4) if axis == 'point' else (4,1)
-#         data = numpyRandom.rand(*vecShape)
-#
-#         # unflattend axis, mix of default names and correctly formatted
-#         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         if axis == 'point':
-#             testObj.setFeatureName(1, None)
-#         else:
-#             testObj.setPointName(1, None)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#         # unflattened axis, inconsistent along original unflattened axis
-#         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#         # unflattened axis, inconsistent along original flattened axis
-#         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
-#
-#
-#     # unflatten something that was flattened - include name transformation
-#     def test_unflattenFromOnePoint_handmadeWithNames(self):
-#         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
-#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-#         toTest = self.constructor(raw, pointNames=["Flattened"], featureNames=rawNames)
-#         expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
-#         namesP = ["A", "B"]
-#         namesF = ["1", "2", "3"]
-#
-#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
-#
-#         toTest.unflattenFromOnePoint(2)
-#         assert toTest == exp
-#
-#     # unflatten something that was flattend - include name transformation
-#     def test_unflattenFromOneFeature_handmadeWithNames(self):
-#         raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
-#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-#         toTest = self.constructor(raw, pointNames=rawNames, featureNames=["Flattened"])
-#         expData = [["el0", "el3"],["el1", "el4"], ["el2", "el5"]]
-#         namesP = ["1", "2", "3"]
-#         namesF = ["A", "B"]
-#
-#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
-#
-#         toTest.unflattenFromOneFeature(2)
-#         assert toTest == exp
-#
-#
-#     # unflatten something that is just a vector - default names
-#     def test_unflattenFromOnePoint_handmadeDefaultNames(self):
-#         self.back_unflatten_handmadeDefaultNames('point')
-#
-#     def test_unflattenFromOneFeature_handmadeDefaultNames(self):
-#         self.back_unflatten_handmadeDefaultNames('feature')
-#
-#     def back_unflatten_handmadeDefaultNames(self, axis):
-#         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         raw = [[1, 10, 20, 2]]
-#         toTest = self.constructor(raw)
-#         expData = numpy.array([[1,10],[20,2]])
-#
-#         if axis == 'point':
-#             exp = self.constructor(expData)
-#         else:
-#             toTest.transpose()
-#             exp = self.constructor(expData.T)
-#
-#         getattr(toTest, target)(2)
-#         assert toTest == exp
-#
-#         # check that the name conforms to the standards of how UML objects assign
-#         # default names
-#         def checkName(n):
-#             assert n.startswith(DEFAULT_PREFIX)
-#             assert int(n[len(DEFAULT_PREFIX):]) >= 0
-#
-#         list(map(checkName, toTest.getPointNames()))
-#         list(map(checkName, toTest.getFeatureNames()))
-#
-#
-#     # random round trip
-#     def test_flatten_to_unflatten_point_roundTrip(self):
-#         self.back_flatten_to_unflatten_roundTrip('point')
-#
-#     def test_flatten_to_unflatten_feature_roundTrip(self):
-#         self.back_flatten_to_unflatten_roundTrip('feature')
-#
-#     def back_flatten_to_unflatten_roundTrip(self, axis):
-#         targetDown = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-#         targetUp = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-#         discardAxisLen = 30
-#         keptAxisLen = 50
-#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-#         namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
-#         namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
-#         namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
-#
-#         testObj = self.constructor(origRaw, **namesArgs)
-#         expObj = testObj.copy()
-#
-#         getattr(testObj, targetDown)()
-#         getattr(testObj, targetUp)(discardAxisLen)
-#         assert testObj == expObj
-#
-#         # second round to see if status of hidden internal variable are still viable
-#         getattr(testObj, targetDown)()
-#         getattr(testObj, targetUp)(discardAxisLen)
-#         assert testObj == expObj
-#
-#
-# def exceptionHelper(testObj, target, args, wanted, checkMsg):
-#     try:
-#         getattr(testObj, target)(*args)
-#         assert False  # expected an exception
-#     except wanted as check:
-#         if checkMsg:
-#             print(check)
-#
-#
+
+
+    ###############################################
+    # points.flattenToOne | features.flattenToOne #
+    ###############################################
+
+    # exception: either axis empty
+    def test_points_flattenToOne_empty(self):
+        self.back_flatten_empty('point')
+
+    def test_features_flattenToOne_empty(self):
+        self.back_flatten_empty('feature')
+
+    def back_flatten_empty(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'flattenToOne')
+        pempty = self.constructor(numpy.empty((0,2)))
+        exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+
+        fempty = self.constructor(numpy.empty((4,0)))
+        exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+
+        trueEmpty = self.constructor(numpy.empty((0,0)))
+        exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+
+
+    # flatten single p/f - see name changes
+    def test_points_flattenToOne_vector(self):
+        self.back_flatten_vector('point')
+
+    def test_features_flattenToOne_vector(self):
+        self.back_flatten_vector('feature')
+
+    def back_flatten_vector(self, axis):
+        raw = [1, -1, 2, -2, 3, -3, 4, -4]
+        vecNames = ['vector']
+        longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
+
+        testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
+
+        expLongNames = ['one+ | vector', 'one- | vector',
+                        'two+ | vector', 'two- | vector',
+                        'three+ | vector', 'three- | vector',
+                        'four+ | vector', 'four- | vector']
+#        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
+        expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
+
+        if axis != 'point':
+            testObj.transpose()
+            expObj.transpose()
+
+        axisObj = getattr(testObj, axis + 's')
+        ret = getattr(axisObj, 'flattenToOne')()
+
+        assert testObj == expObj
+        assert ret is None  # in place op, nothing returned
+
+
+    def test_points_flattenToOne_handMade_valuesOnly(self):
+        dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
+        expRaw = [["p1,f1", "p1,f2", "p2,f1", "p2,f2"]]
+        testObj = self.constructor(dataRaw)
+
+        testObj.points.flattenToOne()
+
+        expObj = self.constructor(expRaw, pointNames=["Flattened"])
+
+        assert testObj == expObj
+
+    def test_features_flattenToOne_handMade_valuesOnly(self):
+        dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
+        expRaw = [["p1,f1"], ["p2,f1"], ["p1,f2"], ["p2,f2"]]
+        testObj = self.constructor(dataRaw)
+
+        testObj.features.flattenToOne()
+
+        expObj = self.constructor(expRaw, featureNames=["Flattened"])
+
+        assert testObj == expObj
+
+
+    # flatten rectangular object
+    def test_points_flattenToOne_rectangleRandom(self):
+        self.back_flatten_rectangleRandom('point')
+
+    def test_features_flattenToOne_rectangleRandom(self):
+        self.back_flatten_rectangleRandom('feature')
+
+    def back_flatten_rectangleRandom(self, axis):
+        order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
+        discardAxisLen = 30
+        keptAxisLen = 50
+        shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
+        endLength = discardAxisLen * keptAxisLen
+        targetShape = (1, endLength) if axis == 'point' else (endLength, 1)
+        origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
+        expRaw = numpy.reshape(origRaw, targetShape, order)
+
+        testObj = self.constructor(origRaw)
+        copyObj = testObj.copy()  # freeze the default axis names to check against later
+        if axis == 'point':
+            expObj = self.constructor(expRaw, pointNames=['Flattened'])
+        else:
+            expObj = self.constructor(expRaw, featureNames=['Flattened'])
+
+        axisObj = getattr(testObj, axis + 's')
+        getattr(axisObj, 'flattenToOne')()
+        assert testObj == expObj
+
+        # default names are ignored by ==, so we explicitly check them in this test
+        keptAxisNames = copyObj.getFeatureNames() if axis == 'point' else copyObj.getPointNames()
+        discardAxisNames = copyObj.getPointNames() if axis == 'point' else copyObj.getFeatureNames()
+        check = testObj.getFeatureNames() if axis == 'point' else testObj.getPointNames()
+
+        for i, name in enumerate(check):
+            splitName = name.split(' | ')
+            assert len(splitName) == 2
+            # we cycle through the names from the kept axis
+            assert splitName[0] == keptAxisNames[i % keptAxisLen]
+            # we have to go through all of the names of the kept axis before we increment
+            # the name from the discarded axis
+            assert splitName[1] == discardAxisNames[i // keptAxisLen]
+
+
+    ###################################################
+    # points.unflattenFromOne | features.unflattenFromOne #
+    ###################################################
+
+    # excpetion: either axis empty
+    def test_points_unflattenFromOne_empty(self):
+        self.back_unflatten_empty('point')
+
+    def test_features_unflattenFromOne_empty(self):
+        self.back_unflatten_empty('feature')
+
+    def back_unflatten_empty(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'unflattenFromOne')
+        single = (0,2) if axis == 'point' else (2,0)
+
+        singleEmpty = self.constructor(numpy.empty(single))
+        exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+
+        trueEmpty = self.constructor(numpy.empty((0,0)))
+        exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+
+
+    # exceptions: opposite vector, 2d data
+    def test_points_unflattenFromOne_wrongShape(self):
+        self.back_unflatten_wrongShape('point')
+
+    def test_features_unflattenFromOne_wrongShape(self):
+        self.back_unflatten_wrongShape('feature')
+
+    def back_unflatten_wrongShape(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'unflattenFromOne')
+        vecShape = (4,1) if axis == 'point' else (1,4)
+
+        wrongVector = self.constructor(numpyRandom.rand(*vecShape))
+        exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+
+        rectangle = self.constructor(numpyRandom.rand(4,4))
+        exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+
+
+    # excpetion: numPoints / numFeatures does not divide length of mega P/F
+    def test_points_unflattenFromOne_doesNotDivide(self):
+        self.back_unflatten_doesNotDivide('point')
+
+    def test_features_unflattenFromOne_doesNotDivide(self):
+        self.back_unflatten_doesNotDivide('feature')
+
+    def back_unflatten_doesNotDivide(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'unflattenFromOne')
+        primeLength = (1,7) if axis == 'point' else (7,1)
+        divisableLength = (1,8) if axis == 'point' else (8,1)
+
+        undivisable = self.constructor(numpyRandom.rand(*primeLength))
+        exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+
+        divisable = self.constructor(numpyRandom.rand(*divisableLength))
+        exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+
+
+    # exception: unflattening would destroy an axis name
+    def test_points_unflattenFromOne_nameDestroyed(self):
+        self.back_unflatten_nameDestroyed('point')
+
+    def test_features_unflattenFromOne_nameDestroyed(self):
+        self.back_unflatten_nameDestroyed('feature')
+
+    def back_unflatten_nameDestroyed(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'unflattenFromOne')
+        vecShape = (1,4) if axis == 'point' else (4,1)
+        data = numpyRandom.rand(*vecShape)
+
+        # non-default name, flattened axis
+        args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
+        testObj = self.constructor(data, **args)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+        # all non-default names, unflattened axis
+        names = ["a", "b", "c", "d"]
+        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+        testObj = self.constructor(data, **args)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+        # single non-default name, unflattened axis
+        testObj = self.constructor(data)
+        if axis == 'point':
+            testObj.setFeatureName(1, "non-default")
+        else:
+            testObj.setPointName(2, "non-default")
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+    # exception: unflattening would destroy an axis name
+    def test_points_unflattenFromOne_nameFormatInconsistent(self):
+        self.back_unflatten_nameFormatInconsistent('point')
+
+    def test_features_unflattenFromOne_nameFormatInconsistent(self):
+        self.back_unflatten_nameFormatInconsistent('feature')
+
+    def back_unflatten_nameFormatInconsistent(self, axis):
+        checkMsg = True
+        target = (axis + 's', 'unflattenFromOne')
+        vecShape = (1,4) if axis == 'point' else (4,1)
+        data = numpyRandom.rand(*vecShape)
+
+        # unflattend axis, mix of default names and correctly formatted
+        names = ["a | 1", "b | 1", "a | 2", "b | 2"]
+        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+        testObj = self.constructor(data, **args)
+        if axis == 'point':
+            testObj.setFeatureName(1, None)
+        else:
+            testObj.setPointName(1, None)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+        # unflattened axis, inconsistent along original unflattened axis
+        names = ["a | 1", "b | 1", "a | 2", "c | 2"]
+        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+        testObj = self.constructor(data, **args)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+        # unflattened axis, inconsistent along original flattened axis
+        names = ["a | 1", "b | 2", "a | 2", "b | 3"]
+        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+        testObj = self.constructor(data, **args)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+
+
+    # unflatten something that was flattened - include name transformation
+    def test_points_unflattenFromOne_handmadeWithNames(self):
+        raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
+        rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
+        toTest = self.constructor(raw, pointNames=["Flattened"], featureNames=rawNames)
+        expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
+        namesP = ["A", "B"]
+        namesF = ["1", "2", "3"]
+
+        exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+
+        toTest.points.unflattenFromOne(2)
+        assert toTest == exp
+
+    # unflatten something that was flattend - include name transformation
+    def test_features_unflattenFromOne_handmadeWithNames(self):
+        raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
+        rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
+        toTest = self.constructor(raw, pointNames=rawNames, featureNames=["Flattened"])
+        expData = [["el0", "el3"],["el1", "el4"], ["el2", "el5"]]
+        namesP = ["1", "2", "3"]
+        namesF = ["A", "B"]
+
+        exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+
+        toTest.features.unflattenFromOne(2)
+        assert toTest == exp
+
+
+    # unflatten something that is just a vector - default names
+    def test_points_unflattenFromOne_handmadeDefaultNames(self):
+        self.back_unflatten_handmadeDefaultNames('point')
+
+    def test_features_unflattenFromOne_handmadeDefaultNames(self):
+        self.back_unflatten_handmadeDefaultNames('feature')
+
+    def back_unflatten_handmadeDefaultNames(self, axis):
+        raw = [[1, 10, 20, 2]]
+        toTest = self.constructor(raw)
+        expData = numpy.array([[1,10],[20,2]])
+
+        if axis == 'point':
+            exp = self.constructor(expData)
+        else:
+            toTest.transpose()
+            exp = self.constructor(expData.T)
+
+        axisObj = getattr(toTest, axis + 's')
+        getattr(axisObj, 'unflattenFromOne')(2)
+        assert toTest == exp
+
+        # check that the name conforms to the standards of how UML objects assign
+        # default names
+        def checkName(n):
+            assert n.startswith(DEFAULT_PREFIX)
+            assert int(n[len(DEFAULT_PREFIX):]) >= 0
+
+        list(map(checkName, toTest.getPointNames()))
+        list(map(checkName, toTest.getFeatureNames()))
+
+
+    # random round trip
+    def test_flatten_to_unflatten_point_roundTrip(self):
+        self.back_flatten_to_unflatten_roundTrip('point')
+
+    def test_flatten_to_unflatten_feature_roundTrip(self):
+        self.back_flatten_to_unflatten_roundTrip('feature')
+
+    def back_flatten_to_unflatten_roundTrip(self, axis):
+        discardAxisLen = 30
+        keptAxisLen = 50
+        shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
+        origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
+        namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
+        namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
+        namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
+
+        testObj = self.constructor(origRaw, **namesArgs)
+        expObj = testObj.copy()
+
+        axisObj = getattr(testObj, axis + 's')
+        getattr(axisObj, 'flattenToOne')()
+        axisObj = getattr(testObj, axis + 's')
+        getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
+        assert testObj == expObj
+
+        # second round to see if status of hidden internal variable are still viable
+        axisObj = getattr(testObj, axis + 's')
+        getattr(axisObj, 'flattenToOne')()
+        axisObj = getattr(testObj, axis + 's')
+        getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
+        assert testObj == expObj
+
+
+def exceptionHelper(testObj, target, args, wanted, checkMsg,):
+    try:
+        axisObj = getattr(testObj, target[0])
+        getattr(axisObj, target[1])(*args)
+        assert False  # expected an exception
+    except wanted as check:
+        if checkMsg:
+            print(check)
+
+
 class StructureAll(StructureDataSafe, StructureModifying):
     pass

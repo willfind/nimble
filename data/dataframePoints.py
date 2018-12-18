@@ -3,6 +3,7 @@ Method implementations and helpers acting specifically on points in a
 DataFrame object.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 import UML
 from UML.exceptions import ArgumentException
@@ -61,3 +62,15 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
                 raise ArgumentException(msg)
 
             self.source.data.iloc[i, :] = currRet
+
+    def _flattenToOne_implementation(self):
+        numElements = len(self.source.points) * len(self.source.features)
+        self.source.data = pd.DataFrame(
+            self.source.data.values.reshape((1, numElements), order='C'))
+
+    def _unflattenFromOne_implementation(self, divideInto):
+        numPoints = divideInto
+        numFeatures = len(self.source.features) // numPoints
+        self.source.data = pd.DataFrame(
+            self.source.data.values.reshape((numPoints, numFeatures),
+                                            order='C'))

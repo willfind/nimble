@@ -65,3 +65,22 @@ class ListPoints(ListAxis, Axis, Points):
                 raise ArgumentException(msg)
 
             self.source.data[i] = currRet
+
+    def _flattenToOne_implementation(self):
+        onto = self.source.data[0]
+        for _ in range(1, len(self.source.points)):
+            onto += self.source.data[1]
+            del self.source.data[1]
+
+        self.source._numFeatures = len(onto)
+
+    def _unflattenFromOne_implementation(self, divideInto):
+        result = []
+        numPoints = divideInto
+        numFeatures = len(self.source.features) // numPoints
+        for i in range(numPoints):
+            temp = self.source.data[0][(i*numFeatures):((i+1)*numFeatures)]
+            result.append(temp)
+
+        self.source.data = result
+        self.source._numFeatures = numFeatures

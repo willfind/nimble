@@ -3,6 +3,7 @@ Method implementations and helpers acting specifically on features in a
 DataFrame object.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 import UML
 from UML.exceptions import ArgumentException
@@ -61,3 +62,15 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
                 raise ArgumentException(msg)
 
             self.source.data.iloc[:, j] = currRet
+
+    def _flattenToOne_implementation(self):
+        numElements = len(self.source.points) * len(self.source.features)
+        self.source.data = pd.DataFrame(
+            self.source.data.values.reshape((numElements, 1), order='F'))
+
+    def _unflattenFromOne_implementation(self, divideInto):
+        numFeatures = divideInto
+        numPoints = len(self.source.points) // numFeatures
+        self.source.data = pd.DataFrame(
+            self.source.data.values.reshape((numPoints, numFeatures),
+                                            order='F'))
