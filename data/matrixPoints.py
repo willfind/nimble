@@ -42,9 +42,9 @@ class MatrixPoints(MatrixAxis, Axis, Points):
         self.source.data = numpy.concatenate((startData, toAdd.data, endData),
                                              0)
 
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):
-            if included is not None and i not in included:
+            if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
             # currRet might return an ArgumentException with a message which needs to be

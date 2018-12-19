@@ -49,9 +49,9 @@ class ListPoints(ListAxis, Axis, Points):
                 selfIndex += 1
         self.source.data = allData
 
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):
-            if included is not None and i not in included:
+            if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
             # currRet might return an ArgumentException with a message which needs to be

@@ -617,6 +617,44 @@ class Points(object):
         """
         self._shuffle()
 
+    def fill(self, match, fill, arguments=None, points=None,
+             returnModified=False):
+        """
+        Replace given values in each point with other values.
+
+        Fill matching values within each point with a specified value
+        based on the values in that point. The ``fill`` value can be
+        a constant or a determined based on unmatched values in the
+        point. The match and fill modules in UML offer common functions
+        for these operations.
+
+        Parameters
+        ----------
+        match : value, list, or function
+            * value - a value to locate within each point
+            * list - values to locate within each point
+            * function - must accept a single value and return True if
+              the value is a match. Certain match types can be imported
+              from UML's match module: missing, nonNumeric, zero, etc.
+        fill : value or function
+            * value - a value to fill each matching value in each point
+            * function - must be in the format fill(point, match) or
+              fill(point, match, arguments) and return the transformed
+              point as a list of values. Certain fill methods can be
+              imported from UML's fill module: mean, median, mode,
+              forwardFill, backwardFill, interpolation
+        arguments : dict
+            Any additional arguments being passed to the fill
+            function.
+        points : identifier or list of identifiers
+            Select specific points to apply fill to. If points is None,
+            the fill will be applied to all points.
+        returnModified : return an object containing True for the
+            modified values in each point and False for unmodified
+            values.
+        """
+        return self._fill(match, fill, arguments, points, returnModified)
+
     ####################
     # Abstract Methods #
     ####################
@@ -699,4 +737,8 @@ class Points(object):
 
     @abstractmethod
     def _shuffle(self):
+        pass
+
+    @abstractmethod
+    def _fill(self, match, fill, arguments, limitTo, returnModified):
         pass

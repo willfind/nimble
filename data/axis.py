@@ -12,6 +12,7 @@ import six
 import numpy
 
 import UML
+from UML import fill
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .dataHelpers import OPTRLIST, OPTRDICT
@@ -51,12 +52,14 @@ class Axis(object):
                 value = self.source.pointView(self._position)
                 self._position += 1
                 return value
+            self._position = 0
             raise StopIteration
         else:
             while self._position < len(self.source.features):
                 value = self.source.featureView(self._position)
                 self._position += 1
                 return value
+            self._position = 0
             raise StopIteration
 
     def __next__(self):
@@ -364,7 +367,7 @@ class Axis(object):
         setAxisNames(ret[0])
         setOffAxisNames(ret[1])
 
-    def _transform(self, function, included):
+    def _transform(self, function, limitTo):
         if self.source._pointCount == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperActionException(msg)
@@ -373,10 +376,10 @@ class Axis(object):
             raise ImproperActionException(msg)
         if function is None:
             raise ArgumentException("function must not be None")
-        if included is not None:
-            included = self.source._constructIndicesList(self.axis, included)
+        if limitTo is not None:
+            limitTo = self.source._constructIndicesList(self.axis, limitTo)
 
-        self._transform_implementation(function, included)
+        self._transform_implementation(function, limitTo)
 
         self.source.validate()
 
@@ -495,6 +498,30 @@ class Axis(object):
         pythonRandom.shuffle(indices)
 
         sorter(sortHelper=indices)
+
+    def _fill(self, toMatch, toFill, arguments=None, limitTo=None,
+              returnModified=False):
+        modified = None
+        toTransform = fill.factory(toMatch, toFill, arguments)
+
+        if returnModified:
+            def bools(values):
+                return [True if toMatch(val) else False for val in values]
+            if self.axis == 'point':
+                getNames = 'getPointNames'
+                setNames = 'setPointNames'
+            else:
+                getNames = 'getFeatureNames'
+                setNames = 'setFeatureNames'
+            modified = self._calculate(bools, limitTo)
+            modNames = [n + "_modified" for n in getattr(modified, getNames)()]
+            getattr(modified, setNames)(modNames)
+
+        self._transform(toTransform, limitTo)
+
+        self.source.validate()
+
+        return modified
 
     #####################
     # Low Level Helpers #
@@ -840,10 +867,10 @@ class Axis(object):
     #  Higher Order Helpers  #
     ##########################
 
-    def _calculate_implementation(self, function, included):
+    def _calculate_implementation(self, function, limitTo):
         retData = []
         for viewID, view in enumerate(self):
-            if included is not None and viewID not in included:
+            if limitTo is not None and viewID not in limitTo:
                 continue
             currOut = function(view)
             # first we branch on whether the output has multiple values
@@ -920,7 +947,7 @@ class Axis(object):
         pass
 
     @abstractmethod
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         pass
 
 ###########

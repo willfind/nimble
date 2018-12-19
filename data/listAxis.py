@@ -205,5 +205,5 @@ class ListAxis(Axis):
         pass
 
     @abstractmethod
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         pass

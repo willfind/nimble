@@ -46,9 +46,9 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
         self.source.data = pd.concat((startData, toAdd.data, endData), axis=0)
         self.source._updateName(axis='point')
 
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):
-            if included is not None and i not in included:
+            if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
             # currRet might return an ArgumentException with a message which needs to be

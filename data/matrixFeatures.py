@@ -42,9 +42,9 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
         self.source.data = numpy.concatenate((startData, toAdd.data, endData),
                                              1)
 
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
-            if included is not None and j not in included:
+            if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
             # currRet might return an ArgumentException with a message which needs to be

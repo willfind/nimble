@@ -167,7 +167,7 @@ class SparseAxis(Axis):
         self.source._sorted = None
         return newNameOrder
 
-    def _transform_implementation(self, function, included):
+    def _transform_implementation(self, function, limitTo):
         modData = []
         modRow = []
         modCol = []
@@ -180,7 +180,7 @@ class SparseAxis(Axis):
             modOther = modRow
 
         for viewID, view in enumerate(self):
-            if included is not None and viewID not in included:
+            if limitTo is not None and viewID not in limitTo:
                 currOut = list(view)
             else:
                 currOut = function(view)
@@ -227,7 +227,6 @@ class SparseAxis(Axis):
         """
         Use scipy csr or csc matrices for indexing targeted values
         """
-        print('here')
         axisNames = []
         if self.axis == 'point':
             getAxisName = self.source.getPointName

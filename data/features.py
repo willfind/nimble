@@ -618,6 +618,45 @@ class Features(object):
         """
         self._shuffle()
 
+    def fill(self, match, fill, arguments=None, features=None,
+             returnModified=False):
+        """
+        Replace given values in each feature with other values.
+
+        Fill matching values within each feature with a specified value
+        based on the values in that feature. The ``fill`` value can be
+        a constant or a determined based on unmatched values in the
+        feature. The match and fill modules in UML offer common
+        functions for these operations.
+
+        Parameters
+        ----------
+        match : value, list, or function
+            * value - a value to locate within each feature
+            * list - values to locate within each feature
+            * function - must accept a single value and return True if
+              the value is a match. Certain match types can be imported
+              from UML's match module: missing, nonNumeric, zero, etc.
+        fill : value or function
+            * value - a value to fill each matching value in each
+              feature
+            * function - must be in the format fill(feature, match) or
+              fill(feature, match, arguments) and return the transformed
+              feature as a list of values. Certain fill methods can be
+              imported from UML's fill module: mean, median, mode,
+              forwardFill, backwardFill, interpolation
+        arguments : dict
+            Any additional arguments being passed to the fill
+            function.
+        features : identifier or list of identifiers
+            Select specific features to apply fill to. If features is
+            None, the fill will be applied to all features.
+        returnModified : return an object containing True for the
+            modified values in each feature and False for unmodified
+            values.
+        """
+        return self._fill(match, fill, arguments, features, returnModified)
+
     ####################
     # Abstract Methods #
     ####################
@@ -700,4 +739,8 @@ class Features(object):
 
     @abstractmethod
     def _shuffle(self):
+        pass
+
+    @abstractmethod
+    def _fill(self, match, fill, arguments, limitTo, returnModified):
         pass
