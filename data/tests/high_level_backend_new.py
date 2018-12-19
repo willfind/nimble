@@ -15,7 +15,7 @@ features.count, elements.countUnique, points.mapReduce, .points,
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
 transformFeatureToIntegers, extractPointsByCoinToss,
-points.shuffle, features.shuffle, normalizePoints, normalizeFeatures,
+points.shuffle, features.shuffle, points.normalize, features.normalize,
 points.fill, features.fill, fillUsingAllData
 """
 
@@ -1427,329 +1427,328 @@ class HighLevelModifying(DataTestObject):
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
-#
-#
-#     #########################################
-#     # normalizePoints / normalizeFeatures() #
-#     #########################################
-#
-#     def normalizeHelper(self, caller, axis, subtract=None, divide=None, also=None):
-#         if axis == 'point':
-#             func = caller.normalizePoints
-#         else:
-#             func = caller.normalizeFeatures
-#         if 'cython' in str(func.__func__.__class__):#if it is a cython function
-#             d = func.__func__.__defaults__
-#             assert (d is None) or (d == (None, None, None))
-#         else:#if it is a normal python function
-#             a, va, vk, d = UML.helpers.inspectArguments(func)
-#             assert d == (None, None, None)
-#
-#         if axis == 'point':
-#             return caller.normalizePoints(subtract=subtract, divide=divide, applyResultTo=also)
-#         else:
-#             caller.transpose()
-#             if also is not None:
-#                 also.transpose()
-#             ret = caller.normalizeFeatures(subtract=subtract, divide=divide, applyResultTo=also)
-#             caller.transpose()
-#             if also is not None:
-#                 also.transpose()
-#             return ret
-#
-#     #exception different type from expected inputs
-#     def test_normalizePoints_exception_unexpected_input_type(self):
-#         self.back_normalize_exception_unexpected_input_type("point")
-#
-#     def test_normalizeFeatures_exception_unexpected_input_type(self):
-#         self.back_normalize_exception_unexpected_input_type("feature")
-#
-#     def back_normalize_exception_unexpected_input_type(self, axis):
-#         obj = self.constructor([[1, 2], [3, 4]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract={})
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide=set([1]))
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#
-#     # exception non stats string
-#     def test_normalizePoints_exception_unexpected_string_value(self):
-#         self.back_normalize_exception_unexpected_string_value('point')
-#
-#     def test_normalizeFeatures_exception_unexpected_string_value(self):
-#         self.back_normalize_exception_unexpected_string_value('feature')
-#
-#     def back_normalize_exception_unexpected_string_value(self, axis):
-#         obj = self.constructor([[1, 2], [3, 4]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract="Hello")
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide="enumerate")
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#
-#     # exception wrong length vector shaped UML object
-#     def test_normalizePoints_exception_wrong_vector_length(self):
-#         self.back_normalize_exception_wrong_vector_length('point')
-#
-#     def test_normalizeFeatures_exception_wrong_vector_length(self):
-#         self.back_normalize_exception_wrong_vector_length('feature')
-#
-#     def back_normalize_exception_wrong_vector_length(self, axis):
-#         obj = self.constructor([[1, 2], [3, 4]])
-#         vectorLong = self.constructor([[1, 2, 3, 4]])
-#         vectorShort = self.constructor([[11]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract=vectorLong)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide=vectorShort)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#
-#     # exception wrong size of UML object
-#     def test_normalizePoints_exception_wrong_size_object(self):
-#         self.back_normalize_exception_wrong_size_object('point')
-#
-#     def test_normalizeFeatures_exception_wrong_size_object(self):
-#         self.back_normalize_exception_wrong_size_object('feature')
-#
-#     def back_normalize_exception_wrong_size_object(self, axis):
-#         obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
-#         objBig = self.constructor([[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]])
-#         objSmall = self.constructor([[1, 1], [2, 2]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract=objBig)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide=objSmall)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#     # applyResultTo is wrong shape in the normalized axis
-#     def test_normalizePoints_exception_applyResultTo_wrong_shape(self):
-#         self.back_normalize_exception_applyResultTo_wrong_shape('point')
-#
-#     def test_normalizeFeatures_exception_applyResultTo_wrong_shape(self):
-#         self.back_normalize_exception_applyResultTo_wrong_shape('feature')
-#
-#     def back_normalize_exception_applyResultTo_wrong_shape(self, axis):
-#         obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
-#         alsoShort = self.constructor([[1, 2, 2], [3, 4, 4]])
-#         alsoLong = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5], [1, 23, 4]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract=1, also=alsoShort)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide=2, also=alsoLong)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#     # applyResultTo is wrong shape when given obj subtract and divide
-#     def test_normalizePoints_exception_applyResultTo_wrong_shape_obj_input(self):
-#         self.back_normalize_exception_applyResultTo_wrong_shape_obj_input('point')
-#
-#     def test_normalizeFeatures_exception_applyResultTo_wrong_shape_obj_input(self):
-#         self.back_normalize_exception_applyResultTo_wrong_shape_obj_input('feature')
-#
-#     def back_normalize_exception_applyResultTo_wrong_shape_obj_input(self, axis):
-#         obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
-#         alsoShort = self.constructor([[1, 2], [3, 4], [5, 5]])
-#         alsoLong = self.constructor([[1, 2, 2, 2], [3, 4, 4, 4], [5, 5, 5, 6]])
-#
-#         sub_div = self.constructor([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
-#
-#         try:
-#             self.normalizeHelper(obj, axis, subtract=sub_div, also=alsoShort)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#         try:
-#             self.normalizeHelper(obj, axis, divide=sub_div, also=alsoLong)
-#             assert False  # Expected ArgumentException
-#         except ArgumentException:
-#             pass
-#
-#     # successful float valued inputs
-#     def test_normalizePoints_success_float_int_inputs_NoAlso(self):
-#         self.back_normalize_success_float_int_inputs_NoAlso("point")
-#
-#     def test_normalizeFeatures_success_float_int_inputs_NoAlso(self):
-#         self.back_normalize_success_float_int_inputs_NoAlso("feature")
-#
-#     def back_normalize_success_float_int_inputs_NoAlso(self, axis):
-#         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
-#         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
-#
-#         ret = self.normalizeHelper(obj, axis, subtract=1, divide=0.5)
-#
-#         assert ret is None
-#         assert expObj == obj
-#
-#         # vector versions
-#         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
-#         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
-#
-#         for retType in UML.data.available:
-#             currObj = obj.copy()
-#             sub = UML.createData(retType, [1] * 3)
-#             div = UML.createData(retType, [0.5] * 3)
-#             ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
-#
-#             assert ret is None
-#             assert expObj == currObj
-#
-#
-#     # successful float valued inputs
-#     def test_normalizePoints_success_float_int_inputs(self):
-#         self.back_normalize_success_float_int_inputs("point")
-#
-#     def test_normalizeFeatures_success_float_int_inputs(self):
-#         self.back_normalize_success_float_int_inputs("feature")
-#
-#     def back_normalize_success_float_int_inputs(self, axis):
-#         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
-#         also = self.constructor([[-1, -1, -1], [.5, .5, .5], [2, 2, 2]])
-#         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
-#         expAlso = self.constructor([[-4, -4, -4], [-1, -1, -1], [2, 2, 2]])
-#
-#         ret = self.normalizeHelper(obj, axis, subtract=1, divide=0.5, also=also)
-#
-#         assert ret is None
-#         assert expObj == obj
-#         assert expAlso == also
-#
-#
-#     # successful stats-string valued inputs
-#     def test_normalizePoints_success_stat_string_inputs(self):
-#         self.back_normalize_success_stat_string_inputs("point")
-#
-#     def test_normalizeFeatures_success_stat_string_inputs(self):
-#         self.back_normalize_success_stat_string_inputs("feature")
-#
-#     def back_normalize_success_stat_string_inputs(self, axis):
-#         obj = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
-#         also = self.constructor([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
-#         expObj = self.constructor([[0, 0, 0], [.5, .5, .5], [2, 2, 2]])
-#         expAlso = self.constructor([[0, 1, 2], [0, .5, 1], [0, -1, -2]])
-#
-#         ret = self.normalizeHelper(obj, axis, subtract="unique count", divide="median", also=also)
-#
-#         assert ret is None
-#         assert expObj == obj
-#         assert expAlso == also
-#
-#
-#     # successful vector object valued inputs
-#     def test_normalizePoints_success_vector_object_inputs(self):
-#         self.back_normalize_success_vector_object_inputs("point")
-#
-#     def test_normalizeFeatures_success_vector_object_inputs(self):
-#         self.back_normalize_success_vector_object_inputs("feature")
-#
-#     def back_normalize_success_vector_object_inputs(self, axis):
-#         obj = self.constructor([[1, 3, 7], [10, 30, 70], [100, 300, 700]])
-#         also = self.constructor([[2, 6, 14], [10, 30, 70], [100, 300, 700]])
-#         subVec = self.constructor([[1, 10, 100]])
-#         divVec = self.constructor([[.5], [5], [50]])
-#         expObj = self.constructor([[0, 4, 12], [0, 4, 12], [0, 4, 12]])
-#         expAlso = self.constructor([[2, 10, 26], [0, 4, 12], [0, 4, 12]])
-#
-#         ret = self.normalizeHelper(obj, axis, subtract=subVec, divide=divVec, also=also)
-#
-#         assert ret is None
-#         assert expObj == obj
-#         assert expAlso == also
-#
-#
-#     # successful matrix valued inputs
-#     def test_normalizePoints_success_full_object_inputs(self):
-#         self.back_normalize_success_full_object_inputs("point")
-#
-#     def test_normalizeFeatures_success_full_object_inputs(self):
-#         self.back_normalize_success_full_object_inputs("feature")
-#
-#     def back_normalize_success_full_object_inputs(self, axis):
-#         obj = self.constructor([[2, 10, 100], [3, 30, 300], [7, 70, 700]])
-#         also = self.constructor([[1, 5, 100], [3, 30, 300], [7, 70, 700]])
-#
-#         subObj = self.constructor([[0, 5, 20], [3, 10, 60], [4, -30, 100]])
-#         divObj = self.constructor([[2, .5, 4], [2, 2, 4], [.25, 2, 6]])
-#
-#         expObj = self.constructor([[1, 10, 20], [0, 10, 60], [12, 50, 100]])
-#         expAlso = self.constructor([[.5, 0, 20], [0, 10, 60], [12, 50, 100]])
-#
-#         if axis == 'point':
-#             ret = self.normalizeHelper(obj, axis, subtract=subObj, divide=divObj, also=also)
-#         else:
-#             subObj.transpose()
-#             divObj.transpose()
-#             ret = self.normalizeHelper(obj, axis, subtract=subObj, divide=divObj, also=also)
-#
-#         assert ret is None
-#         assert expObj == obj
-#         assert expAlso == also
-#
-#
-#     # string valued inputs and also values that are different in shape.
-#     def test_normalizeFeatures_success_statString_diffSizeAlso(self):
-#         self.back_normalize_success_statString_diffSizeAlso("point")
-#
-#     def test_normalizePoints_success_statString_diffSizeAlso(self):
-#         self.back_normalize_success_statString_diffSizeAlso("feature")
-#
-#     def back_normalize_success_statString_diffSizeAlso(self, axis):
-#         obj1 = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
-#         obj2 = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
-#         alsoLess = self.constructor([[1, 2], [1, 2], [1, 2]])
-#         alsoMore = self.constructor([[1, 2, 1, 2], [1, 2, 1, 2], [1, 2, 1, 2]])
-#
-#         expObj = self.constructor([[0, 0, 0], [.5, .5, .5], [2, 2, 2]])
-#         expAlsoL = self.constructor([[0, 1], [0, .5], [0, -1]])
-#         expAlsoM = self.constructor([[0, 1, 0, 1], [0, .5, 0, .5], [0, -1, 0, -1]])
-#
-#         ret1 = self.normalizeHelper(obj1, axis, subtract="unique count", divide="median", also=alsoLess)
-#         ret2 = self.normalizeHelper(obj2, axis, subtract="unique count", divide="median", also=alsoMore)
-#
-#         assert ret1 is None
-#         assert ret2 is None
-#         assert expObj == obj1
-#         assert expObj == obj2
-#         assert expAlsoL == alsoLess
-#         assert expAlsoM == alsoMore
-#
+
+    #########################################
+    # points.normalize / features.normalize() #
+    #########################################
+
+    def normalizeHelper(self, caller, axis, subtract=None, divide=None, also=None):
+        if axis == 'point':
+            func = caller.points.normalize
+        else:
+            func = caller.features.normalize
+        if 'cython' in str(func.__func__.__class__):#if it is a cython function
+            d = func.__func__.__defaults__
+            assert (d is None) or (d == (None, None, None))
+        else:#if it is a normal python function
+            a, va, vk, d = UML.helpers.inspectArguments(func)
+            assert d == (None, None, None)
+
+        if axis == 'point':
+            return caller.points.normalize(subtract=subtract, divide=divide, applyResultTo=also)
+        else:
+            caller.transpose()
+            if also is not None:
+                also.transpose()
+            ret = caller.features.normalize(subtract=subtract, divide=divide, applyResultTo=also)
+            caller.transpose()
+            if also is not None:
+                also.transpose()
+            return ret
+
+    #exception different type from expected inputs
+    def test_points_normalize_exception_unexpected_input_type(self):
+        self.back_normalize_exception_unexpected_input_type("point")
+
+    def test_features_normalize_exception_unexpected_input_type(self):
+        self.back_normalize_exception_unexpected_input_type("feature")
+
+    def back_normalize_exception_unexpected_input_type(self, axis):
+        obj = self.constructor([[1, 2], [3, 4]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract={})
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide=set([1]))
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+
+    # exception non stats string
+    def test_points_normalize_exception_unexpected_string_value(self):
+        self.back_normalize_exception_unexpected_string_value('point')
+
+    def test_features_normalize_exception_unexpected_string_value(self):
+        self.back_normalize_exception_unexpected_string_value('feature')
+
+    def back_normalize_exception_unexpected_string_value(self, axis):
+        obj = self.constructor([[1, 2], [3, 4]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract="Hello")
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide="enumerate")
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+
+    # exception wrong length vector shaped UML object
+    def test_points_normalize_exception_wrong_vector_length(self):
+        self.back_normalize_exception_wrong_vector_length('point')
+
+    def test_features_normalize_exception_wrong_vector_length(self):
+        self.back_normalize_exception_wrong_vector_length('feature')
+
+    def back_normalize_exception_wrong_vector_length(self, axis):
+        obj = self.constructor([[1, 2], [3, 4]])
+        vectorLong = self.constructor([[1, 2, 3, 4]])
+        vectorShort = self.constructor([[11]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=vectorLong)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide=vectorShort)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+
+    # exception wrong size of UML object
+    def test_points_normalize_exception_wrong_size_object(self):
+        self.back_normalize_exception_wrong_size_object('point')
+
+    def test_features_normalize_exception_wrong_size_object(self):
+        self.back_normalize_exception_wrong_size_object('feature')
+
+    def back_normalize_exception_wrong_size_object(self, axis):
+        obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
+        objBig = self.constructor([[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]])
+        objSmall = self.constructor([[1, 1], [2, 2]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=objBig)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide=objSmall)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+    # applyResultTo is wrong shape in the normalized axis
+    def test_points_normalize_exception_applyResultTo_wrong_shape(self):
+        self.back_normalize_exception_applyResultTo_wrong_shape('point')
+
+    def test_features_normalize_exception_applyResultTo_wrong_shape(self):
+        self.back_normalize_exception_applyResultTo_wrong_shape('feature')
+
+    def back_normalize_exception_applyResultTo_wrong_shape(self, axis):
+        obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
+        alsoShort = self.constructor([[1, 2, 2], [3, 4, 4]])
+        alsoLong = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5], [1, 23, 4]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=1, also=alsoShort)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide=2, also=alsoLong)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+    # applyResultTo is wrong shape when given obj subtract and divide
+    def test_points_normalize_exception_applyResultTo_wrong_shape_obj_input(self):
+        self.back_normalize_exception_applyResultTo_wrong_shape_obj_input('point')
+
+    def test_features_normalize_exception_applyResultTo_wrong_shape_obj_input(self):
+        self.back_normalize_exception_applyResultTo_wrong_shape_obj_input('feature')
+
+    def back_normalize_exception_applyResultTo_wrong_shape_obj_input(self, axis):
+        obj = self.constructor([[1, 2, 2], [3, 4, 4], [5, 5, 5]])
+        alsoShort = self.constructor([[1, 2], [3, 4], [5, 5]])
+        alsoLong = self.constructor([[1, 2, 2, 2], [3, 4, 4, 4], [5, 5, 5, 6]])
+
+        sub_div = self.constructor([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=sub_div, also=alsoShort)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+        try:
+            self.normalizeHelper(obj, axis, divide=sub_div, also=alsoLong)
+            assert False  # Expected ArgumentException
+        except ArgumentException:
+            pass
+
+    # successful float valued inputs
+    def test_points_normalize_success_float_int_inputs_NoAlso(self):
+        self.back_normalize_success_float_int_inputs_NoAlso("point")
+
+    def test_features_normalize_success_float_int_inputs_NoAlso(self):
+        self.back_normalize_success_float_int_inputs_NoAlso("feature")
+
+    def back_normalize_success_float_int_inputs_NoAlso(self, axis):
+        obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
+        expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
+
+        ret = self.normalizeHelper(obj, axis, subtract=1, divide=0.5)
+
+        assert ret is None
+        assert expObj == obj
+
+        # vector versions
+        obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
+        expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
+
+        for retType in UML.data.available:
+            currObj = obj.copy()
+            sub = UML.createData(retType, [1] * 3)
+            div = UML.createData(retType, [0.5] * 3)
+            ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
+
+            assert ret is None
+            assert expObj == currObj
+
+
+    # successful float valued inputs
+    def test_points_normalize_success_float_int_inputs(self):
+        self.back_normalize_success_float_int_inputs("point")
+
+    def test_features_normalize_success_float_int_inputs(self):
+        self.back_normalize_success_float_int_inputs("feature")
+
+    def back_normalize_success_float_int_inputs(self, axis):
+        obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
+        also = self.constructor([[-1, -1, -1], [.5, .5, .5], [2, 2, 2]])
+        expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
+        expAlso = self.constructor([[-4, -4, -4], [-1, -1, -1], [2, 2, 2]])
+
+        ret = self.normalizeHelper(obj, axis, subtract=1, divide=0.5, also=also)
+
+        assert ret is None
+        assert expObj == obj
+        assert expAlso == also
+
+
+    # successful stats-string valued inputs
+    def test_points_normalize_success_stat_string_inputs(self):
+        self.back_normalize_success_stat_string_inputs("point")
+
+    def test_features_normalize_success_stat_string_inputs(self):
+        self.back_normalize_success_stat_string_inputs("feature")
+
+    def back_normalize_success_stat_string_inputs(self, axis):
+        obj = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
+        also = self.constructor([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        expObj = self.constructor([[0, 0, 0], [.5, .5, .5], [2, 2, 2]])
+        expAlso = self.constructor([[0, 1, 2], [0, .5, 1], [0, -1, -2]])
+
+        ret = self.normalizeHelper(obj, axis, subtract="unique count", divide="median", also=also)
+
+        assert ret is None
+        assert expObj == obj
+        assert expAlso == also
+
+
+    # successful vector object valued inputs
+    def test_points_normalize_success_vector_object_inputs(self):
+        self.back_normalize_success_vector_object_inputs("point")
+
+    def test_features_normalize_success_vector_object_inputs(self):
+        self.back_normalize_success_vector_object_inputs("feature")
+
+    def back_normalize_success_vector_object_inputs(self, axis):
+        obj = self.constructor([[1, 3, 7], [10, 30, 70], [100, 300, 700]])
+        also = self.constructor([[2, 6, 14], [10, 30, 70], [100, 300, 700]])
+        subVec = self.constructor([[1, 10, 100]])
+        divVec = self.constructor([[.5], [5], [50]])
+        expObj = self.constructor([[0, 4, 12], [0, 4, 12], [0, 4, 12]])
+        expAlso = self.constructor([[2, 10, 26], [0, 4, 12], [0, 4, 12]])
+
+        ret = self.normalizeHelper(obj, axis, subtract=subVec, divide=divVec, also=also)
+
+        assert ret is None
+        assert expObj == obj
+        assert expAlso == also
+
+
+    # successful matrix valued inputs
+    def test_points_normalize_success_full_object_inputs(self):
+        self.back_normalize_success_full_object_inputs("point")
+
+    def test_features_normalize_success_full_object_inputs(self):
+        self.back_normalize_success_full_object_inputs("feature")
+
+    def back_normalize_success_full_object_inputs(self, axis):
+        obj = self.constructor([[2, 10, 100], [3, 30, 300], [7, 70, 700]])
+        also = self.constructor([[1, 5, 100], [3, 30, 300], [7, 70, 700]])
+
+        subObj = self.constructor([[0, 5, 20], [3, 10, 60], [4, -30, 100]])
+        divObj = self.constructor([[2, .5, 4], [2, 2, 4], [.25, 2, 6]])
+
+        expObj = self.constructor([[1, 10, 20], [0, 10, 60], [12, 50, 100]])
+        expAlso = self.constructor([[.5, 0, 20], [0, 10, 60], [12, 50, 100]])
+
+        if axis == 'point':
+            ret = self.normalizeHelper(obj, axis, subtract=subObj, divide=divObj, also=also)
+        else:
+            subObj.transpose()
+            divObj.transpose()
+            ret = self.normalizeHelper(obj, axis, subtract=subObj, divide=divObj, also=also)
+
+        assert ret is None
+        assert expObj == obj
+        assert expAlso == also
+
+
+    # string valued inputs and also values that are different in shape.
+    def test_features_normalize_success_statString_diffSizeAlso(self):
+        self.back_normalize_success_statString_diffSizeAlso("point")
+
+    def test_points_normalize_success_statString_diffSizeAlso(self):
+        self.back_normalize_success_statString_diffSizeAlso("feature")
+
+    def back_normalize_success_statString_diffSizeAlso(self, axis):
+        obj1 = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
+        obj2 = self.constructor([[1, 1, 1], [2, 2, 2], [-1, -1, -1]])
+        alsoLess = self.constructor([[1, 2], [1, 2], [1, 2]])
+        alsoMore = self.constructor([[1, 2, 1, 2], [1, 2, 1, 2], [1, 2, 1, 2]])
+
+        expObj = self.constructor([[0, 0, 0], [.5, .5, .5], [2, 2, 2]])
+        expAlsoL = self.constructor([[0, 1], [0, .5], [0, -1]])
+        expAlsoM = self.constructor([[0, 1, 0, 1], [0, .5, 0, .5], [0, -1, 0, -1]])
+
+        ret1 = self.normalizeHelper(obj1, axis, subtract="unique count", divide="median", also=alsoLess)
+        ret2 = self.normalizeHelper(obj2, axis, subtract="unique count", divide="median", also=alsoMore)
+
+        assert ret1 is None
+        assert ret2 is None
+        assert expObj == obj1
+        assert expObj == obj2
+        assert expAlsoL == alsoLess
+        assert expAlsoM == alsoMore
+
     #####################
     # features.fill #
     #####################

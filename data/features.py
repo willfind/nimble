@@ -228,7 +228,7 @@ class Features(object):
 
         Returns
         -------
-        UML object
+        UML data object
 
         See Also
         --------
@@ -281,7 +281,7 @@ class Features(object):
 
         Returns
         -------
-        UML object
+        UML data object
 
         See Also
         --------
@@ -532,7 +532,7 @@ class Features(object):
 
         Returns
         -------
-        UML object
+        UML data object
 
         See also
         --------
@@ -557,7 +557,7 @@ class Features(object):
 
         Parameters
         ----------
-        toAdd : UML object
+        toAdd : UML data object
             The UML data object whose contents we will be including
             in this object. Must have the same point names as the
             calling object, but not necessarily in the same order. Must
@@ -654,8 +654,57 @@ class Features(object):
         returnModified : return an object containing True for the
             modified values in each feature and False for unmodified
             values.
+
+        See Also
+        --------
+        match, fill
+
+        Examples
+        --------
+        TODO
         """
         return self._fill(match, fill, arguments, features, returnModified)
+
+    def normalize(self, subtract=None, divide=None, applyResultTo=None):
+        """
+        Modify all features in this object using the given operations.
+
+        Normalize the data by applying subtraction and division
+        operations. A value of None for subtract or divide implies that
+        no change will be made to the data in regards to that operation.
+
+        Parameters
+        ----------
+        subtract : number, str, UML data object
+            * number - a numerical denominator for dividing the data
+            * str -  a statistical function (all of the same ones
+              callable though featureStatistics)
+            * UML data object - If a vector shaped object is given, then
+              the value associated with each feature will be subtracted
+              from all values of that feature. Otherwise, the values in
+              the object are used for elementwise subtraction
+        divide : number, str, UML data object
+            * number - a numerical denominator for dividing the data
+            * str -  a statistical function (all of the same ones
+              callable though featureStatistics)
+            * UML data object - If a vector shaped object is given, then
+              the value associated with each feature will be used in
+              division of all values for that feature. Otherwise, the
+              values in the object are used for elementwise division.
+        applyResultTo : UML data object, statistical method
+            If a UML data object is given, then perform the same
+            operations to it as are applied to the calling object.
+            However, if a statistical method is specified as subtract or
+            divide, then concrete values are first calculated only from
+            querying the calling object, and the operation is performed
+            on applyResultTo using the results; as if a UML data object
+            was given for the subtract or divide arguments.
+
+        Examples
+        --------
+        TODO
+        """
+        self._normalize(subtract, divide, applyResultTo)
 
     ####################
     # Abstract Methods #
@@ -743,4 +792,8 @@ class Features(object):
 
     @abstractmethod
     def _fill(self, match, fill, arguments, limitTo, returnModified):
+        pass
+
+    @abstractmethod
+    def _normalize(self, subtract, divide, applyResultTo):
         pass

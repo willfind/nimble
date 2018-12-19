@@ -427,7 +427,24 @@ class Axis(object):
         return ret
 
     def _add(self, toAdd, insertBefore):
-        self._genericAddFrontend(self.axis, toAdd, insertBefore)
+        _validateInsertableData(self.axis, self.source, toAdd)
+        if self.source.getTypeString() != toAdd.getTypeString():
+            toAdd = toAdd.copyAs(self.source.getTypeString())
+
+        if self.axis == 'point' and insertBefore is None:
+            insertBefore = len(self.source.points)
+        elif self.axis == 'feature' and insertBefore is None:
+            insertBefore = len(self.source.features)
+        else:
+            insertBefore = self.source._getIndex(insertBefore, self.axis)
+
+        offAxis = 'feature' if self.axis == 'point' else 'point'
+        toAdd = _alignNames(offAxis, self.source, toAdd)
+        self._add_implementation(toAdd, insertBefore)
+
+        _setAddedCountAndNames(self.axis, self.source, toAdd, insertBefore)
+
+        self.source.validate()
 
     def _mapReduce(self, mapper, reducer):
         if self.axis == 'point':
@@ -522,6 +539,202 @@ class Axis(object):
         self.source.validate()
 
         return modified
+
+    def _normalize(self, subtract, divide, applyResultTo):
+
+        # used to trigger later conditionals
+        alsoIsObj = isinstance(applyResultTo, UML.data.Base)
+
+        # the operation is different when the input is a vector
+        # or produces a vector (ie when the input is a statistics
+        # string) so during the validation steps we check for
+        # those cases
+        subIsVec = False
+        divIsVec = False
+
+        # check it is within the desired types
+        if subtract is not None:
+            if not isinstance(subtract, (int, float, six.string_types, UML.data.Base)):
+                msg = "The argument named subtract must have a value that is "
+                msg += "an int, float, string, or is a UML data object"
+                raise ArgumentException(msg)
+        if divide is not None:
+            if not isinstance(divide, (int, float, six.string_types, UML.data.Base)):
+                msg = "The argument named divide must have a value that is "
+                msg += "an int, float, string, or is a UML data object"
+                raise ArgumentException(msg)
+
+        # check that if it is a string, it is one of the accepted values
+        if isinstance(subtract, six.string_types):
+            self.source._validateStatisticalFunctionInputString(subtract)
+        if isinstance(divide, six.string_types):
+            self.source._validateStatisticalFunctionInputString(divide)
+
+        # arg generic helper to check that objects are of the
+        # correct shape/size
+        def validateInObjectSize(argname, argval):
+            inPC = len(argval.points)
+            inFC = len(argval.features)
+            objPC = self.source._pointCount
+            objFC = self.source._featureCount
+
+            inMainLen = inPC if self.axis == "point" else inFC
+            inOffLen = inFC if self.axis == "point" else inPC
+            objMainLen = objPC if self.axis == "point" else objFC
+            objOffLen = objFC if self.axis == 'point' else objPC
+
+            if inMainLen != objMainLen or inOffLen != objOffLen:
+                vecErr = argname + " "
+                vecErr += "was a UML object in the shape of a "
+                vecErr += "vector (" + str(inPC) + " x "
+                vecErr += str(inFC) + "), "
+                vecErr += "but the length of long axis did not match "
+                vecErr += "the number of " + self.axis + "s in this object ("
+                vecErr += str(self.source._pointCount) + ")."
+                # treat it as a vector
+                if inMainLen == 1:
+                    if inOffLen != objMainLen:
+                        raise ArgumentException(vecErr)
+                    return True
+                # treat it as a vector
+                elif inOffLen == 1:
+                    if inMainLen != objMainLen:
+                        raise ArgumentException(vecErr)
+                    argval.transpose()
+                    return True
+                # treat it as a mis-sized object
+                else:
+                    msg = argname + " "
+                    msg += "was a UML obejct with a shape of ("
+                    msg += str(inPC) + " x " + str(inFC) + "), "
+                    msg += "but it doesn't match the shape of the calling"
+                    msg += "object (" + str(objPC) + " x "
+                    msg += str(objFC) + ")"
+                    raise ArgumentException(msg)
+            return False
+
+        def checkAlsoShape(also, objIn):
+            """
+            Raises an exception if the normalized axis shape doesn't match the
+            calling object, or if when subtract of divide takes an object, also
+            doesn't match the shape of the caller (this is to be called after)
+            the check that the caller's shape matches that of the subtract or
+            divide argument.
+            """
+            offAxis = 'feature' if self.axis == 'point' else 'point'
+            callerP = len(self.source.points)
+            callerF = len(self.source.features)
+            alsoP = len(also.points)
+            alsoF = len(also.features)
+
+            callMainLen = callerP if self.axis == "point" else callerF
+            alsoMainLen = alsoP if self.axis == "point" else alsoF
+            callOffLen = callerF if self.axis == "point" else callerP
+            alsoOffLen = alsoF if self.axis == "point" else alsoP
+
+            if callMainLen != alsoMainLen:
+                msg = "applyResultTo must have the same number of " + self.axis
+                msg += "s (" + str(alsoMainLen) + ") as the calling object "
+                msg += "(" + str(callMainLen) + ")"
+                raise ArgumentException(msg)
+            if objIn and callOffLen != alsoOffLen:
+                msg = "When a non-vector UML object is given for the subtract "
+                msg += "or divide arguments, then applyResultTo "
+                msg += "must have the same number of " + offAxis
+                msg += "s (" + str(alsoOffLen) + ") as the calling object "
+                msg += "(" + str(callOffLen) + ")"
+                raise ArgumentException(msg)
+
+        # actually check that objects are the correct shape/size
+        objArg = False
+        if isinstance(subtract, UML.data.Base):
+            subIsVec = validateInObjectSize("subtract", subtract)
+            objArg = True
+        if isinstance(divide, UML.data.Base):
+            divIsVec = validateInObjectSize("divide", divide)
+            objArg = True
+
+        # check the shape of applyResultTo
+        if alsoIsObj:
+            checkAlsoShape(applyResultTo, objArg)
+
+        # if a statistics string was entered, generate the results
+        # of that statistic
+        #		if isinstance(subtract, basestring):
+        #			if axis == 'point':
+        #				subtract = self.pointStatistics(subtract)
+        #			else:
+        #				subtract = self.featureStatistics(subtract)
+        #			subIsVec = True
+        #		if isinstance(divide, basestring):
+        #			if axis == 'point':
+        #				divide = self.pointStatistics(divide)
+        #			else:
+        #				divide = self.featureStatistics(divide)
+        #			divIsVec = True
+
+        if self.axis == 'point':
+            indexGetter = lambda x: self._getIndex(x.getPointName(0))
+            if isinstance(subtract, six.string_types):
+                subtract = self.source.pointStatistics(subtract)
+                subIsVec = True
+            if isinstance(divide, six.string_types):
+                divide = self.source.pointStatistics(divide)
+                divIsVec = True
+        else:
+            indexGetter = lambda x: self._getIndex(x.getFeatureName(0))
+            if isinstance(subtract, six.string_types):
+                subtract = self.source.featureStatistics(subtract)
+                subIsVec = True
+            if isinstance(divide, six.string_types):
+                divide = self.source.featureStatistics(divide)
+                divIsVec = True
+
+        # helper for when subtract is a vector of values
+        def subber(currView):
+            ret = []
+            for val in currView:
+                ret.append(val - subtract[indexGetter(currView)])
+            return ret
+
+        # helper for when divide is a vector of values
+        def diver(currView):
+            ret = []
+            for val in currView:
+                ret.append(val / divide[indexGetter(currView)])
+            return ret
+
+        # first perform the subtraction operation
+        if subtract is not None and subtract != 0:
+            if subIsVec:
+                if self.axis == 'point':
+                    self._transform(subber, None)
+                    if alsoIsObj:
+                        applyResultTo.points.transform(subber)
+                else:
+                    self._transform(subber, None)
+                    if alsoIsObj:
+                        applyResultTo.features.transform(subber)
+            else:
+                self.source -= subtract
+                if alsoIsObj:
+                    applyResultTo -= subtract
+
+        # then perform the division operation
+        if divide is not None and divide != 1:
+            if divIsVec:
+                if self.axis == 'point':
+                    self._transform(diver, None)
+                    if alsoIsObj:
+                        applyResultTo.points.transform(diver)
+                else:
+                    self._transform(diver, None)
+                    if alsoIsObj:
+                        applyResultTo.features.transform(diver)
+            else:
+                self.source /= divide
+                if alsoIsObj:
+                    applyResultTo /= divide
 
     #####################
     # Low Level Helpers #
@@ -897,30 +1110,6 @@ class Axis(object):
             ret.transpose()
 
         return ret
-
-    def _genericAddFrontend(self, axis, toAdd, insertBefore):
-        """
-        Validation and modifications for all insert operations
-        """
-        self.source._validateAxis(axis)
-        _validateInsertableData(axis, self.source, toAdd)
-        if self.source.getTypeString() != toAdd.getTypeString():
-            toAdd = toAdd.copyAs(self.source.getTypeString())
-
-        if axis == 'point' and insertBefore is None:
-            insertBefore = len(self.source.points)
-        elif axis == 'feature' and insertBefore is None:
-            insertBefore = len(self.source.features)
-        else:
-            insertBefore = self.source._getIndex(insertBefore, axis)
-
-        offAxis = 'feature' if self.axis == 'point' else 'point'
-        toAdd = _alignNames(offAxis, self.source, toAdd)
-        self._add_implementation(toAdd, insertBefore)
-
-        _setAddedCountAndNames(self.axis, self.source, toAdd, insertBefore)
-
-        self.source.validate()
 
     ####################
     # Abstract Methods #
