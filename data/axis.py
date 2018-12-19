@@ -7,6 +7,8 @@ from __future__ import absolute_import
 from __future__ import division
 import copy
 from abc import abstractmethod
+import inspect
+import sys
 
 import six
 import numpy
@@ -201,7 +203,7 @@ class Axis(object):
             ret.setFeatureNames(self.source.getFeatureNames())
         else:
             ret.setPointNames(self.source.getPointNames())
-        _adjustCountAndNames(self.source, self.axis, ret)
+        self._adjustCountAndNames(ret)
 
         ret._relPath = self.source.relativePath
         ret._absPath = self.source.absolutePath
@@ -213,7 +215,7 @@ class Axis(object):
     def _delete(self, toDelete, start, end, number, randomize):
         ret = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
-        _adjustCountAndNames(self.source, self.axis, ret)
+        self._adjustCountAndNames(ret)
         self.source.validate()
 
     def _retain(self, toRetain, start, end, number, randomize):
@@ -427,7 +429,7 @@ class Axis(object):
         return ret
 
     def _add(self, toAdd, insertBefore):
-        _validateInsertableData(self.axis, self.source, toAdd)
+        self._validateInsertableData(toAdd)
         if self.source.getTypeString() != toAdd.getTypeString():
             toAdd = toAdd.copyAs(self.source.getTypeString())
 
@@ -439,10 +441,10 @@ class Axis(object):
             insertBefore = self.source._getIndex(insertBefore, self.axis)
 
         offAxis = 'feature' if self.axis == 'point' else 'point'
-        toAdd = _alignNames(offAxis, self.source, toAdd)
+        toAdd = self._alignNames(offAxis, toAdd)
         self._add_implementation(toAdd, insertBefore)
 
-        _setAddedCountAndNames(self.axis, self.source, toAdd, insertBefore)
+        self._setAddedCountAndNames(toAdd, insertBefore)
 
         self.source.validate()
 
@@ -553,13 +555,14 @@ class Axis(object):
         divIsVec = False
 
         # check it is within the desired types
+        allowedTypes = (int, float, six.string_types, UML.data.Base)
         if subtract is not None:
-            if not isinstance(subtract, (int, float, six.string_types, UML.data.Base)):
+            if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
                 raise ArgumentException(msg)
         if divide is not None:
-            if not isinstance(divide, (int, float, six.string_types, UML.data.Base)):
+            if not isinstance(divide, allowedTypes):
                 msg = "The argument named divide must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
                 raise ArgumentException(msg)
@@ -955,6 +958,38 @@ class Axis(object):
             return len(targetList)
         return self._structuralBackend_implementation(structure, targetList)
 
+    def _adjustCountAndNames(self, other):
+        """
+        Adjust the count and names (when names have been generated) for
+        this object, removing the names that have been extracted to the
+        other object.
+        """
+        if self.axis == 'point':
+            self.source._pointCount -= len(other.points)
+            if self.source._pointNamesCreated():
+                idxList = []
+                for name in other.getPointNames():
+                    idxList.append(self.source.pointNames[name])
+                idxList = sorted(idxList)
+                for i, val in enumerate(idxList):
+                    del self.source.pointNamesInverse[val - i]
+                self.source.pointNames = {}
+                for idx, pt in enumerate(self.source.pointNamesInverse):
+                    self.source.pointNames[pt] = idx
+
+        else:
+            self.source._featureCount -= len(other.features)
+            if self.source._featureNamesCreated():
+                idxList = []
+                for name in other.getFeatureNames():
+                    idxList.append(self.source.featureNames[name])
+                idxList = sorted(idxList)
+                for i, val in enumerate(idxList):
+                    del self.source.featureNamesInverse[val - i]
+                self.source.featureNames = {}
+                for idx, ft in enumerate(self.source.featureNamesInverse):
+                    self.source.featureNames[ft] = idx
+
     def _flattenNames(self, discardAxis):
         """
         Axis names for the unflattened axis after a flatten operation.
@@ -1111,6 +1146,229 @@ class Axis(object):
 
         return ret
 
+    def _validateInsertableData(self, toAdd):
+        """
+        Required validation before inserting an object
+        """
+        if toAdd is None:
+            msg = "The argument 'toAdd' must not have a value of None"
+            raise ArgumentException(msg)
+        if not isinstance(toAdd, UML.data.Base):
+            msg = "The argument 'toAdd' must be an instance of the "
+            msg += "UML.data.Base  class. The value we recieved was "
+            msg += str(toAdd) + ", had the type " + str(type(toAdd))
+            msg += ", and a method resolution order of "
+            msg += str(inspect.getmro(toAdd.__class__))
+            raise ArgumentException(msg)
+
+        if self.axis == 'point':
+            objOffAxisLen = self.source._featureCount
+            addOffAxisLen = len(toAdd.features)
+            objHasAxisNames = self.source._pointNamesCreated()
+            addHasAxisNames = toAdd._pointNamesCreated()
+            objHasOffAxisNames = self.source._featureNamesCreated()
+            addHasOffAxisNames = toAdd._featureNamesCreated()
+            offAxis = 'feature'
+            funcName = 'points.add'
+        else:
+            objOffAxisLen = self.source._pointCount
+            addOffAxisLen = len(toAdd.points)
+            objHasAxisNames = self.source._featureNamesCreated()
+            addHasAxisNames = toAdd._featureNamesCreated()
+            objHasOffAxisNames = self.source._pointNamesCreated()
+            addHasOffAxisNames = toAdd._pointNamesCreated()
+            offAxis = 'point'
+            funcName = 'features.add'
+
+        if objOffAxisLen != addOffAxisLen:
+            msg = "The argument 'toAdd' must have the same number of {axis}s "
+            msg += "as the caller object. This object contains {objCount} "
+            msg += "{axis}s and toAdd contains {addCount} {axis}s."
+            msg = msg.format(axis=self.axis, objCount=objOffAxisLen,
+                             addCount=addOffAxisLen)
+            raise ArgumentException(msg)
+
+        # this helper ignores default names - so we can only have an
+        # intersection of names when BOTH objects have names created.
+        if objHasAxisNames and addHasAxisNames:
+            self._validateEmptyNamesIntersection('toAdd', toAdd)
+        # helper looks for name inconsistency that can be resolved by
+        # reordering - definitionally, if one object has all default names,
+        # there can be no inconsistency, so both objects must have names
+        # assigned for this to be relevant.
+        if objHasOffAxisNames and addHasOffAxisNames:
+            self._validateReorderedNames(offAxis, funcName, toAdd)
+
+    def _validateEmptyNamesIntersection(self, argName, argValue):
+        intersection = self._nameIntersection(argValue)
+        shared = []
+        if intersection:
+            for name in intersection:
+                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    shared.append(name)
+
+        if shared != []:
+            truncated = False
+            if len(shared) > 10:
+                full = len(shared)
+                shared = shared[:10]
+                truncated = True
+
+            msg = "The argument named " + argName + " must not share any "
+            msg += self.axis + "Names with the calling object, yet the "
+            msg += "following names occured in both: "
+            msg += UML.exceptions.prettyListString(shared)
+            if truncated:
+                msg += "... (only first 10 entries out of " + str(full)
+                msg += " total)"
+            raise ArgumentException(msg)
+
+    def _nameIntersection(self, other):
+        """
+        Returns a set containing only names that are shared along the
+        axis between the two objects.
+        """
+        if other is None:
+            raise ArgumentException("The other object cannot be None")
+        if not isinstance(other, UML.data.Base):
+            msg = "The other object must be an instance of base"
+            raise ArgumentException(msg)
+
+        axis = self.axis
+        self.source._defaultNamesGeneration_NamesSetOperations(other, axis)
+        if axis == 'point':
+            return (six.viewkeys(self.source.pointNames)
+                    & six.viewkeys(other.pointNames))
+        else:
+            return (six.viewkeys(self.source.featureNames)
+                    & six.viewkeys(other.featureNames))
+
+    def _validateReorderedNames(self, axis, callSym, other):
+        """
+        Validate axis names to check to see if they are equal ignoring
+        order. Raises an exception if the objects do not share exactly
+        the same names, or requires reordering in the presence of
+        default names.
+        """
+        if axis == 'point':
+            lnames = self.source.getPointNames()
+            rnames = other.getPointNames()
+            lGetter = self.source.getPointIndex
+            rGetter = other.getPointIndex
+        else:
+            lnames = self.source.getFeatureNames()
+            rnames = other.getFeatureNames()
+            lGetter = self.source.getFeatureIndex
+            rGetter = other.getFeatureIndex
+
+        inconsistencies = self.source._inconsistentNames(lnames, rnames)
+
+        if len(inconsistencies) != 0:
+            # check for the presence of default names; we don't allow
+            # reordering in that case.
+            msgBase = "When calling caller." + callSym + "(callee) we require "
+            msgBase += "that the " + axis + " names all contain the same "
+            msgBase += "names, regardless of order. "
+            msg = copy.copy(msgBase)
+            msg += "However, when default names are present, we don't allow "
+            msg += "reordering to occur: either all names must be specified, "
+            msg += "or the order must be the same."
+
+
+            if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in lnames):
+                raise ArgumentException(msg)
+            if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
+                raise ArgumentException(msg)
+
+            ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
+            # names are not the same.
+            if len(ldiff) != 0:
+                rdiff = numpy.setdiff1d(rnames, lnames, assume_unique=True)
+                msgBase += "Yet, the following names were unmatched (caller "
+                msgBase += "names on the left, callee names on the right):\n"
+
+                table = [['ID', 'name', '', 'ID', 'name']]
+                for lname, rname in zip(ldiff, rdiff):
+                    table.append([lGetter(lname), lname, "   ",
+                                  rGetter(rname), rname])
+
+                msg += UML.logger.tableString.tableString(table)
+                print(msg, file=sys.stderr)
+
+                raise ArgumentException(msg)
+
+    def _alignNames(self, axis, toAdd):
+        """
+        Sort the point or feature names of the passed object to match
+        this object. If sorting is necessary, a copy will be returned to
+        prevent modification of the passed object, otherwise the
+        original object will be returned. Assumes validation of the
+        names has already occurred.
+        """
+        if axis == 'point':
+            namesCreated = self.source._pointNamesCreated()
+            objNames = self.source.getPointNames
+            toAddNames = toAdd.getPointNames
+            def sorter(obj, names):
+                return obj.points.sort(sortHelper=names)
+        else:
+            namesCreated = self.source._featureNamesCreated()
+            objNames = self.source.getFeatureNames
+            toAddNames = toAdd.getFeatureNames
+            def sorter(obj, names):
+                return obj.features.sort(sortHelper=names)
+
+        # This may not look exhaustive, but because of the previous call to
+        # _validateInsertableData before this helper, most of the toAdd cases
+        # will have already caused an exception
+        if namesCreated:
+            allDefault = all(n.startswith(DEFAULT_PREFIX) for n in objNames())
+            reorder = objNames() != toAddNames()
+            if not allDefault and reorder:
+                # use copy when reordering so toAdd object is not modified
+                toAdd = toAdd.copy()
+                sorter(toAdd, objNames())
+
+        return toAdd
+
+    def _setAddedCountAndNames(self, addedObj, insertedBefore):
+        """
+        Modify the point or feature count to include the addedObj. If
+        one or both objects have names, names will be set as well.
+        """
+        if self.axis == 'point':
+            newPtCount = len(self.source.points) + len(addedObj.points)
+            self.source._setpointCount(newPtCount)
+            # only need to adjust names if names are present
+            if not (self.source._pointNamesCreated()
+                    or addedObj._pointNamesCreated()):
+                return
+            objNames = self.source.getPointNames()
+            insertedNames = addedObj.getPointNames()
+            setObjNames = self.source.setPointNames
+        else:
+            newFtCount = len(self.source.features) + len(addedObj.features)
+            self.source._setfeatureCount(newFtCount)
+            # only need to adjust names if names are present
+            if not (self.source._featureNamesCreated()
+                    or addedObj._featureNamesCreated()):
+                return
+            objNames = self.source.getFeatureNames()
+            insertedNames = addedObj.getFeatureNames()
+            setObjNames = self.source.setFeatureNames
+        # ensure no collision with default names
+        adjustedNames = []
+        for name in insertedNames:
+            if name.startswith(DEFAULT_PREFIX):
+                adjustedNames.append(self.source._nextDefaultName(self.axis))
+            else:
+                adjustedNames.append(name)
+        startNames = objNames[:insertedBefore]
+        endNames = objNames[insertedBefore:]
+
+        newNames = startNames + adjustedNames + endNames
+        setObjNames(newNames)
+
     ####################
     # Abstract Methods #
     ####################
@@ -1240,142 +1498,3 @@ def _stringToFunction(string, axis, nameChecker):
         raise ArgumentException(msg)
 
     return target
-
-def _adjustCountAndNames(source, axis, other):
-    """
-    Adjust the count and names (when names have been generated) for this
-    object, removing the names that have been extracted to the other
-    object.
-    """
-    if axis == 'point':
-        source._pointCount -= len(other.points)
-        if source._pointNamesCreated():
-            idxList = []
-            for name in other.getPointNames():
-                idxList.append(source.pointNames[name])
-            idxList = sorted(idxList)
-            for i, val in enumerate(idxList):
-                del source.pointNamesInverse[val - i]
-            source.pointNames = {}
-            for idx, pt in enumerate(source.pointNamesInverse):
-                source.pointNames[pt] = idx
-
-    else:
-        source._featureCount -= len(other.features)
-        if source._featureNamesCreated():
-            idxList = []
-            for name in other.getFeatureNames():
-                idxList.append(source.featureNames[name])
-            idxList = sorted(idxList)
-            for i, val in enumerate(idxList):
-                del source.featureNamesInverse[val - i]
-            source.featureNames = {}
-            for idx, ft in enumerate(source.featureNamesInverse):
-                source.featureNames[ft] = idx
-
-def _alignNames(axis, caller, toAdd):
-    """
-    Sort the point or feature names of the passed object to match
-    this object. If sorting is necessary, a copy will be returned to
-    prevent modification of the passed object, otherwise the
-    original object will be returned. Assumes validation of the
-    names has already occurred.
-    """
-    caller._validateAxis(axis)
-    if axis == 'point':
-        namesCreated = caller._pointNamesCreated()
-        callerNames = caller.getPointNames
-        toAddNames = toAdd.getPointNames
-        def sorter(obj, names):
-            return getattr(obj, 'sortPoints')(sortHelper=names)
-    else:
-        namesCreated = caller._featureNamesCreated()
-        callerNames = caller.getFeatureNames
-        toAddNames = toAdd.getFeatureNames
-        def sorter(obj, names):
-            return getattr(obj, 'sortFeatures')(sortHelper=names)
-
-    # This may not look exhaustive, but because of the previous call to
-    # _validateInsertableData before this helper, most of the toAdd cases will
-    # have already caused an exception
-    if namesCreated:
-        allDefault = all(n.startswith(DEFAULT_PREFIX) for n in callerNames())
-        reorder = callerNames() != toAddNames()
-        if not allDefault and reorder:
-            # use copy when reordering so toAdd object is not modified
-            toAdd = toAdd.copy()
-            sorter(toAdd, callerNames())
-
-    return toAdd
-
-def _validateInsertableData(axis, caller, toAdd):
-    """
-    Required validation before inserting an object
-    """
-    caller._validateAxis(axis)
-    caller._validateValueIsNotNone('toAdd', toAdd)
-    caller._validateValueIsUMLDataObject('toAdd', toAdd, True)
-    if axis == 'point':
-        caller._validateObjHasSameNumberOfFeatures('toAdd', toAdd)
-        # this helper ignores default names - so we can only have an
-        # intersection of names when BOTH objects have names created.
-        if caller._pointNamesCreated() and toAdd._pointNamesCreated():
-            caller._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-        # helper looks for name inconsistency that can be resolved by
-        # reordering - definitionally, if one object has all default names,
-        # there can be no inconsistency, so both objects must have names
-        # assigned for this to be relevant.
-        if caller._featureNamesCreated() and toAdd._featureNamesCreated():
-            caller._validateReorderedNames('feature', 'addPoints', toAdd)
-    else:
-        caller._validateObjHasSameNumberOfPoints('toAdd', toAdd)
-        # this helper ignores default names - so we can only have an
-        # intersection of names when BOTH objects have names created.
-        if caller._featureNamesCreated() and toAdd._featureNamesCreated():
-            caller._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-        # helper looks for name inconsistency that can be resolved by
-        # reordering - definitionally, if one object has all default names,
-        # there can be no inconsistency, so both objects must have names
-        # assigned for this to be relevant.
-        if caller._pointNamesCreated() and toAdd._pointNamesCreated():
-            caller._validateReorderedNames('point', 'addFeatures', toAdd)
-
-def _setAddedCountAndNames(axis, caller, addedObj, insertedBefore):
-    """
-    Modify the point or feature count to include the addedObj. If one or
-    both objects have names, names will be set as well.
-    """
-    caller._validateAxis(axis)
-    if axis == 'point':
-        # only adjust count if no names in either object
-        if not (caller._pointNamesCreated()
-                or addedObj._pointNamesCreated()):
-            caller._setpointCount(len(caller.points) + len(addedObj.points))
-            return
-        callerNames = caller.getPointNames()
-        insertedNames = addedObj.getPointNames()
-        setSelfNames = caller.setPointNames
-        caller._setpointCount(len(caller.points) + len(addedObj.points))
-    else:
-        # only adjust count if no names in either object
-        if not (caller._featureNamesCreated()
-                or addedObj._featureNamesCreated()):
-            newFtCount = len(caller.features) + len(addedObj.features)
-            caller._setfeatureCount(newFtCount)
-            return
-        callerNames = caller.getFeatureNames()
-        insertedNames = addedObj.getFeatureNames()
-        setSelfNames = caller.setFeatureNames
-        caller._setfeatureCount(len(caller.features) + len(addedObj.features))
-    # ensure no collision with default names
-    adjustedNames = []
-    for name in insertedNames:
-        if name.startswith(DEFAULT_PREFIX):
-            adjustedNames.append(caller._nextDefaultName(axis))
-        else:
-            adjustedNames.append(name)
-    startNames = callerNames[:insertedBefore]
-    endNames = callerNames[insertedBefore:]
-
-    newNames = startNames + adjustedNames + endNames
-    setSelfNames(newNames)
