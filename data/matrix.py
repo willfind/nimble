@@ -16,9 +16,9 @@ from six.moves import zip
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .matrixPoints import MatrixPoints
-from .matrixFeatures import MatrixFeatures
-from .matrixElements import MatrixElements
+from .matrixPoints import MatrixPoints, MatrixPointsView
+from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
+from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import inheritDocstringsFactory
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -244,6 +244,15 @@ class Matrix(Base):
         class MatrixView(BaseView, Matrix):
             def __init__(self, **kwds):
                 super(MatrixView, self).__init__(**kwds)
+
+            def _getPoints(self):
+                return MatrixPointsView(self)
+
+            def _getFeatures(self):
+                return MatrixFeaturesView(self)
+
+            def _getElements(self):
+                return MatrixElementsView(self)
 
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]

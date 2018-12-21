@@ -8,6 +8,7 @@ import numpy
 
 import UML
 from .elements import Elements
+from .elements_view import ElementsView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -186,3 +187,8 @@ class SparseElements(Elements):
                 continue
 
             self.source.data.data[index] = currRet
+
+class SparseElementsView(ElementsView, SparseElements, Elements):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        super(SparseElementsView, self).__init__(**kwds)

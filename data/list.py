@@ -16,9 +16,9 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .listPoints import ListPoints
-from .listFeatures import ListFeatures
-from .listElements import ListElements
+from .listPoints import ListPoints, ListPointsView
+from .listFeatures import ListFeatures, ListFeaturesView
+from .listElements import ListElements, ListElementsView
 from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import reorderToMatchList
 import UML
@@ -362,6 +362,15 @@ class List(Base):
         class ListView(BaseView, List):
             def __init__(self, **kwds):
                 super(ListView, self).__init__(**kwds)
+
+            def _getPoints(self):
+                return ListPointsView(self)
+
+            def _getFeatures(self):
+                return ListFeaturesView(self)
+
+            def _getElements(self):
+                return ListElementsView(self)
 
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is done

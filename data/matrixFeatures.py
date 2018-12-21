@@ -8,6 +8,7 @@ import numpy
 
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
 
@@ -76,3 +77,9 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
         numPoints = len(self.source.points) // numFeatures
         self.source.data = self.source.data.reshape((numPoints, numFeatures),
                                                     order='F')
+
+class MatrixFeaturesView(AxisView, MatrixFeatures, MatrixAxis, Axis, Features):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        kwds['axis'] = 'feature'
+        super(MatrixFeaturesView, self).__init__(**kwds)

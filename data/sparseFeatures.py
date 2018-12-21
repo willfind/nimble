@@ -8,6 +8,7 @@ import numpy
 
 import UML
 from .axis import Axis
+from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
 
@@ -108,3 +109,9 @@ class SparseFeatures(SparseAxis, Axis, Features):
 
         self.source.data = coo_matrix((data, (row, col)), newShape)
         self.source._sorted = 'feature'
+
+class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        kwds['axis'] = 'feature'
+        super(SparseFeaturesView, self).__init__(**kwds)

@@ -19,9 +19,9 @@ from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
-from .sparsePoints import SparsePoints
-from .sparseFeatures import SparseFeatures
-from .sparseElements import SparseElements
+from .sparsePoints import SparsePoints, SparsePointsView
+from .sparseFeatures import SparseFeatures, SparseFeaturesView
+from .sparseElements import SparseElements, SparseElementsView
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -1057,6 +1057,15 @@ class SparseVectorView(BaseView, Sparse):
 class SparseView(BaseView, Sparse):
     def __init__(self, **kwds):
         super(SparseView, self).__init__(**kwds)
+
+    def _getPoints(self):
+        return SparsePointsView(self)
+
+    def _getFeatures(self):
+        return SparseFeaturesView(self)
+
+    def _getElements(self):
+        return SparseElementsView(self)
 
     def _validate_implementation(self, level):
         self._source.validate(level)

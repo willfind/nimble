@@ -14,9 +14,9 @@ from six.moves import range
 
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataframePoints import DataFramePoints
-from .dataframeFeatures import DataFrameFeatures
-from .dataframeElements import DataFrameElements
+from .dataframePoints import DataFramePoints, DataFramePointsView
+from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
+from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
 import UML
@@ -235,6 +235,15 @@ class DataFrame(Base):
         class DataFrameView(BaseView, DataFrame):
             def __init__(self, **kwds):
                 super(DataFrameView, self).__init__(**kwds)
+
+            def _getPoints(self):
+                return DataFramePointsView(self)
+
+            def _getFeatures(self):
+                return DataFrameFeaturesView(self)
+
+            def _getElements(self):
+                return DataFrameElementsView(self)
 
             def _setAllDefault(self, axis):
                 super(DataFrameView, self)._setAllDefault(axis)

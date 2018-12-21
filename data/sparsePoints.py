@@ -8,6 +8,7 @@ import numpy
 
 import UML
 from .axis import Axis
+from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
 
@@ -107,3 +108,9 @@ class SparsePoints(SparseAxis, Axis, Points):
 
         self.source.data = coo_matrix((data, (row, col)), newShape)
         self.source._sorted = 'point'
+
+class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        kwds['axis'] = 'point'
+        super(SparsePointsView, self).__init__(**kwds)

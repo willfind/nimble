@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .axis_view import AxisView
 from .listAxis import ListAxis
 from .points import Points
 
@@ -84,3 +85,9 @@ class ListPoints(ListAxis, Axis, Points):
 
         self.source.data = result
         self.source._numFeatures = numFeatures
+
+class ListPointsView(AxisView, ListPoints, ListAxis, Axis, Points):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        kwds['axis'] = 'point'
+        super(ListPointsView, self).__init__(**kwds)

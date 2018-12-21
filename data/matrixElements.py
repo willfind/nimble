@@ -9,6 +9,7 @@ import numpy
 
 import UML
 from .elements import Elements
+from .elements_view import ElementsView
 
 class MatrixElements(Elements):
     """
@@ -95,3 +96,8 @@ class MatrixElements(Elements):
             self.source.data = numpy.matrix(result)
         else:
             self.source.data = numpy.multiply(self.source.data, other.data)
+
+class MatrixElementsView(ElementsView, MatrixElements, Elements):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        super(MatrixElementsView, self).__init__(**kwds)

@@ -8,6 +8,7 @@ from __future__ import division
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
 
@@ -74,3 +75,10 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
         self.source.data = pd.DataFrame(
             self.source.data.values.reshape((numPoints, numFeatures),
                                             order='F'))
+
+class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
+                            Features):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        kwds['axis'] = 'feature'
+        super(DataFrameFeaturesView, self).__init__(**kwds)

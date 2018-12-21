@@ -6,6 +6,7 @@ from __future__ import absolute_import
 import itertools
 
 from .elements import Elements
+from .elements_view import ElementsView
 
 class ListElements(Elements):
     """
@@ -90,3 +91,8 @@ class ListElements(Elements):
                 # Divided by 1 to make it raise if it involves non-numeric
                 # types ('str')
                 self.source.data[pNum][fNum] *= other[pNum, fNum] / 1
+
+class ListElementsView(ElementsView, ListElements, Elements):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        super(ListElementsView, self).__init__(**kwds)

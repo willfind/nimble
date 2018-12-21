@@ -9,6 +9,7 @@ import numpy as np
 
 import UML
 from .elements import Elements
+from .elements_view import ElementsView
 
 pd = UML.importModule('pandas')
 if pd:
@@ -100,3 +101,8 @@ class DataFrameElements(Elements):
         else:
             self.source.data = pd.DataFrame(
                 np.multiply(self.source.data.values, other.data))
+
+class DataFrameElementsView(ElementsView, DataFrameElements, Elements):
+    def __init__(self, source, **kwds):
+        kwds['source'] = source
+        super(DataFrameElementsView, self).__init__(**kwds)
