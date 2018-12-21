@@ -92,7 +92,7 @@ def filterLowest(obj, toDrop=.05):
     if len(obj.points) != 1:
         obj.transpose()
 
-    obj.sortFeatures(0)
+    obj.features.sort(0)
 
     if isinstance(toDrop, float):
         # we rely on this to convert via truncation to ensure we're including
@@ -100,7 +100,7 @@ def filterLowest(obj, toDrop=.05):
         start = int(len(obj.features) * toDrop)
     else:
         start = toDrop
-    return obj.extractFeatures(start=start)
+    return obj.features.extract(start=start)
 
 
 def testFilterLowest():
@@ -331,7 +331,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
         return genderValue[pID] == 1
 
     toSplit = responses.copy()
-    femalePoints = toSplit.extractPoints(extractFemale)
+    femalePoints = toSplit.points.extract(extractFemale)
     malePoints = toSplit
 
     num = 0
@@ -346,8 +346,8 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
         fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender, catScaleGender)
 #       print len(mSubscale.points)
 #       print len(mSubscale.features)
-#       mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
-#       fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
+#       mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender).points.extract(end=10)
+#       fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender).points.extract(end=10)
 
 #       bw = tuple([.02 + i*.02 for i in xrange(25)])
         bw = tuple([.5 - i*.02 for i in range(24)])
@@ -506,7 +506,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
         return genderValue[pID] == 1
 
     toSplit = responses.copy()
-    femalePoints = toSplit.extractPoints(extractFemale)
+    femalePoints = toSplit.points.extract(extractFemale)
     malePoints = toSplit
     numMale = len(malePoints.points)
     numFemale = len(femalePoints.points)

@@ -176,12 +176,12 @@ class LogisticRegressionSelectByOmission(CustomLearner):
         removalIndices = [withIndices[n][1] for n in range(numberToOmit)]
         self.wantedIndices = list(set(range(len(trainX.features))) - set(removalIndices))
 
-        inTrainX = trainX.copyFeatures(self.wantedIndices)
+        inTrainX = trainX.features.copy(self.wantedIndices)
         self._trained = UML.train(sklLogReg, inTrainX, trainY, **kwargs)
 
 
     def apply(self, testX):
-        inTestX = testX.copyFeatures(self.wantedIndices)
+        inTestX = testX.features.copy(self.wantedIndices)
         return self._trained.apply(inTestX, useLog=False)
 
 
@@ -192,11 +192,11 @@ class ReducedRidge(CustomLearner):
     def train(self, trainX, trainY, alpha, wantedIndices):
         name = 'scikitlearn.RidgeClassifier'
         self.wantedIndices = wantedIndices
-        redTrainX = trainX.copyFeatures(wantedIndices)
+        redTrainX = trainX.features.copy(wantedIndices)
         self.tl = UML.train(name, redTrainX, trainY, alpha, useLog=False)
 
     def apply(self, testX):
-        redTestX = testX.copyFeatures(self.wantedIndices)
+        redTestX = testX.features.copy(self.wantedIndices)
         return self.tl.apply(redTestX, useLog=False)
 
 
@@ -206,11 +206,11 @@ class ReducedLogisticRegression(CustomLearner):
     def train(self, trainX, trainY, C, wantedIndices):
         name = 'scikitlearn.LogisticRegression'
         self.wantedIndices = wantedIndices
-        redTrainX = trainX.copyFeatures(wantedIndices)
+        redTrainX = trainX.features.copy(wantedIndices)
         self.tl = UML.train(name, redTrainX, trainY, C, useLog=False)
 
     def apply(self, testX):
-        redTestX = testX.copyFeatures(self.wantedIndices)
+        redTestX = testX.features.copy(self.wantedIndices)
         return self.tl.apply(redTestX, useLog=False)
 
 
@@ -227,7 +227,7 @@ def sanityCheck(trainX, totalScores):
             total += value
         return total
 
-    summed = trainX.calculateForEachPoint(summer)
+    summed = trainX.points.calculate(summer)
     summed.setFeatureName(0, "totalScorePosOrNeg")
     assert summed == totalScores
 
@@ -237,24 +237,24 @@ def seperateData(dataAll, omitList):
     nameOfFirst = "I do not enjoy watching dance performances. (M)"
     indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
 
-    usedData = dataAll.extractFeatures(start=indexOfFirst, end=None)
-    usedData.addFeatures(dataAll.copyFeatures("isMale"))
-    usedData.addFeatures(dataAll.copyFeatures("InTestSet"))
+    usedData = dataAll.features.extract(start=indexOfFirst, end=None)
+    usedData.features.add(dataAll.features.copy("isMale"))
+    usedData.features.add(dataAll.features.copy("InTestSet"))
 
-    usedData.extractFeatures(omitList)
+    usedData.features.extract(omitList)
 
     def selectInTestSet(point):
         if point["InTestSet"] > 0:
             return True
         return False
 
-    testingSet = usedData.extractPoints(selectInTestSet)
-    testY = testingSet.extractFeatures("isMale")
-    testingSet.extractFeatures("InTestSet")
+    testingSet = usedData.points.extract(selectInTestSet)
+    testY = testingSet.features.extract("isMale")
+    testingSet.features.extract("InTestSet")
     testX = testingSet
 
-    trainY = usedData.extractFeatures("isMale")
-    usedData.extractFeatures("InTestSet")
+    trainY = usedData.features.extract("isMale")
+    usedData.features.extract("InTestSet")
     trainX = usedData
 
     return trainX, trainY, testX, testY
@@ -339,15 +339,15 @@ def standardizeScoreScale(obj):
                 ret.append(-elem)
         return ret
 
-#   reduced = obj.copyPoints(end=20)
-#   reduced = reduced.copyFeatures([0,1,2,58,59,60])
+#   reduced = obj.points.copy(end=20)
+#   reduced = reduced.features.copy([0,1,2,58,59,60])
 #   print reduced.getFeatureNames()
 #   reduced.show('Before')
 
-    obj.transformEachFeature(reverseScorePolarity, features=negScored)
+    obj.features.transform(reverseScorePolarity, features=negScored)
 
-#   reduced = obj.copyPoints(end=20)
-#   reduced = reduced.copyFeatures([0,1,2,58,59,60])
+#   reduced = obj.points.copy(end=20)
+#   reduced = reduced.features.copy([0,1,2,58,59,60])
 #   reduced.show('After')
 
 #   exit(0)
@@ -573,7 +573,7 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
         currTL = allTL[i]
         currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
         currCoefsObj = UML.createData("Matrix", currCoefs)
-        coefsObj.addPoints(currCoefsObj)
+        coefsObj.points.add(currCoefsObj)
 
 #   print len(coefsObj.points)
 #   print len(coefsObj.features)
@@ -624,12 +624,12 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     coefs = trainedLearner.backend.coef_.flatten()
     print(coefs.shape)
 
-    trainX.addPoints(testX)
-    trainY.addPoints(testY)
+    trainX.points.add(testX)
+    trainY.points.add(testY)
 
     nzIDs = trainY.copyAs("numpyarray",outputAs1D=True).nonzero()[0]
 
-    malePoints = trainX.extractPoints(list(nzIDs))
+    malePoints = trainX.points.extract(list(nzIDs))
     femalePoints = trainX
 
     print(len(malePoints.points))
@@ -728,7 +728,7 @@ def normalize_Feature_subtract_mean_div_std(trainX, testX):
 
 def wantedIndiceGrabber(tl, data):
     wi = tl.getAttributes()['wantedIndices']
-    return data.copyFeatures(wi)
+    return data.features.copy(wi)
 
 def featSelect_All(trainX, trainY, testX, numWanted):
     return (trainX, testX)
@@ -803,8 +803,8 @@ def featSelect_handmade_orig(trainX, trainY, testX, numWanted):
     wanted.append(" I laugh aloud. (F)")
     wanted.append(" I show my feelings when I'm happy. (F)")
 
-    redTrain = trainX.copyFeatures(wanted)
-    redTest = testX.copyFeatures(wanted)
+    redTrain = trainX.features.copy(wanted)
+    redTest = testX.features.copy(wanted)
     return (redTrain, redTest)
 
 def featSelect_handmade_random(trainX, trainY, testX, numWanted):
@@ -833,8 +833,8 @@ def featSelect_handmade_random(trainX, trainY, testX, numWanted):
     wanted.append(" I would never make a high-risk investment. (F)")
     wanted.append(" I have a dark outlook on the future. (M)")
 
-    redTrain = trainX.copyFeatures(wanted)
-    redTest = testX.copyFeatures(wanted)
+    redTrain = trainX.features.copy(wanted)
+    redTest = testX.features.copy(wanted)
     return (redTrain, redTest)
 
 ############################
@@ -1032,7 +1032,7 @@ if __name__ == "__main__":
     # Check some of the expectations we had on the data to make sure
     # we've extracted the right stuff
     if performSanityCheck:
-        totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
+        totalScores = dataAll.features.extract("totalScorePosOrNeg")
         sanityCheck(trainX, totalScores)  # defined above __main__
 
     print("")

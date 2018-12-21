@@ -144,209 +144,6 @@ class List(Base):
         self.data = transposed
         self._numFeatures = tempFeatures
 
-    def _addPoints_implementation(self, toAdd, insertBefore):
-        """
-        Insert the points from the toAdd object below the provided index in
-        this object, the remaining points from this object will continue below
-        the inserted points
-
-        """
-        insertedLength = len(self.points) + len(toAdd.points)
-        insertRange = range(insertBefore, insertBefore + len(toAdd.points))
-        insertIndex = 0
-        selfIndex = 0
-        allData = []
-        for pointIndex in range(insertedLength):
-            if pointIndex in insertRange:
-                allData.append(toAdd.data[insertIndex])
-                insertIndex += 1
-            else:
-                allData.append(self.data[selfIndex])
-                selfIndex += 1
-        self.data = allData
-
-    def _addFeatures_implementation(self, toAdd, insertBefore):
-        """
-        Insert the features from the toAdd object to the right of the
-        provided index in this object, the remaining points from this object
-        will continue to the right of the inserted points
-
-        """
-        for i in range(len(self.points)):
-            startData = self.data[i][:insertBefore]
-            endData = self.data[i][insertBefore:]
-            allPointData = startData + list(toAdd.data[i]) + endData
-            self.data[i] = allPointData
-        self._numFeatures = self._numFeatures + len(toAdd.features)
-
-    def _sortPoints_implementation(self, sortBy, sortHelper):
-        return self._sort_generic_implementation(sortBy, sortHelper, 'point')
-
-    def _sortFeatures_implementation(self, sortBy, sortHelper):
-        return self._sort_generic_implementation(sortBy, sortHelper, 'feature')
-
-    def _sort_generic_implementation(self, sortBy, sortHelper, axis):
-        if axis == 'point':
-            test = self.pointView(0)
-            viewIter = self.pointIterator()
-            indexGetter = self.getPointIndex
-            nameGetter = self.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.getPointNames()
-        else:
-            test = self.featureView(0)
-            viewIter = self.featureIterator()
-            indexGetter = self.getFeatureIndex
-            nameGetter = self.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.getFeatureNames()
-
-        if isinstance(sortHelper, list):
-            sortData = numpy.array(self.data, dtype=numpy.object_)
-            if axis == 'point':
-                sortData = sortData[sortHelper, :]
-            else:
-                sortData = sortData[:, sortHelper]
-            self.data = sortData.tolist()
-            newNameOrder = [names[idx] for idx in sortHelper]
-            return newNameOrder
-
-        scorer = None
-        comparator = None
-        try:
-            sortHelper(test)
-            scorer = sortHelper
-        except TypeError:
-            pass
-        try:
-            sortHelper(test, test)
-            comparator = sortHelper
-        except TypeError:
-            pass
-
-        if sortHelper is not None and scorer is None and comparator is None:
-            raise ArgumentException("sortHelper is neither a scorer or a comparator")
-
-        # make array of views
-        viewArray = []
-        for v in viewIter:
-            viewArray.append(v)
-
-        if comparator is not None:
-            # try:
-            #     viewArray.sort(cmp=comparator)#python2
-            # except:
-            viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
-            indexPosition = []
-            for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
-                indexPosition.append(index)
-        else:
-            #scoreArray = viewArray
-            scoreArray = []
-            if scorer is not None:
-                # use scoring function to turn views into values
-                for i in range(len(viewArray)):
-                    scoreArray.append(scorer(viewArray[i]))
-            else:
-                for i in range(len(viewArray)):
-                    scoreArray.append(viewArray[i][sortBy])
-
-            # use numpy.argsort to make desired index array
-            # this results in an array whole ith index contains the the
-            # index into the data of the value that should be in the ith
-            # position
-            indexPosition = numpy.argsort(scoreArray)
-
-        # run through target axis and change indices
-        if axis == 'point':
-            source = copy.copy(self.data)
-            for i in range(len(self.data)):
-                self.data[i] = source[indexPosition[i]]
-        else:
-            for i in range(len(self.data)):
-                currPoint = self.data[i]
-                temp = copy.copy(currPoint)
-                for j in range(len(indexPosition)):
-                    currPoint[j] = temp[indexPosition[j]]
-
-        # we convert the indices of the their previous location into their feature names
-        newNameOrder = []
-        for i in range(len(indexPosition)):
-            oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
-            newNameOrder.append(newName)
-        return newNameOrder
-
-
-    def _structuralBackend_implementation(self, structure, axis, targetList):
-        """
-        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
-        copyPoints/Features. Returns a new object containing only the points in targetList and
-        performs some modifications to the original object if necessary. This function does not
-        perform all of the modification or process how each function handles the returned value,
-        these are managed separately by each frontend function.
-        """
-        pnames = []
-        fnames = []
-        data = numpy.matrix(self.data, dtype=object)
-
-        if axis == 'point':
-            keepList = [idx for idx in range(len(self.points)) if idx not in targetList]
-            satisfying = data[targetList, :]
-            if structure != 'copy':
-                keep = data[keepList, :]
-                self.data = keep.tolist()
-
-            for index in targetList:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-
-        else:
-            if self.data == []:
-                # create empty matrix with correct shape
-                data = numpy.matrix(numpy.empty((len(self.points),len(self.features))), dtype=object)
-
-            keepList = [idx for idx in range(len(self.features)) if idx not in targetList]
-            satisfying = data[:, targetList]
-            if structure != 'copy':
-                keep = data[:, keepList]
-                self.data = keep.tolist()
-
-            for index in targetList:
-                fnames.append(self.getFeatureName(index))
-            pnames = self.getPointNames()
-
-            if structure != 'copy':
-                self._numFeatures = self._numFeatures - len(targetList)
-
-        return List(satisfying, pointNames=pnames, featureNames=fnames, reuseData=True)
-
-
-    def _mapReducePoints_implementation(self, mapper, reducer):
-        mapResults = {}
-        # apply the mapper to each point in the data
-        for i in range(len(self.points)):
-            currResults = mapper(self.pointView(i))
-            # the mapper will return a list of key value pairs
-            for (k, v) in currResults:
-                # if key is new, we must add an empty list
-                if k not in mapResults:
-                    mapResults[k] = []
-                # append this value to the list of values associated with the key
-                mapResults[k].append(v)
-
-        # apply the reducer to the list of values associated with each key
-        ret = []
-        for mapKey in mapResults.keys():
-            mapValues = mapResults[mapKey]
-            # the reducer will return a tuple of a key to a value
-            redRet = reducer(mapKey, mapValues)
-            if redRet is not None:
-                (redKey, redValue) = redRet
-                ret.append([redKey, redValue])
-        return List(ret, reuseData=True)
-
     def _getTypeString_implementation(self):
         return 'List'
 
@@ -404,7 +201,7 @@ class List(Base):
 
             outFile.write(fnamesLine)
 
-        for point in self.pointIterator():
+        for point in self.points:
             currPname = point.getPointName(0)
             first = True
             if includePointNames:
@@ -508,84 +305,6 @@ class List(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
 
-
-
-    def _calculateForEachElement_implementation(self, function, points, features,
-                                                preserveZeros, outputType):
-        return self._calculateForEachElementGenericVectorized(
-               function, points, features, outputType)
-
-
-    def _transformEachPoint_implementation(self, function, points):
-        for i, p in enumerate(self.pointIterator()):
-            if points is not None and i not in points:
-                continue
-            currRet = function(p)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
-            if isinstance(currRet, ArgumentException):
-                currRet.value = currRet.value.format('point', i)
-                raise currRet
-            if len(currRet) != len(self.features):
-                msg = "function must return an iterable with as many elements as features in this object"
-                raise ArgumentException(msg)
-
-            self.data[i] = currRet
-
-    def _transformEachFeature_implementation(self, function, features):
-        for j, f in enumerate(self.featureIterator()):
-            if features is not None and j not in features:
-                continue
-            currRet = function(f)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
-            if isinstance(currRet, ArgumentException):
-                currRet.value = currRet.value.format('feature', j)
-                raise currRet
-            if len(currRet) != len(self.points):
-                msg = "function must return an iterable with as many elements as points in this object"
-                raise ArgumentException(msg)
-
-            for i in range(len(self.points)):
-                self.data[i][j] = currRet[i]
-
-    def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
-        oneArg = False
-        try:
-            toTransform(0, 0, 0)
-        except TypeError:
-            if isinstance(toTransform, dict):
-                oneArg = None
-            else:
-                oneArg = True
-
-        IDs = itertools.product(range(len(self.points)), range(len(self.features)))
-        for (i, j) in IDs:
-            currVal = self.data[i][j]
-
-            if points is not None and i not in points:
-                continue
-            if features is not None and j not in features:
-                continue
-            if preserveZeros and currVal == 0:
-                continue
-
-            if oneArg is None:
-                if currVal in toTransform.keys():
-                    currRet = toTransform[currVal]
-                else:
-                    continue
-            elif oneArg:
-                currRet = toTransform(currVal)
-            else:
-                currRet = toTransform(currVal, i, j)
-
-            if skipNoneReturnValues and currRet is None:
-                continue
-
-            self.data[i][j] = currRet
-
-
     def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
         if not isinstance(values, UML.data.Base):
             values = [values] * (featureEnd - featureStart + 1)
@@ -594,7 +313,6 @@ class List(Base):
         else:
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values.data[p - pointStart]
-
 
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
@@ -680,7 +398,6 @@ class List(Base):
                 else:
                     return listForm
 
-
         class FeatureViewer(object):
             def __init__(self, source, fStart, fEnd):
                 self.source = source
@@ -764,7 +481,7 @@ class List(Base):
         in this object. False otherwise
 
         """
-        for point in self.pointIterator():
+        for point in self.points:
             for i in range(len(point)):
                 if point[i] == 0:
                     return True
@@ -832,7 +549,6 @@ class List(Base):
 
         return nzIt(self)
 
-
     def _mul__implementation(self, other):
         if isinstance(other, UML.data.Base):
             return self._matrixMultiply_implementation(other)
@@ -852,16 +568,15 @@ class List(Base):
 
         """
         ret = []
-        for sPoint in self.pointIterator():
+        for sPoint in self.points:
             retP = []
-            for oFeature in other.featureIterator():
+            for oFeature in other.features:
                 runningTotal = 0
                 for index in range(len(other.points)):
                     runningTotal += sPoint[index] * oFeature[index]
                 retP.append(runningTotal)
             ret.append(retP)
         return List(ret)
-
 
     def _elementwiseMultiply_implementation(self, other):
         """

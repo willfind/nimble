@@ -62,19 +62,19 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
     for labelNumber in range(len(featuresToPredict)):
         #create the features for the current labelNum, and exclude irrelevant poins
         currentFeatures = data.copy()
-        currentFeatures.extractPoints(
+        currentFeatures.points.extract(
             functionsToExcludePoints[labelNumber]) #get rid of points that aren't relevant to this label
 
         #remove all the different labels from the features
-        labelsMatrix = currentFeatures.extractFeatures(featuresToPredict)
+        labelsMatrix = currentFeatures.features.extract(featuresToPredict)
 
         #get the labels we'll be predicting
         featureToPredict = featuresToPredict[labelNumber]
-        currentLabels = labelsMatrix.copyFeatures(featureToPredict)
+        currentLabels = labelsMatrix.features.copy(featureToPredict)
 
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
-        featuresWithLabels.addFeatures(currentLabels)
+        featuresWithLabels.features.add(currentLabels)
         labelFeatureNum = len(featuresWithLabels.features) - 1
 
         #get the training and testing data for this label
@@ -89,7 +89,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
     #confirm the training X sets all have the same number of features (even though they may not have the same number of points)
     for trainX, trainY in zip(trainXs, trainYs):
-        assert len(trainX.features) == trainXs[0].fts
+        assert len(trainX.features) == len(trainXs[0].features)
         assert len(trainY.points) == len(trainX.points)
         assert len(trainY.features) == 1
 
@@ -107,37 +107,37 @@ def testBuildTrainingAndTestingSetsForPredictions():
                                                                                  featuresToPredict,
                                                                                  functionsToExcludePoints)
     assert (len(trainXs)) == 2
-    assert trainXs[0].fts == 4
-    assert trainXs[1].fts == 4
+    assert len(trainXs[0].features) == 4
+    assert len(trainXs[1].features) == 4
     assert trainXs[0].getFeatureNames() == ["x1", "x2", "x3", "x4"]
     assert trainXs[1].getFeatureNames() == ["x1", "x2", "x3", "x4"]
-    assert trainXs[0].pts == 2
-    assert testXs[0].pts == 1
-    assert trainXs[1].pts == 4
-    assert testXs[1].pts == 2
+    assert len(trainXs[0].points) == 2
+    assert len(testXs[0].points) == 1
+    assert len(trainXs[1].points) == 4
+    assert len(testXs[1].points) == 2
     jointXs0 = trainXs[0].copy()
-    jointXs0.addPoints(testXs[0])
-    jointXs0.sortPoints("x1")
+    jointXs0.points.add(testXs[0])
+    jointXs0.points.sort("x1")
     print("jointXs0\n", jointXs0)
     assert jointXs0.isApproximatelyEqual(createData("Matrix", [[1, 5, 2, 7], [3, 5, 2, 3], [4, 9.2, 3, 5]]))
 
     jointYs0 = trainYs[0].copy()
-    jointYs0.addPoints(testYs[0])
-    jointYs0.sortPoints(0)
+    jointYs0.points.add(testYs[0])
+    jointYs0.points.sort(0)
 
     print("jointYs0\n", jointYs0)
     assert jointYs0.isApproximatelyEqual(createData("Matrix", [[1], [3], [5]]))
 
     jointXs1 = trainXs[1].copy()
-    jointXs1.addPoints(testXs[1])
-    jointXs1.sortPoints("x1")
+    jointXs1.points.add(testXs[1])
+    jointXs1.points.sort("x1")
     assert jointXs1.isApproximatelyEqual(createData("Matrix",
                                                     [[1, 5, 2, 7], [2, 2, 3.2, 9.1], [3, 5, 2, 3], [4, 9.2, 3, 5],
                                                      [5, -4, 2, 1], [6, -2, -3, -2]]))
 
     jointYs1 = trainYs[1].copy()
-    jointYs1.addPoints(testYs[1])
-    jointYs1.sortPoints(0)
+    jointYs1.points.add(testYs[1])
+    jointYs1.points.sort(0)
 
     print("jointYs1\n", jointYs1)
     assert jointYs1.isApproximatelyEqual(createData("Matrix", [[-7], [-3], [0], [1], [1], [9]]))
@@ -159,20 +159,20 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         testXs[i] = testXs[i].copy()
         testYs[i] = testYs[i].copy()
 
-    if numFeaturesToKeep > trainXs[0].fts: raise Exception(
+    if numFeaturesToKeep > len(trainXs[0].features): raise Exception(
         "Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(
-            trainXs[0].fts) + " features.")
+            len(trainXs[0].features)) + " features.")
 
     droppedFeatureErrorsListOutSample = []
     droppedFeatureErrorsListInSample = []
 
-    while trainXs[0].fts > numFeaturesToKeep:
-        print(str(trainXs[0].fts) + " features left")
+    while len(trainXs[0].features) > numFeaturesToKeep:
+        print(str(len(trainXs[0].features)) + " features left")
 
         errorForEachFeatureDropped = []
 
         #try dropping each feature one by one
-        for featureNumToDrop in range(trainXs[0].fts):
+        for featureNumToDrop in range(len(trainXs[0].features)):
             #sys.stdout.write(" " + str(trainXs[0].getFeatureNames()[featureNumToDrop]))
             errorsForThisFeatureDrop = []
             #for each label we're predicting
@@ -181,7 +181,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 #print "trainX", trainX
                 #build a feature set to train on that doesn't include the feature we're dropping
                 trainXWithoutFeature = trainX.copy()
-                trainXWithoutFeature.extractFeatures(featureNumToDrop)
+                trainXWithoutFeature.features.extract(featureNumToDrop)
 
                 algorithmName = predictionAlgorithms[labelNum]
                 if "Logistic" in algorithmName:
@@ -209,13 +209,13 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
 
         # print("\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3)))
         for trainX, testX in zip(trainXs, testXs):
-            trainX.extractFeatures(mostUselessFeatureNum)
-            testX.extractFeatures(mostUselessFeatureNum)
+            trainX.features.extract(mostUselessFeatureNum)
+            testX.features.extract(mostUselessFeatureNum)
         outSampleErrorsHash, outSampleParamshash = getPredictionErrors(trainXs, trainYs, testXs, testYs,
                                                                        predictionAlgorithms, featuresToPredict)
         mostUselessFeatureErrorOutSample = outSampleErrorsHash["Combined Error"]
         droppedFeatureErrorsListOutSample.append(mostUselessFeatureErrorOutSample)
-    #print "viableFeaturesLeft", trainXs[0].fts
+    #print "viableFeaturesLeft", len(trainXs[0].features)
 
     if plot:
         pylab.plot(droppedFeatureErrorsListOutSample, ".", color="green")
@@ -297,12 +297,12 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
         trainYsTemp = copy.copy(trainYs)
         testXsTemp = copy.copy(testXs)
         testYsTemp = copy.copy(testYs)
-        numFeatures = trainXs[0].fts
+        numFeatures = len(trainXs[0].features)
         featuresToKeep = random.sample(list(range(numFeatures)), numFeaturesToKeep)
         #print "featuresToKeep", featuresToKeep
         for datasetNum in range(len(trainXsTemp)):
-            trainXsTemp[datasetNum] = trainXsTemp[datasetNum].copyFeatures(featuresToKeep)
-            testXsTemp[datasetNum] = testXsTemp[datasetNum].copyFeatures(featuresToKeep)
+            trainXsTemp[datasetNum] = trainXsTemp[datasetNum].features.copy(featuresToKeep)
+            testXsTemp[datasetNum] = testXsTemp[datasetNum].features.copy(featuresToKeep)
 
         errorsHash, parametersHash = getPredictionErrors(trainXs=trainXsTemp, trainYs=trainYsTemp, testXs=testXsTemp,
                                                          testYs=testYsTemp, predictionAlgorithms=predictionAlgorithms,
@@ -443,10 +443,10 @@ def testPercentileOf():
 
 """
 def plotFeatureDistributionForDifferentFilters(X, featureName, filterFunc):
-	pointsFiltered = X.extractPoints(filterFunc)
+	pointsFiltered = X.points.extract(filterFunc)
 	pointsUnfiltered = X
-	featureFiltered = pointsFiltered.copyFeatures(featureName)
-	featureUnfiltered = pointsUnfiltered.copyFeatures(featureName)
+	featureFiltered = pointsFiltered.features.copy(featureName)
+	featureUnfiltered = pointsUnfiltered.features.copy(featureName)
 	featureFiltered.show() WAS WORKING HERE
 	pylab.hist(featureFiltered.data, color="blue")
 	pylab.hist(featureUnfiltered.data, color="green")
@@ -456,7 +456,7 @@ def plotFeatureDistributionForDifferentFilters(X, featureName, filterFunc):
 
 def applyPointFilterThenPlotDistribution(X, featureName, filterFunc):
     Z = X.copy()
-    pointsToUse = Z.extractPoints(filterFunc)
+    pointsToUse = Z.points.extract(filterFunc)
     pointsToUse.plotFeatureDistribution(featureName)
 
 
@@ -464,8 +464,8 @@ def trainAndTestClassificationErrorUsingOneVariable(data, variableToUse, labelID
     trainX, trainY, testX, testY = data.trainAndTestSets(testFraction=fractionOfDataForTesting, labels=labelID)
 
     #just use this one variable in our predictions
-    trainX = trainX.copyFeatures(variableToUse)
-    testX = testX.copyFeatures(variableToUse)
+    trainX = trainX.features.copy(variableToUse)
+    testX = testX.features.copy(variableToUse)
 
     ### use logistic regression using this one variable
     algorithmName = "SciKitLearn.LogisticRegression"
@@ -480,16 +480,16 @@ def trainAndTestClassificationErrorUsingOneVariable(data, variableToUse, labelID
 
 def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
     featuresForStats = allFeatures.copy()
-    liarsForStats = featuresForStats.copy().extractPoints(lambda x: x["inLyingGroup"] == 1)
-    honestForStats = featuresForStats.copy().extractPoints(lambda x: x["inLyingGroup"] == 0)
+    liarsForStats = featuresForStats.copy().points.extract(lambda x: x["inLyingGroup"] == 1)
+    honestForStats = featuresForStats.copy().points.extract(lambda x: x["inLyingGroup"] == 0)
 
     #featuresForStats.show()
-    featuresForStats.extractFeatures(featuresToRemoveCompletely)
-    featuresForStats.extractFeatures(featuresToPredict)
-    liarsForStats.extractFeatures(featuresToRemoveCompletely)
-    liarsForStats.extractFeatures(featuresToPredict)
-    honestForStats.extractFeatures(featuresToRemoveCompletely)
-    honestForStats.extractFeatures(featuresToPredict)
+    featuresForStats.features.extract(featuresToRemoveCompletely)
+    featuresForStats.features.extract(featuresToPredict)
+    liarsForStats.features.extract(featuresToRemoveCompletely)
+    liarsForStats.features.extract(featuresToPredict)
+    honestForStats.features.extract(featuresToRemoveCompletely)
+    honestForStats.features.extract(featuresToPredict)
 
     honestForStats.pointStatistics("standarddeviation").plotFeatureDistribution(0)
     liarsForStats.pointStatistics("standarddeviation").plotFeatureDistribution(0)
@@ -509,7 +509,7 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 
 #pointStdDevs.show()
 #stats = pointMeans.copy()
-#stats.addFeatures(pointStdDevs)
+#stats.features.add(pointStdDevs)
 #stats.plotFeatureCross(0,1)
 
 #def pointsToZScores(data):
@@ -541,7 +541,7 @@ if __name__ == "__main__":
 
     """
 
-    allFeatures.extractFeatures(featuresToRemoveCompletely)
+    allFeatures.features.extract(featuresToRemoveCompletely)
 
     #debugging only
     pointsToZScores(allFeatures)

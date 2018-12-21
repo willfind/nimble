@@ -90,7 +90,7 @@ def testSciKitLearnSparseRegression():
     A = scipy.sparse.coo_matrix((data, (points, cols)), shape=(x, x))
     obj = UML.createData('Sparse', A)
     testObj = obj.copy()
-    testObj.extractFeatures(cols[0])
+    testObj.features.extract(cols[0])
 
     ret = UML.trainAndApply(toCall('SGDRegressor'), trainX=obj, trainY=cols[0], testX=testObj)
 
@@ -351,7 +351,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
 def testSciKitLearnClusterLearners():
     data = generateClusteredPoints(3, 60, 8)
     data = data[0]
-    data.shufflePoints()
+    data.points.shuffle()
     trainX = data[:50,:]
     testX = data[50:,:]
     Xtrain = trainX.data
@@ -652,16 +652,16 @@ def testConvertYTrainDType():
             ['c', 3, 1, 2, 3, 1]]
     # object will have 'object' dtype because of strings in data
     trainObj = UML.createData('Matrix', train)
-    trainObj.retainFeatures([1, 2, 3, 4, 5])
+    trainObj.features.retain([1, 2, 3, 4, 5])
     testObj = UML.createData('Matrix', test)
-    testObj.retainFeatures([2,3,4,5])
+    testObj.features.retain([2,3,4,5])
 
     # case1 trainY passed as integer
     assert trainObj[:,0].data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
 
     #case2 trainY passed as UML object
-    trainY = trainObj.extractFeatures(0)
+    trainY = trainObj.features.extract(0)
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 

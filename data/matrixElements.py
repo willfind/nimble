@@ -72,7 +72,7 @@ class MatrixElements(Elements):
 
     def _calculate_implementation(self, function, points, features,
                                   preserveZeros, outputType):
-        return self._calculateForEachElementGenericVectorized(
+        return self._calculate_genericVectorized(
             function, points, features, outputType)
 
     #############################

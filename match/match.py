@@ -81,13 +81,13 @@ def anyAllValuesBackend(quantity, data, match):
         # 2D data
         if quantity is any:
             # if any feature contains a match we can return True
-            for i in range(data.features):
+            for i in range(len(data.features)):
                 if quantity([match(val) for val in data[:, i]]):
                     return True
             return False
         else:
             # if any feature does not have all matches we can return False
-            for i in range(data.features):
+            for i in range(len(data.features)):
                 if not quantity([match(val) for val in data[:, i]]):
                     return False
             return True

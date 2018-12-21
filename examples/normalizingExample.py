@@ -21,7 +21,7 @@ if __name__ == "__main__":
     variables = ["y", "x1", "x2", "x3"]
     data1 = [[1, 6, 0, 0], [1, 3, 0, 0], [0, -5, 0, 0], [0, -3, 0, 0]]
     trainObj = createData('Matrix', data=data1, featureNames=variables)
-    trainObjY = trainObj.extractFeatures('y')
+    trainObjY = trainObj.features.extract('y')
 
     # data we're going to classify
     variables2 = ["x1", "x2", "x3"]

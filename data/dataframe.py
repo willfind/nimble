@@ -75,191 +75,8 @@ class DataFrame(Base):
         """
         self.data = self.data.T
 
-    def _addPoints_implementation(self, toAdd, insertBefore):
-        """
-        Insert the points from the toAdd object below the provided index in
-        this object, the remaining points from this object will continue below
-        the inserted points
-
-        """
-        startData = self.data.iloc[:insertBefore, :]
-        endData = self.data.iloc[insertBefore:, :]
-        self.data = pd.concat((startData, toAdd.data, endData), axis=0)
-        self._updateName(axis='point')
-
-    def _addFeatures_implementation(self, toAdd, insertBefore):
-        """
-        Insert the features from the toAdd object to the right of the
-        provided index in this object, the remaining points from this object
-        will continue to the right of the inserted points
-
-        """
-        startData = self.data.iloc[:, :insertBefore]
-        endData = self.data.iloc[:, insertBefore:]
-        self.data = pd.concat((startData, toAdd.data, endData), axis=1)
-        self._updateName(axis='feature')
-
-    def _sortPoints_implementation(self, sortBy, sortHelper):
-        """
-        Modify this object so that the points are sorted using the built in python
-        sort on point views. The input arguments are passed to that function unaltered
-        This function returns a list of pointNames indicating the new order of the data.
-
-        """
-        return self._sort_implementation(sortBy, sortHelper, 'point')
-
-    def _sortFeatures_implementation(self, sortBy, sortHelper):
-        """
-        Modify this object so that the features are sorted using the built in python
-        sort on feature views. The input arguments are passed to that function unaltered
-        This function returns a list of featureNames indicating the new order of the data.
-
-        """
-        return self._sort_implementation(sortBy, sortHelper, 'feature')
-
-    def _sort_implementation(self, sortBy, sortHelper, axis):
-        if axis == 'point':
-            test = self.pointView(0)
-            viewIter = self.pointIterator()
-            indexGetter = self.getPointIndex
-            nameGetter = self.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.getPointNames()
-        else:
-            test = self.featureView(0)
-            viewIter = self.featureIterator()
-            indexGetter = self.getFeatureIndex
-            nameGetter = self.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.getFeatureNames()
-
-        if isinstance(sortHelper, list):
-            if axis == 'point':
-                self.data = self.data.iloc[sortHelper, :]
-            else:
-                self.data = self.data.iloc[:, sortHelper]
-            newNameOrder = [names[idx] for idx in sortHelper]
-            return newNameOrder
-
-        scorer = None
-        comparator = None
-        try:
-            sortHelper(test)
-            scorer = sortHelper
-        except TypeError:
-            pass
-        try:
-            sortHelper(test, test)
-            comparator = sortHelper
-        except TypeError:
-            pass
-
-        if sortHelper is not None and scorer is None and comparator is None:
-            raise ArgumentException("sortHelper is neither a scorer or a comparator")
-
-        if comparator is not None:
-            # make array of views
-            viewArray = []
-            for v in viewIter:
-                viewArray.append(v)
-
-            viewArray.sort(key=cmp_to_key(comparator))
-            indexPosition = []
-            for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
-                indexPosition.append(index)
-            indexPosition = np.array(indexPosition)
-        elif hasattr(scorer, 'permuter'):
-            scoreArray = scorer.indices
-            indexPosition = np.argsort(scoreArray)
-        else:
-            # make array of views
-            viewArray = []
-            for v in viewIter:
-                viewArray.append(v)
-
-            scoreArray = viewArray
-            if scorer is not None:
-                # use scoring function to turn views into values
-                for i in range(len(viewArray)):
-                    scoreArray[i] = scorer(viewArray[i])
-            else:
-                for i in range(len(viewArray)):
-                    scoreArray[i] = viewArray[i][sortBy]
-
-            # use numpy.argsort to make desired index array
-            # this results in an array whose ith entry contains the the
-            # index into the data of the value that should be in the ith
-            # position.
-            indexPosition = np.argsort(scoreArray)
-
-        # use numpy indexing to change the ordering
-        if axis == 'point':
-            self.data = self.data.iloc[indexPosition, :]
-        else:
-            self.data = self.data.iloc[:, indexPosition]
-
-        # we convert the indices of the their previous location into their feature names
-        newNameOrder = []
-        for i in range(len(indexPosition)):
-            oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
-            newNameOrder.append(newName)
-        return newNameOrder
-
-    def _structuralBackend_implementation(self, structure, axis, targetList):
-        """
-        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
-        copyPoints/Features. Returns a new object containing only the points in targetList and
-        performs some modifications to the original object if necessary. This function does not
-        perform all of the modification or process how each function handles the returned value,
-        these are managed separately by each frontend function.
-        """
-        if structure == 'copy':
-            return self.pointsOrFeaturesVectorized(targetList, axis, 'copy', True)
-        else:
-            return self.pointsOrFeaturesVectorized(targetList, axis, 'extract', True)
-
-
-    def _mapReducePoints_implementation(self, mapper, reducer):
-        # apply_along_axis() expects a scalar or array of scalars as output,
-        # but our mappers output a list of tuples (ie a sequence type)
-        # which is not allowed. This packs key value pairs into an array
-        def mapperWrapper(point):
-            pairs = mapper(point)
-            ret = []
-            for (k, v) in pairs:
-                ret.append(k)
-                ret.append(v)
-            return np.array(ret)
-
-        mapResultsMatrix = np.apply_along_axis(mapperWrapper, 1, self.data.values)
-        mapResults = {}
-        for pairsArray in mapResultsMatrix:
-            for i in range(len(pairsArray) / 2):
-                # pairsArray has key value pairs packed back to back
-                k = pairsArray[i * 2]
-                v = pairsArray[(i * 2) + 1]
-                # if key is new, we must add an empty list
-                if k not in mapResults:
-                    mapResults[k] = []
-                # append this value to the list of values associated with the key
-                mapResults[k].append(v)
-
-        # apply the reducer to the list of values associated with each key
-        ret = []
-        for mapKey in mapResults.keys():
-            mapValues = mapResults[mapKey]
-            # the reducer will return a tuple of a key to a value
-            redRet = reducer(mapKey, mapValues)
-            if redRet is not None:
-                (redKey, redValue) = redRet
-                ret.append([redKey, redValue])
-        return UML.createData('DataFrame', ret)
-
     def _getTypeString_implementation(self):
         return 'DataFrame'
-
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
@@ -378,84 +195,6 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', dataArray)
 
-
-    def _calculateForEachElement_implementation(self, function, points, features,
-                                                preserveZeros, outputType):
-        return self._calculateForEachElementGenericVectorized(
-               function, points, features, outputType)
-
-
-    def _transformEachPoint_implementation(self, function, points):
-        """
-
-        """
-        for i, p in enumerate(self.pointIterator()):
-            if points is not None and i not in points:
-                continue
-            currRet = function(p)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
-            if isinstance(currRet, ArgumentException):
-                currRet.value = currRet.value.format('point', i)
-                raise currRet
-            if len(currRet) != len(self.features):
-                msg = "function must return an iterable with as many elements as features in this object"
-                raise ArgumentException(msg)
-
-            self.data.iloc[i, :] = currRet
-
-    def _transformEachFeature_implementation(self, function, features):
-        for j, f in enumerate(self.featureIterator()):
-            if features is not None and j not in features:
-                continue
-            currRet = function(f)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
-            if isinstance(currRet, ArgumentException):
-                currRet.value = currRet.value.format('feature', j)
-                raise currRet
-            if len(currRet) != len(self.points):
-                msg = "function must return an iterable with as many elements as points in this object"
-                raise ArgumentException(msg)
-
-            self.data.iloc[:, j] = currRet
-
-    def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
-        oneArg = False
-        try:
-            toTransform(0, 0, 0)
-        except TypeError:
-            if isinstance(toTransform, dict):
-                oneArg = None
-            else:
-                oneArg = True
-
-        IDs = itertools.product(range(len(self.points)), range(len(self.features)))
-        for (i, j) in IDs:
-            currVal = self.data.iloc[i, j]
-
-            if points is not None and i not in points:
-                continue
-            if features is not None and j not in features:
-                continue
-            if preserveZeros and currVal == 0:
-                continue
-
-            if oneArg is None:
-                if currVal in toTransform.keys():
-                    currRet = toTransform[currVal]
-                else:
-                    continue
-            elif oneArg:
-                currRet = toTransform(currVal)
-            else:
-                currRet = toTransform(currVal, i, j)
-
-            if skipNoneReturnValues and currRet is None:
-                continue
-
-            self.data.iloc[i, j] = currRet
-
     def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
         """
         """
@@ -467,7 +206,6 @@ class DataFrame(Base):
 
         self.data.iloc[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-
     def _flattenToOnePoint_implementation(self):
         numElements = len(self.points) * len(self.features)
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
@@ -475,7 +213,6 @@ class DataFrame(Base):
     def _flattenToOneFeature_implementation(self):
         numElements = len(self.points) * len(self.features)
         self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
-
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         numFeatures = len(self.features) // numPoints
@@ -818,38 +555,3 @@ class DataFrame(Base):
             # self.data.columns = self.getFeatureNames()
             self.data.columns = list(range(len(self.data.columns)))
         #-----------------------------------------------------------------------
-
-
-    def pointsOrFeaturesVectorized(self, indexList, axis, funcType, inplace=True):
-        """
-
-        """
-        df = self.data
-
-        if axis == 0 or axis == 'point':
-            ret = df.iloc[indexList, :]
-            axis = 0
-            name = 'pointNames'
-            nameList = [self.getPointName(i) for i in indexList]
-            otherName = 'featureNames'
-            otherNameList = self.getFeatureNames()
-        elif axis == 1 or axis == 'feature':
-            ret = df.iloc[:, indexList]
-            axis = 1
-            name = 'featureNames'
-            nameList = [self.getFeatureName(i) for i in indexList]
-            otherName = 'pointNames'
-            otherNameList = self.getPointNames()
-        else:
-            msg = 'axis can only be 0,1 or point, feature'
-            raise ArgumentException(msg)
-
-        if funcType.lower() == "extract":
-            df.drop(indexList, axis=axis, inplace=inplace)
-
-        if axis == 0:
-            df.index = numpy.arange(len(df.index), dtype=df.index.dtype)
-        else:
-            df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
-
-        return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})

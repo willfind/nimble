@@ -60,7 +60,7 @@ def covariance(X, X_T=None, sample=True):
         X_T.transpose()
     pointMeansVector = X.pointStatistics('mean')
     fill = lambda x: [x[0]] * len(X.features)
-    pointMeans = pointMeansVector.calculateForEachPoint(fill)
+    pointMeans = pointMeansVector.points.calculate(fill)
     pointMeans_T = pointMeans.copy()
     pointMeans_T.transpose()
 

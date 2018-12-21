@@ -93,7 +93,7 @@ class SparseElements(Elements):
             # our init methods will filter them out from the data attribute
             return UML.createData(outputType, values)
         # zeros not preserved
-        return self._calculateForEachElementGenericVectorized(
+        return self._calculate_genericVectorized(
             function, points, features, outputType)
 
     #############################

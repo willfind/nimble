@@ -97,14 +97,14 @@ class ListAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         if self.axis == 'point':
             test = self.source.pointView(0)
-            viewIter = self.source.pointIterator()
+            viewIter = self.source.points
             indexGetter = self.source.getPointIndex
             nameGetter = self.source.getPointName
             nameGetterStr = 'getPointName'
             names = self.source.getPointNames()
         else:
             test = self.source.featureView(0)
-            viewIter = self.source.featureIterator()
+            viewIter = self.source.features
             indexGetter = self.source.getFeatureIndex
             nameGetter = self.source.getFeatureName
             nameGetterStr = 'getFeatureName'

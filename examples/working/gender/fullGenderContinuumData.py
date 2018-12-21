@@ -139,10 +139,10 @@ def removeDemographics(obj):
     being gender information, which we are predicting for.
 
     """
-    removed = obj.extractFeatures(start=3, end=20)
+    removed = obj.features.extract(start=3, end=20)
     print(removed.getFeatureNames())
 
-    removed = obj.extractFeatures(end=1)
+    removed = obj.features.extract(end=1)
     print(removed.getFeatureNames())
 
 def replaceNAs(obj):
@@ -157,7 +157,7 @@ def replaceNAs(obj):
         else:
             return value
 
-    obj.transformEachElement(NAtoZero)
+    obj.elements.transform(NAtoZero)
 
 def keepFeaturesNoDemographics():
     """
@@ -204,13 +204,13 @@ def batchCreateFromOrigFile(name):
         keepFeatures=kf)
 
     batches = [batch1, batch2, batch3, batch4, batch5]
-    trainY = batch1.extractFeatures(0)
+    trainY = batch1.features.extract(0)
 
     print("batches loaded")
 
     for index, obj in enumerate(batches):
         if index > 0:
-            trainY.addPoints(obj.extractFeatures(0))
+            trainY.points.add(obj.features.extract(0))
         assert "gender" not in obj.getFeatureNames()
         replaceNAs(obj)
         batches[index] = obj.copyAs("List")
@@ -224,10 +224,10 @@ def batchCreateFromOrigFile(name):
     print("batches NA replaced")
 
     dataAll = batches[0]
-    dataAll.addPoints(batches[1])
-    dataAll.addPoints(batches[2])
-    dataAll.addPoints(batches[3])
-    dataAll.addPoints(batches[4])
+    dataAll.points.add(batches[1])
+    dataAll.points.add(batches[2])
+    dataAll.points.add(batches[3])
+    dataAll.points.add(batches[4])
 
     print("batches combined")
 
@@ -239,7 +239,7 @@ def batchCreateFromOrigFile(name):
     print("transformed trainY to integers")
     print(trainY.getFeatureNames())
 
-    dataAll.addFeatures(trainY)
+    dataAll.features.add(trainY)
 
     return dataAll
 
@@ -254,7 +254,7 @@ def makeGenderIntegers(obj):
             return 1
         else:
             return 0
-    obj.transformEachPoint(maleToOne)
+    obj.points.transform(maleToOne)
 
 def featNormalize_stdScore_applyTo(train, test):
     vals = []
@@ -267,7 +267,7 @@ def featNormalize_stdScore_applyTo(train, test):
 
         return (workspace - mn) / std
 
-    train.transformEachPoint(fn)
+    train.points.transform(fn)
 
     def fnLookup(feat):
         workspace = numpy.array(feat)
@@ -276,7 +276,7 @@ def featNormalize_stdScore_applyTo(train, test):
 
         return (workspace - mn) / std
 
-    test.transformEachFeature(fnLookup)
+    test.features.transform(fnLookup)
 
 
 def featNormalize_stdScoreMissing_applyTo(train, test):
@@ -292,7 +292,7 @@ def featNormalize_stdScoreMissing_applyTo(train, test):
         onAll = (workspace - mn) / std
         return numpy.multiply(onAll, mask)
 
-    train.transformEachFeature(fn)
+    train.features.transform(fn)
 
 #   def fnLookup(feat):
 #       workspace = numpy.array(feat)
@@ -301,14 +301,14 @@ def featNormalize_stdScoreMissing_applyTo(train, test):
 
 #       return (workspace - mn) / std
 
-#   test.transformEachFeature(fnLookup)
+#   test.features.transform(fnLookup)
 
 
 def pointNormalizeViaApplyTo_DivNZ(obj):
     """
     Normalize each point by dividing by the number of
     non-zero values in that point. This is an implementation
-    that uses a single call to transformEachPoint.
+    that uses a single call to points.transform.
 
     """
 #   nzRecord = []
@@ -317,7 +317,7 @@ def pointNormalizeViaApplyTo_DivNZ(obj):
         nz = numpy.count_nonzero(workspace)
         return workspace / nz
 
-    obj.transformEachPoint(pn)
+    obj.points.transform(pn)
 
 #   print max(nzRecord)
 #   print numpy.average(nzRecord)
@@ -328,13 +328,13 @@ def pointNormalize_DivNZ(obj):
     """
     Normalize each point by dividing by the number of
     non-zero values in that point. This is an implementation
-    that uses the normalizePoints method.
+    that uses the points.normalize method.
 
     """
-    nzPerPoint = obj.calculateForEachPoint(numpy.count_nonzeroNZ)
+    nzPerPoint = obj.points.calculate(numpy.count_nonzeroNZ)
     nzPerPoint = nzPerPoint.copyAs("Matrix")
 
-    obj.normalizePoints(divide=nzPerPoint)
+    obj.points.normalize(divide=nzPerPoint)
 
 def loadTransformSave(origFilePath):
     """
@@ -358,7 +358,7 @@ def checkNumberNZ_point(obj):
     Plot the distribution of non-zero values of each point
     in the given object.
     """
-    nzObj = obj.calculateForEachPoint(numpy.count_nonzero)
+    nzObj = obj.points.calculate(numpy.count_nonzero)
 #   nzObj.show("nz", maxHeight=100)
 
     path = "/home/tpburns/gimbel_tech/sparse-gender-nz.png"
@@ -369,7 +369,7 @@ def checkNumberNZ_feature(obj):
     Plot the distribution of non-zero values of each feature (question)
     in the given object.
     """
-    nzObj = obj.calculateForEachFeature(numpy.count_nonzero)
+    nzObj = obj.features.calculate(numpy.count_nonzero)
 #   nzObj.show("nz", maxHeight=100)
 
     path = "/home/tpburns/gimbel_tech/sparse-gender-nz-Qs.png"
@@ -396,19 +396,19 @@ def writeOutCoefficientsAndNames(trainedLearner, trialType):
 
     namesObj = UML.createData("List", [trainX.getFeatureNames()])
 
-    namesObj.addFeatures(coefsObj)
+    namesObj.features.add(coefsObj)
 
     path = "/home/tpburns/gimbel_tech/gender-sparse-coefs-" + trialType
     namesObj.writeFile(path, format='csv', includeNames=False)
 
 def preprocess_RemoveLowNZ(dataObj, labelObj=None):
-    nzObj = dataObj.calculateForEachPoint(numpy.count_nonzero)
+    nzObj = dataObj.points.calculate(numpy.count_nonzero)
     nzArr = nzObj.copyAs('numpyarray', outputAs1D=True)
     remove = list(numpy.where(nzArr >= 50))
 
-    dataObj.extractPoints(remove)
+    dataObj.points.extract(remove)
     if labelObj is not None:
-        labelObj.extractPoints(remove)
+        labelObj.points.extract(remove)
 
 def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
     def countNZ(point):
@@ -418,7 +418,7 @@ def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
                 nz += 1
         return nz
 
-    nzObj = dataObj.calculateForEachPoint(countNZ)
+    nzObj = dataObj.points.calculate(countNZ)
 
     def removeLessThan50(point):
         index = dataObj.getPointIndex(point.getPointName(0))
@@ -428,14 +428,14 @@ def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
         else:
             return False
 
-    dataObj.extractPoints(removeLessThan50)
+    dataObj.points.extract(removeLessThan50)
     if labelObj is not None:
-        labelObj.extractPoints(removeLessThan50)
+        labelObj.points.extract(removeLessThan50)
 
 
 
 def featureNorm_stdScore(trainX, testX):
-    trainX.normalizeFeatures('mean', 'std', testX)
+    trainX.features.normalize('mean', 'std', testX)
 
 
 
@@ -556,7 +556,7 @@ if __name__ == "__main__":
 
     allData = fileLoadHelper(retType, defaultFile, allowRemLess50Load)
 
-#       wantedData = allData.extractPoints(end=ptsSel)
+#       wantedData = allData.points.extract(end=ptsSel)
         # separate train and test data.
 #       numPoints = len(wantedData.points)
     #   testPortion = 3000./numPoints
@@ -582,10 +582,10 @@ if __name__ == "__main__":
 #   for ptsSel in [20000]:
         print("total Data: " + str(ptsSel) + " x " + str(len(allData.features)))
 
-        trainX = allData.copyPoints(end=ptsSel)
-        trainY = trainX.extractFeatures("gender")
-        testX = allData.copyPoints(start=len(allData.points) - 3000)
-        testY = testX.extractFeatures("gender")
+        trainX = allData.points.copy(end=ptsSel)
+        trainY = trainX.features.extract("gender")
+        testX = allData.points.copy(start=len(allData.points) - 3000)
+        testY = testX.features.extract("gender")
 
         trainX.name = "Training Data"
         trainY.name = "Training Labels"
@@ -602,7 +602,7 @@ if __name__ == "__main__":
 #       print time.asctime(time.localtime())
 #       featNormalize_stdScore_applyTo(trainX, testX)
         featNormalize_stdScoreMissing_applyTo(trainX, testX)
-#       trainX.normalizeFeatures('mean', 'std', testX)
+#       trainX.features.normalize('mean', 'std', testX)
 #       print time.asctime(time.localtime()) + "\n"
 #       print trainX.data[0:5, 0:15]
 

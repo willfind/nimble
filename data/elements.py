@@ -11,7 +11,6 @@ import six
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from . import dataHelpers
-from .dataHelpers import OPTRLIST, OPTRDICT
 from .dataHelpers import valuesToPythonList
 
 class Elements(object):
@@ -227,13 +226,7 @@ class Elements(object):
         if callable(condition):
             ret = self.calculate(function=condition, outputType='Matrix')
         elif isinstance(condition, six.string_types):
-            for optr in OPTRLIST:
-                if optr in condition:
-                    value = float(condition[len(optr):])
-                    optr = '==' if optr == '=' else optr
-                    optrOperator = OPTRDICT[optr]
-                    break
-            func = lambda x: optrOperator(x, value)
+            func = lambda x: eval('x'+condition)
             ret = self.calculate(function=func, outputType='Matrix')
         else:
             msg = 'function can only be a function or str, not else'
@@ -392,7 +385,7 @@ class Elements(object):
                     self.source._numericValidation()
                     other._numericValidation()
                     raise e
-            self.source.transformEachElement(powFromRight)
+            self.source.elements.transform(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
                 try:
@@ -401,7 +394,7 @@ class Elements(object):
                     self.source._numericValidation()
                     other._numericValidation()
                     raise e
-            self.source.transformEachElement(powFromRight)
+            self.source.elements.transform(powFromRight)
 
         self.source.validate()
 
@@ -409,7 +402,7 @@ class Elements(object):
     # Higher Order Helpers #
     ########################
 
-    def _calculateForEachElementGenericVectorized(
+    def _calculate_genericVectorized(
             self, function, points, features, outputType):
         # need points/features as arrays for indexing
         if points:

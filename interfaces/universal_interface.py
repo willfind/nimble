@@ -148,7 +148,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 #Remove true labels from from training set, if not already separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
-                    trainY = trainX.extractFeatures(trainY)
+                    trainY = trainX.features.extract(trainY)
 
                 # Get set of unique class labels
                 labelVector = trainY.copy()
@@ -178,7 +178,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 trainedLearners = []
                 for label in labelSet:
                     relabeler.func_defaults = (label,)
-                    trainLabels = trainY.calculateForEachPoint(relabeler)
+                    trainLabels = trainY.points.calculate(relabeler)
                     trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
                                                        timer=timer)
                     trainedLearner.label = label
@@ -193,12 +193,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # we want the data and the labels together in one object or this method
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
-                    trainX.addFeatures(trainY)
+                    trainX.features.add(trainY)
                     trainY = len(trainX.features) - 1
 
                 # Get set of unique class labels, then generate list of all 2-combinations of
                 # class labels
-                labelVector = trainX.copyFeatures([trainY])
+                labelVector = trainX.features.copy([trainY])
                 labelVector.transpose()
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
                 labelPairs = generateAllPairs(labelSet)
@@ -225,12 +225,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 trainedLearners = []
                 for pair in labelPairs:
                     #get all points that have one of the labels in pair
-                    pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
-                    pairTrueLabels = pairData.extractFeatures(trainY)
+                    pairData = trainX.points.extract(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+                    pairTrueLabels = pairData.features.extract(trainY)
                     trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
                                                        timer=timer))
-                    pairData.addFeatures(pairTrueLabels)
-                    trainX.addPoints(pairData)
+                    pairData.features.add(pairTrueLabels)
+                    trainX.points.add(pairData)
                 if useLog:
                     timer.stop('trainOVO')
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
@@ -282,7 +282,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # separate training data / labels if needed
         if isinstance(trainY, (six.string_types, int, numpy.int64)):
             trainX = trainX.copy()
-            trainY = trainX.extractFeatures(toExtract=trainY)
+            trainY = trainX.features.extract(toExtract=trainY)
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(learnerName, trainX, trainY, None, instantiatedInputs, customDict)
@@ -1126,8 +1126,8 @@ class TrainedLearner(object):
                 rowIndex = scoreOrder.index(labels[pointIndex, 0])
                 return row[rowIndex]
 
-            scoreVector = scores.calculateForEachPoint(grabValue)
-            labels.addFeatures(scoreVector)
+            scoreVector = scores.points.calculate(grabValue)
+            labels.features.add(scoreVector)
 
             ret = labels
 
@@ -1259,7 +1259,7 @@ class TrainedLearner(object):
             label = internalOrder[index]
             return desiredDict[label]
 
-        formatedRawOrder.sortFeatures(sortHelper=sortScorer)
+        formatedRawOrder.features.sort(sortHelper=sortScorer)
         return formatedRawOrder
 
 class TrainedLearners(TrainedLearner):
@@ -1299,10 +1299,10 @@ class TrainedLearners(TrainedLearner):
                 else:
                     #as it's added to results object, rename each column with its corresponding class label
                     oneLabelResults.setFeatureName(0, str(label))
-                    rawPredictions.addFeatures(oneLabelResults)
+                    rawPredictions.features.add(oneLabelResults)
 
             if scoreMode.lower() == 'label'.lower():
-                winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
+                winningPredictionIndices = rawPredictions.points.calculate(UML.helpers.extractWinningPredictionIndex).copyAs(
                     format="python list")
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
@@ -1354,11 +1354,11 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = partialResults.copyAs(format="List")
                 else:
                     partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-                    rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+                    rawPredictions.features.add(partialResults.copyAs(format="List"))
                 predictionFeatureID += 1
             #set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
-                ret = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionLabel)
+                ret = rawPredictions.points.calculate(UML.helpers.extractWinningPredictionLabel)
                 ret.setFeatureName(0, "winningLabel")
                 return ret
             elif scoreMode.lower() == 'bestScore'.lower():

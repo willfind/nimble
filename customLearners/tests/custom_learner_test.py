@@ -219,13 +219,13 @@ class LoveAtFirstSightClassifier(CustomLearner):
 
     def apply(self, testX):
         ret = []
-        for point in testX.pointIterator():
+        for point in testX.points:
             ret.append([self.prediction])
         return UML.createData("Matrix", ret)
 
     def getScores(self, testX):
         ret = []
-        for point in testX.pointIterator():
+        for point in testX.points:
             currScores = []
             for value in self.scope:
                 if value == self.prediction:

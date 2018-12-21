@@ -177,7 +177,7 @@ def kNeighborsBackend(method, data, match, arguments):
         arguments = {}
 
     tmpDict = {}#store idx, col and values for matching values
-    for pID, pt in enumerate(data.pointIterator()):
+    for pID, pt in enumerate(data.points):
         # find matching values in the point
         if anyValues(match)(pt):
             notMatchFts = []
@@ -196,7 +196,7 @@ def kNeighborsBackend(method, data, match, arguments):
                 trainingData = data[:, notMatchFts]
                 # training data includes only points that have valid data at each feature
                 # this will also remove the point we are evaluating from the training data
-                trainingData.deletePoints(anyValues(match))
+                trainingData.points.delete(anyValues(match))
                 pred = UML.trainAndApply(method, trainingData, -1, predictData,
                                          arguments=arguments)
                 pred = pred[0]
@@ -210,6 +210,6 @@ def kNeighborsBackend(method, data, match, arguments):
         except KeyError:
             return value
 
-    data.transformEachElement(transform)
+    data.elements.transform(transform)
 
     return data

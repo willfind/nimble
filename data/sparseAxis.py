@@ -89,6 +89,7 @@ class SparseAxis(Axis):
                 sortedData = [idxDict[val] for val in self.source.data.col]
                 self.source.data.col = numpy.array(sortedData)
             newNameOrder = [names[idx] for idx in sortHelper]
+            self.source._sorted = None
             return newNameOrder
 
         test = viewMaker(0)

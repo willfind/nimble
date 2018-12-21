@@ -4,11 +4,13 @@ will operate depending on whether it is being called along the points or
 the features axis.
 """
 from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import division
 import copy
 from abc import abstractmethod
 import inspect
 import sys
+import operator
 
 import six
 import numpy
@@ -17,7 +19,6 @@ import UML
 from UML import fill
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
-from .dataHelpers import OPTRLIST, OPTRDICT
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
 
@@ -452,12 +453,10 @@ class Axis(object):
         if self.axis == 'point':
             targetCount = len(self.source.points)
             otherCount = len(self.source.features)
-            valueIterator = self.source.pointIterator
             otherAxis = 'feature'
         else:
             targetCount = len(self.source.features)
             otherCount = len(self.source.points)
-            valueIterator = self.source.featureIterator
             otherAxis = 'point'
 
         if targetCount == 0:
@@ -479,7 +478,7 @@ class Axis(object):
 
         mapResults = {}
         # apply the mapper to each point in the data
-        for value in valueIterator():
+        for value in self:
             currResults = mapper(value)
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
@@ -508,10 +507,10 @@ class Axis(object):
     def _shuffle(self):
         if self.axis == 'point':
             values = len(self.source.points)
-            sorter = self.source.sortPoints
+            sorter = self.source.points.sort
         else:
             values = len(self.source.features)
-            sorter = self.source.sortFeatures
+            sorter = self.source.features.sort
 
         indices = list(range(values))
         pythonRandom.shuffle(indices)
@@ -1338,23 +1337,27 @@ class Axis(object):
         """
         if self.axis == 'point':
             newPtCount = len(self.source.points) + len(addedObj.points)
-            self.source._setpointCount(newPtCount)
             # only need to adjust names if names are present
             if not (self.source._pointNamesCreated()
                     or addedObj._pointNamesCreated()):
+                self.source._setpointCount(newPtCount)
                 return
             objNames = self.source.getPointNames()
             insertedNames = addedObj.getPointNames()
+            # must change point count AFTER getting names
+            self.source._setpointCount(newPtCount)
             setObjNames = self.source.setPointNames
         else:
             newFtCount = len(self.source.features) + len(addedObj.features)
-            self.source._setfeatureCount(newFtCount)
             # only need to adjust names if names are present
             if not (self.source._featureNamesCreated()
                     or addedObj._featureNamesCreated()):
+                self.source._setfeatureCount(newFtCount)
                 return
             objNames = self.source.getFeatureNames()
             insertedNames = addedObj.getFeatureNames()
+            # must change point count AFTER getting names
+            self.source._setfeatureCount(newFtCount)
             setObjNames = self.source.setFeatureNames
         # ensure no collision with default names
         adjustedNames = []
@@ -1445,14 +1448,18 @@ def _stringToFunction(string, axis, nameChecker):
     """
     Convert a query string into a python function.
     """
+    optrDict = {'<=': operator.le, '>=': operator.ge,
+                '!=': operator.ne, '==': operator.eq,
+                '<': operator.lt, '>': operator.gt}
     # to set in for loop
     nameOfPtOrFt = None
     valueOfPtOrFt = None
     optrOperator = None
-    for optr in OPTRLIST:
+
+    for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
         if optr in string:
             targetList = string.split(optr)
-            # user can use '=' but OPTRDICT only contains '=='
+            # user can use '=' but optrDict only contains '=='
             optr = '==' if optr == '=' else optr
             #after splitting at the optr, list must have 2 items
             if len(targetList) != 2:
@@ -1475,7 +1482,7 @@ def _stringToFunction(string, axis, nameChecker):
                 msg += "'{0}' doesn't exist".format(nameOfPtOrFt)
                 raise ArgumentException(msg)
 
-            optrOperator = OPTRDICT[optr]
+            optrOperator = optrDict[optr]
             # convert valueOfPtOrFt from a string, if possible
             try:
                 valueOfPtOrFt = float(valueOfPtOrFt)

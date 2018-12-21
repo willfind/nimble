@@ -623,9 +623,9 @@ def initDataObject(
                 cleaned.append(converted)
         if len(cleaned) == len(ret.points):
             pCmp = makeCmp(cleaned, ret, 'point')
-            ret.sortPoints(sortHelper=pCmp)
+            ret.points.sort(sortHelper=pCmp)
         else:
-            ret = ret.copyPoints(cleaned)
+            ret = ret.points.copy(cleaned)
     if keepFeatures != 'all':
         cleaned = []
         for val in keepFeatures:
@@ -635,9 +635,9 @@ def initDataObject(
 
         if len(cleaned) == len(ret.features):
             fCmp = makeCmp(cleaned, ret, 'feature')
-            ret.sortFeatures(sortHelper=fCmp)
+            ret.features.sort(sortHelper=fCmp)
         else:
-            ret = ret.copyFeatures(cleaned)
+            ret = ret.features.copy(cleaned)
 
     return ret
 
@@ -652,18 +652,18 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
     praw = None
     if pointNamesID is not None:
         # extract the feature of point names
-        pnames = ret.extractFeatures(pointNamesID)
+        pnames = ret.features.extract(pointNamesID)
         if featureNamesID is not None:
             # discard the point of feature names that pulled along since we
             # extracted these first
-            pnames.extractPoints(featureNamesID)
+            pnames.points.extract(featureNamesID)
         praw = pnames.copyAs('numpyarray', outputAs1D=True)
         praw = numpy.vectorize(str)(praw)
 
     fraw = None
     if featureNamesID is not None:
         # extract the point of feature names
-        fnames = ret.extractPoints(featureNamesID)
+        fnames = ret.points.extract(featureNamesID)
         # extracted point names first, so if they existed, they aren't in
         # ret anymore. So we DON'T need to extract them from this object
         fraw = fnames.copyAs('numpyarray', outputAs1D=True)
@@ -2198,7 +2198,7 @@ def copyLabels(dataSet, dependentVar):
     elif isinstance(dependentVar, (str, six.text_type, int)):
         #known Indicator is an index; we extract the column it indicates
         #from knownValues
-        labels = dataSet.copyFeatures([dependentVar])
+        labels = dataSet.features.copy([dependentVar])
     else:
         raise ArgumentException("Missing or improperly formatted indicator for known labels in computeMetrics")
 
@@ -2404,7 +2404,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
     else:
         #known Indicator is a feature ID or group of IDs; we extract the
         # columns it indicates from knownValues
-        knownLabels = knownData.copyFeatures(dependentVar)
+        knownLabels = knownData.features.copy(dependentVar)
 
     result = performanceFunction(knownLabels, predictedData)
 
@@ -2513,7 +2513,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
         if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
-            Y = X.extractFeatures(Y)
+            Y = X.features.extract(Y)
 
         if len(Y.features) > 1 and scoreMode != 'label':
             msg = "When dealing with multi dimentional outputs / predictions, "
@@ -2593,7 +2593,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.addPoints(curTestingY)
+                collectedY.points.add(curTestingY)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2608,7 +2608,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].addPoints(results[resultIndex])
+                results[0].points.add(results[resultIndex])
 
             # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
             finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
@@ -2640,13 +2640,13 @@ def makeFoldIterator(dataList, folds):
     if dataList is None or len(dataList) == 0:
         raise ArgumentException("dataList may not be None, or empty")
 
-    points = dataList[0].pts
+    points = len(dataList[0].points)
     for data in dataList:
         if data is not None:
             if len(data.points) == 0:
                 raise ArgumentException(
                     "One of the objects has 0 points, it is impossible to specify a valid number of folds")
-            if len(data.points) != dataList[0].pts:
+            if len(data.points) != len(dataList[0].points):
                 raise ArgumentException("All data objects in the list must have the same number of points and features")
 
     # note: we want truncation here
@@ -2697,9 +2697,9 @@ class _foldIteratorClass():
 
             # we want each training set to be permuted wrt its ordering in the original
             # data. This is setting up a permutation to be applied to each object
-            #		indices = range(0, copiedList[0].pts - len(self.foldList[self.index]))
+            #		indices = range(0, len(copiedList[0].points) - len(self.foldList[self.index]))
             #		pythonRandom.shuffle(indices)
-        indices = numpy.arange(0, copiedList[0].pts - len(self.foldList[self.index]))
+        indices = numpy.arange(0, len(copiedList[0].points) - len(self.foldList[self.index]))
         numpyRandom.shuffle(indices)
 
         resultsList = []
@@ -2707,9 +2707,9 @@ class _foldIteratorClass():
             if copied is None:
                 resultsList.append((None, None))
             else:
-                currTest = copied.extractPoints(self.foldList[self.index])
+                currTest = copied.points.extract(self.foldList[self.index])
                 currTrain = copied
-                currTrain.sortPoints(sortHelper=indices)
+                currTrain.points.sort(sortHelper=indices)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList
@@ -3337,12 +3337,12 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     # we want the data and the labels together in one object or this method
     if isinstance(trainY, Base):
         trainX = trainX.copy()
-        trainX.addFeatures(trainY)
+        trainX.features.add(trainY)
         trainY = len(trainX.features) - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations of
     # class labels
-    labelVector = trainX.copyFeatures([trainY])
+    labelVector = trainX.features.copy([trainY])
     labelVector.transpose()
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
@@ -3369,8 +3369,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     predictionFeatureID = 0
     for pair in labelPairs:
         #get all points that have one of the labels in pair
-        pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
-        pairTrueLabels = pairData.extractFeatures(trainY)
+        pairData = trainX.points.extract(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+        pairTrueLabels = pairData.features.extract(trainY)
         #train classifier on that data; apply it to the test set
         partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged,
                                            useLog=deepLog)
@@ -3379,9 +3379,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
             rawPredictions = partialResults.copyAs(format="List")
         else:
             partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-            rawPredictions.addFeatures(partialResults.copyAs(format="List"))
-        pairData.addFeatures(pairTrueLabels)
-        trainX.addPoints(pairData)
+            rawPredictions.features.add(partialResults.copyAs(format="List"))
+        pairData.features.add(pairTrueLabels)
+        trainX.points.add(pairData)
         predictionFeatureID += 1
 
     if useLog:
@@ -3389,7 +3389,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
     #set up the return data based on which format has been requested
     if scoreMode.lower() == 'label'.lower():
-        ret = rawPredictions.calculateForEachPoint(extractWinningPredictionLabel)
+        ret = rawPredictions.points.calculate(extractWinningPredictionLabel)
         ret.setFeatureName(0, "winningLabel")
         return ret
     elif scoreMode.lower() == 'bestScore'.lower():
@@ -3475,7 +3475,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     #Remove true labels from from training set, if not already separated
     if isinstance(trainY, (str, int, int)):
         trainX = trainX.copy()
-        trainY = trainX.extractFeatures(trainY)
+        trainY = trainX.features.extract(trainY)
 
     # Get set of unique class labels
     labelVector = trainY.copy()
@@ -3509,7 +3509,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
             else:
                 return 1
 
-        trainLabels = trainY.calculateForEachPoint(relabeler)
+        trainLabels = trainY.points.calculate(relabeler)
         oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged,
                                             useLog=deepLog)
         #put all results into one Base container, of the same type as trainX
@@ -3520,13 +3520,13 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         else:
             #as it's added to results object, rename each column with its corresponding class label
             oneLabelResults.setFeatureName(0, str(label))
-            rawPredictions.addFeatures(oneLabelResults)
+            rawPredictions.features.add(oneLabelResults)
 
     if useLog:
         timer.stop('train')
 
     if scoreMode.lower() == 'label'.lower():
-        winningPredictionIndices = rawPredictions.calculateForEachPoint(extractWinningPredictionIndex).copyAs(
+        winningPredictionIndices = rawPredictions.points.calculate(extractWinningPredictionIndex).copyAs(
             format="python list")
         winningLabels = []
         for [winningIndex] in winningPredictionIndices:
@@ -3590,7 +3590,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
     # if testY is in testX, we need to extract it before we call a trainAndApply type function
     if isinstance(testY, (six.string_types, int, int)):
         testX = testX.copy()
-        testY = testX.extractFeatures([testY])
+        testY = testX.features.extract([testY])
 
     predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog,
                                         timer=timer)

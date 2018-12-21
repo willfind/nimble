@@ -87,8 +87,8 @@ class FoldIteratorTester(object):
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.addPoints(fold1Test)
-        fold2Train.addPoints(fold2Test)
+        fold1Train.points.add(fold1Test)
+        fold2Train.points.add(fold2Test)
 
     def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
         """ Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
@@ -109,8 +109,8 @@ class FoldIteratorTester(object):
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.addPoints(fold1Test)
-        fold2Train.addPoints(fold2Test)
+        fold1Train.points.add(fold1Test)
+        fold2Train.points.add(fold2Test)
 
         assert fold1NoneTrain is None
         assert fold1NoneTest is None
@@ -162,12 +162,12 @@ class FoldIteratorTester(object):
                 testList.append(test)
 
             for train in trainList:
-                assert len(train.points) == trainList[0].pts
+                assert len(train.points) == len(trainList[0].points)
                 for index in range(len(train.points)):
                     assert fabs(train[index, 0]) == fabs(trainList[0][index, 0])
 
             for test in testList:
-                assert len(test.points) == testList[0].pts
+                assert len(test.points) == len(testList[0].points)
                 for index in range(len(test.points)):
                     assert fabs(test[index, 0]) == fabs(testList[0][index, 0])
 
@@ -605,7 +605,7 @@ def testExtractWinningPredictionLabel():
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
     BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
-    predictions = BaseObj.calculateForEachFeature(extractWinningPredictionLabel)
+    predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
     listPredictions = predictions.copyAs(format="python list")
 
     assert listPredictions[0][0] - 3 == 0.0

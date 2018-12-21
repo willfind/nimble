@@ -370,7 +370,7 @@ class Shogun(UniversalInterface):
 
                     return inverseMapper
 
-                ret.transformEachElement(makeInverseMapper(remap), features=0)
+                ret.elements.transform(makeInverseMapper(remap), features=0)
 
         return ret
 
@@ -885,7 +885,7 @@ def _remapLabelsRange(toRemap):
             ret.append(mapping[value])
         return ret
 
-    toRemap.transformEachFeature(remap)
+    toRemap.features.transform(remap)
 
     return inverse
 
@@ -935,7 +935,7 @@ def _remapLabelsSpecific(toRemap, space):
             ret.append(space[mapping[value]])
         return ret
 
-    toRemap.transformEachFeature(remap)
+    toRemap.features.transform(remap)
 
     return inverse
 

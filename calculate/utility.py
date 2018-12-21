@@ -243,7 +243,7 @@ def _generatePredicted(knowns, predictionType):
     elif predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
         scores = UML.createData(returnType="List", data=scores, featureNames=['LabelScore'])
-        workingCopy.addFeatures(scores)
+        workingCopy.features.add(scores)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
     else:

@@ -9,13 +9,13 @@ that missing implementation.
 
 Methods tested in this file (none modify the data):
 _addPointName, _addFeatureName, _pointNameDifference, _featureNameDifference,
-_pointNameIntersection, _featureNameIntersection, _pointNameSymmetricDifference,
+points._nameIntersection, features._nameIntersection, _pointNameSymmetricDifference,
 _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
-setPointName, setFeatureName, setPointNames, setFeatureNames,
+points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
-_equalFeatureNames, getPointNames, getFeatureNames, __len__,
-getFeatureIndex, getFeatureName, getPointIndex, getPointName,
-_constructIndicesList
+_equalFeatureNames, points.getNames, features.getNames, __len__,
+features.getIndex, features.getName, points.getIndex, points.getName,
+points.getIndices, features.getIndices, _constructIndicesList
 
 """
 
@@ -238,53 +238,53 @@ class LowLevelBackend(object):
         assert "four" not in results
 
 
-    ############################
-    # _pointNameIntersection() #
-    ############################
+    ##############################
+    # points._NameIntersection() #
+    ##############################
 
     @raises(ArgumentException)
-    def test__pointNameIntersection_exceptionOtherNone(self):
-        """ Test _pointNameIntersection() for ArgumentException when the other object is None """
+    def test_points_nameIntersection_exceptionOtherNone(self):
+        """ Test points._nameIntersection() for ArgumentException when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameIntersection(None)
+        toTest.points._nameIntersection(None)
 
     @raises(ArgumentException)
-    def test__pointNameIntersection_exceptionWrongType(self):
-        """ Test _pointNameIntersection() for ArgumentException when the other object is not the right type """
+    def test_points_nameIntersection_exceptionWrongType(self):
+        """ Test points._nameIntersection() for ArgumentException when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameIntersection("wrong")
+        toTest.points._nameIntersection("wrong")
 
-    def test__pointNameIntersection_handmade(self):
-        """ Test _pointNameIntersection() against handmade output """
+    def test_points_nameIntersection_handmade(self):
+        """ Test points._nameIntersection() against handmade output """
         toTest1 = self.constructor(pointNames=["one", "two", "three"])
         toTest2 = self.constructor(pointNames=["two", "four"])
-        results = toTest1._pointNameIntersection(toTest2)
+        results = toTest1.points._nameIntersection(toTest2)
         assert "one" not in results
         assert "two" in results
         assert "three" not in results
         assert "four" not in results
 
-    #######################
-    # _featureNameIntersection() #
-    #######################
+    ################################
+    # features._nameIntersection() #
+    ################################
 
     @raises(ArgumentException)
-    def test_featureNameIntersection_exceptionOtherNone(self):
-        """ Test _featureNameIntersection() for ArgumentException when the other object is None """
+    def test_features_nameIntersection_exceptionOtherNone(self):
+        """ Test features._nameIntersection() for ArgumentException when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameIntersection(None)
+        toTest.features._nameIntersection(None)
 
     @raises(ArgumentException)
-    def test_featureNameIntersection_exceptionWrongType(self):
-        """ Test _featureNameIntersection() for ArgumentException when the other object is not the right type """
+    def test_features_nameIntersection_exceptionWrongType(self):
+        """ Test features._nameIntersection() for ArgumentException when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameIntersection("wrong")
+        toTest.features._nameIntersection("wrong")
 
-    def test_featureNameIntersection_handmade(self):
-        """ Test _featureNameIntersection() against handmade output """
+    def test_features_nameIntersection_handmade(self):
+        """ Test features._nameIntersection() against handmade output """
         toTest1 = self.constructor(featureNames=["one", "two", "three"])
         toTest2 = self.constructor(featureNames=["two", "four"])
-        results = toTest1._featureNameIntersection(toTest2)
+        results = toTest1.features._nameIntersection(toTest2)
         assert "one" not in results
         assert "two" in results
         assert "three" not in results
@@ -394,261 +394,261 @@ class LowLevelBackend(object):
         assert "three" in results
         assert "four" in results
 
-    #################
-    # setPointName() #
-    #################
+    ####################
+    # points.setName() #
+    ####################
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionPrevWrongType(self):
-        """ Test setPointName() for ArgumentException when given the wrong type for prev"""
+    def test_points_setName_exceptionPrevWrongType(self):
+        """ Test points.setName() for ArgumentException when given the wrong type for prev"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(oldIdentifier=0.3, newName="New!")
+        toTest.points.setName(oldIdentifier=0.3, newName="New!")
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionPrevInvalidIndex(self):
-        """ Test setPointName() for ArgumentException when given an invalid prev index"""
+    def test_points_setName_exceptionPrevInvalidIndex(self):
+        """ Test points.setName() for ArgumentException when given an invalid prev index"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(oldIdentifier=12, newName="New!")
+        toTest.points.setName(oldIdentifier=12, newName="New!")
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionPrevNotFound(self):
-        """ Test setPointName() for ArgumentException when the prev pointName is not found"""
+    def test_points_setName_exceptionPrevNotFound(self):
+        """ Test points.setName() for ArgumentException when the prev pointName is not found"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(oldIdentifier="Previous!", newName="New!")
+        toTest.points.setName(oldIdentifier="Previous!", newName="New!")
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionNewInvalidType(self):
-        """ Test setPointName() for ArgumentException when the new pointName is not a string"""
+    def test_points_setName_exceptionNewInvalidType(self):
+        """ Test points.setName() for ArgumentException when the new pointName is not a string"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(oldIdentifier="three", newName=4)
+        toTest.points.setName(oldIdentifier="three", newName=4)
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionNonUnique(self):
-        """ Test setPointName() for ArgumentException when a duplicate pointName is given"""
+    def test_points_setName_exceptionNonUnique(self):
+        """ Test points.setName() for ArgumentException when a duplicate pointName is given"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(oldIdentifier="three", newName="two")
+        toTest.points.setName(oldIdentifier="three", newName="two")
 
     @raises(ArgumentException)
-    def test_setPointName_exceptionNoPoints(self):
+    def test_points_setName_exceptionNoPoints(self):
         toTest = self.constructor()
-        toTest.setPointName("hello", "2")
+        toTest.points.setName("hello", "2")
 
-    def test_setPointName_handmade_viaIndex(self):
-        """ Test setPointName() against handmade input when specifying the pointName by index """
+    def test_points_setName_handmade_viaIndex(self):
+        """ Test points.setName() against handmade input when specifying the pointName by index """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName(0, "ZERO")
-        toTest.setPointName(3, "3")
+        toTest.points.setName(0, "ZERO")
+        toTest.points.setName(3, "3")
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
 
-    def test_setPointName_handmade_viaPointName(self):
-        """ Test setPointName() against handmade input when specifying the pointName by name """
+    def test_points_setName_handmade_viaPointName(self):
+        """ Test points.setName() against handmade input when specifying the pointName by name """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.setPointName("zero", "ZERO")
-        toTest.setPointName("three", "3")
+        toTest.points.setName("zero", "ZERO")
+        toTest.points.setName("three", "3")
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
 
-    def test_setPointName_NoneOutput(self):
-        """ Test setPointName() return None as output """
+    def test_points_setName_NoneOutput(self):
+        """ Test points.setName() return None as output """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        ret = toTest.setPointName("zero", "ZERO")
+        ret = toTest.points.setName("zero", "ZERO")
         assert ret is None
 
 
-    #################
-    # setFeatureName() #
-    #################
+    ######################
+    # features.setName() #
+    ######################
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionPrevWrongType(self):
-        """ Test setFeatureName() for ArgumentException when given the wrong type for prev"""
+    def test_features_setName_exceptionPrevWrongType(self):
+        """ Test features.setName() for ArgumentException when given the wrong type for prev"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(oldIdentifier=0.3, newName="New!")
+        toTest.features.setName(oldIdentifier=0.3, newName="New!")
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionPrevInvalidIndex(self):
-        """ Test setFeatureName() for ArgumentException when given an invalid prev index"""
+    def test_features_setName_exceptionPrevInvalidIndex(self):
+        """ Test features.setName() for ArgumentException when given an invalid prev index"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(oldIdentifier=12, newName="New!")
+        toTest.features.setName(oldIdentifier=12, newName="New!")
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionPrevNotFound(self):
-        """ Test setFeatureName() for ArgumentException when the prev featureName is not found"""
+    def test_features_setName_exceptionPrevNotFound(self):
+        """ Test features.setName() for ArgumentException when the prev featureName is not found"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(oldIdentifier="Previous!", newName="New!")
+        toTest.features.setName(oldIdentifier="Previous!", newName="New!")
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionNewInvalidType(self):
-        """ Test setFeatureName() for ArgumentException when the new featureName is not a string"""
+    def test_features_setName_exceptionNewInvalidType(self):
+        """ Test features.setName() for ArgumentException when the new featureName is not a string"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(oldIdentifier="three", newName=4)
+        toTest.features.setName(oldIdentifier="three", newName=4)
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionNonUnique(self):
-        """ Test setFeatureName() for ArgumentException when a duplicate featureName is given"""
+    def test_features_setName_exceptionNonUnique(self):
+        """ Test features.setName() for ArgumentException when a duplicate featureName is given"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(oldIdentifier="three", newName="two")
+        toTest.features.setName(oldIdentifier="three", newName="two")
 
     #@raises(ArgumentException)
-    #def test_setFeatureName_exceptionManualAddDefault(self):
-    #	""" Test setFeatureName() for ArgumentException when given a default featureName """
+    #def test_features_setName_exceptionManualAddDefault(self):
+    #	""" Test features.setName() for ArgumentException when given a default featureName """
     #	toTest = self.constructor(featureNames=["hello"])
-    #	toTest.setFeatureName("hello",DEFAULT_PREFIX + "2")
+    #	toTest.features.setName("hello",DEFAULT_PREFIX + "2")
 
     @raises(ArgumentException)
-    def test_setFeatureName_exceptionNoFeatures(self):
+    def test_features_setName_exceptionNoFeatures(self):
         toTest = self.constructor()
-        toTest.setFeatureName("hello", "2")
+        toTest.features.setName("hello", "2")
 
-    def test_setFeatureName_handmade_viaIndex(self):
-        """ Test setFeatureName() against handmade input when specifying the featureName by index """
+    def test_features_setName_handmade_viaIndex(self):
+        """ Test features.setName() against handmade input when specifying the featureName by index """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName(0, "ZERO")
-        toTest.setFeatureName(3, "3")
+        toTest.features.setName(0, "ZERO")
+        toTest.features.setName(3, "3")
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
-    def test_setFeatureName_handmade_viaFeatureName(self):
-        """ Test setFeatureName() against handmade input when specifying the featureName by name """
+    def test_features_setName_handmade_viaFeatureName(self):
+        """ Test features.setName() against handmade input when specifying the featureName by name """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.setFeatureName("zero", "ZERO")
-        toTest.setFeatureName("three", "3")
+        toTest.features.setName("zero", "ZERO")
+        toTest.features.setName("three", "3")
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
-    def test_setFeatureName_NoneOutput(self):
-        """ Test setFeatureName() returns None as output """
+    def test_features_setName_NoneOutput(self):
+        """ Test features.setName() returns None as output """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        ret = toTest.setFeatureName("zero", "ZERO")
+        ret = toTest.features.setName("zero", "ZERO")
         assert ret is None
 
-    ###################
-    # setPointNames() #
-    ###################
+    #####################
+    # points.setNames() #
+    #####################
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionWrongTypeObject(self):
-        """ Test setPointNames() for ArgumentException when pointNames is an unexpected type """
+    def test_points_setNames_exceptionWrongTypeObject(self):
+        """ Test points.setNames() for ArgumentException when pointNames is an unexpected type """
         toTest = self.constructor(pointNames=['one'])
-        toTest.setPointNames(12)
+        toTest.points.setNames(12)
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNonStringPointNameInList(self):
-        """ Test setPointNames() for ArgumentException when a list element is not a string """
+    def test_points_setNames_exceptionNonStringPointNameInList(self):
+        """ Test points.setNames() for ArgumentException when a list element is not a string """
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         nonStringName = ['one', 'two', 3]
-        toTest.setPointNames(nonStringName)
+        toTest.points.setNames(nonStringName)
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNonUniqueStringInList(self):
-        """ Test setPointNames() for ArgumentException when a list element is not unique """
+    def test_points_setNames_exceptionNonUniqueStringInList(self):
+        """ Test points.setNames() for ArgumentException when a list element is not unique """
         toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
-        toTest.setPointNames(nonUnique)
+        toTest.points.setNames(nonUnique)
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNoPointsList(self):
-        """ Test setPointNames() for ArgumentException when there are no points to name """
+    def test_points_setNames_exceptionNoPointsList(self):
+        """ Test points.setNames() for ArgumentException when there are no points to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
-        toTest.setPointNames(toAssign)
+        toTest.points.setNames(toAssign)
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
-    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+    def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
-        toTest.setPointNames(['a', 'b', 'c'])
+        toTest.points.setNames(['a', 'b', 'c'])
 
-    def test_setPointNames_emptyDataAndList(self):
-        """ Test setPointNames() when both the data and the list are empty """
+    def test_points_setNames_emptyDataAndList(self):
+        """ Test points.setNames() when both the data and the list are empty """
         toTest = self.constructor()
         toAssign = []
-        toTest.setPointNames(toAssign)
-        assert toTest.getPointNames() == []
+        toTest.points.setNames(toAssign)
+        assert toTest.points.getNames() == []
 
-    def test_setPointNames_addDefault(self):
-        """ Test setPointNames() when given a default pointName """
+    def test_points_setNames_addDefault(self):
+        """ Test points.setNames() when given a default pointName """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
         newNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
-        toTest.setPointNames(newNames)
+        toTest.points.setNames(newNames)
         assert toTest._nextDefaultValuePoint > 17
 
-    def test_setPointNames_handmadeList(self):
-        """ Test setPointNames() against handmade output """
+    def test_points_setNames_handmadeList(self):
+        """ Test points.setNames() against handmade output """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
         origNames = ["zero", "one", "two", "three"]
-        toTest.setPointNames(origNames)
+        toTest.points.setNames(origNames)
         confirmExpectedNames(toTest, 'point', origNames)
 
-    def test_setPointNames_handmadeReplacingWithSameList(self):
-        """ Test setPointNames() against handmade output when you're replacing the position of poitnNames """
+    def test_points_setNames_handmadeReplacingWithSameList(self):
+        """ Test points.setNames() against handmade output when you're replacing the position of poitnNames """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
         toAssign = ["hey", "gone", "none", "blank"]
-        ret = toTest.setPointNames(toAssign)  # ret Check
+        ret = toTest.points.setNames(toAssign)  # ret Check
         confirmExpectedNames(toTest, 'point', toAssign)
         assert ret is None
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNonStringPointNameInDict(self):
-        """ Test setPointNames() for ArgumentException when a dict key is not a string """
+    def test_points_setNames_exceptionNonStringPointNameInDict(self):
+        """ Test points.setNames() for ArgumentException when a dict key is not a string """
         toTest = self.constructor(pointNames=['one'])
         nonStringNames = {1: 1}
-        toTest.setPointNames(nonStringNames)
+        toTest.points.setNames(nonStringNames)
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNonIntIndexInDict(self):
-        """ Test setPointNames() for ArgumentException when a dict value is not an int """
+    def test_points_setNames_exceptionNonIntIndexInDict(self):
+        """ Test points.setNames() for ArgumentException when a dict value is not an int """
         toTest = self.constructor(pointNames=['one'])
         nonIntIndex = {"one": "one"}
-        toTest.setPointNames(nonIntIndex)
+        toTest.points.setNames(nonIntIndex)
 
     @raises(ArgumentException)
-    def test_setPointNames_exceptionNoPointsDict(self):
-        """ Test setPointNames() for ArgumentException when there are no points to name """
+    def test_points_setNames_exceptionNoPointsDict(self):
+        """ Test points.setNames() for ArgumentException when there are no points to name """
         toTest = self.constructor(pointNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
-        toTest.setPointNames(toAssign)
+        toTest.points.setNames(toAssign)
 
-    def test_setPointNames_emptyDataAndDict(self):
-        """ Test setPointNames() when both the data and the dict are empty """
+    def test_points_setNames_emptyDataAndDict(self):
+        """ Test points.setNames() when both the data and the dict are empty """
         toTest = self.constructor()
         toAssign = {}
-        toTest.setPointNames(toAssign)
-        assert toTest.getPointNames() == []
+        toTest.points.setNames(toAssign)
+        assert toTest.points.getNames() == []
 
-    def test_setPointNames_handmadeDict(self):
-        """ Test setPointNames() against handmade output """
+    def test_points_setNames_handmadeDict(self):
+        """ Test points.setNames() against handmade output """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
         origNames = {"zero": 0, "one": 1, "two": 2, "three": 3}
-        toTest.setPointNames(origNames)
+        toTest.points.setNames(origNames)
         confirmExpectedNames(toTest, 'point', origNames)
 
-    def test_setPointNames_handmadeReplacingWithSameDict(self):
-        """ Test setPointNames() against handmade output when you're replacing the position of pointNames """
+    def test_points_setNames_handmadeReplacingWithSameDict(self):
+        """ Test points.setNames() against handmade output when you're replacing the position of pointNames """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
-        ret = toTest.setPointNames(toAssign)
+        ret = toTest.points.setNames(toAssign)
         confirmExpectedNames(toTest, 'point', toAssign)
         assert ret is None
 
-    def test_setPointNames_list_mixedSpecifiedUnspecified_defaults(self):
+    def test_points_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(pointNames=([None] * 4))
 
         nextNum = toTest._nextDefaultValuePoint
@@ -657,125 +657,125 @@ class LowLevelBackend(object):
         toAssign[0] = DEFAULT_PREFIX + str(nextNum)
         toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
 
-        ret = toTest.setPointNames(toAssign)
+        ret = toTest.points.setNames(toAssign)
 
-        assert toTest.getPointName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.getPointName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.getPointName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert toTest.getPointName(3).startswith(DEFAULT_PREFIX)
+        assert toTest.points.getName(0) == DEFAULT_PREFIX + str(nextNum)
+        assert toTest.points.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
+        assert toTest.points.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
+        assert toTest.points.getName(3).startswith(DEFAULT_PREFIX)
         assert ret is None
 
 
-    #####################
-    # setFeatureNames() #
-    #####################
+    #######################
+    # features.setNames() #
+    #######################
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionWrongTypeObject(self):
-        """ Test setFeatureNames() for ArgumentException when featureNames is an unexpected type """
+    def test_features_setNames_exceptionWrongTypeObject(self):
+        """ Test features.setNames() for ArgumentException when featureNames is an unexpected type """
         toTest = self.constructor(featureNames=['one'])
-        toTest.setFeatureNames(12)
+        toTest.features.setNames(12)
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNonStringFeatureNameInDict(self):
-        """ Test setFeatureNames() for ArgumentException when a dict key is not a string """
+    def test_features_setNames_exceptionNonStringFeatureNameInDict(self):
+        """ Test features.setNames() for ArgumentException when a dict key is not a string """
         toTest = self.constructor(featureNames=['one'])
         nonStringFeatureNames = {1: 1}
-        toTest.setFeatureNames(nonStringFeatureNames)
+        toTest.features.setNames(nonStringFeatureNames)
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNonIntIndexInDict(self):
-        """ Test setFeatureNames() for ArgumentException when a dict value is not an int """
+    def test_features_setNames_exceptionNonIntIndexInDict(self):
+        """ Test features.setNames() for ArgumentException when a dict value is not an int """
         toTest = self.constructor(featureNames=['one'])
         nonIntIndex = {"one": "one"}
-        toTest.setFeatureNames(nonIntIndex)
+        toTest.features.setNames(nonIntIndex)
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNoFeaturesDict(self):
-        """ Test setFeatureNames() for ArgumentException when there are no features to name """
+    def test_features_setNames_exceptionNoFeaturesDict(self):
+        """ Test features.setNames() for ArgumentException when there are no features to name """
         toTest = self.constructor(featureNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
-        toTest.setFeatureNames(toAssign)
+        toTest.features.setNames(toAssign)
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
-    def test_setFeatureNames_calls_valuesToPythonList(self, mockFunc):
+    def test_features_setNames_calls_valuesToPythonList(self, mockFunc):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
-        toTest.setFeatureNames(['a', 'b', 'c'])
+        toTest.features.setNames(['a', 'b', 'c'])
 
-    def test_setFeatureNames_emptyDataAndDict(self):
-        """ Test setFeatureNames() when both the data and the dict are empty """
+    def test_features_setNames_emptyDataAndDict(self):
+        """ Test features.setNames() when both the data and the dict are empty """
         toTest = self.constructor()
         toAssign = {}
-        toTest.setFeatureNames(toAssign)
-        assert toTest.getFeatureNames() == []
+        toTest.features.setNames(toAssign)
+        assert toTest.features.getNames() == []
 
-    def test_setFeatureNames_handmadeDict(self):
-        """ Test setFeatureNames() against handmade output """
+    def test_features_setNames_handmadeDict(self):
+        """ Test features.setNames() against handmade output """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
         origFeatureNames = {"zero": 0, "one": 1, "two": 2, "three": 3}
-        toTest.setFeatureNames(origFeatureNames)
+        toTest.features.setNames(origFeatureNames)
         confirmExpectedNames(toTest, 'feature', origFeatureNames)
 
-    def test_setFeatureNames_handmadeReplacingWithSameDict(self):
-        """ Test setFeatureNames() against handmade output when you're replacing the position of featureNames """
+    def test_features_setNames_handmadeReplacingWithSameDict(self):
+        """ Test features.setNames() against handmade output when you're replacing the position of featureNames """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
-        ret = toTest.setFeatureNames(toAssign)
+        ret = toTest.features.setNames(toAssign)
         confirmExpectedNames(toTest, 'feature', toAssign)
         assert ret is None
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNonStringFeatureNameInList(self):
-        """ Test setFeatureNames() for ArgumentException when a list element is not a string """
+    def test_features_setNames_exceptionNonStringFeatureNameInList(self):
+        """ Test features.setNames() for ArgumentException when a list element is not a string """
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         nonStringFeatureNames = ['one', 'two', 3]
-        toTest.setFeatureNames(nonStringFeatureNames)
+        toTest.features.setNames(nonStringFeatureNames)
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNonUniqueStringInList(self):
-        """ Test setFeatureNames() for ArgumentException when a list element is not unique """
+    def test_features_setNames_exceptionNonUniqueStringInList(self):
+        """ Test features.setNames() for ArgumentException when a list element is not unique """
         toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
-        toTest.setFeatureNames(nonUnique)
+        toTest.features.setNames(nonUnique)
 
     @raises(ArgumentException)
-    def test_setFeatureNames_exceptionNoFeaturesList(self):
-        """ Test setFeatureNames() for ArgumentException when there are no features to name """
+    def test_features_setNames_exceptionNoFeaturesList(self):
+        """ Test features.setNames() for ArgumentException when there are no features to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
-        toTest.setFeatureNames(toAssign)
+        toTest.features.setNames(toAssign)
 
-    def test_setFeatureNames_emptyDataAndList(self):
-        """ Test setFeatureNames() when both the data and the list are empty """
+    def test_features_setNames_emptyDataAndList(self):
+        """ Test features.setNames() when both the data and the list are empty """
         toTest = self.constructor()
         toAssign = []
-        toTest.setFeatureNames(toAssign)
-        assert toTest.getFeatureNames() == []
+        toTest.features.setNames(toAssign)
+        assert toTest.features.getNames() == []
 
-    def test_setFeatureNames_addDefault(self):
-        """ Test setFeatureNames() when given a default featureName """
+    def test_features_setNames_addDefault(self):
+        """ Test features.setNames() when given a default featureName """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
         newFeatureNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
-        toTest.setFeatureNames(newFeatureNames)
+        toTest.features.setNames(newFeatureNames)
         assert toTest._nextDefaultValueFeature > 17
 
-    def test_setFeatureNames_handmadeList(self):
-        """ Test setFeatureNames() against handmade output """
+    def test_features_setNames_handmadeList(self):
+        """ Test features.setNames() against handmade output """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
         origFeatureNames = ["zero", "one", "two", "three"]
-        toTest.setFeatureNames(origFeatureNames)
+        toTest.features.setNames(origFeatureNames)
         confirmExpectedNames(toTest, 'feature', origFeatureNames)
 
-    def test_setFeatureNames_handmadeReplacingWithSameList(self):
-        """ Test setFeatureNames() against handmade output when you're replacing the position of featureNames """
+    def test_features_setNames_handmadeReplacingWithSameList(self):
+        """ Test features.setNames() against handmade output when you're replacing the position of featureNames """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
         toAssign = ["hey", "gone", "none", "blank"]
-        ret = toTest.setFeatureNames(toAssign)  # RET CHECK
+        ret = toTest.features.setNames(toAssign)  # RET CHECK
         confirmExpectedNames(toTest, 'feature', toAssign)
         assert ret is None
 
-    def test_setFeatureNames_list_mixedSpecifiedUnspecified_defaults(self):
+    def test_features_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(featureNames=([None] * 4))
 
         nextNum = toTest._nextDefaultValueFeature
@@ -784,43 +784,42 @@ class LowLevelBackend(object):
         toAssign[0] = DEFAULT_PREFIX + str(nextNum)
         toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
 
-        ret = toTest.setFeatureNames(toAssign)
+        ret = toTest.features.setNames(toAssign)
 
-        assert toTest.getFeatureName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.getFeatureName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.getFeatureName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert toTest.getFeatureName(3).startswith(DEFAULT_PREFIX)
+        assert toTest.features.getName(0) == DEFAULT_PREFIX + str(nextNum)
+        assert toTest.features.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
+        assert toTest.features.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
+        assert toTest.features.getName(3).startswith(DEFAULT_PREFIX)
         assert ret is None
 
-
-    ##########################
-    # _adjustCountAndNames() #
-    ##########################
+    ##################################################################
+    # points._adjustCountAndNames() / features._adjustCountAndNames()#
+    ##################################################################
 
     def test_adjustCountAndNames_pointCountAndNames(self):
         origNames = ["zero", "one", "two", "three"]
         orig = self.constructor(pointNames=origNames)
         other = self.constructor(pointNames=["one", "two"])
         expNames = ["zero", "three"]
-        orig._adjustCountAndNames('point', other)
+        orig.points._adjustCountAndNames(other)
 
         assert len(orig.points) == 2
-        assert orig.getPointNames() == expNames
+        assert orig.points.getNames() == expNames
 
     def test_adjustCountAndNames_featureCountAndNames(self):
         origNames = ["zero", "one", "two", "three"]
         orig = self.constructor(featureNames=origNames)
         other = self.constructor(featureNames=["one", "two"])
         expNames = ["zero", "three"]
-        orig._adjustCountAndNames('feature', other)
+        orig.features._adjustCountAndNames(other)
 
         assert len(orig.features) == 2
-        assert orig.getFeatureNames() == expNames
+        assert orig.features.getNames() == expNames
 
 
-    ##########################
+    ##############################
     # _removePointNameAndShift() #
-    ##########################
+    #############################
 
     @raises(ArgumentException)
     def test__removePointNameAndShift_exceptionNoneInput(self):
@@ -869,9 +868,9 @@ class LowLevelBackend(object):
         confirmExpectedNames(toTest, 'point', expectedNames)
 
 
-    ##########################
+    ################################
     # _removeFeatureNameAndShift() #
-    ##########################
+    ################################
 
     @raises(ArgumentException)
     def test_removeFeatureNameAndShift_exceptionNoneInput(self):
@@ -920,9 +919,9 @@ class LowLevelBackend(object):
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
 
-    ##################
+    ######################
     # _equalPointNames() #
-    ##################
+    ######################
 
     def test__equalPointNames_False(self):
         """ Test _equalPointNames() against some non-equal input """
@@ -959,11 +958,11 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2', '3'])
-        toTest1.setPointName(0, None)
-        toTest1.setPointName(1, None)
-        toTest2.setPointName(0, None)
-        toTest2.setPointName(1, None)
-        toTest2.setPointName(2, None)
+        toTest1.points.setName(0, None)
+        toTest1.points.setName(1, None)
+        toTest2.points.setName(0, None)
+        toTest2.points.setName(1, None)
+        toTest2.points.setName(2, None)
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
 
@@ -971,34 +970,34 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for equality of default named objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.setPointName(0, None)
-        toTest1.setPointName(1, None)
-        toTest2.setPointName(0, None)
-        toTest2.setPointName(1, None)
+        toTest1.points.setName(0, None)
+        toTest1.points.setName(1, None)
+        toTest2.points.setName(0, None)
+        toTest2.points.setName(1, None)
         assert toTest1._equalPointNames(toTest2)
         assert toTest2._equalPointNames(toTest1)
 
     def test__equalPointNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.setPointName(0, None)
-        toTest1.setPointName(1, '1')
-        toTest2.setPointName(1, None)
+        toTest1.points.setName(0, None)
+        toTest1.points.setName(1, '1')
+        toTest2.points.setName(1, None)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
-        toTest1.setPointName(1, '2')
-        toTest1.setPointName(1, None)
+        toTest1.points.setName(1, '2')
+        toTest1.points.setName(1, None)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
 
 
-    ##################
+    ########################
     # _equalFeatureNames() #
-    ##################
+    ########################
 
     def test_equalFeatureNames_False(self):
         """ Test _equalFeatureNames() against some non-equal input """
@@ -1035,11 +1034,11 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2', '3'])
-        toTest1.setFeatureName(0, None)
-        toTest1.setFeatureName(1, None)
-        toTest2.setFeatureName(0, None)
-        toTest2.setFeatureName(1, None)
-        toTest2.setFeatureName(2, None)
+        toTest1.features.setName(0, None)
+        toTest1.features.setName(1, None)
+        toTest2.features.setName(0, None)
+        toTest2.features.setName(1, None)
+        toTest2.features.setName(2, None)
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
 
@@ -1047,25 +1046,25 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for equality of default named objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.setFeatureName(0, None)
-        toTest1.setFeatureName(1, None)
-        toTest2.setFeatureName(0, None)
-        toTest2.setFeatureName(1, None)
+        toTest1.features.setName(0, None)
+        toTest1.features.setName(1, None)
+        toTest2.features.setName(0, None)
+        toTest2.features.setName(1, None)
         assert toTest1._equalFeatureNames(toTest2)
         assert toTest2._equalFeatureNames(toTest1)
 
     def test_equalFeatureNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.setFeatureName(0, None)
-        toTest1.setFeatureName(1, '1')
-        toTest2.setFeatureName(1, None)
+        toTest1.features.setName(0, None)
+        toTest1.features.setName(1, '1')
+        toTest2.features.setName(1, None)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
-        toTest1.setFeatureName(1, '2')
-        toTest1.setFeatureName(1, None)
+        toTest1.features.setName(1, '2')
+        toTest1.features.setName(1, None)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
@@ -1089,92 +1088,92 @@ class LowLevelBackend(object):
         assert toTest1.name == DEFAULT_NAME_PREFIX + str(second)
         assert toTest2.name == DEFAULT_NAME_PREFIX + str(third)
 
+    ###################
+    # points.getNames #
+    ###################
 
-    #################
-    # getPointNames #
-    #################
-
-    def test_getPointNames_Empty(self):
+    def test_points_getNames_Empty(self):
         toTest = self.constructor(psize=0, fsize=2)
 
-        ret = toTest.getPointNames()
+        ret = toTest.points.getNames()
         assert ret == []
 
-    def test_getPointNames_basic(self):
+    def test_points_getNames_basic(self):
         pnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(pointNames=pnames, fsize=2)
 
-        ret = toTest.getPointNames()
+        ret = toTest.points.getNames()
         assert ret == ['zero', 'one', 'hello']
 
-    def test_getPointNames_mixedDefault(self):
+    def test_points_getNames_mixedDefault(self):
         pnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(pointNames=pnames, fsize=2)
-        toTest.setPointName(0, None)
+        toTest.points.setName(0, None)
 
-        ret = toTest.getPointNames()
+        ret = toTest.points.getNames()
         assert ret[0].startswith(DEFAULT_PREFIX)
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
-    def test_getPointNames_unmodifiable(self):
+    def test_points_getNames_unmodifiable(self):
         pnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(pointNames=pnames, fsize=2)
 
-        ret = toTest.getPointNames()
+        ret = toTest.points.getNames()
 
         ret[0] = 'modified'
-        toTest.setPointName(1, 'modified')
+        toTest.points.setName(1, 'modified')
 
         assert ret[1] == 'one'
-        assert toTest.getPointIndex('zero') == 0
-        assert toTest.getPointName(0) == 'zero'
+        assert toTest.points.getIndex('zero') == 0
+        assert toTest.points.getName(0) == 'zero'
 
 
-    ###################
-    # getFeatureNames #
-    ###################
+    #####################
+    # features.getNames #
+    #####################
 
-    def test_getFeatureNames_Empty(self):
+    def test_features_getNames_Empty(self):
         toTest = self.constructor(psize=2, fsize=0)
 
-        ret = toTest.getFeatureNames()
+        ret = toTest.features.getNames()
         assert ret == []
 
-    def test_getFeatureNames_basic(self):
+    def test_features_getNames_basic(self):
         fnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(featureNames=fnames, psize=2)
 
-        ret = toTest.getFeatureNames()
+        ret = toTest.features.getNames()
         assert ret == ['zero', 'one', 'hello']
 
-    def test_getFeatureNames_mixedDefault(self):
+    def test_features_getNames_mixedDefault(self):
         fnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(featureNames=fnames, psize=2)
-        toTest.setFeatureName(0, None)
+        toTest.features.setName(0, None)
 
-        ret = toTest.getFeatureNames()
+        ret = toTest.features.getNames()
         assert ret[0].startswith(DEFAULT_PREFIX)
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
-    def test_getFeatureNames_unmodifiable(self):
+    def test_features_getNames_unmodifiable(self):
         fnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(featureNames=fnames, psize=2)
 
-        ret = toTest.getFeatureNames()
+        ret = toTest.features.getNames()
 
         ret[0] = 'modified'
-        toTest.setFeatureName(1, 'modified')
+        toTest.features.setName(1, 'modified')
 
         assert ret[1] == 'one'
-        assert toTest.getFeatureIndex('zero') == 0
-        assert toTest.getFeatureName(0) == 'zero'
+        assert toTest.features.getIndex('zero') == 0
+        assert toTest.features.getName(0) == 'zero'
 
 
-    ################################################################
-    # getFeatureIndex, getFeatureName, getPointIndex, getPointName #
-    ################################################################
+    ############################################################
+    # features.getIndex, features.getIndices, features.getName #
+    # points.getIndex, points.getIndices, points.getName       #
+    ############################################################
 
     # consistency checks between all sources of axis name information
     def test_name_index_consistency(self):
@@ -1183,24 +1182,27 @@ class LowLevelBackend(object):
 
         toTest = self.constructor(featureNames=fnames, pointNames=pnames)
 
-        pByGetAll = toTest.getPointNames()
-        pByIndex = [toTest.getPointName(i) for i in range(len(toTest.points))]
+        pByGetAll = toTest.points.getNames()
+        pByIndex = [toTest.points.getName(i) for i in range(len(toTest.points))]
         assert pByIndex == pByGetAll
 
         pnamesShuffle = pythonRandom.sample(pnames, len(pnames))
-        pByName = [toTest.getPointIndex(n) for n in pnamesShuffle]
+        pByName = [toTest.points.getIndex(n) for n in pnamesShuffle]
+        pByNames = toTest.points.getIndices([n for n in pnamesShuffle])
         pByPyIndex = [pnames.index(n) for n in pnamesShuffle]
         assert pByName == pByPyIndex
+        assert pByNames == pByPyIndex
 
-        fByGetAll = toTest.getFeatureNames()
-        fByIndex = [toTest.getFeatureName(i) for i in range(len(toTest.features))]
+        fByGetAll = toTest.features.getNames()
+        fByIndex = [toTest.features.getName(i) for i in range(len(toTest.features))]
         assert fByIndex == fByGetAll
 
         fnamesShuffle = pythonRandom.sample(fnames, len(fnames))
-        fByName = [toTest.getFeatureIndex(n) for n in fnamesShuffle]
+        fByName = [toTest.features.getIndex(n) for n in fnamesShuffle]
+        fByNames = toTest.features.getIndices([n for n in fnamesShuffle])
         fByPyIndex = [fnames.index(n) for n in fnamesShuffle]
         assert fByName == fByPyIndex
-
+        assert fByNames == fByPyIndex
 
     ###########
     # __len__ #
@@ -1259,7 +1261,7 @@ class LowLevelBackend(object):
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
-    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+    def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
         toTest._constructIndicesList(['p1', 'p2', 'p3'])

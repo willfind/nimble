@@ -2111,9 +2111,9 @@ def test_DataOutputWithMissingDataTypes1D():
         orig1 = UML.createData(t, [1,2,"None"])
         orig2 = UML.createData(t, (1,2,"None"))
         orig3 = UML.createData(t, {'a':1, 'b':2, 'c':"None"})
-        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.getPointName(0))
         orig10 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
-        orig10.sortFeatures(sortBy=orig10.getPointName(0))
+        orig10.features.sort(sortBy=orig10.getPointName(0))
         orig4 = UML.createData(t, numpy.array([1,2,"None"]))
         orig5 = UML.createData(t, numpy.matrix([1,2,"None"]))
         if pd:
@@ -2152,9 +2152,9 @@ def test_DataOutputWithMissingDataTypes2D():
         orig1 = UML.createData(t, [[1,2,'None'], [3,4,'b']])
         orig2 = UML.createData(t, ((1,2,'None'), (3,4,'b')))
         orig3 = UML.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
-        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.getPointName(0))
         orig7 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.sortFeatures(sortBy=orig7.getPointName(0))
+        orig7.features.sort(sortBy=orig7.getPointName(0))
         orig4 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig5 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:

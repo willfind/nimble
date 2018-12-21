@@ -245,16 +245,6 @@ class BaseView(Base):
     ###########################
 
     @exception_docstring
-    def fillUsingPoints(self, match, fill, arguments=None, points=None,
-                        returnModified=False):
-        self._readOnlyException("fillUsingPoints")
-
-    @exception_docstring
-    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
-                          returnModified=False):
-        self._readOnlyException("fillUsingFeatures")
-
-    @exception_docstring
     def fillUsingAllData(self, match, fill, arguments=None, points=None,
                           features=None, returnModified=False):
         self._readOnlyException("fillUsingAllData")
@@ -266,23 +256,6 @@ class BaseView(Base):
     @exception_docstring
     def transformFeatureToIntegers(self, featureToConvert):
         self._readOnlyException("transformFeatureToIntegers")
-
-    @exception_docstring
-    def shufflePoints(self):
-        self._readOnlyException("shufflePoints")
-
-    @exception_docstring
-    def shuffleFeatures(self):
-        self._readOnlyException("shuffleFeatures")
-
-    @exception_docstring
-    def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
-        self._readOnlyException("normalizePoints")
-
-    @exception_docstring
-    def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
-        self._readOnlyException("normalizeFeatures")
-
 
     ########################################
     ########################################
@@ -309,61 +282,8 @@ class BaseView(Base):
         self._readOnlyException("transpose")
 
     @exception_docstring
-    def addPoints(self, toAdd, insertBefore=None):
-        self._readOnlyException("addPoints")
-
-    @exception_docstring
-    def addFeatures(self, toAdd, insertBefore=None):
-        self._readOnlyException("addFeatures")
-
-    @exception_docstring
-    def sortPoints(self, sortBy=None, sortHelper=None):
-        self._readOnlyException("sortPoints")
-
-    @exception_docstring
-    def sortFeatures(self, sortBy=None, sortHelper=None):
-        self._readOnlyException("sortFeatures")
-
-    @exception_docstring
-    def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("extractPoints")
-
-    @exception_docstring
-    def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("extractFeatures")
-
-    @exception_docstring
-    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("deletePoints")
-
-    @exception_docstring
-    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("deleteFeatures")
-
-    @exception_docstring
-    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("retainPoints")
-
-    @exception_docstring
-    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("retainFeatures")
-
-    @exception_docstring
     def referenceDataFrom(self, other):
         self._readOnlyException("referenceDataFrom")
-
-    @exception_docstring
-    def transformEachPoint(self, function, points=None):
-        self._readOnlyException("transformEachPoint")
-
-    @exception_docstring
-    def transformEachFeature(self, function, features=None):
-        self._readOnlyException("transformEachFeature")
-
-    @exception_docstring
-    def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
-                             skipNoneReturnValues=False):
-        self._readOnlyException("transformEachElement")
 
     @exception_docstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):

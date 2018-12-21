@@ -122,10 +122,10 @@ def runSequence(objectList):
         currFunc = availableMethods[index]
         print(currFunc)
         # exclude operation we know are not runnabel given certain configurations
-        if objectList[0].pts == 0:
+        if len(objectList[0].points) == 0:
             if currFunc in unavailableNoPoints:
                 continue
-        if objectList[0].fts == 0:
+        if len(objectList[0].features) == 0:
             if currFunc in unavailableNoFeatures:
                 continue
 

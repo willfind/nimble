@@ -102,8 +102,8 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 
     results = []
     for i in range(len(knownValues.features)):
-        currKnown = knownValues.copyFeatures(i)
-        currPred = predictedValues.copyFeatures(i)
+        currKnown = knownValues.features.copy(i)
+        currPred = predictedValues.features.copy(i)
         results.append(rootMeanSquareError(currKnown, currPred))
 
     return float(sum(results)) / len(knownValues.features)

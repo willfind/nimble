@@ -1,11 +1,10 @@
 """
-
 Methods tested in this file (none modify the data):
 
-pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
-featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator
-
+pointCount, featureCount, isIdentical, writeFile, __getitem__,
+pointView, featureView, view, containsZero, __eq__, __ne__, toString,
+pointSimilarities, featureSimilarities, pointStatistics,
+featureStatistics, points.__iter__, features.__iter__, nonZeroIterator
 """
 
 from __future__ import absolute_import
@@ -1050,10 +1049,10 @@ class QueryBackend(DataTestObject):
                 return
             elif pNum == 0:
                 data = makeUniformLength("List", 1, fNum, valLen)
-                data.extractPoints(0)
+                data.points.extract(0)
             elif fNum == 0:
                 data = makeUniformLength("List", pNum, 1, valLen)
-                data.extractFeatures(0)
+                data.features.extract(0)
             else:
                 if valLen is None:
                     data = UML.createRandomData("List", pNum, fNum, .25, elementType='int')
@@ -1901,6 +1900,196 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
+    ###################
+    # points.__iter__ #
+    ###################
+
+    def test_points_iter_FemptyCorrectness(self):
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        pIter = toTest.points
+
+        pView = next(pIter)
+        assert len(pView) == 0
+        pView = next(pIter)
+        assert len(pView) == 0
+
+        try:
+            next(pIter)
+            assert False  # expected StopIteration from prev statement
+        except StopIteration:
+            pass
+
+    def test_points_iter_noNextPempty(self):
+        """ test .points() has no next value when object is point empty """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        viewIter = toTest.points
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    def test_points_iter_exactValueViaFor(self):
+        """ Test .points() gives views that contain exactly the correct data """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        viewIter = toTest.points
+
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert toCheck[0][0] == 1
+        assert toCheck[0][1] == 2
+        assert toCheck[0][2] == 3
+        assert toCheck[1][0] == 4
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 6
+        assert toCheck[2][0] == 7
+        assert toCheck[2][1] == 8
+        assert toCheck[2][2] == 9
+
+    def test_points_iter_allZeroVectors(self):
+        """ Test .points() works when there are all zero points """
+        data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = toTest.points
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.points)
+
+        assert toCheck[0][0] == 0
+        assert toCheck[0][1] == 0
+        assert toCheck[0][2] == 0
+
+        assert toCheck[1][0] == 4
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 6
+
+        assert toCheck[2][0] == 0
+        assert toCheck[2][1] == 0
+        assert toCheck[2][2] == 0
+
+        assert toCheck[3][0] == 7
+        assert toCheck[3][1] == 8
+        assert toCheck[3][2] == 9
+
+        assert toCheck[4][0] == 0
+        assert toCheck[4][1] == 0
+        assert toCheck[4][2] == 0
+
+        assert toCheck[5][0] == 0
+        assert toCheck[5][1] == 0
+        assert toCheck[5][2] == 0
+
+    #####################
+    # features.__iter__ #
+    #####################
+
+    def test_features_iter_PemptyCorrectness(self):
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        fIter = toTest.features
+
+        fView = next(fIter)
+        assert len(fView) == 0
+        fView = next(fIter)
+        assert len(fView) == 0
+
+        try:
+            next(fIter)
+            assert False  # expected StopIteration from prev statement
+        except StopIteration:
+            pass
+
+    def test_features_iter_noNextFempty(self):
+        """ test .features() has no next value when object is feature empty """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        viewIter = toTest.features
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+
+    def test_features_iter_exactValueViaFor(self):
+        """ Test .features() gives views that contain exactly the correct data """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        viewIter = toTest.features
+
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert toCheck[0][0] == 1
+        assert toCheck[0][1] == 4
+        assert toCheck[0][2] == 7
+        assert toCheck[1][0] == 2
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 8
+        assert toCheck[2][0] == 3
+        assert toCheck[2][1] == 6
+        assert toCheck[2][2] == 9
+
+
+    def test_features_iter_allZeroVectors(self):
+        """ Test .features() works when there are all zero points """
+        data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = toTest.features
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.features)
+        assert toCheck[0][0] == 0
+        assert toCheck[0][1] == 0
+        assert toCheck[0][2] == 0
+
+        assert toCheck[1][0] == 1
+        assert toCheck[1][1] == 4
+        assert toCheck[1][2] == 7
+
+        assert toCheck[2][0] == 0
+        assert toCheck[2][1] == 0
+        assert toCheck[2][2] == 0
+
+        assert toCheck[3][0] == 2
+        assert toCheck[3][1] == 5
+        assert toCheck[3][2] == 8
+
+        assert toCheck[4][0] == 0
+        assert toCheck[4][1] == 0
+        assert toCheck[4][2] == 0
+
+        assert toCheck[5][0] == 3
+        assert toCheck[5][1] == 6
+        assert toCheck[5][2] == 9
+
+        assert toCheck[6][0] == 0
+        assert toCheck[6][1] == 0
+        assert toCheck[6][2] == 0
+
+        assert toCheck[7][0] == 0
+        assert toCheck[7][1] == 0
+        assert toCheck[7][2] == 0
 
     ###################
     # nonZeroIterator #
