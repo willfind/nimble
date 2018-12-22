@@ -67,17 +67,15 @@ class SparseAxis(Axis):
         if self.axis == 'point':
             viewMaker = self.source.pointView
             getViewIter = self.source.pointIterator
-            indexGetter = self.source.getPointIndex
-            nameGetter = self.source.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.source.getPointNames()
+            indexGetter = self.source.points.getIndex
+            nameGetter = self.source.points.getName
+            names = self.source.points.getNames()
         else:
             viewMaker = self.source.featureView
             getViewIter = self.source.featureIterator
-            indexGetter = self.source.getFeatureIndex
-            nameGetter = self.source.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.source.getFeatureNames()
+            indexGetter = self.source.features.getIndex
+            nameGetter = self.source.features.getName
+            names = self.source.features.getNames()
 
         if isinstance(sortHelper, list):
             sortedData = []
@@ -118,7 +116,8 @@ class SparseAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+                viewAxis = getattr(viewArray[i], self.axis + 's')
+                index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):
@@ -230,8 +229,8 @@ class SparseAxis(Axis):
         """
         axisNames = []
         if self.axis == 'point':
-            getAxisName = self.source.getPointName
-            getOtherNames = self.source.getFeatureNames
+            getAxisName = self.source.points.getName
+            getOtherNames = self.source.features.getNames
             data = self.source.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
@@ -241,8 +240,8 @@ class SparseAxis(Axis):
                         notTarget.append(idx)
                 notTargeted = data[notTarget, :]
         else:
-            getAxisName = self.source.getFeatureName
-            getOtherNames = self.source.getPointNames
+            getAxisName = self.source.features.getName
+            getOtherNames = self.source.points.getNames
             data = self.source.data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
@@ -333,12 +332,12 @@ class SparseAxis(Axis):
         fnames = []
         if self.axis == 'point':
             for index in targetList:
-                pnames.append(self.source.getPointName(index))
-            fnames = self.source.getFeatureNames()
+                pnames.append(self.source.points.getName(index))
+            fnames = self.source.features.getNames()
         else:
-            pnames = self.source.getPointNames()
+            pnames = self.source.points.getNames()
             for index in targetList:
-                fnames.append(self.source.getFeatureName(index))
+                fnames.append(self.source.features.getName(index))
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)

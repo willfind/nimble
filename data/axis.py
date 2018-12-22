@@ -79,34 +79,13 @@ class Axis(object):
     ########################
 
     def _getName(self, index):
-        if self.axis == 'point':
-            hasNames = self.source._pointNamesCreated()
-        else:
-            hasNames = self.source._featureNamesCreated()
-
-        if not hasNames:
-            self.source._setAllDefault(self.axis)
-
-        if self.axis == 'point':
-            namesList = self.source.pointNamesInverse
-        else:
-            namesList = self.source.featureNamesInverse
-
-        return namesList[index]
+        return self._getNames()[index]
 
     def _getNames(self):
-        if self.axis == 'point':
-            hasNames = self.source._pointNamesCreated()
-        else:
-            hasNames = self.source._featureNamesCreated()
-
+        hasNames = getattr(self.source, '_' + self.axis + 'NamesCreated')()
         if not hasNames:
             self.source._setAllDefault(self.axis)
-
-        if self.axis == 'point':
-            namesList = self.source.pointNamesInverse
-        else:
-            namesList = self.source.featureNamesInverse
+        namesList = getattr(self.source, self.axis + 'NamesInverse')
 
         return copy.copy(namesList)
 
@@ -145,28 +124,18 @@ class Axis(object):
             self._setNamesFromList(assignments, count)
 
     def _getIndex(self, name):
-        if self.axis == 'point':
-            hasNames = self.source._pointNamesCreated()
-            namesDict = self.source.pointNames
-        else:
-            hasNames = self.source._featureNamesCreated()
-            namesDict = self.source.featureNames
-
+        hasNames = getattr(self.source, '_' + self.axis + 'NamesCreated')()
         if not hasNames:
             self.source._setAllDefault(self.axis)
+        namesDict = getattr(self.source, self.axis + 'Names')
 
         return namesDict[name]
 
     def _getIndices(self, names):
-        if self.axis == 'point':
-            hasNames = self.source._pointNamesCreated()
-            namesDict = self.source.pointNames
-        else:
-            hasNames = self.source._featureNamesCreated()
-            namesDict = self.source.featureNames
-
+        hasNames = getattr(self.source, '_' + self.axis + 'NamesCreated')()
         if not hasNames:
             self.source._setAllDefault(self.axis)
+        namesDict = getattr(self.source, self.axis + 'Names')
 
         return [namesDict[n] for n in names]
 
@@ -187,9 +156,9 @@ class Axis(object):
                                               number, randomize)
 
         if self.axis == 'point':
-            ret.setFeatureNames(self.source.getFeatureNames())
+            ret.features.setNames(self.source.features.getNames())
         else:
-            ret.setPointNames(self.source.getPointNames())
+            ret.points.setNames(self.source.points.getNames())
 
         ret._absPath = self.source.absolutePath
         ret._relPath = self.source.relativePath
@@ -201,9 +170,9 @@ class Axis(object):
                                               number, randomize)
 
         if self.axis == 'point':
-            ret.setFeatureNames(self.source.getFeatureNames())
+            ret.features.setNames(self.source.features.getNames())
         else:
-            ret.setPointNames(self.source.getPointNames())
+            ret.points.setNames(self.source.points.getNames())
         self._adjustCountAndNames(ret)
 
         ret._relPath = self.source.relativePath
@@ -223,9 +192,9 @@ class Axis(object):
         ref = self._genericStructuralFrontend('retain', toRetain, start, end,
                                               number, randomize)
         if self.axis == 'point':
-            ref.setFeatureNames(self.source.getFeatureNames())
+            ref.features.setNames(self.source.features.getNames())
         else:
-            ref.setPointNames(self.source.getPointNames())
+            ref.points.setNames(self.source.points.getNames())
 
         ref._relPath = self.source.relativePath
         ref._absPath = self.source.absolutePath
@@ -249,12 +218,12 @@ class Axis(object):
             otherAxis = 'feature'
             axisCount = self.source._pointCount
             otherCount = self.source._featureCount
-            setNames = self.source.setPointNames
+            setNames = self.source.points.setNames
         else:
             otherAxis = 'point'
             axisCount = self.source._featureCount
             otherCount = self.source._pointCount
-            setNames = self.source.setFeatureNames
+            setNames = self.source.features.setNames
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self.source._getIndex(sortBy, otherAxis)
@@ -304,15 +273,15 @@ class Axis(object):
             offAxisCount = self.source._featureCount
             setAxisCount = self.source._setpointCount
             setOffAxisCount = self.source._setfeatureCount
-            setAxisNames = self.source.setPointNames
-            setOffAxisNames = self.source.setFeatureNames
+            setAxisNames = self.source.points.setNames
+            setOffAxisNames = self.source.features.setNames
         else:
             axisCount = self.source._featureCount
             offAxisCount = self.source._pointCount
             setAxisCount = self.source._setfeatureCount
             setOffAxisCount = self.source._setpointCount
-            setAxisNames = self.source.setFeatureNames
-            setOffAxisNames = self.source.setPointNames
+            setAxisNames = self.source.features.setNames
+            setOffAxisNames = self.source.points.setNames
 
         setOffAxisCount(axisCount * offAxisCount)
         setAxisCount(1)
@@ -326,16 +295,16 @@ class Axis(object):
             offAxisCount = self.source._featureCount
             setAxisCount = self.source._setpointCount
             setOffAxisCount = self.source._setfeatureCount
-            setAxisNames = self.source.setPointNames
-            setOffAxisNames = self.source.setFeatureNames
+            setAxisNames = self.source.points.setNames
+            setOffAxisNames = self.source.features.setNames
         else:
             offAxis = 'point'
             axisCount = self.source._featureCount
             offAxisCount = self.source._pointCount
             setAxisCount = self.source._setfeatureCount
             setOffAxisCount = self.source._setpointCount
-            setAxisNames = self.source.setFeatureNames
-            setOffAxisNames = self.source.setPointNames
+            setAxisNames = self.source.features.setNames
+            setOffAxisNames = self.source.points.setNames
 
         if offAxisCount == 0:
             msg = "Can only unflattenFromOne when there is one or more "
@@ -369,6 +338,19 @@ class Axis(object):
         setAxisCount(divideInto)
         setAxisNames(ret[0])
         setOffAxisNames(ret[1])
+
+    def _shuffle(self):
+        if self.axis == 'point':
+            values = len(self.source.points)
+            sorter = self.source.points.sort
+        else:
+            values = len(self.source.features)
+            sorter = self.source.features.sort
+
+        indices = list(range(values))
+        pythonRandom.shuffle(indices)
+
+        sorter(sortHelper=indices)
 
     def _transform(self, function, limitTo):
         if self.source._pointCount == 0:
@@ -411,18 +393,18 @@ class Axis(object):
             if limitTo is not None and self.source._pointNamesCreated():
                 names = []
                 for index in sorted(limitTo):
-                    names.append(self.source.getPointName(index))
-                ret.setPointNames(names)
+                    names.append(self.source.points.getName(index))
+                ret.points.setNames(names)
             elif self.source._pointNamesCreated():
-                ret.setPointNames(self.source.getPointNames())
+                ret.points.setNames(self.source.points.getNames())
         else:
             if limitTo is not None and self.source._featureNamesCreated():
                 names = []
                 for index in sorted(limitTo):
-                    names.append(self.source.getFeatureName(index))
-                ret.setFeatureNames(names)
+                    names.append(self.source.features.getName(index))
+                ret.features.setNames(names)
             elif self.source._featureNamesCreated():
-                ret.setFeatureNames(self.source.getFeatureNames())
+                ret.features.setNames(self.source.features.getNames())
 
         ret._absPath = self.source.absolutePath
         ret._relPath = self.source.relativePath
@@ -504,19 +486,6 @@ class Axis(object):
 
         return ret
 
-    def _shuffle(self):
-        if self.axis == 'point':
-            values = len(self.source.points)
-            sorter = self.source.points.sort
-        else:
-            values = len(self.source.features)
-            sorter = self.source.features.sort
-
-        indices = list(range(values))
-        pythonRandom.shuffle(indices)
-
-        sorter(sortHelper=indices)
-
     def _fill(self, toMatch, toFill, arguments=None, limitTo=None,
               returnModified=False):
         modified = None
@@ -525,15 +494,12 @@ class Axis(object):
         if returnModified:
             def bools(values):
                 return [True if toMatch(val) else False for val in values]
-            if self.axis == 'point':
-                getNames = 'getPointNames'
-                setNames = 'setPointNames'
-            else:
-                getNames = 'getFeatureNames'
-                setNames = 'setFeatureNames'
+
             modified = self._calculate(bools, limitTo)
-            modNames = [n + "_modified" for n in getattr(modified, getNames)()]
-            getattr(modified, setNames)(modNames)
+            modAxis = getattr(modified, self.axis + 's')
+            currNames = getattr(modAxis, 'getNames')()
+            modNames = [n + "_modified" for n in currNames]
+            getattr(modAxis, 'setNames')(modNames)
 
         self._transform(toTransform, limitTo)
 
@@ -542,7 +508,6 @@ class Axis(object):
         return modified
 
     def _normalize(self, subtract, divide, applyResultTo):
-
         # used to trigger later conditionals
         alsoIsObj = isinstance(applyResultTo, UML.data.Base)
 
@@ -676,7 +641,7 @@ class Axis(object):
         #			divIsVec = True
 
         if self.axis == 'point':
-            indexGetter = lambda x: self._getIndex(x.getPointName(0))
+            indexGetter = lambda x: self._getIndex(x.points.getName(0))
             if isinstance(subtract, six.string_types):
                 subtract = self.source.pointStatistics(subtract)
                 subIsVec = True
@@ -684,7 +649,7 @@ class Axis(object):
                 divide = self.source.pointStatistics(divide)
                 divIsVec = True
         else:
-            indexGetter = lambda x: self._getIndex(x.getFeatureName(0))
+            indexGetter = lambda x: self._getIndex(x.features.getName(0))
             if isinstance(subtract, six.string_types):
                 subtract = self.source.featureStatistics(subtract)
                 subIsVec = True
@@ -746,12 +711,11 @@ class Axis(object):
         if self.axis == 'point':
             names = self.source.pointNames
             invNames = self.source.pointNamesInverse
-            index = self.source._getPointIndex(oldIdentifier)
         else:
             names = self.source.featureNames
             invNames = self.source.featureNamesInverse
-            index = self.source._getFeatureIndex(oldIdentifier)
 
+        index = self.source._getIndex(oldIdentifier, self.axis)
         if newName is not None:
             if not isinstance(newName, six.string_types):
                 msg = "The new name must be either None or a string"
@@ -967,7 +931,7 @@ class Axis(object):
             self.source._pointCount -= len(other.points)
             if self.source._pointNamesCreated():
                 idxList = []
-                for name in other.getPointNames():
+                for name in other.points.getNames():
                     idxList.append(self.source.pointNames[name])
                 idxList = sorted(idxList)
                 for i, val in enumerate(idxList):
@@ -980,7 +944,7 @@ class Axis(object):
             self.source._featureCount -= len(other.features)
             if self.source._featureNamesCreated():
                 idxList = []
-                for name in other.getFeatureNames():
+                for name in other.features.getNames():
                     idxList.append(self.source.featureNames[name])
                 idxList = sorted(idxList)
                 for i, val in enumerate(idxList):
@@ -994,11 +958,11 @@ class Axis(object):
         Axis names for the unflattened axis after a flatten operation.
         """
         if discardAxis == 'point':
-            keepNames = self.source.getFeatureNames()
-            dropNames = self.source.getPointNames()
+            keepNames = self.source.features.getNames()
+            dropNames = self.source.points.getNames()
         else:
-            keepNames = self.source.getPointNames()
-            dropNames = self.source.getFeatureNames()
+            keepNames = self.source.points.getNames()
+            dropNames = self.source.features.getNames()
 
         ret = []
         for d in dropNames:
@@ -1012,10 +976,10 @@ class Axis(object):
         New axis names after an unflattening operation.
         """
         if self.axis == 'point':
-            both = self.source.getFeatureNames()
+            both = self.source.features.getNames()
             keptAxisLength = self.source._featureCount // addedAxisLength
         else:
-            both = self.source.getPointNames()
+            both = self.source.points.getNames()
             keptAxisLength = self.source._pointCount // addedAxisLength
         allDefault = self._namesAreFlattenFormatConsistent(addedAxisLength,
                                                            keptAxisLength)
@@ -1045,11 +1009,11 @@ class Axis(object):
         otherwise.
         """
         if self.axis == 'point':
-            flat = self.source.getPointNames()
-            formatted = self.source.getFeatureNames()
+            flat = self.source.points.getNames()
+            formatted = self.source.features.getNames()
         else:
-            flat = self.source.getFeatureNames()
-            formatted = self.source.getPointNames()
+            flat = self.source.features.getNames()
+            formatted = self.source.points.getNames()
 
         def checkIsDefault(axisName):
             ret = False
@@ -1250,15 +1214,15 @@ class Axis(object):
         default names.
         """
         if axis == 'point':
-            lnames = self.source.getPointNames()
-            rnames = other.getPointNames()
-            lGetter = self.source.getPointIndex
-            rGetter = other.getPointIndex
+            lnames = self.source.points.getNames()
+            rnames = other.points.getNames()
+            lGetter = self.source.points.getIndex
+            rGetter = other.points.getIndex
         else:
-            lnames = self.source.getFeatureNames()
-            rnames = other.getFeatureNames()
-            lGetter = self.source.getFeatureIndex
-            rGetter = other.getFeatureIndex
+            lnames = self.source.features.getNames()
+            rnames = other.features.getNames()
+            lGetter = self.source.features.getIndex
+            rGetter = other.features.getIndex
 
         inconsistencies = self.source._inconsistentNames(lnames, rnames)
 
@@ -1306,14 +1270,14 @@ class Axis(object):
         """
         if axis == 'point':
             namesCreated = self.source._pointNamesCreated()
-            objNames = self.source.getPointNames
-            toAddNames = toAdd.getPointNames
+            objNames = self.source.points.getNames
+            toAddNames = toAdd.points.getNames
             def sorter(obj, names):
                 return obj.points.sort(sortHelper=names)
         else:
             namesCreated = self.source._featureNamesCreated()
-            objNames = self.source.getFeatureNames
-            toAddNames = toAdd.getFeatureNames
+            objNames = self.source.features.getNames
+            toAddNames = toAdd.features.getNames
             def sorter(obj, names):
                 return obj.features.sort(sortHelper=names)
 
@@ -1342,11 +1306,11 @@ class Axis(object):
                     or addedObj._pointNamesCreated()):
                 self.source._setpointCount(newPtCount)
                 return
-            objNames = self.source.getPointNames()
-            insertedNames = addedObj.getPointNames()
+            objNames = self.source.points.getNames()
+            insertedNames = addedObj.points.getNames()
             # must change point count AFTER getting names
             self.source._setpointCount(newPtCount)
-            setObjNames = self.source.setPointNames
+            setObjNames = self.source.points.setNames
         else:
             newFtCount = len(self.source.features) + len(addedObj.features)
             # only need to adjust names if names are present
@@ -1354,11 +1318,11 @@ class Axis(object):
                     or addedObj._featureNamesCreated()):
                 self.source._setfeatureCount(newFtCount)
                 return
-            objNames = self.source.getFeatureNames()
-            insertedNames = addedObj.getFeatureNames()
+            objNames = self.source.features.getNames()
+            insertedNames = addedObj.features.getNames()
             # must change point count AFTER getting names
             self.source._setfeatureCount(newFtCount)
-            setObjNames = self.source.setFeatureNames
+            setObjNames = self.source.features.setNames
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:

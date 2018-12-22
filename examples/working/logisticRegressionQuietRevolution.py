@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     yLabel = "to predict"
     data = createData("List", fileName, featureNames=True)
-    data.setFeatureName("Self-identification of introversion", yLabel)
+    data.features.setName("Self-identification of introversion", yLabel)
 
 
     #I can't get this to work. Not only does calling train for this algorithm after not seem to work,

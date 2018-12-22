@@ -69,13 +69,13 @@ def cleanFeatureNames(obj):
     Modifies given object to have have feature names processed by the cleanName function.
 
     """
-    names = obj.getFeatureNames()
+    names = obj.features.getNames()
     clean = []
     for name in names:
         temp = cleanName(name)
         clean.append(temp)
 
-    obj.setFeatureNames(clean)
+    obj.features.setNames(clean)
 
 
 def loadCategoryData(path):
@@ -100,7 +100,7 @@ def loadCategoryData(path):
 
     categoriesByQName = categories.copyAs("List")
     qs = categoriesByQName.features.extract("question")
-    categoriesByQName.setPointNames(qs.copyAs('pythonlist', outputAs1D=True))
+    categoriesByQName.points.setNames(qs.copyAs('pythonlist', outputAs1D=True))
 #   categoriesByQName.show('cat')
 
     namesByCategory = {}
@@ -140,20 +140,20 @@ def loadResponseData(path):
     # drop non-binary genders
     responses.points.extract([0,1,2,3,4,5])
 
-    genderValueID = responses.getFeatureIndex("male1female0")
+    genderValueID = responses.features.getIndex("male1female0")
     genderValue = responses.features.extract(genderValueID)
     genderValue = genderValue.copyAs("Matrix")
     genderValue = invertGenderScoring(genderValue)
-    genderValue.setFeatureName(0, "male0female1")
+    genderValue.features.setName(0, "male0female1")
 
-    firstCat = responses.getFeatureIndex('"agreeable" category')
+    firstCat = responses.features.getIndex('"agreeable" category')
     categoryScores = responses.features.extract(start=firstCat)
     categoryScores = categoryScores.copyAs("Matrix")
 
 #   categoryScores.show('catScores')
 
-    firstQID = responses.getFeatureIndex("I contradict others.")
-    lastQID = responses.getFeatureIndex("I get stressed out.")
+    firstQID = responses.features.getIndex("I contradict others.")
+    lastQID = responses.features.getIndex("I get stressed out.")
     responses = responses.features.extract(start=firstQID, end=lastQID)
     responses = responses.copyAs("Matrix")
 
@@ -433,7 +433,7 @@ def verifyGenderAvgerageOrdering(picked, responses, genderValue, categoriesByQNa
 
     """
     def extractFemale(point):
-        pID = responses.getPointIndex(point.getPointName(0))
+        pID = responses.points.getIndex(point.points.getName(0))
         return genderValue[pID] == 1
 
     toSplit = responses.copy()
@@ -456,7 +456,7 @@ def verifyGenderAvgerageOrdering(picked, responses, genderValue, categoriesByQNa
 def outputFile_SelectedQsPerCategory(outPath, categoriesByQName, picked):
     raw = []
     for point in categoriesByQName.points:
-        question = point.getPointName(0)
+        question = point.points.getName(0)
         category = point[0]
 
         gender = 1 if point[1] == 'female' else -1
@@ -478,7 +478,7 @@ def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
     allCats = numpy.unique(allCats).tolist()
     raw = []
     for point in categoriesByQName.points:
-        question = point.getPointName(0)
+        question = point.points.getName(0)
         category = point[0]
 
         if question not in picked[category]:
@@ -508,7 +508,7 @@ def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
 def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, responses,
                                     genders, scaleType):
     def extractFemale(point):
-        pID = responses.getPointIndex(point.getPointName(0))
+        pID = responses.points.getIndex(point.points.getName(0))
         return genders[pID] == 1
 
     toSplit = responses.copy()
@@ -599,7 +599,7 @@ def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categori
     for category, (q0, q1) in selected.items():
         scale = scaleType[category] if scaleType is not None else 'female'
         sub = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
-        sub.setFeatureName(0, category)
+        sub.features.setName(0, category)
         if collected is None:
             collected = sub
         else:
@@ -610,11 +610,11 @@ def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categori
         corrs = residuals_collected.featureSimilarities('correlation')
     else:
         corrs = collected.featureSimilarities('correlation')
-    corrs.setPointName("Empathetic", "Compassionate")
-    corrs.setFeatureName("Empathetic", "Compassionate")
+    corrs.points.setName("Empathetic", "Compassionate")
+    corrs.features.setName("Empathetic", "Compassionate")
 
-    corrs.points.sort(sortHelper=lambda x: x.getPointName(0))
-    corrs.features.sort(sortHelper=lambda x: x.getFeatureName(0))
+    corrs.points.sort(sortHelper=lambda x: x.points.getName(0))
+    corrs.features.sort(sortHelper=lambda x: x.features.getName(0))
 #   corrs.show("Selected Category Correlation Matrix", maxHeight=None, maxWidth=None, maxColumnWidth=25)
     if outFile is not None:
         corrs.writeFile(outFile)
@@ -638,8 +638,8 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
         scale = scaleType[category] if scaleType is not None else 'female'
         subM = generateSubScale(males, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
         subF = generateSubScale(females, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
-        subM.setFeatureName(0, category)
-        subF.setFeatureName(0, category)
+        subM.features.setName(0, category)
+        subF.features.setName(0, category)
         if collectedM is None:
             collectedM = subM
         else:
@@ -653,15 +653,15 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
     corrsM = collectedM.featureSimilarities('correlation')
     corrsF = collectedF.featureSimilarities('correlation')
 
-    corrsM.setPointName("Empathetic", "Compassionate")
-    corrsM.setFeatureName("Empathetic", "Compassionate")
-    corrsF.setPointName("Empathetic", "Compassionate")
-    corrsF.setFeatureName("Empathetic", "Compassionate")
+    corrsM.points.setName("Empathetic", "Compassionate")
+    corrsM.features.setName("Empathetic", "Compassionate")
+    corrsF.points.setName("Empathetic", "Compassionate")
+    corrsF.features.setName("Empathetic", "Compassionate")
 
-    corrsM.points.sort(sortHelper=lambda x: x.getPointName(0))
-    corrsM.features.sort(sortHelper=lambda x: x.getFeatureName(0))
-    corrsF.points.sort(sortHelper=lambda x: x.getPointName(0))
-    corrsF.features.sort(sortHelper=lambda x: x.getFeatureName(0))
+    corrsM.points.sort(sortHelper=lambda x: x.points.getName(0))
+    corrsM.features.sort(sortHelper=lambda x: x.features.getName(0))
+    corrsF.points.sort(sortHelper=lambda x: x.points.getName(0))
+    corrsF.features.sort(sortHelper=lambda x: x.features.getName(0))
 
     avgCorr = (corrsM + corrsF) / 2.0
     basePartialCorr = UML.createData("Matrix", outFileBase)
@@ -682,7 +682,7 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
             else:
                 raise RuntimeError("ALARM")
 
-    signObj = UML.createData("List", signMatrix, pointNames=avgCorr.getPointNames(), featureNames=avgCorr.getFeatureNames())
+    signObj = UML.createData("List", signMatrix, pointNames=avgCorr.points.getNames(), featureNames=avgCorr.features.getNames())
     signObj.writeFile(outFileSign)
 
     diff = avgCorr - basePartialCorr
@@ -695,7 +695,7 @@ def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
     for category, qs in selected.items():
         for q in qs:
             sub = responses.features.copy(q)
-            sub.setFeatureName(0, q)
+            sub.features.setName(0, q)
             if collected is None:
                 collected = sub
             else:
@@ -716,8 +716,8 @@ def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, cate
 
             q.features.add(sub)
             corr = q.featureSimilarities("correlation")
-            corr.setPointName(0, qName)
-            corr.setFeatureName(1, 'Q to Cat Corr')
+            corr.points.setName(0, qName)
+            corr.features.setName(1, 'Q to Cat Corr')
             corr = corr.view(0,0,1,1)
             if collected is None:
                 collected = UML.createData("Matrix", [], featureNames=['Q to Cat Corr'])
@@ -741,8 +741,8 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
         q1.features.add(q2)
         qs = q1
         corr = qs.featureSimilarities("correlation")
-        corr.setPointName(0, category)
-        corr.setFeatureName(1, 'Q to Q in Same Cat Corr')
+        corr.points.setName(0, category)
+        corr.features.setName(1, 'Q to Q in Same Cat Corr')
         corr = corr.view(0,0,1,1)           
         if collected is None:
             collected = UML.createData("Matrix", [], featureNames=['Q to Q in Same Cat Corr'])
@@ -760,7 +760,7 @@ def outputFile_selected_data(responses, categoriesByQName, selected, outPath):
     selectedQs = toUse
     selectedNames = []
 
-    for fname in selectedQs.getFeatureNames():
+    for fname in selectedQs.features.getNames():
         currCat = categoriesByQName[fname,0]
         if fname in selected[currCat]:
             selectedNames.append(fname)
@@ -780,7 +780,7 @@ def outputFile_selected_and_transformed_data(responses, categoriesByQName, scale
     rescale = []
     selectedNames = []
 
-    for fname in responsesOnly.getFeatureNames():
+    for fname in responsesOnly.features.getNames():
         currCat = categoriesByQName[fname,0]
         if fname in selected[currCat]:
             selectedNames.append(fname)
@@ -823,8 +823,8 @@ def scoreToGenderPValues(scores, genders):
 def generateSubScale(data, qA_ID, qA_Gender, qB_ID, qB_Gender, scale_Gender='female'):
     qA = data.features.copy(qA_ID)
     qB = data.features.copy(qB_ID)
-    qA.setFeatureNames(None)
-    qB.setFeatureNames(None)
+    qA.features.setNames(None)
+    qB.features.setNames(None)
 
     if scale_Gender == 'female':
         qA = -qA if qA_Gender == 'male' else qA
@@ -856,7 +856,7 @@ def setupCategoryScaleTypes(categoriesByQName, selected, includeMale):
         return ret[point[0]]
 
     catScaleFeature = categoriesByQName.points.calculate(unpack)
-    catScaleFeature.setFeatureName(0, 'genderHigherAvgOfCat')
+    catScaleFeature.features.setName(0, 'genderHigherAvgOfCat')
 
     if len(categoriesByQName.features) == 3:
         categoriesByQName.features.extract('genderHigherAvgOfCat')
@@ -890,7 +890,7 @@ def addNoiseToResponses(responses):
 
 def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw, scaleType):
     def extractFemale(point):
-        pID = responses.getPointIndex(point.getPointName(0))
+        pID = responses.points.getIndex(point.points.getName(0))
         return genderValue[pID] == 1
 
     toSplit = responses.copy()

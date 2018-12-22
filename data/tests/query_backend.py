@@ -221,24 +221,23 @@ class QueryBackend(DataTestObject):
         def excludeAxis(axis):
             if axis == 'point':
                 exclude = self.constructor(data, featureNames=featureNames)
-                getter = 'getPointName'
                 if isinstance(exclude, UML.data.BaseView):
-                    setter = exclude._source.setPointNames
+                    setter = exclude._source.points.setNames
                 else:
-                    setter = exclude.setPointNames
+                    setter = exclude.points.setNames
                 count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
-                getter = 'getFeatureName'
                 if isinstance(exclude, UML.data.BaseView):
-                    setter = exclude._source.setFeatureNames
+                    setter = exclude._source.features.setNames
                 else:
-                    setter = exclude.setFeatureNames
+                    setter = exclude.features.setNames
                 count = len(exclude.features)
 
             # increase the index of the default point name so that it will be
             # recognizable when we read in from the file.
-            while (getDefNameIndex(getattr(exclude, getter)(0)) <= 100):
+            axisExclude = getattr(exclude, axis + 's')
+            while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
                 setter(None)
 
             # call writeFile
@@ -249,15 +248,15 @@ class QueryBackend(DataTestObject):
                 readObj = self.constructor(data=tmpFile.name, featureNames=True)
             else:
                 readObj = self.constructor(data=tmpFile.name, pointNames=True)
-
+            axisRead = getattr(readObj, axis + 's')
             # isIdentical will ignore default names, but we still want to
             # ensure everything else is a match
             assert readObj.isIdentical(exclude)
             assert exclude.isIdentical(readObj)
 
             for i in range(count):
-                origName = getattr(exclude, getter)(i)
-                readName = getattr(readObj, getter)(i)
+                origName = getattr(axisExclude, 'getName')(i)
+                readName = getattr(axisRead, 'getName')(i)
                 assert getDefNameIndex(origName) > 100
                 assert getDefNameIndex(readName) < 10
 
@@ -675,25 +674,24 @@ class QueryBackend(DataTestObject):
                 for j in range(fSize):
                     assert v[i, j] == orig[i + pStart, j + fStart]
 
-            # getPointNames
+            # points.getNames
             # +1 since pEnd inclusive when calling .view, array splices are exclusive
-            assert v.getPointNames() == pnames[pStart:pEnd + 1]
-
-            # getPointIndex, getPointName
+            assert v.points.getNames() == pnames[pStart:pEnd + 1]
+            # points.getIndex, points.getName
             for i in range(pStart, pEnd):
                 origName = pnames[i]
-                assert v.getPointName(i - pStart) == origName
-                assert v.getPointIndex(origName) == i - pStart
+                assert v.points.getName(i - pStart) == origName
+                assert v.points.getIndex(origName) == i - pStart
 
-            # getFeatureNames
+            # features.getName
             # +1 since fEnd inclusive when calling .view, array splices are exclusive
-            assert v.getFeatureNames() == fnames[fStart:fEnd + 1]
+            assert v.features.getNames() == fnames[fStart:fEnd + 1]
 
-            # getFeatureIndex, getFeatureName
+            # features.getIndex, features.getName
             for i in range(fStart, fEnd):
                 origName = fnames[i]
-                assert v.getFeatureName(i - fStart) == origName
-                assert v.getFeatureIndex(origName) == i - fStart
+                assert v.features.getName(i - fStart) == origName
+                assert v.features.getIndex(origName) == i - fStart
 
         for pStart in range(origPLen):
             for pEnd in range(pStart, origPLen):
@@ -1731,9 +1729,9 @@ class QueryBackend(DataTestObject):
         expPossibleFNames = ['samplestd', 'samplestandarddeviation', 'std', 'standarddeviation']
 
         assert expObj.isApproximatelyEqual(ret)
-        assert expObj.getPointNames() == ret.getPointNames()
-        assert len(ret.getFeatureNames()) == 1
-        assert ret.getFeatureNames()[0] in expPossibleFNames
+        assert expObj.points.getNames() == ret.points.getNames()
+        assert len(ret.features.getNames()) == 1
+        assert ret.features.getNames()[0] in expPossibleFNames
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
@@ -1775,9 +1773,9 @@ class QueryBackend(DataTestObject):
         expPossiblePNames = ['populationstd', 'populationstandarddeviation']
 
         assert expObj.isApproximatelyEqual(ret)
-        assert expObj.getPointNames() == ret.getPointNames()
-        assert len(ret.getFeatureNames()) == 1
-        assert ret.getFeatureNames()[0] in expPossiblePNames
+        assert expObj.points.getNames() == ret.points.getNames()
+        assert len(ret.features.getNames()) == 1
+        assert ret.features.getNames()[0] in expPossiblePNames
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
@@ -2193,9 +2191,9 @@ def checkToStringRet(ret, data, includeNames):
             if includeNames:
                 # generate name from indices
                 offset = len(data.points) if negRow else 0
-                fromIndexPname = data.getPointName(offset + rDataIndex)
+                fromIndexPname = data.points.getName(offset + rDataIndex)
                 assert fromIndexPname == pname
 
                 offset = len(data.features) if negCol else 0
-                fromIndexFname = data.getFeatureName(offset + cDataIndex)
+                fromIndexFname = data.features.getName(offset + cDataIndex)
                 assert fromIndexFname == fnames[cDataIndex]

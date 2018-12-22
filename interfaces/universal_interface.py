@@ -1122,7 +1122,7 @@ class TrainedLearner(object):
             scoreOrder = list(scoreOrder)
             # find scores matching predicted labels
             def grabValue(row):
-                pointIndex = scores.getPointIndex(row.getPointName(0))
+                pointIndex = scores.points.getIndex(row.points.getName(0))
                 rowIndex = scoreOrder.index(labels[pointIndex, 0])
                 return row[rowIndex]
 
@@ -1255,7 +1255,7 @@ class TrainedLearner(object):
             desiredDict[label] = i
 
         def sortScorer(feature):
-            index = formatedRawOrder.getFeatureIndex(feature.getFeatureName(0))
+            index = formatedRawOrder.features.getIndex(feature.features.getName(0))
             label = internalOrder[index]
             return desiredDict[label]
 
@@ -1295,10 +1295,10 @@ class TrainedLearners(TrainedLearner):
                 if rawPredictions is None:
                     rawPredictions = oneLabelResults
                     #as it's added to results object, rename each column with its corresponding class label
-                    rawPredictions.setFeatureName(0, str(label))
+                    rawPredictions.features.setName(0, str(label))
                 else:
                     #as it's added to results object, rename each column with its corresponding class label
-                    oneLabelResults.setFeatureName(0, str(label))
+                    oneLabelResults.features.setName(0, str(label))
                     rawPredictions.features.add(oneLabelResults)
 
             if scoreMode.lower() == 'label'.lower():
@@ -1313,7 +1313,7 @@ class TrainedLearners(TrainedLearner):
                 #construct a list of lists, with each row in the list containing the predicted
                 #label and score of that label for the corresponding row in rawPredictions
                 predictionMatrix = rawPredictions.copyAs(format="python list")
-                indexToLabel = rawPredictions.getFeatureNames()
+                indexToLabel = rawPredictions.features.getNames()
                 tempResultsList = []
                 for row in predictionMatrix:
                     bestLabelAndScore = UML.helpers.extractWinningPredictionIndexAndScore(row, indexToLabel)
@@ -1328,7 +1328,7 @@ class TrainedLearners(TrainedLearner):
                 columnHeaders = sorted([str(i) for i in self.labelSet])
                 #create map between label and index in list, so we know where to put each value
                 labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
-                featureNamesItoN = rawPredictions.getFeatureNames()
+                featureNamesItoN = rawPredictions.features.getNames()
                 predictionMatrix = rawPredictions.copyAs(format="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
@@ -1353,13 +1353,13 @@ class TrainedLearners(TrainedLearner):
                 if rawPredictions is None:
                     rawPredictions = partialResults.copyAs(format="List")
                 else:
-                    partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
+                    partialResults.features.setName(0, 'predictions-' + str(predictionFeatureID))
                     rawPredictions.features.add(partialResults.copyAs(format="List"))
                 predictionFeatureID += 1
             #set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
                 ret = rawPredictions.points.calculate(UML.helpers.extractWinningPredictionLabel)
-                ret.setFeatureName(0, "winningLabel")
+                ret.features.setName(0, "winningLabel")
                 return ret
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list containing the predicted

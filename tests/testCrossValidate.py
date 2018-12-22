@@ -144,7 +144,7 @@ def test_crossValidate_reasonable_results():
 
     # ensures nonmodification of X data object when getting Y data
     assert len(X.features) == 4
-    X.setFeatureNames(['X1', 'X2', 'X3', 'Y'])
+    X.features.setNames(['X1', 'X2', 'X3', 'Y'])
     result = crossValidate(regressionAlgo, X, 'Y', meanAbsoluteError, {}, numFolds=5)
     assert len(X.features) == 4
     #assert error essentially zero since there's no noise
@@ -178,7 +178,7 @@ def test_crossValidate_2d_api_check():
     index = len(X.features)
     combined = X.copy()
     combined.features.add(Y)
-    combined.setFeatureNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
+    combined.features.setNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
     result = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
     #assert error essentially zero since there's no noise
     assert isinstance(result, float)

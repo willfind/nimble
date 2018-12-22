@@ -217,7 +217,7 @@ class ReducedLogisticRegression(CustomLearner):
 def sanityCheck(trainX, totalScores):
     assert len(trainX.features) == 84
 
-    for name in trainX.getFeatureNames():
+    for name in trainX.features.getNames():
         assert name[-3:] == "(M)" or name[-3:] == "(F)"
 
     # gotta fix data's __getitem__ so we can just pass python's sum function
@@ -228,14 +228,14 @@ def sanityCheck(trainX, totalScores):
         return total
 
     summed = trainX.points.calculate(summer)
-    summed.setFeatureName(0, "totalScorePosOrNeg")
+    summed.features.setName(0, "totalScorePosOrNeg")
     assert summed == totalScores
 
 def seperateData(dataAll, omitList):
     # grab the features we want to be in the training data; including raw
     # data that we may later choose to omit
     nameOfFirst = "I do not enjoy watching dance performances. (M)"
-    indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
+    indexOfFirst = dataAll.features.getIndex(nameOfFirst)
 
     usedData = dataAll.features.extract(start=indexOfFirst, end=None)
     usedData.features.add(dataAll.features.copy("isMale"))
@@ -267,7 +267,7 @@ def printCoefficientsHR(trainedLearner):
     for i in range(len(coefs)):
         value = coefs[i]
         if value != 0:
-            chosen.append(trainX.getFeatureName(i))
+            chosen.append(trainX.features.getName(i))
             chosenCoefs.append(coefs[i])
 
     # display those questions which were the most useful
@@ -285,7 +285,7 @@ def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
     coefs = []
     paired = []
     for i in range(len(coefsFromLearner)):
-        name = trainX.getFeatureName(i).strip()
+        name = trainX.features.getName(i).strip()
         paired.append((name, coefsFromLearner[i]))
 
     if randomize:
@@ -313,7 +313,7 @@ def saveCoefficients(trainedLearner, names, outPath):
 
 
 def standardizeScoreScale(obj):
-    allNames = obj.getFeatureNames()
+    allNames = obj.features.getNames()
     negScored = []
     for i, name in enumerate(allNames):
         assert name[-1] == ")" and name[-3] == "("
@@ -324,7 +324,7 @@ def standardizeScoreScale(obj):
     # confirm scoring range assumptions
     for f in range(len(obj.features)):
         for p in range(len(obj.points)):
-            fname = obj.getFeatureName(f)
+            fname = obj.features.getName(f)
             if fname[-2] == 'M':
                 assert obj[p,f] >= 0 and obj[p, f] <= 4
             else:
@@ -341,7 +341,7 @@ def standardizeScoreScale(obj):
 
 #   reduced = obj.points.copy(end=20)
 #   reduced = reduced.features.copy([0,1,2,58,59,60])
-#   print reduced.getFeatureNames()
+#   print reduced.features.getNames()
 #   reduced.show('Before')
 
     obj.features.transform(reverseScorePolarity, features=negScored)
@@ -439,7 +439,7 @@ def analysis_removal_comparison(trainX, trainY, testX, testY):
 
     num = 35
 
-    allQsList = trainX.getFeatureNames()
+    allQsList = trainX.features.getNames()
 #   allQs = set(allQsList)
     LVQs = []
     LMQs = []
@@ -581,8 +581,8 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
     coefCorr = coefsObj.featureSimilarities("correlation")
     # BUT THIS IS WIERD since the questions are 'scored' on different
     # scales depending on whether it ends with an (M) or (F)
-    coefCorr.setPointNames([str(val) for val in range(75)])
-    coefCorr.setFeatureNames([str(val) for val in range(75)])
+    coefCorr.points.setNames([str(val) for val in range(75)])
+    coefCorr.features.setNames([str(val) for val in range(75)])
     coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
         includeObjectName=False)
 
@@ -642,7 +642,7 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     print("")
     print(fMeans)
 
-    names = trainX.getFeatureNames()
+    names = trainX.features.getNames()
     zipped = list(zip(mMeans, fMeans, coefs, names))
 
     def r(xxx_todo_changeme):
@@ -1108,7 +1108,7 @@ if __name__ == "__main__":
 
         # grab the feature names associated with the non-zero coefficients
 #       printCoefficientsPythonLists(trainedLearner, trainX, randomize=True)
-#       saveCoefficients(trainedLearner, trainX.getFeatureNames(), coefOutFile)
+#       saveCoefficients(trainedLearner, trainX.features.getNames(), coefOutFile)
 
 
     exit(0)

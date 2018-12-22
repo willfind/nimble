@@ -122,12 +122,12 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                self.data.columns = self.getFeatureNames()
+                self.data.columns = self.features.getNames()
                 if includePointNames:
                     outFile.write('point_names')
 
             if includePointNames:
-                    self.data.index = self.getPointNames()
+                    self.data.index = self.points.getNames()
 
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
 
@@ -149,9 +149,9 @@ class DataFrame(Base):
 
         comment = '#'
         if includePointNames:
-            comment += ','.join(self.getPointNames())
+            comment += ','.join(self.points.getNames())
         if includeFeatureNames:
-            comment += '\n#' + ','.join(self.getFeatureNames())
+            comment += '\n#' + ','.join(self.features.getNames())
         mmwrite(outPath, self.data, comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
@@ -424,7 +424,7 @@ class DataFrame(Base):
 
     def _rsub__implementation(self, other):
         ret = other - self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -541,19 +541,6 @@ class DataFrame(Base):
 
         return self
 
-    def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
-        super(DataFrame, self)._setName_implementation(oldIdentifier, newName, axis, allowDefaults)
-        #update the index or columns in self.data
-        self._updateName(axis)
-
-    def _setNamesFromList(self, assignments, count, axis):
-        super(DataFrame, self)._setNamesFromList(assignments, count, axis)
-        self._updateName(axis)
-
-    def _setNamesFromDict(self, assignments, count, axis):
-        super(DataFrame, self)._setNamesFromDict(assignments, count, axis)
-        self._updateName(axis)
-
     def _updateName(self, axis):
         """
         update self.data.index or self.data.columns
@@ -561,6 +548,6 @@ class DataFrame(Base):
         if axis == 'point':
             self.data.index = list(range(len(self.data.index)))
         else:
-            # self.data.columns = self.getFeatureNames()
+            # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
         #-----------------------------------------------------------------------

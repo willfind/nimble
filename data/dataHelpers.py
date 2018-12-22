@@ -77,15 +77,6 @@ class View(six.with_metaclass(ABCMeta)):
     def name(self):
         pass
 
-    @abstractmethod
-    def getPointName(self, index):
-        pass
-
-    @abstractmethod
-    def getFeatureName(self, index):
-        pass
-
-
 def nextDefaultObjectName():
     global defaultObjectNumber
     ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)
@@ -167,7 +158,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
     (retPNames, retFNames) = (None, None)
 
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
-        retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
+        retPNames = mergeNames(baseSource.points.getNames(), otherSource.points.getNames())
     elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
         retPNames = baseSource.pointNames
     elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
@@ -176,7 +167,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         retPNames = None
 
     if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
-        retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+        retFNames = mergeNames(baseSource.features.getNames(), otherSource.features.getNames())
     elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
         retFNames = baseSource.featureNames
     elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
@@ -208,9 +199,9 @@ def reorderToMatchList(dataObject, matchList, axis):
         mappedOrig[matchList[i]] = i
 
     if axis == 'point':
-        indexGetter = lambda x: dataObject.getPointIndex(x.getPointName(0))
+        indexGetter = lambda x: dataObject.points.getIndex(x.points.getName(0))
     else:
-        indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
+        indexGetter = lambda x: dataObject.features.getIndex(x.features.getName(0))
 
     def scorer(viewObj):
         index = indexGetter(viewObj)
@@ -286,7 +277,7 @@ def hasNonDefault(obj, axis):
     else:
         possibleIndices = range(len(obj.features))
 
-    getter = obj.getPointName if axis == 'point' else obj.getFeatureName
+    getter = obj.points.getName if axis == 'point' else obj.features.getName
 
     ret = False
     for index in possibleIndices:

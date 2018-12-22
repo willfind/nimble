@@ -85,7 +85,7 @@ class KNNClassifier(CustomLearner):
             raise PackageException(msg)
 
         def distanceFrom(point):
-            index = self._trainX.getPointIndex(point.getPointName(0))
+            index = self._trainX.points.getIndex(point.points.getName(0))
             return [index, scipy.spatial.distance.euclidean(test, point)]
 
         distances = self._trainX.points.calculate(distanceFrom)

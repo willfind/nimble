@@ -55,17 +55,17 @@ def back_unary_pfname_preservations(callerCon, op):
     toCall = getattr(caller, op)
     ret = toCall()
 
-    assert ret.getPointNames() == pnames
-    assert ret.getFeatureNames() == fnames
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
 
     # changing the returned value, in case the caller is read-only.
     # We confirm the separation of the name recording either way.
-    ret.setPointName('p1', 'p0')
+    ret.points.setName('p1', 'p0')
 
-    assert 'p1' in caller.getPointNames()
-    assert 'p0' not in caller.getPointNames()
-    assert 'p0' in ret.getPointNames()
-    assert 'p1' not in ret.getPointNames()
+    assert 'p1' in caller.points.getNames()
+    assert 'p0' not in caller.points.getNames()
+    assert 'p0' in ret.points.getNames()
+    assert 'p1' not in ret.points.getNames()
 
 
 def back_unary_NamePath_preservations(callerCon, op):
@@ -100,21 +100,21 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             toCall = getattr(caller, op)
             ret = toCall(num)
 
-            assert ret.getPointNames() == pnames
-            assert ret.getFeatureNames() == fnames
+            assert ret.points.getNames() == pnames
+            assert ret.features.getNames() == fnames
 
-            caller.setPointName('p1', 'p0')
+            caller.points.setName('p1', 'p0')
             if inplace:
-                assert 'p0' in ret.getPointNames()
-                assert 'p1' not in ret.getPointNames()
+                assert 'p0' in ret.points.getNames()
+                assert 'p1' not in ret.points.getNames()
             else:
-                assert 'p0' not in ret.getPointNames()
-                assert 'p1' in ret.getPointNames()
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+                assert 'p0' not in ret.points.getNames()
+                assert 'p1' in ret.points.getNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         except AssertionError:
             einfo = sys.exc_info()
-            six.reraise(einfo[1], None, einfo[2])
+            six.reraise(*einfo)
         #		except ArgumentException:
         #			einfo = sys.exc_info()
         #			raise einfo[1], None, einfo[2]
@@ -177,8 +177,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, fnames)
@@ -187,21 +187,21 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
         if inplace:
-            caller.setPointName('p1', 'p0')
-            assert 'p0' in ret.getPointNames()
-            assert 'p1' not in ret.getPointNames()
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+            caller.points.setName('p1', 'p0')
+            assert 'p0' in ret.points.getNames()
+            assert 'p1' not in ret.points.getNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         else:
-            ret.setPointName('p1', 'p0')
-            assert 'p0' not in caller.getPointNames()
-            assert 'p1' in caller.getPointNames()
-            assert 'p0' in ret.getPointNames()
-            assert 'p1' not in ret.getPointNames()
+            ret.points.setName('p1', 'p0')
+            assert 'p0' not in caller.points.getNames()
+            assert 'p1' in caller.points.getNames()
+            assert 'p0' in ret.points.getNames()
+            assert 'p1' not in ret.points.getNames()
 
 
 def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
@@ -362,8 +362,8 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, pnames)
@@ -374,19 +374,19 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
         # check name seperation between caller and returned object
-        ret.setPointName('p1', 'p0')
+        ret.points.setName('p1', 'p0')
         if inplace:
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         else:
-            assert 'p0' not in caller.getPointNames()
-            assert 'p1' in caller.getPointNames()
-        assert 'p0' in ret.getPointNames()
-        assert 'p1' not in ret.getPointNames()
+            assert 'p0' not in caller.points.getNames()
+            assert 'p1' in caller.points.getNames()
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
 
 
 def back_otherObjectExceptions(callerCon, attr1, attr2=None):
@@ -1386,8 +1386,8 @@ class NumericalModifying(DataTestObject):
         ret = toCall(other)
 
         assert ret is None
-        assert caller.getPointNames() == pnames
-        assert caller.getFeatureNames() == fnames
+        assert caller.points.getNames() == pnames
+        assert caller.features.getNames() == fnames
 
         # both names same
         caller = self.constructor(data, pnames, fnames)
@@ -1395,8 +1395,8 @@ class NumericalModifying(DataTestObject):
         toCall = getattr(getattr(caller, 'elements'), 'multiply')
         ret = toCall(other)
 
-        assert caller.getPointNames() == pnames
-        assert caller.getFeatureNames() == fnames
+        assert caller.points.getNames() == pnames
+        assert caller.features.getNames() == fnames
 
     def test_elementwiseMultipy_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'multiply')
@@ -1663,7 +1663,7 @@ class NumericalModifying(DataTestObject):
 
     def test_ipow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
-    
+
 
 class AllNumerical(NumericalDataSafe, NumericalModifying):
     pass

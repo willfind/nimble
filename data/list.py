@@ -193,7 +193,7 @@ class List(Base):
             def combine(a, b):
                 return a + ',' + b
 
-            fnames = self.getFeatureNames()
+            fnames = self.features.getNames()
             fnamesLine = reduce(combine, fnames)
             fnamesLine += '\n'
             if includePointNames:
@@ -202,7 +202,7 @@ class List(Base):
             outFile.write(fnamesLine)
 
         for point in self.points:
-            currPname = point.getPointName(0)
+            currPname = point.points.getName(0)
             first = True
             if includePointNames:
                 outFile.write(currPname)
@@ -235,11 +235,11 @@ class List(Base):
             outFile.write('\n')
 
         if includePointNames:
-            writeNames(self.getPointNames())
+            writeNames(self.points.getNames())
         else:
             outFile.write('%#\n')
         if includeFeatureNames:
-            writeNames(self.getFeatureNames())
+            writeNames(self.features.getNames())
         else:
             outFile.write('%#\n')
 
@@ -376,11 +376,11 @@ class List(Base):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
                 if self._pointNamesCreated():
-                    pNames = self.getPointNames()
+                    pNames = self.points.getNames()
                 else:
                     pNames = False
                 if self._featureNamesCreated():
-                    fNames = self.getFeatureNames()
+                    fNames = self.features.getNames()
                 else:
                     fNames = False
 
@@ -618,6 +618,6 @@ class List(Base):
         convert slef.data to a numpy matrix
         """
         if len(self.data) == 0:# in case, self.data is []
-            return numpy.matrix(numpy.empty([len(self.getPointNames()), len(self.getFeatureNames())]))
+            return numpy.matrix(numpy.empty([len(self.points.getNames()), len(self.features.getNames())]))
 
         return numpy.matrix(self.data)

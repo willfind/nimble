@@ -142,11 +142,11 @@ class StructureShared(DataTestObject):
         if axis == 'point':
             toCall = 'points'
             def selTwo(p):
-                return p.getPointName(0) in pointNames[:2]
+                return p.points.getName(0) in pointNames[:2]
         else:
             toCall = 'features'
             def selTwo(f):
-                return f.getFeatureName(0) in featureNames[:2]
+                return f.features.getName(0) in featureNames[:2]
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
@@ -340,10 +340,10 @@ class StructureDataSafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.setFeatureName('two', '2')
-        copySparse.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
+        copySparse.features.setName('two', '2')
+        copySparse.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
         copySparse.points.sort(sortHelper=pointsShuffleIndices)
         copySparse.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
@@ -352,10 +352,10 @@ class StructureDataSafe(StructureShared):
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.setFeatureName('two', '2')
-        copyList.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
+        copyList.features.setName('two', '2')
+        copyList.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
         copyList.points.sort(sortHelper=pointsShuffleIndices)
         copyList.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
@@ -364,10 +364,10 @@ class StructureDataSafe(StructureShared):
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.setFeatureName('two', '2')
-        copyMatrix.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
+        copyMatrix.features.setName('two', '2')
+        copyMatrix.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
         copyMatrix.points.sort(sortHelper=pointsShuffleIndices)
         copyMatrix.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
@@ -376,10 +376,10 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.setFeatureName('two', '2')
-        copyDataFrame.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
+        copyDataFrame.features.setName('two', '2')
+        copyDataFrame.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
         copyDataFrame.points.sort(sortHelper=pointsShuffleIndices)
         copyDataFrame.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
@@ -669,7 +669,7 @@ class StructureDataSafe(StructureShared):
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in copyIndices:
+            if int(point.points.getName(0)) in copyIndices:
                 return True
             else:
                 return False
@@ -1468,7 +1468,7 @@ class StructureDataSafe(StructureShared):
         copyIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in copyIndices:
+            if int(feature.features.getName(0)) in copyIndices:
                 return True
             else:
                 return False
@@ -2058,9 +2058,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
-        orig3.features.sort(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig10.features.sort(sortBy=orig10.getPointName(0))
+        orig10.features.sort(sortBy=orig10.points.getName(0))
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         if pd:
@@ -2090,9 +2090,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, elementType=object)
-        orig3.features.sort(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.features.sort(sortBy=orig7.getPointName(0))
+        orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         if pd:
@@ -2361,18 +2361,18 @@ class StructureModifying(StructureShared):
         dataObjT = self.constructor(deepcopy(dataTrans), pointNames=transPointNames,
                                                          featureNames=transFeatureNames)
         dataObj1.transpose()
-        assert dataObj1.getPointNames() == transPointNames
-        assert dataObj1.getFeatureNames() == transFeatureNames
+        assert dataObj1.points.getNames() == transPointNames
+        assert dataObj1.features.getNames() == transFeatureNames
         assert dataObj1.isIdentical(dataObjT)
 
         dataObj1.transpose()
         dataObjT.transpose()
-        assert dataObj1.getPointNames() == dataObj2.getPointNames()
-        assert dataObj1.getFeatureNames() == dataObj2.getFeatureNames()
+        assert dataObj1.points.getNames() == dataObj2.points.getNames()
+        assert dataObj1.features.getNames() == dataObj2.features.getNames()
         assert dataObj1.isIdentical(dataObj2)
 
-        assert dataObj2.getPointNames() == dataObjT.getPointNames()
-        assert dataObj2.getFeatureNames() == dataObjT.getFeatureNames()
+        assert dataObj2.points.getNames() == dataObjT.points.getNames()
+        assert dataObj2.features.getNames() == dataObjT.features.getNames()
         assert dataObj2.isIdentical(dataObjT)
 
     def test_transpose_NamePath_preservation(self):
@@ -2503,10 +2503,10 @@ class StructureModifying(StructureShared):
         toTest1 = self.constructor([[1, 2, 3]])
         toTest2 = self.constructor([[1, 3, 2]])
 
-        toTest1.setFeatureName(1, '2')
-        toTest1.setFeatureName(2, '3')
-        toTest2.setFeatureName(1, '3')
-        toTest2.setFeatureName(2, '2')
+        toTest1.features.setName(1, '2')
+        toTest1.features.setName(2, '3')
+        toTest2.features.setName(1, '3')
+        toTest2.features.setName(2, '2')
 
         if axis == 'point':
             toTest1.points.add(toTest2)
@@ -2710,8 +2710,8 @@ class StructureModifying(StructureShared):
         dup = orig.copy()
 
         if axis == 'point':
-            dupNames = dup.getPointNames()
-            assert orig.getPointNames() == dupNames
+            dupNames = dup.points.getNames()
+            assert orig.points.getNames() == dupNames
 
             orig.points.add(orig, insertBefore)
 
@@ -2721,8 +2721,8 @@ class StructureModifying(StructureShared):
                 dataExp = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [7, 8, 9], [4, 5, 6], [7, 8, 9]]
             expected = self.constructor(dataExp, featureNames=names)
         else:
-            dupNames = dup.getFeatureNames()
-            assert orig.getFeatureNames() == dupNames
+            dupNames = dup.features.getNames()
+            assert orig.features.getNames() == dupNames
 
             orig.features.add(orig, insertBefore)
 
@@ -2734,7 +2734,7 @@ class StructureModifying(StructureShared):
 
         assert orig == expected
 
-        checkNames = orig.getPointNames() if axis == 'point' else orig.getFeatureNames()
+        checkNames = orig.points.getNames() if axis == 'point' else orig.features.getNames()
         lastDefIndex = int(dupNames[2][-1])
         if insertBefore is None:
             assert checkNames[:3] == dupNames
@@ -2816,7 +2816,6 @@ class StructureModifying(StructureShared):
             expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
             toTest.features.add(toInsert, insertBefore)
-
         # check that toInsert object was not modified when reordering occurred
         assert toInsert.isIdentical(expInsert)
         assert toTest.isIdentical(expected)
@@ -2895,9 +2894,9 @@ class StructureModifying(StructureShared):
         if axis == 'point':
             insertData = [[-1, -2, -3]]
             # assign names to be the reverse of toTest's default names
-            fNames = list(reversed(toTest.getFeatureNames()))
+            fNames = list(reversed(toTest.features.getNames()))
             toInsert = self.constructor(insertData, featureNames=fNames)
-            assert toTest.getFeatureNames() != toInsert.getFeatureNames()
+            assert toTest.features.getNames() != toInsert.features.getNames()
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
             toTest.points.add(toInsert)
@@ -2905,9 +2904,9 @@ class StructureModifying(StructureShared):
         else:
             insertData = [[-1], [-2], [-3]]
             # assign names to be the reverse of toTest's default names
-            pNames = list(reversed(toTest.getPointNames()))
+            pNames = list(reversed(toTest.points.getNames()))
             toInsert = self.constructor(insertData, pointNames=pNames)
-            assert toTest.getPointNames() != toInsert.getPointNames()
+            assert toTest.points.getNames() != toInsert.points.getNames()
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
             toTest.features.add(toInsert)
@@ -3423,7 +3422,7 @@ class StructureModifying(StructureShared):
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in extractIndices:
+            if int(point.points.getName(0)) in extractIndices:
                 return True
             else:
                 return False
@@ -3885,8 +3884,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.anyMissing)
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([[None, 11, None], [7, 11, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3894,8 +3893,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.allMissing)
         expTest = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
         expRet = self.constructor([[None, None, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3904,8 +3903,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.anyNonNumeric)
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3913,8 +3912,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.allNonNumeric)
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
         expRet = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3923,8 +3922,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3932,8 +3931,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
         expRet = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3942,8 +3941,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([[-1, 11, -3], [7, 11, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3951,8 +3950,8 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
         expRet = self.constructor([[-1, -2, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4243,7 +4242,7 @@ class StructureModifying(StructureShared):
         extractIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in extractIndices:
+            if int(feature.features.getName(0)) in extractIndices:
                 return True
             else:
                 return False
@@ -4696,8 +4695,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.anyMissing)
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4705,8 +4704,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.allMissing)
         expTest = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
         expRet = self.constructor([[None], [None], [None], [None]])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4715,8 +4714,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.anyNonNumeric)
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4724,8 +4723,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.allNonNumeric)
         expTest = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4734,8 +4733,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4743,8 +4742,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4753,8 +4752,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4762,8 +4761,8 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
         expRet = self.constructor([[-3], [-3], [-3], [-3]])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -4854,7 +4853,7 @@ class StructureModifying(StructureShared):
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in deleteIndices:
+            if int(point.points.getName(0)) in deleteIndices:
                 return True
             else:
                 return False
@@ -5232,52 +5231,52 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.anyMissing)
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.allMissing)
         exp = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
     def test_points_delete_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.anyNonNumeric)
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.allNonNumeric)
         exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
     def test_points_delete_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.anyValues(['a', 'c', 'x']))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.allValues(['a', 'c', 'x']))
         exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
     def test_points_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.anyValues(lambda x: x < 0))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.points.delete(match.allValues(lambda x: x < 0))
         exp = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
     #########################
@@ -5522,7 +5521,7 @@ class StructureModifying(StructureShared):
         deleteIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in deleteIndices:
+            if int(feature.features.getName(0)) in deleteIndices:
                 return True
             else:
                 return False
@@ -5899,52 +5898,52 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.anyMissing)
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.allMissing)
         exp = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
     def test_features_delete_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.anyNonNumeric)
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.allNonNumeric)
         exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
     def test_features_delete_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.anyValues(['a', 'c', 'x']))
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.allValues(['a', 'c', 'x']))
         exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
     def test_features_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.anyValues(lambda x: x < 0))
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
         toTest.features.delete(match.allValues(lambda x: x < 0))
         exp = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
     #################
@@ -6062,7 +6061,7 @@ class StructureModifying(StructureShared):
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in retainIndices:
+            if int(point.points.getName(0)) in retainIndices:
                 return True
             else:
                 return False
@@ -6457,52 +6456,52 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.anyMissing)
         expTest = self.constructor([[None, 11, None], [7, 11, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.allMissing)
         expTest = self.constructor([[None, None, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
     def test_points_retain_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.anyNonNumeric)
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.allNonNumeric)
         expTest = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
     def test_points_retain_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
     def test_points_retain_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[-1, 11, -3], [7, 11, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[-1, -2, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
     #########################
@@ -6769,7 +6768,7 @@ class StructureModifying(StructureShared):
         retainIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in retainIndices:
+            if int(feature.features.getName(0)) in retainIndices:
                 return True
             else:
                 return False
@@ -7187,8 +7186,8 @@ class StructureModifying(StructureShared):
         ret = orig.referenceDataFrom(other)  # RET CHECK
 
         assert orig.data is other.data
-        assert '-1' in orig.getPointNames()
-        assert '1' in orig.getFeatureNames()
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
         assert ret is None
 
     def test_referenceDataFrom_ObjName_Paths(self):
@@ -7244,52 +7243,52 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         toTest.features.retain(match.anyMissing)
         expTest = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.allMissing)
         expTest = self.constructor([[None], [None], [None], [None]])
-        expTest.setFeatureNames(['c'])
+        expTest.features.setNames(['c'])
         assert toTest == expTest
 
     def test_features_retain_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.anyNonNumeric)
         expTest = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.allNonNumeric)
         expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['c'])
+        expTest.features.setNames(['c'])
         assert toTest == expTest
 
     def test_features_retain_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['c'])
+        expTest.features.setNames(['c'])
         assert toTest == expTest
 
     def test_features_retain_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
         ret = toTest.features.retain(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[-3], [-3], [-3], [-3]])
-        expTest.setFeatureNames(['c'])
+        expTest.features.setNames(['c'])
         assert toTest == expTest
 
     ######################
@@ -7310,7 +7309,7 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         origObj.points.transform(emitLower)
 
@@ -7321,7 +7320,7 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         origObj.points.transform(emitLower)
 
@@ -7339,7 +7338,7 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[origObj.getFeatureIndex('deci')]
+            value = point[origObj.features.getIndex('deci')]
             return [value, value, value]
 
         lowerCounts = origObj.points.transform(emitAllDeci)  # RET CHECK
@@ -7357,7 +7356,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[toTest.getFeatureIndex('deci')]
+            value = point[toTest.features.getIndex('deci')]
             return [value, value, value]
 
         toTest._name = "TestName"
@@ -7377,7 +7376,7 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[origObj.getFeatureIndex('deci')]
+            value = point[origObj.features.getIndex('deci')]
             return [value, value, value]
 
         origObj.points.transform(emitAllDeci, points=[3, 'two'])
@@ -7847,28 +7846,28 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(val, "hello", 0, 1, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, "Wrong", 1, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 2, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 1, -12)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
@@ -8092,9 +8091,9 @@ class StructureModifying(StructureShared):
         assert testObj == expObj
 
         # default names are ignored by ==, so we explicitly check them in this test
-        keptAxisNames = copyObj.getFeatureNames() if axis == 'point' else copyObj.getPointNames()
-        discardAxisNames = copyObj.getPointNames() if axis == 'point' else copyObj.getFeatureNames()
-        check = testObj.getFeatureNames() if axis == 'point' else testObj.getPointNames()
+        keptAxisNames = copyObj.features.getNames() if axis == 'point' else copyObj.points.getNames()
+        discardAxisNames = copyObj.points.getNames() if axis == 'point' else copyObj.features.getNames()
+        check = testObj.features.getNames() if axis == 'point' else testObj.points.getNames()
 
         for i, name in enumerate(check):
             splitName = name.split(' | ')
@@ -8195,9 +8194,9 @@ class StructureModifying(StructureShared):
         # single non-default name, unflattened axis
         testObj = self.constructor(data)
         if axis == 'point':
-            testObj.setFeatureName(1, "non-default")
+            testObj.features.setName(1, "non-default")
         else:
-            testObj.setPointName(2, "non-default")
+            testObj.points.setName(2, "non-default")
         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
     # exception: unflattening would destroy an axis name
@@ -8218,9 +8217,9 @@ class StructureModifying(StructureShared):
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
         if axis == 'point':
-            testObj.setFeatureName(1, None)
+            testObj.features.setName(1, None)
         else:
-            testObj.setPointName(1, None)
+            testObj.points.setName(1, None)
         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # unflattened axis, inconsistent along original unflattened axis
@@ -8293,8 +8292,8 @@ class StructureModifying(StructureShared):
             assert n.startswith(DEFAULT_PREFIX)
             assert int(n[len(DEFAULT_PREFIX):]) >= 0
 
-        list(map(checkName, toTest.getPointNames()))
-        list(map(checkName, toTest.getFeatureNames()))
+        list(map(checkName, toTest.points.getNames()))
+        list(map(checkName, toTest.features.getNames()))
 
 
     # random round trip

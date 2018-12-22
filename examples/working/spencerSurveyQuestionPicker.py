@@ -83,7 +83,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         #get the training and testing data for this label
         trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting, labels=labelFeatureNum)
 
-        assert not(featureToPredict in trainX.getFeatureNames())
+        assert not(featureToPredict in trainX.features.getNames())
         trainXs.append(trainX)
         trainYs.append(trainY)
         testXs.append(testX)
@@ -108,8 +108,8 @@ def testBuildTrainingAndTestingSetsForPredictions():
     assert(len(trainXs)) == 2
     assert len(trainXs[0].features) == 4
     assert len(trainXs[1].features) == 4
-    assert trainXs[0].getFeatureNames() == ["x1","x2","x3","x4"]
-    assert trainXs[1].getFeatureNames() == ["x1","x2","x3","x4"]
+    assert trainXs[0].features.getNames() == ["x1","x2","x3","x4"]
+    assert trainXs[1].features.getNames() == ["x1","x2","x3","x4"]
     assert len(trainXs[0].points) == 2
     assert len(testXs[0].points) == 1
     assert len(trainXs[1].points) == 4
@@ -214,7 +214,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 if mode == "remove features":
                     trainXWithoutFeature.features.extract(featureNumToDrop)
                 elif mode == "add features":
-                    featureNameToDrop = origTrainXs[labelNum].getFeatureName(featureNumToDrop)
+                    featureNameToDrop = origTrainXs[labelNum].features.getName(featureNumToDrop)
                     #if we've already added this feature, skip it
                     if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue 
                     #print "trainXWithoutFeature", trainXWithoutFeature
@@ -242,14 +242,14 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 else:
                     raise Exception("Don't know how to set parameters for algorithm: " + str(algorithmName))
 
-                if numpy.isnan(error): raise Exception("Found nan error for " + str(algorithmName) + " when dropping feature " + featureNumberToDrop + " called " + origTrainXs[0].getFeatureName(featureNumberToDrop))
+                if numpy.isnan(error): raise Exception("Found nan error for " + str(algorithmName) + " when dropping feature " + featureNumberToDrop + " called " + origTrainXs[0].features.getName(featureNumberToDrop))
                 errorsForThisFeatureDrop.append(error)
 
             #if this is not a feature we're already done with
             if len(errorsForThisFeatureDrop) > 0: 
-                #raise Exception("There were no errors recorded!" + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].getFeatureName(featureNumToDrop))
+                #raise Exception("There were no errors recorded!" + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].features.getName(featureNumToDrop))
                 combinedErrorForFeatureDrop = numpy.mean(errorsForThisFeatureDrop)
-                if numpy.isnan(combinedErrorForFeatureDrop): raise Exception("nan error value from: " + str(errorsForThisFeatureDrop) + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].getFeatureName(featureNumToDrop))
+                if numpy.isnan(combinedErrorForFeatureDrop): raise Exception("nan error value from: " + str(errorsForThisFeatureDrop) + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].features.getName(featureNumToDrop))
                 errorForEachFeatureDropped.append((combinedErrorForFeatureDrop, featureNumToDrop))
 
 
@@ -260,14 +260,14 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         print("errorForEachFeatureDropped", errorForEachFeatureDropped)
         print("training set error after dropped", mostUselessFeatureErrorInSample)
         mostUselessFeatureNum = errorForEachFeatureDropped[-1][1]
-        #print "\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3))
+        #print "\nRemoving feature " + str(trainX.features.getNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3))
         for labelNum, trainX, testX in zip(list(range(len(trainXs))), trainXs, testXs):
             if mode == "remove features":
-                mostUselessFeatureName = trainX.getFeatureName(mostUselessFeatureNum)
+                mostUselessFeatureName = trainX.features.getName(mostUselessFeatureNum)
                 trainX.features.extract(mostUselessFeatureNum)
                 testX.features.extract(mostUselessFeatureNum)
             elif mode == "add features":
-                mostUselessFeatureName = origTrainXs[labelNum].getFeatureName(mostUselessFeatureNum)
+                mostUselessFeatureName = origTrainXs[labelNum].features.getName(mostUselessFeatureNum)
                 trainX.features.add(origTrainXs[labelNum].features.copy(mostUselessFeatureNum))
                 testX.features.add(origTestXs[labelNum].features.copy(mostUselessFeatureNum))
                 namesUsedForEachLabel[labelNum].add(mostUselessFeatureName)
@@ -277,7 +277,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         droppedFeatureErrorsListOutSample.append(mostUselessFeatureErrorOutSample)
         ###for printing to the screen
         if verbose:
-            curFeatureNames = trainX.getFeatureNames()
+            curFeatureNames = trainX.features.getNames()
             print("dropped feature: " + str(mostUselessFeatureName))
             print("features: " + str(curFeatureNames))
             print("parameters: " + str(outSampleParamsHash))
@@ -347,7 +347,7 @@ def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     trainXs, trainYs, testXs, testYs = reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, mode=mode, numFeaturesToKeep=numFeaturesToKeep, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict, plot=plot, verbose=verbose)
     errorsHash, parametersHash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict)
 
-    bestFeatures = trainXs[0].getFeatureNames()
+    bestFeatures = trainXs[0].features.getNames()
     return bestFeatures, errorsHash, parametersHash
 
 

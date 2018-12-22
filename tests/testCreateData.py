@@ -482,17 +482,17 @@ def test_automaticByType_fnames_rawAndCSV():
         # example which triggers automatic removal
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert correct.getFeatureNames() == ['fname0','fname1','fname2']
+        assert correct.features.getNames() == ['fname0','fname1','fname2']
 
         # example where first line contains a non-string interpretable value
         nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
         fail1 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail1.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail1.features.getNames()))
 
         # example where the first line contains all strings, but second line also contains strings
         sameTypeFail2Raw = "fname0,fname1,fname2\n1,data2,3"
         fail2 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail2.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail2.features.getNames()))
 
 
 def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
@@ -501,17 +501,17 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
         # example where user provided False overides automatic detection
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         overide1 = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1.features.getNames()))
 
         # example where user provided True extracts non-detectable first line
         nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
         overide2 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames=True)
-        assert overide2.getFeatureNames() == ['fname0', '1.0', 'fname2']
+        assert overide2.features.getNames() == ['fname0', '1.0', 'fname2']
 
         # example where user provided True extracts non-detectable first line
         sameTypeFail2Raw = "fname0,fname1,fname2\ndata1,data2,data3"
         overide3 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames=True)
-        assert overide3.getFeatureNames() == ['fname0', 'fname1', 'fname2']
+        assert overide3.features.getNames() == ['fname0', 'fname1', 'fname2']
 
 
 def test_automaticByType_pname_interaction_with_fname():
@@ -526,38 +526,38 @@ def test_automaticByType_pname_interaction_with_fname():
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
-        assert testObj.getPointNames() == ['pname0']
+        assert testObj.features.getNames() == ['fname0','fname1','fname2']
+        assert testObj.points.getNames() == ['pname0']
 
         # pnames auto triggereed with explicit fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=True)
-        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
-        assert testObj.getPointNames() == ['pname0']
+        assert testObj.features.getNames() == ['fname0','fname1','fname2']
+        assert testObj.points.getNames() == ['pname0']
 
         #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE1
         raw = "point_names,fname0,1.0,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
         #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE2
         raw = "point_names,fname0,fname1,fname2\npname0,data1,data2,data3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
         #pnames not triggered given 'point_names' at [0,0] when fnames explicit False
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
         #pnames explicit False given 'point_names' at [0,0] and fname auto extraction
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
-        assert testObj.getFeatureNames() == ['point_names', 'fname0', 'fname1', 'fname2']
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+        assert testObj.features.getNames() == ['point_names', 'fname0', 'fname1', 'fname2']
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
 
 def test_namesInComment_MTXArr():
@@ -1382,11 +1382,11 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
                     for i in range(len(pSel)):
-                        pSelUse[i] = ret.getPointName(i)
+                        pSelUse[i] = ret.points.getName(i)
 
                 if fSel != 'all':
                     for i in range(len(fSel)):
-                        fSelUse[i] = ret.getFeatureName(i)
+                        fSelUse[i] = ret.features.getName(i)
 
                 retN = UML.createData(
                     t, tmpF.name, keepPoints=pSelUse,
@@ -1427,11 +1427,11 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
                     for i in range(len(pSel)):
-                        pSelUse[i] = ret.getPointName(i)
+                        pSelUse[i] = ret.points.getName(i)
 
                 if fSel != 'all':
                     for i in range(len(fSel)):
-                        fSelUse[i] = ret.getFeatureName(i)
+                        fSelUse[i] = ret.features.getName(i)
 
                 retN = UML.createData(
                     t, tmpF.name, keepPoints=pSelUse,
@@ -1472,11 +1472,11 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
                     for i in range(len(pSel)):
-                        pSelUse[i] = ret.getPointName(i)
+                        pSelUse[i] = ret.points.getName(i)
 
                 if fSel != 'all':
                     for i in range(len(fSel)):
-                        fSelUse[i] = ret.getFeatureName(i)
+                        fSelUse[i] = ret.features.getName(i)
 
                 retN = UML.createData(
                     t, tmpF.name, keepPoints=pSelUse,
@@ -2111,9 +2111,9 @@ def test_DataOutputWithMissingDataTypes1D():
         orig1 = UML.createData(t, [1,2,"None"])
         orig2 = UML.createData(t, (1,2,"None"))
         orig3 = UML.createData(t, {'a':1, 'b':2, 'c':"None"})
-        orig3.features.sort(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig10 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
-        orig10.features.sort(sortBy=orig10.getPointName(0))
+        orig10.features.sort(sortBy=orig10.points.getName(0))
         orig4 = UML.createData(t, numpy.array([1,2,"None"]))
         orig5 = UML.createData(t, numpy.matrix([1,2,"None"]))
         if pd:
@@ -2152,9 +2152,9 @@ def test_DataOutputWithMissingDataTypes2D():
         orig1 = UML.createData(t, [[1,2,'None'], [3,4,'b']])
         orig2 = UML.createData(t, ((1,2,'None'), (3,4,'b')))
         orig3 = UML.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
-        orig3.features.sort(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig7 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.features.sort(sortBy=orig7.getPointName(0))
+        orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig5 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:

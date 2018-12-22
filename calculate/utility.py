@@ -235,7 +235,7 @@ def _generatePredicted(knowns, predictionType):
 
     """
     workingCopy = knowns.copy()
-    workingCopy.setFeatureName(0, 'PredictedClassLabel')
+    workingCopy.features.setName(0, 'PredictedClassLabel')
     # Labels
     if predictionType == 0:
         return workingCopy

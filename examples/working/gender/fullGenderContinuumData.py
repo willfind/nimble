@@ -140,10 +140,10 @@ def removeDemographics(obj):
 
     """
     removed = obj.features.extract(start=3, end=20)
-    print(removed.getFeatureNames())
+    print(removed.features.getNames())
 
     removed = obj.features.extract(end=1)
-    print(removed.getFeatureNames())
+    print(removed.features.getNames())
 
 def replaceNAs(obj):
     """
@@ -211,7 +211,7 @@ def batchCreateFromOrigFile(name):
     for index, obj in enumerate(batches):
         if index > 0:
             trainY.points.add(obj.features.extract(0))
-        assert "gender" not in obj.getFeatureNames()
+        assert "gender" not in obj.features.getNames()
         replaceNAs(obj)
         batches[index] = obj.copyAs("List")
 
@@ -237,7 +237,7 @@ def batchCreateFromOrigFile(name):
     makeGenderIntegers(trainY)
     trainY = trainY.copyAs("List")
     print("transformed trainY to integers")
-    print(trainY.getFeatureNames())
+    print(trainY.features.getNames())
 
     dataAll.features.add(trainY)
 
@@ -271,7 +271,7 @@ def featNormalize_stdScore_applyTo(train, test):
 
     def fnLookup(feat):
         workspace = numpy.array(feat)
-        index = test.getFeatureIndex(feat.getFeatureName(0))
+        index = test.features.getIndex(feat.features.getName(0))
         (mn,std) = vals[index]
 
         return (workspace - mn) / std
@@ -296,7 +296,7 @@ def featNormalize_stdScoreMissing_applyTo(train, test):
 
 #   def fnLookup(feat):
 #       workspace = numpy.array(feat)
-#       index = test.getFeatureIndex(feat.getFeatureName(0))
+#       index = test.features.getIndex(feat.features.getName(0))
 #       (mn,std) = vals[index]
 
 #       return (workspace - mn) / std
@@ -394,7 +394,7 @@ def writeOutCoefficientsAndNames(trainedLearner, trialType):
     if len(coefsObj.points) == 1:
         coefsObj.transpose()
 
-    namesObj = UML.createData("List", [trainX.getFeatureNames()])
+    namesObj = UML.createData("List", [trainX.features.getNames()])
 
     namesObj.features.add(coefsObj)
 
@@ -421,7 +421,7 @@ def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
     nzObj = dataObj.points.calculate(countNZ)
 
     def removeLessThan50(point):
-        index = dataObj.getPointIndex(point.getPointName(0))
+        index = dataObj.points.getIndex(point.points.getName(0))
         i = int(index)
         if nzObj[i] < 50:
             return True

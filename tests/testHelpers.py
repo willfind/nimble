@@ -470,7 +470,7 @@ def testtrainAndApplyOneVsOne():
     assert results2.data[2][0] == 3.0
     assert results2.data[2][1] == 2
 
-    results3FeatureMap = results3.getFeatureNames()
+    results3FeatureMap = results3.features.getNames()
     for i in range(len(results3.data)):
         row = results3.data[i]
         for j in range(len(row)):

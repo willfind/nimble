@@ -81,7 +81,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting,
                                                                            labels=labelFeatureNum)
 
-        assert not (featureToPredict in trainX.getFeatureNames())
+        assert not (featureToPredict in trainX.features.getNames())
         trainXs.append(trainX)
         trainYs.append(trainY)
         testXs.append(testX)
@@ -109,8 +109,8 @@ def testBuildTrainingAndTestingSetsForPredictions():
     assert (len(trainXs)) == 2
     assert len(trainXs[0].features) == 4
     assert len(trainXs[1].features) == 4
-    assert trainXs[0].getFeatureNames() == ["x1", "x2", "x3", "x4"]
-    assert trainXs[1].getFeatureNames() == ["x1", "x2", "x3", "x4"]
+    assert trainXs[0].features.getNames() == ["x1", "x2", "x3", "x4"]
+    assert trainXs[1].features.getNames() == ["x1", "x2", "x3", "x4"]
     assert len(trainXs[0].points) == 2
     assert len(testXs[0].points) == 1
     assert len(trainXs[1].points) == 4
@@ -173,7 +173,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
 
         #try dropping each feature one by one
         for featureNumToDrop in range(len(trainXs[0].features)):
-            #sys.stdout.write(" " + str(trainXs[0].getFeatureNames()[featureNumToDrop]))
+            #sys.stdout.write(" " + str(trainXs[0].features.getNames()[featureNumToDrop]))
             errorsForThisFeatureDrop = []
             #for each label we're predicting
             for labelNum, trainX, trainY in zip(list(range(len(trainXs))), trainXs, trainYs):
@@ -207,7 +207,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         droppedFeatureErrorsListInSample.append(mostUselessFeatureErrorInSample)
         mostUselessFeatureNum = errorForEachFeatureDropped[-1][1]
 
-        # print("\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3)))
+        # print("\nRemoving feature " + str(trainX.features.getNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3)))
         for trainX, testX in zip(trainXs, testXs):
             trainX.features.extract(mostUselessFeatureNum)
             testX.features.extract(mostUselessFeatureNum)
@@ -284,7 +284,7 @@ def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                                                      predictionAlgorithms=predictionAlgorithms,
                                                      featuresToPredict=featuresToPredict)
 
-    bestFeatures = trainXs[0].getFeatureNames()
+    bestFeatures = trainXs[0].features.getNames()
     return bestFeatures, errorsHash, parametersHash
 
 

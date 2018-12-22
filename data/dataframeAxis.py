@@ -34,6 +34,29 @@ class DataFrameAxis(Axis):
         kwds['source'] = self.source
         super(DataFrameAxis, self).__init__(**kwds)
 
+    def _setName_implementation(self, oldIdentifier, newName):
+        super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
+                                                           newName)
+        #update the index or columns in self.data
+        self._updateName()
+
+    def _setNamesFromList(self, assignments, count):
+        super(DataFrameAxis, self)._setNamesFromList(assignments, count)
+        self._updateName()
+
+    def _setNamesFromDict(self, assignments, count):
+        super(DataFrameAxis, self)._setNamesFromDict(assignments, count)
+        self._updateName()
+
+    def _updateName(self):
+        """
+        update self.data.index or self.data.columns
+        """
+        if self.axis == 'point':
+            self.source.data.index = range(len(self.source.data.index))
+        else:
+            self.source.data.columns = range(len(self.source.data.columns))
+
     ##############################
     # Structural implementations #
     ##############################
@@ -54,16 +77,16 @@ class DataFrameAxis(Axis):
             ret = df.iloc[targetList, :]
             axis = 0
             name = 'pointNames'
-            nameList = [self.source.getPointName(i) for i in targetList]
+            nameList = [self.source.points.getName(i) for i in targetList]
             otherName = 'featureNames'
-            otherNameList = self.source.getFeatureNames()
+            otherNameList = self.source.features.getNames()
         elif self.axis == 'feature':
             ret = df.iloc[:, targetList]
             axis = 1
             name = 'featureNames'
-            nameList = [self.source.getFeatureName(i) for i in targetList]
+            nameList = [self.source.features.getName(i) for i in targetList]
             otherName = 'pointNames'
-            otherNameList = self.source.getPointNames()
+            otherNameList = self.source.points.getNames()
 
         if structure.lower() != "copy":
             df.drop(targetList, axis=axis, inplace=True)
@@ -80,17 +103,15 @@ class DataFrameAxis(Axis):
         if self.axis == 'point':
             test = self.source.pointView(0)
             viewIter = self.source.points
-            indexGetter = self.source.getPointIndex
-            nameGetter = self.source.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.source.getPointNames()
+            indexGetter = self.source.points.getIndex
+            nameGetter = self.source.points.getName
+            names = self.source.points.getNames()
         else:
             test = self.source.featureView(0)
             viewIter = self.source.features
-            indexGetter = self.source.getFeatureIndex
-            nameGetter = self.source.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.source.getFeatureNames()
+            indexGetter = self.source.features.getIndex
+            nameGetter = self.source.features.getName
+            names = self.source.features.getNames()
 
         if isinstance(sortHelper, list):
             if self.axis == 'point':
@@ -126,7 +147,8 @@ class DataFrameAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+                viewAxis = getattr(viewArray[i], self.axis + 's')
+                index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):

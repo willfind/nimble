@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir):
         plotObj.elementwisePower(2)
-        plotObj.setFeatureName(0, "N(0,1) squared")
+        plotObj.features.setName(0, "N(0,1) squared")
 
         outPath = None
         if outDir is not None:
@@ -63,8 +63,8 @@ if __name__ == "__main__":
         obj2 = UML.createData("Matrix", scaled)
         obj1.features.add(obj2)
 
-        #obj1.setFeatureName(0, "[0, 1) random noise")
-        obj1.setFeatureName(1, "(Feature 0 * 3) + noise")
+        #obj1.features.setName(0, "[0, 1) random noise")
+        obj1.features.setName(1, "(Feature 0 * 3) + noise")
         obj1.name = "Noise"
 
         outPath = None

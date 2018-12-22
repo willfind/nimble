@@ -116,7 +116,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         origObj.points.calculate(emitLower)
 
@@ -127,7 +127,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         origObj.points.calculate(emitLower)
 
@@ -145,7 +145,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         lowerCounts = origObj.points.calculate(emitLower)
 
@@ -162,7 +162,7 @@ class HighLevelDataSafe(DataTestObject):
                                   featureNames=featureNames, name=preserveName, path=preservePair)
 
         def emitLower(point):
-            return point[toTest.getFeatureIndex('deci')]
+            return point[toTest.features.getIndex('deci')]
 
         ret = toTest.points.calculate(emitLower)
 
@@ -174,7 +174,7 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
-        assert ret.getPointNames() == toTest.getPointNames()
+        assert ret.points.getNames() == toTest.points.getNames()
 
     def test_points_calculate_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -183,7 +183,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
         lowerCounts = origObj.points.calculate(emitLower, points=['three', 2])
 
@@ -301,7 +301,7 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
-        assert toTest.getFeatureNames() == ret.getFeatureNames()
+        assert toTest.features.getNames() == ret.features.getNames()
 
     def test_features_calculate_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -871,17 +871,17 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0, randomOrder=False)
 
-        assert trX.getPointNames() == ['one', 'two']
-        assert trX.getFeatureNames() == ['fives', 'labs2', 'bozo', 'long']
+        assert trX.points.getNames() == ['one', 'two']
+        assert trX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
 
-        assert trY.getPointNames() == ['one', 'two']
-        assert trY.getFeatureNames() == ['labs1']
+        assert trY.points.getNames() == ['one', 'two']
+        assert trY.features.getNames() == ['labs1']
 
-        assert teX.getPointNames() == ['three', 'four']
-        assert teX.getFeatureNames() == ['fives', 'labs2', 'bozo', 'long']
+        assert teX.points.getNames() == ['three', 'four']
+        assert teX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
 
-        assert teY.getPointNames() == ['three', 'four']
-        assert teY.getFeatureNames() == ['labs1']
+        assert teY.points.getNames() == ['three', 'four']
+        assert teY.features.getNames() == ['labs1']
 
 
     def test_trainAndTestSets_randomOrder(self):
@@ -1088,11 +1088,11 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
         ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
 
-        assert toTest.getPointName(0) == '1a'
-        assert toTest.getPointName(1) == '2a'
-        assert toTest.getPointName(2) == '3'
-        assert toTest.getPointName(3) == '2b'
-        assert toTest.getPointName(4) == '1b'
+        assert toTest.points.getName(0) == '1a'
+        assert toTest.points.getName(1) == '2a'
+        assert toTest.points.getName(2) == '3'
+        assert toTest.points.getName(3) == '2b'
+        assert toTest.points.getName(4) == '1b'
         assert ret is None
 
     def test_transformFeatureToIntegers_positioning(self):
@@ -1552,7 +1552,7 @@ class HighLevelModifying(DataTestObject):
         obj1 = obj0.copy()
         ret = obj1.features.fill(match.missing, fill.mean) #RET CHECK
         exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp1.setFeatureNames(['a', 'b', 'c'])
+        exp1.features.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
         assert ret is None
 
@@ -1560,15 +1560,15 @@ class HighLevelModifying(DataTestObject):
         obj2.features.fill([3, 7], None)
         obj2.features.fill(match.missing, fill.mean)
         exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
-        exp2.setFeatureNames(['a', 'b', 'c'])
+        exp2.features.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.features.fill(match.missing, fill.mean, returnModified=True)
         exp3 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp3.setFeatureNames(['a', 'b', 'c'])
+        exp3.features.setNames(['a', 'b', 'c'])
         expRet = self.constructor([[False, False, False], [True, False, True], [False, False, True], [False, False, False]])
-        expRet.setFeatureNames(['a_modified', 'b_modified', 'c_modified'])
+        expRet.features.setNames(['a_modified', 'b_modified', 'c_modified'])
         assert obj3 == exp3
         assert ret == expRet
 
@@ -1577,22 +1577,22 @@ class HighLevelModifying(DataTestObject):
         obj1 = obj0.copy()
         obj1.features.fill(match.nonNumeric, fill.mean)
         exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp1.setFeatureNames(['a', 'b', 'c'])
+        exp1.features.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
         obj2 = obj0.copy()
         obj2.features.fill([3, 7], 'na')
         obj2.features.fill(match.nonNumeric, fill.mean)
         exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
-        exp2.setFeatureNames(['a', 'b', 'c'])
+        exp2.features.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.features.fill(match.nonNumeric, fill.mean, features=['b',2], returnModified=True)
         exp3 = self.constructor([[1, 2, 3], ['na', 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp3.setFeatureNames(['a', 'b', 'c'])
+        exp3.features.setNames(['a', 'b', 'c'])
         expRet = self.constructor([[False, False], [False, True], [False, True], [False, False]])
-        expRet.setFeatureNames(['b_modified', 'c_modified'])
+        expRet.features.setNames(['b_modified', 'c_modified'])
         assert obj3 == exp3
         assert ret == expRet
 
@@ -1606,7 +1606,7 @@ class HighLevelModifying(DataTestObject):
         obj.features.fill(11, None)
         obj.features.fill(match.missing, fill.median)
         exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_features_fill_median_nonNumeric(self):
@@ -1614,7 +1614,7 @@ class HighLevelModifying(DataTestObject):
         obj.features.fill(11, 'na')
         obj.features.fill(match.nonNumeric, fill.median)
         exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1627,14 +1627,14 @@ class HighLevelModifying(DataTestObject):
         obj0.features.fill(9, None)
         obj0.features.fill(match.missing, fill.mode)
         exp0 = self.constructor([[1, 2, 3], [7, 11, 3], [7, 11, 3], [7, 8, 3]])
-        exp0.setFeatureNames(['a', 'b', 'c'])
+        exp0.features.setNames(['a', 'b', 'c'])
         assert obj0 == exp0
 
         obj1 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d','c'], ['e','f','g']], featureNames=['a', 'b', 'c'])
         obj1.features.fill('c', None)
         obj1.features.fill(match.missing, fill.mode)
         exp1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
-        exp1.setFeatureNames(['a', 'b', 'c'])
+        exp1.features.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
     @raises(ArgumentException)
@@ -1647,21 +1647,21 @@ class HighLevelModifying(DataTestObject):
         obj.features.fill(11, None)
         obj.features.fill(match.missing, 0, features=['b', 'c'])
         exp = self.constructor([[1, 2, 3], [None, 0, 0], [7, 0, 0], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_features_fill_constant(self):
         obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.features.fill(0, 100)
         exp = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_features_fill_forwardFill(self):
         obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.features.fill(match.missing, fill.forwardFill)
         exp = self.constructor([[1, 2, 3], [1, 11, 3], [7, 11, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1674,7 +1674,7 @@ class HighLevelModifying(DataTestObject):
         obj.features.fill(11, None)
         obj.features.fill(match.missing, fill.backwardFill)
         exp = self.constructor([[1, 2, 3], [7, 8, 9], [7, 8, 9], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1686,7 +1686,7 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.features.fill(match.missing, fill.interpolate)
         exp = self.constructor([[1, 2, 3], [4, 11, 5], [7, 11, 7], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_features_fill_custom_match(self):
@@ -1812,7 +1812,7 @@ class HighLevelModifying(DataTestObject):
         obj1 = obj0.copy()
         ret = obj1.points.fill(match.missing, fill.mean) # RET CHECK
         exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp1.setPointNames(['a', 'b', 'c'])
+        exp1.points.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
         assert ret is None
 
@@ -1820,15 +1820,15 @@ class HighLevelModifying(DataTestObject):
         obj2.points.fill([4, 8], None)
         obj2.points.fill(match.missing, fill.mean)
         exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
-        exp2.setPointNames(['a', 'b', 'c'])
+        exp2.points.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.points.fill(match.missing, fill.mean, returnModified=True)
         exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
         expRet = self.constructor([[False, False, False, False], [True, False, True, False], [False, False, False, True]])
-        exp3.setPointNames(['a', 'b', 'c'])
-        expRet.setPointNames(['a_modified', 'b_modified', 'c_modified'])
+        exp3.points.setNames(['a', 'b', 'c'])
+        expRet.points.setNames(['a_modified', 'b_modified', 'c_modified'])
         assert obj3 == exp3
         assert ret == expRet
 
@@ -1837,22 +1837,22 @@ class HighLevelModifying(DataTestObject):
         obj1 = obj0.copy()
         obj1.points.fill(match.nonNumeric, fill.mean)
         exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp1.setPointNames(['a', 'b', 'c'])
+        exp1.points.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
         obj2 = obj0.copy()
         obj2.points.fill([4, 8], 'na')
         obj2.points.fill(match.nonNumeric, fill.mean)
         exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
-        exp2.setPointNames(['a', 'b', 'c'])
+        exp2.points.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.points.fill(match.nonNumeric, fill.mean, points=['b', 2], returnModified=True)
         exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
         expRet = self.constructor([[True, False, True, False], [False, False, False, True]])
-        exp3.setPointNames(['a', 'b', 'c'])
-        expRet.setPointNames(['b_modified', 'c_modified'])
+        exp3.points.setNames(['a', 'b', 'c'])
+        expRet.points.setNames(['b_modified', 'c_modified'])
         assert obj3 == exp3
         assert ret == expRet
 
@@ -1865,7 +1865,7 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj.points.fill(match.missing, fill.median)
         exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 9]])
-        exp.setPointNames(['a', 'b', 'c'])
+        exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_points_fill_median_nonNumeric(self):
@@ -1873,7 +1873,7 @@ class HighLevelModifying(DataTestObject):
         obj.points.fill(11, 'na')
         obj.points.fill(match.nonNumeric, fill.median)
         exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 5, 5]])
-        exp.setPointNames(['a', 'b', 'c'])
+        exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1886,14 +1886,14 @@ class HighLevelModifying(DataTestObject):
         obj0.points.fill(9, None)
         obj0.points.fill(match.missing, fill.mode)
         exp0 = self.constructor([[1, 2, 3, 3], [8, 6, 8, 8], [11, 11, 11, 11]], pointNames=['a', 'b', 'c'])
-        exp0.setPointNames(['a', 'b', 'c'])
+        exp0.points.setNames(['a', 'b', 'c'])
         assert obj0 == exp0
 
         obj1 = self.constructor([['a', 'b', 'c', 'c'], [None, 'f', 'h', 'h'], ['i', 'i', 'k', None]], pointNames=['a', 'b', 'c'])
         obj1.points.fill('b', None)
         obj1.points.fill(match.missing, fill.mode)
         exp1 = self.constructor([['a', 'c', 'c', 'c'], ['h', 'f', 'h', 'h'], ['i', 'i', 'k', 'i']], pointNames=['a', 'b', 'c'])
-        exp1.setPointNames(['a', 'b', 'c'])
+        exp1.points.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
     @raises(ArgumentException)
@@ -1906,21 +1906,21 @@ class HighLevelModifying(DataTestObject):
         obj.points.fill(11, None)
         obj.points.fill(match.missing, 0, points=['b', 'c'])
         exp = self.constructor([[1, 2, None], [0, 0, 6], [7, 0, 0], [7, 8, 9]])
-        exp.setPointNames(['a', 'b', 'c', 'd'])
+        exp.points.setNames(['a', 'b', 'c', 'd'])
         assert obj == exp
 
     def test_points_fill_constant(self):
         obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
         obj.points.fill(0, 100)
         exp = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
-        exp.setPointNames(['a', 'b', 'c', 'd'])
+        exp.points.setNames(['a', 'b', 'c', 'd'])
         assert obj == exp
 
     def test_points_fill_forwardFill(self):
         obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj.points.fill(match.missing, fill.forwardFill)
         exp = self.constructor([[1, 2, 3, 4], [5, 5, 5, 8], [9, 1, 11, 11]])
-        exp.setPointNames(['a', 'b', 'c'])
+        exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1933,7 +1933,7 @@ class HighLevelModifying(DataTestObject):
         obj.points.fill(11, None)
         obj.points.fill(match.missing, fill.backwardFill)
         exp = self.constructor([[1, 2, 3, 4], [5, 8, 8, 8], [1, 1, 2, 2]])
-        exp.setPointNames(['a', 'b', 'c'])
+        exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     @raises(ArgumentException)
@@ -1945,7 +1945,7 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [None, 1, None, 5]], pointNames=['a', 'b', 'c'])
         obj.points.fill(match.missing, fill.interpolate)
         exp = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [1, 1, 3, 5]])
-        exp.setPointNames(['a', 'b', 'c'])
+        exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
     def test_points_fill_custom_match(self):
@@ -2087,7 +2087,7 @@ class HighLevelModifying(DataTestObject):
         expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
         ret = toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, arguments, returnModified=True)
         expRet = self.constructor([[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]])
-        expRet.setFeatureNames([name + "_modified" for name in expRet.getFeatureNames()])
+        expRet.features.setNames([name + "_modified" for name in expRet.features.getNames()])
         assert toTest == expTest
         assert ret == expRet
 

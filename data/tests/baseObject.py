@@ -67,13 +67,13 @@ def viewConstructorMaker(concreteType):
         if len(orig.points) != 0:
             firstPRaw = [[0] * len(orig.features)]
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
+                                                    pointNames=['firstPNonView'], featureNames=orig.features.getNames(),
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                     elementType=elementType)
 
             lastPRaw = [[3] * len(orig.features)]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
+                                                   pointNames=['lastPNonView'], featureNames=orig.features.getNames(),
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                    elementType=elementType)
 
@@ -93,7 +93,7 @@ def viewConstructorMaker(concreteType):
         if len(orig.features) != 0:
             lastFRaw = [[1] * len(full.points)]
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=full.getPointNames(), pointNames=['lastFNonView'],
+                                                     featureNames=full.points.getNames(), pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
             lastFeature.transpose()

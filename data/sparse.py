@@ -214,7 +214,7 @@ class Sparse(Base):
             def combine(a, b):
                 return a + ',' + b
 
-            fnames = self.getFeatureNames()
+            fnames = self.features.getNames()
             fnamesLine = reduce(combine, fnames)
             fnamesLine += '\n'
             if includePointNames:
@@ -231,7 +231,7 @@ class Sparse(Base):
         pointer = 0
         pmax = len(self.data.data)
         for i in range(len(self.points)):
-            currPname = self.getPointName(i)
+            currPname = self.points.getName(i)
             if includePointNames:
                 outFile.write(currPname)
                 outFile.write(',')
@@ -280,12 +280,12 @@ class Sparse(Base):
 
         header = ''
         if includePointNames:
-            header = makeNameString(len(self.points), self.getPointNames())
+            header = makeNameString(len(self.points), self.points.getNames())
             header += '\n'
         else:
             header += '#\n'
         if includeFeatureNames:
-            header += makeNameString(len(self.features), self.getFeatureNames())
+            header += makeNameString(len(self.features), self.features.getNames())
             header += '\n'
         else:
             header += '#\n'
@@ -806,7 +806,7 @@ class Sparse(Base):
         #			retRow = numpy.array(self.data.row)
         #			retCol = numpy.array(self.data.col)
         #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
 
         #	def _rdiv__implementation(self, other):
@@ -814,7 +814,7 @@ class Sparse(Base):
         #		retRow = numpy.array(self.data.row)
         #		retCol = numpy.array(self.data.col)
         #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _idiv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
@@ -834,7 +834,7 @@ class Sparse(Base):
         #			retRow = numpy.array(self.data.row)
         #			retCol = numpy.array(self.data.col)
         #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _rtruediv__implementation(self, other):
         #		retData = self.data.data.__rtruediv__(other)
@@ -842,7 +842,7 @@ class Sparse(Base):
         #		retCol = numpy.array(self.data.col)
         #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
 
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _itruediv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
@@ -867,7 +867,7 @@ class Sparse(Base):
         #			retRow = self.data.row[nzIDs]
         #			retCol = self.data.col[nzIDs]
         #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
 
         #	def _rfloordiv__implementation(self, other):
@@ -877,7 +877,7 @@ class Sparse(Base):
         #		retRow = self.data.row[nzIDs]
         #		retCol = self.data.col[nzIDs]
         #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _ifloordiv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
@@ -899,7 +899,7 @@ class Sparse(Base):
             retRow = numpy.array(self.data.row)
             retCol = numpy.array(self.data.col)
             ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
-        return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
     def _rmod__implementation(self, other):
         retData = other % self.data.data
@@ -907,7 +907,7 @@ class Sparse(Base):
         retCol = numpy.array(self.data.col)
         ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
 
-        return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1053,6 +1053,15 @@ class SparseVectorView(BaseView, Sparse):
 
     def __init__(self, **kwds):
         super(SparseVectorView, self).__init__(**kwds)
+
+    def _getPoints(self):
+        return SparsePointsView(self)
+
+    def _getFeatures(self):
+        return SparseFeaturesView(self)
+
+    def _getElements(self):
+        return SparseElementsView(self)
 
 class SparseView(BaseView, Sparse):
     def __init__(self, **kwds):

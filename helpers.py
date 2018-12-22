@@ -595,9 +595,9 @@ def initDataObject(
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
-            indexGetter = lambda x: outerObj.getPointIndex(x.getPointName(0))
+            indexGetter = lambda x: outerObj.points.getIndex(x.points.getName(0))
         else:
-            indexGetter = lambda x: outerObj.getFeatureIndex(x.getFeatureName(0))
+            indexGetter = lambda x: outerObj.features.getIndex(x.features.getName(0))
         positions = {}
         for i in range(len(keepList)):
             positions[keepList[i]] = i
@@ -672,9 +672,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
     # have to wait for everything to be extracted before we add the names,
     # because otherwise the lenths won't be correct
     if praw is not None:
-        ret.setPointNames(list(praw))
+        ret.points.setNames(list(praw))
     if fraw is not None:
-        ret.setFeatureNames(list(fraw))
+        ret.features.setNames(list(fraw))
 
     return ret
 
@@ -3378,7 +3378,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         if rawPredictions is None:
             rawPredictions = partialResults.copyAs(format="List")
         else:
-            partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
+            partialResults.features.setName(0, 'predictions-' + str(predictionFeatureID))
             rawPredictions.features.add(partialResults.copyAs(format="List"))
         pairData.features.add(pairTrueLabels)
         trainX.points.add(pairData)
@@ -3390,7 +3390,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     #set up the return data based on which format has been requested
     if scoreMode.lower() == 'label'.lower():
         ret = rawPredictions.points.calculate(extractWinningPredictionLabel)
-        ret.setFeatureName(0, "winningLabel")
+        ret.features.setName(0, "winningLabel")
         return ret
     elif scoreMode.lower() == 'bestScore'.lower():
         #construct a list of lists, with each row in the list containing the predicted
@@ -3516,10 +3516,10 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         if rawPredictions is None:
             rawPredictions = oneLabelResults
             #as it's added to results object, rename each column with its corresponding class label
-            rawPredictions.setFeatureName(0, str(label))
+            rawPredictions.features.setName(0, str(label))
         else:
             #as it's added to results object, rename each column with its corresponding class label
-            oneLabelResults.setFeatureName(0, str(label))
+            oneLabelResults.features.setName(0, str(label))
             rawPredictions.features.add(oneLabelResults)
 
     if useLog:
@@ -3537,7 +3537,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         #construct a list of lists, with each row in the list containing the predicted
         #label and score of that label for the corresponding row in rawPredictions
         predictionMatrix = rawPredictions.copyAs(format="python list")
-        indexToLabel = rawPredictions.getFeatureNames()
+        indexToLabel = rawPredictions.features.getNames()
         tempResultsList = []
         for row in predictionMatrix:
             bestLabelAndScore = extractWinningPredictionIndexAndScore(row, indexToLabel)
@@ -3552,7 +3552,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         columnHeaders = sorted([str(i) for i in labelSet])
         #create map between label and index in list, so we know where to put each value
         labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
-        featureNamesItoN = rawPredictions.getFeatureNames()
+        featureNamesItoN = rawPredictions.features.getNames()
         predictionMatrix = rawPredictions.copyAs(format="python list")
         resultsContainer = []
         for row in predictionMatrix:

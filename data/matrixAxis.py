@@ -51,16 +51,16 @@ class MatrixAxis(Axis):
         nameList = []
         if self.axis == 'point':
             axisVal = 0
-            getName = self.source.getPointName
+            getName = self.source.points.getName
             ret = self.source.data[targetList]
             pointNames = nameList
-            featureNames = self.source.getFeatureNames()
+            featureNames = self.source.features.getNames()
         else:
             axisVal = 1
-            getName = self.source.getFeatureName
+            getName = self.source.features.getName
             ret = self.source.data[:, targetList]
             featureNames = nameList
-            pointNames = self.source.getPointNames()
+            pointNames = self.source.points.getNames()
 
         if structure != 'copy':
             self.source.data = numpy.delete(self.source.data,
@@ -77,17 +77,15 @@ class MatrixAxis(Axis):
         if self.axis == 'point':
             test = self.source.pointView(0)
             viewIter = self.source.points
-            indexGetter = self.source.getPointIndex
-            nameGetter = self.source.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.source.getPointNames()
+            indexGetter = self.source.points.getIndex
+            nameGetter = self.source.points.getName
+            names = self.source.points.getNames()
         else:
             test = self.source.featureView(0)
             viewIter = self.source.features
-            indexGetter = self.source.getFeatureIndex
-            nameGetter = self.source.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.source.getFeatureNames()
+            indexGetter = self.source.features.getIndex
+            nameGetter = self.source.features.getName
+            names = self.source.features.getNames()
 
         if isinstance(sortHelper, list):
             if self.axis == 'point':
@@ -123,7 +121,8 @@ class MatrixAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+                viewAxis = getattr(viewArray[i], self.axis + 's')
+                index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):

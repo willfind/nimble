@@ -64,8 +64,8 @@ class ListAxis(Axis):
                 self.source.data = keep.tolist()
 
             for index in targetList:
-                pnames.append(self.source.getPointName(index))
-            fnames = self.source.getFeatureNames()
+                pnames.append(self.source.points.getName(index))
+            fnames = self.source.features.getNames()
 
         else:
             if self.source.data == []:
@@ -84,8 +84,8 @@ class ListAxis(Axis):
                 self.source.data = keep.tolist()
 
             for index in targetList:
-                fnames.append(self.source.getFeatureName(index))
-            pnames = self.source.getPointNames()
+                fnames.append(self.source.features.getName(index))
+            pnames = self.source.points.getNames()
 
             if structure != 'copy':
                 remainingFts = self.source._numFeatures - len(targetList)
@@ -98,17 +98,15 @@ class ListAxis(Axis):
         if self.axis == 'point':
             test = self.source.pointView(0)
             viewIter = self.source.points
-            indexGetter = self.source.getPointIndex
-            nameGetter = self.source.getPointName
-            nameGetterStr = 'getPointName'
-            names = self.source.getPointNames()
+            indexGetter = self.source.points.getIndex
+            nameGetter = self.source.points.getName
+            names = self.source.points.getNames()
         else:
             test = self.source.featureView(0)
             viewIter = self.source.features
-            indexGetter = self.source.getFeatureIndex
-            nameGetter = self.source.getFeatureName
-            nameGetterStr = 'getFeatureName'
-            names = self.source.getFeatureNames()
+            indexGetter = self.source.features.getIndex
+            nameGetter = self.source.features.getName
+            names = self.source.features.getNames()
 
         if isinstance(sortHelper, list):
             sortData = numpy.array(self.source.data, dtype=numpy.object_)
@@ -149,7 +147,8 @@ class ListAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
             indexPosition = []
             for i in range(len(viewArray)):
-                index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+                viewAxis = getattr(viewArray[i], self.axis + 's')
+                index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
         else:
             #scoreArray = viewArray

@@ -38,7 +38,7 @@ class LogisticRegressionNoTraining(CustomLearner):
 
         ret = probabilities.elements.calculate(roundProb)
         
-        for i,name in enumerate(testX.getFeatureNames()):
+        for i,name in enumerate(testX.features.getNames()):
             print(name + " : " + str(self.coefs[i]))
 
         return ret
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     # load the associated data for categories
     categoryMetadata = UML.createData("List", path_categories_metadata)
     cm_pnames = categoryMetadata.features.extract(0).copyAs("pythonList", outputAs1D=True)
-    categoryMetadata.setPointNames(cm_pnames)
+    categoryMetadata.points.setNames(cm_pnames)
 
     # load the associated data for questions
     questionMetadata = UML.createData("List", path_question_metatdata)

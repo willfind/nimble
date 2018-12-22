@@ -129,7 +129,7 @@ class Matrix(Base):
                 def combine(a, b):
                     return a + ',' + b
 
-                fnames = self.getFeatureNames()
+                fnames = self.features.getNames()
                 fnamesLine = reduce(combine, fnames)
                 fnamesLine += '\n'
                 if includePointNames:
@@ -139,7 +139,7 @@ class Matrix(Base):
 
         with open(outPath, 'ab') as outFile:#python3 need this.
             if includePointNames:
-                pnames = numpy.matrix(self.getPointNames())
+                pnames = numpy.matrix(self.points.getNames())
                 pnames = pnames.transpose()
 
                 viewData = self.data.view()
@@ -164,12 +164,12 @@ class Matrix(Base):
 
         header = ''
         if includePointNames:
-            header = makeNameString(len(self.points), self.getPointName)
+            header = makeNameString(len(self.points), self.points.getName)
             header += '\n'
         else:
             header += '#\n'
         if includeFeatureNames:
-            header += makeNameString(len(self.features), self.getFeatureName)
+            header += makeNameString(len(self.features), self.features.getName)
         else:
             header += '#\n'
 
@@ -562,14 +562,14 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
         raise ArgumentException(msg)
     if axis == "point":
         #convert name of feature to index of feature
-        indexOfFeature = outerObject.getFeatureIndex(function.nameOfFeatureOrPoint)
+        indexOfFeature = outerObject.features.getIndex(function.nameOfFeatureOrPoint)
         #extract the feature from the underlying matrix
         queryData = outerObject.data[:, indexOfFeature]
     else:
         if axis != "feature":
             raise ArgumentException("axis must be 'point' or 'feature'")
         #convert name of point to index of point
-        indexOfPoint = outerObject.getPointIndex(function.nameOfFeatureOrPoint)
+        indexOfPoint = outerObject.points.getIndex(function.nameOfFeatureOrPoint)
         #extract the point from the underlying matrix
         queryData = outerObject.data[indexOfPoint, :]
     ret = function.optr(queryData, function.valueOfFeatureOrPoint)

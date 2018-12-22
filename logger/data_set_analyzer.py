@@ -45,7 +45,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
 
     resultsTable = [None] * len(dataContainer.features)
     for index in range(len(dataContainer.features)):
-        resultsTable[index] = dataContainer.getFeatureName(index)
+        resultsTable[index] = dataContainer.features.getName(index)
 
     transposeRow(resultsTable)
 

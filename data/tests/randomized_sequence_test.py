@@ -297,10 +297,10 @@ def genID(dataObj, seed, axis):
     retIntID = random.randint(0, 1)
     if axis == 'point':
         numInAxis = len(dataObj.points)
-        source = dataObj.getPointName
+        source = dataObj.points.getName
     else:
         numInAxis = len(dataObj.features)
-        source = dataObj.getFeatureName
+        source = dataObj.features.getName
 
     intID = random.randint(0, numInAxis - 1)
     if retIntID:
@@ -319,10 +319,10 @@ def genIDList(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
         numInAxis = len(dataObj.points)
-        source = dataObj.getPointName
+        source = dataObj.points.getName
     else:
         numInAxis = len(dataObj.features)
-        source = dataObj.getFeatureName
+        source = dataObj.features.getName
 
     numToSample = random.randint(1, numInAxis)
     IDList = random.sample(list(range(numInAxis)), numToSample)
@@ -410,10 +410,10 @@ genFNumLim = functools.partial(genNumLimit, axis='faeture')
 
 def checkNameNums(dataObj, axis):
     if axis == 'point':
-        source = dataObj.getPointName
+        source = dataObj.points.getName
         length = len(dataObj.points)
     else:
-        source = dataObj.getFeatureName
+        source = dataObj.features.getName
         length = len(dataObj.features)
 
     maxNum = 0

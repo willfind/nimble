@@ -327,7 +327,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
     from UML.examples.gender.gender_categories_and_visualizations import generateSubScale
 
     def extractFemale(point):
-        pID = responses.getPointIndex(point.getPointName(0))
+        pID = responses.points.getIndex(point.points.getName(0))
         return genderValue[pID] == 1
 
     toSplit = responses.copy()
@@ -502,7 +502,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
 
     """
     def extractFemale(point):
-        pID = responses.getPointIndex(point.getPointName(0))
+        pID = responses.points.getIndex(point.points.getName(0))
         return genderValue[pID] == 1
 
     toSplit = responses.copy()

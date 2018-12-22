@@ -332,8 +332,8 @@ class Elements(object):
         retNames = dataHelpers.mergeNonDefaultNames(self.source, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self.source.setPointNames(retPNames)
-        self.source.setFeatureNames(retFNames)
+        self.source.points.setNames(retPNames)
+        self.source.features.setNames(retFNames)
         self.source.validate()
 
     def power(self, other):
