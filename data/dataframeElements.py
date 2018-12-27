@@ -25,7 +25,7 @@ class DataFrameElements(Elements):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
+        self._source = source
         kwds['source'] = source
         super(DataFrameElements, self).__init__(**kwds)
 
@@ -44,10 +44,10 @@ class DataFrameElements(Elements):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(len(self.source.points)),
-                                range(len(self.source.features)))
+        IDs = itertools.product(range(len(self._source.points)),
+                                range(len(self._source.features)))
         for (i, j) in IDs:
-            currVal = self.source.data.iloc[i, j]
+            currVal = self._source.data.iloc[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -69,7 +69,7 @@ class DataFrameElements(Elements):
             if skipNoneReturnValues and currRet is None:
                 continue
 
-            self.source.data.iloc[i, j] = currRet
+            self._source.data.iloc[i, j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -94,13 +94,13 @@ class DataFrameElements(Elements):
         modification of the calling object.
         """
         if isinstance(other, UML.data.Sparse):
-            result = other.data.multiply(self.source.data.values)
+            result = other.data.multiply(self._source.data.values)
             if hasattr(result, 'todense'):
                 result = result.todense()
-            self.source.data = pd.DataFrame(result)
+            self._source.data = pd.DataFrame(result)
         else:
-            self.source.data = pd.DataFrame(
-                np.multiply(self.source.data.values, other.data))
+            self._source.data = pd.DataFrame(
+                np.multiply(self._source.data.values, other.data))
 
 class DataFrameElementsView(ElementsView, DataFrameElements, Elements):
     def __init__(self, source, **kwds):

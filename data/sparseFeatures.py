@@ -26,10 +26,10 @@ class SparseFeatures(SparseAxis, Axis, Features):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
-        self.axis = 'feature'
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._source = source
+        self._axis = 'feature'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(SparseFeatures, self).__init__(**kwds)
 
     ##############################
@@ -42,16 +42,16 @@ class SparseFeatures(SparseAxis, Axis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        self.source._sortInternal('feature')
+        self._source._sortInternal('feature')
         newData = []
         newRow = []
         newCol = []
         # add original data until insert location
-        for i, col in enumerate(self.source.data.col):
+        for i, col in enumerate(self._source.data.col):
             if col < insertBefore:
-                newRow.append(self.source.data.row[i])
+                newRow.append(self._source.data.row[i])
                 newCol.append(col)
-                newData.append(self.source.data.data[i])
+                newData.append(self._source.data.data[i])
             else:
                 break
         # add inserted data with adjusted col
@@ -61,54 +61,54 @@ class SparseFeatures(SparseAxis, Axis, Features):
             newCol.append(col + insertBefore)
             newData.append(toAdd.data.data[i])
         # add remaining original data with adjusted col
-        for i, col in enumerate(self.source.data.col[splitLength:]):
-            newRow.append(self.source.data.row[splitLength:][i])
+        for i, col in enumerate(self._source.data.col[splitLength:]):
+            newRow.append(self._source.data.row[splitLength:][i])
             newCol.append(col + len(toAdd.features))
-            newData.append(self.source.data.data[splitLength:][i])
+            newData.append(self._source.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
         try:
-            newData = numpy.array(newData, dtype=self.source.data.dtype)
+            newData = numpy.array(newData, dtype=self._source.data.dtype)
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
 
-        numNewCols = len(self.source.features) + len(toAdd.features)
-        shape = (len(self.source.points), numNewCols)
-        self.source.data = coo_matrix((newData, (newRow, newCol)),
+        numNewCols = len(self._source.features) + len(toAdd.features)
+        shape = (len(self._source.points), numNewCols)
+        self._source.data = coo_matrix((newData, (newRow, newCol)),
                                       shape=shape)
-        self.source._sorted = None
+        self._source._sorted = None
 
     # def _flattenToOne_implementation(self):
-    #     self.source._sortInternal('feature')
-    #     fLen = len(self.source.points)
-    #     numElem = len(self.source.points) * len(self.source.features)
-    #     data = self.source.data.data
-    #     row = self.source.data.row
-    #     col = self.source.data.col
+    #     self._source._sortInternal('feature')
+    #     fLen = len(self._source.points)
+    #     numElem = len(self._source.points) * len(self._source.features)
+    #     data = self._source.data.data
+    #     row = self._source.data.row
+    #     col = self._source.data.col
     #     for i in range(len(data)):
     #         if col[i] > 0:
     #             row[i] += (col[i] * fLen)
     #             col[i] = 0
     #
-    #     self.source.data = coo_matrix((data, (row, col)), (numElem, 1))
+    #     self._source.data = coo_matrix((data, (row, col)), (numElem, 1))
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     # only one feature, so both sorts are the same order
-    #     if self.source._sorted is None:
-    #         self.source._sortInternal('feature')
+    #     if self._source._sorted is None:
+    #         self._source._sortInternal('feature')
     #
     #     numFeatures = divideInto
-    #     numPoints = len(self.source.points) // numFeatures
+    #     numPoints = len(self._source.points) // numFeatures
     #     newShape = (numPoints, numFeatures)
-    #     data = self.source.data.data
-    #     row = self.source.data.row
-    #     col = self.source.data.col
+    #     data = self._source.data.data
+    #     row = self._source.data.row
+    #     col = self._source.data.col
     #     for i in range(len(data)):
     #         # must change the col entry before modifying the row entry
     #         col[i] = row[i] / numPoints
     #         row[i] = row[i] % numPoints
     #
-    #     self.source.data = coo_matrix((data, (row, col)), newShape)
-    #     self.source._sorted = 'feature'
+    #     self._source.data = coo_matrix((data, (row, col)), newShape)
+    #     self._source._sorted = 'feature'
 
 class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
     def __init__(self, source, **kwds):
@@ -147,4 +147,4 @@ class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
             def __next__(self):
                 return self.next()
 
-        return nzIt(self.source)
+        return nzIt(self._source)

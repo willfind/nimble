@@ -28,10 +28,10 @@ class MatrixAxis(Axis):
         The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
-        self.axis = axis
-        self.source = source
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._axis = axis
+        self._source = source
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(MatrixAxis, self).__init__(**kwds)
 
     ##############################
@@ -49,21 +49,21 @@ class MatrixAxis(Axis):
         managed separately by each frontend function.
         """
         nameList = []
-        if self.axis == 'point':
+        if self._axis == 'point':
             axisVal = 0
-            getName = self.source.points.getName
-            ret = self.source.data[targetList]
+            getName = self._source.points.getName
+            ret = self._source.data[targetList]
             pointNames = nameList
-            featureNames = self.source.features.getNames()
+            featureNames = self._source.features.getNames()
         else:
             axisVal = 1
-            getName = self.source.features.getName
-            ret = self.source.data[:, targetList]
+            getName = self._source.features.getName
+            ret = self._source.data[:, targetList]
             featureNames = nameList
-            pointNames = self.source.points.getNames()
+            pointNames = self._source.points.getNames()
 
         if structure != 'copy':
-            self.source.data = numpy.delete(self.source.data,
+            self._source.data = numpy.delete(self._source.data,
                                             targetList, axisVal)
 
         # construct nameList
@@ -74,24 +74,24 @@ class MatrixAxis(Axis):
                                featureNames=featureNames)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self.axis == 'point':
-            test = self.source.pointView(0)
-            viewIter = self.source.points
-            indexGetter = self.source.points.getIndex
-            nameGetter = self.source.points.getName
-            names = self.source.points.getNames()
+        if self._axis == 'point':
+            test = self._source.pointView(0)
+            viewIter = self._source.points
+            indexGetter = self._source.points.getIndex
+            nameGetter = self._source.points.getName
+            names = self._source.points.getNames()
         else:
-            test = self.source.featureView(0)
-            viewIter = self.source.features
-            indexGetter = self.source.features.getIndex
-            nameGetter = self.source.features.getName
-            names = self.source.features.getNames()
+            test = self._source.featureView(0)
+            viewIter = self._source.features
+            indexGetter = self._source.features.getIndex
+            nameGetter = self._source.features.getName
+            names = self._source.features.getNames()
 
         if isinstance(sortHelper, list):
-            if self.axis == 'point':
-                self.source.data = self.source.data[sortHelper, :]
+            if self._axis == 'point':
+                self._source.data = self._source.data[sortHelper, :]
             else:
-                self.source.data = self.source.data[:, sortHelper]
+                self._source.data = self._source.data[:, sortHelper]
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
@@ -121,7 +121,7 @@ class MatrixAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self.axis + 's')
+                viewAxis = getattr(viewArray[i], self._axis + 's')
                 index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
@@ -150,10 +150,10 @@ class MatrixAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # use numpy indexing to change the ordering
-        if self.axis == 'point':
-            self.source.data = self.source.data[indexPosition, :]
+        if self._axis == 'point':
+            self._source.data = self._source.data[indexPosition, :]
         else:
-            self.source.data = self.source.data[:, indexPosition]
+            self._source.data = self._source.data[:, indexPosition]
 
         # convert indices of their previous location into their feature names
         newNameOrder = []

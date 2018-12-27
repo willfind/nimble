@@ -21,7 +21,7 @@ class MatrixElements(Elements):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
+        self._source = source
         kwds['source'] = source
         super(MatrixElements, self).__init__(**kwds)
 
@@ -40,10 +40,10 @@ class MatrixElements(Elements):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(len(self.source.points)),
-                                range(len(self.source.features)))
+        IDs = itertools.product(range(len(self._source.points)),
+                                range(len(self._source.features)))
         for (i, j) in IDs:
-            currVal = self.source.data[i, j]
+            currVal = self._source.data[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -65,7 +65,7 @@ class MatrixElements(Elements):
             if skipNoneReturnValues and currRet is None:
                 continue
 
-            self.source.data[i, j] = currRet
+            self._source.data[i, j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -90,12 +90,12 @@ class MatrixElements(Elements):
         modification of the calling object.
         """
         if isinstance(other, UML.data.Sparse):
-            result = other.data.multiply(self.source.data)
+            result = other.data.multiply(self._source.data)
             if hasattr(result, 'todense'):
                 result = result.todense()
-            self.source.data = numpy.matrix(result)
+            self._source.data = numpy.matrix(result)
         else:
-            self.source.data = numpy.multiply(self.source.data, other.data)
+            self._source.data = numpy.multiply(self._source.data, other.data)
 
 class MatrixElementsView(ElementsView, MatrixElements, Elements):
     def __init__(self, source, **kwds):

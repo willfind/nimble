@@ -24,7 +24,7 @@ class SparseElements(Elements):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
+        self._source = source
         kwds['source'] = source
         super(SparseElements, self).__init__(**kwds)
 
@@ -59,10 +59,10 @@ class SparseElements(Elements):
 
     def _calculate_implementation(self, function, points, features,
                                   preserveZeros, outputType):
-        if not isinstance(self.source, UML.data.BaseView):
-            data = self.source.data.data
-            row = self.source.data.row
-            col = self.source.data.col
+        if not isinstance(self._source, UML.data.BaseView):
+            data = self._source.data.data
+            row = self._source.data.row
+            col = self._source.data.col
         else:
             # initiate generic implementation for view types
             preserveZeros = False
@@ -73,7 +73,7 @@ class SparseElements(Elements):
             except Exception:
                 function.otypes = [numpy.object_]
                 data = function(data)
-            shape = self.source.data.shape
+            shape = self._source.data.shape
             values = coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
@@ -119,11 +119,11 @@ class SparseElements(Elements):
             toMul = other.data
         else:
             toMul = other.copyAs('numpyarray')
-        raw = self.source.data.multiply(coo_matrix(toMul))
+        raw = self._source.data.multiply(coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
-            self.source.data = raw.tocoo()
+            self._source.data = raw.tocoo()
         else:
-            self.source.data = coo_matrix(raw, shape=self.source.data.shape)
+            self._source.data = coo_matrix(raw, shape=self._source.data.shape)
 
     ######################
     # Structural helpers #
@@ -156,18 +156,18 @@ class SparseElements(Elements):
         ret = self.calculate(wrapper, None, None, preserveZeros=False,
                              skipNoneReturnValues=True)
 
-        pnames = self.source.points.getNames()
-        fnames = self.source.features.getNames()
-        self.source.referenceDataFrom(ret)
-        self.source.points.setNames(pnames)
-        self.source.features.setNames(fnames)
+        pnames = self._source.points.getNames()
+        fnames = self._source.features.getNames()
+        self._source.referenceDataFrom(ret)
+        self._source.points.setNames(pnames)
+        self._source.features.setNames(fnames)
 
 
     def _transformEachElement_zeroPreserve_implementation(
             self, toTransform, points, features, skipNoneReturnValues, oneArg):
-        for index, val in enumerate(self.source.data.data):
-            pID = self.source.data.row[index]
-            fID = self.source.data.col[index]
+        for index, val in enumerate(self._source.data.data):
+            pID = self._source.data.row[index]
+            fID = self._source.data.col[index]
             if points is not None and pID not in points:
                 continue
             if features is not None and fID not in features:
@@ -186,7 +186,7 @@ class SparseElements(Elements):
             if skipNoneReturnValues and currRet is None:
                 continue
 
-            self.source.data.data[index] = currRet
+            self._source.data.data[index] = currRet
 
 class SparseElementsView(ElementsView, SparseElements, Elements):
     def __init__(self, source, **kwds):

@@ -18,7 +18,7 @@ class ListElements(Elements):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
+        self._source = source
         kwds['source'] = source
         super(ListElements, self).__init__(**kwds)
 
@@ -37,10 +37,10 @@ class ListElements(Elements):
             else:
                 oneArg = True
 
-        IDs = itertools.product(range(len(self.source.points)),
-                                range(len(self.source.features)))
+        IDs = itertools.product(range(len(self._source.points)),
+                                range(len(self._source.features)))
         for (i, j) in IDs:
-            currVal = self.source.data[i][j]
+            currVal = self._source.data[i][j]
 
             if points is not None and i not in points:
                 continue
@@ -62,7 +62,7 @@ class ListElements(Elements):
             if skipNoneReturnValues and currRet is None:
                 continue
 
-            self.source.data[i][j] = currRet
+            self._source.data[i][j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -86,11 +86,11 @@ class ListElements(Elements):
         different, but the returned object will be the inplace
         modification of the calling object.
         """
-        for pNum in range(len(self.source.points)):
-            for fNum in range(len(self.source.features)):
+        for pNum in range(len(self._source.points)):
+            for fNum in range(len(self._source.features)):
                 # Divided by 1 to make it raise if it involves non-numeric
                 # types ('str')
-                self.source.data[pNum][fNum] *= other[pNum, fNum] / 1
+                self._source.data[pNum][fNum] *= other[pNum, fNum] / 1
 
 class ListElementsView(ElementsView, ListElements, Elements):
     def __init__(self, source, **kwds):

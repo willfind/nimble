@@ -28,10 +28,10 @@ class DataFrameAxis(Axis):
         The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
-        self.axis = axis
-        self.source = source
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._axis = axis
+        self._source = source
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(DataFrameAxis, self).__init__(**kwds)
 
     def _setName_implementation(self, oldIdentifier, newName):
@@ -52,10 +52,10 @@ class DataFrameAxis(Axis):
         """
         update self.data.index or self.data.columns
         """
-        if self.axis == 'point':
-            self.source.data.index = range(len(self.source.data.index))
+        if self._axis == 'point':
+            self._source.data.index = range(len(self._source.data.index))
         else:
-            self.source.data.columns = range(len(self.source.data.columns))
+            self._source.data.columns = range(len(self._source.data.columns))
 
     ##############################
     # Structural implementations #
@@ -71,22 +71,22 @@ class DataFrameAxis(Axis):
         each function handles the returned value, these are managed
         separately by each frontend function.
         """
-        df = self.source.data
+        df = self._source.data
 
-        if self.axis == 'point':
+        if self._axis == 'point':
             ret = df.iloc[targetList, :]
             axis = 0
             name = 'pointNames'
-            nameList = [self.source.points.getName(i) for i in targetList]
+            nameList = [self._source.points.getName(i) for i in targetList]
             otherName = 'featureNames'
-            otherNameList = self.source.features.getNames()
-        elif self.axis == 'feature':
+            otherNameList = self._source.features.getNames()
+        elif self._axis == 'feature':
             ret = df.iloc[:, targetList]
             axis = 1
             name = 'featureNames'
-            nameList = [self.source.features.getName(i) for i in targetList]
+            nameList = [self._source.features.getName(i) for i in targetList]
             otherName = 'pointNames'
-            otherNameList = self.source.points.getNames()
+            otherNameList = self._source.points.getNames()
 
         if structure.lower() != "copy":
             df.drop(targetList, axis=axis, inplace=True)
@@ -100,24 +100,24 @@ class DataFrameAxis(Axis):
                                           otherName: otherNameList})
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self.axis == 'point':
-            test = self.source.pointView(0)
-            viewIter = self.source.points
-            indexGetter = self.source.points.getIndex
-            nameGetter = self.source.points.getName
-            names = self.source.points.getNames()
+        if self._axis == 'point':
+            test = self._source.pointView(0)
+            viewIter = self._source.points
+            indexGetter = self._source.points.getIndex
+            nameGetter = self._source.points.getName
+            names = self._source.points.getNames()
         else:
-            test = self.source.featureView(0)
-            viewIter = self.source.features
-            indexGetter = self.source.features.getIndex
-            nameGetter = self.source.features.getName
-            names = self.source.features.getNames()
+            test = self._source.featureView(0)
+            viewIter = self._source.features
+            indexGetter = self._source.features.getIndex
+            nameGetter = self._source.features.getName
+            names = self._source.features.getNames()
 
         if isinstance(sortHelper, list):
-            if self.axis == 'point':
-                self.source.data = self.source.data.iloc[sortHelper, :]
+            if self._axis == 'point':
+                self._source.data = self._source.data.iloc[sortHelper, :]
             else:
-                self.source.data = self.source.data.iloc[:, sortHelper]
+                self._source.data = self._source.data.iloc[:, sortHelper]
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
@@ -147,7 +147,7 @@ class DataFrameAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self.axis + 's')
+                viewAxis = getattr(viewArray[i], self._axis + 's')
                 index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
@@ -176,10 +176,10 @@ class DataFrameAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # use numpy indexing to change the ordering
-        if self.axis == 'point':
-            self.source.data = self.source.data.iloc[indexPosition, :]
+        if self._axis == 'point':
+            self._source.data = self._source.data.iloc[indexPosition, :]
         else:
-            self.source.data = self.source.data.iloc[:, indexPosition]
+            self._source.data = self._source.data.iloc[:, indexPosition]
 
         # convert indices of their previous location into their feature names
         newNameOrder = []

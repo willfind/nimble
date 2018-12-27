@@ -25,9 +25,9 @@ class Elements(object):
     source : UML data object
         The object containing the elements.
     """
-    def __init__(self, source):
-        self.source = source
-        super(Elements, self).__init__()
+    def __init__(self, source, **kwds):
+        self._source = source
+        super(Elements, self).__init__(**kwds)
 
     # TODO iterator???
 
@@ -74,14 +74,14 @@ class Elements(object):
         TODO
         """
         if points is not None:
-            points = self.source._constructIndicesList('point', points)
+            points = self._source._constructIndicesList('point', points)
         if features is not None:
-            features = self.source._constructIndicesList('feature', features)
+            features = self._source._constructIndicesList('feature', features)
 
         self._transform_implementation(toTransform, points, features,
                                        preserveZeros, skipNoneReturnValues)
 
-        self.source.validate()
+        self._source.validate()
 
     ###########################
     # Higher Order Operations #
@@ -136,14 +136,14 @@ class Elements(object):
             oneArg = True
 
         if points is not None:
-            points = self.source._constructIndicesList('point', points)
+            points = self._source._constructIndicesList('point', points)
         if features is not None:
-            features = self.source._constructIndicesList('feature', features)
+            features = self._source._constructIndicesList('feature', features)
 
         if outputType is not None:
             optType = outputType
         else:
-            optType = self.source.getTypeString()
+            optType = self._source.getTypeString()
 
         # Use vectorized for functions with oneArg
         if oneArg:
@@ -166,15 +166,15 @@ class Elements(object):
         else:
             # if unable to vectorize, iterate over each point
             if not points:
-                points = list(range(len(self.source.points)))
+                points = list(range(len(self._source.points)))
             if not features:
-                features = list(range(len(self.source.features)))
+                features = list(range(len(self._source.features)))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
                 f = 0
                 for fj in features:
-                    value = self.source[pi, fj]
+                    value = self._source[pi, fj]
                     if preserveZeros and value == 0:
                         valueArray[p, f] = 0
                     else:
@@ -191,10 +191,10 @@ class Elements(object):
 
             ret = UML.createData(optType, valueArray)
 
-        ret._absPath = self.source.absolutePath
-        ret._relPath = self.source.relativePath
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
 
-        self.source.validate()
+        self._source.validate()
 
         return ret
 
@@ -263,14 +263,14 @@ class Elements(object):
         """
         uniqueCount = {}
         if points is None:
-            points = [i for i in range(len(self.source.points))]
+            points = [i for i in range(len(self._source.points))]
         if features is None:
-            features = [i for i in range(len(self.source.features))]
+            features = [i for i in range(len(self._source.features))]
         points = valuesToPythonList(points, 'points')
         features = valuesToPythonList(features, 'features')
         for i in points:
             for j in features:
-                val = self.source[i, j]
+                val = self._source[i, j]
                 temp = uniqueCount.get(val, 0)
                 uniqueCount[val] = temp + 1
 
@@ -305,36 +305,36 @@ class Elements(object):
             msg = "'other' must be an instance of a UML data object"
             raise ArgumentException(msg)
 
-        if len(self.source.points) != len(other.points):
+        if len(self._source.points) != len(other.points):
             msg = "The number of points in each object must be equal."
             raise ArgumentException(msg)
-        if len(self.source.features) != len(other.features):
+        if len(self._source.features) != len(other.features):
             msg = "The number of features in each object must be equal."
             raise ArgumentException(msg)
 
-        if len(self.source.points) == 0 or len(self.source.features) == 0:
+        if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperActionException(msg)
 
-        self.source._validateEqualNames('point', 'point',
+        self._source._validateEqualNames('point', 'point',
                                         'elements.multiply', other)
-        self.source._validateEqualNames('feature', 'feature',
+        self._source._validateEqualNames('feature', 'feature',
                                         'elements.multiply', other)
 
         try:
             self._multiply_implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
-            self.source._numericValidation()
+            self._source._numericValidation()
             other._numericValidation()
             raise e
 
-        retNames = dataHelpers.mergeNonDefaultNames(self.source, other)
+        retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self.source.points.setNames(retPNames)
-        self.source.features.setNames(retFNames)
-        self.source.validate()
+        self._source.points.setNames(retPNames)
+        self._source.features.setNames(retFNames)
+        self._source.validate()
 
     def power(self, other):
         """
@@ -366,14 +366,14 @@ class Elements(object):
 
         if isinstance(other, UML.data.Base):
             # same shape
-            if len(self.source.points) != len(other.points):
+            if len(self._source.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
                 raise ArgumentException(msg)
-            if len(self.source.features) != len(other.features):
+            if len(self._source.features) != len(other.features):
                 msg = "The number of features in each object must be equal."
                 raise ArgumentException(msg)
 
-        if len(self.source.points) == 0 or len(self.source.features) == 0:
+        if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperActionException(msg)
 
@@ -382,21 +382,21 @@ class Elements(object):
                 try:
                     return val ** other[pnum, fnum]
                 except Exception as e:
-                    self.source._numericValidation()
+                    self._source._numericValidation()
                     other._numericValidation()
                     raise e
-            self.source.elements.transform(powFromRight)
+            self._source.elements.transform(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
                 try:
                     return val ** other
                 except Exception as e:
-                    self.source._numericValidation()
+                    self._source._numericValidation()
                     other._numericValidation()
                     raise e
-            self.source.elements.transform(powFromRight)
+            self._source.elements.transform(powFromRight)
 
-        self.source.validate()
+        self._source.validate()
 
     ########################
     # Higher Order Helpers #
@@ -408,12 +408,12 @@ class Elements(object):
         if points:
             points = numpy.array(points)
         else:
-            points = numpy.array(range(len(self.source.points)))
+            points = numpy.array(range(len(self._source.points)))
         if features:
             features = numpy.array(features)
         else:
-            features = numpy.array(range(len(self.source.features)))
-        toCalculate = self.source.copyAs('numpyarray')
+            features = numpy.array(range(len(self._source.features)))
+        toCalculate = self._source.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:

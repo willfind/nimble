@@ -32,10 +32,10 @@ class SparseAxis(Axis):
         The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
-        self.axis = axis
-        self.source = source
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._axis = axis
+        self._source = source
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(SparseAxis, self).__init__(**kwds)
 
     ##############################
@@ -53,8 +53,8 @@ class SparseAxis(Axis):
         managed separately by each frontend function.
         """
         # SparseView or object dtype
-        if (self.source.data.data is None
-                or self.source.data.data.dtype == numpy.object_):
+        if (self._source.data.data is None
+                or self._source.data.data.dtype == numpy.object_):
             return self._structuralIterative_implementation(
                 structure, targetList)
         # nonview numeric objects
@@ -64,28 +64,29 @@ class SparseAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         scorer = None
         comparator = None
-        if self.axis == 'point':
-            viewMaker = self.source.pointView
-            indexGetter = self.source.points.getIndex
-            nameGetter = self.source.points.getName
-            names = self.source.points.getNames()
+        source = self._source
+        if self._axis == 'point':
+            viewMaker = source.pointView
+            indexGetter = source.points.getIndex
+            nameGetter = source.points.getName
+            names = source.points.getNames()
         else:
-            viewMaker = self.source.featureView
-            indexGetter = self.source.features.getIndex
-            nameGetter = self.source.features.getName
-            names = self.source.features.getNames()
+            viewMaker = source.featureView
+            indexGetter = source.features.getIndex
+            nameGetter = source.features.getName
+            names = source.features.getNames()
 
         if isinstance(sortHelper, list):
             sortedData = []
             idxDict = {val: idx for idx, val in enumerate(sortHelper)}
-            if self.axis == 'point':
-                sortedData = [idxDict[val] for val in self.source.data.row]
-                self.source.data.row = numpy.array(sortedData)
+            if self._axis == 'point':
+                sortedData = [idxDict[val] for val in source.data.row]
+                source.data.row = numpy.array(sortedData)
             else:
-                sortedData = [idxDict[val] for val in self.source.data.col]
-                self.source.data.col = numpy.array(sortedData)
+                sortedData = [idxDict[val] for val in source.data.col]
+                source.data.col = numpy.array(sortedData)
             newNameOrder = [names[idx] for idx in sortHelper]
-            self.source._sorted = None
+            source._sorted = None
             return newNameOrder
 
         test = viewMaker(0)
@@ -113,7 +114,7 @@ class SparseAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self.axis + 's')
+                viewAxis = getattr(viewArray[i], self._axis + 's')
                 index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
@@ -147,10 +148,10 @@ class SparseAxis(Axis):
         for i in range(indexPosition.shape[0]):
             reverseIdxPosition[indexPosition[i]] = i
 
-        if self.axis == 'point':
-            self.source.data.row[:] = reverseIdxPosition[self.source.data.row]
+        if self._axis == 'point':
+            source.data.row[:] = reverseIdxPosition[source.data.row]
         else:
-            self.source.data.col[:] = reverseIdxPosition[self.source.data.col]
+            source.data.col[:] = reverseIdxPosition[source.data.col]
 
         # we need to return an array of the feature names in their new order.
         # convert indices of their previous location into their names
@@ -160,7 +161,7 @@ class SparseAxis(Axis):
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
 
-        self.source._sorted = None
+        source._sorted = None
         return newNameOrder
 
     def _transform_implementation(self, function, limitTo):
@@ -168,7 +169,7 @@ class SparseAxis(Axis):
         modRow = []
         modCol = []
 
-        if self.axis == 'point':
+        if self._axis == 'point':
             modTarget = modRow
             modOther = modCol
         else:
@@ -180,10 +181,11 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an ArgumentException with a message which needs to be
-                # formatted with the axis and current index before being raised
+                # currRet might return an ArgumentException with a message which
+                # needs to be formatted with the axis and current index before
+                # being raised
                 if isinstance(currOut, ArgumentException):
-                    currOut.value = currOut.value.format(self.axis, viewID)
+                    currOut.value = currOut.value.format(self._axis, viewID)
                     raise currOut
 
             # easy way to reuse code if we have a singular return
@@ -207,10 +209,10 @@ class SparseAxis(Axis):
                 modData = numpy.array(modData, dtype=numpy.float)
             except Exception:
                 modData = numpy.array(modData, dtype=numpy.object_)
-            shape = (len(self.source.points), len(self.source.features))
-            self.source.data = coo_matrix((modData, (modRow, modCol)),
+            shape = (len(self._source.points), len(self._source.features))
+            self._source.data = coo_matrix((modData, (modRow, modCol)),
                                           shape=shape)
-            self.source._sorted = None
+            self._source._sorted = None
 
         ret = None
         return ret
@@ -224,42 +226,42 @@ class SparseAxis(Axis):
         Use scipy csr or csc matrices for indexing targeted values
         """
         axisNames = []
-        if self.axis == 'point':
-            getAxisName = self.source.points.getName
-            getOtherNames = self.source.features.getNames
-            data = self.source.data.tocsr()
+        if self._axis == 'point':
+            getAxisName = self._source.points.getName
+            getOtherNames = self._source.features.getNames
+            data = self._source.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
                 notTarget = []
-                for idx in range(len(self.source.points)):
+                for idx in range(len(self._source.points)):
                     if idx not in targetList:
                         notTarget.append(idx)
                 notTargeted = data[notTarget, :]
         else:
-            getAxisName = self.source.features.getName
-            getOtherNames = self.source.points.getNames
-            data = self.source.data.tocsc()
+            getAxisName = self._source.features.getName
+            getOtherNames = self._source.points.getNames
+            data = self._source.data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
                 notTarget = []
-                for idx in range(len(self.source.features)):
+                for idx in range(len(self._source.features)):
                     if idx not in targetList:
                         notTarget.append(idx)
                 notTargeted = data[:, notTarget]
 
-        self.source._validateAxis(self.axis)
+        self._source._validateAxis(self._axis)
 
         for index in targetList:
             axisNames.append(getAxisName(index))
         otherNames = getOtherNames()
 
         if structure != 'copy':
-            self.source.data = notTargeted.tocoo()
-            self.source._sortInternal(self.axis)
+            self._source.data = notTargeted.tocoo()
+            self._source._sortInternal(self._axis)
 
         ret = targeted.tocoo()
 
-        if self.axis == 'point':
+        if self._axis == 'point':
             return UML.data.Sparse(ret, pointNames=axisNames,
                                    featureNames=otherNames,
                                    reuseData=True)
@@ -283,23 +285,23 @@ class SparseAxis(Axis):
         keepCols = []
         keepIndex = 0
 
-        # iterate through self.axis data
+        # iterate through self._axis data
         for targetID, view in enumerate(self):
             # coo_matrix data for return object
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
                     targetData.append(value)
-                    if self.axis == 'point':
+                    if self._axis == 'point':
                         targetRows.append(targetList.index(targetID))
                         targetCols.append(view.data.col[otherID])
                     else:
                         targetRows.append(view.data.row[otherID])
                         targetCols.append(targetList.index(targetID))
-            # coo_matrix data for modified self.source
+            # coo_matrix data for modified self._source
             elif structure != 'copy':
                 for otherID, value in enumerate(view.data.data):
                     keepData.append(value)
-                    if self.axis == 'point':
+                    if self._axis == 'point':
                         keepRows.append(keepIndex)
                         keepCols.append(view.data.col[otherID])
                     else:
@@ -308,11 +310,11 @@ class SparseAxis(Axis):
                 keepIndex += 1
 
         # instantiate return data
-        selfShape, targetShape = _calcShapes(self.source.data.shape,
-                                             targetLength, self.axis)
+        selfShape, targetShape = _calcShapes(self._source.data.shape,
+                                             targetLength, self._axis)
         if structure != 'copy':
             keepData = numpy.array(keepData, dtype=dtype)
-            self.source.data = coo_matrix((keepData, (keepRows, keepCols)),
+            self._source.data = coo_matrix((keepData, (keepRows, keepCols)),
                                           shape=selfShape)
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetData = numpy.array(targetData, dtype=dtype)
@@ -322,23 +324,23 @@ class SparseAxis(Axis):
         # get names for return obj
         pnames = []
         fnames = []
-        if self.axis == 'point':
+        if self._axis == 'point':
             for index in targetList:
-                pnames.append(self.source.points.getName(index))
-            fnames = self.source.features.getNames()
+                pnames.append(self._source.points.getName(index))
+            fnames = self._source.features.getNames()
         else:
-            pnames = self.source.points.getNames()
+            pnames = self._source.points.getNames()
             for index in targetList:
-                fnames.append(self.source.features.getName(index))
+                fnames.append(self._source.features.getName(index))
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)
 
     def _nonZeroIterator_implementation(self):
-        if self.axis == 'point':
-            self.source._sortInternal('point')
+        if self._axis == 'point':
+            self._source._sortInternal('point')
         else:
-            self.source._sortInternal('feature')
+            self._source._sortInternal('feature')
         class nzIt(object):
             def __init__(self, source):
                 self._source = source
@@ -360,7 +362,7 @@ class SparseAxis(Axis):
             def __next__(self):
                 return self.next()
 
-        return nzIt(self.source)
+        return nzIt(self._source)
 
     ####################
     # Abstract Methods #

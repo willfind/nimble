@@ -29,10 +29,10 @@ class ListAxis(Axis):
         The object containing point and feature data.
     """
     def __init__(self, axis, source, **kwds):
-        self.axis = axis
-        self.source = source
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._axis = axis
+        self._source = source
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(ListAxis, self).__init__(**kwds)
 
     ##############################
@@ -51,70 +51,70 @@ class ListAxis(Axis):
         """
         pnames = []
         fnames = []
-        data = numpy.matrix(self.source.data, dtype=object)
+        data = numpy.matrix(self._source.data, dtype=object)
 
-        if self.axis == 'point':
+        if self._axis == 'point':
             keepList = []
-            for idx in range(len(self.source.points)):
+            for idx in range(len(self._source.points)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[targetList, :]
             if structure != 'copy':
                 keep = data[keepList, :]
-                self.source.data = keep.tolist()
+                self._source.data = keep.tolist()
 
             for index in targetList:
-                pnames.append(self.source.points.getName(index))
-            fnames = self.source.features.getNames()
+                pnames.append(self._source.points.getName(index))
+            fnames = self._source.features.getNames()
 
         else:
-            if self.source.data == []:
+            if self._source.data == []:
                 # create empty matrix with correct shape
-                shape = (len(self.source.points), len(self.source.features))
+                shape = (len(self._source.points), len(self._source.features))
                 empty = numpy.empty(shape)
                 data = numpy.matrix(empty, dtype=numpy.object_)
 
             keepList = []
-            for idx in range(len(self.source.features)):
+            for idx in range(len(self._source.features)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[:, targetList]
             if structure != 'copy':
                 keep = data[:, keepList]
-                self.source.data = keep.tolist()
+                self._source.data = keep.tolist()
 
             for index in targetList:
-                fnames.append(self.source.features.getName(index))
-            pnames = self.source.points.getNames()
+                fnames.append(self._source.features.getName(index))
+            pnames = self._source.points.getNames()
 
             if structure != 'copy':
-                remainingFts = self.source._numFeatures - len(targetList)
-                self.source._numFeatures = remainingFts
+                remainingFts = self._source._numFeatures - len(targetList)
+                self._source._numFeatures = remainingFts
 
         return UML.data.List(satisfying, pointNames=pnames,
                              featureNames=fnames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self.axis == 'point':
-            test = self.source.pointView(0)
-            viewIter = self.source.points
-            indexGetter = self.source.points.getIndex
-            nameGetter = self.source.points.getName
-            names = self.source.points.getNames()
+        if self._axis == 'point':
+            test = self._source.pointView(0)
+            viewIter = self._source.points
+            indexGetter = self._source.points.getIndex
+            nameGetter = self._source.points.getName
+            names = self._source.points.getNames()
         else:
-            test = self.source.featureView(0)
-            viewIter = self.source.features
-            indexGetter = self.source.features.getIndex
-            nameGetter = self.source.features.getName
-            names = self.source.features.getNames()
+            test = self._source.featureView(0)
+            viewIter = self._source.features
+            indexGetter = self._source.features.getIndex
+            nameGetter = self._source.features.getName
+            names = self._source.features.getNames()
 
         if isinstance(sortHelper, list):
-            sortData = numpy.array(self.source.data, dtype=numpy.object_)
-            if self.axis == 'point':
+            sortData = numpy.array(self._source.data, dtype=numpy.object_)
+            if self._axis == 'point':
                 sortData = sortData[sortHelper, :]
             else:
                 sortData = sortData[:, sortHelper]
-            self.source.data = sortData.tolist()
+            self._source.data = sortData.tolist()
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
@@ -147,7 +147,7 @@ class ListAxis(Axis):
             viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
             indexPosition = []
             for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self.axis + 's')
+                viewAxis = getattr(viewArray[i], self._axis + 's')
                 index = indexGetter(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
         else:
@@ -168,13 +168,13 @@ class ListAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # run through target axis and change indices
-        if self.axis == 'point':
-            source = copy.copy(self.source.data)
-            for i in range(len(self.source.data)):
-                self.source.data[i] = source[indexPosition[i]]
+        if self._axis == 'point':
+            source = copy.copy(self._source.data)
+            for i in range(len(self._source.data)):
+                self._source.data[i] = source[indexPosition[i]]
         else:
-            for i in range(len(self.source.data)):
-                currPoint = self.source.data[i]
+            for i in range(len(self._source.data)):
+                currPoint = self._source.data[i]
                 temp = copy.copy(currPoint)
                 for j in range(len(indexPosition)):
                     currPoint[j] = temp[indexPosition[j]]

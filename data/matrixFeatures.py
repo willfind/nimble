@@ -22,10 +22,10 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
-        self.axis = 'feature'
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._source = source
+        self._axis = 'feature'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(MatrixFeatures, self).__init__(**kwds)
 
     ##############################
@@ -38,22 +38,23 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self.source.data[:, :insertBefore]
-        endData = self.source.data[:, insertBefore:]
-        self.source.data = numpy.concatenate((startData, toAdd.data, endData),
-                                             1)
+        startData = self._source.data[:, :insertBefore]
+        endData = self._source.data[:, insertBefore:]
+        self._source.data = numpy.concatenate((startData, toAdd.data, endData),
+                                              1)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
+            # currRet might return an ArgumentException with a message which
+            # needs to be formatted with the axis and current index before
+            # being raised
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
-            if len(currRet) != len(self.source.points):
+            if len(currRet) != len(self._source.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise ArgumentException(msg)
@@ -62,20 +63,20 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
             except ValueError:
                 currRet = numpy.array(currRet, dtype=numpy.object_)
                 # need self.data to be object dtype if inserting object dtype
-                if numpy.issubdtype(self.source.data.dtype, numpy.number):
-                    self.source.data = self.source.data.astype(numpy.object_)
-            reshape = (len(self.source.points), 1)
-            self.source.data[:, j] = numpy.array(currRet).reshape(reshape)
+                if numpy.issubdtype(self._source.data.dtype, numpy.number):
+                    self._source.data = self._source.data.astype(numpy.object_)
+            reshape = (len(self._source.points), 1)
+            self._source.data[:, j] = numpy.array(currRet).reshape(reshape)
 
     # def _flattenToOne_implementation(self):
-    #     numElements = len(self.source.points) * len(self.source.features)
-    #     self.source.data = self.source.data.reshape((numElements, 1),
+    #     numElements = len(self._source.points) * len(self._source.features)
+    #     self._source.data = self._source.data.reshape((numElements, 1),
     #                                                 order='F')
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numFeatures = divideInto
-    #     numPoints = len(self.source.points) // numFeatures
-    #     self.source.data = self.source.data.reshape((numPoints, numFeatures),
+    #     numPoints = len(self._source.points) // numFeatures
+    #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='F')
 
     def _nonZeroIterator_implementation(self):
@@ -107,7 +108,7 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
             def __next__(self):
                 return self.next()
 
-        return nzIt(self.source)
+        return nzIt(self._source)
 
 class MatrixFeaturesView(AxisView, MatrixFeatures, MatrixAxis, Axis, Features):
     def __init__(self, source, **kwds):

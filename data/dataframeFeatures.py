@@ -26,10 +26,10 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
         The object containing features data.
     """
     def __init__(self, source, **kwds):
-        self.source = source
-        self.axis = 'feature'
-        kwds['axis'] = self.axis
-        kwds['source'] = self.source
+        self._source = source
+        self._axis = 'feature'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
         super(DataFrameFeatures, self).__init__(**kwds)
 
     ##############################
@@ -42,38 +42,39 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self.source.data.iloc[:, :insertBefore]
-        endData = self.source.data.iloc[:, insertBefore:]
-        self.source.data = pd.concat((startData, toAdd.data, endData), axis=1)
-        self.source._updateName(axis='feature')
+        startData = self._source.data.iloc[:, :insertBefore]
+        endData = self._source.data.iloc[:, insertBefore:]
+        self._source.data = pd.concat((startData, toAdd.data, endData), axis=1)
+        self._source._updateName(axis='feature')
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            # currRet might return an ArgumentException with a message which needs to be
-            # formatted with the axis and current index before being raised
+            # currRet might return an ArgumentException with a message which
+            # needs to be formatted with the axis and current index before
+            # being raised
             if isinstance(currRet, ArgumentException):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
-            if len(currRet) != len(self.source.points):
+            if len(currRet) != len(self._source.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise ArgumentException(msg)
 
-            self.source.data.iloc[:, j] = currRet
+            self._source.data.iloc[:, j] = currRet
 
     # def _flattenToOne_implementation(self):
-    #     numElements = len(self.source.points) * len(self.source.features)
-    #     self.source.data = pd.DataFrame(
-    #         self.source.data.values.reshape((numElements, 1), order='F'))
+    #     numElements = len(self._source.points) * len(self._source.features)
+    #     self._source.data = pd.DataFrame(
+    #         self._source.data.values.reshape((numElements, 1), order='F'))
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numFeatures = divideInto
-    #     numPoints = len(self.source.points) // numFeatures
-    #     self.source.data = pd.DataFrame(
-    #         self.source.data.values.reshape((numPoints, numFeatures),
+    #     numPoints = len(self._source.points) // numFeatures
+    #     self._source.data = pd.DataFrame(
+    #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
 
     def _nonZeroIterator_implementation(self):
@@ -105,7 +106,7 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
             def __next__(self):
                 return self.next()
 
-        return nzIt(self.source)
+        return nzIt(self._source)
 
 class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
                             Features):

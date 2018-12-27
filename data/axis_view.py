@@ -14,16 +14,16 @@ class AxisView(Axis):
         super(AxisView, self).__init__(**kwds)
 
     def _getNames(self):
-        if self.axis == 'point':
-            start = self.source._pStart
-            end = self.source._pEnd
+        if self._axis == 'point':
+            start = self._source._pStart
+            end = self._source._pEnd
         else:
-            start = self.source._fStart
-            end = self.source._fEnd
+            start = self._source._fStart
+            end = self._source._fEnd
 
-        if not getattr(self.source._source, self.axis + 'NamesInverse'):
-            self.source._source._setAllDefault(self.axis)
-        names = getattr(self.source._source, self.axis + 'NamesInverse')
+        if not getattr(self._source._source, self._axis + 'NamesInverse'):
+            self._source._source._setAllDefault(self._axis)
+        names = getattr(self._source._source, self._axis + 'NamesInverse')
 
         return names[start:end]
 
@@ -31,14 +31,14 @@ class AxisView(Axis):
         return self._getNames()[index]
 
     def _getIndex(self, name):
-        if self.axis == 'point':
-            start = self.source._pStart
-            end = self.source._pEnd
-            possible = self.source._source.points.getIndex(name)
+        if self._axis == 'point':
+            start = self._source._pStart
+            end = self._source._pEnd
+            possible = self._source._source.points.getIndex(name)
         else:
-            start = self.source._fStart
-            end = self.source._fEnd
-            possible = self.source._source.features.getIndex(name)
+            start = self._source._fStart
+            end = self._source._fEnd
+            possible = self._source._source.features.getIndex(name)
         if possible >= start and possible < end:
             return possible - start
         else:
