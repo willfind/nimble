@@ -4,7 +4,8 @@ Methods tested in this file (none modify the data):
 pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 pointSimilarities, featureSimilarities, pointStatistics,
-featureStatistics, points.__iter__, features.__iter__, nonZeroIterator
+featureStatistics, points.__iter__, features.__iter__,
+points.nonZeroIterator, features.nonZeroIterator
 """
 
 from __future__ import absolute_import
@@ -2089,38 +2090,49 @@ class QueryBackend(DataTestObject):
         assert toCheck[7][1] == 0
         assert toCheck[7][2] == 0
 
-    ###################
-    # nonZeroIterator #
-    ###################
+    #####################################################
+    # points.nonZeroIterator / features.nonZeroIterator #
+    #####################################################
 
-    def test_nonZeroIteratorPointGrouped_handmade(self):
+    def test_points_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIterator(iterateBy='points'):
+        for val in obj.points.nonZeroIterator():
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
 
-    def test_nonZeroIteratorFeatureGrouped_handmade(self):
+    def test_points_nonZeroIterator_empty(self):
+        data = []
+        obj = self.constructor(data)
+
+        ret = []
+        for val in obj.points.nonZeroIterator():
+            ret.append(val)
+
+        assert ret == []
+
+    def test_features_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIterator(iterateBy='features'):
+        for val in obj.features.nonZeroIterator():
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
 
-    @raises(ArgumentException)
-    def test_nonZeroIteratorException_unexpectedIterateBy(self):
-        data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
+    def test_features_nonZeroIterator_empty(self):
+        data = []
         obj = self.constructor(data)
 
-        for val in obj.nonZeroIterator(iterateBy='elements'):
-            pass
+        ret = []
+        for val in obj.features.nonZeroIterator():
+            ret.append(val)
 
+        assert ret == []
 
 ###########
 # Helpers #

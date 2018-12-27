@@ -87,77 +87,6 @@ class Sparse(Base):
         (points, cols) = scipy.shape(self.data)
         return points
 
-    def pointIterator(self):
-        self._sortInternal('point')
-
-        class pointIt(object):
-            def __init__(self, outer):
-                self._outer = outer
-                self._nextID = 0
-                self._stillSorted = True
-                self._sortedPosition = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                if self._nextID >= len(self._outer.points):
-                    raise StopIteration
-                if self._outer._sorted != "point" or not self._stillSorted:
-                #					print "actually called"
-                    self._stillSorted = False
-                    value = self._outer.pointView(self._nextID)
-                else:
-                    end = self._sortedPosition
-                    #this ensures end is always in range, and always exclusive
-                    while (end < len(self._outer.data.data) and self._outer.data.row[end] == self._nextID):
-                        end += 1
-                    value = self._outer.pointView(self._nextID)
-                    self._sortedPosition = end
-                self._nextID += 1
-                return value
-
-            def __next__(self):
-                return self.next()
-
-        return pointIt(self)
-
-    def featureIterator(self):
-        self._sortInternal('feature')
-
-        class featureIt():
-            def __init__(self, outer):
-                self._outer = outer
-                self._nextID = 0
-                self._stillSorted = True
-                self._stilled = True
-                self._sortedPosition = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                if self._nextID >= len(self._outer.features):
-                    raise StopIteration
-                if self._outer._sorted != "feature" or not self._stillSorted:
-                #					print "actually called"
-                    self._stillSorted = False
-                    value = self._outer.featureView(self._nextID)
-                else:
-                    end = self._sortedPosition
-                    #this ensures end is always in range, and always exclusive
-                    while (end < len(self._outer.data.data) and self._outer.data.col[end] == self._nextID):
-                        end += 1
-                    value = self._outer.featureView(self._nextID)
-                    self._sortedPosition = end
-                self._nextID += 1
-                return value
-
-            def __next__(self):
-                return self.next()
-
-        return featureIt(self)
-
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copyAs("Matrix")
         toPlot.plot(outPath, includeColorbar)
@@ -697,40 +626,6 @@ class Sparse(Base):
         """
         return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
-    def _nonZeroIteratorPointGrouped_implementation(self):
-        self._sortInternal('point')
-        return self._nonZeroIterator_general_implementation()
-
-    def _nonZeroIteratorFeatureGrouped_implementation(self):
-        self._sortInternal('feature')
-        return self._nonZeroIterator_general_implementation()
-
-    def _nonZeroIterator_general_implementation(self):
-        # Assumption: underlying data already correctly sorted by
-        # per axis helper; will not be modified during iteration
-        class nzIt(object):
-            def __init__(self, source):
-                self._source = source
-                self._index = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while (self._index < len(self._source.data.data)):
-                    value = self._source.data.data[self._index]
-
-                    self._index += 1
-                    if value != 0:
-                        return value
-
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        return nzIt(self)
-
     def _matrixMultiply_implementation(self, other):
         """
         Matrix multiply this UML data object against the provided other UML data
@@ -1084,52 +979,6 @@ class SparseView(BaseView, Sparse):
         adjY = y + self._fStart
         return self._source[adjX, adjY]
 
-    def pointIterator(self):
-        return self._generic_iterator("point")
-
-    def featureIterator(self):
-        return self._generic_iterator("feature")
-
-    def _generic_iterator(self, axis):
-        source = self._source
-        if axis == 'point':
-            positionLimit = self._pStart + len(self.points)
-            sourceStart = self._pStart
-            # Needs to be None if we're dealing with a fully empty point
-            fixedStart = self._fStart if self._fStart != 0 else None
-            # self._fEnd is exclusive, but view takes inclusive indices
-            fixedEnd = (self._fEnd - 1) if self._fEnd != 0 else None
-        else:
-            positionLimit = self._fStart + len(self.features)
-            sourceStart = self._fStart
-            # Needs to be None if we're dealing with a fully empty feature
-            fixedStart = self._pStart if self._pStart != 0 else None
-            # self._pEnd is exclusive, but view takes inclusive indices
-            fixedEnd = (self._pEnd - 1) if self._pEnd != 0 else None
-
-        class GenericIt(object):
-            def __init__(self):
-                self._position = sourceStart
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                if self._position < positionLimit:
-                    if axis == 'point':
-                        value = source.view(self._position, self._position, fixedStart, fixedEnd)
-                    else:
-                        value = source.view(fixedStart, fixedEnd, self._position, self._position)
-                    self._position += 1
-                    return value
-
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        return GenericIt()
-
     def _copyAs_implementation(self, format):
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
@@ -1215,44 +1064,3 @@ class SparseView(BaseView, Sparse):
         ret = UML.createData(self.getTypeString(), ret.data)
 
         return ret
-
-
-    def _nonZeroIteratorPointGrouped_implementation(self):
-        return self._nonZeroIterator_general_implementation(self.points)
-
-    def _nonZeroIteratorFeatureGrouped_implementation(self):
-        return self._nonZeroIterator_general_implementation(self.features)
-
-    def _nonZeroIterator_general_implementation(self, sourceIter):
-        # IDEA: check if sorted in the way you want.
-        # if yes, iterate through
-        # if no, use numpy argsort? this gives you indices that
-        # would sort it, iterate through those indices to do access?
-        #
-        # safety: somehow check that your sorting setup hasn't changed
-
-        class nzIt(object):
-            def __init__(self):
-                self._sourceIter = sourceIter
-                self._currGroup = None
-                self._index = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while True:
-                    try:
-                        value = self._currGroup[self._index]
-                        self._index += 1
-
-                        if value != 0:
-                            return value
-                    except:
-                        self._currGroup = next(self._sourceIter)
-                        self._index = 0
-
-            def __next__(self):
-                return self.next()
-
-        return nzIt()

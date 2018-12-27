@@ -76,6 +76,37 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     #         self.source.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
 
+    def _nonZeroIterator_implementation(self):
+        class nzIt(object):
+            def __init__(self, source):
+                self._source = source
+                self._pIndex = 0
+                self._pStop = len(source.points)
+                self._fIndex = 0
+                self._fStop = len(source.features)
+
+            def __iter__(self):
+                return self
+
+            def next(self):
+                while (self._fIndex < self._fStop):
+                    value = self._source.data.iloc[self._pIndex, self._fIndex]
+
+                    self._pIndex += 1
+                    if self._pIndex >= self._pStop:
+                        self._pIndex = 0
+                        self._fIndex += 1
+
+                    if value != 0:
+                        return value
+
+                raise StopIteration
+
+            def __next__(self):
+                return self.next()
+
+        return nzIt(self.source)
+
 class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
                             Features):
     def __init__(self, source, **kwds):

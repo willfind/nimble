@@ -7394,7 +7394,7 @@ class StructureModifying(StructureShared):
         def emitNumNZ(point):
             ret = 0
             assert len(point) == 3
-            for value in point.nonZeroIterator():
+            for value in point.points.nonZeroIterator():
                 ret += 1
             return [ret, ret, ret]
 
@@ -7526,7 +7526,7 @@ class StructureModifying(StructureShared):
         def emitNumNZ(feature):
             ret = 0
             assert len(feature) == 4
-            for value in feature.nonZeroIterator():
+            for value in feature.features.nonZeroIterator():
                 ret += 1
             return [ret, ret, ret, ret]
 

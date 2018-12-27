@@ -718,6 +718,17 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo)
 
+    def nonZeroIterator(self):
+        """
+        Iterate through each non-zero value following the point order.
+
+        Returns an iterator for all non-zero elements contained in this
+        object, where the values in the same point will be
+        contiguous, with the earlier indexed points coming
+        before the later indexed points.
+        """
+        return self._nonZeroIterator()
+
     ####################
     # Abstract Methods #
     ####################
@@ -808,4 +819,8 @@ class Points(object):
 
     @abstractmethod
     def _normalize(self, subtract, divide, applyResultTo):
+        pass
+
+    @abstractmethod
+    def _nonZeroIterator(self):
         pass

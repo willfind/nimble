@@ -720,6 +720,17 @@ class Features(object):
         """
         self._normalize(subtract, divide, applyResultTo)
 
+    def nonZeroIterator(self):
+        """
+        Iterate through each non-zero value following the feature order.
+
+        Returns an iterator for all non-zero elements contained in this
+        object, where the values in the same feature will be
+        contiguous, with the earlier indexed features coming
+        before the later indexed features.
+        """
+        return self._nonZeroIterator()
+
     ####################
     # Abstract Methods #
     ####################
@@ -810,4 +821,8 @@ class Features(object):
 
     @abstractmethod
     def _normalize(self, subtract, divide, applyResultTo):
+        pass
+
+    @abstractmethod
+    def _nonZeroIterator(self):
         pass

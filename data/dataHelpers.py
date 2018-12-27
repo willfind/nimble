@@ -62,10 +62,6 @@ class View(six.with_metaclass(ABCMeta)):
         pass
 
     @abstractmethod
-    def nonZeroIterator(self):
-        pass
-
-    @abstractmethod
     def __len__(self):
         pass
 

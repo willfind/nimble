@@ -1721,45 +1721,6 @@ class Base(object):
             yLim=(yMin, yMax), sampleSizeForAverage=sampleSizeForAverage)
         return p
 
-    def nonZeroIterator(self, iterateBy='points'):
-        """
-        Returns an iterator for all non-zero elements contained in this
-        object, where the values in the same point|feature will be
-        contiguous, with the earlier indexed points|features coming
-        before the later indexed points|features.
-
-        iterateBy: Genereate an iterator over 'points' or 'features'.
-        Default is 'points'.
-
-        If the object is one dimensional, iterateBy is ignored.
-        """
-
-        class EmptyIt(object):
-            def __iter__(self):
-                return self
-
-            def next(self):
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        if self._pointCount == 0 or self._featureCount == 0:
-            return EmptyIt()
-
-        if self._pointCount == 1:
-            return self._nonZeroIteratorPointGrouped_implementation()
-        if self._featureCount == 1:
-            return self._nonZeroIteratorFeatureGrouped_implementation()
-
-        if iterateBy == 'points':
-            return self._nonZeroIteratorPointGrouped_implementation()
-        elif iterateBy == 'features':
-            return self._nonZeroIteratorFeatureGrouped_implementation()
-        else:
-            msg = "iterateBy can just be 'points' or 'features'"
-            raise ArgumentException(msg)
-
     ##################################################################
     ##################################################################
     ###   Subclass implemented structural manipulation functions   ###

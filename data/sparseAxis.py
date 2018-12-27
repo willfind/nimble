@@ -66,13 +66,11 @@ class SparseAxis(Axis):
         comparator = None
         if self.axis == 'point':
             viewMaker = self.source.pointView
-            getViewIter = self.source.pointIterator
             indexGetter = self.source.points.getIndex
             nameGetter = self.source.points.getName
             names = self.source.points.getNames()
         else:
             viewMaker = self.source.featureView
-            getViewIter = self.source.featureIterator
             indexGetter = self.source.features.getIndex
             nameGetter = self.source.features.getName
             names = self.source.features.getNames()
@@ -109,8 +107,7 @@ class SparseAxis(Axis):
         if comparator is not None:
             # make array of views
             viewArray = []
-            viewIter = getViewIter()
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             viewArray.sort(key=cmp_to_key(comparator))
@@ -126,8 +123,7 @@ class SparseAxis(Axis):
         else:
             # make array of views
             viewArray = []
-            viewIter = getViewIter()
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             scoreArray = viewArray
@@ -277,10 +273,6 @@ class SparseAxis(Axis):
         Iterate through each member to index targeted values
         """
         dtype = numpy.object_
-        if self.axis == 'point':
-            viewIterator = self.source.pointIterator
-        else:
-            viewIterator = self.source.featureIterator
 
         targetLength = len(targetList)
         targetData = []
@@ -292,7 +284,7 @@ class SparseAxis(Axis):
         keepIndex = 0
 
         # iterate through self.axis data
-        for targetID, view in enumerate(viewIterator()):
+        for targetID, view in enumerate(self):
             # coo_matrix data for return object
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
@@ -341,6 +333,34 @@ class SparseAxis(Axis):
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)
+
+    def _nonZeroIterator_implementation(self):
+        if self.axis == 'point':
+            self.source._sortInternal('point')
+        else:
+            self.source._sortInternal('feature')
+        class nzIt(object):
+            def __init__(self, source):
+                self._source = source
+                self._index = 0
+
+            def __iter__(self):
+                return self
+
+            def next(self):
+                while (self._index < len(self._source.data.data)):
+                    value = self._source.data.data[self._index]
+
+                    self._index += 1
+                    if value != 0:
+                        return value
+
+                raise StopIteration
+
+            def __next__(self):
+                return self.next()
+
+        return nzIt(self.source)
 
     ####################
     # Abstract Methods #

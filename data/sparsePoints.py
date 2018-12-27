@@ -114,3 +114,36 @@ class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
         kwds['source'] = source
         kwds['axis'] = 'point'
         super(SparsePointsView, self).__init__(**kwds)
+
+    def _nonZeroIterator_implementation(self):
+        # IDEA: check if sorted in the way you want.
+        # if yes, iterate through
+        # if no, use numpy argsort? this gives you indices that
+        # would sort it, iterate through those indices to do access?
+        #
+        # safety: somehow check that your sorting setup hasn't changed
+        class nzIt(object):
+            def __init__(self, source):
+                self._sourceIter = source.points
+                self._currGroup = None
+                self._index = 0
+
+            def __iter__(self):
+                return self
+
+            def next(self):
+                while True:
+                    try:
+                        value = self._currGroup[self._index]
+                        self._index += 1
+
+                        if value != 0:
+                            return value
+                    except:
+                        self._currGroup = next(self._sourceIter)
+                        self._index = 0
+
+            def __next__(self):
+                return self.next()
+
+        return nzIt(self.source)
