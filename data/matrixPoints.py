@@ -67,16 +67,16 @@ class MatrixPoints(MatrixAxis, Axis, Points):
             reshape = (1, len(self.source.features))
             self.source.data[i, :] = numpy.array(currRet).reshape(reshape)
 
-    def _flattenToOne_implementation(self):
-        numElements = len(self.source.points) * len(self.source.features)
-        self.source.data = self.source.data.reshape((1, numElements),
-                                                    order='C')
-
-    def _unflattenFromOne_implementation(self, divideInto):
-        numPoints = divideInto
-        numFeatures = len(self.source.features) // numPoints
-        self.source.data = self.source.data.reshape((numPoints, numFeatures),
-                                                    order='C')
+    # def _flattenToOne_implementation(self):
+    #     numElements = len(self.source.points) * len(self.source.features)
+    #     self.source.data = self.source.data.reshape((1, numElements),
+    #                                                 order='C')
+    #
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     numPoints = divideInto
+    #     numFeatures = len(self.source.features) // numPoints
+    #     self.source.data = self.source.data.reshape((numPoints, numFeatures),
+    #                                                 order='C')
 
 class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
     def __init__(self, source, **kwds):

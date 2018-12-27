@@ -77,38 +77,38 @@ class SparseFeatures(SparseAxis, Axis, Features):
                                       shape=shape)
         self.source._sorted = None
 
-    def _flattenToOne_implementation(self):
-        self.source._sortInternal('feature')
-        fLen = len(self.source.points)
-        numElem = len(self.source.points) * len(self.source.features)
-        data = self.source.data.data
-        row = self.source.data.row
-        col = self.source.data.col
-        for i in range(len(data)):
-            if col[i] > 0:
-                row[i] += (col[i] * fLen)
-                col[i] = 0
-
-        self.source.data = coo_matrix((data, (row, col)), (numElem, 1))
-
-    def _unflattenFromOne_implementation(self, divideInto):
-        # only one feature, so both sorts are the same order
-        if self.source._sorted is None:
-            self.source._sortInternal('feature')
-
-        numFeatures = divideInto
-        numPoints = len(self.source.points) // numFeatures
-        newShape = (numPoints, numFeatures)
-        data = self.source.data.data
-        row = self.source.data.row
-        col = self.source.data.col
-        for i in range(len(data)):
-            # must change the col entry before modifying the row entry
-            col[i] = row[i] / numPoints
-            row[i] = row[i] % numPoints
-
-        self.source.data = coo_matrix((data, (row, col)), newShape)
-        self.source._sorted = 'feature'
+    # def _flattenToOne_implementation(self):
+    #     self.source._sortInternal('feature')
+    #     fLen = len(self.source.points)
+    #     numElem = len(self.source.points) * len(self.source.features)
+    #     data = self.source.data.data
+    #     row = self.source.data.row
+    #     col = self.source.data.col
+    #     for i in range(len(data)):
+    #         if col[i] > 0:
+    #             row[i] += (col[i] * fLen)
+    #             col[i] = 0
+    #
+    #     self.source.data = coo_matrix((data, (row, col)), (numElem, 1))
+    #
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     # only one feature, so both sorts are the same order
+    #     if self.source._sorted is None:
+    #         self.source._sortInternal('feature')
+    #
+    #     numFeatures = divideInto
+    #     numPoints = len(self.source.points) // numFeatures
+    #     newShape = (numPoints, numFeatures)
+    #     data = self.source.data.data
+    #     row = self.source.data.row
+    #     col = self.source.data.col
+    #     for i in range(len(data)):
+    #         # must change the col entry before modifying the row entry
+    #         col[i] = row[i] / numPoints
+    #         row[i] = row[i] % numPoints
+    #
+    #     self.source.data = coo_matrix((data, (row, col)), newShape)
+    #     self.source._sorted = 'feature'
 
 class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
     def __init__(self, source, **kwds):

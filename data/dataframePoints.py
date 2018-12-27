@@ -64,17 +64,17 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
 
             self.source.data.iloc[i, :] = currRet
 
-    def _flattenToOne_implementation(self):
-        numElements = len(self.source.points) * len(self.source.features)
-        self.source.data = pd.DataFrame(
-            self.source.data.values.reshape((1, numElements), order='C'))
-
-    def _unflattenFromOne_implementation(self, divideInto):
-        numPoints = divideInto
-        numFeatures = len(self.source.features) // numPoints
-        self.source.data = pd.DataFrame(
-            self.source.data.values.reshape((numPoints, numFeatures),
-                                            order='C'))
+    # def _flattenToOne_implementation(self):
+    #     numElements = len(self.source.points) * len(self.source.features)
+    #     self.source.data = pd.DataFrame(
+    #         self.source.data.values.reshape((1, numElements), order='C'))
+    #
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     numPoints = divideInto
+    #     numFeatures = len(self.source.features) // numPoints
+    #     self.source.data = pd.DataFrame(
+    #         self.source.data.values.reshape((numPoints, numFeatures),
+    #                                         order='C'))
 class DataFramePointsView(AxisView, DataFramePoints, DataFrameAxis, Axis,
                           Points):
     def __init__(self, source, **kwds):

@@ -64,17 +64,17 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
 
             self.source.data.iloc[:, j] = currRet
 
-    def _flattenToOne_implementation(self):
-        numElements = len(self.source.points) * len(self.source.features)
-        self.source.data = pd.DataFrame(
-            self.source.data.values.reshape((numElements, 1), order='F'))
-
-    def _unflattenFromOne_implementation(self, divideInto):
-        numFeatures = divideInto
-        numPoints = len(self.source.points) // numFeatures
-        self.source.data = pd.DataFrame(
-            self.source.data.values.reshape((numPoints, numFeatures),
-                                            order='F'))
+    # def _flattenToOne_implementation(self):
+    #     numElements = len(self.source.points) * len(self.source.features)
+    #     self.source.data = pd.DataFrame(
+    #         self.source.data.values.reshape((numElements, 1), order='F'))
+    #
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     numFeatures = divideInto
+    #     numPoints = len(self.source.points) // numFeatures
+    #     self.source.data = pd.DataFrame(
+    #         self.source.data.values.reshape((numPoints, numFeatures),
+    #                                         order='F'))
 
 class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
                             Features):

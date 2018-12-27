@@ -252,92 +252,92 @@ class Axis(object):
 
         self.source.validate()
 
-    def _flattenToOne(self):
-        if self.source._pointCount == 0 or self.source._featureCount == 0:
-            msg = "Can only flattenToOne when there is one or more {0}s. "
-            msg += "This object has 0 {0}s."
-            msg = msg.format(self.axis)
-            raise ImproperActionException(msg)
-
-        # TODO: flatten nameless Objects without the need to generate default
-        # names for them.
-        if not self.source._pointNamesCreated():
-            self.source._setAllDefault('point')
-        if not self.source._featureNamesCreated():
-            self.source._setAllDefault('feature')
-
-        self._flattenToOne_implementation()
-
-        if self.axis == 'point':
-            axisCount = self.source._pointCount
-            offAxisCount = self.source._featureCount
-            setAxisCount = self.source._setpointCount
-            setOffAxisCount = self.source._setfeatureCount
-            setAxisNames = self.source.points.setNames
-            setOffAxisNames = self.source.features.setNames
-        else:
-            axisCount = self.source._featureCount
-            offAxisCount = self.source._pointCount
-            setAxisCount = self.source._setfeatureCount
-            setOffAxisCount = self.source._setpointCount
-            setAxisNames = self.source.features.setNames
-            setOffAxisNames = self.source.points.setNames
-
-        setOffAxisCount(axisCount * offAxisCount)
-        setAxisCount(1)
-        setOffAxisNames(self._flattenNames(self.axis))
-        setAxisNames(['Flattened'])
-
-    def _unflattenFromOne(self, divideInto):
-        if self.axis == 'point':
-            offAxis = 'feature'
-            axisCount = self.source._pointCount
-            offAxisCount = self.source._featureCount
-            setAxisCount = self.source._setpointCount
-            setOffAxisCount = self.source._setfeatureCount
-            setAxisNames = self.source.points.setNames
-            setOffAxisNames = self.source.features.setNames
-        else:
-            offAxis = 'point'
-            axisCount = self.source._featureCount
-            offAxisCount = self.source._pointCount
-            setAxisCount = self.source._setfeatureCount
-            setOffAxisCount = self.source._setpointCount
-            setAxisNames = self.source.features.setNames
-            setOffAxisNames = self.source.points.setNames
-
-        if offAxisCount == 0:
-            msg = "Can only unflattenFromOne when there is one or more "
-            msg = "{offAxis}s. This object has 0 {offAxis}s."
-            msg = msg.format(offAxis=offAxis)
-            raise ImproperActionException(msg)
-        if axisCount != 1:
-            msg = "Can only unflattenFromOne when there is only one {axis}. "
-            msg += "This object has {axisCount} {axis}s."
-            msg += msg.format(axis=self.axis, axisCount=axisCount)
-            raise ImproperActionException(msg)
-        if offAxisCount % divideInto != 0:
-            msg = "The argument num{axisCap}s ({divideInto}) must be a "
-            msg += "divisor of this object's {offAxis}Count ({offAxisCount}) "
-            msg += "otherwise it will not be possible to equally divide the "
-            msg += "elements into the desired number of {axis}s."
-            msg = msg.format(axisCap=self.axis.capitalize(),
-                             divideInto=divideInto, offAxis=offAxis,
-                             offAxisCount=offAxisCount, axis=self.axis)
-            raise ArgumentException(msg)
-
-        if not self.source._pointNamesCreated():
-            self.source._setAllDefault('point')
-        if not self.source._featureNamesCreated():
-            self.source._setAllDefault('feature')
-
-        self._unflattenFromOne_implementation(divideInto)
-        ret = self._unflattenNames(divideInto)
-
-        setOffAxisCount(offAxisCount // divideInto)
-        setAxisCount(divideInto)
-        setAxisNames(ret[0])
-        setOffAxisNames(ret[1])
+    # def _flattenToOne(self):
+    #     if self.source._pointCount == 0 or self.source._featureCount == 0:
+    #         msg = "Can only flattenToOne when there is one or more {0}s. "
+    #         msg += "This object has 0 {0}s."
+    #         msg = msg.format(self.axis)
+    #         raise ImproperActionException(msg)
+    #
+    #     # TODO: flatten nameless Objects without the need to generate default
+    #     # names for them.
+    #     if not self.source._pointNamesCreated():
+    #         self.source._setAllDefault('point')
+    #     if not self.source._featureNamesCreated():
+    #         self.source._setAllDefault('feature')
+    #
+    #     self._flattenToOne_implementation()
+    #
+    #     if self.axis == 'point':
+    #         axisCount = self.source._pointCount
+    #         offAxisCount = self.source._featureCount
+    #         setAxisCount = self.source._setpointCount
+    #         setOffAxisCount = self.source._setfeatureCount
+    #         setAxisNames = self.source.points.setNames
+    #         setOffAxisNames = self.source.features.setNames
+    #     else:
+    #         axisCount = self.source._featureCount
+    #         offAxisCount = self.source._pointCount
+    #         setAxisCount = self.source._setfeatureCount
+    #         setOffAxisCount = self.source._setpointCount
+    #         setAxisNames = self.source.features.setNames
+    #         setOffAxisNames = self.source.points.setNames
+    #
+    #     setOffAxisCount(axisCount * offAxisCount)
+    #     setAxisCount(1)
+    #     setOffAxisNames(self._flattenNames(self.axis))
+    #     setAxisNames(['Flattened'])
+    #
+    # def _unflattenFromOne(self, divideInto):
+    #     if self.axis == 'point':
+    #         offAxis = 'feature'
+    #         axisCount = self.source._pointCount
+    #         offAxisCount = self.source._featureCount
+    #         setAxisCount = self.source._setpointCount
+    #         setOffAxisCount = self.source._setfeatureCount
+    #         setAxisNames = self.source.points.setNames
+    #         setOffAxisNames = self.source.features.setNames
+    #     else:
+    #         offAxis = 'point'
+    #         axisCount = self.source._featureCount
+    #         offAxisCount = self.source._pointCount
+    #         setAxisCount = self.source._setfeatureCount
+    #         setOffAxisCount = self.source._setpointCount
+    #         setAxisNames = self.source.features.setNames
+    #         setOffAxisNames = self.source.points.setNames
+    #
+    #     if offAxisCount == 0:
+    #         msg = "Can only unflattenFromOne when there is one or more "
+    #         msg = "{offAxis}s. This object has 0 {offAxis}s."
+    #         msg = msg.format(offAxis=offAxis)
+    #         raise ImproperActionException(msg)
+    #     if axisCount != 1:
+    #         msg = "Can only unflattenFromOne when there is only one {axis}. "
+    #         msg += "This object has {axisCount} {axis}s."
+    #         msg += msg.format(axis=self.axis, axisCount=axisCount)
+    #         raise ImproperActionException(msg)
+    #     if offAxisCount % divideInto != 0:
+    #         msg = "The argument num{axisCap}s ({divideInto}) must be a "
+    #         msg += "divisor of this object's {offAxis}Count ({offAxisCount}) "
+    #         msg += "otherwise it will not be possible to equally divide the "
+    #         msg += "elements into the desired number of {axis}s."
+    #         msg = msg.format(axisCap=self.axis.capitalize(),
+    #                          divideInto=divideInto, offAxis=offAxis,
+    #                          offAxisCount=offAxisCount, axis=self.axis)
+    #         raise ArgumentException(msg)
+    #
+    #     if not self.source._pointNamesCreated():
+    #         self.source._setAllDefault('point')
+    #     if not self.source._featureNamesCreated():
+    #         self.source._setAllDefault('feature')
+    #
+    #     self._unflattenFromOne_implementation(divideInto)
+    #     ret = self._unflattenNames(divideInto)
+    #
+    #     setOffAxisCount(offAxisCount // divideInto)
+    #     setAxisCount(divideInto)
+    #     setAxisNames(ret[0])
+    #     setOffAxisNames(ret[1])
 
     def _shuffle(self):
         if self.axis == 'point':
@@ -1352,13 +1352,13 @@ class Axis(object):
     def _add_implementation(self, toAdd, insertBefore):
         pass
 
-    @abstractmethod
-    def _flattenToOne_implementation(self):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOne_implementation(self, divideInto):
-        pass
+    # @abstractmethod
+    # def _flattenToOne_implementation(self):
+    #     pass
+    #
+    # @abstractmethod
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):
