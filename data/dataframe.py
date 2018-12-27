@@ -12,6 +12,8 @@ import numpy
 import numpy as np
 from six.moves import range
 
+import UML
+from UML.exceptions import ArgumentException, PackageException
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -19,8 +21,6 @@ from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
-import UML
-from UML.exceptions import ArgumentException, PackageException
 
 pd = UML.importModule('pandas')
 scipy = UML.importModule('scipy.sparse')

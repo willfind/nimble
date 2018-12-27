@@ -491,21 +491,21 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
     honestForStats.features.extract(featuresToRemoveCompletely)
     honestForStats.features.extract(featuresToPredict)
 
-    honestForStats.pointStatistics("standarddeviation").plotFeatureDistribution(0)
-    liarsForStats.pointStatistics("standarddeviation").plotFeatureDistribution(0)
+    honestForStats.points.statistics("standarddeviation").plotFeatureDistribution(0)
+    liarsForStats.points.statistics("standarddeviation").plotFeatureDistribution(0)
 
     featuresForStats = liarsForStats
 
     #print "point means"
-    pointMeans = featuresForStats.pointStatistics("mean")
+    pointMeans = featuresForStats.points.statistics("mean")
     #print "lyers"
     #featuresForStats.show()
     #print "means"
-    print("minMean", pointMeans.featureStatistics("min"))
-    print("maxMean", pointMeans.featureStatistics("max"))
+    print("minMean", pointMeans.features.statistics("min"))
+    print("maxMean", pointMeans.features.statistics("max"))
     #pointMeans.show()
-    pointStdDevs = featuresForStats.pointStatistics("standarddeviation")
-    print("meanStdDev", pointStdDevs.featureStatistics("mean"))
+    pointStdDevs = featuresForStats.points.statistics("standarddeviation")
+    print("meanStdDev", pointStdDevs.features.statistics("mean"))
 
 #pointStdDevs.show()
 #stats = pointMeans.copy()
@@ -513,13 +513,13 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 #stats.plotFeatureCross(0,1)
 
 #def pointsToZScores(data):
-#	means = data.pointStatistics("mean")
-#	stddevs = data.pointStatistics("standarddeviation")
+#	means = data.points.statistics("mean")
+#	stddevs = data.points.statistics("standarddeviation")
 #	return (data - means) / stddevs #this doesn't work because of size mismatch
 
 def pointsToZScores(data):
-    means = data.pointStatistics("mean")
-    stddevs = data.pointStatistics("standarddeviation")
+    means = data.points.statistics("mean")
+    stddevs = data.points.statistics("standarddeviation")
     #identity = UML.createData("Matrix", numpy.ones(len(data.features)))
     rawIdentity = numpy.atleast_2d(numpy.ones(len(data.features)))
     onesPoint = UML.createData("Matrix", rawIdentity)

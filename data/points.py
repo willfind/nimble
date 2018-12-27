@@ -726,8 +726,46 @@ class Points(object):
         object, where the values in the same point will be
         contiguous, with the earlier indexed points coming
         before the later indexed points.
+
+        Examples
+        --------
+        TODO
         """
         return self._nonZeroIterator()
+
+    #########################
+    # Statistical functions #
+    #########################
+
+    def similarities(self, similarityFunction):
+        """
+        Calculate similarities between points.
+
+        Return a new object containing the results of the
+        ``similarityFunction``.
+
+        Parameters
+        ----------
+        similarityFunction: str
+            The name of the function. The accepted strings include:
+            'correlation', 'covariance', 'dot product',
+            'sample covariance', and 'population covariance'
+
+        Returns
+        -------
+        UML data object
+
+        Examples
+        --------
+        TODO
+        """
+        return self._similarities(similarityFunction)
+
+    def statistics(self, statisticsFunction):
+        """
+
+        """
+        return self._statistics(statisticsFunction)
 
     ####################
     # Abstract Methods #
@@ -823,4 +861,12 @@ class Points(object):
 
     @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _similarities(self):
+        pass
+
+    @abstractmethod
+    def _statistics(self):
         pass

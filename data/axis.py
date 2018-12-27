@@ -21,6 +21,7 @@ from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
+from .dataHelpers import cleanKeywordInput, validateInputString
 
 class Axis(object):
     """
@@ -412,6 +413,37 @@ class Axis(object):
 
         return ret
 
+    def _calculate_implementation(self, function, limitTo):
+        retData = []
+        for viewID, view in enumerate(self):
+            if limitTo is not None and viewID not in limitTo:
+                continue
+            currOut = function(view)
+            # first we branch on whether the output has multiple values
+            # or is singular.
+            if (hasattr(currOut, '__iter__') and
+                    # in python3, string has __iter__ too.
+                    not isinstance(currOut, six.string_types)):
+                # if there are multiple values, they must be random accessible
+                if not hasattr(currOut, '__getitem__'):
+                    msg = "function must return random accessible data "
+                    msg += "(ie has a __getitem__ attribute)"
+                    raise ArgumentException(msg)
+
+                toCopyInto = []
+                for value in currOut:
+                    toCopyInto.append(value)
+                retData.append(toCopyInto)
+            # singular return
+            else:
+                retData.append([currOut])
+
+        ret = UML.createData(self._source.getTypeString(), retData)
+        if self._axis != 'point':
+            ret.transpose()
+
+        return ret
+
     def _add(self, toAdd, insertBefore):
         self._validateInsertableData(toAdd)
         if self._source.getTypeString() != toAdd.getTypeString():
@@ -533,10 +565,16 @@ class Axis(object):
                 raise ArgumentException(msg)
 
         # check that if it is a string, it is one of the accepted values
+        accepted = [
+            'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
         if isinstance(subtract, six.string_types):
-            self._source._validateStatisticalFunctionInputString(subtract)
+            validateInputString(subtract, accepted, 'subtract')
         if isinstance(divide, six.string_types):
-            self._source._validateStatisticalFunctionInputString(divide)
+            validateInputString(divide, accepted, 'divide')
 
         # arg generic helper to check that objects are of the
         # correct shape/size
@@ -630,32 +668,32 @@ class Axis(object):
         # of that statistic
         #		if isinstance(subtract, basestring):
         #			if axis == 'point':
-        #				subtract = self.pointStatistics(subtract)
+        #				subtract = self._statistics(subtract)
         #			else:
-        #				subtract = self.featureStatistics(subtract)
+        #				subtract = self._statistics(subtract)
         #			subIsVec = True
         #		if isinstance(divide, basestring):
         #			if axis == 'point':
-        #				divide = self.pointStatistics(divide)
+        #				divide = self._statistics(divide)
         #			else:
-        #				divide = self.featureStatistics(divide)
+        #				divide = self._statistics(divide)
         #			divIsVec = True
 
         if self._axis == 'point':
             indexGetter = lambda x: self._getIndex(x.points.getName(0))
             if isinstance(subtract, six.string_types):
-                subtract = self._source.pointStatistics(subtract)
+                subtract = self._statistics(subtract)
                 subIsVec = True
             if isinstance(divide, six.string_types):
-                divide = self._source.pointStatistics(divide)
+                divide = self._statistics(divide)
                 divIsVec = True
         else:
             indexGetter = lambda x: self._getIndex(x.features.getName(0))
             if isinstance(subtract, six.string_types):
-                subtract = self._source.featureStatistics(subtract)
+                subtract = self._statistics(subtract)
                 subIsVec = True
             if isinstance(divide, six.string_types):
-                divide = self._source.featureStatistics(divide)
+                divide = self._statistics(divide)
                 divIsVec = True
 
         # helper for when subtract is a vector of values
@@ -709,6 +747,108 @@ class Axis(object):
             return EmptyIt()
 
         return self._nonZeroIterator_implementation()
+
+    #########################
+    # Statistical functions #
+    #########################
+
+    def _similarities(self, similarityFunction):
+        accepted = [
+            'correlation', 'covariance', 'dot product', 'sample covariance',
+            'population covariance'
+            ]
+        cleanFuncName = validateInputString(similarityFunction, accepted,
+                                            'similarities')
+
+        if cleanFuncName == 'correlation':
+            toCall = UML.calculate.correlation
+        elif (cleanFuncName == 'covariance'
+              or cleanFuncName == 'samplecovariance'):
+            toCall = UML.calculate.covariance
+        elif cleanFuncName == 'populationcovariance':
+            def populationCovariance(X, X_T):
+                return UML.calculate.covariance(X, X_T, False)
+
+            toCall = populationCovariance
+        elif cleanFuncName == 'dotproduct':
+            def dotProd(X, X_T):
+                return X * X_T
+
+            toCall = dotProd
+
+        transposed = self._source.copy()
+        transposed.transpose()
+
+        if self._axis == 'point':
+            ret = toCall(self._source, transposed)
+        else:
+            ret = toCall(transposed, self._source)
+
+        # TODO validation or result.
+
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
+
+        return ret
+
+    def _statistics(self, statisticsFunction, groupByFeature=None):
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(statisticsFunction)
+        else:
+            # groupByFeature is only a parameter for .features
+            res = self._source.groupByFeature(groupByFeature)
+            for k in res:
+                res[k] = res[k].features._statisticsBackend(statisticsFunction)
+            return res
+
+    def _statisticsBackend(self, statisticsFunction):
+        accepted = [
+            'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
+        cleanFuncName = validateInputString(statisticsFunction, accepted,
+                                            'statistics')
+
+        if cleanFuncName == 'max':
+            toCall = UML.calculate.maximum
+        elif cleanFuncName == 'mean':
+            toCall = UML.calculate.mean
+        elif cleanFuncName == 'median':
+            toCall = UML.calculate.median
+        elif cleanFuncName == 'min':
+            toCall = UML.calculate.minimum
+        elif cleanFuncName == 'uniquecount':
+            toCall = UML.calculate.uniqueCount
+        elif cleanFuncName == 'proportionmissing':
+            toCall = UML.calculate.proportionMissing
+        elif cleanFuncName == 'proportionzero':
+            toCall = UML.calculate.proportionZero
+        elif cleanFuncName == 'std' or cleanFuncName == 'standarddeviation':
+            def sampleStandardDeviation(values):
+                return UML.calculate.standardDeviation(values, True)
+
+            toCall = sampleStandardDeviation
+        elif (cleanFuncName == 'samplestd'
+              or cleanFuncName == 'samplestandarddeviation'):
+            def sampleStandardDeviation(values):
+                return UML.calculate.standardDeviation(values, True)
+
+            toCall = sampleStandardDeviation
+        elif (cleanFuncName == 'populationstd'
+              or cleanFuncName == 'populationstandarddeviation'):
+            toCall = UML.calculate.standardDeviation
+
+        if self._axis == 'point':
+            ret = self._source.points.calculate(toCall)
+            ret.points.setNames(self._source.points.getNames())
+            ret.features.setName(0, cleanFuncName)
+        else:
+            ret = self._source.features.calculate(toCall)
+            ret.points.setName(0, cleanFuncName)
+            ret.features.setNames(self._source.features.getNames())
+        return ret
 
     #####################
     # Low Level Helpers #
@@ -1084,37 +1224,6 @@ class Axis(object):
     ##########################
     #  Higher Order Helpers  #
     ##########################
-
-    def _calculate_implementation(self, function, limitTo):
-        retData = []
-        for viewID, view in enumerate(self):
-            if limitTo is not None and viewID not in limitTo:
-                continue
-            currOut = function(view)
-            # first we branch on whether the output has multiple values
-            # or is singular.
-            if (hasattr(currOut, '__iter__') and
-                    # in python3, string has __iter__ too.
-                    not isinstance(currOut, six.string_types)):
-                # if there are multiple values, they must be random accessible
-                if not hasattr(currOut, '__getitem__'):
-                    msg = "function must return random accessible data "
-                    msg += "(ie has a __getitem__ attribute)"
-                    raise ArgumentException(msg)
-
-                toCopyInto = []
-                for value in currOut:
-                    toCopyInto.append(value)
-                retData.append(toCopyInto)
-            # singular return
-            else:
-                retData.append([currOut])
-
-        ret = UML.createData(self._source.getTypeString(), retData)
-        if self._axis != 'point':
-            ret.transpose()
-
-        return ret
 
     def _validateInsertableData(self, toAdd):
         """

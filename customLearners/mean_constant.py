@@ -9,7 +9,7 @@ class MeanConstant(CustomLearner):
     learnerType = 'regression'
 
     def train(self, trainX, trainY):
-        self.mean = trainY.featureStatistics('mean')[0, 0]
+        self.mean = trainY.features.statistics('mean')[0, 0]
 
     def apply(self, testX):
         raw = numpy.zeros(len(testX.points))

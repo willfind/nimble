@@ -49,7 +49,7 @@ def silver_factor(pCount, fCount):
 
 def makePowerOfAdjustedLogLikelihoodSum(exp):
     def PowerOfAdjustedLogLikelihoodSum(knownValues, predictedValues):
-        ratioValues = predictedValues / predictedValues.pointStatistics('max').featureStatistics('max')[0]  # everything now on scale from 0 to 1
+        ratioValues = predictedValues / predictedValues.points.statistics('max').features.statistics('max')[0]  # everything now on scale from 0 to 1
         negativeLogOfRatios = (-numpy.log(ratioValues))
         expNegLog = negativeLogOfRatios ** exp
         total = numpy.sum(expNegLog)

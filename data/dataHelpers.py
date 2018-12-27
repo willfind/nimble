@@ -341,6 +341,24 @@ def cleanKeywordInput(s):
     s = "".join(s.split())
     return s
 
+def validateInputString(string, accepted, paramName):
+    acceptedClean = list(map(cleanKeywordInput, accepted))
+
+    msg = paramName + " must be equivalent to one of the following: "
+    msg += str(accepted) + ", but '" + str(string)
+    msg += "' was given instead. Note: casing and whitespace is "
+    msg += "ignored when checking the " + paramName
+
+    if not isinstance(string, six.string_types):
+        raise ArgumentException(msg)
+
+    cleanFuncName = cleanKeywordInput(string)
+
+    if cleanFuncName not in acceptedClean:
+        raise ArgumentException(msg)
+
+    return cleanFuncName
+
 
 def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
     """Adjust the inputs to be a consistent length and with

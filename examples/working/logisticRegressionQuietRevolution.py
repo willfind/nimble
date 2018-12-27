@@ -180,8 +180,8 @@ if __name__ == "__main__":
                 coefs = None
                 intercept = None
                 #predictions = None
-                misclassifiedInSample = inSampleY.featureStatistics("mean")[0, 0]
-                misclassified = testYTemp.featureStatistics("mean")[0, 0]
+                misclassifiedInSample = inSampleY.features.statistics("mean")[0, 0]
+                misclassified = testYTemp.features.statistics("mean")[0, 0]
 
 
             #print "\nROUND"
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             #print "misclassified %:", misclassified
             #if predictions != None:
             #	print "predictions:\n", predictions
-            #	print predictions.featureStatistics("mean")
+            #	print predictions.features.statistics("mean")
 
             output.append([name, per(misclassified), per(misclassifiedInSample), intercept, coefs])
 

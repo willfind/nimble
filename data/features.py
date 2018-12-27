@@ -724,12 +724,65 @@ class Features(object):
         """
         Iterate through each non-zero value following the feature order.
 
-        Returns an iterator for all non-zero elements contained in this
+        Return an iterator for all non-zero elements contained in this
         object, where the values in the same feature will be
         contiguous, with the earlier indexed features coming
         before the later indexed features.
+
+        Examples
+        --------
+        TODO
         """
         return self._nonZeroIterator()
+
+    #########################
+    # Statistical functions #
+    #########################
+
+    def similarities(self, similarityFunction):
+        """
+        Calculate similarities between features.
+
+        Return a new object containing the results of the
+        ``similarityFunction``.
+
+        Parameters
+        ----------
+        similarityFunction: str
+            The name of the function. The accepted strings include:
+            'correlation', 'covariance', 'dot product',
+            'sample covariance', and 'population covariance'
+
+        Returns
+        -------
+        UML data object
+
+        Examples
+        --------
+        TODO
+        """
+        return self._similarities(similarityFunction)
+
+    def statistics(self, statisticsFunction, groupByFeature=None):
+        """
+        Calculate feature statistics.
+
+        Parameters
+        ----------
+        statisticsFunction: str
+            The name of the function. The accepted strings include:
+            'correlation', 'covariance', 'dot product',
+            'sample covariance', and 'population covariance'
+
+        Returns
+        -------
+        UML data object
+
+        Examples
+        --------
+        TODO
+        """
+        return self._statistics(statisticsFunction, groupByFeature)
 
     ####################
     # Abstract Methods #
@@ -825,4 +878,12 @@ class Features(object):
 
     @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _similarities(self):
+        pass
+
+    @abstractmethod
+    def _statistics(self):
         pass

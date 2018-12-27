@@ -26,8 +26,8 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
     boundaryOnNormalScale = scipy.stats.norm.ppf(halfConfidence)
 
     sqrtN = float(math.sqrt(len(errors.points)))
-    mean = errors.featureStatistics('mean')[0, 0]
-    std = errors.featureStatistics('SampleStandardDeviation')[0, 0]
+    mean = errors.features.statistics('mean')[0, 0]
+    std = errors.features.statistics('SampleStandardDeviation')[0, 0]
 
     low = transform(mean - (boundaryOnNormalScale * (std / sqrtN)))
     high = transform(mean + (boundaryOnNormalScale * (std / sqrtN)))

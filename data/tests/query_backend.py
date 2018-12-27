@@ -3,7 +3,7 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
-pointSimilarities, featureSimilarities, pointStatistics,
+points.similarities, features.similarities, pointStatistics,
 featureStatistics, points.__iter__, features.__iter__,
 points.nonZeroIterator, features.nonZeroIterator
 """
@@ -1087,17 +1087,17 @@ class QueryBackend(DataTestObject):
 
 
     ##################### #######################
-    # pointSimilarities # # featureSimilarities #
+    # points.similarities # # features.similarities #
     ##################### #######################
 
     @raises(ArgumentException)
-    def test_pointSimilaritesInvalidParamType(self):
-        """ Test pointSimilarities raise exception for unexpected param type """
+    def test_points_similarities_InvalidParamType(self):
+        """ Test points.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(True)
 
     @raises(ArgumentException)
-    def test_featureSimilaritesInvalidParamType(self):
-        """ Test featureSimilarities raise exception for unexpected param type """
+    def test_features_similarities_InvalidParamType(self):
+        """ Test features.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(False)
 
     def backend_Sim_InvalidParamType(self, axis):
@@ -1105,18 +1105,18 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(data)
 
         if axis:
-            obj.pointSimilarities({"hello": 5})
+            obj.points.similarities({"hello": 5})
         else:
-            obj.featureSimilarities({"hello": 5})
+            obj.features.similarities({"hello": 5})
 
     @raises(ArgumentException)
-    def test_pointSimilaritesUnexpectedString(self):
-        """ Test pointSimilarities raise exception for unexpected string value """
+    def test_points_similarities_UnexpectedString(self):
+        """ Test points.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(True)
 
     @raises(ArgumentException)
-    def test_featureSimilaritesUnexpectedString(self):
-        """ Test featureSimilarities raise exception for unexpected string value """
+    def test_features_similarities_UnexpectedString(self):
+        """ Test features.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(False)
 
     def backend_Sim_UnexpectedString(self, axis):
@@ -1124,18 +1124,18 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(data)
 
         if axis:
-            obj.pointSimilarities("foo")
+            obj.points.similarities("foo")
         else:
-            obj.featureSimilarities("foo")
+            obj.features.similarities("foo")
 
 
     # test results covariance
-    def test_pointSimilaritesSampleCovarianceResult(self):
-        """ Test pointSimilarities returns correct sample covariance results """
+    def test_points_similarities_SampleCovarianceResult(self):
+        """ Test points.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(True)
 
-    def test_featureSimilaritesSampleCovarianceResult(self):
-        """ Test featureSimilarities returns correct sample covariance results """
+    def test_features_similarities_SampleCovarianceResult(self):
+        """ Test features.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(False)
 
     def backend_Sim_SampleCovarianceResult(self, axis):
@@ -1147,9 +1147,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("covariance ")
+            ret = orig.points.similarities("covariance ")
         else:
-            ret = trans.featureSimilarities("sample\tcovariance")
+            ret = trans.features.similarities("sample\tcovariance")
             ret.transpose()
 
         # hand computed results
@@ -1168,12 +1168,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesPopulationCovarianceResult(self):
-        """ Test pointSimilarities returns correct population covariance results """
+    def test_points_similarities_PopulationCovarianceResult(self):
+        """ Test points.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(True)
 
-    def test_featureSimilaritesPopulationCovarianceResult(self):
-        """ Test featureSimilarities returns correct population covariance results """
+    def test_features_similarities_PopulationCovarianceResult(self):
+        """ Test features.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(False)
 
     def backend_Sim_populationCovarianceResult(self, axis):
@@ -1185,9 +1185,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("population COvariance")
+            ret = orig.points.similarities("population COvariance")
         else:
-            ret = trans.featureSimilarities("populationcovariance")
+            ret = trans.features.similarities("populationcovariance")
             ret.transpose()
 
         # hand computed results
@@ -1206,11 +1206,11 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesSTDandVarianceIdentity(self):
+    def test_points_similarities_STDandVarianceIdentity(self):
         """ Test identity between population covariance and population std of points """
         self.backend_Sim_STDandVarianceIdentity(True)
 
-    def test_featureSimilaritesSTDandVarianceIdentity(self):
+    def test_features_similarities_STDandVarianceIdentity(self):
         """ Test identity between population covariance and population std of features """
         self.backend_Sim_STDandVarianceIdentity(False)
 
@@ -1221,11 +1221,11 @@ class QueryBackend(DataTestObject):
         trans = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities(" populationcovariance")
-            stdVector = orig.pointStatistics("population std")
+            ret = orig.points.similarities(" populationcovariance")
+            stdVector = orig.points.statistics("population std")
         else:
-            ret = trans.featureSimilarities("populationcovariance")
-            stdVector = trans.featureStatistics("\npopulationstd")
+            ret = trans.features.similarities("populationcovariance")
+            stdVector = trans.features.statistics("\npopulationstd")
             ret.transpose()
 
         numpy.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
@@ -1234,12 +1234,12 @@ class QueryBackend(DataTestObject):
 
 
     # test results correlation
-    def test_pointSimilaritesCorrelationResult(self):
-        """ Test pointSimilarities returns correct correlation results """
+    def test_points_similarities_CorrelationResult(self):
+        """ Test points.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(True)
 
-    def test_featureSimilaritesCorrelationResult(self):
-        """ Test featureSimilarities returns correct correlation results """
+    def test_features_similarities_CorrelationResult(self):
+        """ Test features.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(False)
 
     def backend_Sim_CorrelationResult(self, axis):
@@ -1251,9 +1251,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("correlation")
+            ret = orig.points.similarities("correlation")
         else:
-            ret = trans.featureSimilarities("corre lation")
+            ret = trans.features.similarities("corre lation")
             ret.transpose()
 
         expRow0 = [1, (1. / 2), (1. / 2)]
@@ -1270,12 +1270,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesCorrelationHelpersEquiv(self):
-        """ Compare pointSimilarities correlation using the various possible helpers """
+    def test_points_similarities_CorrelationHelpersEquiv(self):
+        """ Compare points.similarities correlation using the various possible helpers """
         self.backend_Sim_CorrelationHelpersEquiv(True)
 
-    def test_featureSimilaritesCorrelationHelpersEquiv(self):
-        """ Compare featureSimilarities correlation using the various possible helpers """
+    def test_features_similarities_CorrelationHelpersEquiv(self):
+        """ Compare features.similarities correlation using the various possible helpers """
         self.backend_Sim_CorrelationHelpersEquiv(False)
 
     def backend_Sim_CorrelationHelpersEquiv(self, axis):
@@ -1286,17 +1286,17 @@ class QueryBackend(DataTestObject):
         sameAsOrig = self.constructor(data)
 
         def explicitCorr(X, sample=True):
-            sampleStdVector = X.pointStatistics('samplestd')
-            popStdVector = X.pointStatistics('populationstd')
+            sampleStdVector = X.points.statistics('samplestd')
+            popStdVector = X.points.statistics('populationstd')
             stdVector = sampleStdVector if sample else popStdVector
 
             stdVector_T = stdVector.copy()
             stdVector_T.transpose()
 
             if sample:
-                cov = X.pointSimilarities('sample covariance')
+                cov = X.points.similarities('sample covariance')
             else:
-                cov = X.pointSimilarities('population Covariance')
+                cov = X.points.similarities('population Covariance')
 
             stdMatrix = stdVector * stdVector_T
             ret = cov / stdMatrix
@@ -1304,14 +1304,14 @@ class QueryBackend(DataTestObject):
             return ret
 
         if axis:
-            ret = orig.pointSimilarities("correlation")
+            ret = orig.points.similarities("correlation")
             sampRet = explicitCorr(orig, True)
             popRet = explicitCorr(orig, False)
         else:
-            ret = trans.featureSimilarities("correlation")
+            ret = trans.features.similarities("correlation")
             # helper only calls pointStatistics, so have to make sure
             # that in this case, we are calling with the transpose of
-            # the object used to test featureSimilarities
+            # the object used to test features.similarities
             sampRet = explicitCorr(orig, True)
             popRet = explicitCorr(orig, False)
             ret.transpose()
@@ -1329,12 +1329,12 @@ class QueryBackend(DataTestObject):
 
 
     # test results dot product
-    def test_pointSimilaritesDotProductResult(self):
-        """ Test pointSimilarities returns correct dot product results """
+    def test_points_similarities_DotProductResult(self):
+        """ Test points.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(True)
 
-    def test_featureSimilaritesDotProductResult(self):
-        """ Test featureSimilarities returns correct dot product results """
+    def test_features_similarities_DotProductResult(self):
+        """ Test features.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(False)
 
     def backend_Sim_DotProductResult(self, axis):
@@ -1346,9 +1346,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("Dot Product")
+            ret = orig.points.similarities("Dot Product")
         else:
-            ret = trans.featureSimilarities("dotproduct\n")
+            ret = trans.features.similarities("dotproduct\n")
             ret.transpose()
 
         expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
@@ -1360,13 +1360,13 @@ class QueryBackend(DataTestObject):
 
     # test input function validation
     @raises(ArgumentException)
-    def todotest_pointSimilaritesFuncValidation(self):
-        """ Test pointSimilarities raises exception for invalid funcitions """
+    def todotest_points_similarities_FuncValidation(self):
+        """ Test points.similarities raises exception for invalid funcitions """
         self.backend_Sim_FuncValidation(True)
 
     @raises(ArgumentException)
-    def todotest_featureSimilaritesFuncValidation(self):
-        """ Test featureSimilarities raises exception for invalid funcitions """
+    def todotest_features_similarities_FuncValidation(self):
+        """ Test features.similarities raises exception for invalid funcitions """
         self.backend_Sim_FuncValidation(False)
 
     def backend_Sim_FuncValidation(self, axis):
@@ -1378,17 +1378,17 @@ class QueryBackend(DataTestObject):
             return one
 
         if axis:
-            obj.pointSimilarities(singleArg)
+            obj.points.similarities(singleArg)
         else:
-            obj.featureSimilarities(singleArg)
+            obj.features.similarities(singleArg)
 
     # test results passed function
     def todotest_pointSimilariteGivenFuncResults(self):
-        """ Test pointSimilarities returns correct results for given function """
+        """ Test points.similarities returns correct results for given function """
         self.backend_Sim_GivenFuncResults(True)
 
-    def todotest_featureSimilaritesGivenFuncResults(self):
-        """ Test featureSimilarities returns correct results for given function """
+    def todotest_features_similarities_GivenFuncResults(self):
+        """ Test features.similarities returns correct results for given function """
         self.backend_Sim_GivenFuncResults(False)
 
     def backend_Sim_GivenFuncResults(self, axis):
@@ -1400,9 +1400,9 @@ class QueryBackend(DataTestObject):
             assert False
 
         if axis:
-            obj.pointSimilarities(euclideanDistance)
+            obj.points.similarities(euclideanDistance)
         else:
-            obj.featureSimilarities(euclideanDistance)
+            obj.features.similarities(euclideanDistance)
 
     def backend_Sim_NamePath_Preservation(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
@@ -1417,9 +1417,9 @@ class QueryBackend(DataTestObject):
 
         for curr in possible:
             if axis:
-                ret = orig.pointSimilarities(curr)
+                ret = orig.points.similarities(curr)
             else:
-                ret = trans.featureSimilarities(curr)
+                ret = trans.features.similarities(curr)
 
             assert orig.name == preserveName
             assert orig.absolutePath == preserveAPath
@@ -1429,10 +1429,10 @@ class QueryBackend(DataTestObject):
             assert ret.absolutePath == preserveAPath
             assert ret.relativePath == preserveRPath
 
-    def test_pointSimilaritesDot_NamePath_preservation(self):
+    def test_points_similarities_Dot_NamePath_preservation(self):
         self.backend_Sim_NamePath_Preservation(True)
 
-    def test_featureSimilarites_NamePath_preservation(self):
+    def test_features_similarities__NamePath_preservation(self):
         self.backend_Sim_NamePath_Preservation(False)
 
 
@@ -1459,10 +1459,10 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("MAx")
+            ret = orig.points.statistics("MAx")
 
         else:
-            ret = trans.featureStatistics("max ")
+            ret = trans.features.statistics("max ")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1488,7 +1488,7 @@ class QueryBackend(DataTestObject):
         if isinstance(orig, UML.data.BaseView):
             return
         #don't test view.
-        res = orig.featureStatistics('mean', groupByFeature='gender')
+        res = orig.features.statistics('mean', groupByFeature='gender')
         expObjf = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
         expObjm = self.constructor([7,8,9], featureNames=['a','b', 'c'], pointNames=['mean'])
         assert expObjf == res['f']
@@ -1505,9 +1505,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("Mean")
+            ret = orig.points.statistics("Mean")
         else:
-            ret = trans.featureStatistics(" MEAN")
+            ret = trans.features.statistics(" MEAN")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1539,9 +1539,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("MeDian")
+            ret = orig.points.statistics("MeDian")
         else:
-            ret = trans.featureStatistics("median")
+            ret = trans.features.statistics("median")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1574,9 +1574,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("mIN")
+            ret = orig.points.statistics("mIN")
         else:
-            ret = trans.featureStatistics("min")
+            ret = trans.features.statistics("min")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1608,9 +1608,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("unique Count")
+            ret = orig.points.statistics("unique Count")
         else:
-            ret = trans.featureStatistics("UniqueCount")
+            ret = trans.features.statistics("UniqueCount")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1642,9 +1642,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("Proportion Missing ")
+            ret = orig.points.statistics("Proportion Missing ")
         else:
-            ret = trans.featureStatistics("proportionmissing")
+            ret = trans.features.statistics("proportionmissing")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1676,9 +1676,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("proportionZero")
+            ret = orig.points.statistics("proportionZero")
         else:
-            ret = trans.featureStatistics("proportion Zero")
+            ret = trans.features.statistics("proportion Zero")
             assert len(ret.points) == 1
             assert len(ret.features) == 3
             ret.transpose()
@@ -1712,9 +1712,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("samplestd  ")
+            ret = orig.points.statistics("samplestd  ")
         else:
-            ret = trans.featureStatistics("standard deviation")
+            ret = trans.features.statistics("standard deviation")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1756,9 +1756,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("popu  lationstd")
+            ret = orig.points.statistics("popu  lationstd")
         else:
-            ret = trans.featureStatistics("population standarddeviation")
+            ret = trans.features.statistics("population standarddeviation")
             ret.transpose()
 
         assert len(ret.points) == 3
@@ -1796,9 +1796,9 @@ class QueryBackend(DataTestObject):
         sameAsOrig = self.constructor(data)
 
         if axis:
-            ret = orig.pointStatistics("hello")
+            ret = orig.points.statistics("hello")
         else:
-            ret = orig.featureStatistics("meanie")
+            ret = orig.features.statistics("meanie")
 
     def backend_Stat_NamePath_preservation(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
@@ -1813,9 +1813,9 @@ class QueryBackend(DataTestObject):
 
         for curr in accepted:
             if axis:
-                ret = orig.pointStatistics(curr)
+                ret = orig.points.statistics(curr)
             else:
-                ret = orig.featureStatistics(curr)
+                ret = orig.features.statistics(curr)
 
             assert orig.name == preserveName
             assert orig.absolutePath == preserveAPath

@@ -398,7 +398,7 @@ def determineBestSubScores(namesByCategory, categoriesByQName, responses, gender
                 qDat = responses.features.copy(q)
                 uDat = responses.features.copy(u)
                 qDat.features.add(uDat)
-                corr = qDat.featureSimilarities("correlation")
+                corr = qDat.features.similarities("correlation")
                 qToQ.append(abs(corr[0,1]))
 
         scoreCorrGenPartial = functools.partial(scoreToGenderCorrelation, genders=genderValue)
@@ -445,9 +445,9 @@ def verifyGenderAvgerageOrdering(picked, responses, genderValue, categoriesByQNa
         q2Gender = categoriesByQName[q2,1]
 
         fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender)
-        fAvg = fSubscale.featureStatistics("mean")[0]
+        fAvg = fSubscale.features.statistics("mean")[0]
         mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender)
-        mAvg = mSubscale.featureStatistics("mean")[0]
+        mAvg = mSubscale.features.statistics("mean")[0]
 
 #       print str(fAvg) + " " + str(mAvg)
         assert fAvg > mAvg
@@ -520,10 +520,10 @@ def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, response
         allScore = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
         
         mScore = generateSubScale(mResponses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
-        mAvg = mScore.featureStatistics("mean")[0,0]
+        mAvg = mScore.features.statistics("mean")[0,0]
         
         fScore = generateSubScale(fResponses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
-        fAvg = fScore.featureStatistics("mean")[0,0]
+        fAvg = fScore.features.statistics("mean")[0,0]
 
         corr = scoreToGenderCorrelation(allScore, genders)
         rawPoint = [category, scaleType[category], mAvg, fAvg, corr]
@@ -607,9 +607,9 @@ def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categori
     
     if partialCorr:
         residuals_collected = residuals(collected, gender)
-        corrs = residuals_collected.featureSimilarities('correlation')
+        corrs = residuals_collected.features.similarities('correlation')
     else:
-        corrs = collected.featureSimilarities('correlation')
+        corrs = collected.features.similarities('correlation')
     corrs.points.setName("Empathetic", "Compassionate")
     corrs.features.setName("Empathetic", "Compassionate")
 
@@ -650,8 +650,8 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
         else:
             collectedF.features.add(subF)
 
-    corrsM = collectedM.featureSimilarities('correlation')
-    corrsF = collectedF.featureSimilarities('correlation')
+    corrsM = collectedM.features.similarities('correlation')
+    corrsF = collectedF.features.similarities('correlation')
 
     corrsM.points.setName("Empathetic", "Compassionate")
     corrsM.features.setName("Empathetic", "Compassionate")
@@ -701,7 +701,7 @@ def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
             else:
                 collected.features.add(sub)
     
-    corrs = collected.featureSimilarities('correlation')
+    corrs = collected.features.similarities('correlation')
 #   corrs.show("Selected Question Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
     if outFile is not None:
         corrs.writeFile(outFile)
@@ -715,7 +715,7 @@ def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, cate
             q = responses.features.copy(qName)
 
             q.features.add(sub)
-            corr = q.featureSimilarities("correlation")
+            corr = q.features.similarities("correlation")
             corr.points.setName(0, qName)
             corr.features.setName(1, 'Q to Cat Corr')
             corr = corr.view(0,0,1,1)
@@ -740,7 +740,7 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
 
         q1.features.add(q2)
         qs = q1
-        corr = qs.featureSimilarities("correlation")
+        corr = qs.features.similarities("correlation")
         corr.points.setName(0, category)
         corr.features.setName(1, 'Q to Q in Same Cat Corr')
         corr = corr.view(0,0,1,1)           
@@ -809,7 +809,7 @@ def outputFile_selected_and_transformed_data(responses, categoriesByQName, scale
 
 def scoreToGenderCorrelation(scores, genders):
     scores.features.add(genders)
-    corr = scores.featureSimilarities("correlation")
+    corr = scores.features.similarities("correlation")
     scores.features.extract(1)
     return corr[0,1]
 

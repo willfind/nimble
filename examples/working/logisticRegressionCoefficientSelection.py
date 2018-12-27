@@ -578,7 +578,7 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
 #   print len(coefsObj.points)
 #   print len(coefsObj.features)
 
-    coefCorr = coefsObj.featureSimilarities("correlation")
+    coefCorr = coefsObj.features.similarities("correlation")
     # BUT THIS IS WIERD since the questions are 'scored' on different
     # scales depending on whether it ends with an (M) or (F)
     coefCorr.points.setNames([str(val) for val in range(75)])
@@ -635,8 +635,8 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     print(len(malePoints.points))
     print(len(femalePoints.points))
 
-    mMeans = malePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
-    fMeans = femalePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
+    mMeans = malePoints.features.statistics("mean").copyAs("pythonlist", outputAs1D=True)
+    fMeans = femalePoints.features.statistics("mean").copyAs("pythonlist", outputAs1D=True)
 
     print(mMeans)
     print("")
