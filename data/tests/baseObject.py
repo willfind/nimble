@@ -96,6 +96,7 @@ def viewConstructorMaker(concreteType):
                                                      featureNames=full.points.getNames(), pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
+
             lastFeature.transpose()
 
             full.features.add(lastFeature)

@@ -108,6 +108,8 @@ class BaseView(Base):
     ############################
 
     def _copyNames(self, CopyObj):
+        CopyObj.pointNamesInverse = self._getPointNames()
+        CopyObj.pointNames = copy.copy(self._source.pointNames)
 
         if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.points.getNames()

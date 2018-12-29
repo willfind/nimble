@@ -438,8 +438,8 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return UML.createData('List', listForm, pointNames=pNames,
-                                          featureNames=fNames)
+                    return List(listForm, pointNames=self._getPointNames(),
+                                featureNames=self._getFeatureNames())
                 else:
                     return listForm
 
