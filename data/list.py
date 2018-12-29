@@ -74,6 +74,10 @@ class List(Base):
             msg += "or ListPassThrough."
             raise ArgumentException(msg)
 
+        if 'featureNames' not in kwds:
+            kwds['featureNames'] = None
+        featureNames = kwds['featureNames']
+
         if isinstance(data, list):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])
             # or (0, len(featureNames)) or (0, 0)
@@ -129,8 +133,7 @@ class List(Base):
         self.data = data
         self._elementType = elementType
 
-        if 'featureNames' not in kwds:
-            kwds['featureNames'] = None
+        kwds['featureNames'] = featureNames
         kwds['shape'] = shape
         super(List, self).__init__(**kwds)
 
@@ -438,8 +441,8 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm, pointNames=self._getPointNames(),
-                                featureNames=self._getFeatureNames())
+                    return List(listForm, pointNames=self.points.getNames(),
+                                featureNames=self.features.getNames())
                 else:
                     return listForm
 
