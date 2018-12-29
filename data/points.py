@@ -763,7 +763,24 @@ class Points(object):
 
     def statistics(self, statisticsFunction):
         """
+        Calculate point statistics.
 
+        Parameters
+        ----------
+        statisticsFunction: str
+            The name of the function. The accepted strings include:
+            'max', 'mean', 'median', 'min', 'population std',
+            'population standard deviation', 'proportion missing',
+            'proportion zero', 'sample standard deviation',
+            'sample std', 'standard deviation', 'std', 'unique count'
+
+        Returns
+        -------
+        UML data object
+
+        Examples
+        --------
+        TODO
         """
         return self._statistics(statisticsFunction)
 

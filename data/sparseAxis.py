@@ -20,7 +20,7 @@ class SparseAxis(Axis):
     """
     Differentiate how Sparse methods act dependent on the axis.
 
-    Also provides abstract methods which will be required to perform
+    Also includes abstract methods which will be required to perform
     axis-specific operations.
 
     Parameters
@@ -30,6 +30,9 @@ class SparseAxis(Axis):
         applied to.
     source : UML data object
         The object containing point and feature data.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
     def __init__(self, axis, source, **kwds):
         self._axis = axis

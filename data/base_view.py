@@ -1,7 +1,6 @@
 """
 Defines a subclass of the base data object, which serves as the primary
 base class for read only views of data objects.
-
 """
 
 from __future__ import division
@@ -24,7 +23,6 @@ def exception_docstring(func):
         func.__doc__ = viewMsg + baseDoc
     return func
 
-
 @inheritDocstringsFactory(Base)
 class BaseView(Base):
     """
@@ -32,37 +30,35 @@ class BaseView(Base):
     normal data object, but disallow all methods which could change the
     data.
 
+    Parameters
+    ----------
+    source : UML data object
+        The UML object that this is a view into.
+    pointStart : int
+        The inclusive index of the first point this view will have
+        access to.
+    pointEnd : int
+        The EXCLUSIVE index defining the last point this view will
+        have access to. This internal representation cannot match
+        the style of the factory method (in which both start and end
+        are inclusive) because we must be able to define empty
+        ranges by having start = end
+    featureStart : int
+        The inclusive index of the first feature this view will have
+        access to.
+    featureEnd : int
+        The EXCLUSIVE index defining the last feature this view will
+        have access to. This internal representation cannot match
+        the style of the factory method (in which both start and end
+        are inclusive) because we must be able to define empty
+        ranges by having start = end
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
 
     def __init__(self, source, pointStart, pointEnd, featureStart, featureEnd,
                  **kwds):
-        """
-        Initializes the object which overides all of the funcitonality in
-        UML.data.Base to either handle the provided access limits or throw
-        exceptions for inappropriate operations.
-
-        source: the UML object that this is a view into.
-
-        pointStart: the inclusive index of the first point this view will have
-        access to.
-
-        pointEnd: the EXCLUSIVE index defining the last point this view will
-        have access to. This internal representation cannot match the style
-        of the factory method (in which both start and end are inclusive)
-        because we must be able to define empty ranges by having start = end
-
-        featureStart: the inclusive index of the first feature this view will
-        have access to.
-
-        featureEnd: the EXCLUSIVE index defining the last feature this view
-        will have access to. This internal representation cannot match the
-        style of the factory method (in which both start and end are inclusive)
-        because we must be able to define empty ranges by having start = end
-
-        kwds: included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
-
-        """
         self._source = source
         self._pStart = pointStart
         self._pEnd = pointEnd
@@ -106,7 +102,6 @@ class BaseView(Base):
         return self._source.data
 
     # TODO: retType
-
 
     ############################
     # Reimplemented Operations #
@@ -249,7 +244,6 @@ class BaseView(Base):
     def unflattenFromOneFeature(self, numFeatures):
         readOnlyException("unflattenFromOneFeature")
 
-
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
@@ -287,7 +281,6 @@ class BaseView(Base):
     @exception_docstring
     def __ipow__(self, other):
         readOnlyException("__ipow__")
-
 
     ####################
     ####################

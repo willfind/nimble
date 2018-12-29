@@ -5,6 +5,8 @@ implemented type of data representation, comparing both the
 results, and an approximately equal representation of their
 contained values.
 
+TODO not updated for api rework
+
 """
 
 from __future__ import absolute_import

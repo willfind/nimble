@@ -17,13 +17,16 @@ class Elements(object):
     """
     Differentiate how methods act on each element.
 
-    Also provides abstract methods which will be required to perform
+    Also includes abstract methods which will be required to perform
     data-type specific operations.
 
     Parameters
     ----------
     source : UML data object
         The object containing the elements.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
     def __init__(self, source, **kwds):
         self._source = source

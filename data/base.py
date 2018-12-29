@@ -113,39 +113,58 @@ class Base(object):
     mapping from names to indices is given by the [point/feature]Names
     attribute, the inverse of that mapping is given by
     [point/feature]NamesInverse.
+
+    Specifically, this includes point and feature names, an object
+    name, and originating pathes for the data in this object. Note:
+    this method (as should all other __init__ methods in this
+    hierarchy) makes use of super().
+
+    Parameters
+    ----------
+    pointNames : iterable, dict
+        A list of point names in the order they appear in the data
+        or a dictionary mapping names to indices. None is given if
+        default names are desired.
+    featureNames : iterable, dict
+        A list of feature names in the order they appear in the data
+        or a dictionary mapping names to indices. None is given if
+        default names are desired.
+    name : str
+        The name to be associated with this object.
+    paths : tuple
+        The first entry is taken to be the string representing the
+        absolute path to the source file of the data and the second
+        entry is taken to be the relative path. Both may be None if
+        these values are to be unspecified.
+    kwds
+        Potentially full of arguments further up the class
+        hierarchy, as following best practices for use of super().
+        Note, however, that this class is the root of the object
+        hierarchy as statically defined.
+
+    Attributes
+    ----------
+    shape : tuple
+        The number of points and features in the object in the format
+        (points, features).
+    points : Axis object
+        An object handling functions manipulating data by points.
+    features : Axis object
+        An object handling functions manipulating data by features.
+    elements : Elements object
+        An object handling functions manipulating data by each element.
+    name : str
+        A name to call this object when printing or logging.
+    absolutePath : str
+        The absolute path to the data file.
+    relativePath : str
+        The relative path to the data file.
+    path : str
+        The path to the data file.
     """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
-        """
-        Instantiate bookkeeping structures common across all data types.
-
-        Specifically, this includes point and feature names, an object
-        name, and originating pathes for the data in this object. Note:
-        this method (as should all other __init__ methods in this
-        hierarchy) makes use of super().
-
-        pointNames : iterable, dict
-            A list of point names in the order they appear in the data
-            or a dictionary mapping names to indices. None is given if
-            default names are desired.
-        featureNames : iterable, dict
-            A list of feature names in the order they appear in the data
-            or a dictionary mapping names to indices. None is given if
-            default names are desired.
-        name : str
-            The name to be associated with this object.
-        paths : tuple
-            The first entry is taken to be the string representing the
-            absolute path to the source file of the data and the second
-            entry is taken to be the relative path. Both may be None if
-            these values are to be unspecified.
-        kwds
-            potentially full of arguments further up the class
-            hierarchy, as following best practices for use of super().
-            Note, however, that this class is the root of the object
-            hierarchy as statically defined.
-        """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
         if pointNames is not None and len(pointNames) != shape[0]:
@@ -3360,7 +3379,6 @@ class Base(object):
         return (six.viewkeys(self.featureNames)
                 | six.viewkeys(other.featureNames))
 
-
     def _equalPointNames(self, other):
         if other is None or not isinstance(other, Base):
             return False
@@ -3659,7 +3677,6 @@ class Base(object):
         #delete from inverse, since list, del will deal with 'remapping'
         del selfNamesInv[index]
 
-
     def _setName_implementation(self, oldIdentifier, newName, axis,
                                 allowDefaults=False):
         """
@@ -3811,7 +3828,6 @@ class Base(object):
             self.featureNames = copy.deepcopy(assignments)
             self.featureNamesInverse = reverseMap
 
-
     def _constructIndicesList(self, axis, values, argName=None):
         """
         Construct a list of indices from a valid integer (python or numpy) or
@@ -3918,14 +3934,6 @@ class Base(object):
 
     @abstractmethod
     def _containsZero_implementation(self):
-        pass
-
-    @abstractmethod
-    def _nonZeroIteratorPointGrouped_implementation(self):
-        pass
-
-    @abstractmethod
-    def _nonZeroIteratorFeatureGrouped_implementation(self):
         pass
 
     @abstractmethod

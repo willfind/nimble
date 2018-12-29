@@ -18,6 +18,9 @@ class ListFeatures(ListAxis, Axis, Features):
     ----------
     source : UML data object
         The object containing features data.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
     def __init__(self, source, **kwds):
         self._source = source

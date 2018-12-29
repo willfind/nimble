@@ -4,22 +4,17 @@ Class extending Base, using a pandas DataFrame to store data.
 
 from __future__ import division
 from __future__ import absolute_import
-import itertools
-import copy
-import re
 
-import numpy
 import numpy as np
 from six.moves import range
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
-from .base import Base, cmp_to_key
+from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
-from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
 
 pd = UML.importModule('pandas')
@@ -28,8 +23,20 @@ scipy = UML.importModule('scipy.sparse')
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
     """
-    Class providing implementations of data manipulation operations on data stored
-    in a pandas DataFrame.
+    Class providing implementations of data manipulation operations on
+    data stored in a pandas DataFrame.
+
+    Parameters
+    ----------
+    data : object
+        pandas DataFrame or numpy matrix.
+    reuseData : bool
+        Only used when data is a pandas DataFrame.
+    elementType : type
+        The pandas dtype of the data.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
@@ -37,14 +44,16 @@ class DataFrame(Base):
         The initializer.
         Inputs:
             data: pandas DataFrame, or numpy matrix.
-            reuseData: boolean. only used when data is a pandas DataFrame.
+            reuseData: boolean. only used when data is a pandas
+            DataFrame.
         """
         if not pd:
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if (not isinstance(data, (pd.DataFrame, np.matrix))):
-            msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
+        if not isinstance(data, (pd.DataFrame, np.matrix)):
+            msg = "the input data can only be a pandas DataFrame or a numpy "
+            msg += "matrix or ListPassThrough."
             raise ArgumentException(msg)
 
         if isinstance(data, pd.DataFrame):
@@ -69,9 +78,11 @@ class DataFrame(Base):
 
     def _transpose_implementation(self):
         """
-        Function to transpose the data, ie invert the feature and point indices of the data.
+        Function to transpose the data, ie invert the feature and point
+        indices of the data.
 
-        This is not an in place operation, a new pandas DataFrame is constructed.
+        This is not an in place operation, a new pandas DataFrame is
+        constructed.
         """
         self.data = self.data.T
 
@@ -94,31 +105,34 @@ class DataFrame(Base):
             return False
         return True
 
-    def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
+    def _writeFile_implementation(self, outPath, format, includePointNames,
+                                  includeFeatureNames):
         """
-        Function to write the data in this object to a file using the specified
-        format. outPath is the location (including file name and extension) where
-        we want to write the output file. includeNames is boolean argument
-        indicating whether the file should start with comment lines designating
-        pointNames and featureNames.
-
+        Function to write the data in this object to a file using the
+        specified format. ``outPath`` is the location (including file
+        name and extension) where we want to write the output file.
+        ``includeNames`` is boolean argument indicating whether the file
+        should start with comment lines designating pointNames and
+        featureNames.
         """
         if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
-            msg += "either be input as the format parameter, or as the extension in the "
-            msg += "outPath"
+            msg = "Unrecognized file format. Accepted types are 'csv' and "
+            msg += "'mtx'. They may either be input as the format parameter, "
+            msg += "or as the extension in the outPath"
             raise ArgumentException(msg)
 
         if format == 'csv':
-            return self._writeFileCSV_implementation(outPath, includePointNames, includeFeatureNames)
+            return self._writeFileCSV_implementation(
+                outPath, includePointNames, includeFeatureNames)
         if format == 'mtx':
-            return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
+            return self._writeFileMTX_implementation(
+                outPath, includePointNames, includeFeatureNames)
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames, includeFeatureNames):
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         """
-        Function to write the data in this object to a CSV file at the designated
-        path.
-
+        Function to write the data in this object to a CSV file at the
+        designated path.
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
@@ -127,19 +141,21 @@ class DataFrame(Base):
                     outFile.write('point_names')
 
             if includePointNames:
-                    self.data.index = self.points.getNames()
+                self.data.index = self.points.getNames()
 
-        self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
+        self.data.to_csv(outPath, mode='a', index=includePointNames,
+                         header=includeFeatureNames)
 
         if includePointNames:
             self._updateName('point')
         if includeFeatureNames:
             self._updateName('feature')
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         """
-        Function to write the data in this object to a matrix market file at the designated
-        path.
+        Function to write the data in this object to a matrix market
+        file at the designated path.
         """
         if not scipy:
             msg = "scipy is not available"
@@ -156,16 +172,19 @@ class DataFrame(Base):
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, DataFrame):
-            raise ArgumentException("Other must be the same type as this object")
+            msg = "Other must be the same type as this object"
+            raise ArgumentException(msg)
 
         self.data = other.data
 
     def _copyAs_implementation(self, format):
         """
         Copy the current DataFrame object to another one in the format.
-        Input:
-            format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
-                    if format is None, a new DataFrame will be created.
+
+        format: string.
+            Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix,
+            scipycsc, scipycsr or None. If format is None, a new
+            DataFrame will be created.
         """
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
@@ -195,39 +214,49 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', dataArray)
 
-    def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
+    def _fillWith_implementation(self, values, pointStart, featureStart,
+                                 pointEnd, featureEnd):
         """
         """
         if not isinstance(values, UML.data.Base):
-            values = values * np.ones((pointEnd - pointStart + 1, featureEnd - featureStart + 1))
+            values = values * np.ones((pointEnd - pointStart + 1,
+                                       featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
             values = values.data.values
 
-        self.data.iloc[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
+        # pandas is exclusive
+        pointEnd += 1
+        featureEnd += 1
+        self.data.iloc[pointStart:pointEnd, featureStart:featureEnd] = values
 
     def _flattenToOnePoint_implementation(self):
         numElements = len(self.points) * len(self.features)
-        self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
+        self.data = pd.DataFrame(
+            self.data.values.reshape((1, numElements), order='C'))
 
     def _flattenToOneFeature_implementation(self):
         numElements = len(self.points) * len(self.features)
-        self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
+        self.data = pd.DataFrame(
+            self.data.values.reshape((numElements, 1), order='F'))
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         numFeatures = len(self.features) // numPoints
-        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
+        self.data = pd.DataFrame(
+            self.data.values.reshape((numPoints, numFeatures), order='C'))
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         numPoints = len(self.points) // numFeatures
-        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
+        self.data = pd.DataFrame(
+            self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]
         #use self.data.values is much faster
         return self.data.values[x, y]
 
-    def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
+    def _view_implementation(self, pointStart, pointEnd, featureStart,
+                             featureEnd):
         """
 
         """
@@ -249,7 +278,8 @@ class DataFrame(Base):
                 super(DataFrameView, self)._setAllDefault(axis)
 
         kwds = {}
-        kwds['data'] = self.data.iloc[pointStart:pointEnd, featureStart:featureEnd]
+        kwds['data'] = self.data.iloc[pointStart:pointEnd,
+                                      featureStart:featureEnd]
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
@@ -270,54 +300,38 @@ class DataFrame(Base):
 
     def _containsZero_implementation(self):
         """
-        Returns True if there is a value that is equal to integer 0 contained
-        in this object. False otherwise
-
+        Returns True if there is a value that is equal to integer 0
+        contained in this object. False otherwise.
         """
         return 0 in self.data.values
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other UML data
-        object. Both object must contain only numeric data. The featureCount of
-        the calling object must equal the pointCount of the other object. The
-        types of the two objects may be different, and the return is guaranteed
-        to be the same type as at least one out of the two, to be automatically
-        determined according to efficiency constraints.
-
+        Matrix multiply this UML data object against the provided other
+        UML data object. Both object must contain only numeric data.
+        The featureCount of the calling object must equal the pointCount
+        of the other object. The types of the two objects may be
+        different, and the return is guaranteed to be the same type as
+        at least one out of the two, to be automatically determined
+        according to efficiency constraints.
         """
 
         leftData = np.matrix(self.data)
-        rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        return DataFrame(leftData * rightData)
-
-    def _elementwiseMultiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this UML data object against the
-        provided other UML data object. Both objects must contain only numeric
-        data. The pointCount and featureCount of both objects must be equal. The
-        types of the two objects may be different, but the returned object will
-        be the inplace modification of the calling object.
-
-        """
         if isinstance(other, UML.data.Sparse):
-            result = other.data.multiply(self.data.values)
-            if hasattr(result, 'todense'):
-                result = result.todense()
-            self.data = pd.DataFrame(result)
+            rightData = other.data
         else:
-            self.data = pd.DataFrame(np.multiply(self.data.values, other.data))
+            rightData = np.matrix(other.data)
+
+        return DataFrame(leftData * rightData)
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided scalar.
-        This object must contain only numeric data. The 'scalar' parameter must
-        be a numeric data type. The returned object will be the inplace modification
-        of the calling object.
-
+        Multiply every element of this UML data object by the provided
+        scalar. This object must contain only numeric data. The 'scalar'
+        parameter must be a numeric data type. The returned object will
+        be the inplace modification of the calling object.
         """
         self.data = self.data * scalar
-
 
     def _mul__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -332,7 +346,10 @@ class DataFrame(Base):
         """
         leftData = np.matrix(self.data)
         if isinstance(other, UML.data.Base):
-            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            if isinstance(other, UML.data.Sparse):
+                rightData = other.data
+            else:
+                rightData = np.matrix(other.data)
         else:
             rightData = other
         leftData += rightData
@@ -344,7 +361,11 @@ class DataFrame(Base):
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = np.matrix(self.data) + (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
+            if isinstance(other, UML.data.Sparse):
+                rightData = other.data
+            else:
+                rightData = np.matrix(other.data)
+            ret = np.matrix(self.data) + rightData
         else:
             ret = np.matrix(self.data) + np.matrix(other)
         self.data = pd.DataFrame(ret)
@@ -353,7 +374,10 @@ class DataFrame(Base):
     def _sub__implementation(self, other):
         leftData = np.matrix(self.data)
         if isinstance(other, UML.data.Base):
-            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            if isinstance(other, UML.data.Sparse):
+                rightData = other.data
+            else:
+                rightData = np.matrix(other.data)
         else:
             rightData = other
         leftData -= rightData
@@ -362,11 +386,18 @@ class DataFrame(Base):
 
     def _rsub__implementation(self, other):
         ret = other - self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
+        pNames = self.points.getNames()
+        fNames = self.features.getNames()
+        return UML.createData('DataFrame', ret, pointNames=pNames,
+                              featureNames=fNames, reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = np.matrix(self.data) - (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
+            if isinstance(other, UML.data.Sparse):
+                rightData = other.data
+            else:
+                rightData = np.matrix(other.data)
+            ret = np.matrix(self.data) - rightData
         else:
             ret = np.matrix(self.data) - np.matrix(other)
         self.data = pd.DataFrame(ret)
@@ -488,4 +519,4 @@ class DataFrame(Base):
         else:
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
-        #-----------------------------------------------------------------------
+        #----------------------------------------------------------------------

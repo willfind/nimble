@@ -7,23 +7,20 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 import numbers
-import itertools
 from functools import reduce
 
 import numpy
 import six
 from six.moves import range
 
-from .base import Base, cmp_to_key
+import UML
+from UML.exceptions import ArgumentException, PackageException
+from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import reorderToMatchList
-import UML
-from UML.exceptions import ArgumentException, PackageException
-from UML.randomness import pythonRandom
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -31,7 +28,8 @@ pd = UML.importModule('pandas')
 allowedItemType = (numbers.Number, six.string_types)
 def isAllowedSingleElement(x):
     """
-    This function is to determine if an element is an allowed single element
+    This function is to determine if an element is an allowed single
+    element
     """
     if isinstance(x, allowedItemType):
         return True
@@ -47,30 +45,46 @@ def isAllowedSingleElement(x):
 @inheritDocstringsFactory(Base)
 class List(Base):
     """
-    Class providing implementations of data manipulation operations on data stored
-    in a list of lists implementation, where the outer list is a list of
-    points of data, and each inner list is a list of values for each feature.
+    Class providing implementations of data manipulation operations on
+    data stored in a list of lists implementation, where the outer list
+    is a list of points of data, and each inner list is a list of values
+    for each feature.
+
+    Parameters
+    ----------
+    data : object
+        A list, numpy matrix, or a ListPassThrough.
+    reuseData : bool
+        Only works when input data is a list.
+    shape : tuple
+        The number of points and features in the object in the format
+        (points, features).
+    checkAll : bool
+        Perform a validity check for all elements.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, elementType=None, **kwds):
-        """
-        data can be a list, a np matrix or a ListPassThrough
-        reuseData only works when input data is a list
-        if checkAll is True, then it will do validity check for all elements
-        """
-        if (not isinstance(data, (list, numpy.matrix))) and 'PassThrough' not in str(type(data)):
-            msg = "the input data can only be a list or a numpy matrix or ListPassThrough."
+    def __init__(self, data, reuseData=False, shape=None, checkAll=True,
+                 elementType=None, **kwds):
+        if ((not isinstance(data, (list, numpy.matrix)))
+                and 'PassThrough' not in str(type(data))):
+            msg = "the input data can only be a list or a numpy matrix "
+            msg += "or ListPassThrough."
             raise ArgumentException(msg)
 
         if isinstance(data, list):
-            #case1: data=[]. self.data will be [], shape will be (0, shape[1]) or (0, len(featureNames)) or (0, 0)
+            #case1: data=[]. self.data will be [], shape will be (0, shape[1])
+            # or (0, len(featureNames)) or (0, 0)
             if len(data) == 0:
                 if shape:
                     shape = (0, shape[1])
                 else:
                     shape = (0, len(featureNames) if featureNames else 0)
             elif isAllowedSingleElement(data[0]):
-            #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be [[1,2,3]], shape will be (1, 3)
+            #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be
+            # [[1,2,3]], shape will be (1, 3)
                 if checkAll:#check all items
                     for i in data:
                         if not isAllowedSingleElement(i):
@@ -79,7 +93,8 @@ class List(Base):
                 shape = (1, len(data))
                 data = [data]
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
-            #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []]. self.data will be = data, shape will be (len(data), len(data[0]))
+            #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
+            # self.data will be = data, shape will be (len(data), len(data[0]))
             #case4: data=[<UML.data.list.FeatureViewer object at 0x43fd410>]
                 numFeatures = len(data[0])
                 if checkAll:#check all items
@@ -97,8 +112,9 @@ class List(Base):
                 data = data
             else:
                 data = [copy.deepcopy(i) for i in data]#copy.deepcopy(data)
-                #this is to convert a list x=[[1,2,3]]*2 to a list y=[[1,2,3], [1,2,3]]
-                #the difference is that x[0] is x[1], but y[0] is not y[1]
+                #this is to convert a list x=[[1,2,3]]*2 to a
+                # list y=[[1,2,3], [1,2,3]]
+                # the difference is that x[0] is x[1], but y[0] is not y[1]
 
         if isinstance(data, numpy.matrix):
             #case5: data is a numpy matrix. shape is already in np matrix
@@ -113,7 +129,8 @@ class List(Base):
         self.data = data
         self._elementType = elementType
 
-        kwds['featureNames'] = featureNames
+        if 'featureNames' not in kwds:
+            kwds['featureNames'] = None
         kwds['shape'] = shape
         super(List, self).__init__(**kwds)
 
@@ -128,9 +145,11 @@ class List(Base):
 
     def _transpose_implementation(self):
         """
-        Function to transpose the data, ie invert the feature and point indices of the data.
+        Function to transpose the data, ie invert the feature and point
+        indices of the data.
 
-        This is not an in place operation, a new list of lists is constructed.
+        This is not an in place operation, a new list of lists is
+        constructed.
         """
         tempFeatures = len(self.data)
         transposed = []
@@ -161,31 +180,34 @@ class List(Base):
                 return False
         return True
 
-    def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
+    def _writeFile_implementation(self, outPath, format, includePointNames,
+                                  includeFeatureNames):
         """
-        Function to write the data in this object to a file using the specified
-        format. outPath is the location (including file name and extension) where
-        we want to write the output file. includeNames is boolean argument
-        indicating whether the file should start with comment lines designating
-        pointNames and featureNames.
-
+        Function to write the data in this object to a file using the
+        specified format. outPath is the location (including file name
+        and extension) where we want to write the output file.
+        ``includeNames`` is boolean argument indicating whether the file
+        should start with comment lines designating pointNames and
+        featureNames.
         """
         if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
-            msg += "either be input as the format parameter, or as the extension in the "
-            msg += "outPath"
+            msg = "Unrecognized file format. Accepted types are 'csv' and "
+            msg += "'mtx'. They may either be input as the format parameter, "
+            msg += "or as the extension in the outPath"
             raise ArgumentException(msg)
 
         if format == 'csv':
-            return self._writeFileCSV_implementation(outPath, includePointNames, includeFeatureNames)
+            return self._writeFileCSV_implementation(
+                outPath, includePointNames, includeFeatureNames)
         if format == 'mtx':
-            return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
+            return self._writeFileMTX_implementation(
+                outPath, includePointNames, includeFeatureNames)
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames, includeFeatureNames):
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         """
-        Function to write the data in this object to a CSV file at the designated
-        path.
-
+        Function to write the data in this object to a CSV file at the
+        designated path.
         """
         outFile = open(outPath, 'w')
 
@@ -216,11 +238,11 @@ class List(Base):
             outFile.write('\n')
         outFile.close()
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         """
-        Function to write the data in this object to a matrix market file at the designated
-        path.
-
+        Function to write the data in this object to a matrix market
+        file at the designated path.
         """
         outFile = open(outPath, 'w')
         outFile.write("%%MatrixMarket matrix array real general\n")
@@ -243,7 +265,7 @@ class List(Base):
         else:
             outFile.write('%#\n')
 
-        outFile.write(str(len(self.points)) + " " + str(len(self.features)) + "\n")
+        outFile.write("{0} {1}\n".format(len(self.points), len(self.features)))
 
         for j in range(len(self.features)):
             for i in range(len(self.points)):
@@ -253,7 +275,8 @@ class List(Base):
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, List):
-            raise ArgumentException("Other must be the same type as this object")
+            msg = "Other must be the same type as this object"
+            raise ArgumentException(msg)
 
         self.data = other.data
         self._numFeatures = other._numFeatures
@@ -262,25 +285,29 @@ class List(Base):
 
         if format == 'Sparse':
             if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
+                emptyData = numpy.empty(shape=(len(self.points),
+                                               len(self.features)))
                 return UML.createData('Sparse', emptyData)
             return UML.createData('Sparse', self.data)
 
         if format is None or format == 'List':
             if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
+                emptyData = numpy.empty(shape=(len(self.points),
+                                               len(self.features)))
                 return UML.createData('List', emptyData)
             else:
                 return UML.createData('List', self.data)
         if format == 'Matrix':
             if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
+                emptyData = numpy.empty(shape=(len(self.points),
+                                               len(self.features)))
                 return UML.createData('Matrix', emptyData)
             else:
                 return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
             if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points), len(self.features)))
+                emptyData = numpy.empty(shape=(len(self.points),
+                                               len(self.features)))
                 return UML.createData('DataFrame', emptyData)
             else:
                 return UML.createData('DataFrame', self.data)
@@ -288,11 +315,13 @@ class List(Base):
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
             if len(self.points) == 0 or len(self.features) == 0:
-                return numpy.empty(shape=(len(self.points), len(self.features)))
+                return numpy.empty(shape=(len(self.points),
+                                          len(self.features)))
             return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
             if len(self.points) == 0 or len(self.features) == 0:
-                return numpy.matrix(numpy.empty(shape=(len(self.points), len(self.features))))
+                return numpy.matrix(numpy.empty(shape=(len(self.points),
+                                                       len(self.features))))
             return numpy.matrix(self.data)
         if format == 'scipycsc':
             if not scipy:
@@ -305,18 +334,20 @@ class List(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
 
-    def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
+    def _fillWith_implementation(self, values, pointStart, featureStart,
+                                 pointEnd, featureEnd):
         if not isinstance(values, UML.data.Base):
             values = [values] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
         else:
             for p in range(pointStart, pointEnd + 1):
-                self.data[p][featureStart:featureEnd + 1] = values.data[p - pointStart]
+                fill = values.data[p - pointStart]
+                self.data[p][featureStart:featureEnd + 1] = fill
 
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
-        for i in range(1,len(self.points)):
+        for _ in range(1, len(self.points)):
             onto += self.data[1]
             del self.data[1]
 
@@ -344,8 +375,8 @@ class List(Base):
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         result = []
         numPoints = len(self.points) // numFeatures
-        # reconstruct the shape we want, point by point. We access the singleton
-        # values from the current data in an out of order iteration
+        # reconstruct the shape we want, point by point. We access the
+        # singleton values from the current data in an out of order iteration
         for i in range(numPoints):
             temp = []
             for j in range(i, len(self.points), numPoints):
@@ -358,7 +389,8 @@ class List(Base):
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
-    def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
+    def _view_implementation(self, pointStart, pointEnd, featureStart,
+                             featureEnd):
         class ListView(BaseView, List):
             def __init__(self, **kwds):
                 super(ListView, self).__init__(**kwds)
@@ -373,8 +405,9 @@ class List(Base):
                 return ListElementsView(self)
 
             def _copyAs_implementation(self, format):
-                # we only want to change how List and pythonlist copying is done
-                # we also temporarily convert self.data to a python list for copyAs
+                # we only want to change how List and pythonlist copying is
+                # done we also temporarily convert self.data to a python list
+                # for copyAs
                 if self._pointNamesCreated():
                     pNames = self.points.getNames()
                 else:
@@ -384,12 +417,15 @@ class List(Base):
                 else:
                     fNames = False
 
-                if (len(self.points) == 0 or len(self.features) == 0) and format != 'List':
-                    emptyStandin = numpy.empty((len(self.points), len(self.features)))
+                if ((len(self.points) == 0 or len(self.features) == 0)
+                        and format != 'List'):
+                    emptyStandin = numpy.empty((len(self.points),
+                                                len(self.features)))
                     intermediate = UML.createData('Matrix', emptyStandin)
                     return intermediate.copyAs(format)
 
-                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)]
+                listForm = [[self._source.data[pID][fID] for fID
+                             in range(self._fStart, self._fEnd)]
                             for pID in range(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
@@ -428,8 +464,8 @@ class List(Base):
             def __eq__(self, other):
                 for i, sVal in enumerate(self):
                     oVal = other[i]
-                    # check element equality - which is only relevant if one of the elements
-                    # is non-NaN
+                    # check element equality - which is only relevant if one
+                    # of the elements is non-NaN
                     if sVal != oVal and (sVal == sVal or oVal == oVal):
                         return False
                 return True
@@ -462,7 +498,8 @@ class List(Base):
                 return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
 
         kwds = {}
-        kwds['data'] = ListPassThrough(self, pointStart, pointEnd, featureStart, featureEnd)
+        kwds['data'] = ListPassThrough(self, pointStart, pointEnd,
+                                       featureStart, featureEnd)
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
@@ -486,9 +523,8 @@ class List(Base):
 
     def _containsZero_implementation(self):
         """
-        Returns True if there is a value that is equal to integer 0 contained
-        in this object. False otherwise
-
+        Returns True if there is a value that is equal to integer 0
+        contained in this object. False otherwise
         """
         for point in self.points:
             for i in range(len(point)):
@@ -506,13 +542,13 @@ class List(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other UML data
-        object. Both object must contain only numeric data. The featureCount of
-        the calling object must equal the pointCount of the other object. The
-        types of the two objects may be different, and the return is guaranteed
-        to be the same type as at least one out of the two, to be automatically
-        determined according to efficiency constraints.
-
+        Matrix multiply this UML data object against the provided other
+        UML data object. Both object must contain only numeric data. The
+        featureCount of the calling object must equal the pointCount of
+        the other object. The types of the two objects may be different,
+        and the return is guaranteed to be the same type as at least one
+        out of the two, to be automatically determined according to
+        efficiency constraints.
         """
         ret = []
         for sPoint in self.points:
@@ -525,27 +561,12 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
-    def _elementwiseMultiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this UML data object against the
-        provided other UML data object. Both objects must contain only numeric
-        data. The pointCount and featureCount of both objects must be equal. The
-        types of the two objects may be different, but the returned object will
-        be the inplace modification of the calling object.
-
-        """
-        for pNum in range(len(self.points)):
-            for fNum in range(len(self.features)):
-                # Divided by 1 to make it raise if it involves non-numeric types ('str')
-                self.data[pNum][fNum] *= other[pNum, fNum] / 1
-
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided scalar.
-        This object must contain only numeric data. The 'scalar' parameter must
-        be a numeric data type. The returned object will be the inplace modification
-        of the calling object.
-
+        Multiply every element of this UML data object by the provided
+        scalar. This object must contain only numeric data. The 'scalar'
+        parameter must be a numeric data type. The returned object will
+        be the inplace modification of the calling object.
         """
         for point in self.data:
             for i in range(len(point)):
@@ -553,9 +574,10 @@ class List(Base):
 
     def outputMatrixData(self):
         """
-        convert slef.data to a numpy matrix
+        convert self.data to a numpy matrix
         """
         if len(self.data) == 0:# in case, self.data is []
-            return numpy.matrix(numpy.empty([len(self.points.getNames()), len(self.features.getNames())]))
+            return numpy.matrix(numpy.empty([len(self.points.getNames()),
+                                             len(self.features.getNames())]))
 
         return numpy.matrix(self.data)

@@ -1,12 +1,25 @@
 """
-
+Defines a subclass of the Axis object, which serves as the primary
+base class for read only axis views of data objects.
 """
 from .axis import Axis
 from .base_view import readOnlyException
 
 class AxisView(Axis):
     """
+    Class defining read only view objects, which have the same api as a
+    normal Axis object, but disallow all methods which could change the
+    data.
 
+    Parameters
+    ----------
+    source : UML data object
+        The UML object that this is a view into.
+    axis : str
+        Either 'point' or 'feature'.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
     def __init__(self, source, axis, **kwds):
         kwds['source'] = source

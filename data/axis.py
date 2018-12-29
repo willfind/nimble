@@ -27,7 +27,7 @@ class Axis(object):
     """
     Differentiate how methods act dependent on the axis.
 
-    Also provides abstract methods which will be required to perform
+    Also includes abstract methods which will be required to perform
     data-type and axis specific operations.
 
     Parameters
@@ -37,6 +37,9 @@ class Axis(object):
         applied to.
     source : UML data object
         The object containing point and feature data.
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
     def __init__(self, axis, source, **kwds):
         self._axis = axis
@@ -621,11 +624,11 @@ class Axis(object):
 
         def checkAlsoShape(also, objIn):
             """
-            Raises an exception if the normalized axis shape doesn't match the
-            calling object, or if when subtract of divide takes an object, also
-            doesn't match the shape of the caller (this is to be called after)
-            the check that the caller's shape matches that of the subtract or
-            divide argument.
+            Raises an exception if the normalized axis shape doesn't
+            match the calling object, or if when subtract of divide
+            takes an object, also doesn't match the shape of the caller
+            (this is to be called after) the check that the caller's
+            shape matches that of the subtract or divide argument.
             """
             offAxis = 'feature' if self._axis == 'point' else 'point'
             callerP = len(self._source.points)

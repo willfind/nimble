@@ -771,8 +771,10 @@ class Features(object):
         ----------
         statisticsFunction: str
             The name of the function. The accepted strings include:
-            'correlation', 'covariance', 'dot product',
-            'sample covariance', and 'population covariance'
+            'max', 'mean', 'median', 'min', 'population std',
+            'population standard deviation', 'proportion missing',
+            'proportion zero', 'sample standard deviation',
+            'sample std', 'standard deviation', 'std', 'unique count'
 
         Returns
         -------
