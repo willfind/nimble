@@ -55,18 +55,16 @@ class Axis(object):
         Get next item
         """
         if self._axis == 'point':
-            while self._position < len(self._source.points):
+            while self._position < len(self):
                 value = self._source.pointView(self._position)
                 self._position += 1
                 return value
-            self._position = 0
             raise StopIteration
         else:
-            while self._position < len(self._source.features):
+            while self._position < len(self):
                 value = self._source.featureView(self._position)
                 self._position += 1
                 return value
-            self._position = 0
             raise StopIteration
 
     def __next__(self):
@@ -95,12 +93,10 @@ class Axis(object):
 
     def _setName(self, oldIdentifier, newName):
         if self._axis == 'point':
-            count = len(self._source.points)
             namesDict = self._source.pointNames
         else:
-            count = len(self._source.features)
             namesDict = self._source.featureNames
-        if count == 0:
+        if len(self) == 0:
             msg = "Cannot set any {0} names; this object has no {0}s"
             msg = msg.format(self._axis)
             raise ArgumentException(msg)
@@ -114,13 +110,12 @@ class Axis(object):
                 self._source.pointNames = None
                 self._source.pointNamesInverse = None
                 return
-            count = len(self._source.points)
         else:
             if assignments is None:
                 self._source.featureNames = None
                 self._source.featureNamesInverse = None
                 return
-            count = len(self._source.features)
+        count = len(self)
         if isinstance(assignments, dict):
             self._setNamesFromDict(assignments, count)
         else:
@@ -158,7 +153,6 @@ class Axis(object):
     def _copy(self, toCopy, start, end, number, randomize):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
-
         if self._axis == 'point':
             ret.features.setNames(self._source.features.getNames())
         else:
@@ -222,12 +216,10 @@ class Axis(object):
             otherAxis = 'feature'
             axisCount = self._source._pointCount
             otherCount = self._source._featureCount
-            setNames = self._source.points.setNames
         else:
             otherAxis = 'point'
             axisCount = self._source._featureCount
             otherCount = self._source._pointCount
-            setNames = self._source.features.setNames
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self._source._getIndex(sortBy, otherAxis)
@@ -253,7 +245,7 @@ class Axis(object):
             return
 
         newNameOrder = self._sort_implementation(sortBy, sortHelper)
-        setNames(newNameOrder)
+        self._setNames(newNameOrder)
 
         self._source.validate()
 
@@ -345,17 +337,11 @@ class Axis(object):
     #     setOffAxisNames(ret[1])
 
     def _shuffle(self):
-        if self._axis == 'point':
-            values = len(self._source.points)
-            sorter = self._source.points.sort
-        else:
-            values = len(self._source.features)
-            sorter = self._source.features.sort
-
+        values = len(self)
         indices = list(range(values))
         pythonRandom.shuffle(indices)
 
-        sorter(sortHelper=indices)
+        self._sort(sortBy=None, sortHelper=indices)
 
     def _transform(self, function, limitTo):
         if self._source._pointCount == 0:
@@ -398,18 +384,18 @@ class Axis(object):
             if limitTo is not None and self._source._pointNamesCreated():
                 names = []
                 for index in sorted(limitTo):
-                    names.append(self._source.points.getName(index))
+                    names.append(self._getName(index))
                 ret.points.setNames(names)
             elif self._source._pointNamesCreated():
-                ret.points.setNames(self._source.points.getNames())
+                ret.points.setNames(self._getNames())
         else:
             if limitTo is not None and self._source._featureNamesCreated():
                 names = []
                 for index in sorted(limitTo):
-                    names.append(self._source.features.getName(index))
+                    names.append(self._getName(index))
                 ret.features.setNames(names)
             elif self._source._featureNamesCreated():
-                ret.features.setNames(self._source.features.getNames())
+                ret.features.setNames(self._getNames())
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -418,7 +404,8 @@ class Axis(object):
 
     def _calculate_implementation(self, function, limitTo):
         retData = []
-        for viewID, view in enumerate(self):
+        axisObj = getattr(self._source, self._axis + 's')
+        for viewID, view in enumerate(axisObj):
             if limitTo is not None and viewID not in limitTo:
                 continue
             currOut = function(view)
@@ -452,10 +439,8 @@ class Axis(object):
         if self._source.getTypeString() != toAdd.getTypeString():
             toAdd = toAdd.copyAs(self._source.getTypeString())
 
-        if self._axis == 'point' and insertBefore is None:
-            insertBefore = len(self._source.points)
-        elif self._axis == 'feature' and insertBefore is None:
-            insertBefore = len(self._source.features)
+        if insertBefore is None:
+            insertBefore = len(self)
         else:
             insertBefore = self._source._getIndex(insertBefore, self._axis)
 
@@ -472,10 +457,12 @@ class Axis(object):
             targetCount = len(self._source.points)
             otherCount = len(self._source.features)
             otherAxis = 'feature'
+            viewIter = self._source.points
         else:
             targetCount = len(self._source.features)
             otherCount = len(self._source.points)
             otherAxis = 'point'
+            viewIter = self._source.features
 
         if targetCount == 0:
             return UML.createData(self._source.getTypeString(),
@@ -496,7 +483,7 @@ class Axis(object):
 
         mapResults = {}
         # apply the mapper to each point in the data
-        for value in self:
+        for value in viewIter:
             currResults = mapper(value)
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
@@ -614,7 +601,7 @@ class Axis(object):
                 # treat it as a mis-sized object
                 else:
                     msg = argname + " "
-                    msg += "was a UML obejct with a shape of ("
+                    msg += "was a UML object with a shape of ("
                     msg += str(inPC) + " x " + str(inFC) + "), "
                     msg += "but it doesn't match the shape of the calling"
                     msg += "object (" + str(objPC) + " x "
@@ -843,14 +830,13 @@ class Axis(object):
               or cleanFuncName == 'populationstandarddeviation'):
             toCall = UML.calculate.standardDeviation
 
+        ret = self._calculate(toCall, limitTo=None)
         if self._axis == 'point':
-            ret = self._source.points.calculate(toCall)
-            ret.points.setNames(self._source.points.getNames())
+            ret.points.setNames(self._getNames())
             ret.features.setName(0, cleanFuncName)
         else:
-            ret = self._source.features.calculate(toCall)
             ret.points.setName(0, cleanFuncName)
-            ret.features.setNames(self._source.features.getNames())
+            ret.features.setNames(self._getNames())
         return ret
 
     #####################
@@ -1006,12 +992,11 @@ class Axis(object):
                                    start=None, end=None, number=None,
                                    randomize=False):
         axis = self._axis
+        axisLength = len(self)
         if axis == 'point':
-            axisLength = len(self._source.points)
             hasNameChecker1 = self._source.hasPointName
             hasNameChecker2 = self._source.hasFeatureName
         else:
-            axisLength = len(self._source.features)
             hasNameChecker1 = self._source.hasFeatureName
             hasNameChecker2 = self._source.hasPointName
 
@@ -1419,29 +1404,29 @@ class Axis(object):
         one or both objects have names, names will be set as well.
         """
         if self._axis == 'point':
-            newPtCount = len(self._source.points) + len(addedObj.points)
+            newPtCount = len(self) + len(addedObj.points)
             # only need to adjust names if names are present
             if not (self._source._pointNamesCreated()
                     or addedObj._pointNamesCreated()):
                 self._source._setpointCount(newPtCount)
                 return
-            objNames = self._source.points.getNames()
+            objNames = self._getNames()
             insertedNames = addedObj.points.getNames()
             # must change point count AFTER getting names
             self._source._setpointCount(newPtCount)
-            setObjNames = self._source.points.setNames
+            setObjNames = self._setNames
         else:
-            newFtCount = len(self._source.features) + len(addedObj.features)
+            newFtCount = len(self) + len(addedObj.features)
             # only need to adjust names if names are present
             if not (self._source._featureNamesCreated()
                     or addedObj._featureNamesCreated()):
                 self._source._setfeatureCount(newFtCount)
                 return
-            objNames = self._source.features.getNames()
+            objNames = self._getNames()
             insertedNames = addedObj.features.getNames()
             # must change point count AFTER getting names
             self._source._setfeatureCount(newFtCount)
-            setObjNames = self._source.features.setNames
+            setObjNames = self._setNames
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:

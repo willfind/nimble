@@ -51,7 +51,7 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
         self._source._updateName(axis='point')
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self):
+        for i, p in enumerate(self._source.points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)

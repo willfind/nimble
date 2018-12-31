@@ -69,15 +69,10 @@ class SparseAxis(Axis):
         comparator = None
         source = self._source
         if self._axis == 'point':
-            viewMaker = source.pointView
-            indexGetter = source.points.getIndex
-            nameGetter = source.points.getName
-            names = source.points.getNames()
+            test = source.pointView(0)
         else:
-            viewMaker = source.featureView
-            indexGetter = source.features.getIndex
-            nameGetter = source.features.getName
-            names = source.features.getNames()
+            test = source.featureView(0)
+        names = self._getNames()
 
         if isinstance(sortHelper, list):
             sortedData = []
@@ -92,7 +87,6 @@ class SparseAxis(Axis):
             source._sorted = None
             return newNameOrder
 
-        test = viewMaker(0)
         try:
             sortHelper(test)
             scorer = sortHelper
@@ -118,7 +112,7 @@ class SparseAxis(Axis):
             indexPosition = []
             for i in range(len(viewArray)):
                 viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = indexGetter(getattr(viewAxis, 'getName')(0))
+                index = self._getIndex(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):
@@ -161,7 +155,7 @@ class SparseAxis(Axis):
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
+            newName = self._getName(oldIndex)
             newNameOrder.append(newName)
 
         source._sorted = None
@@ -175,11 +169,13 @@ class SparseAxis(Axis):
         if self._axis == 'point':
             modTarget = modRow
             modOther = modCol
+            viewIter = self._source.points
         else:
             modTarget = modCol
             modOther = modRow
+            viewIter = self._source.features
 
-        for viewID, view in enumerate(self):
+        for viewID, view in enumerate(viewIter):
             if limitTo is not None and viewID not in limitTo:
                 currOut = list(view)
             else:
@@ -229,27 +225,25 @@ class SparseAxis(Axis):
         Use scipy csr or csc matrices for indexing targeted values
         """
         axisNames = []
+        getAxisName = self._getName
+
+        if structure != 'copy':
+            notTarget = []
+            for idx in range(len(self)):
+                if idx not in targetList:
+                    notTarget.append(idx)
+
         if self._axis == 'point':
-            getAxisName = self._source.points.getName
             getOtherNames = self._source.features.getNames
             data = self._source.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
-                notTarget = []
-                for idx in range(len(self._source.points)):
-                    if idx not in targetList:
-                        notTarget.append(idx)
                 notTargeted = data[notTarget, :]
         else:
-            getAxisName = self._source.features.getName
             getOtherNames = self._source.points.getNames
             data = self._source.data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
-                notTarget = []
-                for idx in range(len(self._source.features)):
-                    if idx not in targetList:
-                        notTarget.append(idx)
                 notTargeted = data[:, notTarget]
 
         self._source._validateAxis(self._axis)
@@ -288,8 +282,9 @@ class SparseAxis(Axis):
         keepCols = []
         keepIndex = 0
 
+        axisObj = getattr(self._source, self._axis + 's')
         # iterate through self._axis data
-        for targetID, view in enumerate(self):
+        for targetID, view in enumerate(axisObj):
             # coo_matrix data for return object
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
@@ -329,12 +324,12 @@ class SparseAxis(Axis):
         fnames = []
         if self._axis == 'point':
             for index in targetList:
-                pnames.append(self._source.points.getName(index))
+                pnames.append(self._getName(index))
             fnames = self._source.features.getNames()
         else:
             pnames = self._source.points.getNames()
             for index in targetList:
-                fnames.append(self._source.features.getName(index))
+                fnames.append(self._getName(index))
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)

@@ -80,14 +80,14 @@ class DataFrameAxis(Axis):
             ret = df.iloc[targetList, :]
             axis = 0
             name = 'pointNames'
-            nameList = [self._source.points.getName(i) for i in targetList]
+            nameList = [self._getName(i) for i in targetList]
             otherName = 'featureNames'
             otherNameList = self._source.features.getNames()
         elif self._axis == 'feature':
             ret = df.iloc[:, targetList]
             axis = 1
             name = 'featureNames'
-            nameList = [self._source.features.getName(i) for i in targetList]
+            nameList = [self._getName(i) for i in targetList]
             otherName = 'pointNames'
             otherNameList = self._source.points.getNames()
 
@@ -105,16 +105,9 @@ class DataFrameAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         if self._axis == 'point':
             test = self._source.pointView(0)
-            viewIter = self._source.points
-            indexGetter = self._source.points.getIndex
-            nameGetter = self._source.points.getName
-            names = self._source.points.getNames()
         else:
             test = self._source.featureView(0)
-            viewIter = self._source.features
-            indexGetter = self._source.features.getIndex
-            nameGetter = self._source.features.getName
-            names = self._source.features.getNames()
+        names = self._getNames()
 
         if isinstance(sortHelper, list):
             if self._axis == 'point':
@@ -144,14 +137,14 @@ class DataFrameAxis(Axis):
         if comparator is not None:
             # make array of views
             viewArray = []
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
                 viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = indexGetter(getattr(viewAxis, 'getName')(0))
+                index = self._getIndex(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):
@@ -160,7 +153,7 @@ class DataFrameAxis(Axis):
         else:
             # make array of views
             viewArray = []
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             scoreArray = viewArray
@@ -188,7 +181,7 @@ class DataFrameAxis(Axis):
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
+            newName = self._getName(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
 

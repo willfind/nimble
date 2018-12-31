@@ -58,7 +58,7 @@ class ListAxis(Axis):
 
         if self._axis == 'point':
             keepList = []
-            for idx in range(len(self._source.points)):
+            for idx in range(len(self)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[targetList, :]
@@ -67,18 +67,18 @@ class ListAxis(Axis):
                 self._source.data = keep.tolist()
 
             for index in targetList:
-                pnames.append(self._source.points.getName(index))
+                pnames.append(self._getName(index))
             fnames = self._source.features.getNames()
 
         else:
             if self._source.data == []:
                 # create empty matrix with correct shape
-                shape = (len(self._source.points), len(self._source.features))
+                shape = (len(self._source.points), len(self))
                 empty = numpy.empty(shape)
                 data = numpy.matrix(empty, dtype=numpy.object_)
 
             keepList = []
-            for idx in range(len(self._source.features)):
+            for idx in range(len(self)):
                 if idx not in targetList:
                     keepList.append(idx)
             satisfying = data[:, targetList]
@@ -87,7 +87,7 @@ class ListAxis(Axis):
                 self._source.data = keep.tolist()
 
             for index in targetList:
-                fnames.append(self._source.features.getName(index))
+                fnames.append(self._getName(index))
             pnames = self._source.points.getNames()
 
             if structure != 'copy':
@@ -100,16 +100,9 @@ class ListAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         if self._axis == 'point':
             test = self._source.pointView(0)
-            viewIter = self._source.points
-            indexGetter = self._source.points.getIndex
-            nameGetter = self._source.points.getName
-            names = self._source.points.getNames()
         else:
             test = self._source.featureView(0)
-            viewIter = self._source.features
-            indexGetter = self._source.features.getIndex
-            nameGetter = self._source.features.getName
-            names = self._source.features.getNames()
+        names = self._getNames()
 
         if isinstance(sortHelper, list):
             sortData = numpy.array(self._source.data, dtype=numpy.object_)
@@ -140,7 +133,7 @@ class ListAxis(Axis):
 
         # make array of views
         viewArray = []
-        for v in viewIter:
+        for v in self:
             viewArray.append(v)
 
         if comparator is not None:
@@ -151,7 +144,7 @@ class ListAxis(Axis):
             indexPosition = []
             for i in range(len(viewArray)):
                 viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = indexGetter(getattr(viewAxis, 'getName')(0))
+                index = self._getIndex(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
         else:
             #scoreArray = viewArray
@@ -186,7 +179,7 @@ class ListAxis(Axis):
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
+            newName = self._getName(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
 

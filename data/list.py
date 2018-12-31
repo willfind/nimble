@@ -66,17 +66,13 @@ class List(Base):
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, shape=None, checkAll=True,
-                 elementType=None, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, shape=None,
+                 checkAll=True, elementType=None, **kwds):
         if ((not isinstance(data, (list, numpy.matrix)))
                 and 'PassThrough' not in str(type(data))):
             msg = "the input data can only be a list or a numpy matrix "
             msg += "or ListPassThrough."
             raise ArgumentException(msg)
-
-        if 'featureNames' not in kwds:
-            kwds['featureNames'] = None
-        featureNames = kwds['featureNames']
 
         if isinstance(data, list):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])

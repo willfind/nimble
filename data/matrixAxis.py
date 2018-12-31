@@ -54,13 +54,11 @@ class MatrixAxis(Axis):
         nameList = []
         if self._axis == 'point':
             axisVal = 0
-            getName = self._source.points.getName
             ret = self._source.data[targetList]
             pointNames = nameList
             featureNames = self._source.features.getNames()
         else:
             axisVal = 1
-            getName = self._source.features.getName
             ret = self._source.data[:, targetList]
             featureNames = nameList
             pointNames = self._source.points.getNames()
@@ -71,7 +69,7 @@ class MatrixAxis(Axis):
 
         # construct nameList
         for index in targetList:
-            nameList.append(getName(index))
+            nameList.append(self._getName(index))
 
         return UML.data.Matrix(ret, pointNames=pointNames,
                                featureNames=featureNames)
@@ -79,16 +77,9 @@ class MatrixAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         if self._axis == 'point':
             test = self._source.pointView(0)
-            viewIter = self._source.points
-            indexGetter = self._source.points.getIndex
-            nameGetter = self._source.points.getName
-            names = self._source.points.getNames()
         else:
             test = self._source.featureView(0)
-            viewIter = self._source.features
-            indexGetter = self._source.features.getIndex
-            nameGetter = self._source.features.getName
-            names = self._source.features.getNames()
+        names = self._getNames()
 
         if isinstance(sortHelper, list):
             if self._axis == 'point':
@@ -118,14 +109,14 @@ class MatrixAxis(Axis):
         if comparator is not None:
             # make array of views
             viewArray = []
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
                 viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = indexGetter(getattr(viewAxis, 'getName')(0))
+                index = self._getIndex(getattr(viewAxis, 'getName')(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):
@@ -134,7 +125,7 @@ class MatrixAxis(Axis):
         else:
             # make array of views
             viewArray = []
-            for v in viewIter:
+            for v in self:
                 viewArray.append(v)
 
             scoreArray = viewArray
@@ -162,7 +153,7 @@ class MatrixAxis(Axis):
         newNameOrder = []
         for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
-            newName = nameGetter(oldIndex)
+            newName = self._getName(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
 

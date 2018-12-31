@@ -51,7 +51,7 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
         self._source._updateName(axis='feature')
 
     def _transform_implementation(self, function, limitTo):
-        for j, f in enumerate(self):
+        for j, f in enumerate(self._source.features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)

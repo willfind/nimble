@@ -40,7 +40,8 @@ class Matrix(Base):
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False,
+                 elementType=None, **kwds):
         if not isinstance(data, (numpy.matrix, numpy.ndarray)):
             # and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix "
@@ -64,8 +65,7 @@ class Matrix(Base):
                 except ValueError:
                     self.data = numpy.matrix(data, dtype=object)
 
-        if 'featureNames' not in kwds:
-            kwds['featureNames'] = None
+        kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 

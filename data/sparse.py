@@ -46,7 +46,8 @@ class Sparse(Base):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, pointNames=None, featureNames=None,
+                 reuseData=False, elementType=None, **kwds):
         if not scipy:
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
@@ -70,10 +71,8 @@ class Sparse(Base):
 
         self._sorted = None
         kwds['shape'] = self.data.shape
-        if 'featureNames' not in kwds:
-            kwds['featureNames'] = None
-        if 'pointNames' not in kwds:
-            kwds['pointNames'] = None
+        kwds['pointNames'] = pointNames
+        kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
