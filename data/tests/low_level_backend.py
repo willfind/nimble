@@ -8,8 +8,8 @@ of directly instantiating a Base object. This function temporarily fills in
 that missing implementation.
 
 Methods tested in this file (none modify the data):
-_addPointName, _addFeatureName, _pointNameDifference, _featureNameDifference,
-points._nameIntersection, features._nameIntersection, _pointNameSymmetricDifference,
+_pointNameDifference, _featureNameDifference, points._nameIntersection,
+features._nameIntersection, _pointNameSymmetricDifference,
 _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
@@ -97,93 +97,6 @@ def confirmExpectedNames(toTest, axis, expected):
 
 
 class LowLevelBackend(object):
-    ###################
-    # _addPointName() #
-    ###################
-
-    @raises(ArgumentException)
-    def test__addPName_exceptionPointNameWrongType(self):
-        """ Test _addPointName() for ArgumentException when given a non string  pointName """
-        toTest = self.constructor(pointNames=["hello"])
-        toTest._addPointName(34)
-
-    @raises(ArgumentException)
-    def test__addPointName_exceptionNonUnique(self):
-        """ Test _addPointName() for ArgumentException when given a duplicate pointName """
-        toTest = self.constructor(pointNames=["hello"])
-        toTest._addPointName("hello")
-
-    def test__addPointName_handmadeDefaultCounter(self):
-        """ Test _addPointName() changes nextDefault counter correctly """
-        toTest = self.constructor(pointNames=["hello"])
-        assert toTest._nextDefaultValuePoint == 1
-        toTest._addPointName(DEFAULT_PREFIX + "1")
-        assert toTest._nextDefaultValuePoint == 2
-
-    def test__addPointName_handmade(self):
-        """ Test _addPointName() against handmade output """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._addPointName("four")
-        toTest._addPointName("five")
-
-        expected = ["zero", "one", "two", "three", "four", "five"]
-        confirmExpectedNames(toTest, 'point', expected)
-
-    def test__addPointName_handmade_addDefault(self):
-        """ Test _addPointName() against handmade output """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._addPointName(None)
-        toTest._addPointName(None)
-
-        expected = ["zero", "one", "two", "three", DEFAULT_PREFIX, DEFAULT_PREFIX]
-
-        confirmExpectedNames(toTest, 'point', expected)
-
-    ###############
-    # _addFeatureName() #
-    ###############
-    @raises(ArgumentException)
-    def test_addFeatureName_exceptionFeatureNameWrongType(self):
-        """ Test _addFeatureName() for ArgumentException when given a non string featureName """
-        toTest = self.constructor(featureNames=["hello"])
-        toTest._addFeatureName(34)
-
-    @raises(ArgumentException)
-    def test_addFeatureName_exceptionNonUnique(self):
-        """ Test _addFeatureName() for ArgumentException when given a duplicate featureName """
-        toTest = self.constructor(featureNames=["hello"])
-        toTest._addFeatureName("hello")
-
-    def test_addFeatureName_handmadeDefaultCounter(self):
-        """ Test _addFeatureName() changes nextDefault counter correctly """
-        toTest = self.constructor(featureNames=["hello"])
-        assert toTest._nextDefaultValueFeature == 1
-        toTest._addFeatureName(DEFAULT_PREFIX + "1")
-        assert toTest._nextDefaultValueFeature == 2
-
-    def test_addFeatureName_handmade(self):
-        """ Test _addFeatureName() against handmade output """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._addFeatureName("four")
-        toTest._addFeatureName("five")
-
-        expected = ["zero", "one", "two", "three", "four", "five"]
-        confirmExpectedNames(toTest, 'feature', expected)
-
-    def test_addFeatureName_handmade_addDefault(self):
-        """ Test _addFeatureName() against handmade output """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._addFeatureName(None)
-        toTest._addFeatureName(None)
-
-        expected = ["zero", "one", "two", "three", DEFAULT_PREFIX, DEFAULT_PREFIX]
-
-        confirmExpectedNames(toTest, 'feature', expected)
-
 
     ##########################
     # _pointNameDifference() #
@@ -815,109 +728,6 @@ class LowLevelBackend(object):
 
         assert len(orig.features) == 2
         assert orig.features.getNames() == expNames
-
-
-    ##############################
-    # _removePointNameAndShift() #
-    #############################
-
-    @raises(ArgumentException)
-    def test__removePointNameAndShift_exceptionNoneInput(self):
-        """ Test _removePointNameAndShift() for ArgumentException when the identifier is None"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift(None)
-
-    @raises(ArgumentException)
-    def test__removePointNameAndShift_exceptionWrongTypeInput(self):
-        """ Test _removePointNameAndShift() for ArgumentException when given the wrong type"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift(0.3)
-
-    @raises(ArgumentException)
-    def test__removePointNameAndShift_exceptionInvalidIndex(self):
-        """ Test _removePointNameAndShift() for ArgumentException when given an invalid index"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift(12)
-
-    @raises(ArgumentException)
-    def test__removePointNameAndShift_exceptionFeatureNameNotFound(self):
-        """ Test _removePointNameAndShift() for ArgumentException when the featureName is not found"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift("bogus")
-
-    def test__removePointNameAndShift_handmade_viaIndex(self):
-        """ Test _removePointNameAndShift() against handmade output """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift(0)
-        toTest._removePointNameAndShift(2)
-        expectedNames = ["one", "two"]
-        confirmExpectedNames(toTest, 'point', expectedNames)
-
-    def test__removePointNameAndShift_handmade_viaFeatureName(self):
-        """ Test _removePointNameAndShift() against handmade output """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest._removePointNameAndShift('zero')
-        toTest._removePointNameAndShift('two')
-        expectedNames = ["one", "three"]
-        confirmExpectedNames(toTest, 'point', expectedNames)
-
-
-    ################################
-    # _removeFeatureNameAndShift() #
-    ################################
-
-    @raises(ArgumentException)
-    def test_removeFeatureNameAndShift_exceptionNoneInput(self):
-        """ Test _removeFeatureNameAndShift() for ArgumentException when the identifier is None"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift(None)
-
-    @raises(ArgumentException)
-    def test_removeFeatureNameAndShift_exceptionWrongTypeInput(self):
-        """ Test _removeFeatureNameAndShift() for ArgumentException when given the wrong type"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift(0.3)
-
-    @raises(ArgumentException)
-    def test_removeFeatureNameAndShift_exceptionInvalidIndex(self):
-        """ Test _removeFeatureNameAndShift() for ArgumentException when given an invalid index"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift(12)
-
-    @raises(ArgumentException)
-    def test_removeFeatureNameAndShift_exceptionFeatureNameNotFound(self):
-        """ Test _removeFeatureNameAndShift() for ArgumentException when the featureName is not found"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift("bogus")
-
-    def test_removeFeatureNameAndShift_handmade_viaIndex(self):
-        """ Test _removeFeatureNameAndShift() against handmade output """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift(0)
-        toTest._removeFeatureNameAndShift(2)
-        expectedFeatureNames = ["one", "two"]
-        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-
-    def test_removeFeatureNameAndShift_handmade_viaFeatureName(self):
-        """ Test _removeFeatureNameAndShift() against handmade output """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest._removeFeatureNameAndShift('zero')
-        toTest._removeFeatureNameAndShift('two')
-        expectedFeatureNames = ["one", "three"]
-        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-
 
     ######################
     # _equalPointNames() #

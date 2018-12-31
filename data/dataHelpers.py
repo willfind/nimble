@@ -26,52 +26,6 @@ DEFAULT_NAME_PREFIX = "OBJECT_#"
 
 defaultObjectNumber = 0
 
-
-class View(six.with_metaclass(ABCMeta)):
-    def equals(self, other):
-        if not isinstance(other, View):
-            return False
-        if len(self) != len(other):
-            return False
-        if self.index() != other.index():
-            return False
-        if not self.name().startswith(DEFAULT_PREFIX) and not other.name().startswith(DEFAULT_PREFIX):
-            if self.name() != other.name():
-                return False
-        for i in range(len(self)):
-            if self[i] != other[i]:
-                return False
-        return True
-
-    def __str__(self):
-        ret = '['
-        for i in range(len(self)):
-            if i != 0:
-                ret += ', '
-            ret += str(self[i])
-        ret += ']'
-        return ret
-
-    @abstractmethod
-    def __getitem__(self, index):
-        pass
-
-    @abstractmethod
-    def __setitem__(self, key, value):
-        pass
-
-    @abstractmethod
-    def __len__(self):
-        pass
-
-    @abstractmethod
-    def index(self):
-        pass
-
-    @abstractmethod
-    def name(self):
-        pass
-
 def nextDefaultObjectName():
     global defaultObjectNumber
     ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)

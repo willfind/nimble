@@ -69,9 +69,11 @@ class SparseAxis(Axis):
         comparator = None
         source = self._source
         if self._axis == 'point':
-            test = source.pointView(0)
+            test = self._source.pointView(0)
+            viewIter = self._source.points
         else:
-            test = source.featureView(0)
+            test = self._source.featureView(0)
+            viewIter = self._source.features
         names = self._getNames()
 
         if isinstance(sortHelper, list):
@@ -105,7 +107,7 @@ class SparseAxis(Axis):
         if comparator is not None:
             # make array of views
             viewArray = []
-            for v in self:
+            for v in viewIter:
                 viewArray.append(v)
 
             viewArray.sort(key=cmp_to_key(comparator))
@@ -121,7 +123,7 @@ class SparseAxis(Axis):
         else:
             # make array of views
             viewArray = []
-            for v in self:
+            for v in viewIter:
                 viewArray.append(v)
 
             scoreArray = viewArray

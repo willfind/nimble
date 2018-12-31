@@ -87,14 +87,6 @@ class Sparse(Base):
     def getdata(self):
         return self.data
 
-    def _features_implementation(self):
-        (points, cols) = scipy.shape(self.data)
-        return cols
-
-    def _points_implementation(self):
-        (points, cols) = scipy.shape(self.data)
-        return points
-
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copyAs("Matrix")
         toPlot.plot(outPath, includeColorbar)

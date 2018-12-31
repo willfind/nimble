@@ -100,8 +100,10 @@ class ListAxis(Axis):
     def _sort_implementation(self, sortBy, sortHelper):
         if self._axis == 'point':
             test = self._source.pointView(0)
+            viewIter = self._source.points
         else:
             test = self._source.featureView(0)
+            viewIter = self._source.features
         names = self._getNames()
 
         if isinstance(sortHelper, list):
@@ -133,7 +135,7 @@ class ListAxis(Axis):
 
         # make array of views
         viewArray = []
-        for v in self:
+        for v in viewIter:
             viewArray.append(v)
 
         if comparator is not None:

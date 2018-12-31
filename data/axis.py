@@ -55,17 +55,14 @@ class Axis(object):
         Get next item
         """
         if self._axis == 'point':
-            while self._position < len(self):
-                value = self._source.pointView(self._position)
-                self._position += 1
-                return value
-            raise StopIteration
+            viewer = self._source.pointView
         else:
-            while self._position < len(self):
-                value = self._source.featureView(self._position)
-                self._position += 1
-                return value
-            raise StopIteration
+            viewer = self._source.featureView
+        while self._position < len(self):
+            value = viewer(self._position)
+            self._position += 1
+            return value
+        raise StopIteration
 
     def __next__(self):
         return self.next()
@@ -996,9 +993,11 @@ class Axis(object):
         if axis == 'point':
             hasNameChecker1 = self._source.hasPointName
             hasNameChecker2 = self._source.hasFeatureName
+            viewIter = self._source.points
         else:
             hasNameChecker1 = self._source.hasFeatureName
             hasNameChecker2 = self._source.hasPointName
+            viewIter = self._source.features
 
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
@@ -1020,7 +1019,7 @@ class Axis(object):
         # boolean function
         elif target is not None:
             # construct list from function
-            for targetID, view in enumerate(self):
+            for targetID, view in enumerate(viewIter):
                 if target(view):
                     targetList.append(targetID)
 
