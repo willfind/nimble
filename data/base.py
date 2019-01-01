@@ -4056,7 +4056,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
@@ -5406,13 +5406,15 @@ class Base(object):
         """
         self._validateAxis(axis)
         if axis == 'point':
-            namesCreated = self._pointNamesCreated()
+            selfNamesCreated = self._pointNamesCreated()
+            otherNamesCreated = other._pointNamesCreated()
             selfNames = self.getPointNames
             otherNames = other.getPointNames
             def sorter(obj, names):
                 return getattr(obj, 'sortPoints')(sortHelper=names)
         else:
-            namesCreated = self._featureNamesCreated()
+            selfNamesCreated = self._featureNamesCreated()
+            otherNamesCreated = other._featureNamesCreated()
             selfNames = self.getFeatureNames
             otherNames = other.getFeatureNames
             def sorter(obj, names):
@@ -5420,10 +5422,11 @@ class Base(object):
 
         # This may not look exhaustive, but because of the previous call to _validateInsertableData
         # before this helper, most of the other cases will have already caused an exception
-        if namesCreated:
-            allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
+        if selfNamesCreated and otherNamesCreated:
+            selfAllDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
+            otherAllDefault = all(name.startswith(DEFAULT_PREFIX) for name in otherNames())
             reorder = selfNames() != otherNames()
-            if not allDefault and reorder:
+            if not (selfAllDefault or otherAllDefault) and reorder:
                 # use copy when reordering so other object is not modified
                 other = other.copy()
                 sorter(other, selfNames())
