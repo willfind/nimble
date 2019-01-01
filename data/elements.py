@@ -339,9 +339,9 @@ class Elements(object):
             raise ImproperActionException(msg)
 
         self._source._validateEqualNames('point', 'point',
-                                        'elements.multiply', other)
+                                         'elements.multiply', other)
         self._source._validateEqualNames('feature', 'feature',
-                                        'elements.multiply', other)
+                                         'elements.multiply', other)
 
         try:
             self._multiply_implementation(other)

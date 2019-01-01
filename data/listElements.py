@@ -96,6 +96,9 @@ class ListElements(Elements):
                 self._source.data[pNum][fNum] *= other[pNum, fNum] / 1
 
 class ListElementsView(ElementsView, ListElements, Elements):
+    """
+    Limit functionality of ListElements to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         super(ListElementsView, self).__init__(**kwds)

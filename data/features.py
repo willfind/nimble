@@ -883,9 +883,9 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _similarities(self):
+    def _similarities(self, similarityFunction):
         pass
 
     @abstractmethod
-    def _statistics(self):
+    def _statistics(self, statisticsFunction, groupByFeature):
         pass

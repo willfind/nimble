@@ -106,6 +106,9 @@ class DataFrameElements(Elements):
                 np.multiply(self._source.data.values, other.data))
 
 class DataFrameElementsView(ElementsView, DataFrameElements, Elements):
+    """
+    Limit functionality of DataFrameElements to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         super(DataFrameElementsView, self).__init__(**kwds)

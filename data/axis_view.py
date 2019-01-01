@@ -5,6 +5,8 @@ base class for read only axis views of data objects.
 from .axis import Axis
 from .base_view import readOnlyException
 
+# TODO inherit docstrings
+
 class AxisView(Axis):
     """
     Class defining read only view objects, which have the same api as a
@@ -67,7 +69,7 @@ class AxisView(Axis):
     def setName(self, oldIdentifier, newName):
         readOnlyException('setName')
 
-    def setNames(self, oldIdentifier, newName):
+    def setNames(self, assignments=None):
         readOnlyException('setNames')
 
     ##############################################################
@@ -79,11 +81,11 @@ class AxisView(Axis):
         readOnlyException('extract')
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
-                randomize=False):
+               randomize=False):
         readOnlyException('delete')
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
-                randomize=False):
+               randomize=False):
         readOnlyException('retain')
 
     def add(self, toAdd, insertBefore=None):
@@ -108,4 +110,3 @@ class AxisView(Axis):
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None):
         readOnlyException('normalize')
-

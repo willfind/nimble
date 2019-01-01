@@ -192,6 +192,9 @@ class SparseElements(Elements):
             self._source.data.data[index] = currRet
 
 class SparseElementsView(ElementsView, SparseElements, Elements):
+    """
+    Limit functionality of SparseElements to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         super(SparseElementsView, self).__init__(**kwds)

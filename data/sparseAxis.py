@@ -182,9 +182,9 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an ArgumentException with a message which
-                # needs to be formatted with the axis and current index before
-                # being raised
+                # currRet might return an ArgumentException with a message
+                # which needs to be formatted with the axis and current index
+                # before being raised
                 if isinstance(currOut, ArgumentException):
                     currOut.value = currOut.value.format(self._axis, viewID)
                     raise currOut
@@ -212,7 +212,7 @@ class SparseAxis(Axis):
                 modData = numpy.array(modData, dtype=numpy.object_)
             shape = (len(self._source.points), len(self._source.features))
             self._source.data = coo_matrix((modData, (modRow, modCol)),
-                                          shape=shape)
+                                           shape=shape)
             self._source._sorted = None
 
         ret = None
@@ -315,7 +315,7 @@ class SparseAxis(Axis):
         if structure != 'copy':
             keepData = numpy.array(keepData, dtype=dtype)
             self._source.data = coo_matrix((keepData, (keepRows, keepCols)),
-                                          shape=selfShape)
+                                           shape=selfShape)
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetData = numpy.array(targetData, dtype=dtype)
         ret = coo_matrix((targetData, (targetRows, targetCols)),
@@ -341,26 +341,6 @@ class SparseAxis(Axis):
             self._source._sortInternal('point')
         else:
             self._source._sortInternal('feature')
-        class nzIt(object):
-            def __init__(self, source):
-                self._source = source
-                self._index = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while (self._index < len(self._source.data.data)):
-                    value = self._source.data.data[self._index]
-
-                    self._index += 1
-                    if value != 0:
-                        return value
-
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
 
         return nzIt(self._source)
 
@@ -372,13 +352,13 @@ class SparseAxis(Axis):
     def _add_implementation(self, toAdd, insertBefore):
         pass
 
-    @abstractmethod
-    def _flattenToOne_implementation(self):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOne_implementation(self, divideInto):
-        pass
+    # @abstractmethod
+    # def _flattenToOne_implementation(self):
+    #     pass
+    #
+    # @abstractmethod
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     pass
 
 ###################
 # Generic Helpers #
@@ -398,3 +378,32 @@ def _calcShapes(currShape, numExtracted, axisType):
         extColShape = colShape
 
     return ((selfRowShape, selfColShape), (extRowShape, extColShape))
+
+class nzIt(object):
+    """
+    Non-zero iterator to return when iterating through points or
+    features. The iteration axis is dependent on how the internal data
+    is sorted before instantiation.
+    """
+    def __init__(self, source):
+        self._source = source
+        self._index = 0
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next non zero value.
+        """
+        while self._index < len(self._source.data.data):
+            value = self._source.data.data[self._index]
+
+            self._index += 1
+            if value != 0:
+                return value
+
+        raise StopIteration
+
+    def __next__(self):
+        return self.next()

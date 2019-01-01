@@ -410,11 +410,11 @@ class List(Base):
                 if self._pointNamesCreated():
                     pNames = self.points.getNames()
                 else:
-                    pNames = False
+                    pNames = None
                 if self._featureNamesCreated():
                     fNames = self.features.getNames()
                 else:
-                    fNames = False
+                    fNames = None
 
                 if ((len(self.points) == 0 or len(self.features) == 0)
                         and format != 'List'):
@@ -437,8 +437,8 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm, pointNames=self.points.getNames(),
-                                featureNames=self.features.getNames())
+                    return List(listForm, pointNames=pNames,
+                                featureNames=fNames)
                 else:
                     return listForm
 

@@ -65,7 +65,7 @@ class MatrixAxis(Axis):
 
         if structure != 'copy':
             self._source.data = numpy.delete(self._source.data,
-                                            targetList, axisVal)
+                                             targetList, axisVal)
 
         # construct nameList
         for index in targetList:
@@ -167,13 +167,13 @@ class MatrixAxis(Axis):
     def _add_implementation(self, toAdd, insertBefore):
         pass
 
-    @abstractmethod
-    def _flattenToOne_implementation(self):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOne_implementation(self, divideInto):
-        pass
+    # @abstractmethod
+    # def _flattenToOne_implementation(self):
+    #     pass
+    #
+    # @abstractmethod
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

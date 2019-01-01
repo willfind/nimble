@@ -290,7 +290,7 @@ class BaseView(Base):
     ####################
     ####################
 
-def readOnlyException(self, name):
+def readOnlyException(name):
     msg = "The " + name + " method is disallowed for View objects. View "
     msg += "objects are read only, yet this method modifies the object"
     raise ImproperActionException(msg)

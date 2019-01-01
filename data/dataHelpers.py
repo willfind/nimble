@@ -9,8 +9,6 @@ import copy
 import math
 import inspect
 
-from abc import ABCMeta
-from abc import abstractmethod
 import six
 from six.moves import range
 import numpy
@@ -34,14 +32,14 @@ def nextDefaultObjectName():
 
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
-    """Helper to set names and pathes of a return object when dealing
+    """
+    Helper to set names and pathes of a return object when dealing
     with some kind of binary operation on data objects. nameSource
     is expected to be either 'self' (indicating take the name from
     the calling object) or None (take a default name). pathSource
     is expected to be either 'self' or 'merge' (meaning to take
     a path only if one of the caller or other has a path specified,
     else use default values)
-
     """
 
     # determine return value's name
@@ -77,16 +75,17 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
 
 
 def mergeNonDefaultNames(baseSource, otherSource):
-    """ Merges the point and feature names of the the two source objects,
+    """
+    Merges the point and feature names of the the two source objects,
     returning a double of the merged point names on the left and the
     merged feature names on the right. A merged name is either the
-    baseSource's if both have default prefixes (or are equal). Otherwise,
-    it is the name which doesn't have a default prefix from either source.
+    baseSource's if both have default prefixes (or are equal).
+    Otherwise, it is the name which doesn't have a default prefix from
+    either source.
 
-    Assumptions: (1) Both objects are the same shape. (2) The point names
-    and feature names of both objects are consistent (any non-default
-    names in the same positions are equal)
-
+    Assumptions: (1) Both objects are the same shape. (2) The point
+    names and feature names of both objects are consistent (any
+    non-default names in the same positions are equal)
     """
     # merge helper
     def mergeNames(baseNames, otherNames):
@@ -107,19 +106,26 @@ def mergeNonDefaultNames(baseSource, otherSource):
     (retPNames, retFNames) = (None, None)
 
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
-        retPNames = mergeNames(baseSource.points.getNames(), otherSource.points.getNames())
-    elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
+        retPNames = mergeNames(baseSource.points.getNames(),
+                               otherSource.points.getNames())
+    elif (baseSource._pointNamesCreated()
+          and not otherSource._pointNamesCreated()):
         retPNames = baseSource.pointNames
-    elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+    elif (not baseSource._pointNamesCreated()
+          and otherSource._pointNamesCreated()):
         retPNames = otherSource.pointNames
     else:
         retPNames = None
 
-    if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
-        retFNames = mergeNames(baseSource.features.getNames(), otherSource.features.getNames())
-    elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
+    if (baseSource._featureNamesCreated()
+            and otherSource._featureNamesCreated()):
+        retFNames = mergeNames(baseSource.features.getNames(),
+                               otherSource.features.getNames())
+    elif (baseSource._featureNamesCreated()
+          and not otherSource._featureNamesCreated()):
         retFNames = baseSource.featureNames
-    elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+    elif (not baseSource._featureNamesCreated()
+          and otherSource._featureNamesCreated()):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
@@ -129,12 +135,12 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 def reorderToMatchList(dataObject, matchList, axis):
     """
-    Helper which will reorder the data object along the specified axis so that
-    instead of being in an order corresponding to a sorted version of matchList,
-    it will be in the order of the given matchList.
+    Helper which will reorder the data object along the specified axis
+    so that instead of being in an order corresponding to a sorted
+    version of matchList, it will be in the order of the given
+    matchList.
 
     matchList must contain only indices, not name based identifiers.
-
     """
     if axis.lower() == "point":
         sortFunc = dataObject.points.sort
@@ -163,8 +169,8 @@ def reorderToMatchList(dataObject, matchList, axis):
 
 def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
-    # list python lists. We must still explicitly exclude strings because of the
-    # numpy string implementation.
+    # list python lists. We must still explicitly exclude strings because of
+    # the numpy string implementation.
     if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
         return False
     return True
@@ -182,7 +188,6 @@ def formatIfNeeded(value, sigDigits):
     """
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
-
     """
     if _looksNumeric(value):
         if not isinstance(value, int) and sigDigits is not None:
@@ -191,13 +196,13 @@ def formatIfNeeded(value, sigDigits):
 
 
 def indicesSplit(allowed, total):
-    """Given the total length of a list, and a limit to
+    """
+    Given the total length of a list, and a limit to
     how many indices we are allowed to display, return
     two lists of indices defining a middle ommision.
     In the tupple return, the first list are positive indices
     growing up from zero. The second list are negative indices
     growing up to negative one.
-
     """
     if total > allowed:
         allowed -= 1
@@ -237,12 +242,14 @@ def hasNonDefault(obj, axis):
 
 
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
-    if not namesList: return ''
+    if not namesList:
+        return ''
     namesString = ""
     (posL, posR) = indicesSplit(numDisplayNames, count)
     possibleIndices = posL + posR
 
-    allDefault = all([namesList[i].startswith(DEFAULT_PREFIX) for i in possibleIndices])
+    allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
+                      for i in possibleIndices])
 
     if allDefault:
         return ""
@@ -285,10 +292,10 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
 
 
 def cleanKeywordInput(s):
-    """Processes the input string such that it is in lower case, and all
-    whitespace is removed. Such a string is then considered 'cleaned' and
-    ready for comparison against lists of accepted values of keywords.
-
+    """
+    Processes the input string such that it is in lower case, and all
+    whitespace is removed. Such a string is then considered 'cleaned'
+    and ready for comparison against lists of accepted values of keywords.
     """
     s = s.lower()
     s = "".join(s.split())
@@ -314,10 +321,10 @@ def validateInputString(string, accepted, paramName):
 
 
 def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
-    """Adjust the inputs to be a consistent length and with
-    consistent omission by removing
-    values and columns from the middle. Returns None.
-
+    """
+    Adjust the inputs to be a consistent length and with consistent
+    omission by removing values and columns from the middle.
+    Returns None.
     """
     namesOmitIndex = int(math.floor(len(fnames) / 2.0))
     dataOmitIndex = int(math.floor(len(dataWidths) / 2.0))
@@ -380,9 +387,10 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
 def inheritDocstringsFactory(toInherit):
     """
-    Factory to make decorator to copy docstrings from toInherit for reimplementations
-    in the wrapped object. Only those functions without docstrings will be given the
-    corresponding docstrings from toInherit.
+    Factory to make decorator to copy docstrings from toInherit for
+    reimplementations in the wrapped object. Only those functions
+    without docstrings will be given the corresponding docstrings from
+    toInherit.
     """
     def inheritDocstring(cls):
         writable = cls.__dict__

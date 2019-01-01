@@ -193,13 +193,13 @@ class ListAxis(Axis):
     def _add_implementation(self, toAdd, insertBefore):
         pass
 
-    @abstractmethod
-    def _flattenToOne_implementation(self):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOne_implementation(self, divideInto):
-        pass
+    # @abstractmethod
+    # def _flattenToOne_implementation(self):
+    #     pass
+    #
+    # @abstractmethod
+    # def _unflattenFromOne_implementation(self, divideInto):
+    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

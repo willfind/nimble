@@ -101,6 +101,9 @@ class MatrixElements(Elements):
             self._source.data = numpy.multiply(self._source.data, other.data)
 
 class MatrixElementsView(ElementsView, MatrixElements, Elements):
+    """
+    Limit functionality of MatrixElements to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         super(MatrixElementsView, self).__init__(**kwds)

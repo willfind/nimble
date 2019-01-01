@@ -77,7 +77,7 @@ class SparseFeatures(SparseAxis, Axis, Features):
         numNewCols = len(self._source.features) + len(toAdd.features)
         shape = (len(self._source.points), numNewCols)
         self._source.data = coo_matrix((newData, (newRow, newCol)),
-                                      shape=shape)
+                                       shape=shape)
         self._source._sorted = None
 
     # def _flattenToOne_implementation(self):
@@ -114,40 +114,49 @@ class SparseFeatures(SparseAxis, Axis, Features):
     #     self._source._sorted = 'feature'
 
 class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
+    """
+    Limit functionality of SparseFeatures to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         kwds['axis'] = 'feature'
         super(SparseFeaturesView, self).__init__(**kwds)
 
     def _nonZeroIterator_implementation(self):
-        # IDEA: check if sorted in the way you want.
-        # if yes, iterate through
-        # if no, use numpy argsort? this gives you indices that
-        # would sort it, iterate through those indices to do access?
-        #
-        # safety: somehow check that your sorting setup hasn't changed
-        class nzIt(object):
-            def __init__(self, source):
-                self._sourceIter = source.features
-                self._currGroup = None
+        return nzIt(self._source)
+
+class nzIt(object):
+    """
+    Non-zero iterator to return when iterating through each feature.
+    """
+    # IDEA: check if sorted in the way you want.
+    # if yes, iterate through
+    # if no, use numpy argsort? this gives you indices that
+    # would sort it, iterate through those indices to do access?
+    #
+    # safety: somehow check that your sorting setup hasn't changed
+    def __init__(self, source):
+        self._sourceIter = source.features
+        self._currGroup = None
+        self._index = 0
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next non zero value.
+        """
+        while True:
+            try:
+                value = self._currGroup[self._index]
+                self._index += 1
+
+                if value != 0:
+                    return value
+            except Exception:
+                self._currGroup = next(self._sourceIter)
                 self._index = 0
 
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while True:
-                    try:
-                        value = self._currGroup[self._index]
-                        self._index += 1
-
-                        if value != 0:
-                            return value
-                    except:
-                        self._currGroup = next(self._sourceIter)
-                        self._index = 0
-
-            def __next__(self):
-                return self.next()
-
-        return nzIt(self._source)
+    def __next__(self):
+        return self.next()

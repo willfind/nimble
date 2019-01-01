@@ -25,7 +25,8 @@ class ElementsView(Elements):
         kwds['source'] = source
         super(ElementsView, self).__init__(**kwds)
 
-    def transform(self, other):
+    def transform(self, toTransform, points=None, features=None,
+                  preserveZeros=False, skipNoneReturnValues=False):
         readOnlyException("transform")
 
     def multiply(self, other):

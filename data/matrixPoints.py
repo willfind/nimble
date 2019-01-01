@@ -83,38 +83,47 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     #                                                 order='C')
 
     def _nonZeroIterator_implementation(self):
-        class nzIt(object):
-            def __init__(self, source):
-                self._source = source
-                self._pIndex = 0
-                self._pStop = len(source.points)
-                self._fIndex = 0
-                self._fStop = len(source.features)
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while (self._pIndex < self._pStop):
-                    value = self._source.data[self._pIndex, self._fIndex]
-
-                    self._fIndex += 1
-                    if self._fIndex >= self._fStop:
-                        self._fIndex = 0
-                        self._pIndex += 1
-
-                    if value != 0:
-                        return value
-
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
         return nzIt(self._source)
 
 class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
+    """
+    Limit functionality of MatrixPoints to read-only
+    """
     def __init__(self, source, **kwds):
         kwds['source'] = source
         kwds['axis'] = 'point'
         super(MatrixPointsView, self).__init__(**kwds)
+
+class nzIt(object):
+    """
+    Non-zero iterator to return when iterating through each point.
+    """
+    def __init__(self, source):
+        self._source = source
+        self._pIndex = 0
+        self._pStop = len(source.points)
+        self._fIndex = 0
+        self._fStop = len(source.features)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next non zero value.
+        """
+        while self._pIndex < self._pStop:
+            value = self._source.data[self._pIndex, self._fIndex]
+
+            self._fIndex += 1
+            if self._fIndex >= self._fStop:
+                self._fIndex = 0
+                self._pIndex += 1
+
+            if value != 0:
+                return value
+
+        raise StopIteration
+
+    def __next__(self):
+        return self.next()

@@ -21,7 +21,7 @@ from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import cleanKeywordInput, validateInputString
+from .dataHelpers import validateInputString
 
 class Axis(object):
     """
@@ -749,8 +749,7 @@ class Axis(object):
 
         if cleanFuncName == 'correlation':
             toCall = UML.calculate.correlation
-        elif (cleanFuncName == 'covariance'
-              or cleanFuncName == 'samplecovariance'):
+        elif cleanFuncName in ['covariance', 'samplecovariance']:
             toCall = UML.calculate.covariance
         elif cleanFuncName == 'populationcovariance':
             def populationCovariance(X, X_T):
@@ -812,19 +811,17 @@ class Axis(object):
             toCall = UML.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
             toCall = UML.calculate.proportionZero
-        elif cleanFuncName == 'std' or cleanFuncName == 'standarddeviation':
+        elif cleanFuncName in ['std', 'standarddeviation']:
             def sampleStandardDeviation(values):
                 return UML.calculate.standardDeviation(values, True)
 
             toCall = sampleStandardDeviation
-        elif (cleanFuncName == 'samplestd'
-              or cleanFuncName == 'samplestandarddeviation'):
+        elif cleanFuncName in ['samplestd', 'samplestandarddeviation']:
             def sampleStandardDeviation(values):
                 return UML.calculate.standardDeviation(values, True)
 
             toCall = sampleStandardDeviation
-        elif (cleanFuncName == 'populationstd'
-              or cleanFuncName == 'populationstandarddeviation'):
+        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = UML.calculate.standardDeviation
 
         ret = self._calculate(toCall, limitTo=None)
@@ -1015,7 +1012,7 @@ class Axis(object):
         if target is not None and not hasattr(target, '__call__'):
             argName = 'to' + structure.capitalize()
             targetList = self._source._constructIndicesList(axis, target,
-                                                           argName)
+                                                            argName)
         # boolean function
         elif target is not None:
             # construct list from function
@@ -1578,6 +1575,9 @@ def _stringToFunction(string, axis, nameChecker):
     return target
 
 class EmptyIt(object):
+    """
+    Non-zero iterator to return when object is point or feature empty.
+    """
     def __iter__(self):
         return self
 
