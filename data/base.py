@@ -84,28 +84,6 @@ def to2args(f):
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
-class BasePoints(Axis, Points):
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(BasePoints, self).__init__(**kwds)
-
-class BaseFeatures(Axis, Features):
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(BaseFeatures, self).__init__(**kwds)
-
-class BaseElements(Elements):
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = self._source
-        super(BaseElements, self).__init__(**kwds)
-
 class Base(object):
     """
     Class defining important data manipulation operations and giving
@@ -178,6 +156,10 @@ class Base(object):
             msg += str(shape[1]) + ")"
             raise ArgumentException(msg)
 
+        self._points = self._getPoints()
+        self._features = self._getFeatures()
+        self._elements = self._getElements()
+
         # Set up point names
         self._nextDefaultValuePoint = 0
         if pointNames is None:
@@ -243,21 +225,21 @@ class Base(object):
 
     @property
     def points(self):
-        return self._getPoints()
+        return self._points
 
     def _getFeatures(self):
         return BaseFeatures(self)
 
     @property
     def features(self):
-        return self._getFeatures()
+        return self._features
 
     def _getElements(self):
         return BaseElements(self)
 
     @property
     def elements(self):
-        return self._getElements()
+        return self._elements
 
     def _setpointCount(self, value):
         self._pointCount = value
@@ -2206,7 +2188,6 @@ class Base(object):
         self.features.setNames(self._flattenNames('point'))
         self.points.setNames(['Flattened'])
 
-
     def flattenToOneFeature(self):
         """
         Modify this object so that its values are in a single feature.
@@ -2253,7 +2234,6 @@ class Base(object):
         self._featureCount = 1
         self.points.setNames(self._flattenNames('feature'))
         self.features.setNames(['Flattened'])
-
 
     def _unflattenNames(self, addedAxis, addedAxisLength):
         """
@@ -2364,7 +2344,6 @@ class Base(object):
 
         return allDefaultStatus
 
-
     def unflattenFromOnePoint(self, numPoints):
         """
         Adjust a flattened point vector to contain multiple points.
@@ -2419,7 +2398,6 @@ class Base(object):
         self._pointCount = numPoints
         self.points.setNames(ret[0])
         self.features.setNames(ret[1])
-
 
     def unflattenFromOneFeature(self, numFeatures):
         """
@@ -2837,7 +2815,6 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperActionException(msg)
 
-
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
 
@@ -2872,7 +2849,6 @@ class Base(object):
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
                 raise ZeroDivisionError(msg)
-
 
     def _genericNumericBinary(self, opName, other):
 
@@ -3586,157 +3562,6 @@ class Base(object):
             invNames.append(defaultName)
             names[defaultName] = i
 
-    def _setName_implementation(self, oldIdentifier, newName, axis,
-                                allowDefaults=False):
-        """
-        Changes the featureName specified by previous to the supplied
-        input featureName.
-
-        oldIdentifier must be a non None string or integer, specifying
-        either a current featureName or the index of a current
-        featureName. newFeatureName may be either a string not currently
-        in the featureName set, or None for an default featureName.
-        newFeatureName may begin with the default prefix.
-        """
-        self._validateAxis(axis)
-        if axis == 'point':
-            names = self.pointNames
-            invNames = self.pointNamesInverse
-            index = self._getPointIndex(oldIdentifier)
-        else:
-            names = self.featureNames
-            invNames = self.featureNamesInverse
-            index = self._getFeatureIndex(oldIdentifier)
-
-        if newName is not None:
-            if not isinstance(newName, six.string_types):
-                msg = "The new name must be either None or a string"
-                raise ArgumentException(msg)
-        if newName in names:
-            if invNames[index] == newName:
-                return
-            msg = "This name '" + newName + "' is already in use"
-            raise ArgumentException(msg)
-
-        if newName is None:
-            newName = self._nextDefaultName(axis)
-
-        #remove the current featureName
-        oldName = invNames[index]
-        del names[oldName]
-
-        # setup the new featureName
-        invNames[index] = newName
-        names[newName] = index
-        self._incrementDefaultIfNeeded(newName, axis)
-
-    def _setNamesFromList(self, assignments, count, axis):
-        if axis == 'point':
-            def checkAndSet(val):
-                if val >= self._nextDefaultValuePoint:
-                    self._nextDefaultValuePoint = val + 1
-        else:
-            def checkAndSet(val):
-                if val >= self._nextDefaultValueFeature:
-                    self._nextDefaultValueFeature = val + 1
-
-        self._validateAxis(axis)
-        if assignments is None:
-            self._setAllDefault(axis)
-            return
-
-        if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large (" + str(len(assignments))
-                msg += "); this axis is empty"
-                raise ArgumentException(msg)
-            self._setNamesFromDict({}, count, axis)
-            return
-        if len(assignments) != count:
-            msg = "assignments may only be an ordered container type, with as "
-            msg += "many entries (" + str(len(assignments)) + ") as this axis "
-            msg += "is long (" + str(count) + ")"
-            raise ArgumentException(msg)
-
-        for name in assignments:
-            if name is not None and not isinstance(name, six.string_types):
-                msg = 'assignments must contain only string values'
-                raise ArgumentException(msg)
-            if name is not None and name.startswith(DEFAULT_PREFIX):
-                try:
-                    num = int(name[DEFAULT_PREFIX_LENGTH:])
-                # Case: default prefix with non-integer suffix. This cannot
-                # cause a future integer suffix naming collision, so we
-                # can ignore it.
-                except ValueError:
-                    continue
-                checkAndSet(num)
-
-        #convert to dict so we only write the checking code once
-        temp = {}
-        for index in range(len(assignments)):
-            name = assignments[index]
-            # take this to mean fill it in with a default name
-            if name is None:
-                name = self._nextDefaultName(axis)
-            if name in temp:
-                msg = "Cannot input duplicate names: " + str(name)
-                raise ArgumentException(msg)
-            temp[name] = index
-        assignments = temp
-
-        self._setNamesFromDict(assignments, count, axis)
-
-    def _setNamesFromDict(self, assignments, count, axis):
-        self._validateAxis(axis)
-        if assignments is None:
-            self._setAllDefault(axis)
-            return
-        if not isinstance(assignments, dict):
-            msg = "assignments may only be a dict, with as many entries as "
-            msg += " this axis is long"
-            raise ArgumentException(msg)
-        if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large; this axis is empty"
-                raise ArgumentException(msg)
-            if axis == 'point':
-                self.pointNames = {}
-                self.pointNamesInverse = []
-            else:
-                self.featureNames = {}
-                self.featureNamesInverse = []
-            return
-        if len(assignments) != count:
-            msg = "assignments may only be a dict, with as many entries as "
-            msg += " this axis is long"
-            raise ArgumentException(msg)
-
-        # at this point, the input must be a dict
-        #check input before performing any action
-        for name in assignments.keys():
-            if not None and not isinstance(name, six.string_types):
-                raise ArgumentException("Names must be strings")
-            if not isinstance(assignments[name], int):
-                raise ArgumentException("Indices must be integers")
-            if assignments[name] < 0 or assignments[name] >= count:
-                countName = 'pointCount' if axis == 'point' else 'featureCount'
-                msg = "Indices must be within 0 to self." + countName + " - 1"
-                raise ArgumentException(msg)
-
-        reverseMap = [None] * len(assignments)
-        for name in assignments.keys():
-            self._incrementDefaultIfNeeded(name, axis)
-            reverseMap[assignments[name]] = name
-
-        # have to copy the input, could be from another object
-        if axis == 'point':
-            self.pointNames = copy.deepcopy(assignments)
-            self.pointNamesInverse = reverseMap
-        else:
-            self.featureNames = copy.deepcopy(assignments)
-            self.featureNamesInverse = reverseMap
-
     def _constructIndicesList(self, axis, values, argName=None):
         """
         Construct a list of indices from a valid integer (python or numpy) or
@@ -3881,6 +3706,28 @@ class Base(object):
     @abstractmethod
     def _mul__implementation(self, other):
         pass
+
+class BasePoints(Axis, Points):
+    def __init__(self, source, **kwds):
+        self._source = source
+        self._axis = 'point'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
+        super(BasePoints, self).__init__(**kwds)
+
+class BaseFeatures(Axis, Features):
+    def __init__(self, source, **kwds):
+        self._source = source
+        self._axis = 'feature'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
+        super(BaseFeatures, self).__init__(**kwds)
+
+class BaseElements(Elements):
+    def __init__(self, source, **kwds):
+        self._source = source
+        kwds['source'] = self._source
+        super(BaseElements, self).__init__(**kwds)
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""

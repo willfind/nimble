@@ -47,7 +47,7 @@ class ListFeatures(ListAxis, Axis, Features):
         self._source._numFeatures += len(toAdd.features)
 
     def _transform_implementation(self, function, limitTo):
-        for j, f in enumerate(self._source.features):
+        for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
@@ -88,6 +88,10 @@ class ListFeatures(ListAxis, Axis, Features):
     #
     #     self._source.data = result
     #     self._source._numFeatures = numFeatures
+
+    #########################
+    # Query implementations #
+    #########################
 
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)

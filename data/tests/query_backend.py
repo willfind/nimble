@@ -3,8 +3,8 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
-points.similarities, features.similarities, pointStatistics,
-featureStatistics, points.__iter__, features.__iter__,
+points.similarities, features.similarities, points.statistics,
+features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator
 """
 
@@ -1086,9 +1086,9 @@ class QueryBackend(DataTestObject):
                                 runTrial(pNum, fNum, valLen, maxW, maxH, colSep)
 
 
-    ##################### #######################
-    # points.similarities # # features.similarities #
-    ##################### #######################
+    ###############################################
+    # points.similarities / features.similarities #
+    ###############################################
 
     @raises(ArgumentException)
     def test_points_similarities_InvalidParamType(self):
@@ -1127,7 +1127,6 @@ class QueryBackend(DataTestObject):
             obj.points.similarities("foo")
         else:
             obj.features.similarities("foo")
-
 
     # test results covariance
     def test_points_similarities_SampleCovarianceResult(self):
@@ -1907,7 +1906,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        pIter = toTest.points
+        pIter = iter(toTest.points)
 
         pView = next(pIter)
         assert len(pView) == 0
@@ -1925,7 +1924,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        viewIter = toTest.points
+        viewIter = iter(toTest.points)
         try:
             next(viewIter)
         except StopIteration:
@@ -1938,7 +1937,7 @@ class QueryBackend(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        viewIter = toTest.points
+        viewIter = iter(toTest.points)
 
         toCheck = []
         for v in viewIter:
@@ -1959,7 +1958,7 @@ class QueryBackend(DataTestObject):
         data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.points
+        viewIter = iter(toTest.points)
         toCheck = []
         for v in viewIter:
             toCheck.append(v)
@@ -1998,7 +1997,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        fIter = toTest.features
+        fIter = iter(toTest.features)
 
         fView = next(fIter)
         assert len(fView) == 0
@@ -2016,7 +2015,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        viewIter = toTest.features
+        viewIter = iter(toTest.features)
         try:
             next(viewIter)
         except StopIteration:
@@ -2030,7 +2029,7 @@ class QueryBackend(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        viewIter = toTest.features
+        viewIter = iter(toTest.features)
 
         toCheck = []
         for v in viewIter:
@@ -2052,7 +2051,7 @@ class QueryBackend(DataTestObject):
         data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.features
+        viewIter = iter(toTest.features)
         toCheck = []
         for v in viewIter:
             toCheck.append(v)

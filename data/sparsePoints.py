@@ -121,6 +121,10 @@ class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
         kwds['axis'] = 'point'
         super(SparsePointsView, self).__init__(**kwds)
 
+    #########################
+    # Query implementations #
+    #########################
+
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
@@ -135,7 +139,7 @@ class nzIt(object):
     #
     # safety: somehow check that your sorting setup hasn't changed
     def __init__(self, source):
-        self._sourceIter = source.points
+        self._sourceIter = iter(source.points)
         self._currGroup = None
         self._index = 0
 

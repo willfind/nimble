@@ -1050,8 +1050,7 @@ class SparseView(BaseView, Sparse):
 
         sIt = self.points
         oIt = other.points
-        for sPoint in sIt:
-            oPoint = next(oIt)
+        for sPoint, oPoint in zip(sIt, oIt):
             for i, sVal in enumerate(sPoint):
                 oVal = oPoint[i]
                 # check element equality - which is only relevant if one of

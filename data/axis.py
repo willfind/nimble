@@ -45,28 +45,10 @@ class Axis(object):
     def __init__(self, axis, source, **kwds):
         self._axis = axis
         self._source = source
-        self._position = 0
         super(Axis, self).__init__(**kwds)
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next item
-        """
-        if isinstance(self, Points):
-            viewer = self._source.pointView
-        else:
-            viewer = self._source.featureView
-        while self._position < len(self):
-            value = viewer(self._position)
-            self._position += 1
-            return value
-        raise StopIteration
-
-    def __next__(self):
-        return self.next()
+        return AxisIterator(self)
 
     def __len__(self):
         if isinstance(self, Points):
@@ -408,11 +390,7 @@ class Axis(object):
 
     def _calculate_implementation(self, function, limitTo):
         retData = []
-        if isinstance(self, Points):
-            axisObj = self._source.points
-        else:
-            axisObj = self._source.features
-        for viewID, view in enumerate(axisObj):
+        for viewID, view in enumerate(self):
             if limitTo is not None and viewID not in limitTo:
                 continue
             currOut = function(view)
@@ -749,9 +727,9 @@ class Axis(object):
 
         return self._nonZeroIterator_implementation()
 
-    #########################
-    # Statistical functions #
-    #########################
+    ###################
+    # Query functions #
+    ###################
 
     def _similarities(self, similarityFunction):
         accepted = [
@@ -845,6 +823,7 @@ class Axis(object):
         else:
             ret.points.setName(0, cleanFuncName)
             ret.features.setNames(self._getNames())
+
         return ret
 
     #####################
@@ -1010,11 +989,9 @@ class Axis(object):
         if axis == 'point':
             hasNameChecker1 = self._source.hasPointName
             hasNameChecker2 = self._source.hasFeatureName
-            viewIter = self._source.points
         else:
             hasNameChecker1 = self._source.hasFeatureName
             hasNameChecker2 = self._source.hasPointName
-            viewIter = self._source.features
 
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
@@ -1036,7 +1013,7 @@ class Axis(object):
         # boolean function
         elif target is not None:
             # construct list from function
-            for targetID, view in enumerate(viewIter):
+            for targetID, view in enumerate(self):
                 if target(view):
                     targetList.append(targetID)
 
@@ -1593,6 +1570,33 @@ def _stringToFunction(string, axis, nameChecker):
         raise ArgumentException(msg)
 
     return target
+
+class AxisIterator(object):
+    def __init__(self, source):
+        self._source = source
+        self._position = 0
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next item
+        """
+        if isinstance(self._source, Points):
+            viewer = self._source._source.pointView
+        else:
+            viewer = self._source._source.featureView
+        if self._position < len(self._source):
+            value = viewer(self._position)
+            self._position += 1
+            return value
+        else:
+            self._position = 0
+            raise StopIteration
+
+    def __next__(self):
+        return self.next()
 
 class EmptyIt(object):
     """

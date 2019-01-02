@@ -172,13 +172,11 @@ class SparseAxis(Axis):
         if isinstance(self, Points):
             modTarget = modRow
             modOther = modCol
-            viewIter = self._source.points
         else:
             modTarget = modCol
             modOther = modRow
-            viewIter = self._source.features
 
-        for viewID, view in enumerate(viewIter):
+        for viewID, view in enumerate(self):
             if limitTo is not None and viewID not in limitTo:
                 currOut = list(view)
             else:
@@ -218,6 +216,18 @@ class SparseAxis(Axis):
 
         ret = None
         return ret
+
+    #########################
+    # Query implementations #
+    #########################
+
+    def _nonZeroIterator_implementation(self):
+        if isinstance(self, Points):
+            self._source._sortInternal('point')
+        else:
+            self._source._sortInternal('feature')
+
+        return nzIt(self._source)
 
     ######################
     # Structural Helpers #
@@ -285,9 +295,8 @@ class SparseAxis(Axis):
         keepCols = []
         keepIndex = 0
 
-        axisObj = getattr(self._source, self._axis + 's')
         # iterate through self._axis data
-        for targetID, view in enumerate(axisObj):
+        for targetID, view in enumerate(self):
             # coo_matrix data for return object
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
@@ -336,14 +345,6 @@ class SparseAxis(Axis):
 
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)
-
-    def _nonZeroIterator_implementation(self):
-        if isinstance(self, Points):
-            self._source._sortInternal('point')
-        else:
-            self._source._sortInternal('feature')
-
-        return nzIt(self._source)
 
     ####################
     # Abstract Methods #

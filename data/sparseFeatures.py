@@ -122,6 +122,10 @@ class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
         kwds['axis'] = 'feature'
         super(SparseFeaturesView, self).__init__(**kwds)
 
+    #########################
+    # Query implementations #
+    #########################
+
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
@@ -136,7 +140,7 @@ class nzIt(object):
     #
     # safety: somehow check that your sorting setup hasn't changed
     def __init__(self, source):
-        self._sourceIter = source.features
+        self._sourceIter = iter(source.features)
         self._currGroup = None
         self._index = 0
 

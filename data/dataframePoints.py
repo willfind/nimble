@@ -51,7 +51,7 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
         self._source._updateName(axis='point')
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self._source.points):
+        for i, p in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
@@ -79,6 +79,10 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
     #     self._source.data = pd.DataFrame(
     #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='C'))
+
+    #########################
+    # Query implementations #
+    #########################
 
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)

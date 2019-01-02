@@ -51,7 +51,7 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
         self._source._updateName(axis='feature')
 
     def _transform_implementation(self, function, limitTo):
-        for j, f in enumerate(self._source.features):
+        for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
@@ -79,6 +79,10 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     #     self._source.data = pd.DataFrame(
     #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
+
+    #########################
+    # Query implementations #
+    #########################
 
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)

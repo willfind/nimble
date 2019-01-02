@@ -47,7 +47,7 @@ class MatrixPoints(MatrixAxis, Axis, Points):
                                               0)
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self._source.points):
+        for i, p in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
@@ -81,6 +81,10 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     #     numFeatures = len(self._source.features) // numPoints
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='C')
+
+    #########################
+    # Query implementations #
+    #########################
 
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
