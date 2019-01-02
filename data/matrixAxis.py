@@ -10,6 +10,7 @@ import numpy
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .points import Points
 from .base import cmp_to_key
 
 class MatrixAxis(Axis):
@@ -52,7 +53,7 @@ class MatrixAxis(Axis):
         managed separately by each frontend function.
         """
         nameList = []
-        if self._axis == 'point':
+        if isinstance(self, Points):
             axisVal = 0
             ret = self._source.data[targetList]
             pointNames = nameList
@@ -75,7 +76,7 @@ class MatrixAxis(Axis):
                                featureNames=featureNames)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             test = self._source.pointView(0)
             viewIter = self._source.points
         else:
@@ -84,7 +85,7 @@ class MatrixAxis(Axis):
         names = self._getNames()
 
         if isinstance(sortHelper, list):
-            if self._axis == 'point':
+            if isinstance(self, Points):
                 self._source.data = self._source.data[sortHelper, :]
             else:
                 self._source.data = self._source.data[:, sortHelper]
@@ -146,7 +147,7 @@ class MatrixAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # use numpy indexing to change the ordering
-        if self._axis == 'point':
+        if isinstance(self, Points):
             self._source.data = self._source.data[indexPosition, :]
         else:
             self._source.data = self._source.data[:, indexPosition]

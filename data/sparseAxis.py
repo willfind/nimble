@@ -10,6 +10,7 @@ import numpy
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .points import Points
 from .base import cmp_to_key
 
 scipy = UML.importModule('scipy')
@@ -68,7 +69,7 @@ class SparseAxis(Axis):
         scorer = None
         comparator = None
         source = self._source
-        if self._axis == 'point':
+        if isinstance(self, Points):
             test = self._source.pointView(0)
             viewIter = self._source.points
         else:
@@ -79,7 +80,7 @@ class SparseAxis(Axis):
         if isinstance(sortHelper, list):
             sortedData = []
             idxDict = {val: idx for idx, val in enumerate(sortHelper)}
-            if self._axis == 'point':
+            if isinstance(self, Points):
                 sortedData = [idxDict[val] for val in source.data.row]
                 source.data.row = numpy.array(sortedData)
             else:
@@ -147,7 +148,7 @@ class SparseAxis(Axis):
         for i in range(indexPosition.shape[0]):
             reverseIdxPosition[indexPosition[i]] = i
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             source.data.row[:] = reverseIdxPosition[source.data.row]
         else:
             source.data.col[:] = reverseIdxPosition[source.data.col]
@@ -168,7 +169,7 @@ class SparseAxis(Axis):
         modRow = []
         modCol = []
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             modTarget = modRow
             modOther = modCol
             viewIter = self._source.points
@@ -235,7 +236,7 @@ class SparseAxis(Axis):
                 if idx not in targetList:
                     notTarget.append(idx)
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             getOtherNames = self._source.features.getNames
             data = self._source.data.tocsr()
             targeted = data[targetList, :]
@@ -260,7 +261,7 @@ class SparseAxis(Axis):
 
         ret = targeted.tocoo()
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             return UML.data.Sparse(ret, pointNames=axisNames,
                                    featureNames=otherNames,
                                    reuseData=True)
@@ -291,7 +292,7 @@ class SparseAxis(Axis):
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
                     targetData.append(value)
-                    if self._axis == 'point':
+                    if isinstance(self, Points):
                         targetRows.append(targetList.index(targetID))
                         targetCols.append(view.data.col[otherID])
                     else:
@@ -301,7 +302,7 @@ class SparseAxis(Axis):
             elif structure != 'copy':
                 for otherID, value in enumerate(view.data.data):
                     keepData.append(value)
-                    if self._axis == 'point':
+                    if isinstance(self, Points):
                         keepRows.append(keepIndex)
                         keepCols.append(view.data.col[otherID])
                     else:
@@ -324,7 +325,7 @@ class SparseAxis(Axis):
         # get names for return obj
         pnames = []
         fnames = []
-        if self._axis == 'point':
+        if isinstance(self, Points):
             for index in targetList:
                 pnames.append(self._getName(index))
             fnames = self._source.features.getNames()
@@ -337,7 +338,7 @@ class SparseAxis(Axis):
                                reuseData=True)
 
     def _nonZeroIterator_implementation(self):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             self._source._sortInternal('point')
         else:
             self._source._sortInternal('feature')

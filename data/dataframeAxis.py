@@ -10,6 +10,7 @@ import numpy
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .points import Points
 from .base import cmp_to_key
 
 class DataFrameAxis(Axis):
@@ -55,7 +56,7 @@ class DataFrameAxis(Axis):
         """
         update self.data.index or self.data.columns
         """
-        if self._axis == 'point':
+        if isinstance(self, Points):
             self._source.data.index = range(len(self._source.data.index))
         else:
             self._source.data.columns = range(len(self._source.data.columns))
@@ -76,7 +77,7 @@ class DataFrameAxis(Axis):
         """
         df = self._source.data
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             ret = df.iloc[targetList, :]
             axis = 0
             name = 'pointNames'
@@ -103,7 +104,7 @@ class DataFrameAxis(Axis):
                                           otherName: otherNameList})
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             test = self._source.pointView(0)
             viewIter = self._source.points
         else:
@@ -112,7 +113,7 @@ class DataFrameAxis(Axis):
         names = self._getNames()
 
         if isinstance(sortHelper, list):
-            if self._axis == 'point':
+            if isinstance(self, Points):
                 self._source.data = self._source.data.iloc[sortHelper, :]
             else:
                 self._source.data = self._source.data.iloc[:, sortHelper]
@@ -174,7 +175,7 @@ class DataFrameAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # use numpy indexing to change the ordering
-        if self._axis == 'point':
+        if isinstance(self, Points):
             self._source.data = self._source.data.iloc[indexPosition, :]
         else:
             self._source.data = self._source.data.iloc[:, indexPosition]

@@ -11,6 +11,7 @@ import numpy
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
+from .points import Points
 from .base import cmp_to_key
 
 class ListAxis(Axis):
@@ -56,7 +57,7 @@ class ListAxis(Axis):
         fnames = []
         data = numpy.matrix(self._source.data, dtype=object)
 
-        if self._axis == 'point':
+        if isinstance(self, Points):
             keepList = []
             for idx in range(len(self)):
                 if idx not in targetList:
@@ -98,7 +99,7 @@ class ListAxis(Axis):
                              featureNames=fnames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             test = self._source.pointView(0)
             viewIter = self._source.points
         else:
@@ -108,7 +109,7 @@ class ListAxis(Axis):
 
         if isinstance(sortHelper, list):
             sortData = numpy.array(self._source.data, dtype=numpy.object_)
-            if self._axis == 'point':
+            if isinstance(self, Points):
                 sortData = sortData[sortHelper, :]
             else:
                 sortData = sortData[:, sortHelper]
@@ -166,7 +167,7 @@ class ListAxis(Axis):
             indexPosition = numpy.argsort(scoreArray)
 
         # run through target axis and change indices
-        if self._axis == 'point':
+        if isinstance(self, Points):
             source = copy.copy(self._source.data)
             for i in range(len(self._source.data)):
                 self._source.data[i] = source[indexPosition[i]]

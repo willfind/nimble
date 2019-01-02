@@ -2,7 +2,10 @@
 Defines a subclass of the Axis object, which serves as the primary
 base class for read only axis views of data objects.
 """
+from __future__ import absolute_import
+
 from .axis import Axis
+from .points import Points
 from .base_view import readOnlyException
 
 # TODO inherit docstrings
@@ -29,24 +32,27 @@ class AxisView(Axis):
         super(AxisView, self).__init__(**kwds)
 
     def _getNames(self):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             start = self._source._pStart
             end = self._source._pEnd
         else:
             start = self._source._fStart
             end = self._source._fEnd
 
-        if not getattr(self._source._source, self._axis + 'NamesInverse'):
+        if not self._namesCreated():
             self._source._source._setAllDefault(self._axis)
-        names = getattr(self._source._source, self._axis + 'NamesInverse')
+        if isinstance(self, Points):
+            namesList = self._source._source.pointNamesInverse
+        else:
+            namesList = self._source._source.featureNamesInverse
 
-        return names[start:end]
+        return namesList[start:end]
 
     def _getName(self, index):
         return self._getNames()[index]
 
     def _getIndex(self, name):
-        if self._axis == 'point':
+        if isinstance(self, Points):
             start = self._source._pStart
             end = self._source._pEnd
             possible = self._source._source.points.getIndex(name)
