@@ -64,26 +64,25 @@ def viewConstructorMaker(concreteType):
 
         # generate points of data to be present before and after the viewable
         # data in the concrete object
-        if orig.points != 0:
-            firstPRaw = [[0] * orig.features]
-            fnamesParam = orig.getFeatureNames() if orig._featureNamesCreated() else 'automatic'
+        if len(orig.points) != 0:
+            firstPRaw = [[0] * len(orig.features)]
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=fnamesParam,
+                                                    pointNames=['firstPNonView'], featureNames=orig.features.getNames(),
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                     elementType=elementType)
 
-            lastPRaw = [[3] * orig.features]
+            lastPRaw = [[3] * len(orig.features)]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=fnamesParam,
+                                                   pointNames=['lastPNonView'], featureNames=orig.features.getNames(),
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                    elementType=elementType)
 
-            firstPoint.addPoints(orig)
+            firstPoint.points.add(orig)
             full = firstPoint
-            full.addPoints(lastPoint)
+            full.points.add(lastPoint)
 
             pStart = 1
-            pEnd = full.points - 2
+            pEnd = len(full.points) - 2
         else:
             full = orig
             pStart = None
@@ -91,19 +90,18 @@ def viewConstructorMaker(concreteType):
 
         # generate features of data to be present before and after the viewable
         # data in the concrete object
-        if orig.features != 0:
-            lastFRaw = [[1] * full.points]
-            fnames = full.getPointNames() if full._pointNamesCreated() else 'automatic'
+        if len(orig.features) != 0:
+            lastFRaw = [[1] * len(full.points)]
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=fnames, pointNames=['lastFNonView'],
+                                                     featureNames=full.points.getNames(), pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
 
             lastFeature.transpose()
 
-            full.addFeatures(lastFeature)
+            full.features.add(lastFeature)
             fStart = None
-            fEnd = full.features - 2
+            fEnd = len(full.features) - 2
         else:
             fStart = None
             fEnd = None

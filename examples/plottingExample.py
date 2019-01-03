@@ -44,8 +44,8 @@ if __name__ == "__main__":
 
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir):
-        plotObj.elementwisePower(2)
-        plotObj.setFeatureName(0, "N(0,1) squared")
+        plotObj.elements.power(2)
+        plotObj.features.setName(0, "N(0,1) squared")
 
         outPath = None
         if outDir is not None:
@@ -61,10 +61,10 @@ if __name__ == "__main__":
         scaled = (raw1 * 3) + raw2
         obj1 = UML.createData("Matrix", raw1)
         obj2 = UML.createData("Matrix", scaled)
-        obj1.addFeatures(obj2)
+        obj1.features.add(obj2)
 
-        #obj1.setFeatureName(0, "[0, 1) random noise")
-        obj1.setFeatureName(1, "(Feature 0 * 3) + noise")
+        #obj1.features.setName(0, "[0, 1) random noise")
+        obj1.features.setName(1, "(Feature 0 * 3) + noise")
         obj1.name = "Noise"
 
         outPath = None
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         else:
             return 1
 
-    checkObj.transformEachElement(makeCheckered)
+    checkObj.elements.transform(makeCheckered)
 
     def addGradient(vector):
         n = len(vector)
@@ -93,8 +93,8 @@ if __name__ == "__main__":
             ret.append(val + i / 2.)
         return ret
 
-    checkGradObj = checkObj.calculateForEachPoint(addGradient)
-    checkGradObj = checkGradObj.calculateForEachFeature(addGradient)
+    checkGradObj = checkObj.points.calculate(addGradient)
+    checkGradObj = checkGradObj.features.calculate(addGradient)
     checkGradObj.name = "Checkerboard with linear gradient"
 
     # plot

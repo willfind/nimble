@@ -16,7 +16,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
         msg = 'To call this function, scipy must be installed.'
         raise PackageException(msg)
 
-    if errors.features != 1:
+    if len(errors.features) != 1:
         raise ArgumentException("The errors vector may only have one feature")
 
     if transform is None:
@@ -25,9 +25,9 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
     halfConfidence = 1 - ((1 - confidence) / 2.0)
     boundaryOnNormalScale = scipy.stats.norm.ppf(halfConfidence)
 
-    sqrtN = float(math.sqrt(errors.points))
-    mean = errors.featureStatistics('mean')[0, 0]
-    std = errors.featureStatistics('SampleStandardDeviation')[0, 0]
+    sqrtN = float(math.sqrt(len(errors.points)))
+    mean = errors.features.statistics('mean')[0, 0]
+    std = errors.features.statistics('SampleStandardDeviation')[0, 0]
 
     low = transform(mean - (boundaryOnNormalScale * (std / sqrtN)))
     high = transform(mean + (boundaryOnNormalScale * (std / sqrtN)))
@@ -37,7 +37,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
     errors = known - predicted
-    errors.elementwisePower(2)
+    errors.elements.power(2)
 
     def wrappedSqrt(value):
         if value < 0:

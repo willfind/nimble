@@ -304,10 +304,10 @@ class Shogun(UniversalInterface):
         # check something that we know won't work, but shogun will not report intelligently
         if trainX is not None or testX is not None:
             if 'pointLen' not in customDict:
-                customDict['pointLen'] = trainX.features if trainX is not None else testX.features
-            if trainX is not None and trainX.features != customDict['pointLen']:
+                customDict['pointLen'] = len(trainX.features) if trainX is not None else len(testX.features)
+            if trainX is not None and len(trainX.features) != customDict['pointLen']:
                 raise ArgumentException("Length of points in the training data and testing data must be the same")
-            if testX is not None and testX.features != customDict['pointLen']:
+            if testX is not None and len(testX.features) != customDict['pointLen']:
                 raise ArgumentException("Length of points in the training data and testing data must be the same")
 
         trainXTrans = None
@@ -370,7 +370,7 @@ class Shogun(UniversalInterface):
 
                     return inverseMapper
 
-                ret.transformEachElement(makeInverseMapper(remap), features=0)
+                ret.elements.transform(makeInverseMapper(remap), features=0)
 
         return ret
 
@@ -868,8 +868,8 @@ def _remapLabelsRange(toRemap):
     value originally in toRemap that was replaced with the value i.
 
     """
-    assert toRemap.features == 1
-    assert toRemap.features > 0
+    assert len(toRemap.features) == 1
+    assert len(toRemap.features) > 0
 
     mapping = {}
     inverse = []
@@ -885,7 +885,7 @@ def _remapLabelsRange(toRemap):
             ret.append(mapping[value])
         return ret
 
-    toRemap.transformEachFeature(remap)
+    toRemap.features.transform(remap)
 
     return inverse
 
@@ -908,8 +908,8 @@ def _remapLabelsSpecific(toRemap, space):
     Raises: ArgumentException if there are more than unique values than values in space
 
     """
-    assert toRemap.points > 0
-    assert toRemap.features == 1
+    assert len(toRemap.points) > 0
+    assert len(toRemap.features) == 1
 
     mapping = {}
     inverse = []
@@ -935,7 +935,7 @@ def _remapLabelsSpecific(toRemap, space):
             ret.append(space[mapping[value]])
         return ret
 
-    toRemap.transformEachFeature(remap)
+    toRemap.features.transform(remap)
 
     return inverse
 

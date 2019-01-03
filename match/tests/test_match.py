@@ -64,10 +64,10 @@ def backend_match_anyAll(anyOrAll, func, data):
             assert func(toTest)
         else:
             allMatching = toTest[:,2]
-            allMatching.addFeatures(allMatching)
+            allMatching.features.add(allMatching)
             assert func(allMatching)
         # test by feature
-        for i, feature in enumerate(toTest.featureIterator()):
+        for i, feature in enumerate(toTest.features):
             # index 0 never contains any matching values
             if i == 0:
                 assert not func(feature)
@@ -81,7 +81,7 @@ def backend_match_anyAll(anyOrAll, func, data):
                 assert func(feature)
         # test by point
         toTest = UML.createData(t, data.T)
-        for i, point in enumerate(toTest.pointIterator()):
+        for i, point in enumerate(toTest.points):
             # index 0 never contains any matching values
             if i == 0:
                 assert not func(point)
