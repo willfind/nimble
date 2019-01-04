@@ -1010,7 +1010,7 @@ class Base(object):
         --------
         raw = [[4132, 41, 'management', 50000, 'm'],
                [4434, 26, 'sales', 26000, 'm'],
-               [4331, 26, 'administration', 28000,'f'],
+               [4331, 26, 'administration', 28000, 'f'],
                [4211, 45, 'sales', 33000, 'm'],
                [4344, 45, 'accounting', 43500, 'f']]
         pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
@@ -1039,7 +1039,7 @@ class Base(object):
 
         dwight   4211  45   sales    33000    m
            jim   4434  26   sales    26000    m
-        *Note: retains list order; index 3 placed before index 1
+        *Note: retains list order; index 3 placed before index 1*
 
         >>>nonManagement = office[1:4, :]
         >>>print(nonManagement)
@@ -1071,7 +1071,7 @@ class Base(object):
             pam     f     26
          dwight     m     45
          angela     f     45
-        *Note: retains list order; 'gender' placed before 'age'
+        *Note: retains list order; 'gender' placed before 'age'*
 
         >>>deptSalary = office[:, 'department':'salary']
         >>>print(deptSalary)
