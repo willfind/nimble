@@ -16,8 +16,8 @@ class ViewAccess(DataTestObject):
     def test_exception_docstring_decorator(self):
         """ test wrapper prepends view object information to Base docstring
         when for a method that raises an exception"""
-        viewDoc = getattr(BaseView, 'extractPoints').__doc__
-        baseDoc = getattr(Base, 'extractPoints').__doc__
+        viewDoc = getattr(BaseView, 'transpose').__doc__
+        baseDoc = getattr(Base, 'transpose').__doc__
 
         viewLines = viewDoc.split('\n')
         baseLines = baseDoc.split('\n')

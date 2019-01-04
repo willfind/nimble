@@ -27,7 +27,7 @@ def checkFormat(scores, numLabels):
     one or a one vs all formatting scheme.
 
     """
-    if scores.features != numLabels and scores.features != (numLabels * (numLabels - 1)) / 2:
+    if len(scores.features) != numLabels and len(scores.features) != (numLabels * (numLabels - 1)) / 2:
         raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
 
 

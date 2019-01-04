@@ -148,7 +148,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 #Remove true labels from from training set, if not already separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
-                    trainY = trainX.extractFeatures(trainY)
+                    trainY = trainX.features.extract(trainY)
 
                 # Get set of unique class labels
                 labelVector = trainY.copy()
@@ -178,7 +178,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 trainedLearners = []
                 for label in labelSet:
                     relabeler.func_defaults = (label,)
-                    trainLabels = trainY.calculateForEachPoint(relabeler)
+                    trainLabels = trainY.points.calculate(relabeler)
                     trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
                                                        timer=timer)
                     trainedLearner.label = label
@@ -193,12 +193,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # we want the data and the labels together in one object or this method
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
-                    trainX.addFeatures(trainY)
-                    trainY = trainX.features - 1
+                    trainX.features.add(trainY)
+                    trainY = len(trainX.features) - 1
 
                 # Get set of unique class labels, then generate list of all 2-combinations of
                 # class labels
-                labelVector = trainX.copyFeatures([trainY])
+                labelVector = trainX.features.copy([trainY])
                 labelVector.transpose()
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
                 labelPairs = generateAllPairs(labelSet)
@@ -225,12 +225,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 trainedLearners = []
                 for pair in labelPairs:
                     #get all points that have one of the labels in pair
-                    pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
-                    pairTrueLabels = pairData.extractFeatures(trainY)
+                    pairData = trainX.points.extract(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+                    pairTrueLabels = pairData.features.extract(trainY)
                     trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
                                                        timer=timer))
-                    pairData.addFeatures(pairTrueLabels)
-                    trainX.addPoints(pairData)
+                    pairData.features.add(pairTrueLabels)
+                    trainX.points.add(pairData)
                 if useLog:
                     timer.stop('trainOVO')
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
@@ -245,7 +245,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, UML.data.Base):
-            has2dOutput = outputData.features > 1
+            has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
@@ -282,7 +282,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # separate training data / labels if needed
         if isinstance(trainY, (six.string_types, int, numpy.int64)):
             trainX = trainX.copy()
-            trainY = trainX.extractFeatures(toExtract=trainY)
+            trainY = trainX.features.extract(toExtract=trainY)
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(learnerName, trainX, trainY, None, instantiatedInputs, customDict)
@@ -668,7 +668,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         order = self._getScoresOrder(learner)
         numLabels = len(order)
-        if numLabels == 2 and rawScores.features == 1:
+        if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
             return UML.createData("Matrix", ret)
 
@@ -676,7 +676,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             applyResults = self._applier(learner, testX, arguments, customDict)
             applyResults = self._outputTransformation(learnerName, applyResults, arguments, "match", "label",
                                                       customDict)
-        if rawScores.features != 3:
+        if len(rawScores.features) != 3:
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(self, learnerName, arguments)
@@ -684,7 +684,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # check the strategy, and modify it if necessary
         if not strategy:
             scores = []
-            for i in range(rawScores.points):
+            for i in range(len(rawScores.points)):
                 combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
@@ -1122,12 +1122,12 @@ class TrainedLearner(object):
             scoreOrder = list(scoreOrder)
             # find scores matching predicted labels
             def grabValue(row):
-                pointIndex = scores.getPointIndex(row.getPointName(0))
+                pointIndex = scores.points.getIndex(row.points.getName(0))
                 rowIndex = scoreOrder.index(labels[pointIndex, 0])
                 return row[rowIndex]
 
-            scoreVector = scores.calculateForEachPoint(grabValue)
-            labels.addFeatures(scoreVector)
+            scoreVector = scores.points.calculate(grabValue)
+            labels.features.add(scoreVector)
 
             ret = labels
 
@@ -1179,7 +1179,7 @@ class TrainedLearner(object):
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, UML.data.Base):
-            has2dOutput = outputData.features > 1
+            has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
@@ -1255,11 +1255,11 @@ class TrainedLearner(object):
             desiredDict[label] = i
 
         def sortScorer(feature):
-            index = formatedRawOrder.getFeatureIndex(feature.getFeatureName(0))
+            index = formatedRawOrder.features.getIndex(feature.features.getName(0))
             label = internalOrder[index]
             return desiredDict[label]
 
-        formatedRawOrder.sortFeatures(sortHelper=sortScorer)
+        formatedRawOrder.features.sort(sortHelper=sortScorer)
         return formatedRawOrder
 
 class TrainedLearners(TrainedLearner):
@@ -1295,14 +1295,14 @@ class TrainedLearners(TrainedLearner):
                 if rawPredictions is None:
                     rawPredictions = oneLabelResults
                     #as it's added to results object, rename each column with its corresponding class label
-                    rawPredictions.setFeatureName(0, str(label))
+                    rawPredictions.features.setName(0, str(label))
                 else:
                     #as it's added to results object, rename each column with its corresponding class label
-                    oneLabelResults.setFeatureName(0, str(label))
-                    rawPredictions.addFeatures(oneLabelResults)
+                    oneLabelResults.features.setName(0, str(label))
+                    rawPredictions.features.add(oneLabelResults)
 
             if scoreMode.lower() == 'label'.lower():
-                winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
+                winningPredictionIndices = rawPredictions.points.calculate(UML.helpers.extractWinningPredictionIndex).copyAs(
                     format="python list")
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
@@ -1313,7 +1313,7 @@ class TrainedLearners(TrainedLearner):
                 #construct a list of lists, with each row in the list containing the predicted
                 #label and score of that label for the corresponding row in rawPredictions
                 predictionMatrix = rawPredictions.copyAs(format="python list")
-                indexToLabel = rawPredictions.getFeatureNames()
+                indexToLabel = rawPredictions.features.getNames()
                 tempResultsList = []
                 for row in predictionMatrix:
                     bestLabelAndScore = UML.helpers.extractWinningPredictionIndexAndScore(row, indexToLabel)
@@ -1328,7 +1328,7 @@ class TrainedLearners(TrainedLearner):
                 columnHeaders = sorted([str(i) for i in self.labelSet])
                 #create map between label and index in list, so we know where to put each value
                 labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
-                featureNamesItoN = rawPredictions.getFeatureNames()
+                featureNamesItoN = rawPredictions.features.getNames()
                 predictionMatrix = rawPredictions.copyAs(format="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
@@ -1353,13 +1353,13 @@ class TrainedLearners(TrainedLearner):
                 if rawPredictions is None:
                     rawPredictions = partialResults.copyAs(format="List")
                 else:
-                    partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-                    rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+                    partialResults.features.setName(0, 'predictions-' + str(predictionFeatureID))
+                    rawPredictions.features.add(partialResults.copyAs(format="List"))
                 predictionFeatureID += 1
             #set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
-                ret = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionLabel)
-                ret.setFeatureName(0, "winningLabel")
+                ret = rawPredictions.points.calculate(UML.helpers.extractWinningPredictionLabel)
+                ret.features.setName(0, "winningLabel")
                 return ret
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list containing the predicted

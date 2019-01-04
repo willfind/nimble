@@ -1,11 +1,11 @@
 """
-
 Methods tested in this file (none modify the data):
 
-pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
-featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator
-
+pointCount, featureCount, isIdentical, writeFile, __getitem__,
+pointView, featureView, view, containsZero, __eq__, __ne__, toString,
+points.similarities, features.similarities, points.statistics,
+features.statistics, points.__iter__, features.__iter__,
+elements.__iter__, points.nonZeroIterator, features.nonZeroIterator
 """
 
 from __future__ import absolute_import
@@ -68,8 +68,8 @@ class QueryBackend(DataTestObject):
         objPEmpty = self.constructor(dataPEmpty)
         objFEmpty = self.constructor(dataFEmpty)
 
-        assert objPEmpty.points == 0
-        assert objFEmpty.points == 2
+        assert len(objPEmpty.points) == 0
+        assert len(objFEmpty.points) == 2
 
 
     def test_pointCount_vectorTest(self):
@@ -80,8 +80,8 @@ class QueryBackend(DataTestObject):
         toTestR = self.constructor(dataR)
         toTestC = self.constructor(dataC)
 
-        rPoints = toTestR.points
-        cPoints = toTestC.points
+        rPoints = len(toTestR.points)
+        cPoints = len(toTestC.points)
 
         assert rPoints == 1
         assert cPoints == 3
@@ -101,8 +101,8 @@ class QueryBackend(DataTestObject):
         pEmpty = self.constructor(dataPEmpty)
         fEmpty = self.constructor(dataFEmpty)
 
-        assert pEmpty.features == 2
-        assert fEmpty.features == 0
+        assert len(pEmpty.features) == 2
+        assert len(fEmpty.features) == 0
 
 
     def test_featureCount_vectorTest(self):
@@ -113,8 +113,8 @@ class QueryBackend(DataTestObject):
         toTestR = self.constructor(dataR)
         toTestC = self.constructor(dataC)
 
-        rFeatures = toTestR.features
-        cFeatures = toTestC.features
+        rFeatures = len(toTestR.features)
+        cFeatures = len(toTestC.features)
 
         assert rFeatures == 3
         assert cFeatures == 1
@@ -222,24 +222,23 @@ class QueryBackend(DataTestObject):
         def excludeAxis(axis):
             if axis == 'point':
                 exclude = self.constructor(data, featureNames=featureNames)
-                getter = 'getPointName'
                 if isinstance(exclude, UML.data.BaseView):
-                    setter = exclude._source.setPointNames
+                    setter = exclude._source.points.setNames
                 else:
-                    setter = exclude.setPointNames
-                count = exclude.points
+                    setter = exclude.points.setNames
+                count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
-                getter = 'getFeatureName'
                 if isinstance(exclude, UML.data.BaseView):
-                    setter = exclude._source.setFeatureNames
+                    setter = exclude._source.features.setNames
                 else:
-                    setter = exclude.setFeatureNames
-                count = exclude.features
+                    setter = exclude.features.setNames
+                count = len(exclude.features)
 
             # increase the index of the default point name so that it will be
             # recognizable when we read in from the file.
-            while (getDefNameIndex(getattr(exclude, getter)(0)) <= 100):
+            axisExclude = getattr(exclude, axis + 's')
+            while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
                 setter(None)
 
             # call writeFile
@@ -250,15 +249,15 @@ class QueryBackend(DataTestObject):
                 readObj = self.constructor(data=tmpFile.name, featureNames=True)
             else:
                 readObj = self.constructor(data=tmpFile.name, pointNames=True)
-
+            axisRead = getattr(readObj, axis + 's')
             # isIdentical will ignore default names, but we still want to
             # ensure everything else is a match
             assert readObj.isIdentical(exclude)
             assert exclude.isIdentical(readObj)
 
             for i in range(count):
-                origName = getattr(exclude, getter)(i)
-                readName = getattr(readObj, getter)(i)
+                origName = getattr(axisExclude, 'getName')(i)
+                readName = getattr(axisRead, 'getName')(i)
                 assert getDefNameIndex(origName) > 100
                 assert getDefNameIndex(readName) < 10
 
@@ -525,7 +524,7 @@ class QueryBackend(DataTestObject):
 
         v = toTest.pointView(0)
 
-        assert v.features == 0
+        assert len(v.features) == 0
 
 
     def test_pointView_isinstance(self):
@@ -538,9 +537,9 @@ class QueryBackend(DataTestObject):
 
         assert isinstance(pView, BaseView)
         assert pView.name != toTest.name
-        assert pView.points == 1
-        assert pView.features == 3
-        assert len(pView) == toTest.features
+        assert len(pView.points) == 1
+        assert len(pView.features) == 3
+        assert len(pView) == len(toTest.features)
         assert pView[0] == 1
         assert pView['two'] == 2
         assert pView['three'] == 3
@@ -557,7 +556,7 @@ class QueryBackend(DataTestObject):
 
         v = toTest.featureView(0)
 
-        assert v.points == 0
+        assert len(v.points) == 0
 
     def test_featureView_isinstance(self):
         """ Test featureView() returns an instance of the BaseView """
@@ -570,9 +569,9 @@ class QueryBackend(DataTestObject):
 
         assert isinstance(fView, BaseView)
         assert fView.name != toTest.name
-        assert fView.points == 3
-        assert fView.features == 1
-        assert len(fView) == toTest.points
+        assert len(fView.points) == 3
+        assert len(fView.features) == 1
+        assert len(fView) == len(toTest.points)
         assert fView[0] == 1
         assert fView['4'] == 4
         assert fView['7'] == 7
@@ -676,25 +675,24 @@ class QueryBackend(DataTestObject):
                 for j in range(fSize):
                     assert v[i, j] == orig[i + pStart, j + fStart]
 
-            # getPointNames
+            # points.getNames
             # +1 since pEnd inclusive when calling .view, array splices are exclusive
-            assert v.getPointNames() == pnames[pStart:pEnd + 1]
-
-            # getPointIndex, getPointName
+            assert v.points.getNames() == pnames[pStart:pEnd + 1]
+            # points.getIndex, points.getName
             for i in range(pStart, pEnd):
                 origName = pnames[i]
-                assert v.getPointName(i - pStart) == origName
-                assert v.getPointIndex(origName) == i - pStart
+                assert v.points.getName(i - pStart) == origName
+                assert v.points.getIndex(origName) == i - pStart
 
-            # getFeatureNames
+            # features.getName
             # +1 since fEnd inclusive when calling .view, array splices are exclusive
-            assert v.getFeatureNames() == fnames[fStart:fEnd + 1]
+            assert v.features.getNames() == fnames[fStart:fEnd + 1]
 
-            # getFeatureIndex, getFeatureName
+            # features.getIndex, features.getName
             for i in range(fStart, fEnd):
                 origName = fnames[i]
-                assert v.getFeatureName(i - fStart) == origName
-                assert v.getFeatureIndex(origName) == i - fStart
+                assert v.features.getName(i - fStart) == origName
+                assert v.features.getIndex(origName) == i - fStart
 
         for pStart in range(origPLen):
             for pEnd in range(pStart, origPLen):
@@ -1050,10 +1048,10 @@ class QueryBackend(DataTestObject):
                 return
             elif pNum == 0:
                 data = makeUniformLength("List", 1, fNum, valLen)
-                data.extractPoints(0)
+                data.points.extract(0)
             elif fNum == 0:
                 data = makeUniformLength("List", pNum, 1, valLen)
-                data.extractFeatures(0)
+                data.features.extract(0)
             else:
                 if valLen is None:
                     data = UML.createRandomData("List", pNum, fNum, .25, elementType='int')
@@ -1088,18 +1086,18 @@ class QueryBackend(DataTestObject):
                                 runTrial(pNum, fNum, valLen, maxW, maxH, colSep)
 
 
-    ##################### #######################
-    # pointSimilarities # # featureSimilarities #
-    ##################### #######################
+    ###############################################
+    # points.similarities / features.similarities #
+    ###############################################
 
     @raises(ArgumentException)
-    def test_pointSimilaritesInvalidParamType(self):
-        """ Test pointSimilarities raise exception for unexpected param type """
+    def test_points_similarities_InvalidParamType(self):
+        """ Test points.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(True)
 
     @raises(ArgumentException)
-    def test_featureSimilaritesInvalidParamType(self):
-        """ Test featureSimilarities raise exception for unexpected param type """
+    def test_features_similarities_InvalidParamType(self):
+        """ Test features.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(False)
 
     def backend_Sim_InvalidParamType(self, axis):
@@ -1107,18 +1105,18 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(data)
 
         if axis:
-            obj.pointSimilarities({"hello": 5})
+            obj.points.similarities({"hello": 5})
         else:
-            obj.featureSimilarities({"hello": 5})
+            obj.features.similarities({"hello": 5})
 
     @raises(ArgumentException)
-    def test_pointSimilaritesUnexpectedString(self):
-        """ Test pointSimilarities raise exception for unexpected string value """
+    def test_points_similarities_UnexpectedString(self):
+        """ Test points.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(True)
 
     @raises(ArgumentException)
-    def test_featureSimilaritesUnexpectedString(self):
-        """ Test featureSimilarities raise exception for unexpected string value """
+    def test_features_similarities_UnexpectedString(self):
+        """ Test features.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(False)
 
     def backend_Sim_UnexpectedString(self, axis):
@@ -1126,18 +1124,17 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(data)
 
         if axis:
-            obj.pointSimilarities("foo")
+            obj.points.similarities("foo")
         else:
-            obj.featureSimilarities("foo")
-
+            obj.features.similarities("foo")
 
     # test results covariance
-    def test_pointSimilaritesSampleCovarianceResult(self):
-        """ Test pointSimilarities returns correct sample covariance results """
+    def test_points_similarities_SampleCovarianceResult(self):
+        """ Test points.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(True)
 
-    def test_featureSimilaritesSampleCovarianceResult(self):
-        """ Test featureSimilarities returns correct sample covariance results """
+    def test_features_similarities_SampleCovarianceResult(self):
+        """ Test features.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(False)
 
     def backend_Sim_SampleCovarianceResult(self, axis):
@@ -1149,9 +1146,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("covariance ")
+            ret = orig.points.similarities("covariance ")
         else:
-            ret = trans.featureSimilarities("sample\tcovariance")
+            ret = trans.features.similarities("sample\tcovariance")
             ret.transpose()
 
         # hand computed results
@@ -1170,12 +1167,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesPopulationCovarianceResult(self):
-        """ Test pointSimilarities returns correct population covariance results """
+    def test_points_similarities_PopulationCovarianceResult(self):
+        """ Test points.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(True)
 
-    def test_featureSimilaritesPopulationCovarianceResult(self):
-        """ Test featureSimilarities returns correct population covariance results """
+    def test_features_similarities_PopulationCovarianceResult(self):
+        """ Test features.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(False)
 
     def backend_Sim_populationCovarianceResult(self, axis):
@@ -1187,9 +1184,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("population COvariance")
+            ret = orig.points.similarities("population COvariance")
         else:
-            ret = trans.featureSimilarities("populationcovariance")
+            ret = trans.features.similarities("populationcovariance")
             ret.transpose()
 
         # hand computed results
@@ -1208,11 +1205,11 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesSTDandVarianceIdentity(self):
+    def test_points_similarities_STDandVarianceIdentity(self):
         """ Test identity between population covariance and population std of points """
         self.backend_Sim_STDandVarianceIdentity(True)
 
-    def test_featureSimilaritesSTDandVarianceIdentity(self):
+    def test_features_similarities_STDandVarianceIdentity(self):
         """ Test identity between population covariance and population std of features """
         self.backend_Sim_STDandVarianceIdentity(False)
 
@@ -1223,11 +1220,11 @@ class QueryBackend(DataTestObject):
         trans = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities(" populationcovariance")
-            stdVector = orig.pointStatistics("population std")
+            ret = orig.points.similarities(" populationcovariance")
+            stdVector = orig.points.statistics("population std")
         else:
-            ret = trans.featureSimilarities("populationcovariance")
-            stdVector = trans.featureStatistics("\npopulationstd")
+            ret = trans.features.similarities("populationcovariance")
+            stdVector = trans.features.statistics("\npopulationstd")
             ret.transpose()
 
         numpy.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
@@ -1236,12 +1233,12 @@ class QueryBackend(DataTestObject):
 
 
     # test results correlation
-    def test_pointSimilaritesCorrelationResult(self):
-        """ Test pointSimilarities returns correct correlation results """
+    def test_points_similarities_CorrelationResult(self):
+        """ Test points.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(True)
 
-    def test_featureSimilaritesCorrelationResult(self):
-        """ Test featureSimilarities returns correct correlation results """
+    def test_features_similarities_CorrelationResult(self):
+        """ Test features.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(False)
 
     def backend_Sim_CorrelationResult(self, axis):
@@ -1253,9 +1250,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("correlation")
+            ret = orig.points.similarities("correlation")
         else:
-            ret = trans.featureSimilarities("corre lation")
+            ret = trans.features.similarities("corre lation")
             ret.transpose()
 
         expRow0 = [1, (1. / 2), (1. / 2)]
@@ -1272,12 +1269,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    def test_pointSimilaritesCorrelationHelpersEquiv(self):
-        """ Compare pointSimilarities correlation using the various possible helpers """
+    def test_points_similarities_CorrelationHelpersEquiv(self):
+        """ Compare points.similarities correlation using the various possible helpers """
         self.backend_Sim_CorrelationHelpersEquiv(True)
 
-    def test_featureSimilaritesCorrelationHelpersEquiv(self):
-        """ Compare featureSimilarities correlation using the various possible helpers """
+    def test_features_similarities_CorrelationHelpersEquiv(self):
+        """ Compare features.similarities correlation using the various possible helpers """
         self.backend_Sim_CorrelationHelpersEquiv(False)
 
     def backend_Sim_CorrelationHelpersEquiv(self, axis):
@@ -1288,17 +1285,17 @@ class QueryBackend(DataTestObject):
         sameAsOrig = self.constructor(data)
 
         def explicitCorr(X, sample=True):
-            sampleStdVector = X.pointStatistics('samplestd')
-            popStdVector = X.pointStatistics('populationstd')
+            sampleStdVector = X.points.statistics('samplestd')
+            popStdVector = X.points.statistics('populationstd')
             stdVector = sampleStdVector if sample else popStdVector
 
             stdVector_T = stdVector.copy()
             stdVector_T.transpose()
 
             if sample:
-                cov = X.pointSimilarities('sample covariance')
+                cov = X.points.similarities('sample covariance')
             else:
-                cov = X.pointSimilarities('population Covariance')
+                cov = X.points.similarities('population Covariance')
 
             stdMatrix = stdVector * stdVector_T
             ret = cov / stdMatrix
@@ -1306,14 +1303,14 @@ class QueryBackend(DataTestObject):
             return ret
 
         if axis:
-            ret = orig.pointSimilarities("correlation")
+            ret = orig.points.similarities("correlation")
             sampRet = explicitCorr(orig, True)
             popRet = explicitCorr(orig, False)
         else:
-            ret = trans.featureSimilarities("correlation")
+            ret = trans.features.similarities("correlation")
             # helper only calls pointStatistics, so have to make sure
             # that in this case, we are calling with the transpose of
-            # the object used to test featureSimilarities
+            # the object used to test features.similarities
             sampRet = explicitCorr(orig, True)
             popRet = explicitCorr(orig, False)
             ret.transpose()
@@ -1331,12 +1328,12 @@ class QueryBackend(DataTestObject):
 
 
     # test results dot product
-    def test_pointSimilaritesDotProductResult(self):
-        """ Test pointSimilarities returns correct dot product results """
+    def test_points_similarities_DotProductResult(self):
+        """ Test points.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(True)
 
-    def test_featureSimilaritesDotProductResult(self):
-        """ Test featureSimilarities returns correct dot product results """
+    def test_features_similarities_DotProductResult(self):
+        """ Test features.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(False)
 
     def backend_Sim_DotProductResult(self, axis):
@@ -1348,9 +1345,9 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT)
 
         if axis:
-            ret = orig.pointSimilarities("Dot Product")
+            ret = orig.points.similarities("Dot Product")
         else:
-            ret = trans.featureSimilarities("dotproduct\n")
+            ret = trans.features.similarities("dotproduct\n")
             ret.transpose()
 
         expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
@@ -1362,13 +1359,13 @@ class QueryBackend(DataTestObject):
 
     # test input function validation
     @raises(ArgumentException)
-    def todotest_pointSimilaritesFuncValidation(self):
-        """ Test pointSimilarities raises exception for invalid funcitions """
+    def todotest_points_similarities_FuncValidation(self):
+        """ Test points.similarities raises exception for invalid funcitions """
         self.backend_Sim_FuncValidation(True)
 
     @raises(ArgumentException)
-    def todotest_featureSimilaritesFuncValidation(self):
-        """ Test featureSimilarities raises exception for invalid funcitions """
+    def todotest_features_similarities_FuncValidation(self):
+        """ Test features.similarities raises exception for invalid funcitions """
         self.backend_Sim_FuncValidation(False)
 
     def backend_Sim_FuncValidation(self, axis):
@@ -1380,17 +1377,17 @@ class QueryBackend(DataTestObject):
             return one
 
         if axis:
-            obj.pointSimilarities(singleArg)
+            obj.points.similarities(singleArg)
         else:
-            obj.featureSimilarities(singleArg)
+            obj.features.similarities(singleArg)
 
     # test results passed function
     def todotest_pointSimilariteGivenFuncResults(self):
-        """ Test pointSimilarities returns correct results for given function """
+        """ Test points.similarities returns correct results for given function """
         self.backend_Sim_GivenFuncResults(True)
 
-    def todotest_featureSimilaritesGivenFuncResults(self):
-        """ Test featureSimilarities returns correct results for given function """
+    def todotest_features_similarities_GivenFuncResults(self):
+        """ Test features.similarities returns correct results for given function """
         self.backend_Sim_GivenFuncResults(False)
 
     def backend_Sim_GivenFuncResults(self, axis):
@@ -1402,9 +1399,9 @@ class QueryBackend(DataTestObject):
             assert False
 
         if axis:
-            obj.pointSimilarities(euclideanDistance)
+            obj.points.similarities(euclideanDistance)
         else:
-            obj.featureSimilarities(euclideanDistance)
+            obj.features.similarities(euclideanDistance)
 
     def backend_Sim_NamePath_Preservation(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
@@ -1419,9 +1416,9 @@ class QueryBackend(DataTestObject):
 
         for curr in possible:
             if axis:
-                ret = orig.pointSimilarities(curr)
+                ret = orig.points.similarities(curr)
             else:
-                ret = trans.featureSimilarities(curr)
+                ret = trans.features.similarities(curr)
 
             assert orig.name == preserveName
             assert orig.absolutePath == preserveAPath
@@ -1431,10 +1428,10 @@ class QueryBackend(DataTestObject):
             assert ret.absolutePath == preserveAPath
             assert ret.relativePath == preserveRPath
 
-    def test_pointSimilaritesDot_NamePath_preservation(self):
+    def test_points_similarities_Dot_NamePath_preservation(self):
         self.backend_Sim_NamePath_Preservation(True)
 
-    def test_featureSimilarites_NamePath_preservation(self):
+    def test_features_similarities__NamePath_preservation(self):
         self.backend_Sim_NamePath_Preservation(False)
 
 
@@ -1461,14 +1458,14 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("MAx")
+            ret = orig.points.statistics("MAx")
 
         else:
-            ret = trans.featureStatistics("max ")
+            ret = trans.features.statistics("max ")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[2], [-1], [0]]
         expObj = self.constructor(expRaw, featureNames=["max"], pointNames=pnames)
@@ -1490,7 +1487,7 @@ class QueryBackend(DataTestObject):
         if isinstance(orig, UML.data.BaseView):
             return
         #don't test view.
-        res = orig.featureStatistics('mean', groupByFeature='gender')
+        res = orig.features.statistics('mean', groupByFeature='gender')
         expObjf = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
         expObjm = self.constructor([7,8,9], featureNames=['a','b', 'c'], pointNames=['mean'])
         assert expObjf == res['f']
@@ -1507,13 +1504,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("Mean")
+            ret = orig.points.statistics("Mean")
         else:
-            ret = trans.featureStatistics(" MEAN")
+            ret = trans.features.statistics(" MEAN")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [2. / 3], [1. / 3]]
         expObj = self.constructor(expRaw, featureNames=["mean"], pointNames=pnames)
@@ -1541,13 +1538,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("MeDian")
+            ret = orig.points.statistics("MeDian")
         else:
-            ret = trans.featureStatistics("median")
+            ret = trans.features.statistics("median")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [1], [0]]
         expObj = self.constructor(expRaw, featureNames=["median"], pointNames=pnames)
@@ -1576,13 +1573,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("mIN")
+            ret = orig.points.statistics("mIN")
         else:
-            ret = trans.featureStatistics("min")
+            ret = trans.features.statistics("min")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [-21], [-1]]
         expObj = self.constructor(expRaw, featureNames=['min'], pointNames=pnames)
@@ -1610,13 +1607,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("unique Count")
+            ret = orig.points.statistics("unique Count")
         else:
-            ret = trans.featureStatistics("UniqueCount")
+            ret = trans.features.statistics("UniqueCount")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1], [2], [3]]
         expObj = self.constructor(expRaw, featureNames=['uniquecount'], pointNames=pnames)
@@ -1644,13 +1641,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("Proportion Missing ")
+            ret = orig.points.statistics("Proportion Missing ")
         else:
-            ret = trans.featureStatistics("proportionmissing")
+            ret = trans.features.statistics("proportionmissing")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[1. / 3], [1. / 3], [2. / 3]]
         expObj = self.constructor(expRaw, featureNames=['proportionmissing'], pointNames=pnames)
@@ -1678,15 +1675,15 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("proportionZero")
+            ret = orig.points.statistics("proportionZero")
         else:
-            ret = trans.featureStatistics("proportion Zero")
-            assert ret.points == 1
-            assert ret.features == 3
+            ret = trans.features.statistics("proportion Zero")
+            assert len(ret.points) == 1
+            assert len(ret.features) == 3
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         expRaw = [[0], [1. / 3], [2. / 3]]
         expObj = self.constructor(expRaw, featureNames=['proportionzero'], pointNames=pnames)
@@ -1714,13 +1711,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("samplestd  ")
+            ret = orig.points.statistics("samplestd  ")
         else:
-            ret = trans.featureStatistics("standard deviation")
+            ret = trans.features.statistics("standard deviation")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         npExpRaw = numpy.std(data, axis=1, ddof=1, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
@@ -1732,9 +1729,9 @@ class QueryBackend(DataTestObject):
         expPossibleFNames = ['samplestd', 'samplestandarddeviation', 'std', 'standarddeviation']
 
         assert expObj.isApproximatelyEqual(ret)
-        assert expObj.getPointNames() == ret.getPointNames()
-        assert len(ret.getFeatureNames()) == 1
-        assert ret.getFeatureNames()[0] in expPossibleFNames
+        assert expObj.points.getNames() == ret.points.getNames()
+        assert len(ret.features.getNames()) == 1
+        assert ret.features.getNames()[0] in expPossibleFNames
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
@@ -1758,13 +1755,13 @@ class QueryBackend(DataTestObject):
         sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
         if axis:
-            ret = orig.pointStatistics("popu  lationstd")
+            ret = orig.points.statistics("popu  lationstd")
         else:
-            ret = trans.featureStatistics("population standarddeviation")
+            ret = trans.features.statistics("population standarddeviation")
             ret.transpose()
 
-        assert ret.points == 3
-        assert ret.features == 1
+        assert len(ret.points) == 3
+        assert len(ret.features) == 1
 
         npExpRaw = numpy.std(data, axis=1, ddof=0, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
@@ -1776,9 +1773,9 @@ class QueryBackend(DataTestObject):
         expPossiblePNames = ['populationstd', 'populationstandarddeviation']
 
         assert expObj.isApproximatelyEqual(ret)
-        assert expObj.getPointNames() == ret.getPointNames()
-        assert len(ret.getFeatureNames()) == 1
-        assert ret.getFeatureNames()[0] in expPossiblePNames
+        assert expObj.points.getNames() == ret.points.getNames()
+        assert len(ret.features.getNames()) == 1
+        assert ret.features.getNames()[0] in expPossiblePNames
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
@@ -1798,9 +1795,9 @@ class QueryBackend(DataTestObject):
         sameAsOrig = self.constructor(data)
 
         if axis:
-            ret = orig.pointStatistics("hello")
+            ret = orig.points.statistics("hello")
         else:
-            ret = orig.featureStatistics("meanie")
+            ret = orig.features.statistics("meanie")
 
     def backend_Stat_NamePath_preservation(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
@@ -1815,9 +1812,9 @@ class QueryBackend(DataTestObject):
 
         for curr in accepted:
             if axis:
-                ret = orig.pointStatistics(curr)
+                ret = orig.points.statistics(curr)
             else:
-                ret = orig.featureStatistics(curr)
+                ret = orig.features.statistics(curr)
 
             assert orig.name == preserveName
             assert orig.absolutePath == preserveAPath
@@ -1901,39 +1898,356 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
-
     ###################
-    # nonZeroIterator #
+    # points.__iter__ #
     ###################
 
-    def test_nonZeroIteratorPointGrouped_handmade(self):
+    def test_points_iter_FemptyCorrectness(self):
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        pIter = iter(toTest.points)
+
+        pView = next(pIter)
+        assert len(pView) == 0
+        pView = next(pIter)
+        assert len(pView) == 0
+
+        try:
+            next(pIter)
+            assert False  # expected StopIteration from prev statement
+        except StopIteration:
+            pass
+
+    def test_points_iter_noNextPempty(self):
+        """ test .points() has no next value when object is point empty """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        viewIter = iter(toTest.points)
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    def test_points_iter_exactValueViaFor(self):
+        """ Test .points() gives views that contain exactly the correct data """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        viewIter = iter(toTest.points)
+
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert toCheck[0][0] == 1
+        assert toCheck[0][1] == 2
+        assert toCheck[0][2] == 3
+        assert toCheck[1][0] == 4
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 6
+        assert toCheck[2][0] == 7
+        assert toCheck[2][1] == 8
+        assert toCheck[2][2] == 9
+
+    def test_points_iter_allZeroVectors(self):
+        """ Test .points() works when there are all zero points """
+        data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = iter(toTest.points)
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.points)
+
+        assert toCheck[0][0] == 0
+        assert toCheck[0][1] == 0
+        assert toCheck[0][2] == 0
+
+        assert toCheck[1][0] == 4
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 6
+
+        assert toCheck[2][0] == 0
+        assert toCheck[2][1] == 0
+        assert toCheck[2][2] == 0
+
+        assert toCheck[3][0] == 7
+        assert toCheck[3][1] == 8
+        assert toCheck[3][2] == 9
+
+        assert toCheck[4][0] == 0
+        assert toCheck[4][1] == 0
+        assert toCheck[4][2] == 0
+
+        assert toCheck[5][0] == 0
+        assert toCheck[5][1] == 0
+        assert toCheck[5][2] == 0
+
+    #####################
+    # features.__iter__ #
+    #####################
+
+    def test_features_iter_PemptyCorrectness(self):
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        fIter = iter(toTest.features)
+
+        fView = next(fIter)
+        assert len(fView) == 0
+        fView = next(fIter)
+        assert len(fView) == 0
+
+        try:
+            next(fIter)
+            assert False  # expected StopIteration from prev statement
+        except StopIteration:
+            pass
+
+    def test_features_iter_noNextFempty(self):
+        """ test .features() has no next value when object is feature empty """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        viewIter = iter(toTest.features)
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+
+    def test_features_iter_exactValueViaFor(self):
+        """ Test .features() gives views that contain exactly the correct data """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        viewIter = iter(toTest.features)
+
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert toCheck[0][0] == 1
+        assert toCheck[0][1] == 4
+        assert toCheck[0][2] == 7
+        assert toCheck[1][0] == 2
+        assert toCheck[1][1] == 5
+        assert toCheck[1][2] == 8
+        assert toCheck[2][0] == 3
+        assert toCheck[2][1] == 6
+        assert toCheck[2][2] == 9
+
+
+    def test_features_iter_allZeroVectors(self):
+        """ Test .features() works when there are all zero features """
+        data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = iter(toTest.features)
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.features)
+        assert toCheck[0][0] == 0
+        assert toCheck[0][1] == 0
+        assert toCheck[0][2] == 0
+
+        assert toCheck[1][0] == 1
+        assert toCheck[1][1] == 4
+        assert toCheck[1][2] == 7
+
+        assert toCheck[2][0] == 0
+        assert toCheck[2][1] == 0
+        assert toCheck[2][2] == 0
+
+        assert toCheck[3][0] == 2
+        assert toCheck[3][1] == 5
+        assert toCheck[3][2] == 8
+
+        assert toCheck[4][0] == 0
+        assert toCheck[4][1] == 0
+        assert toCheck[4][2] == 0
+
+        assert toCheck[5][0] == 3
+        assert toCheck[5][1] == 6
+        assert toCheck[5][2] == 9
+
+        assert toCheck[6][0] == 0
+        assert toCheck[6][1] == 0
+        assert toCheck[6][2] == 0
+
+        assert toCheck[7][0] == 0
+        assert toCheck[7][1] == 0
+        assert toCheck[7][2] == 0
+
+    #####################
+    # elements.__iter__ #
+    #####################
+
+    def test_elements_iter_noNextPempty(self):
+        """ test .elements() has no next value when object is point empty """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        viewIter = toTest.elements
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    def test_elements_iter_noNextFempty(self):
+        """ test .elements() has no next value when object is feature empty """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        viewIter = toTest.elements
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    def test_elements_iter_exactValueViaFor(self):
+        """ Test .elements() gives views that contain exactly the correct data """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        viewIter = toTest.elements
+
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert toCheck == list(range(1, 10))
+
+    def test_elements_iter_allZeroPoints(self):
+        """ Test .elements() works when there are all zero points """
+        data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = toTest.elements
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.points) * len(toTest.features)
+
+        assert toCheck[0] == 0
+        assert toCheck[1] == 0
+        assert toCheck[2] == 0
+
+        assert toCheck[3] == 4
+        assert toCheck[4] == 5
+        assert toCheck[5] == 6
+
+        assert toCheck[6] == 0
+        assert toCheck[7] == 0
+        assert toCheck[8] == 0
+
+        assert toCheck[9] == 7
+        assert toCheck[10] == 8
+        assert toCheck[11] == 9
+
+        assert toCheck[12] == 0
+        assert toCheck[13] == 0
+        assert toCheck[14] == 0
+
+        assert toCheck[15] == 0
+        assert toCheck[16] == 0
+        assert toCheck[17] == 0
+
+    def test_elements_iter_allZeroVectors(self):
+        """ Test .elements() works when there are all zero features """
+        data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
+        toTest = self.constructor(data)
+
+        viewIter = toTest.elements
+        toCheck = []
+        for v in viewIter:
+            toCheck.append(v)
+
+        assert len(toCheck) == len(toTest.features) * len(toTest.points)
+        assert toCheck[0] == 0
+        assert toCheck[1] == 1
+        assert toCheck[2] == 0
+        assert toCheck[3] == 2
+        assert toCheck[4] == 0
+        assert toCheck[5] == 3
+        assert toCheck[6] == 0
+        assert toCheck[7] == 0
+
+        assert toCheck[8] == 0
+        assert toCheck[9] == 4
+        assert toCheck[10] == 0
+        assert toCheck[11] == 5
+        assert toCheck[12] == 0
+        assert toCheck[13] == 6
+        assert toCheck[14] == 0
+        assert toCheck[15] == 0
+
+        assert toCheck[16] == 0
+        assert toCheck[17] == 7
+        assert toCheck[18] == 0
+        assert toCheck[19] == 8
+        assert toCheck[20] == 0
+        assert toCheck[21] == 9
+        assert toCheck[22] == 0
+        assert toCheck[23] == 0
+
+    #####################################################
+    # points.nonZeroIterator / features.nonZeroIterator #
+    #####################################################
+
+    def test_points_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIterator(iterateBy='points'):
+        for val in obj.points.nonZeroIterator():
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
 
-    def test_nonZeroIteratorFeatureGrouped_handmade(self):
+    def test_points_nonZeroIterator_empty(self):
+        data = []
+        obj = self.constructor(data)
+
+        ret = []
+        for val in obj.points.nonZeroIterator():
+            ret.append(val)
+
+        assert ret == []
+
+    def test_features_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIterator(iterateBy='features'):
+        for val in obj.features.nonZeroIterator():
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
 
-    @raises(ArgumentException)
-    def test_nonZeroIteratorException_unexpectedIterateBy(self):
-        data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
+    def test_features_nonZeroIterator_empty(self):
+        data = []
         obj = self.constructor(data)
 
-        for val in obj.nonZeroIterator(iterateBy='elements'):
-            pass
+        ret = []
+        for val in obj.features.nonZeroIterator():
+            ret.append(val)
 
+        assert ret == []
 
 ###########
 # Helpers #
@@ -1959,10 +2273,10 @@ def checkToStringRet(ret, data, includeNames):
             if len(val) != 0:
                 fnames.append(val)
         # -1 for the fnames,  -1 for the blank row
-        assert len(rows) - 2 <= data.points
+        assert len(rows) - 2 <= len(data.points)
     else:
         rowOffset = 0
-        assert len(rows) <= data.points
+        assert len(rows) <= len(data.points)
 
     for r in range(rowOffset, len(rows)):
         row = rows[r]
@@ -1984,7 +2298,7 @@ def checkToStringRet(ret, data, includeNames):
             rDataIndex = -(len(rows) - r)
 
         negCol = False
-        assert len(vals) <= data.features
+        assert len(vals) <= len(data.features)
         if includeNames:
             assert len(fnames) == len(vals)
         for c in range(len(vals)):
@@ -2003,10 +2317,10 @@ def checkToStringRet(ret, data, includeNames):
 
             if includeNames:
                 # generate name from indices
-                offset = data.points if negRow else 0
-                fromIndexPname = data.getPointName(offset + rDataIndex)
+                offset = len(data.points) if negRow else 0
+                fromIndexPname = data.points.getName(offset + rDataIndex)
                 assert fromIndexPname == pname
 
-                offset = data.features if negCol else 0
-                fromIndexFname = data.getFeatureName(offset + cDataIndex)
+                offset = len(data.features) if negCol else 0
+                fromIndexFname = data.features.getName(offset + cDataIndex)
                 assert fromIndexFname == fnames[cDataIndex]
