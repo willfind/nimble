@@ -72,7 +72,7 @@ def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output
 
     # isolate the target values from training examples, if present
     if trainY is not None:
-        trainY = trainX.extractFeatures([trainY])
+        trainY = trainX.features.extract([trainY])
         # Regressors expects row vectors in this case
         trainY.transpose()
 

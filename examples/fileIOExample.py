@@ -17,6 +17,7 @@ if __name__ == "__main__":
     import os.path
     import UML
     from UML import createData
+    from UML import match
 
     # string manipulation to get and make paths
     pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     full = createData("DataFrame", pathOrig, featureNames=True)
 
     # scrub the set of any string valued data
-    full.dropFeaturesContainingType(six.string_types)
+    full.features.delete(match.anyNonNumeric)
 
     # demonstrate splitting the data in train and test sets out of place. By default,
     # the distribution of points between the two returned objects is random.
@@ -38,16 +39,16 @@ if __name__ == "__main__":
     (trainOutPlace, testOutPlace) = full.trainAndTestSets(testFraction)
 
     # demonstrate splitting the data into train and test sets in place
-    total = full.points
+    total = len(full.points)
     num = int(round(testFraction * total))
-    testInPlace = full.extractPoints(start=0, end=total-1, number=num, randomize=True)
+    testInPlace = full.points.extract(start=0, end=total-1, number=num, randomize=True)
     trainInPlace = full
 
     # the two methods yield comparable results
-    assert testInPlace.points == num
-    assert trainInPlace.points == total - num
-    assert testInPlace.points == testOutPlace.points
-    assert trainInPlace.points == trainOutPlace.points
+    assert len(testInPlace.points) == num
+    assert len(trainInPlace.points) == total - num
+    assert len(testInPlace.points) == len(testOutPlace.points)
+    assert len(trainInPlace.points) == len(trainOutPlace.points)
 
     # output the split and normalized sets for later usage
     trainInPlace.writeFile(pathTrain, format='csv', includeNames=True)
