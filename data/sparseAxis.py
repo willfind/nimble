@@ -346,6 +346,72 @@ class SparseAxis(Axis):
         return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
                                reuseData=True)
 
+    def _unique_implementation(self):
+        if self._source._sorted is None:
+            self._source._sortInternal("feature")
+        count =len(self)
+        hasAxisNames = self._namesCreated()
+        getAxisName = self._getName
+        getAxisNames = self._getNames
+        data = self._source.data.data
+        row = self._source.data.row
+        col = self._source.data.col
+        if isinstance(self, Points):
+            axisLocator = row
+            offAxisLocator = col
+            hasOffAxisNames = self._source._featureNamesCreated()
+            getOffAxisNames = self._source.features.getNames
+        else:
+            axisLocator = col
+            offAxisLocator = row
+            hasOffAxisNames = self._source._pointNamesCreated()
+            getOffAxisNames = self._source.points.getNames
+
+        unique = set()
+        uniqueData = []
+        uniqueAxis = []
+        uniqueOffAxis = []
+        keepNames = []
+        axisCount = 0
+        for i in range(count):
+            axisLoc = axisLocator == i
+            # data values can look the same but have zeros in different places;
+            # zip with offAxis to ensure the locations are the same as well
+            key = tuple(zip(data[axisLoc], offAxisLocator[axisLoc]))
+            if key not in unique:
+                unique.add(key)
+                uniqueData.extend(data[axisLoc])
+                uniqueAxis.extend([axisCount for _ in range(sum(axisLoc))])
+                uniqueOffAxis.extend(offAxisLocator[axisLoc])
+                if hasAxisNames:
+                    keepNames.append(getAxisName(i))
+                axisCount += 1
+
+        if hasAxisNames and keepNames == getAxisNames():
+            return self._source.copy()
+
+        axisNames = False
+        offAxisNames = False
+        if len(keepNames) > 0:
+            axisNames = keepNames
+        if hasOffAxisNames:
+            offAxisNames = getOffAxisNames()
+        self._source._sorted = None
+
+        uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
+        if isinstance(self, Points):
+            shape = (axisCount, len(self._source.features))
+            uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
+                                    shape=shape)
+            return UML.createData('Sparse', uniqueCoo, pointNames=axisNames,
+                                  featureNames=offAxisNames)
+        else:
+            shape = (len(self._source.points), axisCount)
+            uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
+                                    shape=shape)
+            return UML.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
+                                  featureNames=axisNames)
+
     ####################
     # Abstract Methods #
     ####################

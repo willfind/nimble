@@ -21,7 +21,6 @@ from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -520,18 +519,6 @@ class List(Base):
             for point in self.data:
             #				assert isinstance(point, list)
                 assert len(point) == expectedLength
-
-    def _unique_implementation(self, axis):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
-        uniqueData = uniqueData.tolist()
-        if self.data == uniqueData:
-            return self.copy()
-
-        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
-        if axis == 'point':
-            return List(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
-        else:
-            return List(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """

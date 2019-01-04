@@ -16,7 +16,6 @@ from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 pd = UML.importModule('pandas')
 scipy = UML.importModule('scipy.sparse')
@@ -298,18 +297,6 @@ class DataFrame(Base):
         shape = self.data.shape
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
-
-    def _unique_implementation(self, axis):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
-        uniqueData = pd.DataFrame(uniqueData)
-        if np.array_equal(self.data.values, uniqueData):
-            return self.copy()
-        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
-
-        if axis == 'point':
-            return DataFrame(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
-        else:
-            return DataFrame(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """

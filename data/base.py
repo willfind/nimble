@@ -552,34 +552,6 @@ class Base(object):
 
         return res
 
-    def uniquePoints(self):
-        """
-        Returns a new object with only unique points. If point names are
-        present, the point name of the first instance of the unique point in
-        this object will be assigned.
-        """
-        ret = self._unique_implementation('point')
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        ret.validate()
-        return ret
-
-    def uniqueFeatures(self):
-        """
-        Returns a new object with only unique features. If feature names are
-        present, the feature name of the first instance of the unique feature
-        in this object will be assigned.
-        """
-        ret = self._unique_implementation('feature')
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        ret.validate()
-        return ret
-
     def countEachUniqueValue(self, points=None, features=None):
         """
         The unique values and the number of occurrences in the data.

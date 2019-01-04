@@ -290,17 +290,6 @@ class Matrix(Base):
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
 
-    def _unique_implementation(self, axis):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
-        if numpy.array_equal(self.data, uniqueData):
-            return self.copy()
-
-        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
-        if axis == 'point':
-            return Matrix(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
-        else:
-            return Matrix(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
-
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0

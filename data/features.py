@@ -735,6 +735,14 @@ class Features(object):
         """
         return self._nonZeroIterator()
 
+    def unique(self):
+        """
+        Return a new object with only unique features. If feature names
+        are present, the feature name of the first instance of the
+        unique feature in this object will be assigned.
+        """
+        return self._unique()
+
     #########################
     # Statistical functions #
     #########################

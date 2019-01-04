@@ -733,6 +733,14 @@ class Points(object):
         """
         return self._nonZeroIterator()
 
+    def unique(self):
+        """
+        Return a new object with only unique points. If point names are
+        present, the point name of the first instance of the unique
+        point in this object will be assigned.
+        """
+        return self._unique()
+
     #########################
     # Statistical functions #
     #########################
@@ -878,6 +886,10 @@ class Points(object):
 
     @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _unique(self):
         pass
 
     @abstractmethod

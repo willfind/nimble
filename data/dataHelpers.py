@@ -440,8 +440,8 @@ def uniqueNameGetter(obj, axis, uniqueIndices):
         getAxisName = obj.features.getName
         getOffAxisNames = obj.points.getNames
 
-    axisNames = None
-    offAxisNames = None
+    axisNames = False
+    offAxisNames = False
     if hasAxisNames:
         axisNames = [getAxisName(i) for i in uniqueIndices]
     if hasOffAxisNames:
