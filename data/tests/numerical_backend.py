@@ -8,8 +8,8 @@ __rdiv__,  __truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
 __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__
 
 In object NumericalModifying:
-elementwisePower, elementwiseMultiply, __imul__, __iadd__, __isub__,
-__idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__, 
+elements.power, elements.multiply, __imul__, __iadd__, __isub__,
+__idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__,
 
 """
 from __future__ import absolute_import
@@ -55,17 +55,17 @@ def back_unary_pfname_preservations(callerCon, op):
     toCall = getattr(caller, op)
     ret = toCall()
 
-    assert ret.getPointNames() == pnames
-    assert ret.getFeatureNames() == fnames
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
 
     # changing the returned value, in case the caller is read-only.
     # We confirm the separation of the name recording either way.
-    ret.setPointName('p1', 'p0')
+    ret.points.setName('p1', 'p0')
 
-    assert 'p1' in caller.getPointNames()
-    assert 'p0' not in caller.getPointNames()
-    assert 'p0' in ret.getPointNames()
-    assert 'p1' not in ret.getPointNames()
+    assert 'p1' in caller.points.getNames()
+    assert 'p0' not in caller.points.getNames()
+    assert 'p0' in ret.points.getNames()
+    assert 'p1' not in ret.points.getNames()
 
 
 def back_unary_NamePath_preservations(callerCon, op):
@@ -100,21 +100,21 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             toCall = getattr(caller, op)
             ret = toCall(num)
 
-            assert ret.getPointNames() == pnames
-            assert ret.getFeatureNames() == fnames
+            assert ret.points.getNames() == pnames
+            assert ret.features.getNames() == fnames
 
-            caller.setPointName('p1', 'p0')
+            caller.points.setName('p1', 'p0')
             if inplace:
-                assert 'p0' in ret.getPointNames()
-                assert 'p1' not in ret.getPointNames()
+                assert 'p0' in ret.points.getNames()
+                assert 'p1' not in ret.points.getNames()
             else:
-                assert 'p0' not in ret.getPointNames()
-                assert 'p1' in ret.getPointNames()
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+                assert 'p0' not in ret.points.getNames()
+                assert 'p1' in ret.points.getNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         except AssertionError:
             einfo = sys.exc_info()
-            six.reraise(einfo[1], None, einfo[2])
+            six.reraise(*einfo)
         #		except ArgumentException:
         #			einfo = sys.exc_info()
         #			raise einfo[1], None, einfo[2]
@@ -177,8 +177,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, fnames)
@@ -187,24 +187,24 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
         if inplace:
-            caller.setPointName('p1', 'p0')
-            assert 'p0' in ret.getPointNames()
-            assert 'p1' not in ret.getPointNames()
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+            caller.points.setName('p1', 'p0')
+            assert 'p0' in ret.points.getNames()
+            assert 'p1' not in ret.points.getNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         else:
-            ret.setPointName('p1', 'p0')
-            assert 'p0' not in caller.getPointNames()
-            assert 'p1' in caller.getPointNames()
-            assert 'p0' in ret.getPointNames()
-            assert 'p1' not in ret.getPointNames()
+            ret.points.setName('p1', 'p0')
+            assert 'p0' not in caller.points.getNames()
+            assert 'p1' in caller.points.getNames()
+            assert 'p0' in ret.points.getNames()
+            assert 'p1' not in ret.points.getNames()
 
 
-def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
+def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
     preserveNameOther = preserveName + "Other"
@@ -220,10 +220,12 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
     assert caller.absolutePath is None
     assert caller.relativePath is None
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+    if ret is None and attr2 is None:
         raise ValueError("Unexpected None return")
 
     # name should be default, path should be pulled from other
@@ -251,10 +253,12 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
     caller = callerCon(data, name=preserveName, path=preservePair)
     other = callerCon(data)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+    if ret is None and attr2 is None:
         raise ValueError("Unexpected None return")
 
     # name should be default, path should be pulled from caller
@@ -287,10 +291,12 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
     caller = callerCon(data, name=preserveName, path=preservePair)
     other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+    if ret is None and attr2 is None:
         raise ValueError("Unexpected None return")
 
     # name should be default, path should be pulled from caller
@@ -322,7 +328,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
     assert other.relativePath == preserveRPathOther
 
 
-def back_matrixmul_pfname_preservations(callerCon, op, inplace):
+def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
     """ Test that p/f names are preserved when calling a binary element wise op """
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
@@ -333,7 +339,9 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
     ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
     other = callerCon(data, ofnames, pnames)
     try:
-        toCall = getattr(caller, op)
+        toCall = getattr(caller, attr1)
+        if attr2 is not None:
+            toCall = getattr(toCall, attr2)
         ret = toCall(other)
         if ret != NotImplemented:
             assert False
@@ -348,44 +356,50 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
     interPnames = ['f1', 'f2', None]
     caller = callerCon(data, pnames, fnames)
     other = callerCon(data, interPnames, fnames)
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, pnames)
     other = callerCon(data, pnames, fnames)
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
     if ret != NotImplemented:
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
         # check name seperation between caller and returned object
-        ret.setPointName('p1', 'p0')
+        ret.points.setName('p1', 'p0')
         if inplace:
-            assert 'p0' in caller.getPointNames()
-            assert 'p1' not in caller.getPointNames()
+            assert 'p0' in caller.points.getNames()
+            assert 'p1' not in caller.points.getNames()
         else:
-            assert 'p0' not in caller.getPointNames()
-            assert 'p1' in caller.getPointNames()
-        assert 'p0' in ret.getPointNames()
-        assert 'p1' not in ret.getPointNames()
+            assert 'p0' not in caller.points.getNames()
+            assert 'p1' in caller.points.getNames()
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
 
 
-def back_otherObjectExceptions(callerCon, op):
+def back_otherObjectExceptions(callerCon, attr1, attr2=None):
     """ Test operation raises exception when param is not a UML data object """
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     caller = callerCon(data)
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall({1: 1, 2: 2, 3: 'three'})
 
 
-def back_selfNotNumericException(callerCon, calleeCon, op):
+def back_selfNotNumericException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception if self has non numeric data """
     data1 = [['why', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
     data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -394,82 +408,98 @@ def back_selfNotNumericException(callerCon, calleeCon, op):
         callee = calleeConstructor(data2, calleeCon)
     except:
         raise ArgumentException("Data type doesn't support non numeric data")
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_otherNotNumericException(callerCon, calleeCon, op):
-    """ Test elementwiseMultiply raises exception if param object has non numeric data """
+def back_otherNotNumericException(callerCon, calleeCon, attr1, attr2=None):
+    """ Test operation raises exception if param object has non numeric data """
     data1 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     data2 = [['one', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
     caller = callerCon(data1)
     callee = calleeConstructor(data2, UML.data.List)  # need to use UML.data.List for string valued element
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_pShapeException(callerCon, calleeCon, op):
+def back_pShapeException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception the shapes of the object don't fit correctly """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [4, 5, 6], ]
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_fShapeException(callerCon, calleeCon, op):
+def back_fShapeException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception the shapes of the object don't fit correctly """
     data1 = [[1, 2], [4, 5], [7, 8]]
     data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_pEmptyException(callerCon, calleeCon, op):
+def back_pEmptyException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception for point empty data """
     data = numpy.zeros((0, 2))
     caller = callerCon(data)
     callee = calleeConstructor(data, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_fEmptyException(callerCon, calleeCon, op):
+def back_fEmptyException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception for feature empty data """
     data = [[], []]
     caller = callerCon(data)
     callee = calleeConstructor(data, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_byZeroException(callerCon, calleeCon, op):
+def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains zero """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [0, 0, 0], [6, 7, 8]]
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
-def back_byInfException(callerCon, calleeCon, op):
+def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains an infinity """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [5, numpy.Inf, 10], [6, 7, 8]]
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
-    toCall = getattr(caller, op)
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
     toCall(callee)
 
 
@@ -637,6 +667,7 @@ def run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity):
 
 
 class NumericalDataSafe(DataTestObject):
+
     ###########
     # __mul__ #
     ###########
@@ -1131,47 +1162,47 @@ class NumericalDataSafe(DataTestObject):
 
 
 class NumericalModifying(DataTestObject):
-    ####################
-    # elementwisePower #
-    ####################
+    ##################
+    # elements.power #
+    ##################
 
     @raises(ArgumentException)
-    def test_elementwisePower_otherObjectExceptions(self):
-        """ Test elementwisePower raises exception when param is not a UML data object """
-        back_otherObjectExceptions(self.constructor, 'elementwisePower')
+    def test_elements_power_otherObjectExceptions(self):
+        """ Test elements.power raises exception when param is not a UML data object """
+        back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
     @raises(ArgumentException)
-    def test_elementwisePower_selfNotNumericException(self):
-        """ Test elementwisePower raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_selfNotNumericException(self):
+        """ Test elements.power raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'power')
 
     @raises(ArgumentException)
-    def test_elementwisePower_otherNotNumericException(self):
-        """ Test elementwisePower raises exception if param object has non numeric data """
-        back_otherNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_otherNotNumericException(self):
+        """ Test elements.power raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'power')
 
     @raises(ArgumentException)
-    def test_elementwisePower_pShapeException(self):
-        """ Test elementwisePower raises exception the shapes of the object don't fit correctly """
-        back_pShapeException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_pShapeException(self):
+        """ Test elements.power raises exception the shapes of the object don't fit correctly """
+        back_pShapeException(self.constructor, self.constructor, 'elements', 'power')
 
     @raises(ArgumentException)
-    def test_elementwisePower_fShapeException(self):
-        """ Test elementwisePower raises exception the shapes of the object don't fit correctly """
-        back_fShapeException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_fShapeException(self):
+        """ Test elements.power raises exception the shapes of the object don't fit correctly """
+        back_fShapeException(self.constructor, self.constructor, 'elements', 'power')
 
     @raises(ImproperActionException)
-    def test_elementwisePower_pEmptyException(self):
-        """ Test elementwisePower raises exception for point empty data """
-        back_pEmptyException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_pEmptyException(self):
+        """ Test elements.power raises exception for point empty data """
+        back_pEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
     @raises(ImproperActionException)
-    def test_elementwisePower_fEmptyException(self):
-        """ Test elementwisePower raises exception for feature empty data """
-        back_fEmptyException(self.constructor, self.constructor, 'elementwisePower')
+    def test_elements_power_fEmptyException(self):
+        """ Test elements.power raises exception for feature empty data """
+        back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
-    def test_elementwisePower_handmade(self):
-        """ Test elementwisePower on handmade data """
+    def test_elements_power_handmade(self):
+        """ Test elements.power on handmade data """
         data = [[1.0, 2], [4, 5], [7, 4]]
         exponents = [[0, -1], [-.5, 2], [2, .5]]
         exp1 = [[1, .5], [.5, 25], [49, 2]]
@@ -1183,14 +1214,14 @@ class NumericalModifying(DataTestObject):
         for retType in UML.data.available:
             caller = self.constructor(data, pointNames=callerpnames)
             exponentsObj = UML.createData(retType, exponents, pointNames=calleepnames, featureNames=calleefnames)
-            caller.elementwisePower(exponentsObj)
+            caller.elements.power(exponentsObj)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
 
             assert exp1Obj.isIdentical(caller)
 
-    def test_elementwisePower_handmadeScalar(self):
-        """ Test elementwisePower on handmade data with scalar parameter"""
+    def test_elements_power_handmadeScalar(self):
+        """ Test elements.power on handmade data with scalar parameter"""
         data = [[1.0, 2], [4, 5], [7, 4]]
         exponent = 2
         exp1 = [[1, 4], [16, 25], [49, 16]]
@@ -1200,56 +1231,56 @@ class NumericalModifying(DataTestObject):
 
         for maker in makers:
             caller = self.constructor(data, pointNames=callerpnames)
-            caller.elementwisePower(exponent)
+            caller.elements.power(exponent)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
 
             assert exp1Obj.isIdentical(caller)
 
-    def test_elementwisePower_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwisePower', False)
+    def test_elements_power_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'power')
 
-    #############################
-    # elementwiseMultiply #
-    #############################
-
-    @raises(ArgumentException)
-    def test_elementwiseMultiply_otherObjectExceptions(self):
-        """ Test elementwiseMultiply raises exception when param is not a UML data object """
-        back_otherObjectExceptions(self.constructor, 'elementwiseMultiply')
+    ######################
+    # elements.multiply #
+    #####################
 
     @raises(ArgumentException)
-    def test_elementwiseMultiply_selfNotNumericException(self):
-        """ Test elementwiseMultiply raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_otherObjectExceptions(self):
+        """ Test elements.multiply raises exception when param is not a UML data object """
+        back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
     @raises(ArgumentException)
-    def test_elementwiseMultiply_otherNotNumericException(self):
-        """ Test elementwiseMultiply raises exception if param object has non numeric data """
-        back_otherNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_selfNotNumericException(self):
+        """ Test elements.multiply raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
 
     @raises(ArgumentException)
-    def test_elementwiseMultiply_pShapeException(self):
-        """ Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
-        back_pShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_otherNotNumericException(self):
+        """ Test elements.multiply raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
 
     @raises(ArgumentException)
-    def test_elementwiseMultiply_fShapeException(self):
-        """ Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
-        back_fShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_pShapeException(self):
+        """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
+        back_pShapeException(self.constructor, self.constructor, 'elements', 'multiply')
+
+    @raises(ArgumentException)
+    def test_elements_multiply_fShapeException(self):
+        """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
+        back_fShapeException(self.constructor, self.constructor, 'elements', 'multiply')
 
     @raises(ImproperActionException)
-    def test_elementwiseMultiply_pEmptyException(self):
-        """ Test elementwiseMultiply raises exception for point empty data """
-        back_pEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_pEmptyException(self):
+        """ Test elements.multiply raises exception for point empty data """
+        back_pEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
 
     @raises(ImproperActionException)
-    def test_elementwiseMultiply_fEmptyException(self):
-        """ Test elementwiseMultiply raises exception for feature empty data """
-        back_fEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_elements_multiply_fEmptyException(self):
+        """ Test elements.multiply raises exception for feature empty data """
+        back_fEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    def test_elementwiseMultiply_handmade(self):
-        """ Test elementwiseMultiply on handmade data """
+    def test_elements_multiply_handmade(self):
+        """ Test elements.multiply on handmade data """
         data = [[1, 2], [4, 5], [7, 8]]
         twos = [[2, 2], [2, 2], [2, 2]]
         exp1 = [[2, 4], [8, 10], [14, 16]]
@@ -1257,21 +1288,21 @@ class NumericalModifying(DataTestObject):
 
         caller = self.constructor(data)
         twosObj = self.constructor(twos)
-        caller.elementwiseMultiply(twosObj)
+        caller.elements.multiply(twosObj)
 
         exp1Obj = self.constructor(exp1)
 
         assert exp1Obj.isIdentical(caller)
 
         halvesObj = self.constructor(halves)
-        caller.elementwiseMultiply(halvesObj)
+        caller.elements.multiply(halvesObj)
 
         exp2Obj = self.constructor(data)
 
         assert caller.isIdentical(exp2Obj)
 
-    def test_elementwiseMultiply_handmadeDifInputs(self):
-        """ Test elementwiseMultiply on handmade data with different input object types"""
+    def test_elements_multiply_handmadeDifInputs(self):
+        """ Test elements.multiply on handmade data with different input object types"""
         data = [[1, 2], [4, 5], [7, 8]]
         twos = [[2, 2], [2, 2], [2, 2]]
         exp1 = [[2, 4], [8, 10], [14, 16]]
@@ -1280,21 +1311,21 @@ class NumericalModifying(DataTestObject):
         for retType in UML.data.available:
             caller = self.constructor(data)
             twosObj = UML.createData(retType, twos)
-            caller.elementwiseMultiply(twosObj)
+            caller.elements.multiply(twosObj)
 
             exp1Obj = self.constructor(exp1)
 
             assert exp1Obj.isIdentical(caller)
 
             halvesObj = UML.createData(retType, halves)
-            caller.elementwiseMultiply(halvesObj)
+            caller.elements.multiply(halvesObj)
 
             exp2Obj = self.constructor(data)
 
             assert caller.isIdentical(exp2Obj)
 
     def test_elementwiseMultipy_auto(self):
-        """ Test elementwiseMultiply on generated data against the numpy op """
+        """ Test elements.multiply on generated data against the numpy op """
         makers = [getattr(UML.data, retType) for retType in UML.data.available]
 
         for i in range(len(makers)):
@@ -1315,8 +1346,8 @@ class NumericalModifying(DataTestObject):
 
             resultf = numpy.multiply(lhsf, rhsf)
             resulti = numpy.multiply(lhsi, rhsi)
-            lhsfObj.elementwiseMultiply(rhsfObj)
-            lhsiObj.elementwiseMultiply(rhsiObj)
+            lhsfObj.elements.multiply(rhsfObj)
+            lhsiObj.elements.multiply(rhsiObj)
 
             expfObj = self.constructor(resultf)
             expiObj = self.constructor(resulti)
@@ -1338,7 +1369,7 @@ class NumericalModifying(DataTestObject):
         ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
         other = self.constructor(otherRaw, opnames, ofnames)
         try:
-            toCall = getattr(caller, 'elementwiseMultiply')
+            toCall = getattr(getattr(caller, 'elements'), 'multiply')
             ret = toCall(other)
             assert False
         except ArgumentException:
@@ -1351,24 +1382,24 @@ class NumericalModifying(DataTestObject):
         # names interwoven
         other = self.constructor(otherRaw, pnames, False)
         caller = self.constructor(data, False, fnames)
-        toCall = getattr(caller, 'elementwiseMultiply')
+        toCall = getattr(getattr(caller, 'elements'), 'multiply')
         ret = toCall(other)
 
         assert ret is None
-        assert caller.getPointNames() == pnames
-        assert caller.getFeatureNames() == fnames
+        assert caller.points.getNames() == pnames
+        assert caller.features.getNames() == fnames
 
         # both names same
         caller = self.constructor(data, pnames, fnames)
         other = self.constructor(otherRaw, pnames, fnames)
-        toCall = getattr(caller, 'elementwiseMultiply')
+        toCall = getattr(getattr(caller, 'elements'), 'multiply')
         ret = toCall(other)
 
-        assert caller.getPointNames() == pnames
-        assert caller.getFeatureNames() == fnames
+        assert caller.points.getNames() == pnames
+        assert caller.features.getNames() == fnames
 
     def test_elementwiseMultipy_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwiseMultiply', False)
+        back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'multiply')
 
 
     ############

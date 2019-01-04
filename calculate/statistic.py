@@ -36,7 +36,7 @@ def proportionZero(values):
     """
     totalNum = len(values)
     nonZeroCount = 0
-    nonZeroItr = values.nonZeroIterator()
+    nonZeroItr = values.points.nonZeroIterator()
     for value in nonZeroItr:
         nonZeroCount += 1
 
@@ -74,7 +74,7 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
         func2 = lambda x, y: x > y
 
     first = True
-    nonZeroValues = values.nonZeroIterator()
+    nonZeroValues = values.points.nonZeroIterator()
     count = 0
 
     #if data types are mixed and some data are not numerical, such as [1,'a']
@@ -113,7 +113,7 @@ def mean(values):
     nonZeroCount = 0
     runningSum = 0
     totalCount = len(values)
-    nonZeroValues = values.nonZeroIterator()
+    nonZeroValues = values.points.nonZeroIterator()
 
     for value in nonZeroValues:
         nonZeroCount += 1
@@ -178,7 +178,7 @@ def standardDeviation(values, sample=False):
     meanRet = mean(values)
     nonZeroCount = 0
     numericalCount = 0
-    nonZeroValues = values.nonZeroIterator()
+    nonZeroValues = values.points.nonZeroIterator()
 
     squaredDifferenceTotal = 0
     for value in nonZeroValues:
@@ -320,10 +320,10 @@ def residuals(toPredict, controlVars):
         msg = "controlVars must be a UML data object"
         raise ArgumentException(msg)
 
-    tpP = toPredict.points
-    tpF = toPredict.features
-    cvP = controlVars.points
-    cvF = controlVars.features
+    tpP = len(toPredict.points)
+    tpF = len(toPredict.features)
+    cvP = len(controlVars.points)
+    cvF = len(controlVars.features)
 
     if tpP != cvP:
         msg = "toPredict and controlVars must have the same number of points: ("
@@ -340,7 +340,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.addFeatures(UML.ones(workingType, cvP, 1))
+    workingCV.features.add(UML.ones(workingType, cvP, 1))
     workingCV = workingCV.copyAs("numpy matrix")
     workingTP = toPredict.copyAs("numpy matrix")
 

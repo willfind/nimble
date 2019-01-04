@@ -17,8 +17,8 @@ class MultiOutputRidgeRegression(CustomLearner):
     def train(self, trainX, trainY, lamb=0):
         self._learners = []
 
-        for i in range(trainY.features):
-            currY = trainY.copyFeatures(i)
+        for i in range(len(trainY.features)):
+            currY = trainY.features.copy(i)
 
             currTL = UML.train('Custom.RidgeRegression', trainX, currY, lamb=lamb)
             self._learners.append(currTL)
@@ -31,6 +31,6 @@ class MultiOutputRidgeRegression(CustomLearner):
             if results is None:
                 results = curr
             else:
-                results.addFeatures(curr)
+                results.features.add(curr)
 
         return results

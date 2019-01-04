@@ -145,18 +145,18 @@ def testMlpyScoreMode():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.points == 2
-    assert bestScores.features == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.points == 2
-    assert allScores.features == 3
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 3
 
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
@@ -172,18 +172,18 @@ def testMlpyScoreModeBinary():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.points == 2
-    assert bestScores.features == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.points == 2
-    assert allScores.features == 2
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 2
 
     checkLabelOrderingAndScoreAssociations([1, -1], bestScores, allScores)
 

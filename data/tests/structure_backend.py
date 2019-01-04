@@ -3,16 +3,15 @@
 Methods tested in this file:
 
 In object StructureDataSafe:
-copyAs, copyPoints, copyFeatures
-
+copyAs, points.copy, features.copy
 
 In object StructureModifying:
-__init__,  transpose, addPoints, addFeatures, sortPoints, sortFeatures,
-extractPoints, extractFeatures, deletePoints, deleteFeatures, retainPoints,
-retainFeatures, referenceDataFrom, transformEachPoint, transformEachFeature,
-transformEachElement, fillWith, flattenToOnePoint, flattenToOneFeature,
-unflattenFromOnePoint, unflattenFromOneFeature
-
+__init__,  transpose, points.add, features.add, points.sort,
+features.sort, points.extract, features.extract, points.delete,
+features.delete, points.retain, features.retain, referenceDataFrom,
+points.transform, features.transform, elements.transform, fillWith,
+flattenToOnePoint, flattenToOneFeature, unflattenFromOnePoint,
+unflattenFromOneFeature
 """
 
 from __future__ import absolute_import
@@ -112,57 +111,61 @@ class StructureShared(DataTestObject):
 
     def back_structural_randomizeNoNumber(self, structure, axis):
         if axis == 'point':
-            toCall = structure + "Points"
+            toCall = 'points'
         else:
-            toCall = structure + "Features"
+            toCall = 'features'
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1,2], randomize=True)
+        callAxis = getattr(toTest, toCall)
+        ret = getattr(callAxis, structure)([0,1,2], randomize=True)
 
     def back_structural_list_numberGreaterThanTargeted(self, structure, axis):
         if axis == 'point':
-            toCall = structure + "Points"
+            toCall = 'points'
         else:
-            toCall = structure + "Features"
+            toCall = 'features'
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1], number=3)
+        callAxis = getattr(toTest, toCall)
+        ret = getattr(callAxis, structure)([0,1], number=3)
 
     def back_structural_function_numberGreaterThanTargeted(self, structure, axis):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
 
         if axis == 'point':
-            toCall = structure + "Points"
+            toCall = 'points'
             def selTwo(p):
-                return p.getPointName(0) in pointNames[:2]
+                return p.points.getName(0) in pointNames[:2]
         else:
-            toCall = structure + "Features"
+            toCall = 'features'
             def selTwo(f):
-                return f.getFeatureName(0) in featureNames[:2]
+                return f.features.getName(0) in featureNames[:2]
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(selTwo, number=3)
+        callAxis = getattr(toTest, toCall)
+        ret = getattr(callAxis, structure)(selTwo, number=3)
 
     def back_structural_range_numberGreaterThanTargeted(self, structure, axis):
         if axis == 'point':
-            toCall = structure + "Points"
+            toCall = 'points'
         else:
-            toCall = structure + "Features"
+            toCall = 'features'
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(start=0, end=1, number=3)
+        callAxis = getattr(toTest, toCall)
+        ret = getattr(callAxis, structure)(start=0, end=1, number=3)
 
 
 class StructureDataSafe(StructureShared):
@@ -337,48 +340,48 @@ class StructureDataSafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.setFeatureName('two', '2')
-        copySparse.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
-        copySparse.sortPoints(sortHelper=pointsShuffleIndices)
-        copySparse.sortFeatures(sortHelper=featuresShuffleIndices)
+        copySparse.features.setName('two', '2')
+        copySparse.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
+        copySparse.points.sort(sortHelper=pointsShuffleIndices)
+        copySparse.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyList = orig.copyAs(format='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.setFeatureName('two', '2')
-        copyList.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
-        copyList.sortPoints(sortHelper=pointsShuffleIndices)
-        copyList.sortFeatures(sortHelper=featuresShuffleIndices)
+        copyList.features.setName('two', '2')
+        copyList.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
+        copyList.points.sort(sortHelper=pointsShuffleIndices)
+        copyList.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copyAs(format='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.setFeatureName('two', '2')
-        copyMatrix.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
-        copyMatrix.sortPoints(sortHelper=pointsShuffleIndices)
-        copyMatrix.sortFeatures(sortHelper=featuresShuffleIndices)
+        copyMatrix.features.setName('two', '2')
+        copyMatrix.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
+        copyMatrix.points.sort(sortHelper=pointsShuffleIndices)
+        copyMatrix.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyDataFrame = orig.copyAs(format='DataFrame')
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.setFeatureName('two', '2')
-        copyDataFrame.setPointName('one', 'WHAT')
-        assert 'two' in orig.getFeatureNames()
-        assert 'one' in orig.getPointNames()
-        copyDataFrame.sortPoints(sortHelper=pointsShuffleIndices)
-        copyDataFrame.sortFeatures(sortHelper=featuresShuffleIndices)
+        copyDataFrame.features.setName('two', '2')
+        copyDataFrame.points.setName('one', 'WHAT')
+        assert 'two' in orig.features.getNames()
+        assert 'one' in orig.points.getNames()
+        copyDataFrame.points.sort(sortHelper=pointsShuffleIndices)
+        copyDataFrame.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
 
@@ -563,28 +566,28 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
 
-    ###################
-    # copyPoints #
-    ###################
+    ###############
+    # points.copy #
+    ###############
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_copyPoints_calls_constructIndicesList(self, mockFunc):
+    def test_points_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
-        ret = toTest.copyPoints(['a', 'b'])
+        ret = toTest.points.copy(['a', 'b'])
 
-    def test_copyPoints_handmadeSingle(self):
-        """ Test copyPoints() against handmade output when copying one point """
+    def test_points_copy_handmadeSingle(self):
+        """ Test points.copy() against handmade output when copying one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.copyPoints(0)
+        ext1 = toTest.points.copy(0)
         exp1 = self.constructor([[1, 2, 3]])
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyPoints_index_NamePath_Preserve(self):
+    def test_points_copy_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
@@ -596,7 +599,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ext1 = toTest.copyPoints(0)
+        ext1 = toTest.points.copy(0)
 
         assert ext1.nameIsDefault()
         assert ext1.path == 'testAbsPath'
@@ -607,50 +610,50 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    def test_copyPoints_ListIntoPEmpty(self):
-        """ Test copyPoints() by copying a list of all points """
+    def test_points_copy_ListIntoPEmpty(self):
+        """ Test points.copy() by copying a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
         expTest = toTest.copy()
-        ret = toTest.copyPoints([0, 1, 2, 3])
+        ret = toTest.points.copy([0, 1, 2, 3])
 
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
 
-    def test_copyPoints_handmadeListSequence(self):
-        """ Test copyPoints() against handmade output for multiple copies """
+    def test_points_copy_handmadeListSequence(self):
+        """ Test points.copy() against handmade output for multiple copies """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        ext1 = toTest.copyPoints('1')
+        ext1 = toTest.points.copy('1')
         exp1 = self.constructor([[1, 2, 3]], pointNames=['1'])
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.copyPoints([1, 2])
+        ext2 = toTest.points.copy([1, 2])
         exp2 = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'])
         assert ext2.isIdentical(exp2)
         expEnd = self.constructor(data, pointNames=names)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyPoints_handmadeListOrdering(self):
-        """ Test copyPoints() against handmade output for out of order copying """
+    def test_points_copy_handmadeListOrdering(self):
+        """ Test points.copy() against handmade output for out of order copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
-        ext1 = toTest.copyPoints([3, 4, 1])
+        ext1 = toTest.points.copy([3, 4, 1])
         exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor(data, pointNames=names)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyPoints_List_trickyOrdering(self):
+    def test_points_copy_List_trickyOrdering(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         toCopy = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
 
-        ret = toTest.copyPoints(toCopy)
+        ret = toTest.points.copy(toCopy)
 
         expRaw = [[0], [0], [2], [0]]
         expRet = self.constructor(expRaw)
@@ -660,19 +663,19 @@ class StructureDataSafe(StructureShared):
         assert ret == expRet
         assert toTest == expTest
 
-    def test_copyPoints_function_selectionGap(self):
+    def test_points_copy_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         copyIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in copyIndices:
+            if int(point.points.getName(0)) in copyIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, pointNames=pnames)
-        ret = toTest.copyPoints(sel)
+        ret = toTest.points.copy(sel)
 
         expRaw = [[2], [0], [0], [0]]
         expNames = ['3', '5', '6', '9']
@@ -682,24 +685,24 @@ class StructureDataSafe(StructureShared):
         assert toTest == expTest
 
 
-    def test_copyPoints_functionIntoPEmpty(self):
-        """ Test copyPoints() by copying all points using a function """
+    def test_points_copy_functionIntoPEmpty(self):
+        """ Test points.copy() by copying all points using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        ret = toTest.copyPoints(allTrue)
+        ret = toTest.points.copy(allTrue)
         expTest = self.constructor(data)
 
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    def test_copyPoints_function_returnPointEmpty(self):
+    def test_points_copy_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        ret = toTest.copyPoints(allFalse)
+        ret = toTest.points.copy(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -708,18 +711,18 @@ class StructureDataSafe(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    def test_copyPoints_handmadeFunction(self):
-        """ Test copyPoints() against handmade output for function copying """
+    def test_points_copy_handmadeFunction(self):
+        """ Test points.copy() against handmade output for function copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        ext = toTest.copyPoints(oneOrFour)
+        ext = toTest.points.copy(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
         assert ext.isIdentical(exp)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyPoints_func_NamePath_preservation(self):
+    def test_points_copy_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -732,7 +735,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ext = toTest.copyPoints(oneOrFour)
+        ext = toTest.points.copy(oneOrFour)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -742,47 +745,47 @@ class StructureDataSafe(StructureShared):
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
-    def test_copyPoints_handmadeFuncionWithFeatureNames(self):
-        """ Test copyPoints() against handmade output for function copying with featureNames"""
+    def test_points_copy_handmadeFuncionWithFeatureNames(self):
+        """ Test points.copy() against handmade output for function copying with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        ext = toTest.copyPoints(oneOrFour)
+        ext = toTest.points.copy(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
         assert ext.isIdentical(exp)
         expEnd = self.constructor(data, featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
     @raises(ArgumentException)
-    def test_copyPoints_exceptionStartInvalid(self):
-        """ Test copyPoints() for ArgumentException when start is not a valid point index """
+    def test_points_copy_exceptionStartInvalid(self):
+        """ Test points.copy() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyPoints(start=1.1, end=2)
+        toTest.points.copy(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_copyPoints_exceptionEndInvalid(self):
-        """ Test copyPoints() for ArgumentException when start is not a valid Point index """
+    def test_points_copy_exceptionEndInvalid(self):
+        """ Test points.copy() for ArgumentException when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyPoints(start=1, end=5)
+        toTest.points.copy(start=1, end=5)
 
     @raises(ArgumentException)
-    def test_copyPoints_exceptionInversion(self):
-        """ Test copyPoints() for ArgumentException when start comes after end """
+    def test_points_copy_exceptionInversion(self):
+        """ Test points.copy() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyPoints(start=2, end=0)
+        toTest.points.copy(start=2, end=0)
 
-    def test_copyPoints_handmadeRange(self):
-        """ Test copyPoints() against handmade output for range copying """
+    def test_points_copy_handmadeRange(self):
+        """ Test points.copy() against handmade output for range copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.copyPoints(start=1, end=2)
+        ret = toTest.points.copy(start=1, end=2)
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]])
         expectedTest = self.constructor(data)
@@ -790,7 +793,7 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_range_NamePath_preservation(self):
+    def test_points_copy_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
@@ -802,7 +805,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ret = toTest.copyPoints(start=1, end=2)
+        ret = toTest.points.copy(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -813,14 +816,14 @@ class StructureDataSafe(StructureShared):
         assert ret.relativePath == 'testRelPath'
 
 
-    def test_copyPoints_rangeIntoPEmpty(self):
-        """ Test copyPoints() copies all points using ranges """
+    def test_points_copy_rangeIntoPEmpty(self):
+        """ Test points.copy() copies all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints(start=0, end=2)
+        ret = toTest.points.copy(start=0, end=2)
 
         assert ret.isIdentical(expRet)
 
@@ -829,13 +832,13 @@ class StructureDataSafe(StructureShared):
         toTest.isIdentical(expTest)
 
 
-    def test_copyPoints_handmadeRangeWithFeatureNames(self):
-        """ Test copyPoints() against handmade output for range copying with featureNames """
+    def test_points_copy_handmadeRangeWithFeatureNames(self):
+        """ Test points.copy() against handmade output for range copying with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints(start=1, end=2)
+        ret = toTest.points.copy(start=1, end=2)
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -844,24 +847,24 @@ class StructureDataSafe(StructureShared):
         assert expectedTest.isIdentical(toTest)
 
 
-    def test_copyPoints_handmadeRangeRand_FM(self):
-        """ Test copyPoints() for correct sizes when using randomized range extraction and featureNames """
+    def test_points_copy_handmadeRangeRand_FM(self):
+        """ Test points.copy() for correct sizes when using randomized range extraction and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.copyPoints(start=0, end=2, number=2, randomize=True)
+        ret = toTest.points.copy(start=0, end=2, number=2, randomize=True)
 
-        assert ret.points == 2
-        assert toTest.points == 3
+        assert len(ret.points) == 2
+        assert len(toTest.points) == 3
 
 
-    def test_copyPoints_handmadeRangeDefaults(self):
-        """ Test copyPoints uses the correct defaults in the case of range based copy """
+    def test_points_copy_handmadeRangeDefaults(self):
+        """ Test points.copy() uses the correct defaults in the case of range based copy """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints(end=1)
+        ret = toTest.points.copy(end=1)
 
         expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=['1', '4'], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -870,7 +873,7 @@ class StructureDataSafe(StructureShared):
         assert expectedTest.isIdentical(toTest)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints(start=1)
+        ret = toTest.points.copy(start=1)
 
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
@@ -878,13 +881,13 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_handmade_calling_pointNames(self):
+    def test_points_copy_handmade_calling_pointNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints(start='4', end='7')
+        ret = toTest.points.copy(start='4', end='7')
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -892,14 +895,14 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_handmadeString(self):
+    def test_points_copy_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one=1')
+        ret = toTest.points.copy('one=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -907,7 +910,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one==1')
+        ret = toTest.points.copy('one==1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -915,7 +918,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one<2')
+        ret = toTest.points.copy('one<2')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -923,7 +926,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one<=1')
+        ret = toTest.points.copy('one<=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -931,7 +934,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one>4')
+        ret = toTest.points.copy('one>4')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -939,7 +942,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one>=7')
+        ret = toTest.points.copy('one>=7')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -947,7 +950,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one!=4')
+        ret = toTest.points.copy('one!=4')
         expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -957,7 +960,7 @@ class StructureDataSafe(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one<1')
+        ret = toTest.points.copy('one<1')
         expectedRet = self.constructor([], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -966,20 +969,20 @@ class StructureDataSafe(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one>0')
+        ret = toTest.points.copy('one>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_handmadeStringWithOperatorWhitespace(self):
+    def test_points_copy_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one = 1')
+        ret = toTest.points.copy('one = 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -987,7 +990,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one == 1')
+        ret = toTest.points.copy('one == 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -995,7 +998,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one < 2')
+        ret = toTest.points.copy('one < 2')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1003,7 +1006,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one <= 1')
+        ret = toTest.points.copy('one <= 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1011,7 +1014,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one > 4')
+        ret = toTest.points.copy('one > 4')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1019,7 +1022,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one >= 7')
+        ret = toTest.points.copy('one >= 7')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1027,7 +1030,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one != 4')
+        ret = toTest.points.copy('one != 4')
         expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -1037,7 +1040,7 @@ class StructureDataSafe(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one < 1')
+        ret = toTest.points.copy('one < 1')
         expectedRet = self.constructor([], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1046,20 +1049,20 @@ class StructureDataSafe(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('one > 0')
+        ret = toTest.points.copy('one > 0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_handmadeStringWithFeatureWhitespace(self):
+    def test_points_copy_handmadeStringWithFeatureWhitespace(self):
         featureNames = ["feature one", "feature two", "feature three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('feature one=1')
+        ret = toTest.points.copy('feature one=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1067,67 +1070,67 @@ class StructureDataSafe(StructureShared):
 
         #test featureName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('feature one = 1')
+        ret = toTest.points.copy('feature one = 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_list_mixed(self):
-        """ Test copyPoints() list input with mixed names and indices """
+    def test_points_copy_list_mixed(self):
+        """ Test points.copy() list input with mixed names and indices """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        ret = toTest.copyPoints(['1',1,-1])
+        ret = toTest.points.copy(['1',1,-1])
         expRet = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
         expTest = self.constructor(data, pointNames=names)
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
     @raises(ArgumentException)
-    def test_copyPoints_handmadeString_featureNotExist(self):
+    def test_points_copy_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyPoints('four=1')
+        ret = toTest.points.copy('four=1')
 
-    def test_copyPoints_numberOnly(self):
+    def test_points_copy_numberOnly(self):
         self.back_copy_numberOnly('point')
 
-    def test_copyPoints_functionAndNumber(self):
+    def test_points_copy_functionAndNumber(self):
         self.back_copy_functionAndNumber('point')
 
-    def test_copyPoints_numberAndRandomizeAllData(self):
+    def test_points_copy_numberAndRandomizeAllData(self):
         self.back_copy_numberAndRandomizeAllData('point')
 
-    def test_copyPoints_numberAndRandomizeSelectedData(self):
+    def test_points_copy_numberAndRandomizeSelectedData(self):
         self.back_copy_numberAndRandomizeSelectedData('point')
 
     @raises(ArgumentException)
-    def test_copyPoints_randomizeNoNumber(self):
+    def test_points_copy_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('copy', 'point')
 
     @raises(ArgumentException)
-    def test_copyPoints_list_numberGreaterThanTargeted(self):
+    def test_points_copy_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
-    def test_copyPoints_function_numberGreaterThanTargeted(self):
+    def test_points_copy_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
-    def test_copyPoints_range_numberGreaterThanTargeted(self):
+    def test_points_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
     ### using match module ###
 
-    def test_copyPoints_match_missing(self):
+    def test_points_copy_match_missing(self):
         data = [[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.anyMissing)
+        ret = toTest.points.copy(match.anyMissing)
         expRet = self.constructor([[None, 11, None], [7, 11, None]], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
@@ -1135,16 +1138,16 @@ class StructureDataSafe(StructureShared):
         data = [[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.allMissing)
+        ret = toTest.points.copy(match.allMissing)
         expRet = self.constructor([[None, None, None]], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyPoints_match_nonNumeric(self):
+    def test_points_copy_match_nonNumeric(self):
         data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.anyNonNumeric)
+        ret = toTest.points.copy(match.anyNonNumeric)
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
@@ -1152,16 +1155,16 @@ class StructureDataSafe(StructureShared):
         data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.allNonNumeric)
+        ret = toTest.points.copy(match.allNonNumeric)
         expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyPoints_match_list(self):
+    def test_points_copy_match_list(self):
         data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.anyValues(['a', 'c', 'x']))
+        ret = toTest.points.copy(match.anyValues(['a', 'c', 'x']))
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
@@ -1169,16 +1172,16 @@ class StructureDataSafe(StructureShared):
         data = [['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.allValues(['a', 'c', 'x']))
+        ret = toTest.points.copy(match.allValues(['a', 'c', 'x']))
         expRet = self.constructor([['a', 'x', 'c']], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyPoints_match_function(self):
+    def test_points_copy_match_function(self):
         data = [[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.anyValues(lambda x: x < 0))
+        ret = toTest.points.copy(match.anyValues(lambda x: x < 0))
         expRet = self.constructor([[-1, 11, -3], [7, 11, -3]], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
@@ -1186,7 +1189,7 @@ class StructureDataSafe(StructureShared):
         data = [[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])
-        ret = toTest.copyPoints(match.allValues(lambda x: x < 0))
+        ret = toTest.points.copy(match.allValues(lambda x: x < 0))
         expRet = self.constructor([[-1, -2, -3]], featureNames=['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
@@ -1197,15 +1200,15 @@ class StructureDataSafe(StructureShared):
 
     def back_copy_numberOnly(self, axis):
         if axis == 'point':
-            toCall = "copyPoints"
+            toCall = "points"
         else:
-            toCall = "copyFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(number=3)
+        ret = getattr(toTest, toCall).copy(number=3)
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
             rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
@@ -1218,15 +1221,15 @@ class StructureDataSafe(StructureShared):
 
     def back_copy_functionAndNumber(self, axis):
         if axis == 'point':
-            toCall = "copyPoints"
+            toCall = "points"
         else:
-            toCall = "copyFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(allTrue, number=2)
+        ret = getattr(toTest, toCall).copy(allTrue, number=2)
         if axis == 'point':
             exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
             rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
@@ -1242,9 +1245,9 @@ class StructureDataSafe(StructureShared):
         given number provides the same result for all input types if using all the data
         """
         if axis == 'point':
-            toCall = "copyPoints"
+            toCall = "points"
         else:
-            toCall = "copyFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -1257,25 +1260,25 @@ class StructureDataSafe(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        ret = getattr(toTest1, toCall)(number=3, randomize=True)
+        ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retList = getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
+        retList = getattr(toTest2, toCall).copy([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retRange = getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        retRange = getattr(toTest3, toCall).copy(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retFunc = getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        retFunc = getattr(toTest4, toCall).copy(allTrue, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert ret.points == 3
+            assert len(ret.points) == 3
         else:
-            assert ret.features == 3
+            assert len(ret.features) == 3
 
         assert ret.isIdentical(retList)
         assert ret.isIdentical(retRange)
@@ -1289,9 +1292,9 @@ class StructureDataSafe(StructureShared):
     def back_copy_numberAndRandomizeSelectedData(self, axis):
         """test that randomization occurs after the data has been selected from the user inputs """
         if axis == 'point':
-            toCall = "copyPoints"
+            toCall = "points"
         else:
-            toCall = "copyFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -1308,18 +1311,18 @@ class StructureDataSafe(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        retList = getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        retList = getattr(toTest1, toCall).copy([1, 2], number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retRange = getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        retRange = getattr(toTest2, toCall).copy(start=1, end=2, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
         UML.randomness.startAlternateControl(seed)
-        retFunc = getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        retFunc = getattr(toTest3, toCall).copy(middleRowsOrCols, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
@@ -1327,28 +1330,28 @@ class StructureDataSafe(StructureShared):
         assert retFunc.isIdentical(exp1) or retList.isIdentical(exp2)
 
     #####################
-    # copyFeatures #
+    # features_copy #
     #####################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_copyFeatures_calls_constructIndicesList(self, mockFunc):
+    def test_features_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
-        ret = toTest.copyFeatures(['a', 'b'])
+        ret = toTest.features.copy(['a', 'b'])
 
-    def test_copyFeatures_handmadeSingle(self):
-        """ Test copyFeatures() against handmade output when copying one feature """
+    def test_features_copy_handmadeSingle(self):
+        """ Test features.copy() against handmade output when copying one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.copyFeatures(0)
+        ext1 = toTest.features.copy(0)
         exp1 = self.constructor([[1], [4], [7]])
 
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyFeatures_List_NamePath_Preserve(self):
+    def test_features_copy_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
@@ -1360,7 +1363,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ext1 = toTest.copyFeatures(0)
+        ext1 = toTest.features.copy(0)
 
         assert toTest.path == 'testAbsPath'
         assert toTest.absolutePath == 'testAbsPath'
@@ -1370,67 +1373,67 @@ class StructureDataSafe(StructureShared):
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
 
-    def test_copyFeatures_ListIntoFEmpty(self):
-        """ Test copyFeatures() by copying a list of all features """
+    def test_features_copy_ListIntoFEmpty(self):
+        """ Test features.copy() by copying a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
-        ret = toTest.copyFeatures([0, 1, 2])
+        ret = toTest.features.copy([0, 1, 2])
 
         assert ret.isIdentical(expRet)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyFeatures_ListIntoFEmptyOutOfOrder(self):
-        """ Test copyFeatures() by copying a list of all features """
+    def test_features_copy_ListIntoFEmptyOutOfOrder(self):
+        """ Test features.copy() by copying a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expData = [[3, 1, 2], [6, 4, 5], [9, 7, 8], [12, 10, 11]]
         expRet = self.constructor(expData)
-        ret = toTest.copyFeatures([2, 0, 1])
+        ret = toTest.features.copy([2, 0, 1])
 
         assert ret.isIdentical(expRet)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
 
-    def test_copyFeatures_handmadeListSequence(self):
-        """ Test copyFeatures() against handmade output for several copies by list """
+    def test_features_copy_handmadeListSequence(self):
+        """ Test features.copy() against handmade output for several copies by list """
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data, pointNames=pointNames)
-        ext1 = toTest.copyFeatures([0])
+        ext1 = toTest.features.copy([0])
         exp1 = self.constructor([[1], [4], [7]], pointNames=pointNames)
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.copyFeatures([3, 2])
+        ext2 = toTest.features.copy([3, 2])
         exp2 = self.constructor([[-1, 3], [-2, 6], [-3, 9]], pointNames=pointNames)
         assert ext2.isIdentical(exp2)
         expEnd = self.constructor(data, pointNames=pointNames)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyFeatures_handmadeListWithFeatureName(self):
-        """ Test copyFeatures() against handmade output for list copies when specifying featureNames """
+    def test_features_copy_handmadeListWithFeatureName(self):
+        """ Test features.copy() against handmade output for list copies when specifying featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        ext1 = toTest.copyFeatures(["one"])
+        ext1 = toTest.features.copy(["one"])
         exp1 = self.constructor([[1], [4], [7]], featureNames=["one"])
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.copyFeatures(["three", "neg"])
+        ext2 = toTest.features.copy(["three", "neg"])
         exp2 = self.constructor([[3, -1], [6, -2], [9, -3]], featureNames=["three", "neg"])
         assert ext2.isIdentical(exp2)
         expEnd = self.constructor(data, featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
 
-    def test_copyFeatures_List_trickyOrdering(self):
+    def test_features_copy_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         toExtract = [6, 5, 3, 9]
         #		toExtract = [3,5,6,9]
 
         toTest = self.constructor(data)
 
-        ret = toTest.copyFeatures(toExtract)
+        ret = toTest.features.copy(toExtract)
 
         expRaw = [0, 0, 1, 0]
         expRet = self.constructor(expRaw)
@@ -1440,7 +1443,7 @@ class StructureDataSafe(StructureShared):
         assert ret == expRet
         assert toTest == expRem
 
-    def test_copyFeatures_List_reorderingWithFeatureNames(self):
+    def test_features_copy_List_reorderingWithFeatureNames(self):
         data = [[1, 2, 3, 10], [4, 5, 6, 11], [7, 8, 9, 12]]
         fnames = ['a', 'b', 'c', 'd']
         test = self.constructor(data, featureNames=fnames)
@@ -1453,26 +1456,26 @@ class StructureDataSafe(StructureShared):
         expTestNames = ['d']
         expTest = self.constructor(data, featureNames=fnames)
 
-        ret = test.copyFeatures(expRetNames)
+        ret = test.features.copy(expRetNames)
         assert ret == expRet
         assert test == expTest
 
 
-    def test_copyFeatures_function_selectionGap(self):
+    def test_features_copy_function_selectionGap(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         copyIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in copyIndices:
+            if int(feature.features.getName(0)) in copyIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, featureNames=fnames)
 
-        ret = toTest.copyFeatures(sel)
+        ret = toTest.features.copy(sel)
 
         expRaw = [1, 0, 0, 0]
         expNames = ['3', '5', '6', '9']
@@ -1486,41 +1489,41 @@ class StructureDataSafe(StructureShared):
         assert toTest == expRem
 
 
-    def test_copyFeatures_functionIntoFEmpty(self):
-        """ Test copyFeatures() by copying all featuress using a function """
+    def test_features_copy_functionIntoFEmpty(self):
+        """ Test features.copy() by copying all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        ret = toTest.copyFeatures(allTrue)
+        ret = toTest.features.copy(allTrue)
         assert ret.isIdentical(expRet)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-    def test_copyFeatures_function_returnPointEmpty(self):
+    def test_features_copy_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        ret = toTest.copyFeatures(allFalse)
+        ret = toTest.features.copy(allFalse)
         expRet = self.constructor([[],[],[]])
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(exp)
 
 
-    def test_copyFeatures_handmadeFunction(self):
-        """ Test copyFeatures() against handmade output for function copies """
+    def test_features_copy_handmadeFunction(self):
+        """ Test features.copy() against handmade output for function copies """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
-        ext = toTest.copyFeatures(absoluteOne)
+        ext = toTest.features.copy(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
         assert ext.isIdentical(exp)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
 
-    def test_copyFeatures_func_NamePath_preservation(self):
+    def test_features_copy_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
@@ -1533,7 +1536,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ext = toTest.copyFeatures(absoluteOne)
+        ext = toTest.features.copy(absoluteOne)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -1543,85 +1546,85 @@ class StructureDataSafe(StructureShared):
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
-    def test_copyFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test copyFeatures() against handmade output for function copies with featureNames """
+    def test_features_copy_handmadeFunctionWithFeatureName(self):
+        """ Test features.copy() against handmade output for function copies with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        ext = toTest.copyFeatures(absoluteOne)
+        ext = toTest.features.copy(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
         assert ext.isIdentical(exp)
         expEnd = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionStartInvalid(self):
-        """ Test copyFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_copy_exceptionStartInvalid(self):
+        """ Test features.copy() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start=1.1, end=2)
+        toTest.features.copy(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionStartInvalidFeatureName(self):
-        """ Test copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+    def test_features_copy_exceptionStartInvalidFeatureName(self):
+        """ Test features.copy() for ArgumentException when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start="wrong", end=2)
+        toTest.features.copy(start="wrong", end=2)
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionEndInvalid(self):
-        """ Test copyFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_copy_exceptionEndInvalid(self):
+        """ Test features.copy() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start=0, end=5)
+        toTest.features.copy(start=0, end=5)
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionEndInvalidFeatureName(self):
-        """ Test copyFeatures() for ArgumentException when start is not a valid featureName """
+    def test_features_copy_exceptionEndInvalidFeatureName(self):
+        """ Test features.copy() for ArgumentException when start is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start="two", end="five")
+        toTest.features.copy(start="two", end="five")
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionInversion(self):
-        """ Test copyFeatures() for ArgumentException when start comes after end """
+    def test_features_copy_exceptionInversion(self):
+        """ Test features.copy() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start=2, end=0)
+        toTest.features.copy(start=2, end=0)
 
     @raises(ArgumentException)
-    def test_copyFeatures_exceptionInversionFeatureName(self):
-        """ Test copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+    def test_features_copy_exceptionInversionFeatureName(self):
+        """ Test features.copy() for ArgumentException when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyFeatures(start="two", end="one")
+        toTest.features.copy(start="two", end="one")
 
 
-    def test_copyFeatures_rangeIntoFEmpty(self):
-        """ Test copyFeatures() copies all Featuress using ranges """
+    def test_features_copy_rangeIntoFEmpty(self):
+        """ Test features.copy() copies all Featuress using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         expRet = self.constructor(data, featureNames=featureNames)
-        ret = toTest.copyFeatures(start=0, end=2)
+        ret = toTest.features.copy(start=0, end=2)
 
         assert ret.isIdentical(expRet)
         exp = self.constructor(data, featureNames=featureNames)
         toTest.isIdentical(exp)
 
-    def test_copyFeatures_handmadeRange(self):
-        """ Test copyFeatures() against handmade output for range copies """
+    def test_features_copy_handmadeRange(self):
+        """ Test features.copy() against handmade output for range copies """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.copyFeatures(start=1, end=2)
+        ret = toTest.features.copy(start=1, end=2)
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]])
         expectedTest = self.constructor(data)
@@ -1629,7 +1632,7 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_range_NamePath_preservation(self):
+    def test_features_copy_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
@@ -1641,7 +1644,7 @@ class StructureDataSafe(StructureShared):
             toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
 
-        ret = toTest.copyFeatures(start=1, end=2)
+        ret = toTest.features.copy(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -1652,14 +1655,14 @@ class StructureDataSafe(StructureShared):
         assert ret.relativePath == 'testRelPath'
 
 
-    def test_copyFeatures_handmadeWithFeatureNames(self):
-        """ Test copyFeatures() against handmade output for range copies with FeatureNames """
+    def test_features_copy_handmadeWithFeatureNames(self):
+        """ Test features.copy() against handmade output for range copies with FeatureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures(start=1, end=2)
+        ret = toTest.features.copy(start=1, end=2)
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -1667,13 +1670,13 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_handmade_calling_featureNames(self):
+    def test_features_copy_handmade_calling_featureNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures(start="two", end="three")
+        ret = toTest.features.copy(start="two", end="three")
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
@@ -1681,14 +1684,14 @@ class StructureDataSafe(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_handmadeString(self):
+    def test_features_copy_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p2=5')
+        ret = toTest.features.copy('p2=5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1696,7 +1699,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1==1')
+        ret = toTest.features.copy('p1==1')
         expectedRet = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1704,7 +1707,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3<9')
+        ret = toTest.features.copy('p3<9')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1712,7 +1715,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3<=8')
+        ret = toTest.features.copy('p3<=8')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1720,7 +1723,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3>8')
+        ret = toTest.features.copy('p3>8')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1728,7 +1731,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3>8.5')
+        ret = toTest.features.copy('p3>8.5')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1736,7 +1739,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1!=1.0')
+        ret = toTest.features.copy('p1!=1.0')
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1744,7 +1747,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1<1')
+        ret = toTest.features.copy('p1<1')
         expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1752,20 +1755,20 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1>0')
+        ret = toTest.features.copy('p1>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_handmadeStringWithOperatorWhitespace(self):
+    def test_features_copy_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p2 = 5')
+        ret = toTest.features.copy('p2 = 5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1773,7 +1776,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1 == 1')
+        ret = toTest.features.copy('p1 == 1')
         expectedRet = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1781,7 +1784,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3 < 9')
+        ret = toTest.features.copy('p3 < 9')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1789,7 +1792,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3 <= 8')
+        ret = toTest.features.copy('p3 <= 8')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1797,7 +1800,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3 > 8')
+        ret = toTest.features.copy('p3 > 8')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1805,7 +1808,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p3 > 8.5')
+        ret = toTest.features.copy('p3 > 8.5')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1813,7 +1816,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1 != 1.0')
+        ret = toTest.features.copy('p1 != 1.0')
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1821,7 +1824,7 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1 < 1')
+        ret = toTest.features.copy('p1 < 1')
         expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1829,20 +1832,20 @@ class StructureDataSafe(StructureShared):
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('p1 > 0')
+        ret = toTest.features.copy('p1 > 0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_handmadeStringWithPointWhitespace(self):
+    def test_features_copy_handmadeStringWithPointWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['pt 1', 'pt 2', 'pt 3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value with no operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('pt 2=5')
+        ret = toTest.features.copy('pt 2=5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -1850,125 +1853,123 @@ class StructureDataSafe(StructureShared):
 
         #test pointName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('pt 2 = 5')
+        ret = toTest.features.copy('pt 2 = 5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyFeatures_list_mixed(self):
-        """ Test copyFeatures() list input with mixed names and indices """
+    def test_features_copy_list_mixed(self):
+        """ Test features.copy() list input with mixed names and indices """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.copyFeatures([1, "three", -1])
+        ret = toTest.features.copy([1, "three", -1])
         expRet = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
         expTest = self.constructor(data, featureNames=featureNames)
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
     @raises(ArgumentException)
-    def test_copyFeatures_handmadeString_pointNotExist(self):
+    def test_features_copy_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.copyFeatures('5=1')
+        ret = toTest.features.copy('5=1')
 
-    def test_copyFeatures_numberOnly(self):
+    def test_features_copy_numberOnly(self):
         self.back_copy_numberOnly('feature')
 
-    def test_copyFeatures_functionAndNumber(self):
+    def test_features_copy_functionAndNumber(self):
         self.back_copy_functionAndNumber('feature')
 
-    def test_copyFeatures_numberAndRandomizeAllData(self):
+    def test_features_copy_numberAndRandomizeAllData(self):
         self.back_copy_numberAndRandomizeAllData('feature')
 
-    def test_copyFeatures_numberAndRandomizeSelectedData(self):
+    def test_features_copy_numberAndRandomizeSelectedData(self):
         self.back_copy_numberAndRandomizeSelectedData('feature')
 
     @raises(ArgumentException)
-    def test_copyFeatures_randomizeNoNumber(self):
+    def test_features_copy_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('copy', 'feature')
 
     @raises(ArgumentException)
-    def test_copyFeatures_list_numberGreaterThanTargeted(self):
+    def test_features_copy_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
-    def test_copyFeatures_function_numberGreaterThanTargeted(self):
+    def test_features_copy_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
-    def test_copyFeatures_range_numberGreaterThanTargeted(self):
+    def test_features_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
-    # using match module
+    ### using match module ###
 
-    def test_copyFeatures_match_missing(self):
+    def test_features_copy_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.anyMissing)
+        ret = toTest.features.copy(match.anyMissing)
         expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]], featureNames=['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.allMissing)
+        ret = toTest.features.copy(match.allMissing)
         expRet = self.constructor([[None], [None], [None], [None]], featureNames=['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyFeatures_match_nonNumeric(self):
+    def test_features_copy_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.anyNonNumeric)
+        ret = toTest.features.copy(match.anyNonNumeric)
         expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]], featureNames=['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.allNonNumeric)
+        ret = toTest.features.copy(match.allNonNumeric)
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyFeatures_match_list(self):
+    def test_features_copy_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.anyValues(['a', 'c', 'x']))
+        ret = toTest.features.copy(match.anyValues(['a', 'c', 'x']))
         expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]], featureNames=['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.allValues(['a', 'c', 'x']))
+        ret = toTest.features.copy(match.allValues(['a', 'c', 'x']))
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']], featureNames=['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_copyFeatures_match_function(self):
+    def test_features_copy_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.anyValues(lambda x: x < 0))
+        ret = toTest.features.copy(match.anyValues(lambda x: x < 0))
         expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]], featureNames=['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
         expTest = toTest.copy()
-        ret = toTest.copyFeatures(match.allValues(lambda x: x < 0))
+        ret = toTest.features.copy(match.allValues(lambda x: x < 0))
         expRet = self.constructor([[-3], [-3], [-3], [-3]], featureNames=['c'])
         assert toTest == expTest
         assert ret == expRet
 
-
 class StructureModifying(StructureShared):
-
     ##############
     # create data
     ##############
@@ -2057,9 +2058,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
-        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig10.sortFeatures(sortBy=orig10.getPointName(0))
+        orig10.features.sort(sortBy=orig10.points.getName(0))
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         if pd:
@@ -2089,9 +2090,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, elementType=object)
-        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig3.features.sort(sortBy=orig3.points.getName(0))
         orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.sortFeatures(sortBy=orig7.getPointName(0))
+        orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         if pd:
@@ -2360,18 +2361,18 @@ class StructureModifying(StructureShared):
         dataObjT = self.constructor(deepcopy(dataTrans), pointNames=transPointNames,
                                                          featureNames=transFeatureNames)
         dataObj1.transpose()
-        assert dataObj1.getPointNames() == transPointNames
-        assert dataObj1.getFeatureNames() == transFeatureNames
+        assert dataObj1.points.getNames() == transPointNames
+        assert dataObj1.features.getNames() == transFeatureNames
         assert dataObj1.isIdentical(dataObjT)
 
         dataObj1.transpose()
         dataObjT.transpose()
-        assert dataObj1.getPointNames() == dataObj2.getPointNames()
-        assert dataObj1.getFeatureNames() == dataObj2.getFeatureNames()
+        assert dataObj1.points.getNames() == dataObj2.points.getNames()
+        assert dataObj1.features.getNames() == dataObj2.features.getNames()
         assert dataObj1.isIdentical(dataObj2)
 
-        assert dataObj2.getPointNames() == dataObjT.getPointNames()
-        assert dataObj2.getFeatureNames() == dataObjT.getFeatureNames()
+        assert dataObj2.points.getNames() == dataObjT.points.getNames()
+        assert dataObj2.features.getNames() == dataObjT.features.getNames()
         assert dataObj2.isIdentical(dataObjT)
 
     def test_transpose_NamePath_preservation(self):
@@ -2391,135 +2392,141 @@ class StructureModifying(StructureShared):
 
 
     #####################################
-    # addPoints() / addFeatures() #
+    # points.add() / features.add() #
     #####################################
 
-    def backend_insert_exceptionNone(self, axis):
+    def backend_add_exceptionNone(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
         if axis == 'point':
-            toTest.addPoints(None)
+            toTest.points.add(None)
         else:
-            toTest.addFeatures(None)
+            toTest.features.add(None)
 
     @raises(ArgumentException)
-    def test_addPoints_exceptionNone(self):
-        """ Test addPoints() for ArgumentException when toInsert is None"""
-        self.backend_insert_exceptionNone('point')
+    def test_points_add_exceptionNone(self):
+        """ Test points.add() for ArgumentException when toInsert is None """
+        self.backend_add_exceptionNone('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exceptionNone(self):
-        """ Test addFeatures() for ArgumentException when toInsert is None """
-        self.backend_insert_exceptionNone('feature')
+    def test_features_add_exceptionNone(self):
+        """ Test features.add() for ArgumentException when toInsert is None """
+        self.backend_add_exceptionNone('feature')
 
-    def backend_insert_exceptionWrongSize(self, axis):
+
+    def backend_add_exceptionWrongSize(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toInsert = self.constructor([[2, 3, 4, 5, 6]])
 
         if axis == 'point':
-            toTest.addPoints(toInsert)
+            toTest.points.add(toInsert)
         else:
             toInsert.transpose()
-            toTest.addFeatures(toInsert)
+            toTest.features.add(toInsert)
 
     @raises(ArgumentException)
-    def test_addPoints_exceptionWrongSize(self):
-        """ Test addPoints() for ArgumentException when toInsert has too many features """
-        self.backend_insert_exceptionWrongSize('point')
+    def test_points_add_exceptionWrongSize(self):
+        """ Test points.add() for ArgumentException when toInsert has too many features """
+        self.backend_add_exceptionWrongSize('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exceptionWrongSize(self):
-        """ Test addFeatures() for ArgumentException when toInsert has too many points """
-        self.backend_insert_exceptionWrongSize('feature')
+    def test_features_add_exceptionWrongSize(self):
+        """ Test features.add() for ArgumentException when toInsert has too many points """
+        self.backend_add_exceptionWrongSize('feature')
 
-    def backend_insert_exception_extendAxis_SameName(self, axis):
+
+    def backend_add_exception_extendAxis_SameName(self, axis):
         toTest1 = self.constructor([[1, 2]], pointNames=["hello"])
         toTest2 = self.constructor([[1, 2], [5, 6]], pointNames=["hello", "goodbye"])
 
         if axis == 'point':
-            toTest2.addPoints(toTest1)
+            toTest2.points.add(toTest1)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest2.addFeatures(toTest1)
+            toTest2.features.add(toTest1)
 
     @raises(ArgumentException)
-    def test_addPoints_exceptionSamePointName(self):
-        """ Test addPoints() for ArgumentException when toInsert and self have a pointName in common """
-        self.backend_insert_exception_extendAxis_SameName('point')
+    def test_points_add_exceptionSamePointName(self):
+        """ Test points.add() for ArgumentException when toInsert and self have a pointName in common """
+        self.backend_add_exception_extendAxis_SameName('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exceptionSameFeatureName(self):
-        """ Test addFeatures() for ArgumentException when toInsert and self have a featureName in common """
-        self.backend_insert_exception_extendAxis_SameName('feature')
+    def test_features_add_exceptionSameFeatureName(self):
+        """ Test features.add() for ArgumentException when toInsert and self have a featureName in common """
+        self.backend_add_exception_extendAxis_SameName('feature')
 
-    def backend_insert_exception_sharedAxis_unsharedName(self, axis):
+
+    def backend_add_exception_sharedAxis_unsharedName(self, axis):
         toTest1 = self.constructor([[1, 2]], featureNames=['1', '2'])
         toTest2 = self.constructor([[2, 1], [6, 5]], featureNames=['6', '1'])
 
         if axis == 'point':
-            toTest2.addPoints(toTest1)
+            toTest2.points.add(toTest1)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest2.addFeatures(toTest1)
+            toTest2.features.add(toTest1)
 
     @raises(ArgumentException)
-    def test_addPoints_exception_unsharedFeatureName(self):
-        """ Test addPoints() for ArgumentException when toInsert and self have a featureName not in common """
-        self.backend_insert_exception_sharedAxis_unsharedName('point')
+    def test_points_add_exception_unsharedFeatureName(self):
+        """ Test points.add() for ArgumentException when toInsert and self have a featureName not in common """
+        self.backend_add_exception_sharedAxis_unsharedName('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exception_unsharedPointName(self):
-        """ Test addFeatures() for ArgumentException when toInsert and self have a pointName not in common """
-        self.backend_insert_exception_sharedAxis_unsharedName('feature')
+    def test_features_add_exception_unsharedPointName(self):
+        """ Test features.add() for ArgumentException when toInsert and self have a pointName not in common """
+        self.backend_add_exception_sharedAxis_unsharedName('feature')
 
-    def backend_insert_exceptionNonUMLDataType(self, axis):
+
+    def backend_add_exceptionNonUMLDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
         if axis == 'point':
-            toTest.addPoints([[1, 1, 1]])
+            toTest.points.add([[1, 1, 1]])
         else:
-            toTest.addFeatures([[1], [1], [1]])
+            toTest.features.add([[1], [1], [1]])
 
     @raises(ArgumentException)
-    def test_addPoints_exceptionNonUMLDataType(self):
-        self.backend_insert_exceptionNonUMLDataType('point')
+    def test_points_add_exceptionNonUMLDataType(self):
+        self.backend_add_exceptionNonUMLDataType('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exceptionNonUMLDataType(self):
-        self.backend_insert_exceptionNonUMLDataType('feature')
+    def test_features_add_exceptionNonUMLDataType(self):
+        self.backend_add_exceptionNonUMLDataType('feature')
 
-    def backend_insert_exception_outOfOrder_with_defaults(self, axis):
+
+    def backend_add_exception_outOfOrder_with_defaults(self, axis):
         toTest1 = self.constructor([[1, 2, 3]])
         toTest2 = self.constructor([[1, 3, 2]])
 
-        toTest1.setFeatureName(1, '2')
-        toTest1.setFeatureName(2, '3')
-        toTest2.setFeatureName(1, '3')
-        toTest2.setFeatureName(2, '2')
+        toTest1.features.setName(1, '2')
+        toTest1.features.setName(2, '3')
+        toTest2.features.setName(1, '3')
+        toTest2.features.setName(2, '2')
 
         if axis == 'point':
-            toTest1.addPoints(toTest2)
+            toTest1.points.add(toTest2)
         else:
             toTest1.transpose()
             toTest2.transpose()
-            toTest1.addFeatures(toTest2)
+            toTest1.features.add(toTest2)
 
     @raises(ArgumentException)
-    def test_addPoints_exception_outOfOrder_with_defaults(self):
-        """ Test addPoints() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
-        self.backend_insert_exception_outOfOrder_with_defaults('point')
+    def test_points_add_exception_outOfOrder_with_defaults(self):
+        """ Test points.add() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_add_exception_outOfOrder_with_defaults('point')
 
     @raises(ArgumentException)
-    def test_addFeatures_exception_outOfOrder_with_defaults(self):
-        """ Test addFeatures() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
-        self.backend_insert_exception_outOfOrder_with_defaults('feature')
+    def test_features_add_exception_outOfOrder_with_defaults(self):
+        """ Test features.add() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_add_exception_outOfOrder_with_defaults('feature')
 
-    def backend_insert_emptyObject(self, axis, insertBefore=None):
+
+    def backend_add_emptyObject(self, axis, insertBefore=None):
         empty = [[], []]
 
         if axis == 'point':
@@ -2534,31 +2541,32 @@ class StructureModifying(StructureShared):
         toExp = self.constructor(data)
 
         if axis == 'point':
-            toTest.addPoints(toInsert, insertBefore)
+            toTest.points.add(toInsert, insertBefore)
         else:
-            toTest.addFeatures(toInsert, insertBefore)
+            toTest.features.add(toInsert, insertBefore)
 
         assert toTest.isIdentical(toExp)
 
-    def test_addPoints_fromEmpty_bottom(self):
-        """ Test addPoints() to bottom when the calling object is point empty """
-        self.backend_insert_emptyObject('point')
+    def test_points_add_fromEmpty_bottom(self):
+        """ Test points.add() to bottom when the calling object is point empty """
+        self.backend_add_emptyObject('point')
 
-    def test_addFeatures_fromEmpty_right(self):
-        """ Test addFeatures() to right when the calling object is feature empty """
-        self.backend_insert_emptyObject('feature')
-
-    @raises(ArgumentException)
-    def test_addPoints_fromEmpty_top(self):
-        """ Test addPoints() with an appendBefore ID when the calling object is point empty raises exception """
-        self.backend_insert_emptyObject('point', 0)
+    def test_features_add_fromEmpty_right(self):
+        """ Test features.add() to right when the calling object is feature empty """
+        self.backend_add_emptyObject('feature')
 
     @raises(ArgumentException)
-    def test_addFeatures_fromEmpty_left(self):
-        """ Test addFeatures() with an appendBefore ID when the calling object is feature empty raises exception """
-        self.backend_insert_emptyObject('feature', 0)
+    def test_points_add_fromEmpty_top(self):
+        """ Test points.add() with an appendBefore ID when the calling object is point empty raises exception """
+        self.backend_add_emptyObject('point', 0)
 
-    def backend_insert_handmadeSingle(self, axis, insertBefore=None):
+    @raises(ArgumentException)
+    def test_features_add_fromEmpty_left(self):
+        """ Test features.add() with an appendBefore ID when the calling object is feature empty raises exception """
+        self.backend_add_emptyObject('feature', 0)
+
+
+    def backend_add_handmadeSingle(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
@@ -2577,7 +2585,7 @@ class StructureModifying(StructureShared):
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
             toInsert = self.constructor([[-1, -2, -3]], pointNames=addName, featureNames=offNames)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            ret = toTest.addPoints(toInsert, insertBefore)  # RET CHECK
+            ret = toTest.points.add(toInsert, insertBefore)  # RET CHECK
         else:
             if insertBefore is None:
                 dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
@@ -2591,36 +2599,37 @@ class StructureModifying(StructureShared):
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
             toInsert = self.constructor([[-1], [-2], [-3]], pointNames=offNames, featureNames=addName)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            ret = toTest.addFeatures(toInsert, insertBefore)  # RET CHECK
+            ret = toTest.features.add(toInsert, insertBefore)  # RET CHECK
 
         assert toTest.isIdentical(expected)
         assert ret is None
 
-    def test_addPoints_handmadeSingle_bottom(self):
-        """ Test addPoints() against handmade output for a single added point to the bottom"""
-        self.backend_insert_handmadeSingle('point')
+    def test_points_add_handmadeSingle_bottom(self):
+        """ Test points.add() against handmade output for a single added point to the bottom"""
+        self.backend_add_handmadeSingle('point')
 
-    def test_addFeatures_handmadeSingle_right(self):
-        """ Test addFeatures() against handmade output for a single added feature to the right"""
-        self.backend_insert_handmadeSingle('feature')
+    def test_features_add_handmadeSingle_right(self):
+        """ Test features.add() against handmade output for a single added feature to the right"""
+        self.backend_add_handmadeSingle('feature')
 
-    def test_addPoints_handmadeSingle_top(self):
-        """ Test addPoints() against handmade output for a single added point the the top"""
-        self.backend_insert_handmadeSingle('point', 0)
+    def test_points_add_handmadeSingle_top(self):
+        """ Test points.add() against handmade output for a single added point the the top"""
+        self.backend_add_handmadeSingle('point', 0)
 
-    def test_addFeatures_handmadeSingle_left(self):
-        """ Test addFeatures() against handmade output for a single added feature to the left"""
-        self.backend_insert_handmadeSingle('feature', 0)
+    def test_features_add_handmadeSingle_left(self):
+        """ Test features.add() against handmade output for a single added feature to the left"""
+        self.backend_add_handmadeSingle('feature', 0)
 
-    def test_addPoints_handmadeSingle_mid(self):
-        """ Test addPoints() against handmade output for a single added point in the middle"""
-        self.backend_insert_handmadeSingle('point', 1)
+    def test_points_add_handmadeSingle_mid(self):
+        """ Test points.add() against handmade output for a single added point in the middle"""
+        self.backend_add_handmadeSingle('point', 1)
 
-    def test_addFeatures_handmadeSingle_mid(self):
-        """ Test addFeatures() against handmade output for a single added feature in the middle"""
-        self.backend_insert_handmadeSingle('feature', 1)
+    def test_features_add_handmadeSingle_mid(self):
+        """ Test features.add() against handmade output for a single added feature in the middle"""
+        self.backend_add_handmadeSingle('feature', 1)
 
-    def backend_insert_handmadeSequence(self, axis, insertBefore=None):
+
+    def backend_add_handmadeSequence(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
@@ -2642,8 +2651,8 @@ class StructureModifying(StructureShared):
                                 [0.1, 0.2, 0.3], [4, 5, 6], [7, 8, 9]]
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            for nextAdd in toInsert.pointIterator():
-                toTest.addPoints(nextAdd, insertBefore)
+            for nextAdd in toInsert.points:
+                toTest.points.add(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
         else:
             if insertBefore is None:
@@ -2657,37 +2666,38 @@ class StructureModifying(StructureShared):
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
             toInsert.transpose()
-            for nextAdd in toInsert.featureIterator():
-                toTest.addFeatures(nextAdd, insertBefore)
+            for nextAdd in toInsert.features:
+                toTest.features.add(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
 
         assert toTest.isIdentical(expected)
 
-    def test_addPoints_handmadeSequence_bottom(self):
-        """ Test addPoints() against handmade output for a sequence of additions to the bottom"""
-        self.backend_insert_handmadeSequence('point')
+    def test_points_add_handmadeSequence_bottom(self):
+        """ Test points.add() against handmade output for a sequence of additions to the bottom"""
+        self.backend_add_handmadeSequence('point')
 
-    def test_addFeatures_handmadeSequence_right(self):
-        """ Test addFeatures() against handmade output for a sequence of additions to the right"""
-        self.backend_insert_handmadeSequence('feature')
+    def test_features_add_handmadeSequence_right(self):
+        """ Test features.add() against handmade output for a sequence of additions to the right"""
+        self.backend_add_handmadeSequence('feature')
 
-    def test_addPoints_handmadeSequence_top(self):
-        """ Test addPoints() against handmade output for a sequence of additions to the top"""
-        self.backend_insert_handmadeSequence('point', 0)
+    def test_points_add_handmadeSequence_top(self):
+        """ Test points.add() against handmade output for a sequence of additions to the top"""
+        self.backend_add_handmadeSequence('point', 0)
 
-    def test_addFeatures_handmadeSequence_left(self):
-        """ Test addFeatures() against handmade output for a sequence of additions to the left"""
-        self.backend_insert_handmadeSequence('feature', 0)
+    def test_features_add_handmadeSequence_left(self):
+        """ Test features.add() against handmade output for a sequence of additions to the left"""
+        self.backend_add_handmadeSequence('feature', 0)
 
-    def test_addPoints_handmadeSequence_mid(self):
-        """ Test addPoints() against handmade output for a sequence of additions in the middle"""
-        self.backend_insert_handmadeSequence('point', 1)
+    def test_points_add_handmadeSequence_mid(self):
+        """ Test points.add() against handmade output for a sequence of additions in the middle"""
+        self.backend_add_handmadeSequence('point', 1)
 
-    def test_addFeatures_handmadeSequence_mid(self):
-        """ Test addFeatures() against handmade output for a sequence of additions in the middle"""
-        self.backend_insert_handmadeSequence('feature', 1)
+    def test_features_add_handmadeSequence_mid(self):
+        """ Test features.add() against handmade output for a sequence of additions in the middle"""
+        self.backend_add_handmadeSequence('feature', 1)
 
-    def backend_insert_selfInsert(self, axis, insertBefore=None):
+
+    def backend_add_selfInsert(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
 
@@ -2699,10 +2709,10 @@ class StructureModifying(StructureShared):
         dup = orig.copy()
 
         if axis == 'point':
-            dupNames = dup.getPointNames()
-            assert orig.getPointNames() == dupNames
+            dupNames = dup.points.getNames()
+            assert orig.points.getNames() == dupNames
 
-            orig.addPoints(orig, insertBefore)
+            orig.points.add(orig, insertBefore)
 
             if insertBefore is None or insertBefore == 0:
                 dataExp = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2710,10 +2720,10 @@ class StructureModifying(StructureShared):
                 dataExp = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [7, 8, 9], [4, 5, 6], [7, 8, 9]]
             expected = self.constructor(dataExp, featureNames=names)
         else:
-            dupNames = dup.getFeatureNames()
-            assert orig.getFeatureNames() == dupNames
+            dupNames = dup.features.getNames()
+            assert orig.features.getNames() == dupNames
 
-            orig.addFeatures(orig, insertBefore)
+            orig.features.add(orig, insertBefore)
 
             if insertBefore is None or insertBefore == 0:
                 dataExp = [[1, 2, 3, 1, 2, 3], [4, 5, 6, 4, 5, 6], [7, 8, 9, 7, 8, 9]]
@@ -2723,7 +2733,7 @@ class StructureModifying(StructureShared):
 
         assert orig == expected
 
-        checkNames = orig.getPointNames() if axis == 'point' else orig.getFeatureNames()
+        checkNames = orig.points.getNames() if axis == 'point' else orig.features.getNames()
         lastDefIndex = int(dupNames[2][-1])
         if insertBefore is None:
             assert checkNames[:3] == dupNames
@@ -2742,25 +2752,26 @@ class StructureModifying(StructureShared):
         assert checkNames[idx2] == DEFAULT_PREFIX + str(lastDefIndex + 2)
         assert checkNames[idx3] == DEFAULT_PREFIX + str(lastDefIndex + 3)
 
-    def test_addPoints_selfInsert_bottom(self):
-        self.backend_insert_selfInsert('point')
+    def test_points_add_selfInsert_bottom(self):
+        self.backend_add_selfInsert('point')
 
-    def test_addFeatures_selfInsert_right(self):
-        self.backend_insert_selfInsert('feature')
+    def test_features_add_selfInsert_right(self):
+        self.backend_add_selfInsert('feature')
 
-    def test_addPoints_selfInsert_top(self):
-        self.backend_insert_selfInsert('point', 0)
+    def test_points_add_selfInsert_top(self):
+        self.backend_add_selfInsert('point', 0)
 
-    def test_addFeatures_selfInsert_left(self):
-        self.backend_insert_selfInsert('feature', 0)
+    def test_features_add_selfInsert_left(self):
+        self.backend_add_selfInsert('feature', 0)
 
-    def test_addPoints_selfInsert_mid(self):
-        self.backend_insert_selfInsert('point', 1)
+    def test_points_add_selfInsert_mid(self):
+        self.backend_add_selfInsert('point', 1)
 
-    def test_addFeatures_selfInsert_mid(self):
-        self.backend_insert_selfInsert('feature', 1)
+    def test_features_add_selfInsert_mid(self):
+        self.backend_add_selfInsert('feature', 1)
 
-    def backend_insert_automaticReorder(self, axis, defPrimaryNames, insertBefore=None):
+
+    def backend_add_automaticReorder(self, axis, defPrimaryNames, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['off1', 'off2', 'off3']
         addOffName = ['off3', 'off2', 'off1']
@@ -2790,7 +2801,7 @@ class StructureModifying(StructureShared):
             toInsert = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
             expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            toTest.addPoints(toInsert, insertBefore)
+            toTest.points.add(toInsert, insertBefore)
         else:
             toAddData = [[-3], [-2], [-1]]
             if insertBefore is None:
@@ -2803,49 +2814,49 @@ class StructureModifying(StructureShared):
             toInsert = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
             expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            toTest.addFeatures(toInsert, insertBefore)
-
+            toTest.features.add(toInsert, insertBefore)
         # check that toInsert object was not modified when reordering occurred
         assert toInsert.isIdentical(expInsert)
         assert toTest.isIdentical(expected)
 
-    def test_addPoints_automaticReorder_fullySpecifiedNames_bottom(self):
-        self.backend_insert_automaticReorder('point', False)
 
-    def test_addFeatures_automaticReorder_fullySpecifiedNames_right(self):
-        self.backend_insert_automaticReorder('feature', False)
+    def test_points_add_automaticReorder_fullySpecifiedNames_bottom(self):
+        self.backend_add_automaticReorder('point', False)
 
-    def test_addPoints_automaticReorder_defaultPointNames_bottom(self):
-        self.backend_insert_automaticReorder('point', True)
+    def test_features_add_automaticReorder_fullySpecifiedNames_right(self):
+        self.backend_add_automaticReorder('feature', False)
 
-    def test_addFeatures_automaticReorder_defaultFeatureNames_right(self):
-        self.backend_insert_automaticReorder('feature', True)
+    def test_points_add_automaticReorder_defaultPointNames_bottom(self):
+        self.backend_add_automaticReorder('point', True)
 
-    def test_addPoints_automaticReorder_fullySpecifiedNames_top(self):
-        self.backend_insert_automaticReorder('point', False, 0)
+    def test_features_add_automaticReorder_defaultFeatureNames_right(self):
+        self.backend_add_automaticReorder('feature', True)
 
-    def test_addFeatures_automaticReorder_fullySpecifiedNames_left(self):
-        self.backend_insert_automaticReorder('feature', False, 0)
+    def test_points_add_automaticReorder_fullySpecifiedNames_top(self):
+        self.backend_add_automaticReorder('point', False, 0)
 
-    def test_addPoints_automaticReorder_defaultPointNames_top(self):
-        self.backend_insert_automaticReorder('point', True, 0)
+    def test_features_add_automaticReorder_fullySpecifiedNames_left(self):
+        self.backend_add_automaticReorder('feature', False, 0)
 
-    def test_addFeatures_automaticReorder_defaultFeatureNames_left(self):
-        self.backend_insert_automaticReorder('feature', True, 0)
+    def test_points_add_automaticReorder_defaultPointNames_top(self):
+        self.backend_add_automaticReorder('point', True, 0)
 
-    def test_addPoints_automaticReorder_fullySpecifiedNames_mid(self):
-        self.backend_insert_automaticReorder('point', False, 1)
+    def test_features_add_automaticReorder_defaultFeatureNames_left(self):
+        self.backend_add_automaticReorder('feature', True, 0)
 
-    def test_addFeatures_automaticReorder_fullySpecifiedNames_mid(self):
-        self.backend_insert_automaticReorder('feature', False, 1)
+    def test_points_add_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_add_automaticReorder('point', False, 1)
 
-    def test_addPoints_automaticReorder_defaultPointNames_mid(self):
-        self.backend_insert_automaticReorder('point', True, 1)
+    def test_features_add_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_add_automaticReorder('feature', False, 1)
 
-    def test_addFeatures_automaticReorder_defaultFeatureNames_mid(self):
-        self.backend_insert_automaticReorder('feature', True, 1)
+    def test_points_add_automaticReorder_defaultPointNames_mid(self):
+        self.backend_add_automaticReorder('point', True, 1)
 
-    def backend_insert_allPossibleUMLDataType(self, axis):
+    def test_features_add_automaticReorder_defaultFeatureNames_mid(self):
+        self.backend_add_automaticReorder('feature', True, 1)
+
+    def backend_add_allPossibleUMLDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         currType = self.constructor([]).getTypeString()
@@ -2858,55 +2869,56 @@ class StructureModifying(StructureShared):
                 insertData = [[-1, -2, -3]]
                 otherTest = UML.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
-                toTest.addPoints(otherTest)
+                toTest.points.add(otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
                 otherTest = UML.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
-                toTest.addFeatures(otherTest)
+                toTest.features.add(otherTest)
                 inserted.append(toTest)
 
         assert all(exp == obj for obj in inserted)
 
-    def test_addPoints_allPossibleUMLDataType(self):
-        self.backend_insert_allPossibleUMLDataType('point')
+    def test_points_add_allPossibleUMLDataType(self):
+        self.backend_add_allPossibleUMLDataType('point')
 
-    def test_addFeatures_allPossibleUMLDataType(self):
-        self.backend_insert_allPossibleUMLDataType('feature')
+    def test_features_add_allPossibleUMLDataType(self):
+        self.backend_add_allPossibleUMLDataType('feature')
 
-    def backend_insert_noReorderWithAllDefaultNames(self, axis):
+
+    def backend_add_noReorderWithAllDefaultNames(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         if axis == 'point':
             insertData = [[-1, -2, -3]]
             # assign names to be the reverse of toTest's default names
-            fNames = list(reversed(toTest.getFeatureNames()))
+            fNames = list(reversed(toTest.features.getNames()))
             toInsert = self.constructor(insertData, featureNames=fNames)
-            assert toTest.getFeatureNames() != toInsert.getFeatureNames()
+            assert toTest.features.getNames() != toInsert.features.getNames()
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
-            toTest.addPoints(toInsert)
+            toTest.points.add(toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
             # assign names to be the reverse of toTest's default names
-            pNames = list(reversed(toTest.getPointNames()))
+            pNames = list(reversed(toTest.points.getNames()))
             toInsert = self.constructor(insertData, pointNames=pNames)
-            assert toTest.getPointNames() != toInsert.getPointNames()
+            assert toTest.points.getNames() != toInsert.points.getNames()
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
-            toTest.addFeatures(toInsert)
+            toTest.features.add(toInsert)
 
         assert toTest == exp
 
-    def test_addPoints_noReorderWithAllDefaultNames(self):
-        self.backend_insert_noReorderWithAllDefaultNames('point')
+    def test_points_add_noReorderWithAllDefaultNames(self):
+        self.backend_add_noReorderWithAllDefaultNames('point')
 
-    def test_addFeatures_noReorderWithAllDefaultNames(self):
-        self.backend_insert_noReorderWithAllDefaultNames('feature')
+    def test_features_add_noReorderWithAllDefaultNames(self):
+        self.backend_add_noReorderWithAllDefaultNames('feature')
 
-    def backend_insert_noReorderAddedHasDefaultNames(self, axis):
+    def backend_add_noReorderAddedHasDefaultNames(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         pNames = ['1', '4', '7']
         fNames = ['a', 'b', 'c']
@@ -2915,37 +2927,37 @@ class StructureModifying(StructureShared):
             insertData = [[-1, -2, -3]]
             # toInsert has default names
             toInsert = self.constructor(insertData)
-            assert toTest.getFeatureNames() != toInsert.getFeatureNames()
+            assert toTest.features.getNames() != toInsert.features.getNames()
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
-            exp.setFeatureNames(fNames)
-            exp.setPointName(0, '1')
-            exp.setPointName(1, '4')
-            exp.setPointName(2, '7')
-            toTest.addPoints(toInsert)
+            exp.features.setNames(fNames)
+            exp.points.setName(0, '1')
+            exp.points.setName(1, '4')
+            exp.points.setName(2, '7')
+            toTest.points.add(toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
             # toInsert has default names
             toInsert = self.constructor(insertData)
-            assert toTest.getPointNames() != toInsert.getPointNames()
+            assert toTest.points.getNames() != toInsert.points.getNames()
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
-            exp.setPointNames(pNames)
-            exp.setFeatureName(0, 'a')
-            exp.setFeatureName(1, 'b')
-            exp.setFeatureName(2, 'c')
-            toTest.addFeatures(toInsert)
+            exp.points.setNames(pNames)
+            exp.features.setName(0, 'a')
+            exp.features.setName(1, 'b')
+            exp.features.setName(2, 'c')
+            toTest.features.add(toInsert)
 
         assert toTest == exp
 
     def test_addPoints_noReorderAddedHasDefaultNames(self):
-        self.backend_insert_noReorderAddedHasDefaultNames('point')
+        self.backend_add_noReorderAddedHasDefaultNames('point')
 
     def test_addFeatures_noReorderAddedHasDefaultNames(self):
-        self.backend_insert_noReorderAddedHasDefaultNames('feature')
+        self.backend_add_noReorderAddedHasDefaultNames('feature')
 
-    def backend_insert_NamePath_preservation(self, axis):
+    def backend_add_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         names = ['one', 'two', 'three']
@@ -2966,66 +2978,66 @@ class StructureModifying(StructureShared):
         toInsert._relPath = "testRelPathOther"
 
         if axis == 'point':
-            toTest.addPoints(toInsert)
+            toTest.points.add(toInsert)
         else:
-            toTest.addFeatures(toInsert)
+            toTest.features.add(toInsert)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    def test_addPoints_NamePath_preservation(self):
-        self.backend_insert_NamePath_preservation('point')
+    def test_points_add_NamePath_preservation(self):
+        self.backend_add_NamePath_preservation('point')
 
-    def test_addFeatures_NamePath_preservation(self):
-        self.backend_insert_NamePath_preservation('feature')
+    def test_features_add_NamePath_preservation(self):
+        self.backend_add_NamePath_preservation('feature')
 
-    def test_addPoints_noNamesCreated(self):
+    def test_points_add_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toInsert = self.constructor([[-1, -2, -3]])
-        toTest.addPoints(toInsert)
+        toTest.points.add(toInsert)
 
         assert not toTest._pointNamesCreated()
         assert not toTest._featureNamesCreated()
 
-    def test_addFeatures_noNamesCreated(self):
+    def test_features_add_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toInsert = self.constructor([[-1], [-2], [-3]])
-        toTest.addFeatures(toInsert)
+        toTest.features.add(toInsert)
 
         assert not toTest._featureNamesCreated()
         assert not toTest._pointNamesCreated()
 
 
     ##############
-    # sortPoints() #
+    # points.sort() #
     ##############
 
     @raises(ArgumentException)
-    def test_sortPoints_exceptionAtLeastOne(self):
-        """ Test sortPoints() has at least one paramater """
+    def test_points_sort_exceptionAtLeastOne(self):
+        """ Test points.sort() has at least one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
-        toTest.sortPoints()
+        toTest.points.sort()
 
     @raises(ArgumentException)
-    def test_sortPoints_exceptionBothNotNone(self):
-        """ Test sortPoints() has only one parameter """
+    def test_points_sort_exceptionBothNotNone(self):
+        """ Test points.sort() has only one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
-        toTest.sortPoints(sortBy=1, sortHelper=[1,2,0])
+        toTest.points.sort(sortBy=1, sortHelper=[1,2,0])
 
-    def test_sortPoints_naturalByFeature(self):
-        """ Test sortPoints() when we specify a feature to sort by """
+    def test_points_sort_naturalByFeature(self):
+        """ Test points.sort() when we specify a feature to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         names = ['1', '7', '4']
         toTest = self.constructor(data, pointNames=names)
 
-        ret = toTest.sortPoints(sortBy=1) # RET CHECK
+        ret = toTest.points.sort(sortBy=1) # RET CHECK
 
         dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
         namesExp = ['7', '1', '4']
@@ -3034,14 +3046,14 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_sortPoints_naturalByFeatureName(self):
-        """ Test sortPoints() when we specify a feature name to sort by """
+    def test_points_sort_naturalByFeatureName(self):
+        """ Test points.sort() when we specify a feature name to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         pnames = ['1', '7', '4']
         fnames = ['1', '2', '3']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        ret = toTest.sortPoints(sortBy='2') # RET CHECK
+        ret = toTest.points.sort(sortBy='2') # RET CHECK
 
         dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
         namesExp = ['7', '1', '4']
@@ -3051,8 +3063,8 @@ class StructureModifying(StructureShared):
         assert ret is None
 
 
-    def test_sortPoints_scorer(self):
-        """ Test sortPoints() when we specify a scoring function """
+    def test_points_sort_scorer(self):
+        """ Test points.sort() when we specify a scoring function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
         toTest = self.constructor(data)
 
@@ -3064,15 +3076,15 @@ class StructureModifying(StructureShared):
                     ret += 1
             return ret
 
-        toTest.sortPoints(sortHelper=numOdds)
+        toTest.points.sort(sortHelper=numOdds)
 
         dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
 
-    def test_sortPoints_comparator(self):
-        """ Test sortPoints() when we specify a comparator function """
+    def test_points_sort_comparator(self):
+        """ Test points.sort() when we specify a comparator function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
         toTest = self.constructor(data)
 
@@ -3087,44 +3099,44 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.sortPoints(sortHelper=compOdds)
+        toTest.points.sort(sortHelper=compOdds)
 
         dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
 
-    def test_sortPoints_dataTypeRetainedFromList(self):
-        """ Test sortPoints() data not converted when sorting by list"""
+    def test_points_sort_dataTypeRetainedFromList(self):
+        """ Test points.sort() data not converted when sorting by list"""
         data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
         toTest = self.constructor(data)
 
-        toTest.sortPoints(sortHelper=[2, 1, 0])
+        toTest.points.sort(sortHelper=[2, 1, 0])
 
         expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
         exp = self.constructor(expData)
 
         assert toTest == exp
 
-    def test_sortPoints_indicesList(self):
-        """ Test sortPoints() when we specify a list of indices """
+    def test_points_sort_indicesList(self):
+        """ Test points.sort() when we specify a list of indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         toTest = self.constructor(data)
 
-        toTest.sortPoints(sortHelper=[2, 1, 0])
+        toTest.points.sort(sortHelper=[2, 1, 0])
 
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         exp = self.constructor(expData)
 
         assert toTest == exp
 
-    def test_sortPoints_namesList(self):
-        """ Test sortPoints() when we specify a list of point names """
+    def test_points_sort_namesList(self):
+        """ Test points.sort() when we specify a list of point names """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         pnames = ['3', '6', '9']
         toTest = self.constructor(data, pointNames=pnames)
 
-        toTest.sortPoints(sortHelper=['9', '6', '3'])
+        toTest.points.sort(sortHelper=['9', '6', '3'])
 
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         expNames = ['9', '6', '3']
@@ -3132,13 +3144,13 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    def test_sortPoints_mixedList(self):
-        """ Test sortPoints() when we specify a mixed list (names/indices) """
+    def test_points_sort_mixedList(self):
+        """ Test points.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         pnames = ['3', '6', '9']
         toTest = self.constructor(data, pointNames=pnames)
 
-        toTest.sortPoints(sortHelper=['9', '6', 0])
+        toTest.points.sort(sortHelper=['9', '6', 0])
 
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         expNames = ['9', '6', '3']
@@ -3147,55 +3159,55 @@ class StructureModifying(StructureShared):
         assert toTest == exp
 
     @raises(ArgumentException)
-    def test_sortPoints_exceptionIndicesPEmpty(self):
-        """ tests sortPoints() throws an ArgumentException when given invalid indices """
+    def test_points_sort_exceptionIndicesPEmpty(self):
+        """ tests points.sort() throws an ArgumentException when given invalid indices """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        toTest.sortPoints(sortHelper=[1, 3])
+        toTest.points.sort(sortHelper=[1, 3])
 
     @raises(ArgumentException)
-    def test_sortPoints_exceptionIndicesSmall(self):
-        """ tests sortPoints() throws an ArgumentException when given an incorrectly sized indices list """
+    def test_points_sort_exceptionIndicesSmall(self):
+        """ tests points.sort() throws an ArgumentException when given an incorrectly sized indices list """
         data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
         toTest = self.constructor(data)
 
-        toTest.sortPoints(sortHelper=[1, 0])
+        toTest.points.sort(sortHelper=[1, 0])
 
     @raises(ArgumentException)
-    def test_sortPoints_exceptionNotUniqueIds(self):
-        """ tests sortPoints() throws an ArgumentException when given duplicate indices """
+    def test_points_sort_exceptionNotUniqueIds(self):
+        """ tests points.sort() throws an ArgumentException when given duplicate indices """
         data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
         toTest = self.constructor(data)
-        toTest.sortPoints(sortHelper=[1, 1, 0])
+        toTest.points.sort(sortHelper=[1, 1, 0])
 
     #################
-    # sortFeatures() #
+    # features.sort() #
     #################
 
     @raises(ArgumentException)
-    def test_sortFeatures_exceptionAtLeastOne(self):
-        """ Test sortFeatures() has at least one paramater """
+    def test_features_sort_exceptionAtLeastOne(self):
+        """ Test features.sort() has at least one paramater """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
-        toTest.sortFeatures()
+        toTest.features.sort()
 
     @raises(ArgumentException)
-    def test_sortFeatures_exceptionBothNotNone(self):
-        """ Test sortPoints() has only one parameter """
+    def test_features_sort_exceptionBothNotNone(self):
+        """ Test points.sort() has only one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
-        toTest.sortFeatures(sortBy=1, sortHelper=[1,2,0])
+        toTest.features.sort(sortBy=1, sortHelper=[1,2,0])
 
-    def test_sortFeatures_naturalByPointWithNames(self):
-        """ Test sortFeatures() when we specify a point to sort by; includes featureNames """
+    def test_features_sort_naturalByPointWithNames(self):
+        """ Test features.sort() when we specify a point to sort by; includes featureNames """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         names = ["1", "2", "3"]
         toTest = self.constructor(data, featureNames=names)
 
-        ret = toTest.sortFeatures(sortBy=1) # RET CHECK
+        ret = toTest.features.sort(sortBy=1) # RET CHECK
 
         dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
         namesExp = ["2", "1", "3"]
@@ -3204,14 +3216,14 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_sortFeatures_naturalByPointNameWithFNames(self):
-        """ Test sortFeatures() when we specify a point name to sort by; includes featureNames """
+    def test_features_sort_naturalByPointNameWithFNames(self):
+        """ Test features.sort() when we specify a point name to sort by; includes featureNames """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         pnames = ['1', '7', '4']
         fnames = ["1", "2", "3"]
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        ret = toTest.sortFeatures(sortBy='7') # RET CHECK
+        ret = toTest.features.sort(sortBy='7') # RET CHECK
 
         dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
         namesExp = ["2", "1", "3"]
@@ -3221,8 +3233,8 @@ class StructureModifying(StructureShared):
         assert ret is None
 
 
-    def test_sortFeatures_scorer(self):
-        """ Test sortFeatures() when we specify a scoring function """
+    def test_features_sort_scorer(self):
+        """ Test features.sort() when we specify a scoring function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
         names = ["2", "1", "3", "0"]
         toTest = self.constructor(data, featureNames=names)
@@ -3234,7 +3246,7 @@ class StructureModifying(StructureShared):
                     ret += 1
             return ret
 
-        toTest.sortFeatures(sortHelper=numOdds)
+        toTest.features.sort(sortHelper=numOdds)
 
         dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
         namesExp = ['0', '1', '2', '3']
@@ -3242,8 +3254,8 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
 
-    def test_sortFeatures_comparator(self):
-        """ Test sortFeatures() when we specify a comparator function """
+    def test_features_sort_comparator(self):
+        """ Test features.sort() when we specify a comparator function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
         toTest = self.constructor(data)
 
@@ -3258,7 +3270,7 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.sortFeatures(sortHelper=compOdds)
+        toTest.features.sort(sortHelper=compOdds)
 
         dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
         objExp = self.constructor(dataExpected)
@@ -3266,37 +3278,37 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
 
 
-    def test_sortFeatures_dataTypeRetainedFromList(self):
-        """ Test sortFeatures() data not converted when sorting by list"""
+    def test_features_sort_dataTypeRetainedFromList(self):
+        """ Test features.sort() data not converted when sorting by list"""
         data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
         toTest = self.constructor(data)
 
-        toTest.sortFeatures(sortHelper=[2, 1, 0])
+        toTest.features.sort(sortHelper=[2, 1, 0])
 
         expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
         exp = self.constructor(expData)
 
         assert toTest == exp
 
-    def test_sortFeatures_indicesList(self):
-        """ Test sortFeatures() when we specify a list of indices """
+    def test_features_sort_indicesList(self):
+        """ Test features.sort() when we specify a list of indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         toTest = self.constructor(data)
 
-        toTest.sortFeatures(sortHelper=[2, 1, 0])
+        toTest.features.sort(sortHelper=[2, 1, 0])
 
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         exp = self.constructor(expData)
 
         assert toTest == exp
 
-    def test_sortFeatures_namesList(self):
-        """ Test sortFeatures() when we specify a list of feature names """
+    def test_features_sort_namesList(self):
+        """ Test features.sort() when we specify a list of feature names """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         fnames = ['third', 'second', 'first']
         toTest = self.constructor(data, featureNames=fnames)
 
-        toTest.sortFeatures(sortHelper=['first', 'second', 'third'])
+        toTest.features.sort(sortHelper=['first', 'second', 'third'])
 
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expNames = ['first', 'second', 'third']
@@ -3304,13 +3316,13 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    def test_sortFeatures_mixedList(self):
-        """ Test sortFeatures() when we specify a mixed list (names/indices) """
+    def test_features_sort_mixedList(self):
+        """ Test features.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         fnames = ['third', 'second', 'first']
         toTest = self.constructor(data, featureNames=fnames)
 
-        toTest.sortFeatures(sortHelper=['first', 'second', 0])
+        toTest.features.sort(sortHelper=['first', 'second', 0])
 
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expNames = ['first', 'second', 'third']
@@ -3319,53 +3331,53 @@ class StructureModifying(StructureShared):
         assert toTest == exp
 
     @raises(ArgumentException)
-    def test_sortFeatures_exceptionIndicesFEmpty(self):
-        """ tests sortFeatures() throws an ArgumentException when given invalid indices """
+    def test_features_sort_exceptionIndicesFEmpty(self):
+        """ tests features.sort() throws an ArgumentException when given invalid indices """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        toTest.sortFeatures(sortHelper=[1, 3])
+        toTest.features.sort(sortHelper=[1, 3])
 
 
     @raises(ArgumentException)
-    def test_sortFeatures_exceptionIndicesSmall(self):
-        """ tests sortFeatures() throws an ArgumentException when given an incorrectly sized indices list """
+    def test_features_sort_exceptionIndicesSmall(self):
+        """ tests features.sort() throws an ArgumentException when given an incorrectly sized indices list """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         toTest = self.constructor(data)
 
-        toTest.sortFeatures(sortHelper=[1, 0])
+        toTest.features.sort(sortHelper=[1, 0])
 
 
     @raises(ArgumentException)
-    def test_sortFeatures_exceptionNotUniqueIds(self):
-        """ tests sortFeatures() throws an ArgumentException when given duplicate indices """
+    def test_features_sort_exceptionNotUniqueIds(self):
+        """ tests features.sort() throws an ArgumentException when given duplicate indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        toTest.sortFeatures(sortHelper=[1, 1, 0])
+        toTest.features.sort(sortHelper=[1, 1, 0])
 
-    #################
-    # extractPoints() #
-    #################
+    ##################
+    # points.extract #
+    ##################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_extractPoints_calls_constructIndicesList(self, mockFunc):
+    def test_points_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
-        ret = toTest.extractPoints(['a', 'b'])
+        ret = toTest.points.extract(['a', 'b'])
 
-    def test_extractPoints_handmadeSingle(self):
-        """ Test extractPoints() against handmade output when extracting one point """
+    def test_points_extract_handmadeSingle(self):
+        """ Test points.extract() against handmade output when extracting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.extractPoints(0)
+        ext1 = toTest.points.extract(0)
         exp1 = self.constructor([[1, 2, 3]])
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor([[4, 5, 6], [7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_extractPoints_index_NamePath_Preserve(self):
+    def test_points_extract_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -3373,7 +3385,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = 'testAbsPath'
         toTest._relPath = 'testRelPath'
 
-        ext1 = toTest.extractPoints(0)
+        ext1 = toTest.points.extract(0)
 
         assert ext1.nameIsDefault()
         assert ext1.path == 'testAbsPath'
@@ -3384,12 +3396,12 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    def test_extractPoints_ListIntoPEmpty(self):
-        """ Test extractPoints() by removing a list of all points """
+    def test_points_extract_ListIntoPEmpty(self):
+        """ Test points.extract() by removing a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
-        ret = toTest.extractPoints([0, 1, 2, 3])
+        ret = toTest.points.extract([0, 1, 2, 3])
 
         assert ret.isIdentical(expRet)
 
@@ -3400,38 +3412,38 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_extractPoints_handmadeListSequence(self):
-        """ Test extractPoints() against handmade output for several list extractions """
+    def test_points_extract_handmadeListSequence(self):
+        """ Test points.extract() against handmade output for several list extractions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        ext1 = toTest.extractPoints('1')
+        ext1 = toTest.points.extract('1')
         exp1 = self.constructor([[1, 2, 3]], pointNames=['1'])
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.extractPoints([1, 2])
+        ext2 = toTest.points.extract([1, 2])
         exp2 = self.constructor([[7, 8, 9], [10, 11, 12]], pointNames=['7', '10'])
         assert ext2.isIdentical(exp2)
         expEnd = self.constructor([[4, 5, 6]], pointNames=['4'])
         assert toTest.isIdentical(expEnd)
 
-    def test_extractPoints_handmadeListOrdering(self):
-        """ Test extractPoints() against handmade output for out of order extraction """
+    def test_points_extract_handmadeListOrdering(self):
+        """ Test points.extract() against handmade output for out of order extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
-        ext1 = toTest.extractPoints([3, 4, 1])
+        ext1 = toTest.points.extract([3, 4, 1])
         exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=['1', '7'])
         assert toTest.isIdentical(expEnd)
 
-    def test_extractPoints_List_trickyOrdering(self):
+    def test_points_extract_List_trickyOrdering(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         toExtract = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
 
-        ret = toTest.extractPoints(toExtract)
+        ret = toTest.points.extract(toExtract)
 
         expRaw = [[0], [0], [2], [0]]
         expRet = self.constructor(expRaw)
@@ -3442,20 +3454,20 @@ class StructureModifying(StructureShared):
         assert ret == expRet
         assert toTest == expRem
 
-    def test_extractPoints_function_selectionGap(self):
+    def test_points_extract_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         extractIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in extractIndices:
+            if int(point.points.getName(0)) in extractIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, pointNames=pnames)
 
-        ret = toTest.extractPoints(sel)
+        ret = toTest.points.extract(sel)
 
         expRaw = [[2], [0], [0], [0]]
         expNames = ['3', '5', '6', '9']
@@ -3469,13 +3481,13 @@ class StructureModifying(StructureShared):
         assert toTest == expRem
 
 
-    def test_extractPoints_functionIntoPEmpty(self):
-        """ Test extractPoints() by removing all points using a function """
+    def test_points_extract_functionIntoPEmpty(self):
+        """ Test points.extract() by removing all points using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        ret = toTest.extractPoints(allTrue)
+        ret = toTest.points.extract(allTrue)
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
@@ -3484,12 +3496,12 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_extractPoints_function_returnPointEmpty(self):
+    def test_points_extract_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        ret = toTest.extractPoints(allFalse)
+        ret = toTest.points.extract(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -3498,18 +3510,18 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(exp)
 
-    def test_extractPoints_handmadeFunction(self):
-        """ Test extractPoints() against handmade output for function extraction """
+    def test_points_extract_handmadeFunction(self):
+        """ Test points.extract() against handmade output for function extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        ext = toTest.extractPoints(oneOrFour)
+        ext = toTest.points.extract(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
         assert ext.isIdentical(exp)
         expEnd = self.constructor([[7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_extractPoints_func_NamePath_preservation(self):
+    def test_points_extract_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -3517,7 +3529,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        ext = toTest.extractPoints(oneOrFour)
+        ext = toTest.points.extract(oneOrFour)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -3527,13 +3539,13 @@ class StructureModifying(StructureShared):
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
-    def test_extractPoints_handmadeFuncionWithFeatureNames(self):
-        """ Test extractPoints() against handmade output for function extraction with featureNames"""
+    def test_points_extract_handmadeFuncionWithFeatureNames(self):
+        """ Test points.extract() against handmade output for function extraction with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        ext = toTest.extractPoints(oneOrFour)
+        ext = toTest.points.extract(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
         assert ext.isIdentical(exp)
         expEnd = self.constructor([[7, 8, 9]], featureNames=featureNames)
@@ -3541,34 +3553,34 @@ class StructureModifying(StructureShared):
 
 
     @raises(ArgumentException)
-    def test_extractPoints_exceptionStartInvalid(self):
-        """ Test extractPoints() for ArgumentException when start is not a valid point index """
+    def test_points_extract_exceptionStartInvalid(self):
+        """ Test points.extract() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractPoints(start=1.1, end=2)
+        toTest.points.extract(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_extractPoints_exceptionEndInvalid(self):
-        """ Test extractPoints() for ArgumentException when start is not a valid Point index """
+    def test_points_extract_exceptionEndInvalid(self):
+        """ Test points.extract() for ArgumentException when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractPoints(start=1, end=5)
+        toTest.points.extract(start=1, end=5)
 
     @raises(ArgumentException)
-    def test_extractPoints_exceptionInversion(self):
-        """ Test extractPoints() for ArgumentException when start comes after end """
+    def test_points_extract_exceptionInversion(self):
+        """ Test points.extract() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractPoints(start=2, end=0)
+        toTest.points.extract(start=2, end=0)
 
-    def test_extractPoints_handmadeRange(self):
-        """ Test extractPoints() against handmade output for range extraction """
+    def test_points_extract_handmadeRange(self):
+        """ Test points.extract() against handmade output for range extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.extractPoints(start=1, end=2)
+        ret = toTest.points.extract(start=1, end=2)
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]])
         expectedTest = self.constructor([[1, 2, 3]])
@@ -3576,7 +3588,7 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_range_NamePath_preservation(self):
+    def test_points_extract_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -3584,7 +3596,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        ret = toTest.extractPoints(start=1, end=2)
+        ret = toTest.points.extract(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -3595,14 +3607,14 @@ class StructureModifying(StructureShared):
         assert ret.relativePath == 'testRelPath'
 
 
-    def test_extractPoints_rangeIntoPEmpty(self):
-        """ Test extractPoints() removes all points using ranges """
+    def test_points_extract_rangeIntoPEmpty(self):
+        """ Test points.extract() removes all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints(start=0, end=2)
+        ret = toTest.points.extract(start=0, end=2)
 
         assert ret.isIdentical(expRet)
 
@@ -3613,13 +3625,13 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_extractPoints_handmadeRangeWithFeatureNames(self):
-        """ Test extractPoints() against handmade output for range extraction with featureNames """
+    def test_points_extract_handmadeRangeWithFeatureNames(self):
+        """ Test points.extract() against handmade output for range extraction with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints(start=1, end=2)
+        ret = toTest.points.extract(start=1, end=2)
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3]], pointNames=['1'], featureNames=featureNames)
@@ -3627,23 +3639,23 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_handmadeRangeRand_FM(self):
-        """ Test extractPoints() for correct sizes when using randomized range extraction and featureNames """
+    def test_points_extract_handmadeRangeRand_FM(self):
+        """ Test points.extract() for correct sizes when using randomized range extraction and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
+        ret = toTest.points.extract(start=0, end=2, number=2, randomize=True)
 
-        assert ret.points == 2
-        assert toTest.points == 1
+        assert len(ret.points) == 2
+        assert len(toTest.points) == 1
 
-    def test_extractPoints_handmadeRangeDefaults(self):
-        """ Test extractPoints uses the correct defaults in the case of range based extraction """
+    def test_points_extract_handmadeRangeDefaults(self):
+        """ Test points.extract uses the correct defaults in the case of range based extraction """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints(end=1)
+        ret = toTest.points.extract(end=1)
 
         expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=['1', '4'], featureNames=featureNames)
         expectedTest = self.constructor([[7, 8, 9]], pointNames=['7'], featureNames=featureNames)
@@ -3652,7 +3664,7 @@ class StructureModifying(StructureShared):
         assert expectedTest.isIdentical(toTest)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints(start=1)
+        ret = toTest.points.extract(start=1)
 
         expectedTest = self.constructor([[1, 2, 3]], pointNames=['1'], featureNames=featureNames)
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
@@ -3660,13 +3672,13 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_handmade_calling_pointNames(self):
+    def test_points_extract_handmade_calling_pointNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints(start='4', end='7')
+        ret = toTest.points.extract(start='4', end='7')
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
@@ -3674,14 +3686,14 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_handmadeString(self):
+    def test_points_extract_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one=1')
+        ret = toTest.points.extract('one=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3689,7 +3701,7 @@ class StructureModifying(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one==1')
+        ret = toTest.points.extract('one==1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3697,7 +3709,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one<2')
+        ret = toTest.points.extract('one<2')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3705,7 +3717,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one<=1')
+        ret = toTest.points.extract('one<=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3713,7 +3725,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one>4')
+        ret = toTest.points.extract('one>4')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3721,7 +3733,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one>=7')
+        ret = toTest.points.extract('one>=7')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3729,7 +3741,7 @@ class StructureModifying(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one!=4')
+        ret = toTest.points.extract('one!=4')
         expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6]], pointNames=[pointNames[1]], featureNames=featureNames)
@@ -3739,7 +3751,7 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one<1')
+        ret = toTest.points.extract('one<1')
         expectedRet = self.constructor([], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3748,20 +3760,20 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one>0')
+        ret = toTest.points.extract('one>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor([], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_handmadeStringWithOperatorWhitespace(self):
+    def test_points_extract_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one = 1')
+        ret = toTest.points.extract('one = 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3769,7 +3781,7 @@ class StructureModifying(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one == 1')
+        ret = toTest.points.extract('one == 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3777,7 +3789,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one < 2')
+        ret = toTest.points.extract('one < 2')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3785,7 +3797,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one <= 1')
+        ret = toTest.points.extract('one <= 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3793,7 +3805,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one > 4')
+        ret = toTest.points.extract('one > 4')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3801,7 +3813,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one >= 7')
+        ret = toTest.points.extract('one >= 7')
         expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3809,7 +3821,7 @@ class StructureModifying(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one != 4')
+        ret = toTest.points.extract('one != 4')
         expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6]], pointNames=[pointNames[1]], featureNames=featureNames)
@@ -3819,7 +3831,7 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one < 1')
+        ret = toTest.points.extract('one < 1')
         expectedRet = self.constructor([], featureNames=featureNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3828,20 +3840,20 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('one > 0')
+        ret = toTest.points.extract('one > 0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor([], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_handmadeStringWithFeatureWhitespace(self):
+    def test_points_extract_handmadeStringWithFeatureWhitespace(self):
         featureNames = ["feature one", "feature two", "feature three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('feature one=1')
+        ret = toTest.points.extract('feature one=1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -3849,135 +3861,135 @@ class StructureModifying(StructureShared):
 
         #test featureName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('feature one = 1')
+        ret = toTest.points.extract('feature one = 1')
         expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractPoints_list_mixed(self):
-        """ Test extractPoints() list input with mixed names and indices """
+    def test_points_extract_list_mixed(self):
+        """ Test points.extract() list input with mixed names and indices """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        ret = toTest.extractPoints(['1',1,-1])
+        ret = toTest.points.extract(['1',1,-1])
         expRet = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
         expTest = self.constructor([[7, 8, 9]], pointNames=['7'])
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
     @raises(ArgumentException)
-    def test_extractPoints_handmadeString_featureNotExist(self):
+    def test_points_extract_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractPoints('four=1')
+        ret = toTest.points.extract('four=1')
 
-    def test_extractPoints_numberOnly(self):
+    def test_points_extract_numberOnly(self):
         self.back_extract_numberOnly('point')
 
-    def test_extractPoints_functionAndNumber(self):
+    def test_points_extract_functionAndNumber(self):
         self.back_extract_functionAndNumber('point')
 
-    def test_extractPoints_numberAndRandomizeAllData(self):
+    def test_points_extract_numberAndRandomizeAllData(self):
         self.back_extract_numberAndRandomizeAllData('point')
 
-    def test_extractPoints_numberAndRandomizeSelectedData(self):
+    def test_points_extract_numberAndRandomizeSelectedData(self):
         self.back_extract_numberAndRandomizeSelectedData('point')
 
     @raises(ArgumentException)
-    def test_extractPoints_randomizeNoNumber(self):
+    def test_points_extract_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('extract', 'point')
 
     @raises(ArgumentException)
-    def test_extractPoints_list_numberGreaterThanTargeted(self):
+    def test_points_extract_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('extract', 'point')
 
     @raises(ArgumentException)
-    def test_extractPoints_function_numberGreaterThanTargeted(self):
+    def test_points_extract_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('extract', 'point')
 
     @raises(ArgumentException)
-    def test_extractPoints_range_numberGreaterThanTargeted(self):
+    def test_points_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
     ### using match module ###
 
-    def test_extractPoints_match_missing(self):
+    def test_points_extract_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.anyMissing)
+        ret = toTest.points.extract(match.anyMissing)
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([[None, 11, None], [7, 11, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.allMissing)
+        ret = toTest.points.extract(match.allMissing)
         expTest = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
         expRet = self.constructor([[None, None, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractPoints_match_nonNumeric(self):
+    def test_points_extract_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.anyNonNumeric)
+        ret = toTest.points.extract(match.anyNonNumeric)
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.allNonNumeric)
+        ret = toTest.points.extract(match.allNonNumeric)
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
         expRet = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractPoints_match_list(self):
+    def test_points_extract_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.anyValues(['a', 'c', 'x']))
+        ret = toTest.points.extract(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.allValues(['a', 'c', 'x']))
+        ret = toTest.points.extract(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
         expRet = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractPoints_match_function(self):
+    def test_points_extract_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.anyValues(lambda x: x < 0))
+        ret = toTest.points.extract(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
         expRet = self.constructor([[-1, 11, -3], [7, 11, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractPoints(match.allValues(lambda x: x < 0))
+        ret = toTest.points.extract(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
         expRet = self.constructor([[-1, -2, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
-        expRet.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
+        expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
@@ -3987,15 +3999,15 @@ class StructureModifying(StructureShared):
 
     def back_extract_numberOnly(self, axis):
         if axis == 'point':
-            toCall = "extractPoints"
+            toCall = "points"
         else:
-            toCall = "extractFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(number=3)
+        ret = getattr(toTest, toCall).extract(number=3)
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
             rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
@@ -4008,15 +4020,15 @@ class StructureModifying(StructureShared):
 
     def back_extract_functionAndNumber(self, axis):
         if axis == 'point':
-            toCall = "extractPoints"
+            toCall = "points"
         else:
-            toCall = "extractFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(allTrue, number=2)
+        ret = getattr(toTest, toCall).extract(allTrue, number=2)
         if axis == 'point':
             exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
             rem = self.constructor(data[2:], pointNames=pnames[2:], featureNames=fnames)
@@ -4032,9 +4044,9 @@ class StructureModifying(StructureShared):
         given number provides the same result for all input types if using all the data
         """
         if axis == 'point':
-            toCall = "extractPoints"
+            toCall = "points"
         else:
-            toCall = "extractFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -4046,27 +4058,27 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        ret = getattr(toTest1, toCall)(number=3, randomize=True)
+        ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retList = getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
+        retList = getattr(toTest2, toCall).extract([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retRange = getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        retRange = getattr(toTest3, toCall).extract(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retFunc = getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        retFunc = getattr(toTest4, toCall).extract(allTrue, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert ret.points == 3
-            assert toTest1.points == 1
+            assert len(ret.points) == 3
+            assert len(toTest1.points) == 1
         else:
-            assert ret.features == 3
-            assert toTest1.features == 1
+            assert len(ret.features) == 3
+            assert len(toTest1.features) == 1
 
         assert ret.isIdentical(retList)
         assert ret.isIdentical(retRange)
@@ -4078,9 +4090,9 @@ class StructureModifying(StructureShared):
     def back_extract_numberAndRandomizeSelectedData(self, axis):
         """test that randomization occurs after the data has been selected from the user inputs """
         if axis == 'point':
-            toCall = "extractPoints"
+            toCall = "points"
         else:
-            toCall = "extractFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -4101,18 +4113,18 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        retList = getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        retList = getattr(toTest1, toCall).extract([1, 2], number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        retRange = getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        retRange = getattr(toTest2, toCall).extract(start=1, end=2, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
         UML.randomness.startAlternateControl(seed)
-        retFunc = getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        retFunc = getattr(toTest3, toCall).extract(middleRowsOrCols, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
@@ -4123,29 +4135,29 @@ class StructureModifying(StructureShared):
         assert toTest2.isIdentical(expTest1) or toTest2.isIdentical(expTest2)
         assert toTest3.isIdentical(expTest1) or toTest3.isIdentical(expTest2)
 
-    ####################
-    # extractFeatures() #
-    ####################
+    ######################
+    # features.extract() #
+    ######################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_extractFeatures_calls_constructIndicesList(self, mockFunc):
+    def test_features_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
-        ret = toTest.extractFeatures(['a', 'b'])
+        ret = toTest.features.extract(['a', 'b'])
 
-    def test_extractFeatures_handmadeSingle(self):
-        """ Test extractFeatures() against handmade output when extracting one feature """
+    def test_features_extract_handmadeSingle(self):
+        """ Test features.extract() against handmade output when extracting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.extractFeatures(0)
+        ext1 = toTest.features.extract(0)
         exp1 = self.constructor([[1], [4], [7]])
 
         assert ext1.isIdentical(exp1)
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_extractFeatures_List_NamePath_Preserve(self):
+    def test_features_extract_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4153,7 +4165,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        ext1 = toTest.extractFeatures(0)
+        ext1 = toTest.features.extract(0)
 
         assert toTest.path == 'testAbsPath'
         assert toTest.absolutePath == 'testAbsPath'
@@ -4163,12 +4175,12 @@ class StructureModifying(StructureShared):
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
 
-    def test_extractFeatures_ListIntoFEmpty(self):
-        """ Test extractFeatures() by removing a list of all features """
+    def test_features_extract_ListIntoFEmpty(self):
+        """ Test features.extract() by removing a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
-        ret = toTest.extractFeatures([0, 1, 2])
+        ret = toTest.features.extract([0, 1, 2])
 
         assert ret.isIdentical(expRet)
 
@@ -4178,13 +4190,13 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_extractFeatures_ListIntoFEmptyOutOfOrder(self):
-        """ Test extractFeatures() by removing a list of all features """
+    def test_features_extract_ListIntoFEmptyOutOfOrder(self):
+        """ Test features.extract() by removing a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expData = [[3, 1, 2], [6, 4, 5], [9, 7, 8], [12, 10, 11]]
         expRet = self.constructor(expData)
-        ret = toTest.extractFeatures([2, 0, 1])
+        ret = toTest.features.extract([2, 0, 1])
 
         assert ret.isIdentical(expRet)
 
@@ -4195,44 +4207,44 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_extractFeatures_handmadeListSequence(self):
-        """ Test extractFeatures() against handmade output for several extractions by list """
+    def test_features_extract_handmadeListSequence(self):
+        """ Test features.extract() against handmade output for several extractions by list """
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data, pointNames=pointNames)
-        ext1 = toTest.extractFeatures([0])
+        ext1 = toTest.features.extract([0])
         exp1 = self.constructor([[1], [4], [7]], pointNames=pointNames)
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.extractFeatures([2, 1])
+        ext2 = toTest.features.extract([2, 1])
         exp2 = self.constructor([[-1, 3], [-2, 6], [-3, 9]], pointNames=pointNames)
         assert ext2.isIdentical(exp2)
         expEndData = [[2], [5], [8]]
         expEnd = self.constructor(expEndData, pointNames=pointNames)
         assert toTest.isIdentical(expEnd)
 
-    def test_extractFeatures_handmadeListWithFeatureName(self):
-        """ Test extractFeatures() against handmade output for list extraction when specifying featureNames """
+    def test_features_extract_handmadeListWithFeatureName(self):
+        """ Test features.extract() against handmade output for list extraction when specifying featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        ext1 = toTest.extractFeatures(["one"])
+        ext1 = toTest.features.extract(["one"])
         exp1 = self.constructor([[1], [4], [7]], featureNames=["one"])
         assert ext1.isIdentical(exp1)
-        ext2 = toTest.extractFeatures(["three", "neg"])
+        ext2 = toTest.features.extract(["three", "neg"])
         exp2 = self.constructor([[3, -1], [6, -2], [9, -3]], featureNames=["three", "neg"])
         assert ext2.isIdentical(exp2)
         expEnd = self.constructor([[2], [5], [8]], featureNames=["two"])
         assert toTest.isIdentical(expEnd)
 
 
-    def test_extractFeatures_List_trickyOrdering(self):
+    def test_features_extract_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         toExtract = [6, 5, 3, 9]
         #		toExtract = [3,5,6,9]
 
         toTest = self.constructor(data)
 
-        ret = toTest.extractFeatures(toExtract)
+        ret = toTest.features.extract(toExtract)
 
         expRaw = [0, 0, 1, 0]
         expRet = self.constructor(expRaw)
@@ -4243,7 +4255,7 @@ class StructureModifying(StructureShared):
         assert ret == expRet
         assert toTest == expRem
 
-    def test_extractFeatures_List_reorderingWithFeatureNames(self):
+    def test_features_extract_List_reorderingWithFeatureNames(self):
         data = [[1, 2, 3, 10], [4, 5, 6, 11], [7, 8, 9, 12]]
         fnames = ['a', 'b', 'c', 'd']
         test = self.constructor(data, featureNames=fnames)
@@ -4256,26 +4268,26 @@ class StructureModifying(StructureShared):
         expTestNames = ['d']
         expTest = self.constructor(expTestRaw, featureNames=expTestNames)
 
-        ret = test.extractFeatures(expRetNames)
+        ret = test.features.extract(expRetNames)
         assert ret == expRet
         assert test == expTest
 
 
-    def test_extractFeatures_function_selectionGap(self):
+    def test_features_extract_function_selectionGap(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         extractIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in extractIndices:
+            if int(feature.features.getName(0)) in extractIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, featureNames=fnames)
 
-        ret = toTest.extractFeatures(sel)
+        ret = toTest.features.extract(sel)
 
         expRaw = [1, 0, 0, 0]
         expNames = ['3', '5', '6', '9']
@@ -4289,13 +4301,13 @@ class StructureModifying(StructureShared):
         assert toTest == expRem
 
 
-    def test_extractFeatures_functionIntoFEmpty(self):
-        """ Test extractFeatures() by removing all featuress using a function """
+    def test_features_extract_functionIntoFEmpty(self):
+        """ Test features.extract() by removing all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        ret = toTest.extractFeatures(allTrue)
+        ret = toTest.features.extract(allTrue)
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
@@ -4304,12 +4316,12 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_extractFeatures_function_returnPointEmpty(self):
+    def test_features_extract_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        ret = toTest.extractFeatures(allFalse)
+        ret = toTest.features.extract(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -4319,19 +4331,19 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_extractFeatures_handmadeFunction(self):
-        """ Test extractFeatures() against handmade output for function extraction """
+    def test_features_extract_handmadeFunction(self):
+        """ Test features.extract() against handmade output for function extraction """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
-        ext = toTest.extractFeatures(absoluteOne)
+        ext = toTest.features.extract(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
         assert ext.isIdentical(exp)
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
 
-    def test_extractFeatures_func_NamePath_preservation(self):
+    def test_features_extract_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
@@ -4339,7 +4351,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        ext = toTest.extractFeatures(absoluteOne)
+        ext = toTest.features.extract(absoluteOne)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -4349,75 +4361,75 @@ class StructureModifying(StructureShared):
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
-    def test_extractFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test extractFeatures() against handmade output for function extraction with featureNames """
+    def test_features_extract_handmadeFunctionWithFeatureName(self):
+        """ Test features.extract() against handmade output for function extraction with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        ext = toTest.extractFeatures(absoluteOne)
+        ext = toTest.features.extract(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
         assert ext.isIdentical(exp)
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         assert toTest.isIdentical(expEnd)
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionStartInvalid(self):
-        """ Test extractFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_extract_exceptionStartInvalid(self):
+        """ Test features.extract() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start=1.1, end=2)
+        toTest.features.extract(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionStartInvalidFeatureName(self):
-        """ Test extractFeatures() for ArgumentException when start is not a valid feature FeatureName """
+    def test_features_extract_exceptionStartInvalidFeatureName(self):
+        """ Test features.extract() for ArgumentException when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start="wrong", end=2)
+        toTest.features.extract(start="wrong", end=2)
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionEndInvalid(self):
-        """ Test extractFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_extract_exceptionEndInvalid(self):
+        """ Test features.extract() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start=0, end=5)
+        toTest.features.extract(start=0, end=5)
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionEndInvalidFeatureName(self):
-        """ Test extractFeatures() for ArgumentException when start is not a valid featureName """
+    def test_features_extract_exceptionEndInvalidFeatureName(self):
+        """ Test features.extract() for ArgumentException when start is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start="two", end="five")
+        toTest.features.extract(start="two", end="five")
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionInversion(self):
-        """ Test extractFeatures() for ArgumentException when start comes after end """
+    def test_features_extract_exceptionInversion(self):
+        """ Test features.extract() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start=2, end=0)
+        toTest.features.extract(start=2, end=0)
 
     @raises(ArgumentException)
-    def test_extractFeatures_exceptionInversionFeatureName(self):
-        """ Test extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
+    def test_features_extract_exceptionInversionFeatureName(self):
+        """ Test features.extract() for ArgumentException when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.extractFeatures(start="two", end="one")
+        toTest.features.extract(start="two", end="one")
 
 
-    def test_extractFeatures_rangeIntoFEmpty(self):
-        """ Test extractFeatures() removes all Featuress using ranges """
+    def test_features_extract_rangeIntoFEmpty(self):
+        """ Test features.extract() removes all Featuress using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         expRet = self.constructor(data, featureNames=featureNames)
-        ret = toTest.extractFeatures(start=0, end=2)
+        ret = toTest.features.extract(start=0, end=2)
 
         assert ret.isIdentical(expRet)
 
@@ -4427,11 +4439,11 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_extractFeatures_handmadeRange(self):
-        """ Test extractFeatures() against handmade output for range extraction """
+    def test_features_extract_handmadeRange(self):
+        """ Test features.extract() against handmade output for range extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.extractFeatures(start=1, end=2)
+        ret = toTest.features.extract(start=1, end=2)
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]])
         expectedTest = self.constructor([[1], [4], [7]])
@@ -4439,7 +4451,7 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_range_NamePath_preservation(self):
+    def test_features_extract_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4447,7 +4459,7 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        ret = toTest.extractFeatures(start=1, end=2)
+        ret = toTest.features.extract(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
@@ -4458,14 +4470,14 @@ class StructureModifying(StructureShared):
         assert ret.relativePath == 'testRelPath'
 
 
-    def test_extractFeatures_handmadeWithFeatureNames(self):
-        """ Test extractFeatures() against handmade output for range extraction with FeatureNames """
+    def test_features_extract_handmadeWithFeatureNames(self):
+        """ Test features.extract() against handmade output for range extraction with FeatureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures(start=1, end=2)
+        ret = toTest.features.extract(start=1, end=2)
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=["one"])
@@ -4473,13 +4485,13 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_handmade_calling_featureNames(self):
+    def test_features_extract_handmade_calling_featureNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures(start="two", end="three")
+        ret = toTest.features.extract(start="two", end="three")
 
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=["one"])
@@ -4487,14 +4499,14 @@ class StructureModifying(StructureShared):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_handmadeString(self):
+    def test_features_extract_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p2=5')
+        ret = toTest.features.extract('p2=5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
@@ -4503,7 +4515,7 @@ class StructureModifying(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1==1')
+        ret = toTest.features.extract('p1==1')
         expectedRet = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         assert expectedRet.isIdentical(ret)
@@ -4511,7 +4523,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3<9')
+        ret = toTest.features.extract('p3<9')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedRet.isIdentical(ret)
@@ -4519,7 +4531,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3<=8')
+        ret = toTest.features.extract('p3<=8')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedRet.isIdentical(ret)
@@ -4527,7 +4539,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3>8')
+        ret = toTest.features.extract('p3>8')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedRet.isIdentical(ret)
@@ -4535,7 +4547,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3>8.5')
+        ret = toTest.features.extract('p3>8.5')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedRet.isIdentical(ret)
@@ -4543,7 +4555,7 @@ class StructureModifying(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1!=1.0')
+        ret = toTest.features.extract('p1!=1.0')
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         assert expectedRet.isIdentical(ret)
@@ -4551,7 +4563,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1<1')
+        ret = toTest.features.extract('p1<1')
         expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -4559,20 +4571,20 @@ class StructureModifying(StructureShared):
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1>0')
+        ret = toTest.features.extract('p1>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor([], pointNames=pointNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_handmadeStringWithOperatorWhitespace(self):
+    def test_features_extract_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p2 = 5')
+        ret = toTest.features.extract('p2 = 5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
@@ -4581,7 +4593,7 @@ class StructureModifying(StructureShared):
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1 == 1')
+        ret = toTest.features.extract('p1 == 1')
         expectedRet = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         assert expectedRet.isIdentical(ret)
@@ -4589,7 +4601,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3 < 9')
+        ret = toTest.features.extract('p3 < 9')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedRet.isIdentical(ret)
@@ -4597,7 +4609,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3 <= 8')
+        ret = toTest.features.extract('p3 <= 8')
         expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedRet.isIdentical(ret)
@@ -4605,7 +4617,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3 > 8')
+        ret = toTest.features.extract('p3 > 8')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedRet.isIdentical(ret)
@@ -4613,7 +4625,7 @@ class StructureModifying(StructureShared):
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p3 > 8.5')
+        ret = toTest.features.extract('p3 > 8.5')
         expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedRet.isIdentical(ret)
@@ -4621,7 +4633,7 @@ class StructureModifying(StructureShared):
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1 != 1.0')
+        ret = toTest.features.extract('p1 != 1.0')
         expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         assert expectedRet.isIdentical(ret)
@@ -4629,7 +4641,7 @@ class StructureModifying(StructureShared):
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1 < 1')
+        ret = toTest.features.extract('p1 < 1')
         expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
@@ -4637,20 +4649,20 @@ class StructureModifying(StructureShared):
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('p1 > 0')
+        ret = toTest.features.extract('p1 > 0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expectedTest = self.constructor([], pointNames=pointNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_handmadeStringWithPointWhitespace(self):
+    def test_features_extract_handmadeStringWithPointWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['pt 1', 'pt 2', 'pt 3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value with no operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('pt 2=5')
+        ret = toTest.features.extract('pt 2=5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
@@ -4659,159 +4671,159 @@ class StructureModifying(StructureShared):
 
         #test pointName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('pt 2 = 5')
+        ret = toTest.features.extract('pt 2 = 5')
         expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_extractFeatures_list_mixed(self):
-        """ Test extractFeatures() list input with mixed names and indices """
+    def test_features_extract_list_mixed(self):
+        """ Test features.extract() list input with mixed names and indices """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.extractFeatures([1, "three", -1])
+        ret = toTest.features.extract([1, "three", -1])
         expRet = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
         expTest = self.constructor([[1], [4], [7]], featureNames=["one"])
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
     @raises(ArgumentException)
-    def test_extractFeatures_handmadeString_pointNotExist(self):
+    def test_features_extract_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.extractFeatures('5=1')
+        ret = toTest.features.extract('5=1')
 
-    def test_extractFeatures_numberOnly(self):
+    def test_features_extract_numberOnly(self):
         self.back_extract_numberOnly('feature')
 
-    def test_extractFeatures_functionAndNumber(self):
+    def test_features_extract_functionAndNumber(self):
         self.back_extract_functionAndNumber('feature')
 
-    def test_extractFeatures_numberAndRandomizeAllData(self):
+    def test_features_extract_numberAndRandomizeAllData(self):
         self.back_extract_numberAndRandomizeAllData('feature')
 
-    def test_extractFeatures_numberAndRandomizeSelectedData(self):
+    def test_features_extract_numberAndRandomizeSelectedData(self):
         self.back_extract_numberAndRandomizeSelectedData('feature')
 
     @raises(ArgumentException)
-    def test_extractFeatures_randomizeNoNumber(self):
+    def test_features_extract_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('extract', 'feature')
 
     @raises(ArgumentException)
-    def test_extractFeatures_list_numberGreaterThanTargeted(self):
+    def test_features_extract_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('extract', 'feature')
 
     @raises(ArgumentException)
-    def test_extractFeatures_function_numberGreaterThanTargeted(self):
+    def test_features_extract_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('extract', 'feature')
 
     @raises(ArgumentException)
-    def test_extractFeatures_range_numberGreaterThanTargeted(self):
+    def test_features_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
-    # using match module
+    ### using match module ###
 
-    def test_extractFeatures_match_missing(self):
+    def test_features_extract_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.anyMissing)
+        ret = toTest.features.extract(match.anyMissing)
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.allMissing)
+        ret = toTest.features.extract(match.allMissing)
         expTest = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
         expRet = self.constructor([[None], [None], [None], [None]])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractFeatures_match_nonNumeric(self):
+    def test_features_extract_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.anyNonNumeric)
+        ret = toTest.features.extract(match.anyNonNumeric)
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.allNonNumeric)
+        ret = toTest.features.extract(match.allNonNumeric)
         expTest = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractFeatures_match_list(self):
+    def test_features_extract_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.anyValues(['a', 'c', 'x']))
+        ret = toTest.features.extract(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.allValues(['a', 'c', 'x']))
+        ret = toTest.features.extract(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
         expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    def test_extractFeatures_match_function(self):
+    def test_features_extract_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.anyValues(lambda x: x < 0))
+        ret = toTest.features.extract(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[2], [11], [11], [8]])
         expRet = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
-        expTest.setFeatureNames(['b'])
-        expRet.setFeatureNames(['a', 'c'])
+        expTest.features.setNames(['b'])
+        expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
         toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
-        ret = toTest.extractFeatures(match.allValues(lambda x: x < 0))
+        ret = toTest.features.extract(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
         expRet = self.constructor([[-3], [-3], [-3], [-3]])
-        expTest.setFeatureNames(['a', 'b'])
-        expRet.setFeatureNames(['c'])
+        expTest.features.setNames(['a', 'b'])
+        expRet.features.setNames(['c'])
         assert toTest == expTest
         assert ret == expRet
 
-    ################
-    # deletePoints #
-    ################
+    #################
+    # points.delete #
+    #################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_deletePoints_calls_constructIndicesList(self, mockFunc):
+    def test_points_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
-        toTest.deletePoints(['a', 'b'])
+        toTest.points.delete(['a', 'b'])
 
-    def test_deletePoints_handmadeSingle(self):
-        """ Test deletePoints() against handmade output when deleting one point """
+    def test_points_delete_handmadeSingle(self):
+        """ Test points.delete() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.deletePoints(0)
+        toTest.points.delete(0)
         expEnd = self.constructor([[4, 5, 6], [7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_deletePoints_index_NamePath_Preserve(self):
+    def test_points_delete_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4819,18 +4831,18 @@ class StructureModifying(StructureShared):
         toTest._absPath = 'testAbsPath'
         toTest._relPath = 'testRelPath'
 
-        toTest.deletePoints(0)
+        toTest.points.delete(0)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deletePoints_ListIntoPEmpty(self):
-        """ Test deletePoints() by deleting a list of all points """
+    def test_points_delete_ListIntoPEmpty(self):
+        """ Test points.delete() by deleting a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
-        toTest.deletePoints([0, 1, 2, 3])
+        toTest.points.delete([0, 1, 2, 3])
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -4839,54 +4851,54 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_deletePoints_handmadeListSequence(self):
-        """ Test deletePoints() against handmade output for several list deletions """
+    def test_points_delete_handmadeListSequence(self):
+        """ Test points.delete() against handmade output for several list deletions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        toTest.deletePoints('1')
+        toTest.points.delete('1')
         exp1 = self.constructor([[4, 5, 6], [7, 8, 9], [10, 11, 12]], pointNames=['4', '7', '10'])
         assert toTest.isIdentical(exp1)
-        toTest.deletePoints([1, 2])
+        toTest.points.delete([1, 2])
         exp2 = self.constructor([[4, 5, 6]], pointNames=['4'])
         assert toTest.isIdentical(exp2)
 
-    def test_deletePoints_handmadeListOrdering(self):
-        """ Test deletePoints() against handmade output for out of order deletion """
+    def test_points_delete_handmadeListOrdering(self):
+        """ Test points.delete() against handmade output for out of order deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
-        toTest.deletePoints([3, 4, 1])
+        toTest.points.delete([3, 4, 1])
         expEnd = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=['1', '7'])
         assert toTest.isIdentical(expEnd)
 
-    def test_deletePoints_List_trickyOrdering(self):
+    def test_points_delete_List_trickyOrdering(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         toDelete = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
 
-        toTest.deletePoints(toDelete)
+        toTest.points.delete(toDelete)
 
         expRaw = [[0], [2], [2], [0], [0], [2]]
         expRem = self.constructor(expRaw)
 
         assert toTest == expRem
 
-    def test_deletePoints_function_selectionGap(self):
+    def test_points_delete_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         deleteIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in deleteIndices:
+            if int(point.points.getName(0)) in deleteIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, pointNames=pnames)
 
-        toTest.deletePoints(sel)
+        toTest.points.delete(sel)
 
         expRaw = [[0], [2], [2], [0], [0], [2]]
         expNames = ['0', '1', '2', '4', '7', '8']
@@ -4895,12 +4907,12 @@ class StructureModifying(StructureShared):
         assert toTest == expRem
 
 
-    def test_deletePoints_functionIntoPEmpty(self):
-        """ Test deletePoints() by removing all points using a function """
+    def test_points_delete_functionIntoPEmpty(self):
+        """ Test points.delete() by removing all points using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.deletePoints(allTrue)
+        toTest.points.delete(allTrue)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -4908,25 +4920,25 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_deletePoints_function_returnPointEmpty(self):
+    def test_points_delete_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        toTest.deletePoints(allFalse)
+        toTest.points.delete(allFalse)
 
         assert toTest.isIdentical(exp)
 
-    def test_deletePoints_handmadeFunction(self):
-        """ Test deletePoints() against handmade output for function deletion """
+    def test_points_delete_handmadeFunction(self):
+        """ Test points.delete() against handmade output for function deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.deletePoints(oneOrFour)
+        toTest.points.delete(oneOrFour)
         expEnd = self.constructor([[7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_deletePoints_func_NamePath_preservation(self):
+    def test_points_delete_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4934,59 +4946,59 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.deletePoints(oneOrFour)
+        toTest.points.delete(oneOrFour)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deletePoints_handmadeFuncionWithFeatureNames(self):
-        """ Test deletePoints() against handmade output for function deletion with featureNames"""
+    def test_points_delete_handmadeFuncionWithFeatureNames(self):
+        """ Test points.delete() against handmade output for function deletion with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        toTest.deletePoints(oneOrFour)
+        toTest.points.delete(oneOrFour)
         expEnd = self.constructor([[7, 8, 9]], featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
 
     @raises(ArgumentException)
-    def test_deletePoints_exceptionStartInvalid(self):
-        """ Test deletePoints() for ArgumentException when start is not a valid point index """
+    def test_points_delete_exceptionStartInvalid(self):
+        """ Test points.delete() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deletePoints(start=1.1, end=2)
+        toTest.points.delete(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_deletePoints_exceptionEndInvalid(self):
-        """ Test deletePoints() for ArgumentException when start is not a valid Point index """
+    def test_points_delete_exceptionEndInvalid(self):
+        """ Test points.delete() for ArgumentException when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deletePoints(start=1, end=5)
+        toTest.points.delete(start=1, end=5)
 
     @raises(ArgumentException)
-    def test_deletePoints_exceptionInversion(self):
-        """ Test deletePoints() for ArgumentException when start comes after end """
+    def test_points_delete_exceptionInversion(self):
+        """ Test points.delete() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deletePoints(start=2, end=0)
+        toTest.points.delete(start=2, end=0)
 
-    def test_deletePoints_handmadeRange(self):
-        """ Test deletePoints() against handmade output for range deletion """
+    def test_points_delete_handmadeRange(self):
+        """ Test points.delete() against handmade output for range deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.deletePoints(start=1, end=2)
+        toTest.points.delete(start=1, end=2)
 
         expectedTest = self.constructor([[1, 2, 3]])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_range_NamePath_preservation(self):
+    def test_points_delete_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4994,20 +5006,20 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.deletePoints(start=1, end=2)
+        toTest.points.delete(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deletePoints_rangeIntoPEmpty(self):
-        """ Test deletePoints() removes all points using ranges """
+    def test_points_delete_rangeIntoPEmpty(self):
+        """ Test points.delete() removes all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints(start=0, end=2)
+        toTest.points.delete(start=0, end=2)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -5016,293 +5028,293 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_deletePoints_handmadeRangeWithFeatureNames(self):
-        """ Test deletePoints() against handmade output for range deletion with featureNames """
+    def test_points_delete_handmadeRangeWithFeatureNames(self):
+        """ Test points.delete() against handmade output for range deletion with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints(start=1, end=2)
+        toTest.points.delete(start=1, end=2)
 
         expectedTest = self.constructor([[1, 2, 3]], pointNames=['1'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_handmadeRangeRand_FM(self):
-        """ Test deletePoints() for correct sizes when using randomized range deletion and featureNames """
+    def test_points_delete_handmadeRangeRand_FM(self):
+        """ Test points.delete() for correct sizes when using randomized range deletion and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deletePoints(start=0, end=2, number=2, randomize=True)
+        toTest.points.delete(start=0, end=2, number=2, randomize=True)
 
-        assert toTest.points == 1
+        assert len(toTest.points) == 1
 
-    def test_deletePoints_handmadeRangeDefaults(self):
-        """ Test deletePoints uses the correct defaults in the case of range based deletion """
+    def test_points_delete_handmadeRangeDefaults(self):
+        """ Test points.delete uses the correct defaults in the case of range based deletion """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints(end=1)
+        toTest.points.delete(end=1)
 
         expectedTest = self.constructor([[7, 8, 9]], pointNames=['7'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints(start=1)
+        toTest.points.delete(start=1)
 
         expectedTest = self.constructor([[1, 2, 3]], pointNames=['1'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_handmade_calling_pointNames(self):
+    def test_points_delete_handmade_calling_pointNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints(start='4', end='7')
+        toTest.points.delete(start='4', end='7')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_handmadeString(self):
+    def test_points_delete_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one=1')
+        toTest.points.delete('one=1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one==1')
+        toTest.points.delete('one==1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one<2')
+        toTest.points.delete('one<2')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one<=1')
+        toTest.points.delete('one<=1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one>4')
+        toTest.points.delete('one>4')
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one>=7')
+        toTest.points.delete('one>=7')
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one!=4')
+        toTest.points.delete('one!=4')
         expectedTest = self.constructor([[4, 5, 6]], pointNames=[pointNames[1]], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one<1')
+        toTest.points.delete('one<1')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one>0')
+        toTest.points.delete('one>0')
         expectedTest = self.constructor([], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_handmadeStringWithOperatorWhitespace(self):
+    def test_points_delete_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one = 1')
+        toTest.points.delete('one = 1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one == 1')
+        toTest.points.delete('one == 1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one < 2')
+        toTest.points.delete('one < 2')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one <= 1')
+        toTest.points.delete('one <= 1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one > 4')
+        toTest.points.delete('one > 4')
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one >= 7')
+        toTest.points.delete('one >= 7')
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one != 4')
+        toTest.points.delete('one != 4')
         expectedTest = self.constructor([[4, 5, 6]], pointNames=[pointNames[1]], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one < 1')
+        toTest.points.delete('one < 1')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('one > 0')
+        toTest.points.delete('one > 0')
         expectedTest = self.constructor([], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_handmadeStringWithFeatureWhitespace(self):
+    def test_points_delete_handmadeStringWithFeatureWhitespace(self):
         featureNames = ["feature one", "feature two", "feature three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('feature one=1')
+        toTest.points.delete('feature one=1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('feature one = 1')
+        toTest.points.delete('feature one = 1')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deletePoints_list_mixed(self):
-        """ Test deletePoints() list input with mixed names and indices """
+    def test_points_delete_list_mixed(self):
+        """ Test points.delete() list input with mixed names and indices """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        toTest.deletePoints(['1',1,-1])
+        toTest.points.delete(['1',1,-1])
         exp1 = self.constructor([[7, 8, 9]], pointNames=['7'])
         assert toTest.isIdentical(exp1)
 
     @raises(ArgumentException)
-    def test_deletePoints_handmadeString_featureNotExist(self):
+    def test_points_delete_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deletePoints('four=1')
+        toTest.points.delete('four=1')
 
-    def test_deletePoints_numberOnly(self):
+    def test_points_delete_numberOnly(self):
         self.back_delete_numberOnly('point')
 
-    def test_deletePoints_functionAndNumber(self):
+    def test_points_delete_functionAndNumber(self):
         self.back_delete_functionAndNumber('point')
 
-    def test_deletePoints_numberAndRandomizeAllData(self):
+    def test_points_delete_numberAndRandomizeAllData(self):
         self.back_delete_numberAndRandomizeAllData('point')
 
-    def test_deletePoints_numberAndRandomizeSelectedData(self):
+    def test_points_delete_numberAndRandomizeSelectedData(self):
         self.back_delete_numberAndRandomizeSelectedData('point')
 
     @raises(ArgumentException)
-    def test_deletePoints_randomizeNoNumber(self):
+    def test_points_delete_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('delete', 'point')
 
     @raises(ArgumentException)
-    def test_deletePoints_list_numberGreaterThanTargeted(self):
+    def test_points_delete_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('delete', 'point')
 
     @raises(ArgumentException)
-    def test_deletePoints_function_numberGreaterThanTargeted(self):
+    def test_points_delete_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('delete', 'point')
 
     @raises(ArgumentException)
-    def test_deletePoints_range_numberGreaterThanTargeted(self):
+    def test_points_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
 
     ### using match module ###
 
-    def test_deletePoints_match_missing(self):
+    def test_points_delete_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.anyMissing)
+        toTest.points.delete(match.anyMissing)
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.allMissing)
+        toTest.points.delete(match.allMissing)
         exp = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
-    def test_deletePoints_match_nonNumeric(self):
+    def test_points_delete_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.anyNonNumeric)
+        toTest.points.delete(match.anyNonNumeric)
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.allNonNumeric)
+        toTest.points.delete(match.allNonNumeric)
         exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
-    def test_deletePoints_match_list(self):
+    def test_points_delete_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.anyValues(['a', 'c', 'x']))
+        toTest.points.delete(match.anyValues(['a', 'c', 'x']))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.allValues(['a', 'c', 'x']))
+        toTest.points.delete(match.allValues(['a', 'c', 'x']))
         exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
-    def test_deletePoints_match_function(self):
+    def test_points_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.anyValues(lambda x: x < 0))
+        toTest.points.delete(match.anyValues(lambda x: x < 0))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
         toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deletePoints(match.allValues(lambda x: x < 0))
+        toTest.points.delete(match.allValues(lambda x: x < 0))
         exp = self.constructor([[-1, 11, -3], [7, 11, -3], [7, 8, 9]])
-        exp.setFeatureNames(['a', 'b', 'c'])
+        exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
     #########################
@@ -5311,15 +5323,15 @@ class StructureModifying(StructureShared):
 
     def back_delete_numberOnly(self, axis):
         if axis == 'point':
-            toCall = "deletePoints"
+            toCall = "points"
         else:
-            toCall = "deleteFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        getattr(toTest, toCall)(number=3)
+        getattr(toTest, toCall).delete(number=3)
         if axis == 'point':
             rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
         else:
@@ -5329,15 +5341,15 @@ class StructureModifying(StructureShared):
 
     def back_delete_functionAndNumber(self, axis):
         if axis == 'point':
-            toCall = "deletePoints"
+            toCall = "points"
         else:
-            toCall = "deleteFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        getattr(toTest, toCall)(allTrue, number=2)
+        getattr(toTest, toCall).delete(allTrue, number=2)
         if axis == 'point':
             rem = self.constructor(data[2:], pointNames=pnames[2:], featureNames=fnames)
         else:
@@ -5350,9 +5362,9 @@ class StructureModifying(StructureShared):
         given number provides the same result for all input types if using all the data
         """
         if axis == 'point':
-            toCall = "deletePoints"
+            toCall = "points"
         else:
-            toCall = "deleteFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -5364,25 +5376,25 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest1, toCall)(number=3, randomize=True)
+        getattr(toTest1, toCall).delete(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
+        getattr(toTest2, toCall).delete([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        getattr(toTest3, toCall).delete(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        getattr(toTest4, toCall).delete(allTrue, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert toTest1.points == 1
+            assert len(toTest1.points) == 1
         else:
-            assert toTest1.features == 1
+            assert len(toTest1.features) == 1
 
         assert toTest1.isIdentical(toTest2)
         assert toTest1.isIdentical(toTest3)
@@ -5391,9 +5403,9 @@ class StructureModifying(StructureShared):
     def back_delete_numberAndRandomizeSelectedData(self, axis):
         """test that randomization occurs after the data has been selected from the user inputs """
         if axis == 'point':
-            toCall = "deletePoints"
+            toCall = "points"
         else:
-            toCall = "deleteFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -5410,45 +5422,45 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        getattr(toTest2, toCall).delete(start=1, end=2, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        getattr(toTest3, toCall).delete(middleRowsOrCols, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
         assert toTest3.isIdentical(exp1) or toTest3.isIdentical(exp2)
 
-    ##################
-    # deleteFeatures #
-    ##################
+    ###################
+    # features.delete #
+    ###################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_deleteFeatures_calls_constructIndicesList(self, mockFunc):
+    def test_features_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
-        toTest.deleteFeatures(['a', 'b'])
+        toTest.features.delete(['a', 'b'])
 
-    def test_deleteFeatures_handmadeSingle(self):
-        """ Test deleteFeatures() against handmade output when deleting one feature """
+    def test_features_delete_handmadeSingle(self):
+        """ Test features.delete() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.deleteFeatures(0)
+        toTest.features.delete(0)
 
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
-    def test_deleteFeatures_List_NamePath_Preserve(self):
+    def test_features_delete_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -5456,18 +5468,18 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.deleteFeatures(0)
+        toTest.features.delete(0)
 
         assert toTest.path == 'testAbsPath'
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deleteFeatures_ListIntoFEmpty(self):
-        """ Test deleteFeatures() by removing a list of all features """
+    def test_features_delete_ListIntoFEmpty(self):
+        """ Test features.delete() by removing a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
-        toTest.deleteFeatures([0, 1, 2])
+        toTest.features.delete([0, 1, 2])
 
         data = [[], [], [], []]
         data = numpy.array(data)
@@ -5475,11 +5487,11 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_deleteFeatures_ListIntoFEmptyOutOfOrder(self):
-        """ Test deleteFeatures() by removing a list of all features """
+    def test_features_delete_ListIntoFEmptyOutOfOrder(self):
+        """ Test features.delete() by removing a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
-        toTest.deleteFeatures([2, 0, 1])
+        toTest.features.delete([2, 0, 1])
 
         data = [[], [], [], []]
         data = numpy.array(data)
@@ -5488,51 +5500,51 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    def test_deleteFeatures_handmadeListSequence(self):
-        """ Test deleteFeatures() against handmade output for several deletions by list """
+    def test_features_delete_handmadeListSequence(self):
+        """ Test features.delete() against handmade output for several deletions by list """
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data, pointNames=pointNames)
-        toTest.deleteFeatures([0])
+        toTest.features.delete([0])
         exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], pointNames=pointNames)
         assert toTest.isIdentical(exp1)
-        toTest.deleteFeatures([2, 1])
+        toTest.features.delete([2, 1])
         expEndData = [[2], [5], [8]]
         exp2 = self.constructor(expEndData, pointNames=pointNames)
         assert toTest.isIdentical(exp2)
 
-    def test_deleteFeatures_handmadeListWithFeatureName(self):
-        """ Test deleteFeatures() against handmade output for list deletion when specifying featureNames """
+    def test_features_delete_handmadeListWithFeatureName(self):
+        """ Test features.delete() against handmade output for list deletion when specifying featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(["one"])
+        toTest.features.delete(["one"])
         exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
         assert toTest.isIdentical(exp1)
-        toTest.deleteFeatures(["three", "neg"])
+        toTest.features.delete(["three", "neg"])
         exp2 = self.constructor([[2], [5], [8]], featureNames=["two"])
         assert toTest.isIdentical(exp2)
 
 
-    def test_deleteFeatures_List_trickyOrdering(self):
+    def test_features_delete_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         toDelete = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
-        toTest.deleteFeatures(toDelete)
+        toTest.features.delete(toDelete)
 
         expRaw = [0, 1, 1, 0, 0, 1]
         expRem = self.constructor(expRaw)
 
         assert toTest == expRem
 
-    def test_deleteFeatures_List_reorderingWithFeatureNames(self):
+    def test_features_delete_List_reorderingWithFeatureNames(self):
         data = [[1, 2, 3, 10], [4, 5, 6, 11], [7, 8, 9, 12]]
         fnames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, featureNames=fnames)
 
         toDelete = ['a', 'c', 'b']
-        toTest.deleteFeatures(toDelete)
+        toTest.features.delete(toDelete)
         expTestRaw = [[10], [11], [12]]
         expTestNames = ['d']
         expTest = self.constructor(expTestRaw, featureNames=expTestNames)
@@ -5540,20 +5552,20 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
 
-    def test_deleteFeatures_function_selectionGap(self):
+    def test_features_delete_function_selectionGap(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         deleteIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in deleteIndices:
+            if int(feature.features.getName(0)) in deleteIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, featureNames=fnames)
-        toTest.deleteFeatures(sel)
+        toTest.features.delete(sel)
 
         expRaw = [0, 1, 1, 0, 0, 1]
         expNames = ['0', '1', '2', '4', '7', '8']
@@ -5562,12 +5574,12 @@ class StructureModifying(StructureShared):
         assert toTest == expRem
 
 
-    def test_deleteFeatures_functionIntoFEmpty(self):
-        """ Test deleteFeatures() by removing all featuress using a function """
+    def test_features_delete_functionIntoFEmpty(self):
+        """ Test features.delete() by removing all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.deleteFeatures(allTrue)
+        toTest.features.delete(allTrue)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -5575,28 +5587,28 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_deleteFeatures_function_returnPointEmpty(self):
+    def test_features_delete_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        toTest.deleteFeatures(allFalse)
+        toTest.features.delete(allFalse)
 
         assert toTest.isIdentical(exp)
 
 
-    def test_deleteFeatures_handmadeFunction(self):
-        """ Test deleteFeatures() against handmade output for function deletion """
+    def test_features_delete_handmadeFunction(self):
+        """ Test features.delete() against handmade output for function deletion """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
-        toTest.deleteFeatures(absoluteOne)
+        toTest.features.delete(absoluteOne)
 
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
 
-    def test_deleteFeatures_func_NamePath_preservation(self):
+    def test_features_delete_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
@@ -5604,78 +5616,78 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.deleteFeatures(absoluteOne)
+        toTest.features.delete(absoluteOne)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deleteFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test deleteFeatures() against handmade output for function deletion with featureNames """
+    def test_features_delete_handmadeFunctionWithFeatureName(self):
+        """ Test features.delete() against handmade output for function deletion with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        ext = toTest.deleteFeatures(absoluteOne)
+        ext = toTest.features.delete(absoluteOne)
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         assert toTest.isIdentical(expEnd)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionStartInvalid(self):
-        """ Test deleteFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_delete_exceptionStartInvalid(self):
+        """ Test features.delete() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start=1.1, end=2)
+        toTest.features.delete(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionStartInvalidFeatureName(self):
-        """ Test deleteFeatures() for ArgumentException when start is not a valid feature FeatureName """
+    def test_features_delete_exceptionStartInvalidFeatureName(self):
+        """ Test features.delete() for ArgumentException when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start="wrong", end=2)
+        toTest.features.delete(start="wrong", end=2)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionEndInvalid(self):
-        """ Test deleteFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_delete_exceptionEndInvalid(self):
+        """ Test features.delete() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start=0, end=5)
+        toTest.features.delete(start=0, end=5)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionEndInvalidFeatureName(self):
-        """ Test deleteFeatures() for ArgumentException when end is not a valid featureName """
+    def test_features_delete_exceptionEndInvalidFeatureName(self):
+        """ Test features.delete() for ArgumentException when end is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start="two", end="five")
+        toTest.features.delete(start="two", end="five")
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionInversion(self):
-        """ Test deleteFeatures() for ArgumentException when start comes after end """
+    def test_features_delete_exceptionInversion(self):
+        """ Test features.delete() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start=2, end=0)
+        toTest.features.delete(start=2, end=0)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_exceptionInversionFeatureName(self):
-        """ Test deleteFeatures() for ArgumentException when start comes after end as FeatureNames"""
+    def test_features_delete_exceptionInversionFeatureName(self):
+        """ Test features.delete() for ArgumentException when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start="two", end="one")
+        toTest.features.delete(start="two", end="one")
 
-    def test_deleteFeatures_rangeIntoFEmpty(self):
-        """ Test deleteFeatures() removes all Featuress using ranges """
+    def test_features_delete_rangeIntoFEmpty(self):
+        """ Test features.delete() removes all Featuress using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures(start=0, end=2)
+        toTest.features.delete(start=0, end=2)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -5683,17 +5695,17 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-    def test_deleteFeatures_handmadeRange(self):
-        """ Test deleteFeatures() against handmade output for range deletion """
+    def test_features_delete_handmadeRange(self):
+        """ Test features.delete() against handmade output for range deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.deleteFeatures(start=1, end=2)
+        toTest.features.delete(start=1, end=2)
 
         expectedTest = self.constructor([[1], [4], [7]])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_range_NamePath_preservation(self):
+    def test_features_delete_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -5701,297 +5713,297 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.deleteFeatures(start=1, end=2)
+        toTest.features.delete(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_deleteFeatures_handmadeWithFeatureNames(self):
-        """ Test deleteFeatures() against handmade output for range deletion with FeatureNames """
+    def test_features_delete_handmadeWithFeatureNames(self):
+        """ Test features.delete() against handmade output for range deletion with FeatureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures(start=1, end=2)
+        toTest.features.delete(start=1, end=2)
 
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=["one"])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_handmade_calling_featureNames(self):
+    def test_features_delete_handmade_calling_featureNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures(start="two", end="three")
+        toTest.features.delete(start="two", end="three")
 
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=["one"])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_handmadeString(self):
+    def test_features_delete_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p2=5')
+        toTest.features.delete('p2=5')
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1==1')
+        toTest.features.delete('p1==1')
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3<9')
+        toTest.features.delete('p3<9')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3<=8')
+        toTest.features.delete('p3<=8')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3>8')
+        toTest.features.delete('p3>8')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3>8.5')
+        toTest.features.delete('p3>8.5')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1!=1.0')
+        toTest.features.delete('p1!=1.0')
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1<1')
+        toTest.features.delete('p1<1')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1>0')
+        toTest.features.delete('p1>0')
         expectedTest = self.constructor([[], [], []], pointNames=pointNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_handmadeStringWithOperatorWhitespace(self):
+    def test_features_delete_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p2 = 5')
+        toTest.features.delete('p2 = 5')
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1 == 1')
+        toTest.features.delete('p1 == 1')
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3 < 9')
+        toTest.features.delete('p3 < 9')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3 <= 8')
+        toTest.features.delete('p3 <= 8')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3 > 8')
+        toTest.features.delete('p3 > 8')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p3 > 8.5')
+        toTest.features.delete('p3 > 8.5')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1 != 1.0')
+        toTest.features.delete('p1 != 1.0')
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1 < 1')
+        toTest.features.delete('p1 < 1')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('p1 > 0')
+        toTest.features.delete('p1 > 0')
         expectedTest = self.constructor([[],[],[]], pointNames=pointNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_handmadeStringWithPointWhitespace(self):
+    def test_features_delete_handmadeStringWithPointWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['pt 1', 'pt 2', 'pt 3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value with no operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('pt 2=5')
+        toTest.features.delete('pt 2=5')
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
         #test pointName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('pt 2 = 5')
+        toTest.features.delete('pt 2 = 5')
         expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
-    def test_deleteFeatures_list_mixed(self):
-        """ Test deleteFeatures() list input with mixed names and indices """
+    def test_features_delete_list_mixed(self):
+        """ Test features.delete() list input with mixed names and indices """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.deleteFeatures([1, "three", -1])
+        toTest.features.delete([1, "three", -1])
         exp1 = self.constructor([[1], [4], [7]], featureNames=["one"])
         assert toTest.isIdentical(exp1)
 
     @raises(ArgumentException)
-    def test_deleteFeatures_handmadeString_pointNotExist(self):
+    def test_features_delete_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.deleteFeatures('5=1')
+        toTest.features.delete('5=1')
 
-    def test_deleteFeatures_numberOnly(self):
+    def test_features_delete_numberOnly(self):
         self.back_delete_numberOnly('feature')
 
-    def test_deleteFeatures_functionAndNumber(self):
+    def test_features_delete_functionAndNumber(self):
         self.back_delete_functionAndNumber('feature')
 
-    def test_deleteFeatures_numberAndRandomizeAllData(self):
+    def test_features_delete_numberAndRandomizeAllData(self):
         self.back_delete_numberAndRandomizeAllData('feature')
 
-    def test_deleteFeatures_numberAndRandomizeSelectedData(self):
+    def test_features_delete_numberAndRandomizeSelectedData(self):
         self.back_delete_numberAndRandomizeSelectedData('feature')
 
     @raises(ArgumentException)
-    def test_deleteFeatures_randomizeNoNumber(self):
+    def test_features_delete_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('delete', 'feature')
 
     @raises(ArgumentException)
-    def test_deleteFeatures_list_numberGreaterThanTargeted(self):
+    def test_features_delete_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('delete', 'feature')
 
     @raises(ArgumentException)
-    def test_deleteFeatures_function_numberGreaterThanTargeted(self):
+    def test_features_delete_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('delete', 'feature')
 
     @raises(ArgumentException)
-    def test_deleteFeatures_range_numberGreaterThanTargeted(self):
+    def test_features_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
-    # using match module
+    ### using match module ###
 
-    def test_deleteFeatures_match_missing(self):
+    def test_features_delete_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.anyMissing)
+        toTest.features.delete(match.anyMissing)
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.allMissing)
+        toTest.features.delete(match.allMissing)
         exp = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
-    def test_deleteFeatures_match_nonNumeric(self):
+    def test_features_delete_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.anyNonNumeric)
+        toTest.features.delete(match.anyNonNumeric)
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.allNonNumeric)
+        toTest.features.delete(match.allNonNumeric)
         exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
-    def test_deleteFeatures_match_list(self):
+    def test_features_delete_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.anyValues(['a', 'c', 'x']))
+        toTest.features.delete(match.anyValues(['a', 'c', 'x']))
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.allValues(['a', 'c', 'x']))
+        toTest.features.delete(match.allValues(['a', 'c', 'x']))
         exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
-    def test_deleteFeatures_match_function(self):
+    def test_features_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.anyValues(lambda x: x < 0))
+        toTest.features.delete(match.anyValues(lambda x: x < 0))
         exp = self.constructor([[2], [11], [11], [8]])
-        exp.setFeatureNames(['b'])
+        exp.features.setNames(['b'])
         assert toTest == exp
 
         toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
-        toTest.deleteFeatures(match.allValues(lambda x: x < 0))
+        toTest.features.delete(match.allValues(lambda x: x < 0))
         exp = self.constructor([[1, 2], [-1, 11], [-1, 11], [7, 8]])
-        exp.setFeatureNames(['a', 'b'])
+        exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
-    ################
-    # retainPoints #
-    ################
+    #################
+    # points.retain #
+    #################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_retainPoints_calls_constructIndicesList(self, mockFunc):
-        """ Test retainPoints calls _constructIndicesList before calling _genericStructuralFrontend"""
+    def test_points_retain_calls_constructIndicesList(self, mockFunc):
+        """ Test points.retain calls _constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
-        toTest.retainPoints(['a', 'b'])
+        toTest.points.retain(['a', 'b'])
 
-    def test_retainPoints_handmadeSingle(self):
-        """ Test retainPoints() against handmade output when retaining one point """
+    def test_points_retain_handmadeSingle(self):
+        """ Test points.retain() against handmade output when retaining one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.retainPoints(0)
+        toTest.points.retain(0)
         exp1 = self.constructor([[1, 2, 3]])
         assert toTest.isIdentical(exp1)
 
-    def test_retainPoints_index_NamePath_Preserve(self):
+    def test_points_retain_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -5999,102 +6011,102 @@ class StructureModifying(StructureShared):
         toTest._absPath = 'testAbsPath'
         toTest._relPath = 'testRelPath'
 
-        toTest.retainPoints(0)
+        toTest.points.retain(0)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainPoints_list_retain_all(self):
-        """ Test retainPoints() by retaining a list of all points """
+    def test_points_retain_list_retain_all(self):
+        """ Test points.retain() by retaining a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         exp = self.constructor(data)
-        toTest.retainPoints([0, 1, 2, 3])
+        toTest.points.retain([0, 1, 2, 3])
 
         assert toTest.isIdentical(exp)
 
-    def test_retainPoints_list_retain_nothing(self):
-        """ Test retainPoints() by retaining an empty list """
+    def test_points_retain_list_retain_nothing(self):
+        """ Test points.retain() by retaining an empty list """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
-        toTest.retainPoints([])
+        toTest.points.retain([])
 
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
-    def test_retainPoints_pythonRange(self):
-        """ Test retainPoints() by retaining a python range of points """
+    def test_points_retain_pythonRange(self):
+        """ Test points.retain() by retaining a python range of points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         exp = self.constructor([[4, 5, 6], [7, 8, 9]])
-        toTest.retainPoints(range(1,3))
+        toTest.points.retain(range(1,3))
 
         assert toTest.isIdentical(exp)
 
-    def test_retainPoints_handmadeListSequence(self):
-        """ Test retainPoints() against handmade output for several list retentions """
+    def test_points_retain_handmadeListSequence(self):
+        """ Test points.retain() against handmade output for several list retentions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        toTest.retainPoints(['1','4','10'])
+        toTest.points.retain(['1','4','10'])
         exp1 = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
         assert toTest.isIdentical(exp1)
-        toTest.retainPoints(1)
+        toTest.points.retain(1)
         exp2 = self.constructor([4, 5, 6], pointNames=['4'])
         assert toTest.isIdentical(exp2)
 
 
-    def test_retainPoints_list_mixed(self):
-        """ Test retainPoints() list input with mixed names and indices """
+    def test_points_retain_list_mixed(self):
+        """ Test points.retain() list input with mixed names and indices """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
-        toTest.retainPoints(['1',1,-1])
+        toTest.points.retain(['1',1,-1])
         exp1 = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
         assert toTest.isIdentical(exp1)
 
 
-    def test_retainPoints_handmadeListOrdering(self):
-        """ Test retainPoints() against handmade output for out of order retention """
+    def test_points_retain_handmadeListOrdering(self):
+        """ Test points.retain() against handmade output for out of order retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
-        toTest.retainPoints([3, 4, 1])
+        toTest.points.retain([3, 4, 1])
         exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
         assert toTest.isIdentical(exp1)
 
 
-    def test_retainPoints_List_trickyOrdering(self):
+    def test_points_retain_List_trickyOrdering(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         toRetain = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
 
-        toTest.retainPoints(toRetain)
+        toTest.points.retain(toRetain)
 
         expRaw = [[0], [0], [2], [0]]
         expTest = self.constructor(expRaw)
 
         assert toTest == expTest
 
-    def test_retainPoints_function_selectionGap(self):
+    def test_points_retain_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
         retainIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in retainIndices:
+            if int(point.points.getName(0)) in retainIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, pointNames=pnames)
 
-        toTest.retainPoints(sel)
+        toTest.points.retain(sel)
 
         expRaw = [[2], [0], [0], [0]]
         expNames = ['3', '5', '6', '9']
@@ -6103,21 +6115,21 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
 
-    def test_retainPoints_functionIntoPEmpty(self):
-        """ Test retainPoints() by retaining all points using a function """
+    def test_points_retain_functionIntoPEmpty(self):
+        """ Test points.retain() by retaining all points using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        toTest.retainPoints(allTrue)
+        toTest.points.retain(allTrue)
         assert toTest.isIdentical(expTest)
 
 
-    def test_retainPoints_function_returnPointEmpty(self):
+    def test_points_retain_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.retainPoints(allFalse)
+        toTest.points.retain(allFalse)
 
         expData = numpy.array([[], [], []])
         expData = expData.T
@@ -6125,24 +6137,24 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
-    def test_retainPoints_function_NumberAndRandomize(self):
+    def test_points_retain_function_NumberAndRandomize(self):
         data = [[1], [2], [3], [4], [5], [6], [7], [8]]
         toTest = self.constructor(data)
 
-        toTest.retainPoints(evenOnly, number=3, randomize=True)
-        assert toTest.points == 3
+        toTest.points.retain(evenOnly, number=3, randomize=True)
+        assert len(toTest.points) == 3
 
-    def test_retainPoints_handmadeFunction(self):
-        """ Test retainPoints() against handmade output for function retention """
+    def test_points_retain_handmadeFunction(self):
+        """ Test points.retain() against handmade output for function retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.retainPoints(oneOrFour)
+        toTest.points.retain(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
         assert toTest.isIdentical(exp)
 
 
-    def test_retainPoints_func_NamePath_preservation(self):
+    def test_points_retain_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -6150,59 +6162,59 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.retainPoints(oneOrFour)
+        toTest.points.retain(oneOrFour)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainPoints_handmadeFunctionWithFeatureNames(self):
-        """ Test retainPoints() against handmade output for function retention with featureNames"""
+    def test_points_retain_handmadeFunctionWithFeatureNames(self):
+        """ Test points.retain() against handmade output for function retention with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        toTest.retainPoints(oneOrFour)
+        toTest.points.retain(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
         assert toTest.isIdentical(exp)
 
 
     @raises(ArgumentException)
-    def test_retainPoints_exceptionStartInvalid(self):
-        """ Test retainPoints() for ArgumentException when start is not a valid point index """
+    def test_points_retain_exceptionStartInvalid(self):
+        """ Test points.retain() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainPoints(start=1.1, end=2)
+        toTest.points.retain(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_retainPoints_exceptionEndInvalid(self):
-        """ Test retainPoints() for ArgumentException when start is not a valid Point index """
+    def test_points_retain_exceptionEndInvalid(self):
+        """ Test points.retain() for ArgumentException when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainPoints(start=1, end=5)
+        toTest.points.retain(start=1, end=5)
 
     @raises(ArgumentException)
-    def test_retainPoints_exceptionInversion(self):
-        """ Test retainPoints() for ArgumentException when start comes after end """
+    def test_points_retain_exceptionInversion(self):
+        """ Test points.retain() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainPoints(start=2, end=0)
+        toTest.points.retain(start=2, end=0)
 
-    def test_retainPoints_handmadeRange(self):
-        """ Test retainPoints() against handmade output for range retention """
+    def test_points_retain_handmadeRange(self):
+        """ Test points.retain() against handmade output for range retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.retainPoints(start=1, end=2)
+        toTest.points.retain(start=1, end=2)
 
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_range_NamePath_preservation(self):
+    def test_points_retain_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -6210,124 +6222,124 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.retainPoints(start=1, end=2)
+        toTest.points.retain(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainPoints_rangeIntoPEmpty(self):
-        """ Test retainPoints() retains all points using ranges """
+    def test_points_retain_rangeIntoPEmpty(self):
+        """ Test points.retain() retains all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         expRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints(start=0, end=2)
+        toTest.points.retain(start=0, end=2)
 
         assert toTest.isIdentical(expRet)
 
 
-    def test_retainPoints_handmadeRangeWithFeatureNames(self):
-        """ Test retainPoints() against handmade output for range retention with featureNames """
+    def test_points_retain_handmadeRangeWithFeatureNames(self):
+        """ Test points.retain() against handmade output for range retention with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints(start=1, end=2)
+        toTest.points.retain(start=1, end=2)
 
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_handmadeRangeRand_FM(self):
-        """ Test retainPoints() for correct sizes when using randomized range retention and featureNames """
+    def test_points_retain_handmadeRangeRand_FM(self):
+        """ Test points.retain() for correct sizes when using randomized range retention and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainPoints(start=0, end=2, number=2, randomize=True)
-        assert toTest.points == 2
+        toTest.points.retain(start=0, end=2, number=2, randomize=True)
+        assert len(toTest.points) == 2
 
-    def test_retainPoints_handmadeRangeDefaults(self):
-        """ Test retainPoints uses the correct defaults in the case of range based retention """
+    def test_points_retain_handmadeRangeDefaults(self):
+        """ Test points.retain uses the correct defaults in the case of range based retention """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints(end=1)
+        toTest.points.retain(end=1)
 
         expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=['1', '4'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints(start=1)
+        toTest.points.retain(start=1)
 
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_handmade_calling_pointNames(self):
+    def test_points_retain_handmade_calling_pointNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints(start='4', end='7')
+        toTest.points.retain(start='4', end='7')
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_handmadeString(self):
+    def test_points_retain_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one=1')
+        toTest.points.retain('one=1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one==1')
+        toTest.points.retain('one==1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one<2')
+        toTest.points.retain('one<2')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one<=1')
+        toTest.points.retain('one<=1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one>4')
+        toTest.points.retain('one>4')
         expectedTest = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one>=7')
+        toTest.points.retain('one>=7')
         expectedTest = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one!=4')
+        toTest.points.retain('one!=4')
         expectedTest = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
 
@@ -6336,7 +6348,7 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one<1')
+        toTest.points.retain('one<1')
         expectedTest = self.constructor([], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
@@ -6344,61 +6356,61 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one>0')
+        toTest.points.retain('one>0')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_handmadeStringWithOperatorWhitespace(self):
+    def test_points_retain_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one = 1')
+        toTest.points.retain('one = 1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one == 1')
+        toTest.points.retain('one == 1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one < 2')
+        toTest.points.retain('one < 2')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one <= 1')
+        toTest.points.retain('one <= 1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one > 4')
+        toTest.points.retain('one > 4')
         expectedTest = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one >= 7')
+        toTest.points.retain('one >= 7')
         expectedTest = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one != 4')
+        toTest.points.retain('one != 4')
         expectedTest = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
                                        featureNames=featureNames)
 
@@ -6407,7 +6419,7 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back an empty
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one < 1')
+        toTest.points.retain('one < 1')
         expectedTest = self.constructor([], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
@@ -6415,119 +6427,119 @@ class StructureModifying(StructureShared):
         #test featureName<value and return back all data
         assert expectedTest.isIdentical(toTest)
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('one > 0')
+        toTest.points.retain('one > 0')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainPoints_handmadeStringWithFeatureWhitespace(self):
+    def test_points_retain_handmadeStringWithFeatureWhitespace(self):
         featureNames = ["feature one", "feature two", "feature three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test featureName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('feature one=1')
+        toTest.points.retain('feature one=1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('feature one = 1')
+        toTest.points.retain('feature one = 1')
         expectedTest = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
     @raises(ArgumentException)
-    def test_retainPoints_handmadeString_featureNotExist(self):
+    def test_points_retain_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainPoints('four=1')
+        toTest.points.retain('four=1')
 
-    def test_retainPoints_numberOnly(self):
+    def test_points_retain_numberOnly(self):
         self.back_retain_numberOnly('point')
 
-    def test_retainPoints_functionAndNumber(self):
+    def test_points_retain_functionAndNumber(self):
         self.back_retain_functionAndNumber('point')
 
-    def test_retainPoints_numberAndRandomizeAllData(self):
+    def test_points_retain_numberAndRandomizeAllData(self):
         self.back_retain_numberAndRandomizeAllData('point')
 
-    def test_retainPoints_numberAndRandomizeSelectedData(self):
+    def test_points_retain_numberAndRandomizeSelectedData(self):
         self.back_retain_numberAndRandomizeSelectedData('point')
 
     @raises(ArgumentException)
-    def test_retainPoints_randomizeNoNumber(self):
+    def test_points_retain_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('retain', 'point')
 
     @raises(ArgumentException)
-    def test_retainPoints_list_numberGreaterThanTargeted(self):
+    def test_points_retain_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('retain', 'point')
 
     @raises(ArgumentException)
-    def test_retainPoints_function_numberGreaterThanTargeted(self):
+    def test_points_retain_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('retain', 'point')
 
     @raises(ArgumentException)
-    def test_retainPoints_range_numberGreaterThanTargeted(self):
+    def test_points_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
 
     ### using match module ###
 
-    def test_retainPoints_match_missing(self):
+    def test_points_retain_match_missing(self):
         toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.anyMissing)
+        ret = toTest.points.retain(match.anyMissing)
         expTest = self.constructor([[None, 11, None], [7, 11, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.allMissing)
+        ret = toTest.points.retain(match.allMissing)
         expTest = self.constructor([[None, None, None]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-    def test_retainPoints_match_nonNumeric(self):
+    def test_points_retain_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.anyNonNumeric)
+        ret = toTest.points.retain(match.anyNonNumeric)
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.allNonNumeric)
+        ret = toTest.points.retain(match.allNonNumeric)
         expTest = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-    def test_retainPoints_match_list(self):
+    def test_points_retain_match_list(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.anyValues(['a', 'c', 'x']))
+        ret = toTest.points.retain(match.anyValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.allValues(['a', 'c', 'x']))
+        ret = toTest.points.retain(match.allValues(['a', 'c', 'x']))
         expTest = self.constructor([['a', 'x', 'c']])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-    def test_retainPoints_match_function(self):
+    def test_points_retain_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.anyValues(lambda x: x < 0))
+        ret = toTest.points.retain(match.anyValues(lambda x: x < 0))
         expTest = self.constructor([[-1, 11, -3], [7, 11, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
         toTest = self.constructor([[-1, -2, -3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainPoints(match.allValues(lambda x: x < 0))
+        ret = toTest.points.retain(match.allValues(lambda x: x < 0))
         expTest = self.constructor([[-1, -2, -3]])
-        expTest.setFeatureNames(['a', 'b', 'c'])
+        expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
     #########################
@@ -6536,15 +6548,15 @@ class StructureModifying(StructureShared):
 
     def back_retain_numberOnly(self, axis):
         if axis == 'point':
-            toCall = "retainPoints"
+            toCall = "points"
         else:
-            toCall = "retainFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        getattr(toTest, toCall)(number=3)
+        getattr(toTest, toCall).retain(number=3)
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
         else:
@@ -6554,15 +6566,15 @@ class StructureModifying(StructureShared):
 
     def back_retain_functionAndNumber(self, axis):
         if axis == 'point':
-            toCall = "retainPoints"
+            toCall = "points"
         else:
-            toCall = "retainFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        getattr(toTest, toCall)([0,1,2], number=2)
+        getattr(toTest, toCall).retain([0,1,2], number=2)
         if axis == 'point':
             exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
         else:
@@ -6575,9 +6587,9 @@ class StructureModifying(StructureShared):
         given number provides the same result for all input types if using all the data
         """
         if axis == 'point':
-            toCall = "retainPoints"
+            toCall = "points"
         else:
-            toCall = "retainFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -6589,25 +6601,25 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest1, toCall)(number=3, randomize=True)
+        getattr(toTest1, toCall).retain(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
+        getattr(toTest2, toCall).retain([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        getattr(toTest3, toCall).retain(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        getattr(toTest4, toCall).retain(allTrue, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         if axis == 'point':
-            assert toTest1.points == 3
+            assert len(toTest1.points) == 3
         else:
-            assert toTest1.features == 3
+            assert len(toTest1.features) == 3
 
         assert toTest1.isIdentical(toTest2)
         assert toTest1.isIdentical(toTest3)
@@ -6616,9 +6628,9 @@ class StructureModifying(StructureShared):
     def back_retain_numberAndRandomizeSelectedData(self, axis):
         """test that randomization occurs after the data has been selected from the user inputs """
         if axis == 'point':
-            toCall = "retainPoints"
+            toCall = "points"
         else:
-            toCall = "retainFeatures"
+            toCall = "features"
 
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
         pnames = ['1', '4', '7', '10']
@@ -6635,45 +6647,45 @@ class StructureModifying(StructureShared):
 
         seed = UML.randomness.generateSubsidiarySeed()
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        getattr(toTest2, toCall).retain(start=1, end=2, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
         UML.randomness.startAlternateControl(seed)
-        getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        getattr(toTest3, toCall).retain(middleRowsOrCols, number=1, randomize=True)
         UML.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
         assert toTest3.isIdentical(exp1) or toTest3.isIdentical(exp2)
 
-    ##################
-    # retainFeatures #
-    ##################
+    ###################
+    # features.retain #
+    ###################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_retainFeatures_calls_constructIndicesList(self, mockFunc):
+    def test_features_retain_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
-        toTest.retainFeatures(['a', 'b'])
+        toTest.features.retain(['a', 'b'])
 
-    def test_retainFeatures_handmadeSingle(self):
-        """ Test retainFeatures() against handmade output when retaining one feature """
+    def test_features_retain_handmadeSingle(self):
+        """ Test features.retain() against handmade output when retaining one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.retainFeatures(0)
+        toTest.features.retain(0)
         exp1 = self.constructor([[1], [4], [7]])
 
         assert toTest.isIdentical(exp1)
 
-    def test_retainFeatures_List_NamePath_Preserve(self):
+    def test_features_retain_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -6681,100 +6693,100 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.retainFeatures(0)
+        toTest.features.retain(0)
 
         assert toTest.path == 'testAbsPath'
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
-    def test_retainFeatures_list_retain_all(self):
-        """ Test retainFeatures() by retaining a list of all features """
+    def test_features_retain_list_retain_all(self):
+        """ Test features.retain() by retaining a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
-        toTest.retainFeatures([0, 1, 2])
+        toTest.features.retain([0, 1, 2])
 
         assert toTest.isIdentical(expTest)
 
-    def test_retainFeatures_list_retain_nothing(self):
-        """ Test retainFeatures() by retaining an empty list """
+    def test_features_retain_list_retain_nothing(self):
+        """ Test features.retain() by retaining an empty list """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
-        toTest.retainFeatures([])
+        toTest.features.retain([])
 
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
-    def test_retainFeatures_pythonRange(self):
-        """ Test retainFeatures() by retaining a python range of points """
+    def test_features_retain_pythonRange(self):
+        """ Test features.retain() by retaining a python range of points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         exp = self.constructor([[2, 3], [5, 6], [8, 9], [11, 12]])
-        toTest.retainFeatures(range(1,3))
+        toTest.features.retain(range(1,3))
 
         assert toTest.isIdentical(exp)
 
-    def test_retainFeatures_ListIntoFEmptyOutOfOrder(self):
-        """ Test retainFeatures() by retaining a list of all features """
+    def test_features_retain_ListIntoFEmptyOutOfOrder(self):
+        """ Test features.retain() by retaining a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expData = [[3, 1, 2], [6, 4, 5], [9, 7, 8], [12, 10, 11]]
         expTest = self.constructor(expData)
-        toTest.retainFeatures([2, 0, 1])
+        toTest.features.retain([2, 0, 1])
 
         assert toTest.isIdentical(expTest)
 
-    def test_retainFeatures_handmadeListSequence(self):
-        """ Test retainFeatures() against handmade output for several retentions by list """
+    def test_features_retain_handmadeListSequence(self):
+        """ Test features.retain() against handmade output for several retentions by list """
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data, pointNames=pointNames)
-        toTest.retainFeatures([1, 2, 3])
+        toTest.features.retain([1, 2, 3])
         exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], pointNames=pointNames)
         assert toTest.isIdentical(exp1)
-        toTest.retainFeatures([2, 1])
+        toTest.features.retain([2, 1])
         exp2 = self.constructor([[-1, 3], [-2, 6], [-3, 9]], pointNames=pointNames)
         assert toTest.isIdentical(exp2)
 
-    def test_retainFeatures_handmadeListWithFeatureName(self):
-        """ Test retainFeatures() against handmade output for list retention when specifying featureNames """
+    def test_features_retain_handmadeListWithFeatureName(self):
+        """ Test features.retain() against handmade output for list retention when specifying featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(["two", "three", "neg"])
+        toTest.features.retain(["two", "three", "neg"])
         exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
         assert toTest.isIdentical(exp1)
-        toTest.retainFeatures(["three", "neg"])
+        toTest.features.retain(["three", "neg"])
         exp2 = self.constructor([[3, -1], [6, -2], [9, -3]], featureNames=["three", "neg"])
         assert toTest.isIdentical(exp2)
 
 
-    def test_retainFeatures_list_mixed(self):
-        """ Test retainFeatures() list input with mixed names and indices """
+    def test_features_retain_list_mixed(self):
+        """ Test features.retain() list input with mixed names and indices """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures([1, "three", -1])
+        toTest.features.retain([1, "three", -1])
         exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
         assert toTest.isIdentical(exp1)
 
 
-    def test_retainFeatures_List_trickyOrdering(self):
+    def test_features_retain_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         toRetain = [6, 5, 3, 9]
 
         toTest = self.constructor(data)
 
-        toTest.retainFeatures(toRetain)
+        toTest.features.retain(toRetain)
 
         expRaw = [0, 0, 1, 0]
         expTest = self.constructor(expRaw)
 
         assert toTest == expTest
 
-    def test_retainFeatures_List_reorderingWithFeatureNames(self):
+    def test_features_retain_List_reorderingWithFeatureNames(self):
         data = [[1, 2, 3, 10], [4, 5, 6, 11], [7, 8, 9, 12]]
         fnames = ['a', 'b', 'c', 'd']
         test = self.constructor(data, featureNames=fnames)
@@ -6783,25 +6795,25 @@ class StructureModifying(StructureShared):
         expRetNames = ['a', 'c', 'b']
         exp = self.constructor(expRetRaw, featureNames=expRetNames)
 
-        test.retainFeatures(expRetNames)
+        test.features.retain(expRetNames)
         assert test == exp
 
 
-    def test_retainFeatures_function_selectionGap(self):
+    def test_features_retain_function_selectionGap(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         retainIndices = [3, 5, 6, 9]
 
         def sel(feature):
-            if int(feature.getFeatureName(0)) in retainIndices:
+            if int(feature.features.getName(0)) in retainIndices:
                 return True
             else:
                 return False
 
         toTest = self.constructor(data, featureNames=fnames)
 
-        toTest.retainFeatures(sel)
+        toTest.features.retain(sel)
 
         expRaw = [1, 0, 0, 0]
         expNames = ['3', '5', '6', '9']
@@ -6810,20 +6822,20 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
 
-    def test_retainFeatures_functionIntoFEmpty(self):
-        """ Test retainFeatures() by retaining all featuress using a function """
+    def test_features_retain_functionIntoFEmpty(self):
+        """ Test features.retain() by retaining all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        toTest.retainFeatures(allTrue)
+        toTest.features.retain(allTrue)
         assert toTest.isIdentical(expTest)
 
-    def test_retainFeatures_function_returnPointEmpty(self):
+    def test_features_retain_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.retainFeatures(allFalse)
+        toTest.features.retain(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -6831,23 +6843,23 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
-    def test_retainFeatures_function_NumberAndRandomize(self):
+    def test_features_retain_function_NumberAndRandomize(self):
         data = [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]]
         toTest = self.constructor(data)
 
-        toTest.retainFeatures(evenOnly, number=2, randomize=True)
-        assert toTest.features == 2
+        toTest.features.retain(evenOnly, number=2, randomize=True)
+        assert len(toTest.features) == 2
 
-    def test_retainFeatures_handmadeFunction(self):
-        """ Test retainFeatures() against handmade output for function retention """
+    def test_features_retain_handmadeFunction(self):
+        """ Test features.retain() against handmade output for function retention """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
-        toTest.retainFeatures(absoluteOne)
+        toTest.features.retain(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
         assert toTest.isIdentical(exp)
 
-    def test_retainFeatures_func_NamePath_preservation(self):
+    def test_features_retain_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
@@ -6855,95 +6867,95 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.retainFeatures(absoluteOne)
+        toTest.features.retain(absoluteOne)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test retainFeatures() against handmade output for function retention with featureNames """
+    def test_features_retain_handmadeFunctionWithFeatureName(self):
+        """ Test features.retain() against handmade output for function retention with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        toTest.retainFeatures(absoluteOne)
+        toTest.features.retain(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
         assert toTest.isIdentical(exp)
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionStartInvalid(self):
-        """ Test retainFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_retain_exceptionStartInvalid(self):
+        """ Test features.retain() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start=1.1, end=2)
+        toTest.features.retain(start=1.1, end=2)
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionStartInvalidFeatureName(self):
-        """ Test retainFeatures() for ArgumentException when start is not a valid feature FeatureName """
+    def test_features_retain_exceptionStartInvalidFeatureName(self):
+        """ Test features.retain() for ArgumentException when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start="wrong", end=2)
+        toTest.features.retain(start="wrong", end=2)
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionEndInvalid(self):
-        """ Test retainFeatures() for ArgumentException when start is not a valid feature index """
+    def test_features_retain_exceptionEndInvalid(self):
+        """ Test features.retain() for ArgumentException when start is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start=0, end=5)
+        toTest.features.retain(start=0, end=5)
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionEndInvalidFeatureName(self):
-        """ Test retainFeatures() for ArgumentException when start is not a valid featureName """
+    def test_features_retain_exceptionEndInvalidFeatureName(self):
+        """ Test features.retain() for ArgumentException when start is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start="two", end="five")
+        toTest.features.retain(start="two", end="five")
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionInversion(self):
-        """ Test retainFeatures() for ArgumentException when start comes after end """
+    def test_features_retain_exceptionInversion(self):
+        """ Test features.retain() for ArgumentException when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start=2, end=0)
+        toTest.features.retain(start=2, end=0)
 
     @raises(ArgumentException)
-    def test_retainFeatures_exceptionInversionFeatureName(self):
-        """ Test retainFeatures() for ArgumentException when start comes after end as FeatureNames"""
+    def test_features_retain_exceptionInversionFeatureName(self):
+        """ Test features.retain() for ArgumentException when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start="two", end="one")
+        toTest.features.retain(start="two", end="one")
 
 
-    def test_retainFeatures_rangeIntoFEmpty(self):
-        """ Test retainFeatures() retains all features using ranges """
+    def test_features_retain_rangeIntoFEmpty(self):
+        """ Test features.retain() retains all features using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         expTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainFeatures(start=0, end=2)
+        toTest.features.retain(start=0, end=2)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_retainFeatures_handmadeRange(self):
-        """ Test retainFeatures() against handmade output for range retention """
+    def test_features_retain_handmadeRange(self):
+        """ Test features.retain() against handmade output for range retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        toTest.retainFeatures(start=1, end=2)
+        toTest.features.retain(start=1, end=2)
 
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainFeatures_range_NamePath_preservation(self):
+    def test_features_retain_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -6951,283 +6963,229 @@ class StructureModifying(StructureShared):
         toTest._absPath = "testAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.retainFeatures(start=1, end=2)
+        toTest.features.retain(start=1, end=2)
 
         assert toTest.name == "testName"
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainFeatures_handmadeWithFeatureNames(self):
-        """ Test retainFeatures() against handmade output for range retention with FeatureNames """
+    def test_features_retain_handmadeWithFeatureNames(self):
+        """ Test features.retain() against handmade output for range retention with FeatureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures(start=1, end=2)
+        toTest.features.retain(start=1, end=2)
 
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainFeatures_handmade_calling_featureNames(self):
+    def test_features_retain_handmade_calling_featureNames(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures(start="two", end="three")
+        toTest.features.retain(start="two", end="three")
 
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainFeatures_handmadeString(self):
+    def test_features_retain_handmadeString(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p2=5')
+        toTest.features.retain('p2=5')
         expectedTest = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1==1')
+        toTest.features.retain('p1==1')
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3<9')
+        toTest.features.retain('p3<9')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3<=8')
+        toTest.features.retain('p3<=8')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3>8')
+        toTest.features.retain('p3>8')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3>8.5')
+        toTest.features.retain('p3>8.5')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1!=1.0')
+        toTest.features.retain('p1!=1.0')
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1<1')
+        toTest.features.retain('p1<1')
         expectedTest = self.constructor([[], [], []], pointNames=pointNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1>0')
+        toTest.features.retain('p1>0')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainFeatures_handmadeStringWithOperatorWhitespace(self):
+    def test_features_retain_handmadeStringWithOperatorWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['p1', 'p2', 'p3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p2 = 5')
+        toTest.features.retain('p2 = 5')
         expectedTest = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName==value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1 == 1')
+        toTest.features.retain('p1 == 1')
         expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3 < 9')
+        toTest.features.retain('p3 < 9')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3 <= 8')
+        toTest.features.retain('p3 <= 8')
         expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3 > 8')
+        toTest.features.retain('p3 > 8')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName>=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p3 > 8.5')
+        toTest.features.retain('p3 > 8.5')
         expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName!=value
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1 != 1.0')
+        toTest.features.retain('p1 != 1.0')
         expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1 < 1')
+        toTest.features.retain('p1 < 1')
         expectedTest = self.constructor([[], [], []], pointNames=pointNames)
 
         assert expectedTest.isIdentical(toTest)
 
         #test featureName<value and return back all data
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('p1 > 0')
+        toTest.features.retain('p1 > 0')
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedTest.isIdentical(toTest)
 
-    def test_retainFeatures_handmadeStringWithPointWhitespace(self):
+    def test_features_retain_handmadeStringWithPointWhitespace(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['pt 1', 'pt 2', 'pt 3']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         #test pointName=value with no operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('pt 2=5')
+        toTest.features.retain('pt 2=5')
         expectedTest = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
 
         assert expectedTest.isIdentical(toTest)
 
         #test pointName=value with operator whitespace
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('pt 2 = 5')
+        toTest.features.retain('pt 2 = 5')
         expectedTest = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
 
         assert expectedTest.isIdentical(toTest)
 
     @raises(ArgumentException)
-    def test_retainFeatures_handmadeString_pointNotExist(self):
+    def test_features_retain_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        toTest.retainFeatures('5=1')
+        toTest.features.retain('5=1')
 
-    def test_retainFeatures_numberOnly(self):
+    def test_features_retain_numberOnly(self):
         self.back_retain_numberOnly('feature')
 
-    def test_retainFeatures_functionAndNumber(self):
+    def test_features_retain_functionAndNumber(self):
         self.back_retain_functionAndNumber('feature')
 
-    def test_retainFeatures_numberAndRandomizeAllData(self):
+    def test_features_retain_numberAndRandomizeAllData(self):
         self.back_retain_numberAndRandomizeAllData('feature')
 
-    def test_retainFeatures_numberAndRandomizeSelectedData(self):
+    def test_features_retain_numberAndRandomizeSelectedData(self):
         self.back_retain_numberAndRandomizeSelectedData('feature')
 
     @raises(ArgumentException)
-    def test_retainFeatures_randomizeNoNumber(self):
+    def test_features_retain_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('retain', 'feature')
 
     @raises(ArgumentException)
-    def test_retainFeatures_list_numberGreaterThanTargeted(self):
+    def test_features_retain_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('retain', 'feature')
 
     @raises(ArgumentException)
-    def test_retainFeatures_function_numberGreaterThanTargeted(self):
+    def test_features_retain_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('retain', 'feature')
 
     @raises(ArgumentException)
-    def test_retainFeatures_range_numberGreaterThanTargeted(self):
+    def test_features_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
-
-    # using match module
-
-    def test_retainFeatures_match_missing(self):
-        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.retainFeatures(match.anyMissing)
-        expTest = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
-        assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.allMissing)
-        expTest = self.constructor([[None], [None], [None], [None]])
-        expTest.setFeatureNames(['c'])
-        assert toTest == expTest
-
-    def test_retainFeatures_match_nonNumeric(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.anyNonNumeric)
-        expTest = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
-        assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.allNonNumeric)
-        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['c'])
-        assert toTest == expTest
-
-    def test_retainFeatures_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.anyValues(['a', 'c', 'x']))
-        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
-        assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
-        expTest.setFeatureNames(['c'])
-        assert toTest == expTest
-
-    def test_retainFeatures_match_function(self):
-        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.anyValues(lambda x: x < 0))
-        expTest = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
-        expTest.setFeatureNames(['a', 'c'])
-        assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
-        ret = toTest.retainFeatures(match.allValues(lambda x: x < 0))
-        expTest = self.constructor([[-3], [-3], [-3], [-3]])
-        expTest.setFeatureNames(['c'])
-        assert toTest == expTest
 
     #####################
     # referenceDataFrom #
@@ -7266,8 +7224,8 @@ class StructureModifying(StructureShared):
         ret = orig.referenceDataFrom(other)  # RET CHECK
 
         assert orig.data is other.data
-        assert '-1' in orig.getPointNames()
-        assert '1' in orig.getFeatureNames()
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
         assert ret is None
 
     def test_referenceDataFrom_ObjName_Paths(self):
@@ -7311,64 +7269,117 @@ class StructureModifying(StructureShared):
 
         orig.referenceDataFrom(other)
 
-        assert orig._pointCount == other.points
-        assert orig._featureCount == other.features
+        assert orig._pointCount == len(other.points)
+        assert orig._featureCount == len(other.features)
 
         assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
         assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
 
+    ### using match module ###
 
-    ########################
-    # transformEachPoint() #
-    ########################
+    def test_features_retain_match_missing(self):
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.features.retain(match.anyMissing)
+        expTest = self.constructor([[1, 3], [None, None], [7, None], [7, 9]])
+        expTest.features.setNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, None], [None, 11, None], [7, 11, None], [7, 8, None]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allMissing)
+        expTest = self.constructor([[None], [None], [None], [None]])
+        expTest.features.setNames(['c'])
+        assert toTest == expTest
+
+    def test_features_retain_match_nonNumeric(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.anyNonNumeric)
+        expTest = self.constructor([[1, 3], ['a', 'c'], [7, 'c'], [7, 9]])
+        expTest.features.setNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allNonNumeric)
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.features.setNames(['c'])
+        assert toTest == expTest
+
+    def test_features_retain_match_list(self):
+        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.anyValues(['a', 'c', 'x']))
+        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expTest.features.setNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allValues(['a', 'c', 'x']))
+        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        expTest.features.setNames(['c'])
+        assert toTest == expTest
+
+    def test_features_retain_match_function(self):
+        toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.anyValues(lambda x: x < 0))
+        expTest = self.constructor([[1, 3], [-1, -3], [-1, -1], [7, 9]])
+        expTest.features.setNames(['a', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, -3], [-1, 11, -3], [-1, 11, -3], [7, 8, -3]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allValues(lambda x: x < 0))
+        expTest = self.constructor([[-3], [-3], [-3], [-3]])
+        expTest.features.setNames(['c'])
+        assert toTest == expTest
+
+    ######################
+    # points.transform() #
+    ######################
 
     @raises(ArgumentException)
-    def test_transformEachPoint_exceptionInputNone(self):
+    def test_points_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
-        origObj.transformEachPoint(None)
+        origObj.points.transform(None)
 
     @raises(ImproperActionException)
-    def test_transformEachPoint_exceptionPEmpty(self):
+    def test_points_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
-        origObj.transformEachPoint(emitLower)
+        origObj.points.transform(emitLower)
 
     @raises(ImproperActionException)
-    def test_transformEachPoint_exceptionFEmpty(self):
+    def test_points_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
         origObj = self.constructor(data)
 
         def emitLower(point):
-            return point[origObj.getFeatureIndex('deci')]
+            return point[origObj.features.getIndex('deci')]
 
-        origObj.transformEachPoint(emitLower)
+        origObj.points.transform(emitLower)
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_transformEachPoint_calls_constructIndicesList(self, mockFunc):
+    def test_points_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
-        toTest.transformEachPoint(noChange, points=['a', 'b'])
+        toTest.points.transform(noChange, points=['a', 'b'])
 
-    def test_transformEachPoint_Handmade(self):
+    def test_points_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[origObj.getFeatureIndex('deci')]
+            value = point[origObj.features.getIndex('deci')]
             return [value, value, value]
 
-        lowerCounts = origObj.transformEachPoint(emitAllDeci)  # RET CHECK
+        lowerCounts = origObj.points.transform(emitAllDeci)  # RET CHECK
 
         expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
         exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
@@ -7376,37 +7387,37 @@ class StructureModifying(StructureShared):
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
 
-    def test_transformEachPoint_NamePath_preservation(self):
+    def test_points_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[toTest.getFeatureIndex('deci')]
+            value = point[toTest.features.getIndex('deci')]
             return [value, value, value]
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.transformEachPoint(emitAllDeci)
+        toTest.points.transform(emitAllDeci)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    def test_transformEachPoint_HandmadeLimited(self):
+    def test_points_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
-            value = point[origObj.getFeatureIndex('deci')]
+            value = point[origObj.features.getIndex('deci')]
             return [value, value, value]
 
-        origObj.transformEachPoint(emitAllDeci, points=[3, 'two'])
+        origObj.points.transform(emitAllDeci, points=[3, 'two'])
 
         expectedOut = [[1, 0.1, 0.01], [1, 0.1, 0.02], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
         exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
@@ -7414,18 +7425,18 @@ class StructureModifying(StructureShared):
         assert origObj.isIdentical(exp)
 
 
-    def test_transformEachPoint_nonZeroIterAndLen(self):
+    def test_points_transform_nonZeroIterAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
         origObj = self.constructor(deepcopy(origData))
 
         def emitNumNZ(point):
             ret = 0
             assert len(point) == 3
-            for value in point.nonZeroIterator():
+            for value in point.points.nonZeroIterator():
                 ret += 1
             return [ret, ret, ret]
 
-        origObj.transformEachPoint(emitNumNZ)
+        origObj.points.transform(emitNumNZ)
 
         expectedOut = [[3, 3, 3], [2, 2, 2], [2, 2, 2], [1, 1, 1]]
         exp = self.constructor(expectedOut)
@@ -7433,12 +7444,12 @@ class StructureModifying(StructureShared):
         assert origObj.isIdentical(exp)
 
 
-    ##########################
-    # transformEachFeature() #
-    ##########################
+    ########################
+    # features.transform() #
+    ########################
 
     @raises(ImproperActionException)
-    def test_transformEachFeature_exceptionPEmpty(self):
+    def test_features_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
         origObj = self.constructor(data)
@@ -7450,10 +7461,10 @@ class StructureModifying(StructureShared):
                     return 0
             return 1
 
-        origObj.transformEachFeature(emitAllEqual)
+        origObj.features.transform(emitAllEqual)
 
     @raises(ImproperActionException)
-    def test_transformEachFeature_exceptionFEmpty(self):
+    def test_features_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
         origObj = self.constructor(data)
@@ -7465,23 +7476,23 @@ class StructureModifying(StructureShared):
                     return 0
             return 1
 
-        origObj.transformEachFeature(emitAllEqual)
+        origObj.features.transform(emitAllEqual)
 
     @raises(ArgumentException)
-    def test_transformEachFeature_exceptionInputNone(self):
+    def test_features_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
-        origObj.transformEachFeature(None)
+        origObj.features.transform(None)
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_transformEachFeature_calls_constructIndicesList(self, mockFunc):
+    def test_features_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
-        toTest.transformEachFeature(noChange, features=['a', 'b'])
+        toTest.features.transform(noChange, features=['a', 'b'])
 
-    def test_transformEachFeature_Handmade(self):
+    def test_features_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
@@ -7494,7 +7505,7 @@ class StructureModifying(StructureShared):
                     return [0, 0, 0, 0]
             return [1, 1, 1, 1]
 
-        lowerCounts = origObj.transformEachFeature(emitAllEqual)  # RET CHECK
+        lowerCounts = origObj.features.transform(emitAllEqual)  # RET CHECK
         expectedOut = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
         exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
@@ -7502,7 +7513,7 @@ class StructureModifying(StructureShared):
         assert origObj.isIdentical(exp)
 
 
-    def test_transformEachFeature_NamePath_preservation(self):
+    def test_features_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
@@ -7519,14 +7530,14 @@ class StructureModifying(StructureShared):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.transformEachFeature(emitAllEqual)
+        toTest.features.transform(emitAllEqual)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_transformEachFeature_HandmadeLimited(self):
+    def test_features_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
@@ -7539,25 +7550,25 @@ class StructureModifying(StructureShared):
                     return [0, 0, 0, 0]
             return [1, 1, 1, 1]
 
-        origObj.transformEachFeature(emitAllEqual, features=[0, 'centi'])
+        origObj.features.transform(emitAllEqual, features=[0, 'centi'])
         expectedOut = [[1, 0.1, 0], [1, 0.1, 0], [1, 0.1, 0], [1, 0.2, 0]]
         exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
         assert origObj.isIdentical(exp)
 
 
-    def test_transformEachFeature_nonZeroIterAndLen(self):
+    def test_features_transform_nonZeroIterAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
         origObj = self.constructor(deepcopy(origData))
 
         def emitNumNZ(feature):
             ret = 0
             assert len(feature) == 4
-            for value in feature.nonZeroIterator():
+            for value in feature.features.nonZeroIterator():
                 ret += 1
             return [ret, ret, ret, ret]
 
-        origObj.transformEachFeature(emitNumNZ)
+        origObj.features.transform(emitNumNZ)
 
         expectedOut = [[3, 3, 2], [3, 3, 2], [3, 3, 2], [3, 3, 2]]
         exp = self.constructor(expectedOut)
@@ -7566,34 +7577,34 @@ class StructureModifying(StructureShared):
 
 
     ##########################
-    # transformEachElement() #
+    # elements.transform() #
     ##########################
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_transformEachElement_calls_constructIndicesList1(self, mockFunc):
+    def test_elements_transform_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.transformEachElement(noChange, points=['a', 'b'])
+        toTest.elements.transform(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
-    def test_transformEachElement_calls_constructIndicesList2(self, mockFunc):
+    def test_elements_transform_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.transformEachElement(noChange, features=['a', 'b'])
+        toTest.elements.transform(noChange, features=['a', 'b'])
 
-    def test_transformEachElement_passthrough(self):
+    def test_elements_transform_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        ret = toTest.transformEachElement(passThrough)  # RET CHECK
+        ret = toTest.elements.transform(passThrough)  # RET CHECK
         assert ret is None
         retRaw = toTest.copyAs(format="python list")
 
@@ -7602,7 +7613,7 @@ class StructureModifying(StructureShared):
         assert [7, 8, 9] in retRaw
 
 
-    def test_transformEachElement_NamePath_preservation(self):
+    def test_elements_transform_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -7610,18 +7621,18 @@ class StructureModifying(StructureShared):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.transformEachElement(passThrough)
+        toTest.elements.transform(passThrough)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_transformEachElement_plusOnePreserve(self):
+    def test_elements_transform_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
 
-        toTest.transformEachElement(plusOne, preserveZeros=True)
+        toTest.elements.transform(plusOne, preserveZeros=True)
         retRaw = toTest.copyAs(format="python list")
 
         assert [2, 0, 4] in retRaw
@@ -7629,11 +7640,11 @@ class StructureModifying(StructureShared):
         assert [8, 0, 10] in retRaw
 
 
-    def test_transformEachElement_plusOneExclude(self):
+    def test_elements_transform_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.transformEachElement(plusOneOnlyEven, skipNoneReturnValues=True)
+        toTest.elements.transform(plusOneOnlyEven, skipNoneReturnValues=True)
         retRaw = toTest.copyAs(format="python list")
 
         assert [1, 3, 3] in retRaw
@@ -7641,13 +7652,13 @@ class StructureModifying(StructureShared):
         assert [7, 9, 9] in retRaw
 
 
-    def test_transformEachElement_plusOneLimited(self):
+    def test_elements_transform_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
+        toTest.elements.transform(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
         retRaw = toTest.copyAs(format="python list")
 
         assert [1, 2, 3] in retRaw
@@ -7655,7 +7666,7 @@ class StructureModifying(StructureShared):
         assert [7, 8, 9] in retRaw
 
 
-    def test_transformEachElement_DictionaryAllMapped(self):
+    def test_elements_transform_DictionaryAllMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7664,12 +7675,12 @@ class StructureModifying(StructureShared):
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping)
+        toTest.elements.transform(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryAllMappedStrings(self):
+    def test_elements_transform_DictionaryAllMappedStrings(self):
         data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7678,12 +7689,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping)
+        toTest.elements.transform(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionarySomeMapped(self):
+    def test_elements_transform_DictionarySomeMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7692,12 +7703,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 8, 3], [4, 5, 6], [7, 2, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping)
+        toTest.elements.transform(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryMappedNotInPoints(self):
+    def test_elements_transform_DictionaryMappedNotInPoints(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7706,12 +7717,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, points=1)
+        toTest.elements.transform(transformMapping, points=1)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryMappedNotInFeatures(self):
+    def test_elements_transform_DictionaryMappedNotInFeatures(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7720,12 +7731,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, features=0)
+        toTest.elements.transform(transformMapping, features=0)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryPreserveZerosNoZeroMap(self):
+    def test_elements_transform_DictionaryPreserveZerosNoZeroMap(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7734,12 +7745,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, preserveZeros=True)
+        toTest.elements.transform(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryPreserveZerosZeroMapZero(self):
+    def test_elements_transform_DictionaryPreserveZerosZeroMapZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7748,12 +7759,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, preserveZeros=True)
+        toTest.elements.transform(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryPreserveZerosZeroMapNonZero(self):
+    def test_elements_transform_DictionaryPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7762,12 +7773,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, preserveZeros=True)
+        toTest.elements.transform(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
+    def test_elements_transform_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7776,12 +7787,12 @@ class StructureModifying(StructureShared):
         expData = [[100, 100, 100], [1, 1, 1], [100, 100, 100]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, preserveZeros=False)
+        toTest.elements.transform(transformMapping, preserveZeros=False)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionarySkipNoneReturn(self):
+    def test_elements_transform_DictionarySkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7790,12 +7801,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.transformEachElement(transformMapping, skipNoneReturnValues=True)
+        toTest.elements.transform(transformMapping, skipNoneReturnValues=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_transformEachElement_DictionaryDoNotSkipNoneReturn(self):
+    def test_elements_transform_DictionaryDoNotSkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -7808,13 +7819,13 @@ class StructureModifying(StructureShared):
         else:
             expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
             expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
-        toTest.transformEachElement(transformMapping, skipNoneReturnValues=False)
+        toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
 
-    ####################
-    #### fillWith() ####
-    ####################
+    ##############
+    # fillWith() #
+    ##############
 
     # fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd)
 
@@ -7873,28 +7884,28 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(val, "hello", 0, 1, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, "Wrong", 1, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 2, 1)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 1, -12)
-            assert False  # expected ArgumentExcpetion
+            assert False  # expected ArgumentException
         except ArgumentException as ae:
             print(ae)
         except Exception:
@@ -7931,7 +7942,7 @@ class StructureModifying(StructureShared):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.fillWith(arg, 0, 0, toTest.points - 1, toTest.features - 1)
+        ret = toTest.fillWith(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
         assert ret is None
 
         arg *= 10
@@ -8009,7 +8020,6 @@ class StructureModifying(StructureShared):
             arg = UML.createData(t, fill)
             toTest.fillWith(arg, 0, 0, 1, 1)
             assert toTest == exp
-
 
     ###########################################
     # flattenToOnePoint | flattenToOneFeature #
@@ -8119,9 +8129,9 @@ class StructureModifying(StructureShared):
         assert testObj == expObj
 
         # default names are ignored by ==, so we explicitly check them in this test
-        keptAxisNames = copyObj.getFeatureNames() if axis == 'point' else copyObj.getPointNames()
-        discardAxisNames = copyObj.getPointNames() if axis == 'point' else copyObj.getFeatureNames()
-        check = testObj.getFeatureNames() if axis == 'point' else testObj.getPointNames()
+        keptAxisNames = copyObj.features.getNames() if axis == 'point' else copyObj.points.getNames()
+        discardAxisNames = copyObj.points.getNames() if axis == 'point' else copyObj.features.getNames()
+        check = testObj.features.getNames() if axis == 'point' else testObj.points.getNames()
 
         for i,name in enumerate(check):
             splitName = name.split(' | ')
@@ -8222,9 +8232,9 @@ class StructureModifying(StructureShared):
         # single non-default name, unflattened axis
         testObj = self.constructor(data)
         if axis == 'point':
-            testObj.setFeatureName(1, "non-default")
+            testObj.features.setName(1, "non-default")
         else:
-            testObj.setPointName(2, "non-default")
+            testObj.points.setName(2, "non-default")
         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
     # exception: unflattening would destroy an axis name
@@ -8245,9 +8255,9 @@ class StructureModifying(StructureShared):
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
         if axis == 'point':
-            testObj.setFeatureName(1, None)
+            testObj.features.setName(1, None)
         else:
-            testObj.setPointName(1, None)
+            testObj.points.setName(1, None)
         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # unflattened axis, inconsistent along original unflattened axis
@@ -8320,8 +8330,8 @@ class StructureModifying(StructureShared):
             assert n.startswith(DEFAULT_PREFIX)
             assert int(n[len(DEFAULT_PREFIX):]) >= 0
 
-        list(map(checkName, toTest.getPointNames()))
-        list(map(checkName, toTest.getFeatureNames()))
+        list(map(checkName, toTest.points.getNames()))
+        list(map(checkName, toTest.features.getNames()))
 
 
     # random round trip
@@ -8354,6 +8364,350 @@ class StructureModifying(StructureShared):
         getattr(testObj, targetUp)(discardAxisLen)
         assert testObj == expObj
 
+#     ###############################################
+#     # points.flattenToOne | features.flattenToOne #
+#     ###############################################
+#
+#     # exception: either axis empty
+#     def test_points_flattenToOne_empty(self):
+#         self.back_flatten_empty('point')
+#
+#     def test_features_flattenToOne_empty(self):
+#         self.back_flatten_empty('feature')
+#
+#     def back_flatten_empty(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'flattenToOne')
+#         pempty = self.constructor(numpy.empty((0,2)))
+#         exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+#
+#         fempty = self.constructor(numpy.empty((4,0)))
+#         exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+#
+#         trueEmpty = self.constructor(numpy.empty((0,0)))
+#         exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+#
+#
+#     # flatten single p/f - see name changes
+#     def test_points_flattenToOne_vector(self):
+#         self.back_flatten_vector('point')
+#
+#     def test_features_flattenToOne_vector(self):
+#         self.back_flatten_vector('feature')
+#
+#     def back_flatten_vector(self, axis):
+#         raw = [1, -1, 2, -2, 3, -3, 4, -4]
+#         vecNames = ['vector']
+#         longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
+#
+#         testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
+#
+#         expLongNames = ['one+ | vector', 'one- | vector',
+#                         'two+ | vector', 'two- | vector',
+#                         'three+ | vector', 'three- | vector',
+#                         'four+ | vector', 'four- | vector']
+# #        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
+#         expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
+#
+#         if axis != 'point':
+#             testObj.transpose()
+#             expObj.transpose()
+#
+#         axisObj = getattr(testObj, axis + 's')
+#         ret = getattr(axisObj, 'flattenToOne')()
+#
+#         assert testObj == expObj
+#         assert ret is None  # in place op, nothing returned
+#
+#
+#     def test_points_flattenToOne_handMade_valuesOnly(self):
+#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
+#         expRaw = [["p1,f1", "p1,f2", "p2,f1", "p2,f2"]]
+#         testObj = self.constructor(dataRaw)
+#
+#         testObj.points.flattenToOne()
+#
+#         expObj = self.constructor(expRaw, pointNames=["Flattened"])
+#
+#         assert testObj == expObj
+#
+#     def test_features_flattenToOne_handMade_valuesOnly(self):
+#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
+#         expRaw = [["p1,f1"], ["p2,f1"], ["p1,f2"], ["p2,f2"]]
+#         testObj = self.constructor(dataRaw)
+#
+#         testObj.features.flattenToOne()
+#
+#         expObj = self.constructor(expRaw, featureNames=["Flattened"])
+#
+#         assert testObj == expObj
+#
+#
+#     # flatten rectangular object
+#     def test_points_flattenToOne_rectangleRandom(self):
+#         self.back_flatten_rectangleRandom('point')
+#
+#     def test_features_flattenToOne_rectangleRandom(self):
+#         self.back_flatten_rectangleRandom('feature')
+#
+#     def back_flatten_rectangleRandom(self, axis):
+#         order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
+#         discardAxisLen = 30
+#         keptAxisLen = 50
+#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
+#         endLength = discardAxisLen * keptAxisLen
+#         targetShape = (1, endLength) if axis == 'point' else (endLength, 1)
+#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
+#         expRaw = numpy.reshape(origRaw, targetShape, order)
+#
+#         testObj = self.constructor(origRaw)
+#         copyObj = testObj.copy()  # freeze the default axis names to check against later
+#         if axis == 'point':
+#             expObj = self.constructor(expRaw, pointNames=['Flattened'])
+#         else:
+#             expObj = self.constructor(expRaw, featureNames=['Flattened'])
+#
+#         axisObj = getattr(testObj, axis + 's')
+#         getattr(axisObj, 'flattenToOne')()
+#         assert testObj == expObj
+#
+#         # default names are ignored by ==, so we explicitly check them in this test
+#         keptAxisNames = copyObj.features.getNames() if axis == 'point' else copyObj.points.getNames()
+#         discardAxisNames = copyObj.points.getNames() if axis == 'point' else copyObj.features.getNames()
+#         check = testObj.features.getNames() if axis == 'point' else testObj.points.getNames()
+#
+#         for i, name in enumerate(check):
+#             splitName = name.split(' | ')
+#             assert len(splitName) == 2
+#             # we cycle through the names from the kept axis
+#             assert splitName[0] == keptAxisNames[i % keptAxisLen]
+#             # we have to go through all of the names of the kept axis before we increment
+#             # the name from the discarded axis
+#             assert splitName[1] == discardAxisNames[i // keptAxisLen]
+#
+#
+#     ###################################################
+#     # points.unflattenFromOne | features.unflattenFromOne #
+#     ###################################################
+#
+#     # excpetion: either axis empty
+#     def test_points_unflattenFromOne_empty(self):
+#         self.back_unflatten_empty('point')
+#
+#     def test_features_unflattenFromOne_empty(self):
+#         self.back_unflatten_empty('feature')
+#
+#     def back_unflatten_empty(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'unflattenFromOne')
+#         single = (0,2) if axis == 'point' else (2,0)
+#
+#         singleEmpty = self.constructor(numpy.empty(single))
+#         exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+#
+#         trueEmpty = self.constructor(numpy.empty((0,0)))
+#         exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+#
+#
+#     # exceptions: opposite vector, 2d data
+#     def test_points_unflattenFromOne_wrongShape(self):
+#         self.back_unflatten_wrongShape('point')
+#
+#     def test_features_unflattenFromOne_wrongShape(self):
+#         self.back_unflatten_wrongShape('feature')
+#
+#     def back_unflatten_wrongShape(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'unflattenFromOne')
+#         vecShape = (4,1) if axis == 'point' else (1,4)
+#
+#         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
+#         exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+#
+#         rectangle = self.constructor(numpyRandom.rand(4,4))
+#         exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+#
+#
+#     # excpetion: numPoints / numFeatures does not divide length of mega P/F
+#     def test_points_unflattenFromOne_doesNotDivide(self):
+#         self.back_unflatten_doesNotDivide('point')
+#
+#     def test_features_unflattenFromOne_doesNotDivide(self):
+#         self.back_unflatten_doesNotDivide('feature')
+#
+#     def back_unflatten_doesNotDivide(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'unflattenFromOne')
+#         primeLength = (1,7) if axis == 'point' else (7,1)
+#         divisableLength = (1,8) if axis == 'point' else (8,1)
+#
+#         undivisable = self.constructor(numpyRandom.rand(*primeLength))
+#         exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+#
+#         divisable = self.constructor(numpyRandom.rand(*divisableLength))
+#         exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+#
+#
+#     # exception: unflattening would destroy an axis name
+#     def test_points_unflattenFromOne_nameDestroyed(self):
+#         self.back_unflatten_nameDestroyed('point')
+#
+#     def test_features_unflattenFromOne_nameDestroyed(self):
+#         self.back_unflatten_nameDestroyed('feature')
+#
+#     def back_unflatten_nameDestroyed(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'unflattenFromOne')
+#         vecShape = (1,4) if axis == 'point' else (4,1)
+#         data = numpyRandom.rand(*vecShape)
+#
+#         # non-default name, flattened axis
+#         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
+#         testObj = self.constructor(data, **args)
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#         # all non-default names, unflattened axis
+#         names = ["a", "b", "c", "d"]
+#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+#         testObj = self.constructor(data, **args)
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#         # single non-default name, unflattened axis
+#         testObj = self.constructor(data)
+#         if axis == 'point':
+#             testObj.features.setName(1, "non-default")
+#         else:
+#             testObj.points.setName(2, "non-default")
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#     # exception: unflattening would destroy an axis name
+#     def test_points_unflattenFromOne_nameFormatInconsistent(self):
+#         self.back_unflatten_nameFormatInconsistent('point')
+#
+#     def test_features_unflattenFromOne_nameFormatInconsistent(self):
+#         self.back_unflatten_nameFormatInconsistent('feature')
+#
+#     def back_unflatten_nameFormatInconsistent(self, axis):
+#         checkMsg = True
+#         target = (axis + 's', 'unflattenFromOne')
+#         vecShape = (1,4) if axis == 'point' else (4,1)
+#         data = numpyRandom.rand(*vecShape)
+#
+#         # unflattend axis, mix of default names and correctly formatted
+#         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
+#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+#         testObj = self.constructor(data, **args)
+#         if axis == 'point':
+#             testObj.features.setName(1, None)
+#         else:
+#             testObj.points.setName(1, None)
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#         # unflattened axis, inconsistent along original unflattened axis
+#         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
+#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+#         testObj = self.constructor(data, **args)
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#         # unflattened axis, inconsistent along original flattened axis
+#         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
+#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
+#         testObj = self.constructor(data, **args)
+#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#
+#
+#     # unflatten something that was flattened - include name transformation
+#     def test_points_unflattenFromOne_handmadeWithNames(self):
+#         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
+#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
+#         toTest = self.constructor(raw, pointNames=["Flattened"], featureNames=rawNames)
+#         expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
+#         namesP = ["A", "B"]
+#         namesF = ["1", "2", "3"]
+#
+#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+#
+#         toTest.points.unflattenFromOne(2)
+#         assert toTest == exp
+#
+#     # unflatten something that was flattend - include name transformation
+#     def test_features_unflattenFromOne_handmadeWithNames(self):
+#         raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
+#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
+#         toTest = self.constructor(raw, pointNames=rawNames, featureNames=["Flattened"])
+#         expData = [["el0", "el3"],["el1", "el4"], ["el2", "el5"]]
+#         namesP = ["1", "2", "3"]
+#         namesF = ["A", "B"]
+#
+#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+#
+#         toTest.features.unflattenFromOne(2)
+#         assert toTest == exp
+#
+#
+#     # unflatten something that is just a vector - default names
+#     def test_points_unflattenFromOne_handmadeDefaultNames(self):
+#         self.back_unflatten_handmadeDefaultNames('point')
+#
+#     def test_features_unflattenFromOne_handmadeDefaultNames(self):
+#         self.back_unflatten_handmadeDefaultNames('feature')
+#
+#     def back_unflatten_handmadeDefaultNames(self, axis):
+#         raw = [[1, 10, 20, 2]]
+#         toTest = self.constructor(raw)
+#         expData = numpy.array([[1,10],[20,2]])
+#
+#         if axis == 'point':
+#             exp = self.constructor(expData)
+#         else:
+#             toTest.transpose()
+#             exp = self.constructor(expData.T)
+#
+#         axisObj = getattr(toTest, axis + 's')
+#         getattr(axisObj, 'unflattenFromOne')(2)
+#         assert toTest == exp
+#
+#         # check that the name conforms to the standards of how UML objects assign
+#         # default names
+#         def checkName(n):
+#             assert n.startswith(DEFAULT_PREFIX)
+#             assert int(n[len(DEFAULT_PREFIX):]) >= 0
+#
+#         list(map(checkName, toTest.points.getNames()))
+#         list(map(checkName, toTest.features.getNames()))
+#
+#
+#     # random round trip
+#     def test_flatten_to_unflatten_point_roundTrip(self):
+#         self.back_flatten_to_unflatten_roundTrip('point')
+#
+#     def test_flatten_to_unflatten_feature_roundTrip(self):
+#         self.back_flatten_to_unflatten_roundTrip('feature')
+#
+#     def back_flatten_to_unflatten_roundTrip(self, axis):
+#         discardAxisLen = 30
+#         keptAxisLen = 50
+#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
+#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
+#         namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
+#         namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
+#         namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
+#
+#         testObj = self.constructor(origRaw, **namesArgs)
+#         expObj = testObj.copy()
+#
+#         axisObj = getattr(testObj, axis + 's')
+#         getattr(axisObj, 'flattenToOne')()
+#         axisObj = getattr(testObj, axis + 's')
+#         getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
+#         assert testObj == expObj
+#
+#         # second round to see if status of hidden internal variable are still viable
+#         axisObj = getattr(testObj, axis + 's')
+#         getattr(axisObj, 'flattenToOne')()
+#         axisObj = getattr(testObj, axis + 's')
+#         getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
+#         assert testObj == expObj
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
     try:
@@ -8363,6 +8717,14 @@ def exceptionHelper(testObj, target, args, wanted, checkMsg):
         if checkMsg:
             print(check)
 
+# def exceptionHelper(testObj, target, args, wanted, checkMsg,):
+#     try:
+#         axisObj = getattr(testObj, target[0])
+#         getattr(axisObj, target[1])(*args)
+#         assert False  # expected an exception
+#     except wanted as check:
+#         if checkMsg:
+#             print(check)
 
 class StructureAll(StructureDataSafe, StructureModifying):
     pass
