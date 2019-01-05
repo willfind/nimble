@@ -7,28 +7,21 @@ from __future__ import absolute_import
 import numpy
 
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
 
-class MatrixFeatures(MatrixAxis, Axis, Features):
+class MatrixFeatures(MatrixAxis, Features):
     """
     Matrix method implementations performed on the feature axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(MatrixFeatures, self).__init__(**kwds)
 
     ##############################
@@ -89,13 +82,11 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixFeaturesView(AxisView, MatrixFeatures, MatrixAxis, Axis, Features):
+class MatrixFeaturesView(AxisView, MatrixFeatures):
     """
     Limit functionality of MatrixFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
+    def __init__(self, **kwds):
         super(MatrixFeaturesView, self).__init__(**kwds)
 
 class nzIt(object):

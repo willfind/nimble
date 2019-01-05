@@ -68,13 +68,13 @@ class DataFrame(Base):
         super(DataFrame, self).__init__(**kwds)
 
     def _getPoints(self):
-        return DataFramePoints(self)
+        return DataFramePoints(source=self)
 
     def _getFeatures(self):
-        return DataFrameFeatures(self)
+        return DataFrameFeatures(source=self)
 
     def _getElements(self):
-        return DataFrameElements(self)
+        return DataFrameElements(source=self)
 
     def _transpose_implementation(self):
         """
@@ -266,13 +266,13 @@ class DataFrame(Base):
                 super(DataFrameView, self).__init__(**kwds)
 
             def _getPoints(self):
-                return DataFramePointsView(self)
+                return DataFramePointsView(source=self)
 
             def _getFeatures(self):
-                return DataFrameFeaturesView(self)
+                return DataFrameFeaturesView(source=self)
 
             def _getElements(self):
-                return DataFrameElementsView(self)
+                return DataFrameElementsView(source=self)
 
             def _setAllDefault(self, axis):
                 super(DataFrameView, self)._setAllDefault(axis)

@@ -7,7 +7,6 @@ from __future__ import division
 
 import UML
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
@@ -16,23 +15,17 @@ pd = UML.importModule('pandas')
 if pd:
     import pandas as pd
 
-class DataFrameFeatures(DataFrameAxis, Axis, Features):
+class DataFrameFeatures(DataFrameAxis, Features):
     """
     DataFrame method implementations performed on the feature axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(DataFrameFeatures, self).__init__(**kwds)
 
     ##############################
@@ -87,14 +80,11 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
-                            Features):
+class DataFrameFeaturesView(AxisView, DataFrameFeatures):
     """
     Limit functionality of DataFrameFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
+    def __init__(self, **kwds):
         super(DataFrameFeaturesView, self).__init__(**kwds)
 
 class nzIt(object):

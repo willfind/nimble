@@ -13,16 +13,11 @@ class ElementsView(Elements):
 
     Parameters
     ----------
-    source : UML data object
-        The UML object that this is a view into.
-    axis : str
-        Either 'point' or 'feature'.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(ElementsView, self).__init__(**kwds)
 
     def transform(self, toTransform, points=None, features=None,

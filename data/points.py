@@ -14,7 +14,7 @@ class Points(object):
     Methods that can be called on the a UML data objects point axis.
     """
     def __init__(self):
-        pass
+        self._axis = 'point'
 
     ########################
     # Low Level Operations #

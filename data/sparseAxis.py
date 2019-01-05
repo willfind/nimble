@@ -26,20 +26,11 @@ class SparseAxis(Axis):
 
     Parameters
     ----------
-    axis : str
-        The axis ('point' or 'feature') which the function will be
-        applied to.
-    source : UML data object
-        The object containing point and feature data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, axis, source, **kwds):
-        self._axis = axis
-        self._source = source
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(SparseAxis, self).__init__(**kwds)
 
     ##############################

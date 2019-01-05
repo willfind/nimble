@@ -221,21 +221,21 @@ class Base(object):
         return self._pointCount, self._featureCount
 
     def _getPoints(self):
-        return BasePoints(self)
+        return BasePoints(source=self)
 
     @property
     def points(self):
         return self._points
 
     def _getFeatures(self):
-        return BaseFeatures(self)
+        return BaseFeatures(source=self)
 
     @property
     def features(self):
         return self._features
 
     def _getElements(self):
-        return BaseElements(self)
+        return BaseElements(source=self)
 
     @property
     def elements(self):
@@ -3708,25 +3708,15 @@ class Base(object):
         pass
 
 class BasePoints(Axis, Points):
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(BasePoints, self).__init__(**kwds)
 
 class BaseFeatures(Axis, Features):
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(BaseFeatures, self).__init__(**kwds)
 
 class BaseElements(Elements):
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(BaseElements, self).__init__(**kwds)
 
 def cmp_to_key(mycmp):

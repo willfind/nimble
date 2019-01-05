@@ -134,13 +134,13 @@ class List(Base):
         super(List, self).__init__(**kwds)
 
     def _getPoints(self):
-        return ListPoints(self)
+        return ListPoints(source=self)
 
     def _getFeatures(self):
-        return ListFeatures(self)
+        return ListFeatures(source=self)
 
     def _getElements(self):
-        return ListElements(self)
+        return ListElements(source=self)
 
     def _transpose_implementation(self):
         """
@@ -395,13 +395,13 @@ class List(Base):
                 super(ListView, self).__init__(**kwds)
 
             def _getPoints(self):
-                return ListPointsView(self)
+                return ListPointsView(source=self)
 
             def _getFeatures(self):
-                return ListFeaturesView(self)
+                return ListFeaturesView(source=self)
 
             def _getElements(self):
-                return ListElementsView(self)
+                return ListElementsView(source=self)
 
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is

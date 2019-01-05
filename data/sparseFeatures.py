@@ -7,7 +7,6 @@ from __future__ import absolute_import
 import numpy
 
 import UML
-from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
@@ -16,23 +15,17 @@ scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
-class SparseFeatures(SparseAxis, Axis, Features):
+class SparseFeatures(SparseAxis, Features):
     """
     Sparse method implementations performed on the feature axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(SparseFeatures, self).__init__(**kwds)
 
     ##############################
@@ -113,13 +106,11 @@ class SparseFeatures(SparseAxis, Axis, Features):
     #     self._source.data = coo_matrix((data, (row, col)), newShape)
     #     self._source._sorted = 'feature'
 
-class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
+class SparseFeaturesView(AxisView, SparseFeatures):
     """
     Limit functionality of SparseFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
+    def __init__(self, **kwds):
         super(SparseFeaturesView, self).__init__(**kwds)
 
     #########################

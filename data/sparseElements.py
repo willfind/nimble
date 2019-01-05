@@ -20,15 +20,11 @@ class SparseElements(Elements):
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(SparseElements, self).__init__(**kwds)
 
     ##############################
@@ -191,10 +187,9 @@ class SparseElements(Elements):
 
             self._source.data.data[index] = currRet
 
-class SparseElementsView(ElementsView, SparseElements, Elements):
+class SparseElementsView(ElementsView, SparseElements):
     """
     Limit functionality of SparseElements to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(SparseElementsView, self).__init__(**kwds)

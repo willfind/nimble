@@ -17,15 +17,11 @@ class MatrixElements(Elements):
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(MatrixElements, self).__init__(**kwds)
 
     ##############################
@@ -100,10 +96,9 @@ class MatrixElements(Elements):
         else:
             self._source.data = numpy.multiply(self._source.data, other.data)
 
-class MatrixElementsView(ElementsView, MatrixElements, Elements):
+class MatrixElementsView(ElementsView, MatrixElements):
     """
     Limit functionality of MatrixElements to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(MatrixElementsView, self).__init__(**kwds)

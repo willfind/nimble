@@ -18,17 +18,11 @@ class AxisView(Axis):
 
     Parameters
     ----------
-    source : UML data object
-        The UML object that this is a view into.
-    axis : str
-        Either 'point' or 'feature'.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, axis, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = axis
+    def __init__(self, **kwds):
         super(AxisView, self).__init__(**kwds)
 
     def _getNames(self):

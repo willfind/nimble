@@ -14,15 +14,11 @@ class ListElements(Elements):
 
     Parameters
     ----------
-    source : UML data object
-        The object containing features data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(ListElements, self).__init__(**kwds)
 
     ##############################
@@ -95,10 +91,9 @@ class ListElements(Elements):
                 # types ('str')
                 self._source.data[pNum][fNum] *= other[pNum, fNum] / 1
 
-class ListElementsView(ElementsView, ListElements, Elements):
+class ListElementsView(ElementsView, ListElements):
     """
     Limit functionality of ListElements to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
+    def __init__(self, **kwds):
         super(ListElementsView, self).__init__(**kwds)

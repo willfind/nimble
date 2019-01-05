@@ -70,13 +70,13 @@ class Matrix(Base):
         super(Matrix, self).__init__(**kwds)
 
     def _getPoints(self):
-        return MatrixPoints(self)
+        return MatrixPoints(source=self)
 
     def _getFeatures(self):
-        return MatrixFeatures(self)
+        return MatrixFeatures(source=self)
 
     def _getElements(self):
-        return MatrixElements(self)
+        return MatrixElements(source=self)
 
     def _transpose_implementation(self):
         """
@@ -265,13 +265,13 @@ class Matrix(Base):
                 super(MatrixView, self).__init__(**kwds)
 
             def _getPoints(self):
-                return MatrixPointsView(self)
+                return MatrixPointsView(source=self)
 
             def _getFeatures(self):
-                return MatrixFeaturesView(self)
+                return MatrixFeaturesView(source=self)
 
             def _getElements(self):
-                return MatrixElementsView(self)
+                return MatrixElementsView(source=self)
 
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]

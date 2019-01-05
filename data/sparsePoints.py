@@ -7,7 +7,6 @@ from __future__ import absolute_import
 import numpy
 
 import UML
-from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
@@ -16,23 +15,17 @@ scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
-class SparsePoints(SparseAxis, Axis, Points):
+class SparsePoints(SparseAxis, Points):
     """
     Sparse method implementations performed on the points axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing the points data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(SparsePoints, self).__init__(**kwds)
 
     ##############################
@@ -112,13 +105,11 @@ class SparsePoints(SparseAxis, Axis, Points):
     #     self._source.data = coo_matrix((data, (row, col)), newShape)
     #     self._source._sorted = 'point'
 
-class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
+class SparsePointsView(AxisView, SparsePoints):
     """
     Limit functionality of SparsePoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
+    def __init__(self, **kwds):
         super(SparsePointsView, self).__init__(**kwds)
 
     #########################

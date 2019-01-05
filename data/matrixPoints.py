@@ -7,28 +7,21 @@ from __future__ import absolute_import
 import numpy
 
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
 
-class MatrixPoints(MatrixAxis, Axis, Points):
+class MatrixPoints(MatrixAxis, Points):
     """
     Matrix method implementations performed on the points axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing the points data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(MatrixPoints, self).__init__(**kwds)
 
     ##############################
@@ -89,13 +82,11 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
+class MatrixPointsView(AxisView, MatrixPoints):
     """
     Limit functionality of MatrixPoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
+    def __init__(self, **kwds):
         super(MatrixPointsView, self).__init__(**kwds)
 
 class nzIt(object):

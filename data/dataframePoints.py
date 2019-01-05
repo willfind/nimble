@@ -7,7 +7,6 @@ from __future__ import division
 
 import UML
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .points import Points
@@ -16,23 +15,17 @@ pd = UML.importModule('pandas')
 if pd:
     import pandas as pd
 
-class DataFramePoints(DataFrameAxis, Axis, Points):
+class DataFramePoints(DataFrameAxis, Points):
     """
     DataFrame method implementations performed on the points axis.
 
     Parameters
     ----------
-    source : UML data object
-        The object containing the points data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
+    def __init__(self, **kwds):
         super(DataFramePoints, self).__init__(**kwds)
 
     ##############################
@@ -87,14 +80,11 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFramePointsView(AxisView, DataFramePoints, DataFrameAxis, Axis,
-                          Points):
+class DataFramePointsView(AxisView, DataFramePoints):
     """
     Limit functionality of DataFramePoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
+    def __init__(self, **kwds):
         super(DataFramePointsView, self).__init__(**kwds)
 
 class nzIt(object):

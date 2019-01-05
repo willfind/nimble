@@ -76,13 +76,13 @@ class Sparse(Base):
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
-        return SparsePoints(self)
+        return SparsePoints(source=self)
 
     def _getFeatures(self):
-        return SparseFeatures(self)
+        return SparseFeatures(source=self)
 
     def _getElements(self):
-        return SparseElements(self)
+        return SparseElements(source=self)
 
     def getdata(self):
         return self.data
@@ -985,26 +985,26 @@ class SparseVectorView(BaseView, Sparse):
         super(SparseVectorView, self).__init__(**kwds)
 
     def _getPoints(self):
-        return SparsePointsView(self)
+        return SparsePointsView(source=self)
 
     def _getFeatures(self):
-        return SparseFeaturesView(self)
+        return SparseFeaturesView(source=self)
 
     def _getElements(self):
-        return SparseElementsView(self)
+        return SparseElementsView(source=self)
 
 class SparseView(BaseView, Sparse):
     def __init__(self, **kwds):
         super(SparseView, self).__init__(**kwds)
 
     def _getPoints(self):
-        return SparsePointsView(self)
+        return SparsePointsView(source=self)
 
     def _getFeatures(self):
-        return SparseFeaturesView(self)
+        return SparseFeaturesView(source=self)
 
     def _getElements(self):
-        return SparseElementsView(self)
+        return SparseElementsView(source=self)
 
     def _validate_implementation(self, level):
         self._source.validate(level)
