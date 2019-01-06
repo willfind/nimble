@@ -28,7 +28,7 @@ from six.moves import range
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = createData('List', data=dataArr, featureNames=['nums'])
-    stDevContainer = testRowList.calculateForEachFeature(standardDeviation)
+    stDevContainer = testRowList.features.calculate(standardDeviation)
     stDev = stDevContainer.copyAs(format="python list")[0][0]
     assert_almost_equal(stDev, 3.6379, 3)
 
@@ -58,12 +58,12 @@ def testProportionMissing():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [1. / 3, 0, 1. / 3])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[1. / 3], [1. / 3], [0]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -75,12 +75,12 @@ def testProportionZero():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [0, 1. / 3, 0])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[0], [0], [1. / 3]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -92,12 +92,12 @@ def testMinimum():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [1, None, 6])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None], [5], [0]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -109,12 +109,12 @@ def testMaximum():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [7, None, 9])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None], [6], [9]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -126,12 +126,12 @@ def testMean():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [4, None, 7.5])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None], [5.5], [16. / 3]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -143,12 +143,12 @@ def testMedian():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [4, None, 7.5])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None], [5.5], [7]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -160,12 +160,12 @@ def testStandardDeviation():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [3, None, 1.5])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None], [0.5], [3.8586123009300755]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -177,12 +177,12 @@ def testUniqueCount():
     for dataType in ['List', 'DataFrame']:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [3, 2, 2])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[2], [2], [3]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -194,12 +194,12 @@ def testFeatureType():
     for dataType in ['List', 'DataFrame']:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, ['Mixed', 'Mixed', 'int'])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [['Mixed'], ['int'], ['Mixed']])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
@@ -211,12 +211,12 @@ def testQuartiles():
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
-        retlf = objl.calculateForEachFeature(func)
+        retlf = objl.features.calculate(func)
         retlfCorrect = createData(dataType, [[1.750, None, 5.250], [4.500, None, 7.500], [7.750, None, 9.250]])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
-        retlp = objl.calculateForEachPoint(func)
+        retlp = objl.points.calculate(func)
         retlpCorrect = createData(dataType, [[None, None, None], [5.250, 5.500, 5.750], [3.500, 7.000, 8.000],
                                              [2.000, 2.000, 2.500], [10.000, 10.000, 10.000]])
         assert retlp.isIdentical(retlpCorrect)
@@ -281,8 +281,8 @@ def test_residuals_exception_zeroAxisOnParam():
     controlOrig = UML.createData("Matrix", [[2,2],[3,3],[4,4]])
 
     try:
-        pred = predOrig.copy().extractPoints(lambda x: False)
-        control = controlOrig.copy().extractPoints(lambda x: False)
+        pred = predOrig.copy().points.extract(lambda x: False)
+        control = controlOrig.copy().points.extract(lambda x: False)
         UML.calculate.residuals(pred, control)
         assert False  # expected ArgumentException
     except ArgumentException as ae:
@@ -290,7 +290,7 @@ def test_residuals_exception_zeroAxisOnParam():
         pass
 
     try:
-        pred = predOrig.copy().extractFeatures(lambda x: False)
+        pred = predOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(pred, controlOrig)
         assert False  # expected ArgumentException
     except ArgumentException as ae:
@@ -298,7 +298,7 @@ def test_residuals_exception_zeroAxisOnParam():
         pass
 
     try:
-        control = controlOrig.copy().extractFeatures(lambda x: False)
+        control = controlOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(predOrig, control)
         assert False  # expected ArgumentException
     except ArgumentException as ae:

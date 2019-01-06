@@ -90,7 +90,7 @@ def testSciKitLearnSparseRegression():
     A = scipy.sparse.coo_matrix((data, (points, cols)), shape=(x, x))
     obj = UML.createData('Sparse', A)
     testObj = obj.copy()
-    testObj.extractFeatures(cols[0])
+    testObj.features.extract(cols[0])
 
     ret = UML.trainAndApply(toCall('SGDRegressor'), trainX=obj, trainY=cols[0], testX=testObj)
 
@@ -150,18 +150,18 @@ def testSciKitLearnScoreMode():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.points == 2
-    assert bestScores.features == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.points == 2
-    assert allScores.features == 3
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 3
 
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
@@ -177,18 +177,18 @@ def testSciKitLearnScoreModeBinary():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.points == 2
-    assert ret.features == 1
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.points == 2
-    assert bestScores.features == 2
+    assert len(bestScores.points) == 2
+    assert len(bestScores.features) == 2
 
     allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.points == 2
-    assert allScores.features == 2
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 2
 
     checkLabelOrderingAndScoreAssociations([1, 2], bestScores, allScores)
 
@@ -351,7 +351,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
 def testSciKitLearnClusterLearners():
     data = generateClusteredPoints(3, 60, 8)
     data = data[0]
-    data.shufflePoints()
+    data.points.shuffle()
     trainX = data[:50,:]
     testX = data[50:,:]
     Xtrain = trainX.data
@@ -652,16 +652,16 @@ def testConvertYTrainDType():
             ['c', 3, 1, 2, 3, 1]]
     # object will have 'object' dtype because of strings in data
     trainObj = UML.createData('Matrix', train)
-    trainObj.retainFeatures([1, 2, 3, 4, 5])
+    trainObj.features.retain([1, 2, 3, 4, 5])
     testObj = UML.createData('Matrix', test)
-    testObj.retainFeatures([2,3,4,5])
+    testObj.features.retain([2,3,4,5])
 
     # case1 trainY passed as integer
     assert trainObj[:,0].data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
 
     #case2 trainY passed as UML object
-    trainY = trainObj.extractFeatures(0)
+    trainY = trainObj.features.extract(0)
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 

@@ -7,7 +7,7 @@ of functionality. For example, View objects only inherit from those test
 objects associated with non-destructive methods. Furthermore, each of
 those higher objects are collections of unit tests generic over a
 construction method, which is provided by the discoverable test objects
-defined in this file. 
+defined in this file.
 
 """
 

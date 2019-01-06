@@ -295,12 +295,12 @@ class SciKitLearn(UniversalInterface):
             if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopyTrainX:
                 trainX = trainX.data
             elif trainX.getTypeString() == 'Sparse':
-                trainX = trainX.copyAs('scipycsr')
+                trainX = trainX.copy().data
             else:
                 trainX = trainX.copyAs('numpy matrix')
 
         if trainY is not None:
-            if trainY.features > 1:
+            if len(trainY.features) > 1:
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)
@@ -315,7 +315,7 @@ class SciKitLearn(UniversalInterface):
             if testX.getTypeString() == 'Matrix' and learnerName not in mustCopyTestX:
                 testX = testX.data
             elif testX.getTypeString() == 'Sparse':
-                testX = testX.copyAs('scipycsr')
+                testX = testX.copy().data
             else:
                 testX = testX.copyAs('numpy matrix')
 
