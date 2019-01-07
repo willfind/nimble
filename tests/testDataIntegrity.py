@@ -81,7 +81,7 @@ def wrappedCrossValidateReturnAll(learnerName, trainX, trainY, testX, testY):
 
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
     tl = UML.train(learnerName, trainX, trainY)
-    tl.incrementalTrain(trainX.copyPoints([0]), trainY.copyPoints([0]))
+    tl.incrementalTrain(trainX.points.copy([0]), trainY.points.copy([0]))
 
 
 def setupAndCallRetrain(learnerName, trainX, trainY, testX, testY):
