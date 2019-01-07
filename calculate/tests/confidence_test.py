@@ -17,11 +17,11 @@ def testSimpleConfidenceInverval():
     pred = UML.createData("Matrix", predRaw)
     pred.transpose()
 
-    assert pred.points == 25
-    assert pred.features == 1
-    mean = pred.featureStatistics('mean')[0, 0]
+    assert len(pred.points) == 25
+    assert len(pred.features) == 1
+    mean = pred.features.statistics('mean')[0, 0]
     numpy.testing.assert_approx_equal(mean, 250.2)
-    std = pred.featureStatistics('samplestandarddeviation')[0, 0]
+    std = pred.features.statistics('samplestandarddeviation')[0, 0]
     numpy.testing.assert_approx_equal(std, 2.5)
 
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)

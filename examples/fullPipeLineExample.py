@@ -31,7 +31,7 @@ if __name__ == "__main__":
              [0, 1, 0, 2],
              [0, 0, 1, 3]]
     testObj = createData('Matrix', data=data2, featureNames=variables)
-    tesObjNoY = testObj.copyFeatures([0,1,2])
+    tesObjNoY = testObj.features.copy([0,1,2])
 
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                             testX=testObj, testY=3, performanceFunction=fractionIncorrect)

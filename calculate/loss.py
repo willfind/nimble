@@ -21,7 +21,7 @@ from six.moves import range
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):
         raise ArgumentException("predictedValues must be derived class of UML.data.Base")
-    if predictedValues.features > 1:
+    if len(predictedValues.features) > 1:
         raise ArgumentException("predictedValues must be labels only; this has more than one feature")
 
 
@@ -36,18 +36,18 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
         compressionFunction is a function that should take two arguments: runningTotal, the final
         output of loopFunction, and n, the number of values in knownValues/predictedValues.
     """
-    knownIsEmpty = knownValues.points == 0 or knownValues.features == 0
-    predIsEmpty = predictedValues.points == 0 or predictedValues.features == 0
+    knownIsEmpty = len(knownValues.points) == 0 or len(knownValues.features) == 0
+    predIsEmpty = len(predictedValues.points) == 0 or len(predictedValues.features) == 0
     if knownValues is None or not isinstance(knownValues, Base) or knownIsEmpty:
         raise ArgumentException("Empty 'knownValues' argument in error calculator")
     if predictedValues is None or not isinstance(predictedValues, Base) or predIsEmpty:
         raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
-    if knownValues.points != predictedValues.points:
+    if len(knownValues.points) != len(predictedValues.points):
         msg = "The knownValues and predictedValues must have the same number of points"
         raise ArgumentException(msg)
 
-    if knownValues.features != predictedValues.features:
+    if len(knownValues.features) != len(predictedValues.features):
         msg = "The knownValues and predictedValues must have the same number of features"
         raise ArgumentException(msg)
 
@@ -60,7 +60,7 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
     n = 0.0
     runningTotal = 0.0
     #Go through all values in known and predicted values, and pass those values to loopFunction
-    for i in range(predictedValues.points):
+    for i in range(len(predictedValues.points)):
         pV = predictedValues[i, 0]
         aV = knownValues[i, 0]
         runningTotal = loopFunction(aV, pV, runningTotal)
@@ -95,18 +95,18 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     """For 2d prediction data, compute the RMSE of each feature, then average
     the results.
     """
-    if knownValues.features != predictedValues.features:
+    if len(knownValues.features) != len(predictedValues.features):
         raise ArgumentException("The known and predicted data must have the same number of features")
-    if knownValues.points != predictedValues.points:
+    if len(knownValues.points) != len(predictedValues.points):
         raise ArgumentException("The known and predicted data must have the same number of points")
 
     results = []
-    for i in range(knownValues.features):
-        currKnown = knownValues.copyFeatures(i)
-        currPred = predictedValues.copyFeatures(i)
+    for i in range(len(knownValues.features)):
+        currKnown = knownValues.features.copy(i)
+        currPred = predictedValues.features.copy(i)
         results.append(rootMeanSquareError(currKnown, currPred))
 
-    return float(sum(results)) / knownValues.features
+    return float(sum(results)) / len(knownValues.features)
 
 
 meanFeaturewiseRootMeanSquareError.optimal = 'min'
@@ -142,10 +142,10 @@ def varianceFractionRemaining(knownValues, predictedValues):
     predicted values. This will be equal to 1 - UML.calculate.rsquared() of
     the same inputs.
     """
-    if knownValues.points != predictedValues.points: raise Exception("Objects had different numbers of points")
-    if knownValues.features != predictedValues.features: raise Exception(
+    if len(knownValues.points) != len(predictedValues.points): raise Exception("Objects had different numbers of points")
+    if len(knownValues.features) != len(predictedValues.features): raise Exception(
         "Objects had different numbers of features. Known values had " + str(
-            knownValues.features) + " and predicted values had " + str(predictedValues.features))
+            len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copyAs("numpy array")
     rawKnowns = knownValues.copyAs("numpy array")

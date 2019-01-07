@@ -19,6 +19,7 @@ if __name__ == "__main__":
     import UML
 
     from UML import createData
+    from UML import match
 
     # string manipulation to get and make paths
     pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     processed = createData("List", pathOrig, featureNames=True)
 
     # this feature is a precalculated similarity rating. Let's not make it too easy...
-    processed.extractFeatures('fnlwgt')
+    processed.features.extract('fnlwgt')
 
     # convert assorted features from strings to binary category columns
     processed.replaceFeatureWithBinaryFeatures('sex')
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     processed.transformFeatureToIntegers('income')
 
     # scrub the rest of the string valued data -- the ones we converted are the non-redundant ones
-    processed.dropFeaturesContainingType(six.string_types)
+    processed.features.delete(match.anyNonNumeric)
 
     # output the cleaned data set for later usage
     processed.writeFile(pathOut, includeNames=True)

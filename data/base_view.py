@@ -1,7 +1,6 @@
 """
 Defines a subclass of the base data object, which serves as the primary
 base class for read only views of data objects.
-
 """
 
 from __future__ import division
@@ -29,7 +28,6 @@ def exception_docstring(func):
         pass
     return func
 
-
 @inheritDocstringsFactory(Base)
 class BaseView(Base):
     """
@@ -37,37 +35,35 @@ class BaseView(Base):
     normal data object, but disallow all methods which could change the
     data.
 
+    Parameters
+    ----------
+    source : UML data object
+        The UML object that this is a view into.
+    pointStart : int
+        The inclusive index of the first point this view will have
+        access to.
+    pointEnd : int
+        The EXCLUSIVE index defining the last point this view will
+        have access to. This internal representation cannot match
+        the style of the factory method (in which both start and end
+        are inclusive) because we must be able to define empty
+        ranges by having start = end
+    featureStart : int
+        The inclusive index of the first feature this view will have
+        access to.
+    featureEnd : int
+        The EXCLUSIVE index defining the last feature this view will
+        have access to. This internal representation cannot match
+        the style of the factory method (in which both start and end
+        are inclusive) because we must be able to define empty
+        ranges by having start = end
+    kwds
+        Included due to best practices so args may automatically be
+        passed further up into the hierarchy if needed.
     """
 
     def __init__(self, source, pointStart, pointEnd, featureStart, featureEnd,
                  **kwds):
-        """
-        Initializes the object which overides all of the funcitonality in
-        UML.data.Base to either handle the provided access limits or throw
-        exceptions for inappropriate operations.
-
-        source: the UML object that this is a view into.
-
-        pointStart: the inclusive index of the first point this view will have
-        access to.
-
-        pointEnd: the EXCLUSIVE index defining the last point this view will
-        have access to. This internal representation cannot match the style
-        of the factory method (in which both start and end are inclusive)
-        because we must be able to define empty ranges by having start = end
-
-        featureStart: the inclusive index of the first feature this view will
-        have access to.
-
-        featureEnd: the EXCLUSIVE index defining the last feature this view
-        will have access to. This internal representation cannot match the
-        style of the factory method (in which both start and end are inclusive)
-        because we must be able to define empty ranges by having start = end
-
-        kwds: included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
-
-        """
         self._source = source
         self._pStart = pointStart
         self._pEnd = pointEnd
@@ -112,61 +108,28 @@ class BaseView(Base):
 
     # TODO: retType
 
-
     ############################
     # Reimplemented Operations #
     ############################
 
-    def getPointNames(self):
-        ret = self._source.getPointNames()
-        ret = ret[self._pStart:self._pEnd]
-
-        return ret
-
-    def getFeatureNames(self):
-        ret = self._source.getFeatureNames()
-        ret = ret[self._fStart:self._fEnd]
-
-        return ret
-
-    def getPointName(self, index):
-        corrected = index + self._pStart
-        return self._source.getPointName(corrected)
-
-    def getPointIndex(self, name):
-        possible = self._source.getPointIndex(name)
-        if possible >= self._pStart and possible < self._pEnd:
-            return possible - self._pStart
-        else:
-            raise KeyError()
-
-    def getFeatureName(self, index):
-        corrected = index + self._fStart
-        return self._source.getFeatureName(corrected)
-
-    def getFeatureIndex(self, name):
-        possible = self._source.getFeatureIndex(name)
-        if possible >= self._fStart and possible < self._fEnd:
-            return possible - self._fStart
-        else:
-            raise KeyError()
-
     def _copyNames(self, CopyObj):
+        # CopyObj.pointNamesInverse = self.points.getNames()
+        # CopyObj.pointNames = copy.copy(self._source.pointNames)
 
         if self._pointNamesCreated():
-            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNamesInverse = self.points.getNames()
             CopyObj.pointNames = copy.copy(self._source.pointNames)
             # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.index = self.getPointNames()
+            #     CopyObj.data.index = self.points.getNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
 
         if self._featureNamesCreated():
-            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNamesInverse = self.features.getNames()
             CopyObj.featureNames = copy.copy(self._source.featureNames)
             # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.columns = self.getFeatureNames()
+            #     CopyObj.data.columns = self.features.getNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
@@ -174,22 +137,22 @@ class BaseView(Base):
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
 
-        if self.points != self._source.points and self._source._pointNamesCreated():
+        if len(self.points) != len(self._source.points) and self._source._pointNamesCreated():
             if self._pStart != 0:
                 CopyObj.pointNames = {}
                 for idx, name in enumerate(CopyObj.pointNamesInverse):
                     CopyObj.pointNames[name] = idx
             else:
-                for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
+                for name in self._source.pointNamesInverse[self._pEnd:len(self._source.points) + 1]:
                     del CopyObj.pointNames[name]
 
-        if self.features != self._source.features and self._source._featureNamesCreated():
+        if len(self.features) != len(self._source.features) and self._source._featureNamesCreated():
             if self._fStart != 0:
                 CopyObj.featureNames = {}
                 for idx, name in enumerate(CopyObj.featureNamesInverse):
                     CopyObj.featureNames[name] = idx
             else:
-                for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
+                for name in self._source.featureNamesInverse[self._fEnd:len(self._source.features) + 1]:
                     del CopyObj.featureNames[name]
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
@@ -198,89 +161,47 @@ class BaseView(Base):
         # -1 because _pEnd and _fEnd are exclusive indices, but view takes inclusive
 
         if pointStart is None:
-            psAdj = None if self._source.points == 0 else self._pStart
+            psAdj = None if len(self._source.points) == 0 else self._pStart
         else:
             psIndex = self._source._getIndex(pointStart, 'point')
             psAdj = psIndex + self._pStart
 
         if pointEnd is None:
-            peAdj = None if self._source.points == 0 else self._pEnd - 1
+            peAdj = None if len(self._source.points) == 0 else self._pEnd - 1
         else:
             peIndex = self._source._getIndex(pointEnd, 'point')
             peAdj = peIndex + self._pStart
 
         if featureStart is None:
-            fsAdj = None if self._source.features == 0 else self._fStart
+            fsAdj = None if len(self._source.features) == 0 else self._fStart
         else:
             fsIndex = self._source._getIndex(featureStart, 'feature')
             fsAdj = fsIndex + self._fStart
 
         if featureEnd is None:
-            feAdj = None if self._source.features == 0 else self._fEnd - 1
+            feAdj = None if len(self._source.features) == 0 else self._fEnd - 1
         else:
             feIndex = self._source._getIndex(featureEnd, 'feature')
             feAdj = feIndex + self._fStart
 
         return self._source.view(psAdj, peAdj, fsAdj, feAdj)
 
-
-    ####################################
-    # Low Level Operations, Disallowed #
-    ####################################
-
-    @exception_docstring
-    def setPointName(self, oldIdentifier, newName):
-        self._readOnlyException("setPointName")
-
-    @exception_docstring
-    def setFeatureName(self, oldIdentifier, newName):
-        self._readOnlyException("setFeatureName")
-
-    @exception_docstring
-    def setPointNames(self, assignments=None):
-        self._readOnlyException("setPointNames")
-
-    @exception_docstring
-    def setFeatureNames(self, assignments=None):
-        self._readOnlyException("setFeatureNames")
-
-
     ###########################
     # Higher Order Operations #
     ###########################
 
     @exception_docstring
-    def dropFeaturesContainingType(self, typeToDrop):
-        self._readOnlyException("dropFeaturesContainingType")
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
+                          features=None, returnModified=False):
+        readOnlyException("fillUsingAllData")
 
     @exception_docstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
-        self._readOnlyException("replaceFeatureWithBinaryFeatures")
+        readOnlyException("replaceFeatureWithBinaryFeatures")
 
     @exception_docstring
     def transformFeatureToIntegers(self, featureToConvert):
-        self._readOnlyException("transformFeatureToIntegers")
-
-    @exception_docstring
-    def extractPointsByCoinToss(self, extractionProbability):
-        self._readOnlyException("extractPointsByCoinToss")
-
-    @exception_docstring
-    def shufflePoints(self):
-        self._readOnlyException("shufflePoints")
-
-    @exception_docstring
-    def shuffleFeatures(self):
-        self._readOnlyException("shuffleFeatures")
-
-    @exception_docstring
-    def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
-        self._readOnlyException("normalizePoints")
-
-    @exception_docstring
-    def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
-        self._readOnlyException("normalizeFeatures")
-
+        readOnlyException("transformFeatureToIntegers")
 
     ########################################
     ########################################
@@ -304,89 +225,31 @@ class BaseView(Base):
 
     @exception_docstring
     def transpose(self):
-        self._readOnlyException("transpose")
-
-    @exception_docstring
-    def addPoints(self, toAdd, insertBefore=None):
-        self._readOnlyException("addPoints")
-
-    @exception_docstring
-    def addFeatures(self, toAdd, insertBefore=None):
-        self._readOnlyException("addFeatures")
-
-    @exception_docstring
-    def sortPoints(self, sortBy=None, sortHelper=None):
-        self._readOnlyException("sortPoints")
-
-    @exception_docstring
-    def sortFeatures(self, sortBy=None, sortHelper=None):
-        self._readOnlyException("sortFeatures")
-
-    @exception_docstring
-    def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("extractPoints")
-
-    @exception_docstring
-    def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("extractFeatures")
-
-    @exception_docstring
-    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("deletePoints")
-
-    @exception_docstring
-    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("deleteFeatures")
-
-    @exception_docstring
-    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("retainPoints")
-
-    @exception_docstring
-    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        self._readOnlyException("retainFeatures")
+        readOnlyException("transpose")
 
     @exception_docstring
     def referenceDataFrom(self, other):
-        self._readOnlyException("referenceDataFrom")
-
-    @exception_docstring
-    def transformEachPoint(self, function, points=None):
-        self._readOnlyException("transformEachPoint")
-
-    @exception_docstring
-    def transformEachFeature(self, function, features=None):
-        self._readOnlyException("transformEachFeature")
-
-    @exception_docstring
-    def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
-                             skipNoneReturnValues=False):
-        self._readOnlyException("transformEachElement")
+        readOnlyException("referenceDataFrom")
 
     @exception_docstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
-        self._readOnlyException("fillWith")
-
-    @exception_docstring
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        self._readOnlyException("handleMissingValues")
+        readOnlyException("fillWith")
 
     @exception_docstring
     def flattenToOnePoint(self):
-        self._readOnlyException("flattenToOnePoint")
+        readOnlyException("flattenToOnePoint")
 
     @exception_docstring
     def flattenToOneFeature(self):
-        self._readOnlyException("flattenToOneFeature")
+        readOnlyException("flattenToOneFeature")
 
     @exception_docstring
     def unflattenFromOnePoint(self, numPoints):
-        self._readOnlyException("unflattenFromOnePoint")
+        readOnlyException("unflattenFromOnePoint")
 
     @exception_docstring
     def unflattenFromOneFeature(self, numFeatures):
-        self._readOnlyException("unflattenFromOneFeature")
-
+        readOnlyException("unflattenFromOneFeature")
 
     ###############################################################
     ###############################################################
@@ -395,45 +258,36 @@ class BaseView(Base):
     ###############################################################
 
     @exception_docstring
-    def elementwiseMultiply(self, other):
-        self._readOnlyException("elementwiseMultiply")
-
-    @exception_docstring
-    def elementwisePower(self, other):
-        self._readOnlyException("elementwisePower")
-
-    @exception_docstring
     def __imul__(self, other):
-        self._readOnlyException("__imul__")
+        readOnlyException("__imul__")
 
     @exception_docstring
     def __iadd__(self, other):
-        self._readOnlyException("__iadd__")
+        readOnlyException("__iadd__")
 
     @exception_docstring
     def __isub__(self, other):
-        self._readOnlyException("__isub__")
+        readOnlyException("__isub__")
 
     @exception_docstring
     def __idiv__(self, other):
-        self._readOnlyException("__idiv__")
+        readOnlyException("__idiv__")
 
     @exception_docstring
     def __itruediv__(self, other):
-        self._readOnlyException("__itruediv__")
+        readOnlyException("__itruediv__")
 
     @exception_docstring
     def __ifloordiv__(self, other):
-        self._readOnlyException("__ifloordiv__")
+        readOnlyException("__ifloordiv__")
 
     @exception_docstring
     def __imod__(self, other):
-        self._readOnlyException("__imod__")
+        readOnlyException("__imod__")
 
     @exception_docstring
     def __ipow__(self, other):
-        self._readOnlyException("__ipow__")
-
+        readOnlyException("__ipow__")
 
     ####################
     ####################
@@ -441,7 +295,7 @@ class BaseView(Base):
     ####################
     ####################
 
-    def _readOnlyException(self, name):
-        msg = "The " + name + " method is disallowed for View objects. View "
-        msg += "objects are read only, yet this method modifies the object"
-        raise ImproperActionException(msg)
+def readOnlyException(name):
+    msg = "The " + name + " method is disallowed for View objects. View "
+    msg += "objects are read only, yet this method modifies the object"
+    raise ImproperActionException(msg)
