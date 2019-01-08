@@ -49,8 +49,8 @@ def testReturnsFundamentalsCorrect():
             for curSparsity in sparsities:
                 returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
 
-                assert (returned.points == nPoints)
-                assert (returned.features == nFeatures)
+                assert (len(returned.points) == nPoints)
+                assert (len(returned.features) == nFeatures)
 
                 #assert that the requested numerical type was returned
                 assert type(returned[0, 0] == curType)
@@ -129,8 +129,8 @@ def test_createRandomizedData_names_passed():
                     curReturnType, numberPoints, numberFeatures, curSparsity,
                     elementType=curType, pointNames=pnames, featureNames=fnames)
 
-                assert ret.getPointNames() == pnames
-                assert ret.getFeatureNames() == fnames
+                assert ret.points.getNames() == pnames
+                assert ret.features.getNames() == fnames
 
 #todo check that sizes of returned objects are what you request via npoints and nfeatures
 
@@ -190,8 +190,8 @@ def back_constant_correctSizeAndContents(toTest, value):
             ret = toTest(t, size[0], size[1])
             assert t == ret.getTypeString()
 
-            assert ret.points == size[0]
-            assert ret.features == size[1]
+            assert len(ret.points) == size[0]
+            assert len(ret.features) == size[1]
 
             for p in range(size[0]):
                 for f in range(size[1]):
@@ -206,8 +206,8 @@ def back_constant_correctNames(toTest):
     for t in returnTypes:
         ret = toTest(t, 2, 2, pointNames=pnames, featureNames=fnames, name=objName)
 
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
         assert ret.name == objName
 
 
@@ -337,8 +337,8 @@ def test_identity_correctNames():
     for t in returnTypes:
         ret = UML.identity(t, 2, pointNames=pnames, featureNames=fnames, name=objName)
 
-        assert ret.getPointNames() == pnames
-        assert ret.getFeatureNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
         assert ret.name == objName
 
 

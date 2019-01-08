@@ -30,8 +30,8 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
     def train(
             self, trainX, trainY, desiredNonZero, verboseStandardOut=False,
             allowSubLogging=False):
-        if desiredNonZero > trainX.features:
-            desiredNonZero = trainX.features
+        if desiredNonZero > len(trainX.features):
+            desiredNonZero = len(trainX.features)
 
         def countNonZero(tl):
             coefs = tl.getAttributes()['coef_']
@@ -89,8 +89,8 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
     def train(
             self, trainX, trainY, desiredNonZero, verboseStandardOut=False,
             allowSubLogging=False):
-        if desiredNonZero > trainX.features:
-            desiredNonZero = trainX.features
+        if desiredNonZero > len(trainX.features):
+            desiredNonZero = len(trainX.features)
 
         def countNonZero(tl):
             coefs = tl.getAttributes()['coef_']
@@ -174,14 +174,14 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 
         # retrain without those features????
         removalIndices = [withIndices[n][1] for n in range(numberToOmit)]
-        self.wantedIndices = list(set(range(trainX.features)) - set(removalIndices))
+        self.wantedIndices = list(set(range(len(trainX.features))) - set(removalIndices))
 
-        inTrainX = trainX.copyFeatures(self.wantedIndices)
+        inTrainX = trainX.features.copy(self.wantedIndices)
         self._trained = UML.train(sklLogReg, inTrainX, trainY, **kwargs)
 
 
     def apply(self, testX):
-        inTestX = testX.copyFeatures(self.wantedIndices)
+        inTestX = testX.features.copy(self.wantedIndices)
         return self._trained.apply(inTestX, useLog=False)
 
 
@@ -192,11 +192,11 @@ class ReducedRidge(CustomLearner):
     def train(self, trainX, trainY, alpha, wantedIndices):
         name = 'scikitlearn.RidgeClassifier'
         self.wantedIndices = wantedIndices
-        redTrainX = trainX.copyFeatures(wantedIndices)
+        redTrainX = trainX.features.copy(wantedIndices)
         self.tl = UML.train(name, redTrainX, trainY, alpha, useLog=False)
 
     def apply(self, testX):
-        redTestX = testX.copyFeatures(self.wantedIndices)
+        redTestX = testX.features.copy(self.wantedIndices)
         return self.tl.apply(redTestX, useLog=False)
 
 
@@ -206,18 +206,18 @@ class ReducedLogisticRegression(CustomLearner):
     def train(self, trainX, trainY, C, wantedIndices):
         name = 'scikitlearn.LogisticRegression'
         self.wantedIndices = wantedIndices
-        redTrainX = trainX.copyFeatures(wantedIndices)
+        redTrainX = trainX.features.copy(wantedIndices)
         self.tl = UML.train(name, redTrainX, trainY, C, useLog=False)
 
     def apply(self, testX):
-        redTestX = testX.copyFeatures(self.wantedIndices)
+        redTestX = testX.features.copy(self.wantedIndices)
         return self.tl.apply(redTestX, useLog=False)
 
 
 def sanityCheck(trainX, totalScores):
-    assert trainX.features == 84
+    assert len(trainX.features) == 84
 
-    for name in trainX.getFeatureNames():
+    for name in trainX.features.getNames():
         assert name[-3:] == "(M)" or name[-3:] == "(F)"
 
     # gotta fix data's __getitem__ so we can just pass python's sum function
@@ -227,34 +227,34 @@ def sanityCheck(trainX, totalScores):
             total += value
         return total
 
-    summed = trainX.calculateForEachPoint(summer)
-    summed.setFeatureName(0, "totalScorePosOrNeg")
+    summed = trainX.points.calculate(summer)
+    summed.features.setName(0, "totalScorePosOrNeg")
     assert summed == totalScores
 
 def seperateData(dataAll, omitList):
     # grab the features we want to be in the training data; including raw
     # data that we may later choose to omit
     nameOfFirst = "I do not enjoy watching dance performances. (M)"
-    indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
+    indexOfFirst = dataAll.features.getIndex(nameOfFirst)
 
-    usedData = dataAll.extractFeatures(start=indexOfFirst, end=None)
-    usedData.appendFeatures(dataAll.copyFeatures("isMale"))
-    usedData.appendFeatures(dataAll.copyFeatures("InTestSet"))
+    usedData = dataAll.features.extract(start=indexOfFirst, end=None)
+    usedData.features.add(dataAll.features.copy("isMale"))
+    usedData.features.add(dataAll.features.copy("InTestSet"))
 
-    usedData.extractFeatures(omitList)
+    usedData.features.extract(omitList)
 
     def selectInTestSet(point):
         if point["InTestSet"] > 0:
             return True
         return False
 
-    testingSet = usedData.extractPoints(selectInTestSet)
-    testY = testingSet.extractFeatures("isMale")
-    testingSet.extractFeatures("InTestSet")
+    testingSet = usedData.points.extract(selectInTestSet)
+    testY = testingSet.features.extract("isMale")
+    testingSet.features.extract("InTestSet")
     testX = testingSet
 
-    trainY = usedData.extractFeatures("isMale")
-    usedData.extractFeatures("InTestSet")
+    trainY = usedData.features.extract("isMale")
+    usedData.features.extract("InTestSet")
     trainX = usedData
 
     return trainX, trainY, testX, testY
@@ -267,7 +267,7 @@ def printCoefficientsHR(trainedLearner):
     for i in range(len(coefs)):
         value = coefs[i]
         if value != 0:
-            chosen.append(trainX.getFeatureName(i))
+            chosen.append(trainX.features.getName(i))
             chosenCoefs.append(coefs[i])
 
     # display those questions which were the most useful
@@ -285,7 +285,7 @@ def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
     coefs = []
     paired = []
     for i in range(len(coefsFromLearner)):
-        name = trainX.getFeatureName(i).strip()
+        name = trainX.features.getName(i).strip()
         paired.append((name, coefsFromLearner[i]))
 
     if randomize:
@@ -313,7 +313,7 @@ def saveCoefficients(trainedLearner, names, outPath):
 
 
 def standardizeScoreScale(obj):
-    allNames = obj.getFeatureNames()
+    allNames = obj.features.getNames()
     negScored = []
     for i, name in enumerate(allNames):
         assert name[-1] == ")" and name[-3] == "("
@@ -322,9 +322,9 @@ def standardizeScoreScale(obj):
             negScored.append(i)
 
     # confirm scoring range assumptions
-    for f in range(obj.features):
-        for p in range(obj.points):
-            fname = obj.getFeatureName(f)
+    for f in range(len(obj.features)):
+        for p in range(len(obj.points)):
+            fname = obj.features.getName(f)
             if fname[-2] == 'M':
                 assert obj[p,f] >= 0 and obj[p, f] <= 4
             else:
@@ -339,15 +339,15 @@ def standardizeScoreScale(obj):
                 ret.append(-elem)
         return ret
 
-#   reduced = obj.copyPoints(end=20)
-#   reduced = reduced.copyFeatures([0,1,2,58,59,60])
-#   print reduced.getFeatureNames()
+#   reduced = obj.points.copy(end=20)
+#   reduced = reduced.features.copy([0,1,2,58,59,60])
+#   print reduced.features.getNames()
 #   reduced.show('Before')
 
-    obj.transformEachFeature(reverseScorePolarity, features=negScored)
+    obj.features.transform(reverseScorePolarity, features=negScored)
 
-#   reduced = obj.copyPoints(end=20)
-#   reduced = reduced.copyFeatures([0,1,2,58,59,60])
+#   reduced = obj.points.copy(end=20)
+#   reduced = reduced.features.copy([0,1,2,58,59,60])
 #   reduced.show('After')
 
 #   exit(0)
@@ -439,7 +439,7 @@ def analysis_removal_comparison(trainX, trainY, testX, testY):
 
     num = 35
 
-    allQsList = trainX.getFeatureNames()
+    allQsList = trainX.features.getNames()
 #   allQs = set(allQsList)
     LVQs = []
     LMQs = []
@@ -573,16 +573,16 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
         currTL = allTL[i]
         currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
         currCoefsObj = UML.createData("Matrix", currCoefs)
-        coefsObj.appendPoints(currCoefsObj)
+        coefsObj.points.add(currCoefsObj)
 
-#   print coefsObj.points
-#   print coefsObj.features
+#   print len(coefsObj.points)
+#   print len(coefsObj.features)
 
-    coefCorr = coefsObj.featureSimilarities("correlation")
+    coefCorr = coefsObj.features.similarities("correlation")
     # BUT THIS IS WIERD since the questions are 'scored' on different
     # scales depending on whether it ends with an (M) or (F)
-    coefCorr.setPointNames([str(val) for val in range(75)])
-    coefCorr.setFeatureNames([str(val) for val in range(75)])
+    coefCorr.points.setNames([str(val) for val in range(75)])
+    coefCorr.features.setNames([str(val) for val in range(75)])
     coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
         includeObjectName=False)
 
@@ -624,25 +624,25 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     coefs = trainedLearner.backend.coef_.flatten()
     print(coefs.shape)
 
-    trainX.appendPoints(testX)
-    trainY.appendPoints(testY)
+    trainX.points.add(testX)
+    trainY.points.add(testY)
 
     nzIDs = trainY.copyAs("numpyarray",outputAs1D=True).nonzero()[0]
 
-    malePoints = trainX.extractPoints(list(nzIDs))
+    malePoints = trainX.points.extract(list(nzIDs))
     femalePoints = trainX
 
-    print(malePoints.points)
-    print(femalePoints.points)
+    print(len(malePoints.points))
+    print(len(femalePoints.points))
 
-    mMeans = malePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
-    fMeans = femalePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
+    mMeans = malePoints.features.statistics("mean").copyAs("pythonlist", outputAs1D=True)
+    fMeans = femalePoints.features.statistics("mean").copyAs("pythonlist", outputAs1D=True)
 
     print(mMeans)
     print("")
     print(fMeans)
 
-    names = trainX.getFeatureNames()
+    names = trainX.features.getNames()
     zipped = list(zip(mMeans, fMeans, coefs, names))
 
     def r(xxx_todo_changeme):
@@ -728,7 +728,7 @@ def normalize_Feature_subtract_mean_div_std(trainX, testX):
 
 def wantedIndiceGrabber(tl, data):
     wi = tl.getAttributes()['wantedIndices']
-    return data.copyFeatures(wi)
+    return data.features.copy(wi)
 
 def featSelect_All(trainX, trainY, testX, numWanted):
     return (trainX, testX)
@@ -747,7 +747,7 @@ def featSelect_LogRegRegularization(trainX, trainY, testX, numWanted):
 
 def featSelect_LogRegOmit_LeastValue(trainX, trainY, testX, numWanted):
     name = "Custom.LogisticRegressionSelectByOmission"
-    nto = trainX.features - numWanted
+    nto = len(trainX.features) - numWanted
     cVals = tuple([100. / (10**n) for n in range(7)])
     tl = UML.train(
         name, trainX, trainY, method="least value", numberToOmit=nto,
@@ -763,7 +763,7 @@ def featSelect_LogRegOmit_LeastValue(trainX, trainY, testX, numWanted):
 
 def featSelect_LogRegOmit_LeastMagnitude(trainX, trainY, testX, numWanted):
     name = "Custom.LogisticRegressionSelectByOmission"
-    nto = trainX.features - numWanted
+    nto = len(trainX.features) - numWanted
     cVals = tuple([100. / (10**n) for n in range(7)])
     tl = UML.train(
         name, trainX, trainY, method="least magnitude", numberToOmit=nto,
@@ -803,8 +803,8 @@ def featSelect_handmade_orig(trainX, trainY, testX, numWanted):
     wanted.append(" I laugh aloud. (F)")
     wanted.append(" I show my feelings when I'm happy. (F)")
 
-    redTrain = trainX.copyFeatures(wanted)
-    redTest = testX.copyFeatures(wanted)
+    redTrain = trainX.features.copy(wanted)
+    redTest = testX.features.copy(wanted)
     return (redTrain, redTest)
 
 def featSelect_handmade_random(trainX, trainY, testX, numWanted):
@@ -833,8 +833,8 @@ def featSelect_handmade_random(trainX, trainY, testX, numWanted):
     wanted.append(" I would never make a high-risk investment. (F)")
     wanted.append(" I have a dark outlook on the future. (M)")
 
-    redTrain = trainX.copyFeatures(wanted)
-    redTest = testX.copyFeatures(wanted)
+    redTrain = trainX.features.copy(wanted)
+    redTest = testX.features.copy(wanted)
     return (redTrain, redTest)
 
 ############################
@@ -1032,13 +1032,13 @@ if __name__ == "__main__":
     # Check some of the expectations we had on the data to make sure
     # we've extracted the right stuff
     if performSanityCheck:
-        totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
+        totalScores = dataAll.features.extract("totalScorePosOrNeg")
         sanityCheck(trainX, totalScores)  # defined above __main__
 
     print("")
-    print("Train points: " + str(trainX.points))
-    print("Test points: " + str(testX.points))
-    print("Starting number of features: " + str(trainX.features))
+    print("Train points: " + str(len(trainX.points)))
+    print("Test points: " + str(len(testX.points)))
+    print("Starting number of features: " + str(len(trainX.features)))
     print("")
 
 
@@ -1108,7 +1108,7 @@ if __name__ == "__main__":
 
         # grab the feature names associated with the non-zero coefficients
 #       printCoefficientsPythonLists(trainedLearner, trainX, randomize=True)
-#       saveCoefficients(trainedLearner, trainX.getFeatureNames(), coefOutFile)
+#       saveCoefficients(trainedLearner, trainX.features.getNames(), coefOutFile)
 
 
     exit(0)

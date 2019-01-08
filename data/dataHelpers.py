@@ -1,7 +1,6 @@
 """
 Any method, object, or constant that might be used by multiple tests or
 the main data wrapper objects defined in this module
-
 """
 
 from __future__ import division
@@ -11,14 +10,18 @@ import math
 import string
 import inspect
 import re
+from functools import wraps
+import sys
 
-
-from abc import ABCMeta
-from abc import abstractmethod
 import six
 from six.moves import range
+from six import reraise
+import numpy
 
+import UML
 from UML.exceptions import ArgumentException
+from UML.logger.uml_logger import buildArgDict, getLogValues
+from UML.logger.stopwatch import Stopwatch
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -29,65 +32,6 @@ DEFAULT_NAME_PREFIX = "OBJECT_#"
 
 defaultObjectNumber = 0
 
-
-class View(six.with_metaclass(ABCMeta)):
-    def equals(self, other):
-        if not isinstance(other, View):
-            return False
-        if len(self) != len(other):
-            return False
-        if self.index() != other.index():
-            return False
-        if not self.name().startswith(DEFAULT_PREFIX) and not other.name().startswith(DEFAULT_PREFIX):
-            if self.name() != other.name():
-                return False
-        for i in range(len(self)):
-            if self[i] != other[i]:
-                return False
-        return True
-
-    def __str__(self):
-        ret = '['
-        for i in range(len(self)):
-            if i != 0:
-                ret += ', '
-            ret += str(self[i])
-        ret += ']'
-        return ret
-
-    @abstractmethod
-    def __getitem__(self, index):
-        pass
-
-    @abstractmethod
-    def __setitem__(self, key, value):
-        pass
-
-    @abstractmethod
-    def nonZeroIterator(self):
-        pass
-
-    @abstractmethod
-    def __len__(self):
-        pass
-
-    @abstractmethod
-    def index(self):
-        pass
-
-    @abstractmethod
-    def name(self):
-        pass
-
-    @abstractmethod
-    def getPointName(self, index):
-        pass
-
-    @abstractmethod
-    def getFeatureName(self, index):
-        pass
-
-
 def nextDefaultObjectName():
     global defaultObjectNumber
     ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)
@@ -96,14 +40,14 @@ def nextDefaultObjectName():
 
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
-    """Helper to set names and pathes of a return object when dealing
+    """
+    Helper to set names and pathes of a return object when dealing
     with some kind of binary operation on data objects. nameSource
     is expected to be either 'self' (indicating take the name from
     the calling object) or None (take a default name). pathSource
     is expected to be either 'self' or 'merge' (meaning to take
     a path only if one of the caller or other has a path specified,
     else use default values)
-
     """
 
     # determine return value's name
@@ -139,16 +83,17 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
 
 
 def mergeNonDefaultNames(baseSource, otherSource):
-    """ Merges the point and feature names of the the two source objects,
+    """
+    Merges the point and feature names of the the two source objects,
     returning a double of the merged point names on the left and the
     merged feature names on the right. A merged name is either the
-    baseSource's if both have default prefixes (or are equal). Otherwise,
-    it is the name which doesn't have a default prefix from either source.
+    baseSource's if both have default prefixes (or are equal).
+    Otherwise, it is the name which doesn't have a default prefix from
+    either source.
 
-    Assumptions: (1) Both objects are the same shape. (2) The point names
-    and feature names of both objects are consistent (any non-default
-    names in the same positions are equal)
-
+    Assumptions: (1) Both objects are the same shape. (2) The point
+    names and feature names of both objects are consistent (any
+    non-default names in the same positions are equal)
     """
     # merge helper
     def mergeNames(baseNames, otherNames):
@@ -169,19 +114,26 @@ def mergeNonDefaultNames(baseSource, otherSource):
     (retPNames, retFNames) = (None, None)
 
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
-        retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
-    elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
+        retPNames = mergeNames(baseSource.points.getNames(),
+                               otherSource.points.getNames())
+    elif (baseSource._pointNamesCreated()
+          and not otherSource._pointNamesCreated()):
         retPNames = baseSource.pointNames
-    elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+    elif (not baseSource._pointNamesCreated()
+          and otherSource._pointNamesCreated()):
         retPNames = otherSource.pointNames
     else:
         retPNames = None
 
-    if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
-        retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
-    elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
+    if (baseSource._featureNamesCreated()
+            and otherSource._featureNamesCreated()):
+        retFNames = mergeNames(baseSource.features.getNames(),
+                               otherSource.features.getNames())
+    elif (baseSource._featureNamesCreated()
+          and not otherSource._featureNamesCreated()):
         retFNames = baseSource.featureNames
-    elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+    elif (not baseSource._featureNamesCreated()
+          and otherSource._featureNamesCreated()):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
@@ -191,17 +143,17 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 def reorderToMatchList(dataObject, matchList, axis):
     """
-    Helper which will reorder the data object along the specified axis so that
-    instead of being in an order corresponding to a sorted version of matchList,
-    it will be in the order of the given matchList.
+    Helper which will reorder the data object along the specified axis
+    so that instead of being in an order corresponding to a sorted
+    version of matchList, it will be in the order of the given
+    matchList.
 
     matchList must contain only indices, not name based identifiers.
-
     """
     if axis.lower() == "point":
-        sortFunc = dataObject.sortPoints
+        sortFunc = dataObject.points.sort
     else:
-        sortFunc = dataObject.sortFeatures
+        sortFunc = dataObject.features.sort
 
     sortedList = copy.copy(matchList)
     sortedList.sort()
@@ -210,9 +162,9 @@ def reorderToMatchList(dataObject, matchList, axis):
         mappedOrig[matchList[i]] = i
 
     if axis == 'point':
-        indexGetter = lambda x: dataObject.getPointIndex(x.getPointName(0))
+        indexGetter = lambda x: dataObject.points.getIndex(x.points.getName(0))
     else:
-        indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
+        indexGetter = lambda x: dataObject.features.getIndex(x.features.getName(0))
 
     def scorer(viewObj):
         index = indexGetter(viewObj)
@@ -225,18 +177,25 @@ def reorderToMatchList(dataObject, matchList, axis):
 
 def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
-    # list python lists. We must still explicitly exclude strings because of the
-    # numpy string implementation.
+    # list python lists. We must still explicitly exclude strings because of
+    # the numpy string implementation.
     if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
         return False
     return True
+
+
+def _checkNumeric(val):
+    """
+    Check if value looks numeric. Raise ValueError if not.
+    """
+    if not _looksNumeric(val):
+        raise ValueError("Value '{}' does not seem to be numeric".format(val))
 
 
 def formatIfNeeded(value, sigDigits):
     """
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
-
     """
     if _looksNumeric(value):
         if not isinstance(value, int) and sigDigits is not None:
@@ -245,13 +204,13 @@ def formatIfNeeded(value, sigDigits):
 
 
 def indicesSplit(allowed, total):
-    """Given the total length of a list, and a limit to
+    """
+    Given the total length of a list, and a limit to
     how many indices we are allowed to display, return
     two lists of indices defining a middle ommision.
     In the tupple return, the first list are positive indices
     growing up from zero. The second list are negative indices
     growing up to negative one.
-
     """
     if total > allowed:
         allowed -= 1
@@ -276,11 +235,11 @@ def indicesSplit(allowed, total):
 
 def hasNonDefault(obj, axis):
     if axis == 'point':
-        possibleIndices = range(obj.points)
+        possibleIndices = range(len(obj.points))
     else:
-        possibleIndices = range(obj.features)
+        possibleIndices = range(len(obj.features))
 
-    getter = obj.getPointName if axis == 'point' else obj.getFeatureName
+    getter = obj.points.getName if axis == 'point' else obj.features.getName
 
     ret = False
     for index in possibleIndices:
@@ -291,12 +250,14 @@ def hasNonDefault(obj, axis):
 
 
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
-    if not namesList: return ''
+    if not namesList:
+        return ''
     namesString = ""
     (posL, posR) = indicesSplit(numDisplayNames, count)
     possibleIndices = posL + posR
 
-    allDefault = all([namesList[i].startswith(DEFAULT_PREFIX) for i in possibleIndices])
+    allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
+                      for i in possibleIndices])
 
     if allDefault:
         return ""
@@ -339,21 +300,39 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
 
 
 def cleanKeywordInput(s):
-    """Processes the input string such that it is in lower case, and all
-    whitespace is removed. Such a string is then considered 'cleaned' and
-    ready for comparison against lists of accepted values of keywords.
-
+    """
+    Processes the input string such that it is in lower case, and all
+    whitespace is removed. Such a string is then considered 'cleaned'
+    and ready for comparison against lists of accepted values of keywords.
     """
     s = s.lower()
     s = "".join(s.split())
     return s
 
+def validateInputString(string, accepted, paramName):
+    acceptedClean = list(map(cleanKeywordInput, accepted))
+
+    msg = paramName + " must be equivalent to one of the following: "
+    msg += str(accepted) + ", but '" + str(string)
+    msg += "' was given instead. Note: casing and whitespace is "
+    msg += "ignored when checking the " + paramName
+
+    if not isinstance(string, six.string_types):
+        raise ArgumentException(msg)
+
+    cleanFuncName = cleanKeywordInput(string)
+
+    if cleanFuncName not in acceptedClean:
+        raise ArgumentException(msg)
+
+    return cleanFuncName
+
 
 def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
-    """Adjust the inputs to be a consistent length and with
-    consistent omission by removing
-    values and columns from the middle. Returns None.
-
+    """
+    Adjust the inputs to be a consistent length and with consistent
+    omission by removing values and columns from the middle.
+    Returns None.
     """
     namesOmitIndex = int(math.floor(len(fnames) / 2.0))
     dataOmitIndex = int(math.floor(len(dataWidths) / 2.0))
@@ -416,9 +395,10 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
 def inheritDocstringsFactory(toInherit):
     """
-    Factory to make decorator to copy docstrings from toInherit for reimplementations
-    in the wrapped object. Only those functions without docstrings will be given the
-    corresponding docstrings from toInherit.
+    Factory to make decorator to copy docstrings from toInherit for
+    reimplementations in the wrapped object. Only those functions
+    without docstrings will be given the corresponding docstrings from
+    toInherit.
     """
     def inheritDocstring(cls):
         writable = cls.__dict__
@@ -430,3 +410,60 @@ def inheritDocstringsFactory(toInherit):
 
         return cls
     return inheritDocstring
+
+def valuesToPythonList(values, argName):
+    """
+    Create a python list of values from an integer (python or numpy),
+    string, or an iterable container object
+    """
+    if isinstance(values, list):
+        return values
+    if isinstance(values, (int, numpy.integer, six.string_types)):
+        return [values]
+    valuesList = []
+    try:
+        for val in values:
+            valuesList.append(val)
+    except TypeError:
+        msg = "The argument '{0}' is not an integer ".format(argName)
+        msg += "(python or numpy), string, or an iterable container object."
+        raise ArgumentException(msg)
+
+    return valuesList
+
+def logCaptureFactory(prefix):
+    def logCapture(function):
+        """
+
+        """
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            logger = UML.logger.active
+            try:
+                logger.position += 1
+                timer = Stopwatch()
+                timer.start("timer")
+                ret = function(*args, **kwargs)
+                logger.position -= 1
+            except Exception as e:
+                logger.position = 0
+                einfo = sys.exc_info()
+                reraise(*einfo)
+            finally:
+                timer.stop("timer")
+            if logger.position == 0:
+                funcName = function.__name__
+                a, v, k, d = inspect.getargspec(function)
+                argNames = a
+                defaults = d
+                useLog, deepLog = getLogValues(argNames, *args, **kwargs)
+                if "useLog" not in argNames:
+                    return ret
+                if useLog:
+                    funcName = prefix + '.' + funcName
+                    argDict = buildArgDict(argNames, defaults, *args, **kwargs)
+                    logger.logPrep(funcName, args[0]._source.getTypeString(), argDict)
+                    logger.log(logger.logType, logger.logInfo)
+            return ret
+        return wrapper
+    return logCapture

@@ -64,8 +64,8 @@ def test_multioutput_learners_callable_from_all():
             [2, -2]]
     trainY = UML.createData('Matrix', data)
 
-    trainY0 = trainY.copyFeatures(0)
-    trainY1 = trainY.copyFeatures(1)
+    trainY0 = trainY.features.copy(0)
+    trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
     testX = UML.createData('Matrix', data)
@@ -73,8 +73,8 @@ def test_multioutput_learners_callable_from_all():
     data = [[555, -555], [1, -1]]
     testY = UML.createData('Matrix', data)
 
-    testY0 = testY.copyFeatures(0)
-    testY1 = testY.copyFeatures(1)
+    testY0 = testY.features.copy(0)
+    testY1 = testY.features.copy(1)
 
     testName = 'Custom.MultiOutputRidgeRegression'
     wrappedName = 'Custom.RidgeRegression'

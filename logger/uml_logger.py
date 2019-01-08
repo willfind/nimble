@@ -1,11 +1,23 @@
+"""
+Handle logging of creating and testing learners.
+Currently stores data in a SQLite database file and generates
+a human readable log by querying the table within the database.
+There is a hierarchical structure to the log, this limits the to
+entries with only the specified level of detail.
+
+Hierarchy
+Level 1: Data creation and preprocessing logs
+Level 2: Outputs basic information about the run, including timestamp,
+         run number, learner name, train and test object details,
+         parameter, metric and timer data if available
+Level 3: Cross validation
+"""
 from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys
 import time
-import six
 import inspect
-import numpy
 import re
 import sqlite3
 from datetime import datetime
@@ -13,26 +25,14 @@ from dateutil.parser import parse
 from ast import literal_eval
 from textwrap import wrap
 from functools import wraps
-from future.utils import raise_
+
+import six
+from six import reraise
+import numpy
 
 import UML
 from UML.exceptions import ArgumentException
 from .stopwatch import Stopwatch
-
-"""
-    Handle logging of creating and testing learners.
-    Currently stores data in a SQLite database file and generates
-    a human readable log by querying the table within the database.
-    There is a hierarchical structure to the log, this limits the to
-    entries with only the specified level of detail.
-
-    Hierarchy
-    Level 1: Data creation and preprocessing logs
-    Level 2: Outputs basic information about the run, including timestamp,
-             run number, learner name, train and test object details, parameter,
-             metric and timer data if available
-    Level 3: Cross validation
-"""
 
 def logCapture(function):
     """
@@ -44,11 +44,6 @@ def logCapture(function):
     """
     @wraps(function)
     def wrapper(*args, **kwargs):
-        funcName = function.__name__
-        a, v, k, d = inspect.getargspec(function)
-        argNames = a
-        defaults = d
-
         logger = UML.logger.active
         try:
             logger.position += 1
@@ -59,32 +54,29 @@ def logCapture(function):
         except Exception as e:
             logger.position = 0
             einfo = sys.exc_info()
-            raise_(einfo[1], None, einfo[2])
+            reraise(*einfo)
         finally:
             timer.stop("timer")
-        if "useLog" in argNames and logger.position == 0:
-            useLog, deepLog = _getLogValues(argNames, *args, **kwargs)
-            if useLog:
-                # crossValidateBackend called directly
-                if funcName == "crossValidateBackend":
-                    if deepLog:
-                        logger.log(logger.logType, logger.logInfo)
-                # logging for prep
-                elif hasattr(UML.data.base.Base, funcName):
-                    # special cases logging is handled in base.py
-                    specialCases = ["dropFeaturesContainingType", "_normalizeGeneric",
-                                    "featureReport", "summaryReport"]
-                    if funcName not in specialCases:
-                        argDict = _buildArgDict(argNames, defaults, *args, **kwargs)
-                        logger.logPrep(funcName, args[0].getTypeString(), argDict)
+        if logger.position == 0 or function.__name__ == 'crossValidateBackend':
+            funcName = function.__name__
+            argNames, _, _, defaults = inspect.getargspec(function)
+            if "useLog" not in argNames:
+                return ret
+            useLog, deepLog = getLogValues(argNames, *args, **kwargs)
+            if funcName == "crossValidateBackend":
+                if useLog and deepLog:
                     logger.log(logger.logType, logger.logInfo)
+            elif useLog:
+                # logging for Base
+                if hasattr(UML.data.Base, funcName):
+                    # special cases logging is handled in base.py
+                    specialCases = ["featureReport", "summaryReport"]
+                    if funcName not in specialCases:
+                        argDict = buildArgDict(argNames, defaults, *args, **kwargs)
+                        logger.logPrep(funcName, args[0].getTypeString(), argDict)
                 # logging for load, data, run
                 else:
                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
-                    logger.log(logger.logType, logger.logInfo)
-        elif funcName == "crossValidateBackend":
-            useLog, deepLog = _getLogValues(argNames, *args, **kwargs)
-            if useLog and deepLog:
                 logger.log(logger.logType, logger.logInfo)
         return ret
     return wrapper
@@ -255,26 +247,26 @@ class UmlLogger(object):
         # check for integers or strings passed for Y values, convert if necessary
         if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
             trainData = trainData.copy()
-            trainLabels = trainData.extractFeatures(trainLabels)
+            trainLabels = trainData.features.extract(trainLabels)
         if isinstance(testLabels, (six.string_types, int, numpy.int64)):
             testData = trainData.copy()
-            testLabels = trainData.extractFeatures(testLabels)
+            testLabels = trainData.features.extract(testLabels)
         if trainData is not None:
             logInfo["trainData"] = trainData.name
-            logInfo["trainDataPoints"] = trainData.points
-            logInfo["trainDataFeatures"] = trainData.features
+            logInfo["trainDataPoints"] = len(trainData.points)
+            logInfo["trainDataFeatures"] = len(trainData.features)
         if trainLabels is not None:
             logInfo["trainLabels"] = trainLabels.name
-            logInfo["trainLabelsPoints"] = trainLabels.points
-            logInfo["trainLabelsFeatures"] = trainLabels.features
+            logInfo["trainLabelsPoints"] = len(trainLabels.points)
+            logInfo["trainLabelsFeatures"] = len(trainLabels.features)
         if testData is not None:
             logInfo["testData"] = testData.name
-            logInfo["testDataPoints"] = testData.points
-            logInfo["testDataFeatures"] = testData.features
+            logInfo["testDataPoints"] = len(testData.points)
+            logInfo["testDataFeatures"] = len(testData.features)
         if testLabels is not None:
             logInfo["testLabels"] = testLabels.name
-            logInfo["testLabelsPoints"] = testLabels.points
-            logInfo["testLabelsFeatures"] = testLabels.features
+            logInfo["testLabelsPoints"] = len(testLabels.points)
+            logInfo["testLabelsFeatures"] = len(testLabels.features)
 
         if arguments is not None and arguments != {}:
             logInfo['arguments'] = arguments
@@ -376,7 +368,7 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def _getLogValues(argNames, *args, **kwargs):
+def getLogValues(argNames, *args, **kwargs):
     """
     Returns the values for useLog and deepLog for logging the function
     """
@@ -392,7 +384,7 @@ def _getLogValues(argNames, *args, **kwargs):
     deepLog = True if deepLog.lower() == 'true' else False
     return useLog, deepLog
 
-def _extractFunctionString(function):
+def extractFunctionString(function):
     """Extracts function name or lambda function if passed a function,
        Otherwise returns a string"""
     try:
@@ -400,11 +392,11 @@ def _extractFunctionString(function):
         if functionName != "<lambda>":
             return functionName
         else:
-            return _lambdaFunctionString(function)
+            return lambdaFunctionString(function)
     except AttributeError:
         return str(function)
 
-def _lambdaFunctionString(function):
+def lambdaFunctionString(function):
     """Returns a string of a lambda function"""
     sourceLine = inspect.getsourcelines(function)[0][0]
     line = re.findall(r'lambda.*',sourceLine)[0]
@@ -426,17 +418,18 @@ def _lambdaFunctionString(function):
             lambdaString += letter
     return lambdaString
 
-def _buildArgDict(argNames, defaults, *args, **kwargs):
+def buildArgDict(argNames, defaults, *args, **kwargs):
     """
     Creates the dictionary of arguments for the prep logType. Adds all required arguments
     and any keyword arguments that are not the default values
     """
     nameArgMap = {}
     for name, arg in zip(argNames,args):
-        if str(arg).startswith("<") and str(arg).endswith(">"):
-            nameArgMap[name] = _extractFunctionString(arg)
-        elif name != "self":
-            nameArgMap[name] = str(arg)
+        if name != 'self':
+            if str(arg).startswith("<") and str(arg).endswith(">"):
+                nameArgMap[name] = extractFunctionString(arg)
+            else:
+                nameArgMap[name] = str(arg)
     startDefaults = len(argNames) - len(defaults)
     defaultArgs = argNames[startDefaults:]
     defaultDict = {}
@@ -453,6 +446,7 @@ def _buildArgDict(argNames, defaults, *args, **kwargs):
     for name in kwargs:
         if name in defaultDict and defaultDict[name] != kwargs[name]:
             argDict[name] = kwargs[name]
+
     return argDict
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
@@ -508,8 +502,8 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
 
 def _showLogOutputString(listOfLogs, levelOfDetail):
     """Formats the string that will be output for calls to the showLog function"""
-    fullLog = "{0:^80}\n".format("UML LOGS")
-    fullLog += "." * 80
+    fullLog = "{0:^79}\n".format("UML LOGS")
+    fullLog += "." * 79
     previousLogRunNumber = None
     for log in listOfLogs:
         timestamp = log[0]
@@ -524,33 +518,33 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
         if runNumber != previousLogRunNumber:
             fullLog += "\n"
             logString = "RUN {0}".format(runNumber)
-            fullLog += ".{0:^78}.".format(logString)
+            fullLog += ".{0:^77}.".format(logString)
             fullLog += "\n"
-            fullLog += "." * 80
+            fullLog += "." * 79
             previousLogRunNumber = runNumber
         try:
             if logType not in ["load", "data", "prep", "run", "crossVal"]:
                 fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
             elif logType == 'load':
                 fullLog += _buildLoadLogString(timestamp, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
             elif logType == 'data':
                 fullLog +=  _buildDataLogString(timestamp, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
             elif logType == 'prep' and levelOfDetail > 1:
                 fullLog +=  _buildPrepLogString(timestamp, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
             elif logType == 'run' and levelOfDetail > 1:
                 fullLog += _buildRunLogString(timestamp, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
             elif logType == 'crossVal' and levelOfDetail > 2:
                 fullLog += _buildCVLogString(timestamp, logInfo)
-                fullLog += '.' * 80
+                fullLog += '.' * 79
         except (TypeError, KeyError): #TODO test
             # handles any user logs with a UML logType that cannot be processed by UML logger
             fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-            fullLog += '.' * 80
+            fullLog += '.' * 79
     return fullLog
 
 def _buildLoadLogString(timestamp, log):
@@ -574,7 +568,7 @@ def _buildPrepLogString(timestamp, log):
     if log['arguments'] != {}:
         argString = "Arguments: "
         argString += _dictToKeywordString(log["arguments"])
-        for string in wrap(argString, 80, subsequent_indent=" "*19):
+        for string in wrap(argString, 79, subsequent_indent=" "*18):
             fullLog += string
             fullLog += "\n"
     return fullLog
@@ -622,7 +616,7 @@ def _buildRunLogString(timestamp, log):
     if log.get("arguments", False):
         argString = "Arguments: "
         argString += _dictToKeywordString(log["arguments"])
-        for string in wrap(argString, 80, subsequent_indent=" "*19):
+        for string in wrap(argString, 79, subsequent_indent=" "*18):
             fullLog += string
             fullLog += "\n"
     # metric data
@@ -664,17 +658,17 @@ def _buildDefaultLogString(timestamp, logType, log):
     """
     fullLog = _logHeader(logType, timestamp)
     if isinstance(log, six.string_types):
-        for string in wrap(log, 80):
+        for string in wrap(log, 79):
             fullLog += string
             fullLog += "\n"
     elif isinstance(log, list):
         listString = _formatRunLine(log)
-        for string in wrap(listString, 80):
+        for string in wrap(listString, 79):
             fullLog += string
             fullLog += "\n"
     else:
         dictString = _dictToKeywordString(log)
-        for string in wrap(dictString, 80):
+        for string in wrap(dictString, 79):
             fullLog += string
             fullLog += "\n"
     return fullLog
@@ -692,7 +686,7 @@ def _formatRunLine(*args):
     args = list(map(str, args))
     lineLog = ""
     for arg in args:
-        whitespace = 20 - len(arg)
+        whitespace = 19 - len(arg)
         lineLog += arg + " " * whitespace
     lineLog += "\n"
     return lineLog
@@ -700,7 +694,7 @@ def _formatRunLine(*args):
 def _logHeader(left, right):
     """Formats the first line of each log entry"""
     lineLog = "\n"
-    lineLog += "{0:60}{1:>20}\n".format(left, right)
+    lineLog += "{0:60}{1:>19}\n".format(left, right)
     return lineLog
 
 #######################

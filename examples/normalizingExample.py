@@ -21,7 +21,7 @@ if __name__ == "__main__":
     variables = ["y", "x1", "x2", "x3"]
     data1 = [[1, 6, 0, 0], [1, 3, 0, 0], [0, -5, 0, 0], [0, -3, 0, 0]]
     trainObj = createData('Matrix', data=data1, featureNames=variables)
-    trainObjY = trainObj.extractFeatures('y')
+    trainObjY = trainObj.features.extract('y')
 
     # data we're going to classify
     variables2 = ["x1", "x2", "x3"]
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     testObj = createData('Matrix', data=data2, featureNames=variables2)
 
     # baseline check
-    assert trainObj.features == 3
-    assert testObj.features == 3
+    assert len(trainObj.features) == 3
+    assert len(testObj.features) == 3
 
     # reserve the original data for comparison
     trainObjOrig = trainObj.copy()
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k': 1})
 
     # assert that we actually do have fewer dimensions
-    assert trainObj.features == 1
-    assert testObj.features == 1
+    assert len(trainObj.features) == 1
+    assert len(testObj.features) == 1
 
     # assert we can predict the correct classes
     ret = trainAndApply('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k': 1})

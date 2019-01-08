@@ -5,6 +5,8 @@ implemented type of data representation, comparing both the
 results, and an approximately equal representation of their
 contained values.
 
+TODO not updated for api rework
+
 """
 
 from __future__ import absolute_import
@@ -122,10 +124,10 @@ def runSequence(objectList):
         currFunc = availableMethods[index]
         print(currFunc)
         # exclude operation we know are not runnabel given certain configurations
-        if objectList[0].points == 0:
+        if len(objectList[0].points) == 0:
             if currFunc in unavailableNoPoints:
                 continue
-        if objectList[0].features == 0:
+        if len(objectList[0].features) == 0:
             if currFunc in unavailableNoFeatures:
                 continue
 
@@ -233,7 +235,7 @@ def addingReducer(identifier, valuesList):
 
 def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False):
     random.seed(seed)
-    shape = (dataObj.points, dataObj.features)
+    shape = (len(dataObj.points), len(dataObj.features))
     if matchType:
         dataType = dataObj.getTypeString()
     else:
@@ -296,11 +298,11 @@ def genID(dataObj, seed, axis):
     random.seed(seed)
     retIntID = random.randint(0, 1)
     if axis == 'point':
-        numInAxis = dataObj.points
-        source = dataObj.getPointName
+        numInAxis = len(dataObj.points)
+        source = dataObj.points.getName
     else:
-        numInAxis = dataObj.features
-        source = dataObj.getFeatureName
+        numInAxis = len(dataObj.features)
+        source = dataObj.features.getName
 
     intID = random.randint(0, numInAxis - 1)
     if retIntID:
@@ -318,11 +320,11 @@ def genID(dataObj, seed, axis):
 def genIDList(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
-        source = dataObj.getPointName
+        numInAxis = len(dataObj.points)
+        source = dataObj.points.getName
     else:
-        numInAxis = dataObj.features
-        source = dataObj.getFeatureName
+        numInAxis = len(dataObj.features)
+        source = dataObj.features.getName
 
     numToSample = random.randint(1, numInAxis)
     IDList = random.sample(list(range(numInAxis)), numToSample)
@@ -342,9 +344,9 @@ genFIDList = functools.partial(genIDList, axis='feature')
 def genPermArr(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = len(dataObj.points)
     else:
-        numInAxis = dataObj.features
+        numInAxis = len(dataObj.features)
 
     permArr = random.sample(list(range(numInAxis)), numInAxis)
 
@@ -381,9 +383,9 @@ def genCopyAsFormat(dataObj, seed):
 def genStartEnd(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = len(dataObj.points)
     else:
-        numInAxis = dataObj.features
+        numInAxis = len(dataObj.features)
 
     start = random.randint(0, numInAxis - 1)
     end = random.randint(start, numInAxis - 1)
@@ -397,9 +399,9 @@ genStartEndFeatures = functools.partial(genStartEnd, axis='feature')
 def genNumLimit(dataObj, seed, axis):
     random.seed(seed)
     if axis == 'point':
-        numInAxis = dataObj.points
+        numInAxis = len(dataObj.points)
     else:
-        numInAxis = dataObj.features
+        numInAxis = len(dataObj.features)
 
     return random.randint(1, numInAxis - 1)
 
@@ -410,11 +412,11 @@ genFNumLim = functools.partial(genNumLimit, axis='faeture')
 
 def checkNameNums(dataObj, axis):
     if axis == 'point':
-        source = dataObj.getPointName
-        length = dataObj.points
+        source = dataObj.points.getName
+        length = len(dataObj.points)
     else:
-        source = dataObj.getFeatureName
-        length = dataObj.features
+        source = dataObj.features.getName
+        length = len(dataObj.features)
 
     maxNum = 0
     for i in range(length):
@@ -447,10 +449,10 @@ genFName = functools.partial(genName, axis='feature')
 
 def genNameList(dataObj, seed, axis):
     if axis == 'point':
-        retLen = dataObj.points
+        retLen = len(dataObj.points)
         name = 'PNAME'
     else:
-        retLen = dataObj.features
+        retLen = len(dataObj.features)
         name = 'FNAME'
 
     ret = []
@@ -541,8 +543,8 @@ def pickGen(dataObj, seed, genList):
 
 ftp = functools.partial
 
-generators = {'appendFeatures': [genObjMatchPoints],
-              'appendPoints': [genObjMatchFeatures],
+generators = {'addFeatures': [genObjMatchPoints],
+              'addPoints': [genObjMatchFeatures],
               'calculateForEachElement': [genViewFuncElmts, ftp(pickGen, genList=(genPID, genPIDList)),
                                           ftp(pickGen, genList=(genFID, genFIDList)), genBool, genBool],
               'calculateForEachFeature': [genViewFunc, genFIDList],
@@ -559,7 +561,6 @@ generators = {'appendFeatures': [genObjMatchPoints],
               'extractFeatures': [genFIDList, None, None, genFNumLim, genBool],
               #TODO!!!! first arg can also be function!!!!
               'extractPoints': [genPIDList, None, None, genPNumLim, genBool],
-              'extractPointsByCoinToss': [genProb],
               'featureView': [genFID],
               'hashCode': [],
               'isApproximatelyEqual': [genObj],
@@ -585,14 +586,14 @@ generators = {'appendFeatures': [genObjMatchPoints],
               'validate': [genOne],
 }
 
-untested = ['dropFeaturesContainingType', # how can you choose the type?
-            'featureIterator', 'pointIterator', #iterator equality isn't a sensible thing to check
+untested = ['featureIterator', 'pointIterator', #iterator equality isn't a sensible thing to check
             'writeFile', # lets not test this yet
             'getTypeString', # won't actually be equal
             'summaryReport', # do we really care about testing this?
             'featureReport', # floating point equality errors? / do we care?
             'pointCount', 'featureCount', # not callable
             'toString' # different underlying types will produce different outputs
+            'fillUsingPoints', 'fillUsingFeatures', 'fillUsingAllData'
 ]
 
 
@@ -601,7 +602,7 @@ def makeParams(funcName, dataObj, seed):
     generatorList = generators[funcName]
     (args, varargs, keywords, defaults) = inspectArguments(getattr(dataObj, funcName))
 
-    #	if funcName.startswith('appendFeatures'):
+    #	if funcName.startswith('addFeatures'):
     #		pdb.set_trace()
 
     argList = []

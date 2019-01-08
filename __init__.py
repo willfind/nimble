@@ -94,7 +94,8 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listDataFunctions', 'listLearners',
-           'listUMLFunctions', 'log', 'normalizeData', 'ones',
-           'registerCustomLearner', 'registerCustomLearnerAsDefault',
-           'setRandomSeed', 'settings', 'showLog', 'train', 'trainAndApply',
-           'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
+           'listUMLFunctions', 'loadData', 'loadTrainedLearner', 'log',
+           'normalizeData', 'ones', 'registerCustomLearner',
+           'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
+           'showLog', 'train', 'trainAndApply', 'trainAndTest',
+           'trainAndTestOnTrainingData', 'UMLPath', 'zeros']

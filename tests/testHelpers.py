@@ -84,11 +84,11 @@ class FoldIteratorTester(object):
         except StopIteration:
             pass
 
-        assert fold1Train.points + fold1Test.points == 5
-        assert fold2Train.points + fold2Test.points == 5
+        assert len(fold1Train.points) + len(fold1Test.points) == 5
+        assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.appendPoints(fold1Test)
-        fold2Train.appendPoints(fold2Test)
+        fold1Train.points.add(fold1Test)
+        fold2Train.points.add(fold2Test)
 
     def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
         """ Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
@@ -106,11 +106,11 @@ class FoldIteratorTester(object):
         except StopIteration:
             pass
 
-        assert fold1Train.points + fold1Test.points == 5
-        assert fold2Train.points + fold2Test.points == 5
+        assert len(fold1Train.points) + len(fold1Test.points) == 5
+        assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.appendPoints(fold1Test)
-        fold2Train.appendPoints(fold2Test)
+        fold1Train.points.add(fold1Test)
+        fold2Train.points.add(fold2Test)
 
         assert fold1NoneTrain is None
         assert fold1NoneTest is None
@@ -143,14 +143,14 @@ class FoldIteratorTester(object):
             pass
 
         # check that the partitions are the right size (ie, no overlap in training and testing)
-        assert fold0Train0.points + fold0Test0.points == 7
-        assert fold1Train0.points + fold1Test0.points == 7
+        assert len(fold0Train0.points) + len(fold0Test0.points) == 7
+        assert len(fold1Train0.points) + len(fold1Test0.points) == 7
 
-        assert fold0Train1.points + fold0Test1.points == 7
-        assert fold1Train1.points + fold1Test1.points == 7
+        assert len(fold0Train1.points) + len(fold0Test1.points) == 7
+        assert len(fold1Train1.points) + len(fold1Test1.points) == 7
 
-        assert fold0Train2.points + fold0Test2.points == 7
-        assert fold1Train2.points + fold1Test2.points == 7
+        assert len(fold0Train2.points) + len(fold0Test2.points) == 7
+        assert len(fold1Train2.points) + len(fold1Test2.points) == 7
 
         # check that the data is in the same order accross objects, within
         # the training or testing sets of a single fold
@@ -162,13 +162,13 @@ class FoldIteratorTester(object):
                 testList.append(test)
 
             for train in trainList:
-                assert train.points == trainList[0].points
-                for index in range(train.points):
+                assert len(train.points) == len(trainList[0].points)
+                for index in range(len(train.points)):
                     assert fabs(train[index, 0]) == fabs(trainList[0][index, 0])
 
             for test in testList:
-                assert test.points == testList[0].points
-                for index in range(test.points):
+                assert len(test.points) == len(testList[0].points)
+                for index in range(len(test.points)):
                     assert fabs(test[index, 0]) == fabs(testList[0][index, 0])
 
 
@@ -260,13 +260,13 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=True, addLabelNoise=True,
                                                                   addLabelColumn=True)
-    pts, feats = noiselessLabels.points, noiselessLabels.features
+    pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
     for i in range(pts):
         for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
-    pts, feats = dataset.points, dataset.features
+    pts, feats = len(dataset.points), len(dataset.features)
     for i in range(pts):
         for j in range(feats):
             #assert dataset has noise for all entries
@@ -275,13 +275,13 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=False, addLabelNoise=False,
                                                                   addLabelColumn=True)
-    pts, feats = noiselessLabels.points, noiselessLabels.features
+    pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
     for i in range(pts):
         for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
-    pts, feats = dataset.points, dataset.features
+    pts, feats = len(dataset.points), len(dataset.features)
     for i in range(pts):
         for j in range(feats):
             #assert dataset has no noise for all entries
@@ -291,7 +291,7 @@ def testGenerateClusteredPoints():
     dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                   addFeatureNoise=False, addLabelNoise=False,
                                                                   addLabelColumn=False)
-    labelColumnlessRows, labelColumnlessCols = dataset.points, dataset.features
+    labelColumnlessRows, labelColumnlessCols = len(dataset.points), len(dataset.features)
     #columnLess should have one less column in the DATASET, rows should be the same
     assert (labelColumnlessCols - feats == -1)
     assert (labelColumnlessRows - pts == 0)
@@ -301,7 +301,7 @@ def testGenerateClusteredPoints():
     allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
                                                                         addFeatureNoise=True, addLabelNoise=True,
                                                                         addLabelColumn=True)
-    pts, feats = allNoiseDataset.points, allNoiseDataset.features
+    pts, feats = len(allNoiseDataset.points), len(allNoiseDataset.features)
     for curRow in range(pts):
         for curCol in range(feats):
             #assert dataset has no noise for all entries
@@ -470,7 +470,7 @@ def testtrainAndApplyOneVsOne():
     assert results2.data[2][0] == 3.0
     assert results2.data[2][1] == 2
 
-    results3FeatureMap = results3.getFeatureNames()
+    results3FeatureMap = results3.features.getNames()
     for i in range(len(results3.data)):
         row = results3.data[i]
         for j in range(len(row)):
@@ -605,7 +605,7 @@ def testExtractWinningPredictionLabel():
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
     BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
-    predictions = BaseObj.calculateForEachFeature(extractWinningPredictionLabel)
+    predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
     listPredictions = predictions.copyAs(format="python list")
 
     assert listPredictions[0][0] - 3 == 0.0

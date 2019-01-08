@@ -43,14 +43,14 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         label = func.__name__.rstrip('_')
         columnLabels.append(label)
 
-    resultsTable = [None] * dataContainer.features
-    for index in range(dataContainer.features):
-        resultsTable[index] = dataContainer.getFeatureName(index)
+    resultsTable = [None] * len(dataContainer.features)
+    for index in range(len(dataContainer.features)):
+        resultsTable[index] = dataContainer.features.getName(index)
 
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.calculateForEachFeature(func)
+        oneFuncResults = dataContainer.features.calculate(func)
         oneFuncResults.transpose()
         oneFuncResultsList = oneFuncResults.copyAs(format="python list")
         appendColumns(resultsTable, oneFuncResultsList)
@@ -99,7 +99,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
         subsetIndices = []
         subsetIndices.extend(leftIndicesToSelect)
         subsetIndices.extend(rightIndicesToSelect)
-        dataContainer = dataContainer.copyFeatures(subsetIndices)
+        dataContainer = dataContainer.features.copy(subsetIndices)
         isSubset = True
     else:
         isSubset = False
@@ -131,9 +131,9 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.calculateForEachFeature(func)
+        funcResults = dataContainer.features.calculate(func)
         funcResults.transpose()
-        aggregateResults = funcResults.calculateForEachFeature(UML.calculate.mean).copyAs(format="python list")[0][0]
+        aggregateResults = funcResults.features.calculate(UML.calculate.mean).copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Values'] = shape[0] * shape[1]

@@ -36,7 +36,7 @@ class MajorityVote(CustomLearner):
             else:
                 counts[v] = 0
 
-        trainY.transformEachElement(counter)
+        trainY.elements.transform(counter)
         mostCommonKey = None
         highestCount = 0
         for key, count in six.iteritems(counts):
@@ -46,7 +46,7 @@ class MajorityVote(CustomLearner):
         self.mode = mostCommonKey
 
     def apply(self, testX):
-        raw = numpy.zeros(testX.points)
+        raw = numpy.zeros(len(testX.points))
         numpy.ndarray.fill(raw, self.mode)
 
         ret = UML.createData("Matrix", raw)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     yLabel = "to predict"
     data = createData("List", fileName, featureNames=True)
-    data.setFeatureName("Self-identification of introversion", yLabel)
+    data.features.setName("Self-identification of introversion", yLabel)
 
 
     #I can't get this to work. Not only does calling train for this algorithm after not seem to work,
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     #print "sectionSettings:", sectionSettings
 
     #get rid of blank rows
-    data.extractPoints(lambda x: len(str(x["Deliberation"]).strip()) == 0)
+    data.points.extract(lambda x: len(str(x["Deliberation"]).strip()) == 0)
 
     #make the data numerical
     data = data.copyAs("Matrix")
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         if v > 9: return 1 #they gave a value higher than the middle value (answering 3 on all three questions)
         return 0
 
-    data.transformEachElement(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
+    data.elements.transform(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
 
     #get the training and testing data
     trainX, trainY, testX, testY = data.trainAndTestSets(testFraction=.2, labels=yLabel)
@@ -133,23 +133,23 @@ if __name__ == "__main__":
 
             #remove some of the features
             if featureToKeep != "all" and featureToKeep != "none":
-                trainXTemp = trainXTemp.extractFeatures(featureToKeep)
-                testXTemp = testXTemp.extractFeatures(featureToKeep)
+                trainXTemp = trainXTemp.features.extract(featureToKeep)
+                testXTemp = testXTemp.features.extract(featureToKeep)
 
             #get rid of some of the points in the test set X and Y based on a filter
             Z = testXTemp.copy()
-            Z.appendFeatures(testY)
+            Z.features.add(testY)
             ZInSample = trainXTemp.copy()
-            ZInSample.appendFeatures(trainYCopy.copy())
+            ZInSample.features.add(trainYCopy.copy())
 
             if filterFunctionForTestPoints != None:
-                Z = Z.extractPoints(filterFunctionForTestPoints)
+                Z = Z.points.extract(filterFunctionForTestPoints)
                 #print "ZInSample 3\n", ZInSample
-                ZInSample = ZInSample.extractPoints(filterFunctionForTestPoints)
+                ZInSample = ZInSample.points.extract(filterFunctionForTestPoints)
 
-            testYTemp = Z.extractFeatures(yLabel)
+            testYTemp = Z.features.extract(yLabel)
             testXTemp = Z.copy()
-            inSampleY = ZInSample.extractFeatures(yLabel)
+            inSampleY = ZInSample.features.extract(yLabel)
             inSampleX = ZInSample
 
             name = ""
@@ -180,8 +180,8 @@ if __name__ == "__main__":
                 coefs = None
                 intercept = None
                 #predictions = None
-                misclassifiedInSample = inSampleY.featureStatistics("mean")[0, 0]
-                misclassified = testYTemp.featureStatistics("mean")[0, 0]
+                misclassifiedInSample = inSampleY.features.statistics("mean")[0, 0]
+                misclassified = testYTemp.features.statistics("mean")[0, 0]
 
 
             #print "\nROUND"
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             #print "misclassified %:", misclassified
             #if predictions != None:
             #	print "predictions:\n", predictions
-            #	print predictions.featureStatistics("mean")
+            #	print predictions.features.statistics("mean")
 
             output.append([name, per(misclassified), per(misclassifiedInSample), intercept, coefs])
 

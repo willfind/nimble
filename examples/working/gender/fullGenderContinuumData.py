@@ -41,7 +41,7 @@ class MissingAwareSVD(CustomLearner):
         pass
 
     def train(self, trainX, trainY, k):
-        if k < 0 or k > trainX.features:
+        if k < 0 or k > len(trainX.features):
             msg = "k must be greater than 0 and less than or equal to "
             msg += "the number of features."
             raise ValueError(msg)
@@ -50,7 +50,7 @@ class MissingAwareSVD(CustomLearner):
         csrFormated = trainX.copyAs("scipycsr", rowsArePoints=False)
 
         covMatrix = missing.covarianceOfRows(csrFormated)
-        
+
         (w, vr) = scipy.linalg.eig(covMatrix)
 
         # we want to find the largest eigen values so we know which
@@ -139,11 +139,11 @@ def removeDemographics(obj):
     being gender information, which we are predicting for.
 
     """
-    removed = obj.extractFeatures(start=3, end=20)
-    print(removed.getFeatureNames())
+    removed = obj.features.extract(start=3, end=20)
+    print(removed.features.getNames())
 
-    removed = obj.extractFeatures(end=1)
-    print(removed.getFeatureNames())
+    removed = obj.features.extract(end=1)
+    print(removed.features.getNames())
 
 def replaceNAs(obj):
     """
@@ -157,7 +157,7 @@ def replaceNAs(obj):
         else:
             return value
 
-    obj.transformEachElement(NAtoZero)
+    obj.elements.transform(NAtoZero)
 
 def keepFeaturesNoDemographics():
     """
@@ -204,14 +204,14 @@ def batchCreateFromOrigFile(name):
         keepFeatures=kf)
 
     batches = [batch1, batch2, batch3, batch4, batch5]
-    trainY = batch1.extractFeatures(0)
+    trainY = batch1.features.extract(0)
 
     print("batches loaded")
 
     for index, obj in enumerate(batches):
         if index > 0:
-            trainY.appendPoints(obj.extractFeatures(0))
-        assert "gender" not in obj.getFeatureNames()
+            trainY.points.add(obj.features.extract(0))
+        assert "gender" not in obj.features.getNames()
         replaceNAs(obj)
         batches[index] = obj.copyAs("List")
 
@@ -224,10 +224,10 @@ def batchCreateFromOrigFile(name):
     print("batches NA replaced")
 
     dataAll = batches[0]
-    dataAll.appendPoints(batches[1])
-    dataAll.appendPoints(batches[2])
-    dataAll.appendPoints(batches[3])
-    dataAll.appendPoints(batches[4])
+    dataAll.points.add(batches[1])
+    dataAll.points.add(batches[2])
+    dataAll.points.add(batches[3])
+    dataAll.points.add(batches[4])
 
     print("batches combined")
 
@@ -237,9 +237,9 @@ def batchCreateFromOrigFile(name):
     makeGenderIntegers(trainY)
     trainY = trainY.copyAs("List")
     print("transformed trainY to integers")
-    print(trainY.getFeatureNames())
+    print(trainY.features.getNames())
 
-    dataAll.appendFeatures(trainY)
+    dataAll.features.add(trainY)
 
     return dataAll
 
@@ -254,7 +254,7 @@ def makeGenderIntegers(obj):
             return 1
         else:
             return 0
-    obj.transformEachPoint(maleToOne)
+    obj.points.transform(maleToOne)
 
 def featNormalize_stdScore_applyTo(train, test):
     vals = []
@@ -267,16 +267,16 @@ def featNormalize_stdScore_applyTo(train, test):
 
         return (workspace - mn) / std
 
-    train.transformEachPoint(fn)
+    train.points.transform(fn)
 
     def fnLookup(feat):
         workspace = numpy.array(feat)
-        index = test.getFeatureIndex(feat.getFeatureName(0))
+        index = test.features.getIndex(feat.features.getName(0))
         (mn,std) = vals[index]
 
         return (workspace - mn) / std
 
-    test.transformEachFeature(fnLookup)
+    test.features.transform(fnLookup)
 
 
 def featNormalize_stdScoreMissing_applyTo(train, test):
@@ -292,23 +292,23 @@ def featNormalize_stdScoreMissing_applyTo(train, test):
         onAll = (workspace - mn) / std
         return numpy.multiply(onAll, mask)
 
-    train.transformEachFeature(fn)
+    train.features.transform(fn)
 
 #   def fnLookup(feat):
 #       workspace = numpy.array(feat)
-#       index = test.getFeatureIndex(feat.getFeatureName(0))
+#       index = test.features.getIndex(feat.features.getName(0))
 #       (mn,std) = vals[index]
 
 #       return (workspace - mn) / std
 
-#   test.transformEachFeature(fnLookup)
+#   test.features.transform(fnLookup)
 
 
 def pointNormalizeViaApplyTo_DivNZ(obj):
     """
     Normalize each point by dividing by the number of
     non-zero values in that point. This is an implementation
-    that uses a single call to transformEachPoint.
+    that uses a single call to points.transform.
 
     """
 #   nzRecord = []
@@ -317,7 +317,7 @@ def pointNormalizeViaApplyTo_DivNZ(obj):
         nz = numpy.count_nonzero(workspace)
         return workspace / nz
 
-    obj.transformEachPoint(pn)
+    obj.points.transform(pn)
 
 #   print max(nzRecord)
 #   print numpy.average(nzRecord)
@@ -328,13 +328,13 @@ def pointNormalize_DivNZ(obj):
     """
     Normalize each point by dividing by the number of
     non-zero values in that point. This is an implementation
-    that uses the normalizePoints method.
+    that uses the points.normalize method.
 
     """
-    nzPerPoint = obj.calculateForEachPoint(numpy.count_nonzeroNZ)
+    nzPerPoint = obj.points.calculate(numpy.count_nonzeroNZ)
     nzPerPoint = nzPerPoint.copyAs("Matrix")
 
-    obj.normalizePoints(divide=nzPerPoint)
+    obj.points.normalize(divide=nzPerPoint)
 
 def loadTransformSave(origFilePath):
     """
@@ -358,7 +358,7 @@ def checkNumberNZ_point(obj):
     Plot the distribution of non-zero values of each point
     in the given object.
     """
-    nzObj = obj.calculateForEachPoint(numpy.count_nonzero)
+    nzObj = obj.points.calculate(numpy.count_nonzero)
 #   nzObj.show("nz", maxHeight=100)
 
     path = "/home/tpburns/gimbel_tech/sparse-gender-nz.png"
@@ -369,7 +369,7 @@ def checkNumberNZ_feature(obj):
     Plot the distribution of non-zero values of each feature (question)
     in the given object.
     """
-    nzObj = obj.calculateForEachFeature(numpy.count_nonzero)
+    nzObj = obj.features.calculate(numpy.count_nonzero)
 #   nzObj.show("nz", maxHeight=100)
 
     path = "/home/tpburns/gimbel_tech/sparse-gender-nz-Qs.png"
@@ -391,24 +391,24 @@ def printInAndOutSampleError(trainedLearner, trainX, testX, testY):
 def writeOutCoefficientsAndNames(trainedLearner, trialType):
     coefs = trainedLearner.getAttributes()['origCoefs'].flatten()
     coefsObj = UML.createData("List", coefs)
-    if coefsObj.points == 1:
+    if len(coefsObj.points) == 1:
         coefsObj.transpose()
 
-    namesObj = UML.createData("List", [trainX.getFeatureNames()])
+    namesObj = UML.createData("List", [trainX.features.getNames()])
 
-    namesObj.appendFeatures(coefsObj)
+    namesObj.features.add(coefsObj)
 
     path = "/home/tpburns/gimbel_tech/gender-sparse-coefs-" + trialType
     namesObj.writeFile(path, format='csv', includeNames=False)
 
 def preprocess_RemoveLowNZ(dataObj, labelObj=None):
-    nzObj = dataObj.calculateForEachPoint(numpy.count_nonzero)
+    nzObj = dataObj.points.calculate(numpy.count_nonzero)
     nzArr = nzObj.copyAs('numpyarray', outputAs1D=True)
     remove = list(numpy.where(nzArr >= 50))
 
-    dataObj.extractPoints(remove)
+    dataObj.points.extract(remove)
     if labelObj is not None:
-        labelObj.extractPoints(remove)
+        labelObj.points.extract(remove)
 
 def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
     def countNZ(point):
@@ -418,24 +418,24 @@ def preprocess_RemoveLowNZOld(dataObj, labelObj=None):
                 nz += 1
         return nz
 
-    nzObj = dataObj.calculateForEachPoint(countNZ)
+    nzObj = dataObj.points.calculate(countNZ)
 
     def removeLessThan50(point):
-        index = dataObj.getPointIndex(point.getPointName(0))
+        index = dataObj.points.getIndex(point.points.getName(0))
         i = int(index)
         if nzObj[i] < 50:
             return True
         else:
             return False
 
-    dataObj.extractPoints(removeLessThan50)
+    dataObj.points.extract(removeLessThan50)
     if labelObj is not None:
-        labelObj.extractPoints(removeLessThan50)
+        labelObj.points.extract(removeLessThan50)
 
 
 
 def featureNorm_stdScore(trainX, testX):
-    trainX.normalizeFeatures('mean', 'std', testX)
+    trainX.features.normalize('mean', 'std', testX)
 
 
 
@@ -454,7 +454,7 @@ def trial_LogRegL2(trainX, trainY, testX, testY):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -473,7 +473,7 @@ def trial_RegularizationSelection(trainX, trainY, testX, testY, wantedNZcoefs):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -486,7 +486,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
     UML.registerCustomLearner("custom", LogisticRegressionSelectByOmission)
 
-    numToOmit = trainX.features - wantedNZcoefs
+    numToOmit = len(trainX.features) - wantedNZcoefs
 
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
@@ -498,7 +498,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -517,7 +517,7 @@ def trial_SVMClassifier_linear(trainX, trainY, testX, testY):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -540,7 +540,7 @@ def trial_SVMClassifier_poly(trainX, trainY, testX, testY, degree):
 
 #   print "Trained!"
 #   print time.asctime(time.localtime())
-    
+
     printInAndOutSampleError(trainedLearner, trainX, testX, testY)
 
     return trainedLearner
@@ -556,12 +556,12 @@ if __name__ == "__main__":
 
     allData = fileLoadHelper(retType, defaultFile, allowRemLess50Load)
 
-#       wantedData = allData.extractPoints(end=ptsSel)
-        # separate train and test data.     
-#       numPoints = wantedData.points
+#       wantedData = allData.points.extract(end=ptsSel)
+        # separate train and test data.
+#       numPoints = len(wantedData.points)
     #   testPortion = 3000./numPoints
     #   testPortion = 1500./numPoints
-#       print "total Data: " + str(numPoints) + " x " + str(wantedData.features)
+#       print "total Data: " + str(numPoints) + " x " + str(len(wantedData.features))
 #       print "test portion: " + str(testPortion)
 
 #       trainX, trainY, testX, testY = wantedData.trainAndTestSets(
@@ -580,12 +580,12 @@ if __name__ == "__main__":
     for ptsSel in [2500,5000,10000]:
 #   for ptsSel in [250,500,1000]:
 #   for ptsSel in [20000]:
-        print("total Data: " + str(ptsSel) + " x " + str(allData.features))
+        print("total Data: " + str(ptsSel) + " x " + str(len(allData.features)))
 
-        trainX = allData.copyPoints(end=ptsSel)
-        trainY = trainX.extractFeatures("gender")
-        testX = allData.copyPoints(start=allData.points-3000)
-        testY = testX.extractFeatures("gender")
+        trainX = allData.points.copy(end=ptsSel)
+        trainY = trainX.features.extract("gender")
+        testX = allData.points.copy(start=len(allData.points) - 3000)
+        testY = testX.features.extract("gender")
 
         trainX.name = "Training Data"
         trainY.name = "Training Labels"
@@ -602,7 +602,7 @@ if __name__ == "__main__":
 #       print time.asctime(time.localtime())
 #       featNormalize_stdScore_applyTo(trainX, testX)
         featNormalize_stdScoreMissing_applyTo(trainX, testX)
-#       trainX.normalizeFeatures('mean', 'std', testX)
+#       trainX.features.normalize('mean', 'std', testX)
 #       print time.asctime(time.localtime()) + "\n"
 #       print trainX.data[0:5, 0:15]
 
@@ -645,7 +645,7 @@ if __name__ == "__main__":
 
 
 
-    
+
     # lasso?
     # pca preprocess, with mean norm? into LogReg, SVM with RBF
 

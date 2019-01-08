@@ -281,7 +281,7 @@ class AlwaysWarnInterface(UniversalInterface):
     def _getScores(self, learner, testX, arguments, customDict):
         sys.stderr.write('WARN TEST\n')
         sys.stderr.flush()
-        num = testX.points
+        num = len(testX.points)
         raw = [0] * num
         return UML.createData("Matrix", raw)
 

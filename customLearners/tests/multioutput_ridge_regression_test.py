@@ -11,8 +11,8 @@ def test_MultiOutputWrapper_simple():
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222]]
     trainY = UML.createData('Matrix', data)
 
-    trainY0 = trainY.copyFeatures(0)
-    trainY1 = trainY.copyFeatures(1)
+    trainY0 = trainY.features.copy(0)
+    trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
     testX = UML.createData('Matrix', data)

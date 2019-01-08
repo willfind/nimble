@@ -52,6 +52,7 @@ from UML.calculate import detectBestResult
 import six
 from six.moves import range
 from six.moves import zip
+cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -437,7 +438,7 @@ def listLearners(package=None):
             results.append(learnerName)
 
     return results
-  
+
 
 @logCapture
 def createData(
@@ -569,7 +570,8 @@ def createData(
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData,
             treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
-        UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
+        UML.logger.active.logLoad(returnType, len(ret.points),
+                                  len(ret.features), name, path)
 
         return ret
     # input is an open file or a path to a file
@@ -579,7 +581,8 @@ def createData(
             name=name, keepPoints=keepPoints, keepFeatures=keepFeatures,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures, inputSeparator=inputSeparator,
             treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
-        UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
+        UML.logger.active.logLoad(returnType, len(ret.points),
+                                  len(ret.features), name, path)
 
         return ret
     # no other allowed inputs
@@ -905,7 +908,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             raise ArgumentException(msg)
 
         #modify numFolds if needed
-        numFolds = trainX.points if trainX.points < 10 else 10
+        numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
                                                               numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
@@ -993,11 +996,11 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
-    if merged != trainedLearner.arguments:
-        extraInfo = {"bestParams": trainedLearner.arguments}
+    if merged != trainedLearner.transformedArguments:
+        extraInfo = {"bestParams": trainedLearner.transformedArguments}
 
-    funcString = learnerName
-    UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString,
+    UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None,
+                             learnerName,
                              merged, None, extraInfo=extraInfo)
 
     return results
@@ -1081,14 +1084,13 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         metrics[key.__name__] = value
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
-    if merged != trainedLearner.arguments:
-        extraInfo = {"bestParams": trainedLearner.arguments}
+    if merged != trainedLearner.transformedArguments:
+        extraInfo = {"bestParams": trainedLearner.transformedArguments}
     if _onTraining:
         name = "trainAndTestOnTrainingData"
     else:
         name = "trainAndTest"
-    funcString = learnerName
-    UML.logger.active.logRun(name, trainX, trainY, testX, testY, funcString,
+    UML.logger.active.logRun(name, trainX, trainY, testX, testY, learnerName,
                              merged, metrics, extraInfo=extraInfo)
 
     return performance
@@ -1258,6 +1260,9 @@ def loadData(inputPath):
 
     Expected file extension '.umld'.
     """
+    if not cloudpickle:
+        msg = "To load UML objects, cloudpickle must be installed"
+        raise PackageException(msg)
     if not inputPath.endswith('.umld'):
         raise ArgumentException('file extension for a saved UML data object should be .umld')
     with open(inputPath, 'rb') as file:
@@ -1276,11 +1281,14 @@ def loadTrainedLearner(inputPath):
 
     Expected file extension '.umlm'.
     """
+    if not cloudpickle:
+        msg = "To load UML models, cloudpickle must be installed"
+        raise PackageException(msg)
     if not inputPath.endswith('.umlm'):
         raise ArgumentException('File extension for a saved UML model should be .umlm')
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+    if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
         raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
     return ret
 
