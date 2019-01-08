@@ -14,7 +14,7 @@ class Features(object):
     Methods that can be called on the a UML data objects feature axis.
     """
     def __init__(self):
-        self._axis = 'feature'
+        pass
 
     ########################
     # Low Level Operations #
