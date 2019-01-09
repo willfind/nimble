@@ -1272,6 +1272,7 @@ class TrainedLearners(TrainedLearner):
         self.trainedLearnersList = trainedLearners
         self.method = method
         self.labelSet = labelSet
+        self.arguments = trainedLearners[0].arguments
         self.has2dOutput = trainedLearners[0].has2dOutput
         self.transformedArguments = trainedLearners[0].transformedArguments
         self.interface = trainedLearners[0].interface

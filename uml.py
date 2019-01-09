@@ -996,8 +996,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
-    if merged != trainedLearner.transformedArguments:
-        extraInfo = {"bestParams": trainedLearner.transformedArguments}
+    if merged != trainedLearner.arguments:
+        extraInfo = {"bestParams": trainedLearner.arguments}
 
     UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None,
                              learnerName,
@@ -1084,8 +1084,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         metrics[key.__name__] = value
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
-    if merged != trainedLearner.transformedArguments:
-        extraInfo = {"bestParams": trainedLearner.transformedArguments}
+    if merged != trainedLearner.arguments:
+        extraInfo = {"bestParams": trainedLearner.arguments}
     if _onTraining:
         name = "trainAndTestOnTrainingData"
     else:
