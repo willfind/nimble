@@ -43,14 +43,14 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         label = func.__name__.rstrip('_')
         columnLabels.append(label)
 
-    resultsTable = [None] * dataContainer.features
-    for index in range(dataContainer.features):
-        resultsTable[index] = dataContainer.getFeatureName(index)
+    resultsTable = [None] * len(dataContainer.features)
+    for index in range(len(dataContainer.features)):
+        resultsTable[index] = dataContainer.features.getName(index)
 
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.calculateForEachFeature(func)
+        oneFuncResults = dataContainer.features.calculate(func)
         oneFuncResults.transpose()
         oneFuncResultsList = oneFuncResults.copyAs(format="python list")
         appendColumns(resultsTable, oneFuncResultsList)
@@ -68,8 +68,8 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     Inputs
         dataContainer - object of a type that inherits from Base.
-        
-        supplementalFunctions - additional functions that should be applied to each feature in 
+
+        supplementalFunctions - additional functions that should be applied to each feature in
             the data set.  Arg signature must expect one iterable feature vector, any other parameters
             must be optional.
 
@@ -87,7 +87,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
         functionsToApply.extend(supplementalFunctions)
 
     #If the data object is too big to print out info about each feature,
-    #extract a subset of features from the data set and 
+    #extract a subset of features from the data set and
     if shape[1] > maxFeaturesToCover:
         if maxFeaturesToCover % 2 == 0:
             leftIndicesToSelect = list(range(maxFeaturesToCover / 2))
@@ -98,7 +98,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
         subsetIndices = []
         subsetIndices.extend(leftIndicesToSelect)
         subsetIndices.extend(rightIndicesToSelect)
-        dataContainer = dataContainer.copyFeatures(subsetIndices)
+        dataContainer = dataContainer.features.copy(subsetIndices)
         isSubset = True
     else:
         isSubset = False
@@ -130,9 +130,9 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.calculateForEachFeature(func)
+        funcResults = dataContainer.features.calculate(func)
         funcResults.transpose()
-        aggregateResults = funcResults.calculateForEachFeature(UML.calculate.mean).copyAs(format="python list")[0][0]
+        aggregateResults = funcResults.features.calculate(UML.calculate.mean).copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Values'] = shape[0] * shape[1]
@@ -151,7 +151,7 @@ def produceAggregateTable(dataContainer):
 def produceAggregateReport(dataContainer, displayDigits):
     """
     Calculate various aggregate statistics about the data set held in dataContainer and return
-    them as a string containing a table, with descriptors in the first row and numerical results 
+    them as a string containing a table, with descriptors in the first row and numerical results
     of those descriptors in the second row of the table.
 
     Statistics gathered:  proportion of zero values, proportion of missing values, number of Points
@@ -209,9 +209,9 @@ def transposeRow(row):
 
 def appendColumns(appendTo, appendFrom):
     """
-        Append the columns of one 2D matrix (lists of lists) into another.  
-        They must have the same number of rows, but can have different numbers 
-        of columns.  I.e. len(appendTo) == len(appendFrom), but 
+        Append the columns of one 2D matrix (lists of lists) into another.
+        They must have the same number of rows, but can have different numbers
+        of columns.  I.e. len(appendTo) == len(appendFrom), but
         len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
         If they do not have the same number of rows, an ArgumentException is
         raised.

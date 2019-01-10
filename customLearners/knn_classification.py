@@ -34,9 +34,9 @@ class KNNClassifier(CustomLearner):
             def scoreHelperDecending(point):
                 return 0 - point[1]
 
-            results.sortPoints(sortHelper=scoreHelperDecending)
+            results.points.sort(sortHelper=scoreHelperDecending)
             # only one label received votes
-            if results.points == 1:
+            if len(results.points) == 1:
                 prediction = results[0, 0]
             # there is a tie between labels, fall back to k=1
             elif results[0, 1] == results[1, 1]:
@@ -47,7 +47,7 @@ class KNNClassifier(CustomLearner):
 
             return prediction
 
-        return testX.calculateForEachPoint(foo)
+        return testX.points.calculate(foo)
 
 
     def getScores(self, testX):
@@ -58,19 +58,19 @@ class KNNClassifier(CustomLearner):
 
         """
         ret = None
-        for p in testX.pointIterator():
+        for p in testX.points:
             nearestPoints = self._generatePointsSortedByDistance(p)
             results = self._voteNearest(nearestPoints)
             # sort ascending according to label ID
-            results.sortPoints(0)
+            results.points.sort(0)
 
-            scores = results.extractFeatures(1)
+            scores = results.features.extract(1)
             scores.transpose()
 
             if ret is None:
                 ret = scores
             else:
-                ret.addPoints(scores)
+                ret.points.add(scores)
 
         return ret
 
@@ -85,11 +85,11 @@ class KNNClassifier(CustomLearner):
             raise PackageException(msg)
 
         def distanceFrom(point):
-            index = self._trainX.getPointIndex(point.getPointName(0))
+            index = self._trainX.points.getIndex(point.points.getName(0))
             return [index, scipy.spatial.distance.euclidean(test, point)]
 
-        distances = self._trainX.calculateForEachPoint(distanceFrom)
-        distances.sortPoints(1)
+        distances = self._trainX.points.calculate(distanceFrom)
+        distances.points.sort(1)
         return distances
 
 
@@ -100,7 +100,7 @@ class KNNClassifier(CustomLearner):
         self.trainY, letting those be the votes. In case of a tie, we revert to
         k=1.
         """
-        topK = votes.copyPoints(end=self.k - 1)
+        topK = votes.points.copy(end=self.k - 1)
 
         def mapper(point):
             labelIndex = self._trainY[int(point[0]), 0]
@@ -109,5 +109,5 @@ class KNNClassifier(CustomLearner):
         def reducer(key, valList):
             return (key, len(valList))
 
-        results = topK.mapReducePoints(mapper, reducer)
+        results = topK.points.mapReduce(mapper, reducer)
         return results

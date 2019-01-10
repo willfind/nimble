@@ -20,7 +20,7 @@ class LogisticRegressionNoTraining(CustomLearner):
     learnerType = "classification"
 
     def train(self, trainX, trainY, coefs, intercept):
-        if coefs.features != 1:
+        if len(coefs.features) != 1:
             coefs.transpose()
         self.coefs = coefs
         self.intercept = float(intercept)
@@ -31,14 +31,14 @@ class LogisticRegressionNoTraining(CustomLearner):
         def getProb(val):
             return 1 / (1 + math.e**(val))
 
-        probabilities = exponents.calculateForEachElement(getProb)
+        probabilities = exponents.elements.calculate(getProb)
 
         def roundProb(val):
             return 1 if val > .5 else 0
 
-        ret = probabilities.calculateForEachElement(roundProb)
+        ret = probabilities.elements.calculate(roundProb)
         
-        for i,name in enumerate(testX.getFeatureNames()):
+        for i,name in enumerate(testX.features.getNames()):
             print(name + " : " + str(self.coefs[i]))
 
         return ret
@@ -57,10 +57,10 @@ def predict_gender_sanityCheck(responses, catTestFraction, splitSeed):
         currData = catTest.copy()
         s = i*100
         print(s)
-        testX = currData.extractPoints(start=s, end=s+100)
-        testY = testX.extractFeatures('male0female1')
+        testX = currData.points.extract(start=s, end=s+100)
+        testY = testX.features.extract('male0female1')
 
-        trainY = currData.extractFeatures('male0female1')
+        trainY = currData.features.extract('male0female1')
         trainX = currData
 
         C = tuple([100. / (10**n) for n in range(7)])
@@ -72,7 +72,7 @@ def predict_gender_fullTrain(responses, catTestFraction, splitSeed):
     UML.setRandomSeed(splitSeed)
     catTrain, catTest = responses.trainAndTestSets(testFraction=catTestFraction)
 
-    trainY = catTest.extractFeatures('male0female1')
+    trainY = catTest.features.extract('male0female1')
     trainX = catTest
 
     C = tuple([1000. / (10**n) for n in range(9)])
@@ -97,7 +97,7 @@ def outputFile_PredictionMetadata(outPath, responses, questionMetadata, coefs, c
     allCats = numpy.unique(allCats).tolist()
     raw = []
 #   print coefs
-    for i,point in enumerate(questionMetadata.pointIterator()):
+    for i,point in enumerate(questionMetadata.points):
         question = point[0]
         category = point[1]
 
@@ -142,14 +142,14 @@ if __name__ == '__main__':
 
     # load the associated data for categories
     categoryMetadata = UML.createData("List", path_categories_metadata)
-    cm_pnames = categoryMetadata.extractFeatures(0).copyAs("pythonList", outputAs1D=True)
-    categoryMetadata.setPointNames(cm_pnames)
+    cm_pnames = categoryMetadata.features.extract(0).copyAs("pythonList", outputAs1D=True)
+    categoryMetadata.points.setNames(cm_pnames)
 
     # load the associated data for questions
     questionMetadata = UML.createData("List", path_question_metatdata)
 
 
-    catTestFraction = float(responses.points - CAT_TRAIN_NUMBER) / responses.points
+    catTestFraction = float(len(responses.points) - CAT_TRAIN_NUMBER) / len(responses.points)
 #   predict_gender_sanityCheck(responses, catTestFraction, SPLITSEED)   
     coefs, intercept = predict_gender_fullTrain(responses, catTestFraction, SPLITSEED)
 

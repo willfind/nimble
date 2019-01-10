@@ -1,6 +1,6 @@
 """
-Anchors the hierarchy of data representation types, providing stubs and common functions.
-
+Anchors the hierarchy of data representation types, providing stubs and
+common functions.
 """
 
 # TODO conversions
@@ -9,45 +9,37 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 import sys
-import warnings
-
-import __main__ as main
-mplError = None
-try:
-    import matplotlib
-    # for .show() to work in interactive sessions
-    # a backend different than Agg needs to be use
-    # The interactive session can choose by default e.g.,
-    # in jupyter-notebook inline is the default.
-    if hasattr(main, '__file__'):
-        # It must be agg  for non-interactive sessions
-        # otherwise the combination of matplotlib and multiprocessing
-        # produces a segfault.
-        # Open matplotlib issue here: https://github.com/matplotlib/matplotlib/issues/8795
-        # It applies for both for python 2 and 3
-        matplotlib.use('Agg')
-
-except ImportError as e:
-    mplError = e
-
-#print('matplotlib backend: {}'.format(matplotlib.get_backend()))
-
 import math
 import numbers
 import itertools
 import copy
-import numpy
 import os.path
-import inspect
-import operator
 from multiprocessing import Process
+from abc import abstractmethod
+
+import numpy
+import six
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 import UML
+from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import ImproperActionException
+from UML.logger import produceFeaturewiseReport
+from UML.logger import produceAggregateReport
+from .points import Points
+from .features import Features
+from .axis import Axis
+from .elements import Elements
+from . import dataHelpers
+# the prefix for default point and feature names
+from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from .dataHelpers import DEFAULT_NAME_PREFIX
+from .dataHelpers import formatIfNeeded
+from .dataHelpers import makeConsistentFNamesAndData
+from .dataHelpers import valuesToPythonList
 
 pd = UML.importModule('pandas')
 
@@ -57,28 +49,33 @@ if cython is None or not cython.compiled:
 
 cloudpickle = UML.importModule('cloudpickle')
 
-from UML.exceptions import ArgumentException, PackageException
-from UML.exceptions import ImproperActionException
-from UML.logger import produceFeaturewiseReport
-from UML.logger import produceAggregateReport
-from UML.randomness import pythonRandom
+mplError = None
+try:
+    import matplotlib
+    import __main__ as main
+    # for .show() to work in interactive sessions
+    # a backend different than Agg needs to be use
+    # The interactive session can choose by default e.g.,
+    # in jupyter-notebook inline is the default.
+    if hasattr(main, '__file__'):
+        # It must be agg  for non-interactive sessions
+        # otherwise the combination of matplotlib and multiprocessing
+        # produces a segfault.
+        # Open matplotlib issue here:
+        # https://github.com/matplotlib/matplotlib/issues/8795
+        # It applies for both for python 2 and 3
+        matplotlib.use('Agg')
+except ImportError as e:
+    mplError = e
 
-from . import dataHelpers
-
-# the prefix for default point and feature names
-from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
-
-from .dataHelpers import DEFAULT_NAME_PREFIX
-
-from .dataHelpers import formatIfNeeded
-
-from .dataHelpers import makeConsistentFNamesAndData
+#print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
 def to2args(f):
     """
-    this function is for __pow__. In cython, __pow__ must have 3 arguments and default can't be used there.
-    so this function is used to convert a function with 3 arguments to a function with 2 arguments when it is used
-    in python environment.
+    this function is for __pow__. In cython, __pow__ must have 3
+    arguments and default can't be used there so this function is used
+    to convert a function with 3 arguments to a function with 2
+    arguments when it is used in python environment.
     """
     def tmpF(x, y):
         return f(x, y, None)
@@ -87,65 +84,65 @@ def to2args(f):
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
-
-def valuesToPythonList(values, argName):
-    """
-    Create a python list of values from an integer (python or numpy),
-    string, or an iterable container object
-
-    """
-    if isinstance(values, list):
-        return values
-    if isinstance(values, (int, numpy.integer, six.string_types)):
-        return [values]
-    valuesList = []
-    try:
-        for val in values:
-            valuesList.append(val)
-    except TypeError:
-        msg = "The argument '{0}' is not an integer ".format(argName)
-        msg += "(python or numpy), string, or an iterable container object."
-        raise ArgumentException(msg)
-
-    return valuesList
-
-
 class Base(object):
     """
-    Class defining important data manipulation operations and giving functionality
-    for the naming the features of that data. A mapping from feature names to feature
-    indices is given by the featureNames attribute, the inverse of that mapping is
-    given by featureNamesInverse.
+    Class defining important data manipulation operations and giving
+    functionality for the naming the points and features of that data. A
+    mapping from names to indices is given by the [point/feature]Names
+    attribute, the inverse of that mapping is given by
+    [point/feature]NamesInverse.
 
+    Specifically, this includes point and feature names, an object
+    name, and originating pathes for the data in this object. Note:
+    this method (as should all other __init__ methods in this
+    hierarchy) makes use of super().
+
+    Parameters
+    ----------
+    pointNames : iterable, dict
+        A list of point names in the order they appear in the data
+        or a dictionary mapping names to indices. None is given if
+        default names are desired.
+    featureNames : iterable, dict
+        A list of feature names in the order they appear in the data
+        or a dictionary mapping names to indices. None is given if
+        default names are desired.
+    name : str
+        The name to be associated with this object.
+    paths : tuple
+        The first entry is taken to be the string representing the
+        absolute path to the source file of the data and the second
+        entry is taken to be the relative path. Both may be None if
+        these values are to be unspecified.
+    kwds
+        Potentially full of arguments further up the class
+        hierarchy, as following best practices for use of super().
+        Note, however, that this class is the root of the object
+        hierarchy as statically defined.
+
+    Attributes
+    ----------
+    shape : tuple
+        The number of points and features in the object in the format
+        (points, features).
+    points : Axis object
+        An object handling functions manipulating data by points.
+    features : Axis object
+        An object handling functions manipulating data by features.
+    elements : Elements object
+        An object handling functions manipulating data by each element.
+    name : str
+        A name to call this object when printing or logging.
+    absolutePath : str
+        The absolute path to the data file.
+    relativePath : str
+        The relative path to the data file.
+    path : str
+        The path to the data file.
     """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
-        """
-        Instantiates the book-keeping structures that are taken to be common
-        across all data types. Specifically, this includes point and feature
-        names, an object name, and originating pathes for the data in this
-        object. Note: this method (as should all other __init__ methods in
-        this hierarchy) makes use of super()
-
-        pointNames: may be an iterable, list-like container or dict mapping
-        names to indices. None is given if default names are desired.
-
-        featureNames: may be an iterable, list-like container or dict mapping
-        names to indices. None is given if default names are desired.
-
-        name: the name to be associated with this object.
-
-        paths: a tuple, where the first entry is taken to be the string
-        representing the absolute path to the source file of the data and
-        the second entry is taken to be the relative path. Both may be
-        None if these values are to be unspecified.
-
-        **kwds: potentially full of arguments further up the class hierarchy,
-        as following best practices for use of super(). Note however, that
-        this class is the root of the object hierarchy as statically defined.
-
-        """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
         if pointNames is not None and len(pointNames) != shape[0]:
@@ -159,6 +156,10 @@ class Base(object):
             msg += str(shape[1]) + ")"
             raise ArgumentException(msg)
 
+        self._points = self._getPoints()
+        self._features = self._getFeatures()
+        self._elements = self._getElements()
+
         # Set up point names
         self._nextDefaultValuePoint = 0
         if pointNames is None:
@@ -166,11 +167,11 @@ class Base(object):
             self.pointNames = None
         elif isinstance(pointNames, dict):
             self._nextDefaultValuePoint = self._pointCount
-            self.setPointNames(pointNames)
+            self.points.setNames(pointNames)
         else:
             pointNames = valuesToPythonList(pointNames, 'pointNames')
             self._nextDefaultValuePoint = self._pointCount
-            self.setPointNames(pointNames)
+            self.points.setNames(pointNames)
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
@@ -179,11 +180,11 @@ class Base(object):
             self.featureNames = None
         elif isinstance(featureNames, dict):
             self._nextDefaultValueFeature = self._featureCount
-            self.setFeatureNames(featureNames)
+            self.features.setNames(featureNames)
         else:
             featureNames = valuesToPythonList(featureNames, 'featureNames')
             self._nextDefaultValueFeature = self._featureCount
-            self.setFeatureNames(featureNames)
+            self.features.setNames(featureNames)
 
         # Set up object name
         if name is None:
@@ -193,34 +194,52 @@ class Base(object):
 
         # Set up paths
         if paths[0] is not None and not isinstance(paths[0], six.string_types):
-            raise ArgumentException(
-                "paths[0] must be None or an absolute path to the file from which the data originates")
-        if paths[0] is not None and not os.path.isabs(paths[0]) and not paths[0].startswith('http'):
+            msg = "paths[0] must be None, an absolute path or web link to "
+            msg += "the file from which the data originates"
+            raise ArgumentException(msg)
+        if (paths[0] is not None
+                and not os.path.isabs(paths[0])
+                and not paths[0].startswith('http')):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
         if paths[1] is not None and not isinstance(paths[1], six.string_types):
-            raise ArgumentException(
-                "paths[1] must be None or a relative path to the file from which the data originates")
+            msg = "paths[1] must be None or a relative path to the file from "
+            msg += "which the data originates"
+            raise ArgumentException(msg)
         self._relPath = paths[1]
 
         # call for safety
         super(Base, self).__init__(**kwds)
 
-
     #######################
     # Property Attributes #
     #######################
 
-    def _getpointCount(self):
-        return self._pointCount
+    @property
+    def shape(self):
+        return self._pointCount, self._featureCount
 
-    points = property(_getpointCount, doc="The number of points in this object")
+    def _getPoints(self):
+        return BasePoints(self)
 
-    def _getfeatureCount(self):
-        return self._featureCount
+    @property
+    def points(self):
+        return self._points
 
-    features = property(_getfeatureCount, doc="The number of features in this object")
+    def _getFeatures(self):
+        return BaseFeatures(self)
+
+    @property
+    def features(self):
+        return self._features
+
+    def _getElements(self):
+        return BaseElements(self)
+
+    @property
+    def elements(self):
+        return self._elements
 
     def _setpointCount(self, value):
         self._pointCount = value
@@ -236,32 +255,57 @@ class Base(object):
             self._name = dataHelpers.nextDefaultObjectName()
         else:
             if not isinstance(value, six.string_types):
-                msg = "The name of an object may only be a string, or the value None"
+                msg = "The name of an object may only be a string or None"
                 raise ValueError(msg)
             self._name = value
 
-    name = property(_getObjName, _setObjName, doc="A name to be displayed when printing or logging this object")
+    @property
+    def name(self):
+        """
+        A name to be displayed when printing or logging this object
+        """
+        return self._getObjName()
+
+    @name.setter
+    def name(self, value):
+        return self._setObjName(value)
 
     def _getAbsPath(self):
         return self._absPath
 
-    absolutePath = property(_getAbsPath, doc="The path to the file this data originated from, in absolute form")
+    @property
+    def absolutePath(self):
+        """
+        The path to the file this data originated from in absolute form.
+        """
+        return self._getAbsPath()
 
     def _getRelPath(self):
         return self._relPath
 
-    relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
+    @property
+    def relativePath(self):
+        """
+        The path to the file this data originated from in relative form.
+        """
+        return self._getRelPath()
+    relativePath = property(_getRelPath, doc="")
 
     def _getPath(self):
         return self.absolutePath
 
-    path = property(_getPath, doc="The path to the file this data originated from")
+    @property
+    def path(self):
+        """
+        The path to the file this data originated from.
+        """
+        return self._getPath()
 
     def _pointNamesCreated(self):
         """
         Returns True if point default names have been created/assigned
         to the object.
-        If the object does not have points it returns True.
+        If the object does not have points it returns False.
         """
         if self.pointNamesInverse is None:
             return False
@@ -272,7 +316,7 @@ class Base(object):
         """
         Returns True if feature default names have been created/assigned
         to the object.
-        If the object does not have features it returns True.
+        If the object does not have features it returns False.
         """
         if self.featureNamesInverse is None:
             return False
@@ -286,165 +330,34 @@ class Base(object):
     def __len__(self):
         # ordered such that the larger axis is always printed, even
         # if they are both in the range [0,1]
-        if self.points == 0 or self.features == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        if self.points == 1:
-            return self.features
-        if self.features == 1:
-            return self.points
+        if self._pointCount == 1:
+            return self._featureCount
+        if self._featureCount == 1:
+            return self._pointCount
 
         msg = "len() is undefined when the number of points ("
-        msg += str(self.points)
+        msg += str(self._pointCount)
         msg += ") and the number of features ("
-        msg += str(self.features)
+        msg += str(self._featureCount)
         msg += ") are both greater than 1"
         raise ImproperActionException(msg)
-
-
-    def setPointName(self, oldIdentifier, newName):
-        """
-        Changes the pointName specified by previous to the supplied input name.
-
-        oldIdentifier must be a non None string or integer, specifying either a current pointName
-        or the index of a current pointName. newName may be either a string not currently
-        in the pointName set, or None for an default pointName. newName cannot begin with the
-        default prefix.
-
-        None is always returned.
-
-        """
-        if self.points == 0:
-            raise ArgumentException("Cannot set any point names; this object has no points ")
-        if self.pointNames is None:
-            self._setAllDefault('point')
-        self._setName_implementation(oldIdentifier, newName, 'point', False)
-
-    def setFeatureName(self, oldIdentifier, newName):
-        """
-        Changes the featureName specified by previous to the supplied input name.
-
-        oldIdentifier must be a non None string or integer, specifying either a current featureName
-        or the index of a current featureName. newName may be either a string not currently
-        in the featureName set, or None for an default featureName. newName cannot begin with the
-        default prefix.
-
-        None is always returned.
-
-        """
-        if self.features == 0:
-            raise ArgumentException("Cannot set any feature names; this object has no features ")
-        if self.featureNames is None:
-            self._setAllDefault('feature')
-        self._setName_implementation(oldIdentifier, newName, 'feature', False)
-
-
-    def setPointNames(self, assignments=None):
-        """
-        Rename all of the point names of this object according to the values
-        specified by the assignments parameter. If given an iterable, list-like
-        container, then we use the mapping between names and array indices to
-        define the point names. If given a dict, then that mapping will be used
-        to define the point names. If assignments is None, then all point names
-        will be given new default values. If assignment is an unexpected type,
-        the names are not strings, the names are not unique, or point indices
-        are missing, then an ArgumentException will be raised.
-
-        """
-        if assignments is None:
-            self.pointNames = None
-            self.pointNamesInverse = None
-        elif isinstance(assignments, dict):
-            self._setNamesFromDict(assignments, self.points, 'point')
-        else:
-            assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesFromList(assignments, self.points, 'point')
-
-    def setFeatureNames(self, assignments=None):
-        """
-        Rename all of the feature names of this object according to the values
-        specified by the assignments parameter. If given a iterable, list-like
-        container, then we use the mapping between names and array indices to
-        define the feature names. If given a dict, then that mapping will be
-        used to define the feature names. If assignments is None, then all
-        feature names will be given new default values. If assignment is an
-        unexpected type, the names are not strings, the names are not unique, or
-        feature indices are missing, then an ArgumentException will be raised.
-
-        """
-        if assignments is None:
-            self.featureNames = None
-            self.featureNamesInverse = None
-        elif isinstance(assignments, dict):
-            self._setNamesFromDict(assignments, self.features, 'feature')
-        else:
-            assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesFromList(assignments, self.features, 'feature')
-
 
     def nameIsDefault(self):
         """Returns True if self.name has a default value"""
         return self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 
-    def getPointNames(self):
-        """Returns a list containing all point names, where their index
-        in the list is the same as the index of the point they correspond
-        to.
-
-        """
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        return copy.copy(self.pointNamesInverse)
-
-    def getFeatureNames(self):
-        """Returns a list containing all feature names, where their index
-        in the list is the same as the index of the feature they
-        correspond to.
-
-        """
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        return copy.copy(self.featureNamesInverse)
-
-    def getPointName(self, index):
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        return self.pointNamesInverse[index]
-
-    def getPointIndex(self, name):
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        return self.pointNames[name]
-
-    def getPointIndices(self, names):
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        return [self.pointNames[n] for n in names]
-
     def hasPointName(self, name):
         try:
-            self.getPointIndex(name)
+            self.points.getIndex(name)
             return True
         except KeyError:
             return False
 
-    def getFeatureName(self, index):
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        return self.featureNamesInverse[index]
-
-    def getFeatureIndex(self, name):
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        return self.featureNames[name]
-
-    def getFeatureIndices(self, names):
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        return [self.featureNames[n] for n in names]
-
     def hasFeatureName(self, name):
         try:
-            self.getFeatureIndex(name)
+            self.features.getIndex(name)
             return True
         except KeyError:
             return False
@@ -453,49 +366,35 @@ class Base(object):
     # Higher Order Operations #
     ###########################
 
-    def dropFeaturesContainingType(self, typeToDrop):
-        """
-        Modify this object so that it no longer contains features which have the specified
-        type as values. None is always returned.
-
-        """
-        if not isinstance(typeToDrop, (list, tuple)):
-            if not isinstance(typeToDrop, type):
-                raise ArgumentException(
-                    "The only allowed inputs are a list of types or a single type, yet the input is neither a list or a type")
-            typeToDrop = [typeToDrop]
-        else:
-            for value in typeToDrop:
-                if not isinstance(value, type):
-                    raise ArgumentException("When giving a list as input, every contained value must be a type")
-
-        if self.points == 0 or self.features == 0:
-            return
-
-        def hasType(feature):
-            for value in feature:
-                for typeValue in typeToDrop:
-                    if isinstance(value, typeValue):
-                        return True
-            return False
-
-        removed = self.extractFeatures(hasType)
-        return
-
-
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
         """
-        Modify this object so that the chosen feature is removed, and binary valued
-        features are added, one for each possible value seen in the original feature.
-        None is always returned.
+        Create binary features for each unique value in a feature.
 
+        Modify this object so that the chosen feature is removed, and
+        binary valued features are added, one for each unique value
+        seen in the original feature.
+
+        Parameters
+        ----------
+        featureToReplace : int or str
+            The index or name of the feature being replaced.
+
+        Returns
+        -------
+        list
+            The new feature names after replacement.
+
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0:
-            raise ImproperActionException("This action is impossible, the object has 0 points")
+        if self._pointCount == 0:
+            msg = "This action is impossible, the object has 0 points"
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(featureToReplace)
         # extract col.
-        toConvert = self.extractFeatures([index])
+        toConvert = self.features.extract([index])
 
         # MR to get list of values
         def getValue(point):
@@ -504,14 +403,14 @@ class Base(object):
         def simpleReducer(identifier, valuesList):
             return (identifier, 0)
 
-        values = toConvert.mapReducePoints(getValue, simpleReducer)
-        values.setFeatureName(0, 'values')
-        values = values.extractFeatures([0])
+        values = toConvert.points.mapReduce(getValue, simpleReducer)
+        values.features.setName(0, 'values')
+        values = values.features.extract([0])
 
         # Convert to List, so we can have easy access
         values = values.copyAs(format="List")
 
-        # for each value run calculateForEachPoint to produce a category
+        # for each value run points.calculate to produce a category
         # point for each value
         def makeFunc(value):
             def equalTo(point):
@@ -521,35 +420,45 @@ class Base(object):
 
             return equalTo
 
-        varName = toConvert.getFeatureName(0)
+        varName = toConvert.features.getName(0)
 
         for point in values.data:
             value = point[0]
-            ret = toConvert.calculateForEachPoint(makeFunc(value))
-            ret.setFeatureName(0, varName + "=" + str(value).strip())
-            toConvert.addFeatures(ret)
+            ret = toConvert.points.calculate(makeFunc(value))
+            ret.features.setName(0, varName + "=" + str(value).strip())
+            toConvert.features.add(ret)
 
         # remove the original feature, and combine with self
-        toConvert.extractFeatures([varName])
-        self.addFeatures(toConvert)
+        toConvert.features.extract([varName])
+        self.features.add(toConvert)
 
-        return toConvert.getFeatureNames()
-
+        return toConvert.features.getNames()
 
     def transformFeatureToIntegers(self, featureToConvert):
         """
-        Modify this object so that the chosen feature in removed, and a new integer
-        valued feature is added with values 0 to n-1, one for each of n values present
-        in the original feature. None is always returned.
+        Represent each unique value in a feature with a unique integer.
 
+        Modify this object so that the chosen feature is removed and a
+        new integer valued feature is added with values 0 to n-1, one
+        for each of n unique values present in the original feature.
+
+        Parameters
+        ----------
+        featureToConvert : int or str
+            The index or name of the feature being replaced.
+
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0:
-            raise ImproperActionException("This action is impossible, the object has 0 points")
+        if self._pointCount == 0:
+            msg = "This action is impossible, the object has 0 points"
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(featureToConvert)
 
         # extract col.
-        toConvert = self.extractFeatures([index])
+        toConvert = self.features.extract([index])
 
         # MR to get list of values
         def getValue(point):
@@ -558,9 +467,9 @@ class Base(object):
         def simpleReducer(identifier, valuesList):
             return (identifier, 0)
 
-        values = toConvert.mapReducePoints(getValue, simpleReducer)
-        values.setFeatureName(0, 'values')
-        values = values.extractFeatures([0])
+        values = toConvert.points.mapReduce(getValue, simpleReducer)
+        values.features.setName(0, 'values')
+        values = values.features.extract([0])
 
         # Convert to List, so we can have easy access
         values = values.copyAs(format="List")
@@ -575,236 +484,38 @@ class Base(object):
         def lookup(point):
             return mapping[point[0]]
 
-        converted = toConvert.calculateForEachPoint(lookup)
-        converted.setPointNames(toConvert.getPointNames())
-        converted.setFeatureName(0, toConvert.getFeatureName(0))
+        converted = toConvert.points.calculate(lookup)
+        converted.points.setNames(toConvert.points.getNames())
+        converted.features.setName(0, toConvert.features.getName(0))
 
-        self.addFeatures(converted)
-
-    def extractPointsByCoinToss(self, extractionProbability):
-        """
-        Return a new object containing a randomly selected sample of points
-        from this object, where a random experiment is performed for each
-        point, with the chance of selection equal to the extractionProbabilty
-        parameter. Those selected values are also removed from this object.
-
-        """
-        #		if self.points == 0:
-        #			raise ImproperActionException("Cannot extract points from an object with 0 points")
-
-        if extractionProbability is None:
-            raise ArgumentException("Must provide a extractionProbability")
-        if extractionProbability <= 0:
-            raise ArgumentException("extractionProbability must be greater than zero")
-        if extractionProbability >= 1:
-            raise ArgumentException("extractionProbability must be less than one")
-
-        def experiment(point):
-            return bool(pythonRandom.random() < extractionProbability)
-
-        ret = self.extractPoints(experiment)
-
-        return ret
-
-
-    def calculateForEachPoint(self, function, points=None):
-        """
-        Calculates the results of the given function on the specified points
-        in this object, with output values collected into a new object that
-        is returned upon completion.
-
-        function: must accept the view of a point as an argument
-
-        points: may be None to indicate application to all points, a single
-        point identifier (name or index) or an iterable, list-like container of
-        point identifiers to limit application only to those specified.
-
-        """
-        if points is not None:
-            points = copy.copy(points)
-            points = self._constructIndicesList('point', points)
-        if self.points == 0:
-            raise ImproperActionException("We disallow this function when there are 0 points")
-        if self.features == 0:
-            raise ImproperActionException("We disallow this function when there are 0 features")
-        if function is None:
-            raise ArgumentException("function must not be None")
-
-        self.validate()
-
-        ret = self._calculateForEach_implementation(function, points, 'point')
-
-        if points is not None:
-            setNames = [self.getPointName(x) for x in sorted(points)]
-            ret.setPointNames(setNames)
-        else:
-            ret.setPointNames(self.getPointNames())
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        return ret
-
-
-    def calculateForEachFeature(self, function, features=None):
-        """
-        Calculates the results of the given function on the specified features
-        in this object, with output values collected into a new object that is
-        returned upon completion.
-
-        function: must accept the view of a feature as an argument
-
-        features: may be None to indicate application to all features, a single
-        feature identifier (name or index) or an iterable, list-like container
-        of feature identifiers to limit application only to those specified.
-
-        """
-        if features is not None:
-            features = copy.copy(features)
-            features = self._constructIndicesList('feature', features)
-        if self.points == 0:
-            raise ImproperActionException("We disallow this function when there are 0 points")
-        if self.features == 0:
-            raise ImproperActionException("We disallow this function when there are 0 features")
-        if function is None:
-            raise ArgumentException("function must not be None")
-
-        self.validate()
-
-        ret = self._calculateForEach_implementation(function, features, 'feature')
-
-        if features is not None:
-            setNames = [self.getFeatureName(x) for x in sorted(features)]
-            ret.setFeatureNames(setNames)
-        else:
-            ret.setFeatureNames(self.getFeatureNames())
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-        return ret
-
-
-    def _calculateForEach_implementation(self, function, included, axis):
-        if axis == 'point':
-            viewIterator = self.pointIterator()
-        else:
-            viewIterator = self.featureIterator()
-
-        retData = []
-        for viewID, view in enumerate(viewIterator):
-            if included is not None and viewID not in included:
-                continue
-            currOut = function(view)
-            # first we branch on whether the output has multiple values or is singular.
-            if hasattr(currOut, '__iter__') and not isinstance(currOut, six.string_types):#in python3, string has __iter__ too.
-                # if there are multiple values, they must be random accessible
-                if not hasattr(currOut, '__getitem__'):
-                    raise ArgumentException(
-                        "function must return random accessible data (ie has a __getitem__ attribute)")
-
-                toCopyInto = []
-                for value in currOut:
-                    toCopyInto.append(value)
-                retData.append(toCopyInto)
-            # singular return
-            else:
-                retData.append([currOut])
-
-        ret = UML.createData(self.getTypeString(), retData)
-        if axis != 'point':
-            ret.transpose()
-
-        return ret
-
-
-    def mapReducePoints(self, mapper, reducer):
-        """
-        Return a new object containing the results of the given mapper and
-        reducer functions
-
-        mapper:  a function receiving a point as the input and outputting an
-                 iterable containing two-tuple(s) of mapping identifier and
-                 point values
-
-        reducer: a function receiving the output of mapper as input and outputting
-                 a two-tuple containing the identifier and the reduced value
-        """
-        return self._mapReduce_implementation('point', mapper, reducer)
-
-    def mapReduceFeatures(self, mapper, reducer):
-        """
-        Return a new object containing the results of the given mapper and
-        reducer functions
-
-        mapper:  a function receiving a feature as the input and outputting an
-                 iterable containing two-tuple(s) of mapping identifier and
-                 feature values
-
-        reducer: a function receiving the output of mapper as input and outputting
-                 a two-tuple containing the identifier and the reduced value
-        """
-        return self._mapReduce_implementation('feature', mapper, reducer)
-
-    def _mapReduce_implementation(self, axis, mapper, reducer):
-        if axis == 'point':
-            targetCount = self.points
-            otherCount = self.features
-            valueIterator = self.pointIterator
-            otherAxis = 'feature'
-        else:
-            targetCount = self.features
-            otherCount = self.points
-            valueIterator = self.featureIterator
-            otherAxis = 'point'
-
-        if targetCount == 0:
-            return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
-        if otherCount == 0:
-            msg = "We do not allow operations over {0}s if there are 0 {1}s".format(axis, otherAxis)
-            raise ImproperActionException(msg)
-
-        if mapper is None or reducer is None:
-            raise ArgumentException("The arguments must not be none")
-        if not hasattr(mapper, '__call__'):
-            raise ArgumentException("The mapper must be callable")
-        if not hasattr(reducer, '__call__'):
-            raise ArgumentException("The reducer must be callable")
-
-        self.validate()
-
-        mapResults = {}
-        # apply the mapper to each point in the data
-        for value in valueIterator():
-            currResults = mapper(value)
-            # the mapper will return a list of key value pairs
-            for (k, v) in currResults:
-                # if key is new, we must add an empty list
-                if k not in mapResults:
-                    mapResults[k] = []
-                # append this value to the list of values associated with the key
-                mapResults[k].append(v)
-
-        # apply the reducer to the list of values associated with each key
-        ret = []
-        for mapKey in mapResults.keys():
-            mapValues = mapResults[mapKey]
-            # the reducer will return a tuple of a key to a value
-            redRet = reducer(mapKey, mapValues)
-            if redRet is not None:
-                (redKey, redValue) = redRet
-                ret.append([redKey, redValue])
-        ret = UML.createData(self.getTypeString(), ret)
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        return ret
+        self.features.add(converted)
 
     def groupByFeature(self, by, countUniqueValueOnly=False):
         """
         Group data object by one or more features.
-        Input:
-        by: can be an int, string or a list of int or a list of string
+
+        Parameters
+        ----------
+        by : int, str or list
+            * int - the index of the feature to group by
+            * str - the name of the feature to group by
+            * list - indices or names of features to group by
+        countUniqueValueOnly : bool
+            Return only the count of points in the group
+
+        Returns
+        -------
+        dict
+            Each unique feature (or group of features) to group by as
+            keys. When ``countUniqueValueOnly`` is False,  the value at
+            each key is a UML object containing the ungrouped features
+            of points within that group. When ``countUniqueValueOnly``
+            is True, the values are the number of points within that
+            group.
+
+        Examples
+        --------
+        TODO
         """
         def findKey1(point, by):#if by is a string or int
             return point[by]
@@ -812,349 +523,210 @@ class Base(object):
         def findKey2(point, by):#if by is a list of string or a list of int
             return tuple([point[i] for i in by])
 
-        if isinstance(by, (six.string_types, numbers.Number)):#if by is a list, then use findKey2; o.w. use findKey1
+        #if by is a list, then use findKey2; o.w. use findKey1
+        if isinstance(by, (six.string_types, numbers.Number)):
             findKey = findKey1
         else:
             findKey = findKey2
 
         res = {}
         if countUniqueValueOnly:
-            for point in self.pointIterator():
+            for point in self.points:
                 k = findKey(point, by)
                 if k not in res:
                     res[k] = 1
                 else:
                     res[k] += 1
         else:
-            for point in self.pointIterator():
+            for point in self.points:
                 k = findKey(point, by)
                 if k not in res:
-                    res[k] = point.getPointNames()
+                    res[k] = point.points.getNames()
                 else:
-                    res[k].extend(point.getPointNames())
+                    res[k].extend(point.points.getNames())
 
             for k in res:
-                tmp = self.copyPoints(toCopy=res[k])
-                tmp.extractFeatures(by)
+                tmp = self.points.copy(toCopy=res[k])
+                tmp.features.delete(by)
                 res[k] = tmp
 
         return res
 
     def countEachUniqueValue(self, points=None, features=None):
         """
-        Returns a dictionary containing each unique value as a key and the
-        number of times that value occurs as the value.
+        The unique values and the number of occurrences in the data.
 
-        points: May be None indicating application to all points, a single
-        identifier or iterable, list-like object of identifiers.
+        Parameters
+        ----------
+        points : identifier, list of identifiers
+            May be a single point name or index, an iterable,
+            container of point names and/or indices. None indicates
+            application to all points.
+        features : identifier, list of identifiers
+            May be a single feature name or index, an iterable,
+            container of feature names and/or indices. None indicates
+            application to all features.
 
-        features: May be None indicating application to all features, a single
-        identifier or iterable, list-like object of identifiers.
+        Returns
+        -------
+        dict
+            Each unique value as keys and a count of the number of times
+            that value occurs as values.
 
+        Examples
+        --------
+        TODO
         """
         uniqueCount = {}
         if points is None:
-            points = [i for i in range(self.points)]
+            points = [i for i in range(self._pointCount)]
         if features is None:
-            features = [i for i in range(self.features)]
+            features = [i for i in range(self._featureCount)]
         points = valuesToPythonList(points, 'points')
         features = valuesToPythonList(features, 'features')
         for i in points:
             for j in features:
                 val = self[i, j]
-                temp = uniqueCount.get(val,0)
+                temp = uniqueCount.get(val, 0)
                 uniqueCount[val] = temp + 1
 
         return uniqueCount
 
-    def pointIterator(self):
-    #		if self.features == 0:
-    #			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
-
-        class pointIt():
-            def __init__(self, outer):
-                self._outer = outer
-                self._position = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while (self._position < self._outer.points):
-                    value = self._outer.pointView(self._position)
-                    self._position += 1
-                    return value
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        return pointIt(self)
-
-    def featureIterator(self):
-    #		if self.points == 0:
-    #			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
-
-        class featureIt():
-            def __init__(self, outer):
-                self._outer = outer
-                self._position = 0
-
-            def __iter__(self):
-                return self
-
-            def next(self):
-                while (self._position < self._outer.features):
-                    value = self._outer.featureView(self._position)
-                    self._position += 1
-                    return value
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        return featureIt(self)
-
-
-    def calculateForEachElement(self, function, points=None, features=None, preserveZeros=False,
-                                skipNoneReturnValues=False, outputType=None):
-        """
-        Returns a new object containing the results of calling function(elementValue)
-        or function(elementValue, pointNum, featureNum) for each element.
-
-        points: Limit to only elements of the specified points; may be None for
-        all points, a single identifier (name or index), or an iterable,
-        list-like container of identifiers; this will affect the shape of the
-        returned object.
-
-        features: Limit to only elements of the specified features; may be None
-        for all features, a single identifier (name or index), or an iterable,
-        list-like container of identifiers; this will affect the shape of the
-        returned object.
-
-        preserveZeros: If True it does not apply the function to elements in
-        the data that are 0 and a 0 is placed in its place in the output.
-
-        skipNoneReturnValues: If True, any time function() returns None, the
-        value that was input to the function will be put in the output in place
-        of None.
-
-        """
-        oneArg = False
-        try:
-            function(0, 0, 0)
-        except TypeError:
-            oneArg = True
-
-        if points is not None:
-            points = self._constructIndicesList('point', points)
-        if features is not None:
-            features = self._constructIndicesList('feature', features)
-
-        if outputType is not None:
-            optType = outputType
-        else:
-            optType = self.getTypeString()
-
-        # Use vectorized for functions with oneArg
-        if oneArg:
-            if not preserveZeros:
-                # check if the function preserves zero values
-                preserveZeros = function(0) == 0
-            def functionWrap(value):
-                if preserveZeros and value == 0:
-                    return 0
-                currRet = function(value)
-                if skipNoneReturnValues and currRet is None:
-                    return value
-                else:
-                    return currRet
-
-            vectorized = numpy.vectorize(functionWrap)
-            ret = self._calculateForEachElement_implementation(
-                     vectorized, points, features, preserveZeros, optType)
-
-        else:
-            # if unable to vectorize, iterate over each point
-            points = points if points else list(range(self.points))
-            features = features if features else list(range(self.features))
-            valueArray = numpy.empty([len(points), len(features)])
-            p = 0
-            for pi in points:
-                f = 0
-                for fj in features:
-                    value = self[pi, fj]
-                    if preserveZeros and value == 0:
-                        valueArray[p, f] = 0
-                    else:
-                        currRet = function(value) if oneArg else function(value, pi, fj)
-                        if skipNoneReturnValues and currRet is None:
-                            valueArray[p, f] = value
-                        else:
-                            valueArray[p, f] = currRet
-                    f += 1
-                p += 1
-
-            ret = UML.createData(optType, valueArray)
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        self.validate()
-
-        return ret
-
-    def _calculateForEachElementGenericVectorized(self, function, points, features,
-                                                  outputType):
-        # need points/features as arrays for indexing
-        points = numpy.array(points) if points else numpy.array(range(self.points))
-        features = numpy.array(features) if features else numpy.array(range(self.features))
-        toCalculate = self.copyAs('numpyarray')
-        # array with only desired points and features
-        toCalculate = toCalculate[points[:,None], features]
-        try:
-            values = function(toCalculate)
-            # check if values has numeric dtype
-            if numpy.issubdtype(values.dtype, numpy.number):
-                return UML.createData(outputType, values)
-            else:
-                return UML.createData(outputType, values, elementType=numpy.object_)
-        except Exception:
-            # change output type of vectorized function to object to handle nonnumeric data
-            function.otypes = [numpy.object_]
-            values = function(toCalculate)
-            return UML.createData(outputType, values, elementType=numpy.object_)
-
-
-
-    def countElements(self, function):
-        """
-        Apply the function onto each element, the result should be True or False, or 1 or 0. Then return back the sum of
-        True (1).
-        function: can be a function object or a string like '>0'.
-        """
-        if callable(function):
-            ret = self.calculateForEachElement(function=function, outputType='Matrix')
-        elif isinstance(function, six.string_types):
-            func = lambda x: eval('x'+function)
-            ret = self.calculateForEachElement(function=func, outputType='Matrix')
-        else:
-            raise ArgumentException('function can only be a function or str, not else')
-        return int(numpy.sum(ret.data))
-
     def hashCode(self):
-        """returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
-        that should almost always change when the values of the matrix are changed by a substantive amount"""
-        if self.points == 0 or self.features == 0:
+        """
+        Returns a hash for this matrix.
+
+        The hash is a number x in the range 0<= x < 1 billion that
+        should almost always change when the values of the matrix are
+        changed by a substantive amount.
+
+        Returns
+        -------
+        int
+
+        Examples
+        --------
+        TODO
+        """
+        if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        valueObj = self.calculateForEachElement(hashCodeFunc, preserveZeros=True, outputType='Matrix')
+        valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
+                                           outputType='Matrix')
         valueList = valueObj.copyAs(format="python list")
-        avg = sum(itertools.chain.from_iterable(valueList)) / float(self.points * self.features)
+        avg = (sum(itertools.chain.from_iterable(valueList))
+               / float(self._pointCount * self._featureCount))
         bigNum = 1000000000
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
 
-
     def isApproximatelyEqual(self, other):
-        """If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data.
-        If it returns True, they probably do but you can't be absolutely sure.
-        Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects
-        passed are of the same type (Matrix, Sparse, etc.)"""
+        """
+        Determine if the data in both objects is likely the same.
+
+        If it returns False, this object and the ``other`` object
+        definitely do not store equivalent data. If it returns True,
+        they likely store equivalent data but it is not possible to be
+        absolutely sure. Note that only the actual data stored is
+        considered, it doesn't matter whether the data matrix objects
+        passed are of the same type (Matrix, Sparse, etc.)
+
+        Parameters
+        ----------
+        other : UML data object
+            The object with which to compare approximate equality with
+            this object.
+
+        Returns
+        -------
+        bool
+            True if approximately equal, else False.
+
+        Examples
+        --------
+        TODO
+        """
         self.validate()
         #first check to make sure they have the same number of rows and columns
-        if self.points != other.points: return False
-        if self.features != other.features: return False
+        if self._pointCount != len(other.points):
+            return False
+        if self._featureCount != len(other.features):
+            return False
         #now check if the hashes of each matrix are the same
-        if self.hashCode() != other.hashCode(): return False
+        if self.hashCode() != other.hashCode():
+            return False
         return True
-
-
-    def shufflePoints(self):
-        """
-        Permute the indexing of the points so they are in a random order. Note: this relies on
-        python's random.shuffle() so may not be sufficiently random for large number of points.
-        See shuffle()'s documentation.
-
-        """
-        return self._genericShuffleFrontend('point')
-
-
-    def shuffleFeatures(self):
-        """
-        Permute the indexing of the features so they are in a random order. Note: this relies on
-        python's random.shuffle() so may not be sufficiently random for large number of features.
-        See shuffle()'s documentation.
-
-        """
-        return self._genericShuffleFrontend('feature')
-
-
-    def _genericShuffleFrontend(self, axis):
-        """
-        Generic function for shufflePoints and shuffleFeatures. Note: this relies on
-        python's random.shuffle() so may not be sufficiently random for large number of features.
-        See shuffle()'s documentation.
-
-        """
-        if axis == 'point':
-            values = self.points
-            sorter = self.sortPoints
-        else:
-            values = self.features
-            sorter = self.sortFeatures
-
-        indices = list(range(values))
-        pythonRandom.shuffle(indices)
-
-        sorter(sortHelper=indices)
-
 
     def copy(self):
         """
-        Return a new object which has the same data (and featureNames, depending on
-        the return type) and in the same UML format as this object.
+        Return a new object which has the same data.
 
+        The copy will be in the same UML format as this object and in
+        addition to copying this objects data, the name and path
+        metadata will by copied as well.
+
+        Returns
+        -------
+        UML data object
+            A copy of this object
+
+        Examples
+        --------
+        TODO
         """
         return self.copyAs(self.getTypeString())
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True):
-        """Partitions this object into training / testing, data / labels
-        sets, returning a new object for each as needed.
+        """
+        Divide the data into training and testing sets.
 
-        testFraction: the fraction of the data to be placed in the testing
-        sets. If randomOrder is False, then the points are taken from the
-        end of this object.
+        Return either a length 2 or a length 4 tuple. If labels=None,
+        then returns a length 2 tuple containing the training object,
+        then the testing object (trainX, testX). If labels is non-None,
+        a length 4 tuple is returned, containing the training data
+        object, then the training labels object, then the testing data
+        object, and finally the testing labels
+        (trainX, trainY, testX, testY).
 
-        labels: may be None, a single feature ID, or a list of feature
-        IDs depending on whether one is dealing with data for unsupervised
-        learning, single variable supervised learning, or multi-output
-        supervised learning. This parameter will affect the shape of the
-        returned tuple.
+        Parameters
+        ----------
+        testFraction : int or float
+            The fraction of the data to be placed in the testing sets.
+            If ``randomOrder`` is False, then the points are taken from
+            the end of this object.
+        labels : identifier or list of identifiers
+            The name(s) or index(es) of the data labels, a value of None
+            implies this data does not contain labels. This parameter
+            will affect the shape of the returned tuple.
+        randomOrder : bool
+            Control whether the order of the points in the returns sets
+            matches that of the original object, or if their order is
+            randomized.
 
-        randomOrder: controls whether the order of the points in the returns
-        sets matches that of the original object, or if their order is
-        randomized.
+        Returns
+        -------
+        tuple
+            If ``labels`` is None, a length 2 tuple containing the
+            training and testing objects (trainX, testX).
+            If ``labels`` is non-None, a length 4 tupes containing the
+            training and testing data objects and the training a testing
+            labels objects (trainX, trainY, testX, testY).
 
-        Returns either a length 2 or a length 4 tuple. If labels=None, then
-        returns a length 2 tuple containing the training object, then the
-        testing object (trainX, testX). If labels is non-None, a length 4
-        tuple is returned, containing the training data object, then the
-        training labels object, then the testing data object, and finally
-        the testing labels (trainX, trainY, testX, testY).
-
+        Examples
+        --------
+        TODO
         """
         toSplit = self.copy()
         if randomOrder:
-            toSplit.shufflePoints()
+            toSplit.points.shuffle()
 
-        testXSize = int(round(testFraction * self.points))
-        startIndex = self.points - testXSize
+        testXSize = int(round(testFraction * self._pointCount))
+        startIndex = self._pointCount - testXSize
 
         #pull out a testing set
         if testXSize == 0:
-            testX = toSplit.extractPoints([])
+            testX = toSplit.points.extract([])
         else:
-            testX = toSplit.extractPoints(start=startIndex)
+            testX = toSplit.points.extract(start=startIndex)
 
         if labels is None:
             toSplit.name = self.name + " trainX"
@@ -1166,8 +738,8 @@ class Base(object):
         if testXSize == 0:
             toExtract = []
 
-        trainY = toSplit.extractFeatures(toExtract)
-        testY = testX.extractFeatures(toExtract)
+        trainY = toSplit.features.extract(toExtract)
+        testY = testX.features.extract(toExtract)
 
         toSplit.name = self.name + " trainX"
         trainY.name = self.name + " trainY"
@@ -1176,312 +748,38 @@ class Base(object):
 
         return toSplit, trainY, testX, testY
 
-
-    def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
-        """
-        Modify all points in this object according to the given
-        operations.
-
-        applyResultTo: default None, if a UML object is given, then
-        perform the same operations to it as are applied to the calling
-        object. However, if a statistical method is specified as subtract
-        or divide, then	concrete values are first calculated only from
-        querying the calling object, and the operation is performed on
-        applyResultTo using the results; as if a UML object was given
-        for the subtract or divide arguments.
-
-        subtract: what should be subtracted from data. May be a fixed
-        numerical value, a string defining a statistical function (all of
-        the same ones callable though pointStatistics), or a UML data
-        object. If a vector shaped object is given, then the value
-        associated with each point will be subtracted from all values of
-        that point. Otherwise, the values in the object are used for
-        elementwise subtraction. Default None - equivalent to subtracting
-        0.
-
-        divide: defines the denominator for dividing the data. May be a
-        fixed numerical value, a string defining a statistical function
-        (all of the same ones callable though pointStatistics), or a UML
-        data object. If a vector shaped object is given, then the value
-        associated with each point will be used in division of all values
-        for that point. Otherwise, the values in the object are used for
-        elementwise division. Default None - equivalent to dividing by
-        1.
-
-        Returns None while having affected the data of the calling
-        object and applyResultTo (if non-None).
-
-        """
-        self._normalizeGeneric("point", subtract, divide, applyResultTo)
-
-    def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
-        """
-        Modify all features in this object according to the given
-        operations.
-
-        applyResultTo: default None, if a UML object is given, then
-        perform the same operations to it as are applied to the calling
-        object. However, if a statistical method is specified as subtract
-        or divide, then	concrete values are first calculated only from
-        querying the calling object, and the operation is performed on
-        applyResultTo using the results; as if a UML object was given
-        for the subtract or divide arguments.
-
-        subtract: what should be subtracted from data. May be a fixed
-        numerical value, a string defining a statistical function (all of
-        the same ones callable though featureStatistics), or a UML data
-        object. If a vector shaped object is given, then the value
-        associated with each feature will be subtracted from all values of
-        that feature. Otherwise, the values in the object are used for
-        elementwise subtraction. Default None - equivalent to subtracting
-        0.
-
-        divide: defines the denominator for dividing the data. May be a
-        fixed numerical value, a string defining a statistical function
-        (all of the same ones callable though featureStatistics), or a UML
-        data object. If a vector shaped object is given, then the value
-        associated with each feature will be used in division of all values
-        for that feature. Otherwise, the values in the object are used for
-        elementwise division. Default None - equivalent to dividing by
-        1.
-
-        Returns None while having affected the data of the calling
-        object and applyResultTo (if non-None).
-
-        """
-        self._normalizeGeneric("feature", subtract, divide, applyResultTo)
-
-    def _normalizeGeneric(self, axis, subtract, divide, applyResultTo):
-
-        # used to trigger later conditionals
-        alsoIsObj = isinstance(applyResultTo, UML.data.Base)
-
-        # the operation is different when the input is a vector
-        # or produces a vector (ie when the input is a statistics
-        # string) so during the validation steps we check for
-        # those cases
-        subIsVec = False
-        divIsVec = False
-
-        # check it is within the desired types
-        if subtract is not None:
-            if not isinstance(subtract, (int, float, six.string_types, UML.data.Base)):
-                msg = "The argument named subtract must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
-                raise ArgumentException(msg)
-        if divide is not None:
-            if not isinstance(divide, (int, float, six.string_types, UML.data.Base)):
-                msg = "The argument named divide must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
-                raise ArgumentException(msg)
-
-        # check that if it is a string, it is one of the accepted values
-        if isinstance(subtract, six.string_types):
-            self._validateStatisticalFunctionInputString(subtract)
-        if isinstance(divide, six.string_types):
-            self._validateStatisticalFunctionInputString(divide)
-
-        # arg generic helper to check that objects are of the
-        # correct shape/size
-        def validateInObjectSize(argname, argval):
-            inPC = argval.points
-            inFC = argval.features
-            selfPC = self.points
-            selfFC = self.features
-
-            inMainLen = inPC if axis == "point" else inFC
-            inOffLen = inFC if axis == "point" else inPC
-            selfMainLen = selfPC if axis == "point" else selfFC
-            selfOffLen = selfFC if axis == 'point' else selfPC
-
-            if inMainLen != selfMainLen or inOffLen != selfOffLen:
-                vecErr = argname + " "
-                vecErr += "was a UML object in the shape of a "
-                vecErr += "vector (" + str(inPC) + " x "
-                vecErr += str(inFC) + "), "
-                vecErr += "but the length of long axis did not match "
-                vecErr += "the number of " + axis + "s in this object ("
-                vecErr += str(self.points) + ")."
-                # treat it as a vector
-                if inMainLen == 1:
-                    if inOffLen != selfMainLen:
-                        raise ArgumentException(vecErr)
-                    return True
-                # treat it as a vector
-                elif inOffLen == 1:
-                    if inMainLen != selfMainLen:
-                        raise ArgumentException(vecErr)
-                    argval.transpose()
-                    return True
-                # treat it as a mis-sized object
-                else:
-                    msg = argname + " "
-                    msg += "was a UML obejct with a shape of ("
-                    msg += str(inPC) + " x " + str(inFC) + "), "
-                    msg += "but it doesn't match the shape of the calling"
-                    msg += "object (" + str(selfPC) + " x "
-                    msg += str(selfFC) + ")"
-                    raise ArgumentException(msg)
-            return False
-
-        def checkAlsoShape(caller, also, objIn, axis):
-            """
-            Raises an exception if the normalized axis shape doesn't match the
-            calling object, or if when subtract of divide takes an object, also
-            doesn't match the shape of the caller (this is to be called after)
-            the check that the caller's shape matches that of the subtract or
-            divide argument.
-            """
-            offAxis = 'feature' if axis == 'point' else 'point'
-            callerP = caller.points
-            callerF = caller.features
-            alsoP = also.points
-            alsoF = also.features
-
-            callMainLen = callerP if axis == "point" else callerF
-            alsoMainLen = alsoP if axis == "point" else alsoF
-            callOffLen = callerF if axis == "point" else callerP
-            alsoOffLen = alsoF if axis == "point" else alsoP
-
-            if callMainLen != alsoMainLen:
-                msg = "applyResultTo must have the same number of " + axis
-                msg += "s (" + str(alsoMainLen) + ") as the calling object "
-                msg += "(" + str(callMainLen) + ")"
-                raise ArgumentException(msg)
-            if objIn and callOffLen != alsoOffLen:
-                msg = "When a non-vector UML object is given for the subtract "
-                msg += "or divide arguments, then applyResultTo "
-                msg += "must have the same number of " + offAxis
-                msg += "s (" + str(alsoOffLen) + ") as the calling object "
-                msg += "(" + str(callOffLen) + ")"
-                raise ArgumentException(msg)
-
-        # actually check that objects are the correct shape/size
-        objArg = False
-        if isinstance(subtract, UML.data.Base):
-            subIsVec = validateInObjectSize("subtract", subtract)
-            objArg = True
-        if isinstance(divide, UML.data.Base):
-            divIsVec = validateInObjectSize("divide", divide)
-            objArg = True
-
-        # check the shape of applyResultTo
-        if alsoIsObj:
-            checkAlsoShape(self, applyResultTo, objArg, axis)
-
-        # if a statistics string was entered, generate the results
-        # of that statistic
-        #		if isinstance(subtract, basestring):
-        #			if axis == 'point':
-        #				subtract = self.pointStatistics(subtract)
-        #			else:
-        #				subtract = self.featureStatistics(subtract)
-        #			subIsVec = True
-        #		if isinstance(divide, basestring):
-        #			if axis == 'point':
-        #				divide = self.pointStatistics(divide)
-        #			else:
-        #				divide = self.featureStatistics(divide)
-        #			divIsVec = True
-
-        if axis == 'point':
-            indexGetter = lambda x: self.getPointIndex(x.getPointName(0))
-            if isinstance(subtract, six.string_types):
-                subtract = self.pointStatistics(subtract)
-                subIsVec = True
-            if isinstance(divide, six.string_types):
-                divide = self.pointStatistics(divide)
-                divIsVec = True
-        else:
-            indexGetter = lambda x: self.getFeatureIndex(x.getFeatureName(0))
-            if isinstance(subtract, six.string_types):
-                subtract = self.featureStatistics(subtract)
-                subIsVec = True
-            if isinstance(divide, six.string_types):
-                divide = self.featureStatistics(divide)
-                divIsVec = True
-
-        # helper for when subtract is a vector of values
-        def subber(currView):
-            ret = []
-            for val in currView:
-                ret.append(val - subtract[indexGetter(currView)])
-            return ret
-
-        # helper for when divide is a vector of values
-        def diver(currView):
-            ret = []
-            for val in currView:
-                ret.append(val / divide[indexGetter(currView)])
-            return ret
-
-        # first perform the subtraction operation
-        if subtract is not None and subtract != 0:
-            if subIsVec:
-                if axis == 'point':
-                    self.transformEachPoint(subber)
-                    if alsoIsObj:
-                        applyResultTo.transformEachPoint(subber)
-                else:
-                    self.transformEachFeature(subber)
-                    if alsoIsObj:
-                        applyResultTo.transformEachFeature(subber)
-            else:
-                self -= subtract
-                if alsoIsObj:
-                    applyResultTo -= subtract
-
-        # then perform the division operation
-        if divide is not None and divide != 1:
-            if divIsVec:
-                if axis == 'point':
-                    self.transformEachPoint(diver)
-                    if alsoIsObj:
-                        applyResultTo.transformEachPoint(diver)
-                else:
-                    self.transformEachFeature(diver)
-                    if alsoIsObj:
-                        applyResultTo.transformEachFeature(diver)
-            else:
-                self /= divide
-                if alsoIsObj:
-                    applyResultTo /= divide
-
-        # this operation is self modifying, so we return None
-        return None
-
-
     ########################################
     ########################################
     ###   Functions related to logging   ###
     ########################################
     ########################################
 
-
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2):
         """
-        Produce a report, in a string formatted as a table, containing summary and statistical
-        information about each feature in the data set, up to 50 features.  If there are more
-        than 50 features, only information about 50 of those features will be reported.
+        Produce a report, in a string formatted as a table, containing
+        summary and statistical information about each feature in the
+        data set, up to 50 features.  If there are more than 50
+        features, only information about 50 of those features will be
+        reported.
         """
-        return produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
+        return produceFeaturewiseReport(
+            self, maxFeaturesToCover=maxFeaturesToCover,
+            displayDigits=displayDigits)
 
     def summaryReport(self, displayDigits=2):
         """
         Produce a report, in a string formatted as a table, containing summary
         information about the data set contained in this object.  Includes
-        proportion of missing values, proportion of zero values, total # of points,
-        and number of features.
+        proportion of missing values, proportion of zero values, total # of
+        points, and number of features.
         """
         return produceAggregateReport(self, displayDigits=displayDigits)
-
 
     ###############################################################
     ###############################################################
     ###   Subclass implemented information querying functions   ###
     ###############################################################
     ###############################################################
-
 
     def isIdentical(self, other):
         if not self._equalFeatureNames(other):
@@ -1491,25 +789,33 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
-
     def writeFile(self, outPath, format=None, includeNames=True):
         """
-        Write the data in this object to a file using the specified format.
+        Write the data in this object to a file in the specified format.
 
-        outPath: the location (including file name and extension) where
-        we want to write the output file.
+        Parameters
+        ----------
+        outPath : str
+            The location (including file name and extension) where
+            we want to write the output file.
+        format : str
+            The formating of the file we write. May be None, 'csv', or
+            'mtx'; if None, we use the extension of outPath to determine
+            the format.
+        includeNames : bool
+            Indicates whether the file will embed the point and feature
+            names into the file. The format of the embedding is
+            dependant on the format of the file: csv will embed names
+            into the data, mtx will place names in a comment.
 
-        format: the formating of the file we write. May be None, 'csv', or
-        'mtx'; if None, we use the extension of outPath to determine the format.
-
-        includeNames: True or False indicating whether the file will embed the point
-        and feature names into the file. The format of the embedding is dependant
-        on the format of the file: csv will embed names into the data, mtx will
-        place names in a comment.
-
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
+        if self._pointCount == 0 or self._featureCount == 0:
+            msg = "We do not allow writing to file when an object has "
+            msg += "0 points or features"
+            raise ImproperActionException(msg)
 
         self.validate()
 
@@ -1521,15 +827,15 @@ class Base(object):
                 format = split[1].lower()
 
         if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
-            msg += "either be input as the format parameter, or as the extension in the "
-            msg += "outPath"
+            msg = "Unrecognized file format. Accepted types are 'csv' and "
+            msg += "'mtx'. They may either be input as the format parameter, "
+            msg += "or as the extension in the outPath"
             raise ArgumentException(msg)
 
         includePointNames = includeNames
         if includePointNames:
             seen = False
-            for name in self.getPointNames():
+            for name in self.points.getNames():
                 if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                     seen = True
             if not seen:
@@ -1538,35 +844,44 @@ class Base(object):
         includeFeatureNames = includeNames
         if includeFeatureNames:
             seen = False
-            for name in self.getFeatureNames():
+            for name in self.features.getNames():
                 if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                     seen = True
             if not seen:
                 includeFeatureNames = False
 
         try:
-            self._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
+            self._writeFile_implementation(
+                outPath, format, includePointNames, includeFeatureNames)
         except Exception:
             if format.lower() == "csv":
                 toOut = self.copyAs("Matrix")
-                toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
+                toOut._writeFile_implementation(
+                    outPath, format, includePointNames, includeFeatureNames)
                 return
             if format.lower() == "mtx":
                 toOut = self.copyAs('Sparse')
-                toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
+                toOut._writeFile_implementation(
+                    outPath, format, includePointNames, includeFeatureNames)
                 return
 
     def save(self, outputPath):
         """
         Save object to a file.
 
-        outputPath: the location (including file name and extension) where
-            we want to write the output file.
+        Uses the dill library to serialize this object.
 
-        If filename extension .umld is not included in file name it would
-        be added to the output file.
+        Parameters
+        ----------
+        outputPath : str
+            The location (including file name and extension) where
+            we want to write the output file. If filename extension
+            .umld is not included in file name it would be added to the
+            output file.
 
-        Uses dill library to serialize it.
+        Examples
+        --------
+        TODO
         """
         if not cloudpickle:
             msg = "To save UML objects, cloudpickle must be installed"
@@ -1580,7 +895,7 @@ class Base(object):
             try:
                 cloudpickle.dump(self, file)
             except Exception as e:
-                raise(e)
+                raise e
         # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
@@ -1588,15 +903,15 @@ class Base(object):
 
     def getTypeString(self):
         """
-        Return a string representing the non-abstract type of this object (e.g. Matrix,
-        Sparse, etc.) that can be passed to createData() function to create a new object
-        of the same type.
+        Return a string representing the non-abstract type of this
+        object (e.g. Matrix, Sparse, etc.) that can be passed to
+        createData() function to create a new object of the same type.
         """
         return self._getTypeString_implementation()
 
     def _processSingleX(self, x):
         """
-
+        Helper for __getitem__ when given a single value for x.
         """
         length = self._pointCount
         if x.__class__ is int or x.__class__ is numpy.integer:
@@ -1611,7 +926,7 @@ class Base(object):
                 return x + length, True
 
         if x.__class__ is str or x.__class__ is six.text_type:
-            return self.getPointIndex(x), True
+            return self.points.getIndex(x), True
 
         if x.__class__ is float:
             if x % 1: # x!=int(x)
@@ -1622,8 +937,8 @@ class Base(object):
             else:
                 x = int(x)
                 if x < -length or x >= length:
-                    msg = "The given index " + str(x) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
+                    msg = "The given index " + str(x) + " is outside of the "
+                    msg += "range of possible indices in the point axis (0 to "
                     msg += str(length - 1) + ")."
                     raise IndexError(msg)
                 if x >= 0:
@@ -1635,7 +950,7 @@ class Base(object):
 
     def _processSingleY(self, y):
         """
-
+        Helper for __getitem__ when given a single value for y.
         """
         length = self._featureCount
         if y.__class__ is int or y.__class__ is numpy.integer:
@@ -1650,7 +965,7 @@ class Base(object):
                 return y + length, True
 
         if y.__class__ is str or y.__class__ is six.text_type:
-            return self.getFeatureIndex(y), True
+            return self.features.getIndex(y), True
 
         if y.__class__ is float:
             if y % 1: # y!=int(y)
@@ -1661,8 +976,8 @@ class Base(object):
             else:
                 y = int(y)
                 if y < -length or y >= length:
-                    msg = "The given index " + str(y) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
+                    msg = "The given index " + str(y) + " is outside of the "
+                    msg += "range of possible indices in the point axis (0 to "
                     msg += str(length - 1) + ")."
                     raise IndexError(msg)
                 if y >= 0:
@@ -1674,24 +989,28 @@ class Base(object):
 
     def __getitem__(self, key):
         """
-        The followings are allowed:
+        The following are allowed:
         X[1, :]            ->    (2d) that just has that one point
         X["age", :]    -> same as above
         X[1:5, :]         -> 4 points (1, 2, 3, 4)
         X[[3,8], :]       -> 2 points (3, 8) IN THE ORDER GIVEN
         X[["age","gender"], :]       -> same as above
 
-        --get based on features only : ALWAYS returns a new copy UML object (2d)
+        --get based on features only : ALWAYS returns a new copy UML
+        object (2d)
         X[:,2]         -> just has that 1 feature
         X[:,"bob"] -> same as above
         X[:,1:5]    -> 4 features (1,2,3,4)
         X[:,[3,8]]  -> 2 features (3,8) IN THE ORDER GIVEN
 
-        --both features and points : can give a scalar value OR UML object 2d depending on case
-        X[1,2]           -> single scalar number value
-        X["age","bob"]    -> single scalar number value
-        X[1:5,4:7]           -> UML object (2d) that has just that rectangle
-        X[[1,2],[3,8]]      -> UML object (2d) that has just 2 points (points 1,2) but only 2 features for each of them (features 3,8)
+        --both features and points : can give a scalar value OR UML
+        object 2d depending on case
+        X[1,2]         -> single scalar number value
+        X["age","bob"] -> single scalar number value
+        X[1:5,4:7]     -> UML object (2d) that has just that rectangle
+        X[[1,2],[3,8]] -> UML object (2d) that has just 2 points
+                          (points 1,2) but only 2 features for each of
+                          them (features 3,8)
         """
         # Make it a tuple if it isn't one
         if key.__class__ is tuple:
@@ -1713,7 +1032,8 @@ class Base(object):
         x, singleX = self._processSingleX(x)
         #process y
         y, singleY = self._processSingleY(y)
-        #if it is the simplest data retrieval such as X[1,2], we'd like to return it back in the fastest way.
+        #if it is the simplest data retrieval such as X[1,2],
+        # we'd like to return it back in the fastest way.
         if singleX and singleY:
             return self._getitem_implementation(x, y)
 
@@ -1721,12 +1041,13 @@ class Base(object):
             if x.__class__ is slice:
                 start = x.start if x.start is not None else 0
                 if start < 0:
-                    start += self.points
-                stop = x.stop if x.stop is not None else self.points
+                    start += self._pointCount
+                stop = x.stop if x.stop is not None else self._pointCount
                 if stop < 0:
-                    stop += self.points
+                    stop += self._pointCount
                 step = x.step if x.step is not None else 1
-                x = [self._processSingleX(xi)[0] for xi in range(start, stop, step)]
+                x = [self._processSingleX(xi)[0] for xi
+                     in range(start, stop, step)]
             else:
                 x = [self._processSingleX(xi)[0] for xi in x]
 
@@ -1734,39 +1055,44 @@ class Base(object):
             if y.__class__ is slice:
                 start = y.start if y.start is not None else 0
                 if start < 0:
-                    start += self.features
-                stop = y.stop if y.stop is not None else self.features
+                    start += self._featureCount
+                stop = y.stop if y.stop is not None else self._featureCount
                 if stop < 0:
-                    stop += self.features
+                    stop += self._featureCount
                 step = y.step if y.step is not None else 1
-                y = [self._processSingleY(yi)[0] for yi in range(start, stop, step)]
+                y = [self._processSingleY(yi)[0] for yi
+                     in range(start, stop, step)]
             else:
                 y = [self._processSingleY(yi)[0] for yi in y]
 
-        return self.copyPoints(toCopy=x).copyFeatures(toCopy=y)
+        return self.points.copy(toCopy=x).features.copy(toCopy=y)
 
     def pointView(self, ID):
         """
-        Returns a View object into the data of the point with the given ID. See View object
-        comments for its capabilities. This View is only valid until the next modification
-        to the shape or ordering of the internal data. After such a modification, there is
-        no guarantee to the validity of the results.
+        Returns a View object into the data of the point with the given
+        ID. See View object comments for its capabilities. This View is
+        only valid until the next modification to the shape or ordering
+        of the internal data. After such a modification, there is no
+        guarantee to the validity of the results.
         """
-        if self.points == 0:
-            raise ImproperActionException("ID is invalid, This object contains no points")
+        if self._pointCount == 0:
+            msg = "ID is invalid, This object contains no points"
+            raise ImproperActionException(msg)
 
         index = self._getPointIndex(ID)
         return self.view(index, index, None, None)
 
     def featureView(self, ID):
         """
-        Returns a View object into the data of the point with the given ID. See View object
-        comments for its capabilities. This View is only valid until the next modification
-        to the shape or ordering of the internal data. After such a modification, there is
-        no guarantee to the validity of the results.
+        Returns a View object into the data of the point with the given
+        ID. See View object comments for its capabilities. This View is
+        only valid until the next modification to the shape or ordering
+        of the internal data. After such a modification, there is no
+        guarantee to the validity of the results.
         """
-        if self.features == 0:
-            raise ImproperActionException("ID is invalid, This object contains no features")
+        if self._featureCount == 0:
+            msg = "ID is invalid, This object contains no features"
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(ID)
         return self.view(None, None, index, index)
@@ -1774,35 +1100,53 @@ class Base(object):
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
         """
-        Factory function to create a read only view into the calling data
-        object. Views may only be constructed from contiguous, in-order
-        points and features whose overlap defines a window into the data.
-        The returned View object is part of UML's datatypes hiearchy, and
-        will have access to all of the same methods as anything that
-        inherits from UML.data.Base; though only those that do not modify
-        the data can be called without an exception being raised. The
-        returned view will also reflect any subsequent changes made to the
-        original object. This is the only accepted method for a user to
-        construct a View object (it should never be done directly), though
-        view objects may be provided to the user, for example via user
-        defined functions passed to extractPoints or calculateForEachFeature.
+        Read-only access into the object data.
 
-        pointStart: the inclusive index of the first point to be accessible
-        in the returned view. Is None by default, meaning to include from
-        the beginning of the object.
+        Factory function to create a read only view into the calling
+        data object. Views may only be constructed from contiguous,
+        in-order points and features whose overlap defines a window into
+        the data. The returned View object is part of UML's datatypes
+        hiearchy, and will have access to all of the same methods as
+        anything that inherits from UML.data.Base; though only those
+        that do not modify the data can be called without an exception
+        being raised. The returned view will also reflect any subsequent
+        changes made to the original object. This is the only accepted
+        method for a user to construct a View object (it should never be
+        done directly), though view objects may be provided to the user,
+        for example via user defined functions passed to points.extract
+        or features.calculate.
 
-        pointEnd: the inclusive index of the last point to be accessible in
-        the returned view. Is None by default, meaning to include up to the
-        end of the object.
+        Parameters
+        ----------
+        pointStart : int
+            The inclusive index of the first point to be accessible in
+            the returned view. Is None by default, meaning to include
+            from the beginning of the object.
+        pointEnd: int
+            The inclusive index of the last point to be accessible in
+            the returned view. Is None by default, meaning to include up
+            to the end of the object.
+        featureStart : int
+            The inclusive index of the first feature to be accessible in
+            the returned view. Is None by default, meaning to include
+            from the beginning of the object.
+        featureEnd : int
+            The inclusive index of the last feature to be accessible in
+            the returned view. Is None by default, meaning to include up
+            to the end of the object.
 
-        featureStart: the inclusive index of the first feature to be
-        accessible in the returned view. Is None by default, meaning to
-        include from the beginning of the object.
+        Returns
+        -------
+        UML view object
+            A UML data object with read-only access.
 
-        featureEnd: the inclusive index of the last feature to be accessible in
-        the returned view. Is None by default, meaning to include up to the
-        end of the object.
+        See Also
+        --------
+        pointView, featureView
 
+        Examples
+        --------
+        TODO
         """
         # transform defaults to mean take as much data as possible,
         # transform end values to be EXCLUSIVE
@@ -1812,12 +1156,13 @@ class Base(object):
             pointStart = self._getIndex(pointStart, 'point')
 
         if pointEnd is None:
-            pointEnd = self.points
+            pointEnd = self._pointCount
         else:
             pointEnd = self._getIndex(pointEnd, 'point')
             # this is the only case that could be problematic and needs
             # checking
-            self._validateRangeOrder("pointStart", pointStart, "pointEnd", pointEnd)
+            self._validateRangeOrder("pointStart", pointStart,
+                                     "pointEnd", pointEnd)
             # make exclusive now that it won't ruin the validation check
             pointEnd += 1
 
@@ -1827,47 +1172,65 @@ class Base(object):
             featureStart = self._getIndex(featureStart, 'feature')
 
         if featureEnd is None:
-            featureEnd = self.features
+            featureEnd = self._featureCount
         else:
             featureEnd = self._getIndex(featureEnd, 'feature')
             # this is the only case that could be problematic and needs
             # checking
-            self._validateRangeOrder("featureStart", featureStart, "featureEnd", featureEnd)
+            self._validateRangeOrder("featureStart", featureStart,
+                                     "featureEnd", featureEnd)
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
-        return self._view_implementation(pointStart, pointEnd, featureStart,
-                                         featureEnd)
+        return self._view_implementation(pointStart, pointEnd,
+                                         featureStart, featureEnd)
 
     def validate(self, level=1):
         """
-        Checks the integrity of the data with respect to the limitations and invariants
-        that our objects enforce.
+        Check the integrity of the data.
+
+        Validate this object with respect to the limitations and
+        invariants that our objects enforce.
+
+        Parameters
+        ----------
+        level : int
+            The extent to which to validate the data.
+
+        Examples
+        --------
+        TODO
         """
         if self._pointNamesCreated():
-            assert self.points == len(self.getPointNames())
+            assert self._pointCount == len(self.points.getNames())
         if self._featureNamesCreated():
-            assert self.features == len(self.getFeatureNames())
+            assert self._featureCount == len(self.features.getNames())
 
         if level > 0:
             if self._pointNamesCreated():
-                for key in self.getPointNames():
-                    assert self.getPointName(self.getPointIndex(key)) == key
+                for key in self.points.getNames():
+                    index = self.points.getIndex(key)
+                    assert self.points.getName(index) == key
             if self._featureNamesCreated():
-                for key in self.getFeatureNames():
-                    assert self.getFeatureName(self.getFeatureIndex(key)) == key
+                for key in self.features.getNames():
+                    index = self.features.getIndex(key)
+                    assert self.features.getName(index) == key
 
         self._validate_implementation(level)
 
-
     def containsZero(self):
         """
-        Returns True if there is a value that is equal to integer 0 contained
-        in this object. False otherwise
+        Evaluate if the object contains one or more zero values.
 
+        Return True if there is a value that is equal to integer 0
+        contained in this object, otherwise False.
+
+        Examples
+        --------
+        TODO
         """
         # trivially False.
-        if self.points == 0 or self.features == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return False
         return self._containsZero_implementation()
 
@@ -1880,8 +1243,10 @@ class Base(object):
 
     def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19):
-
-        if self.points == 0 or self.features == 0:
+        """
+        TODO
+        """
+        if self._pointCount == 0 or self._featureCount == 0:
             return ""
 
         # setup a bundle of fixed constants
@@ -1890,15 +1255,14 @@ class Base(object):
         rowHold = '|'
         pnameSep = ' '
         nameHolder = '...'
-        holderOrientation = 'center'
         dataOrientation = 'center'
         pNameOrientation = 'rjust'
         fNameOrientation = 'center'
 
         #setup a bundle of default values
-        maxHeight = self.points + 2 if maxHeight is None else maxHeight
+        maxHeight = self._pointCount + 2 if maxHeight is None else maxHeight
         maxWidth = float('inf') if maxWidth is None else maxWidth
-        maxRows = min(maxHeight, self.points)
+        maxRows = min(maxHeight, self._pointCount)
         maxDataRows = maxRows
         includePNames = False
         includeFNames = False
@@ -1909,7 +1273,7 @@ class Base(object):
             if includeFNames:
                 # plus or minus 2 because we will be dealing with both
                 # feature names and a gap row
-                maxRows = min(maxHeight, self.points + 2)
+                maxRows = min(maxHeight, self._pointCount + 2)
                 maxDataRows = maxRows - 2
 
         # Set up point Names and determine how much space they take up
@@ -1917,17 +1281,18 @@ class Base(object):
         pnamesWidth = None
         maxDataWidth = maxWidth
         if includePNames:
-            pnames, pnamesWidth = self._arrangePointNames(maxDataRows, maxColumnWidth,
-                                                          rowHold, nameHolder)
+            pnames, pnamesWidth = self._arrangePointNames(
+                maxDataRows, maxColumnWidth, rowHold, nameHolder)
             # The available space for the data is reduced by the width of the
             # pnames, a column separator, the pnames seperator, and another
             # column seperator
-            maxDataWidth = maxWidth - (pnamesWidth + 2 * len(colSep) + len(pnameSep))
+            maxDataWidth = (maxWidth
+                            - (pnamesWidth + 2 * len(colSep) + len(pnameSep)))
 
         # Set up data values to fit in the available space
-        dataTable, colWidths = self._arrangeDataWithLimits(maxDataWidth, maxDataRows,
-                                                           sigDigits, maxColumnWidth, colSep, colHold, rowHold,
-                                                           nameHolder)
+        dataTable, colWidths = self._arrangeDataWithLimits(
+            maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
+            colHold, rowHold, nameHolder)
 
         # set up feature names list, record widths
         fnames = None
@@ -1940,8 +1305,8 @@ class Base(object):
             makeConsistentFNamesAndData(fnames, dataTable, colWidths, colHold)
 
         # combine names into finalized table
-        finalTable, finalWidths = self._arrangeFinalTable(pnames, pnamesWidth,
-                                                          dataTable, colWidths, fnames, pnameSep)
+        finalTable, finalWidths = self._arrangeFinalTable(
+            pnames, pnamesWidth, dataTable, colWidths, fnames, pnameSep)
 
         # set up output string
         out = ""
@@ -1971,7 +1336,8 @@ class Base(object):
         ret = self.getTypeString() + "(\n"
 
         # setup data
-        dataStr = self.toString(includeNames=False, maxWidth=maxW, maxHeight=maxH)
+        dataStr = self.toString(includeNames=False, maxWidth=maxW,
+                                maxHeight=maxH)
         byLine = dataStr.split('\n')
         # toString ends with a \n, so we get rid of the empty line produced by
         # the split
@@ -1980,30 +1346,33 @@ class Base(object):
         newLines = (']\n' + indent + ' [').join(byLine)
         ret += (indent + '[[%s]]\n') % newLines
 
-        numRows = min(self.points, maxW)
-        # if exists non default point names, print all (truncated) point names
-        ret += dataHelpers.makeNamesLines(indent, maxW, numRows, self.points,
-                                          self.getPointNames(), 'pointNames')
-        # if exists non default feature names, print all (truncated) feature names
+        numRows = min(self._pointCount, maxW)
+        # if non default point names, print all (truncated) point names
+        ret += dataHelpers.makeNamesLines(
+            indent, maxW, numRows, self._pointCount, self.points.getNames(),
+            'pointNames')
+        # if non default feature names, print all (truncated) feature names
         numCols = 0
         if byLine:
             splited = byLine[0].split(' ')
             for val in splited:
                 if val != '' and val != '...':
                     numCols += 1
-        elif self.features > 0:
+        elif self._featureCount > 0:
             # if the container is empty, then roughly compute length of
             # the string of feature names, and then calculate numCols
-            strLength = len("___".join(self.getFeatureNames())) + \
-                        len(''.join([str(i) for i in range(self.features)]))
-            numCols = int(min(1, maxW / float(strLength)) * self.features)
-        # because of how dataHelers.indicesSplit works, we need this to be plus one
-        # in some cases this means one extra feature name is displayed. But that's
-        # acceptable
-        if numCols <= self.features:
+            strLength = (len("___".join(self.features.getNames()))
+                         + len(''.join([str(i) for i
+                                        in range(self._featureCount)])))
+            numCols = int(min(1, maxW / float(strLength)) * self._featureCount)
+        # because of how dataHelers.indicesSplit works, we need this to be plus
+        # one in some cases this means one extra feature name is displayed. But
+        # that's acceptable
+        if numCols <= self._featureCount:
             numCols += 1
-        ret += dataHelpers.makeNamesLines(indent, maxW, numCols, self.features,
-                                          self.getFeatureNames(), 'featureNames')
+        ret += dataHelpers.makeNamesLines(
+            indent, maxW, numCols, self._featureCount,
+            self.features.getNames(), 'featureNames')
 
         # if name not None, print
         if not self.name.startswith(DEFAULT_NAME_PREFIX):
@@ -2034,9 +1403,10 @@ class Base(object):
     def __str__(self):
         return self.toString()
 
-    def show(self, description, includeObjectName=True, includeAxisNames=True, maxWidth=120,
-             maxHeight=30, sigDigits=3, maxColumnWidth=19):
-        """Method to simplify printing a representation of this data object,
+    def show(self, description, includeObjectName=True, includeAxisNames=True,
+             maxWidth=120, maxHeight=30, sigDigits=3, maxColumnWidth=19):
+        """
+        Method to simplify printing a representation of this data object,
         with some context. The backend is the toString() method, and this
         method includes control over all of the same functionality via
         arguments. Prior to the names and data, it additionally prints a
@@ -2073,25 +1443,25 @@ class Base(object):
             context = self.name + " : "
         else:
             context = ""
-        context += str(self.points) + "pt x "
-        context += str(self.features) + "ft"
+        context += str(self._pointCount) + "pt x "
+        context += str(self._featureCount) + "ft"
         print(context)
-        print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, maxColumnWidth))
+        print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
+                            maxColumnWidth))
 
 
     def plot(self, outPath=None, includeColorbar=False):
         self._plot(outPath, includeColorbar)
 
-
     def _setupOutFormatForPlotting(self, outPath):
         outFormat = None
         if isinstance(outPath, six.string_types):
-            (path, ext) = os.path.splitext(outPath)
+            (_, ext) = os.path.splitext(outPath)
             if len(ext) == 0:
                 outFormat = 'png'
         return outFormat
 
-    def _matplotlibBackendHandleing(self, outPath, plotter, **kwargs):
+    def _matplotlibBackendHandling(self, outPath, plotter, **kwargs):
         if outPath is None:
             if matplotlib.get_backend() == 'agg':
                 import matplotlib.pyplot as plt
@@ -2134,11 +1504,13 @@ class Base(object):
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandleing(outPath, plotter, d=self.data)
+        p = self._matplotlibBackendHandling(outPath, plotter, d=self.data)
         return p
 
-    def plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
-        """Plot a histogram of the distribution of values in the specified
+    def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
+                                xMax=None):
+        """
+        Plot a histogram of the distribution of values in the specified
         Feature. Along the x axis of the plot will be the values seen in
         the feature, grouped into bins; along the y axis will be the number
         of values in each bin. Bin width is calculated using
@@ -2156,7 +1528,8 @@ class Base(object):
         """
         self._plotFeatureDistribution(feature, outPath, xMin, xMax)
 
-    def _plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
+    def _plotFeatureDistribution(self, feature, outPath=None, xMin=None,
+                                 xMax=None):
         self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
         return self._plotDistribution('feature', feature, outPath, xMin, xMax)
 
@@ -2165,10 +1538,10 @@ class Base(object):
         index = self._getIndex(identifier, axis)
         if axis == 'point':
             getter = self.pointView
-            name = self.getPointName(index)
+            name = self.points.getName(index)
         else:
             getter = self.featureView
-            name = self.getFeatureName(index)
+            name = self.features.getName(index)
 
         toPlot = getter(index)
 
@@ -2209,17 +1582,23 @@ class Base(object):
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p= self._matplotlibBackendHandleing(outPath, plotter, d=toPlot, xLim=(xMin, xMax))
+        p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot,
+                                            xLim=(xMin, xMax))
         return p
 
-    def plotFeatureAgainstFeatureRollingAverage(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                                  yMax=None, sampleSizeForAverage=20):
+    def plotFeatureAgainstFeatureRollingAverage(
+            self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
+            yMax=None, sampleSizeForAverage=20):
+        """
+        TODO
+        """
+        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
+                                        sampleSizeForAverage)
 
-        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage)
-
-    def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                                  yMax=None):
-        """Plot a scatter plot of the two input features using the pairwise
+    def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
+                                  xMax=None, yMin=None, yMax=None):
+        """
+        Plot a scatter plot of the two input features using the pairwise
         combination of their values as coordinates. Control over the width
         of the both axes is given, with the warning that user specified
         values can obscure data that would otherwise be plotted given default
@@ -2242,18 +1621,24 @@ class Base(object):
         """
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
 
-    def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                                   yMax=None, sampleSizeForAverage=None):
+    def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
+                                   xMax=None, yMin=None, yMax=None,
+                                   sampleSizeForAverage=None):
         self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
-        return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage)
+        return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax,
+                               yMin, yMax, sampleSizeForAverage)
 
-    def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage=None):
+    def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax,
+                   sampleSizeForAverage=None):
         outFormat = self._setupOutFormatForPlotting(outPath)
         xIndex = self._getIndex(x, xAxis)
         yIndex = self._getIndex(y, yAxis)
 
         def customGetter(index, axis):
-            copied = self.copyPoints(index) if axis == 'point' else self.copyFeatures(index)
+            if axis == 'point':
+                copied = self.points.copy(index)
+            else:
+                copied = self.features.copy(index)
             return copied.copyAs('numpyarray', outputAs1D=True)
 
         def pGetter(index):
@@ -2264,25 +1649,27 @@ class Base(object):
 
         if xAxis == 'point':
             xGetter = pGetter
-            xName = self.getPointName(xIndex)
+            xName = self.points.getName(xIndex)
         else:
             xGetter = fGetter
-            xName = self.getFeatureName(xIndex)
+            xName = self.features.getName(xIndex)
 
         if yAxis == 'point':
             yGetter = pGetter
-            yName = self.getPointName(yIndex)
+            yName = self.points.getName(yIndex)
         else:
             yGetter = fGetter
-            yName = self.getFeatureName(yIndex)
+            yName = self.features.getName(yIndex)
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
 
         if sampleSizeForAverage:
             #do rolling average
-            xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot), key=lambda x: x[0])))
-            convShape = numpy.ones(sampleSizeForAverage)/float(sampleSizeForAverage)
+            xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot),
+                                                key=lambda x: x[0])))
+            convShape = (numpy.ones(sampleSizeForAverage)
+                         / float(sampleSizeForAverage))
             startIdx = sampleSizeForAverage-1
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
@@ -2292,8 +1679,14 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            xlabel = xAxis + ' #' + str(xIndex) if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX else xName
-            ylabel = yAxis + ' #' + str(yIndex) if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX else yName
+            if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                xlabel = xAxis + ' #' + str(xIndex)
+            else:
+                xlabel = xName
+            if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                ylabel = yAxis + ' #' + str(yIndex)
+            else:
+                ylabel = yName
 
             xName2 = xName
             yName2 = yName
@@ -2324,48 +1717,10 @@ class Base(object):
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p= self._matplotlibBackendHandleing(outPath, plotter, inX=xToPlot, inY=yToPlot,
-                                             xLim=(xMin, xMax), yLim=(yMin, yMax),
-                                             sampleSizeForAverage=sampleSizeForAverage)
+        p = self._matplotlibBackendHandling(
+            outPath, plotter, inX=xToPlot, inY=yToPlot, xLim=(xMin, xMax),
+            yLim=(yMin, yMax), sampleSizeForAverage=sampleSizeForAverage)
         return p
-
-    def nonZeroIterator(self, iterateBy='points'):
-        """
-        Returns an iterator for all non-zero elements contained in this
-        object, where the values in the same point|feature will be contiguous,
-        with the earlier indexed points|features coming before the later indexed
-        points|features.
-
-        iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
-
-        If the object is one dimensional, iterateBy is ignored.
-        """
-
-        class EmptyIt(object):
-            def __iter__(self):
-                return self
-
-            def next(self):
-                raise StopIteration
-
-            def __next__(self):
-                return self.next()
-
-        if self.points == 0 or self.features == 0:
-            return EmptyIt()
-
-        if self.points == 1:
-            return self._nonZeroIteratorPointGrouped_implementation()
-        if self.features == 1:
-            return self._nonZeroIteratorFeatureGrouped_implementation()
-
-        if iterateBy == 'points':
-            return self._nonZeroIteratorPointGrouped_implementation()
-        elif iterateBy == 'features':
-            return self._nonZeroIteratorFeatureGrouped_implementation()
-        else:
-            msg = "iterateBy can just be 'points' or 'features'"
-            raise ArgumentException(msg)
 
     ##################################################################
     ##################################################################
@@ -2375,438 +1730,59 @@ class Base(object):
 
     def transpose(self):
         """
-        Function to transpose the data, ie invert the feature and point indices of the data.
-        The point and feature names are also swapped. None is always returned.
+        Invert the feature and point indices of the data.
 
+        Transpose the data in this object, inplace by inverting the
+        feature and point indices. This operations also includes
+        inverting the point and feature names.
+
+        Examples
+        --------
+        TODO
         """
         self._transpose_implementation()
 
-        self._pointCount, self._featureCount = self._featureCount, self._pointCount
+        self._pointCount, self._featureCount = (self._featureCount,
+                                                self._pointCount)
 
         if self._pointNamesCreated() and self._featureNamesCreated():
-            self.pointNames, self.featureNames = self.featureNames, self.pointNames
-            self.setFeatureNames(self.featureNames)
-            self.setPointNames(self.pointNames)
+            self.pointNames, self.featureNames = (self.featureNames,
+                                                  self.pointNames)
+            self.features.setNames(self.featureNames)
+            self.points.setNames(self.pointNames)
         elif self._pointNamesCreated():
             self.featureNames = self.pointNames
             self.pointNames = None
             self.pointNamesInverse = None
-            self.setFeatureNames(self.featureNames)
+            self.features.setNames(self.featureNames)
         elif self._featureNamesCreated():
             self.pointNames = self.featureNames
             self.featureNames = None
             self.featureNamesInverse = None
-            self.setPointNames(self.pointNames)
+            self.points.setNames(self.pointNames)
         else:
             pass
 
         self.validate()
 
-
-    def addPoints(self, toAdd, insertBefore=None):
-        """
-        Expand this object by inserting the points of toAdd prior to the
-        insertBefore identifier. The features in toAdd do not need to be in the
-        same order as in the calling object; the data will automatically be
-        placed using the calling object's feature order if there is an
-        unambiguous mapping. toAdd will be unaffected by calling this method.
-
-        toAdd - the UML data object whose contents we will be including
-        in this object. Must have the same number of features as the calling
-        object. Must not share any point names with the calling object.
-        Must have the same features names as the calling object, but not
-        necessarily in the same order.
-
-        insertBefore - the index or point name prior to which the data from
-        toAdd will be inserted. The default value, None, indicates that the
-        data will be inserted below all points in this object, or in other
-        words: appended to the end of the current points.
-
-        """
-        self._genericAddFrontend('point', toAdd, insertBefore)
-
-
-    def addFeatures(self, toAdd, insertBefore=None):
-        """
-        Expand this object by inserting the features of toAdd prior to
-        the insertBefore identifier. The points in toAdd do not need to be in
-        the same order as in the calling object; the data will automatically be
-        placed using the calling object's feature order if there is an
-        unambiguous mapping. toAdd will be unaffected by calling this method.
-
-        toAdd - the UML data object whose contents we will be including
-        in this object. Must have the same number of points as the calling
-        object. Must not share any feature names with the calling object.
-        Must have the same point names as the calling object, but not
-        necessarily in the same order.
-
-        insertBefore - the index or feature name prior to which the data from
-        toAdd will be inserted. The default value, None, indicates that the
-        data will be inserted to the right of all features in this object,
-        or in other words: appended to the end of the current features.
-
-        """
-        self._genericAddFrontend('feature', toAdd, insertBefore)
-
-
-    def _genericAddFrontend(self, axis, toAdd, insertBefore):
-        """
-        Performs the validation and modifications for all insert operations
-
-        """
-        self._validateAxis(axis)
-        self._validateInsertableData(axis, toAdd)
-        if self.getTypeString() != toAdd.getTypeString():
-            toAdd = toAdd.copyAs(self.getTypeString())
-
-        if axis == 'point' and insertBefore is None:
-            insertBefore = self.points
-        elif axis == 'feature' and insertBefore is None:
-            insertBefore = self.features
-        else:
-            insertBefore = self._getIndex(insertBefore, axis)
-
-        if axis == 'point':
-            toAdd = self._alignNames('feature', toAdd)
-            self._addPoints_implementation(toAdd, insertBefore)
-            if not self._pointNamesCreated() and not toAdd._pointNamesCreated():
-                self._setpointCount(self.points + toAdd.points)
-            else:
-                self._setAddedCountAndNames('point', toAdd, insertBefore)
-        else:
-            toAdd = self._alignNames('point', toAdd)
-            self._addFeatures_implementation(toAdd, insertBefore)
-            if not self._featureNamesCreated() and not toAdd._featureNamesCreated():
-                self._setfeatureCount(self.features + toAdd.features)
-            else:
-                self._setAddedCountAndNames('feature', toAdd, insertBefore)
-
-        self.validate()
-
-
-    def sortPoints(self, sortBy=None, sortHelper=None):
-        """
-        Modify this object so that the points are sorted in place.
-
-        sortBy: may indicate the feature to sort by or None if the entire point
-        is to be taken as a key
-
-        sortHelper: either an iterable, list-like object of identifiers (names
-        and/or indices), a comparator or a scoring function, or None to indicate
-        the natural ordering
-
-        """
-        self._genericSortFrontend('point', sortBy, sortHelper)
-
-
-    def sortFeatures(self, sortBy=None, sortHelper=None):
-        """
-        Modify this object so that the features are sorted in place.
-
-        sortBy: indicates the point to sort by or None if the entire point
-        is to be taken as a key
-
-        sortHelper: either an iterable, list-like object of identifiers (names
-        and/or indices), a comparator or a scoring function, or None to indicate
-        the natural ordering
-
-        """
-        self._genericSortFrontend('feature', sortBy, sortHelper)
-
-
-    def _genericSortFrontend(self, axis, sortBy, sortHelper):
-        """Generic sorting function for SortPoints and SortFeatures"""
-        if sortBy is not None and sortHelper is not None:
-            raise ArgumentException("Cannot specify a feature to sort by and a helper function")
-        if sortBy is None and sortHelper is None:
-            raise ArgumentException("Either sortBy or sortHelper must not be None")
-
-        if axis == 'point':
-            otherAxis = 'feature'
-            axisCount = self.points
-            otherCount = self.features
-            sort_implementation = self._sortPoints_implementation
-            namesCreated = self._pointNamesCreated()
-            setNames = self.setPointNames
-        else:
-            otherAxis = 'point'
-            axisCount = self.features
-            otherCount = self.points
-            sort_implementation = self._sortFeatures_implementation
-            namesCreated = self._featureNamesCreated()
-            setNames = self.setFeatureNames
-
-        if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getIndex(sortBy, otherAxis)
-
-        if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            indices = self._constructIndicesList(axis, sortHelper)
-            if len(indices) != axisCount:
-                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
-                msg += "but sortHelper has {0} identifiers".format(len(indices))
-                raise ArgumentException(msg)
-            if len(indices) != len(set(indices)):
-                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
-                msg += "but sortHelper has {0} ".format(len(set(indices)))
-                msg += "unique identifiers"
-                raise ArgumentException(msg)
-
-            sortHelper = indices
-
-        # its already sorted in these cases
-        if otherCount == 0 or axisCount == 0 or axisCount == 1:
-            return
-
-        newNameOrder = sort_implementation(sortBy, sortHelper)
-        setNames(newNameOrder)
-
-        self.validate()
-
-
-    def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, removing those points that are specified by the
-        input, and returning an object containing those removed points.
-
-        toExtract: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a point will return True if it is to
-             be extracted
-          4. a filter function, as a string, containing a comparison operator
-             between a feature name and a value (i.e 'feat1<10')
-
-        start and end: parameters indicating range based extraction. If range
-        based extraction is employed, toExtract must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.points, respectively.
-
-        number: the quantity of points that are to be extracted, the default
-        None means unrestricted extraction.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        points are determined by point order, otherwise it is uniform random
-        across the space of possible points.
-
-        """
-        ret = self._genericStructuralFrontend('extract', 'point', toExtract,
-                                              start, end, number, randomize)
-
-        ret.setFeatureNames(self.getFeatureNames())
-        self._adjustCountAndNames('point', ret)
-
-        ret._relPath = self.relativePath
-        ret._absPath = self.absolutePath
-
-        self.validate()
-
-        return ret
-
-
-    def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, removing those features that are specified by the
-        input, and returning an object containing those removed features.
-
-        toExtract: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a feature will return True if it is to
-             be extracted
-          4. a filter function, as a string, containing a comparison operator
-             between a point name and a value (i.e 'point1<10')
-
-        start and end: parameters indicating range based extraction. If range
-        based extraction is employed, toExtract must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.features, respectively.
-
-        number: the quantity of features that are to be extracted, the default
-        None means unrestricted extraction.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        features are determined by feature order, otherwise it is uniform random
-        across the space of possible features.
-
-        """
-        ret = self._genericStructuralFrontend('extract', 'feature', toExtract,
-                                              start, end, number, randomize)
-
-        ret.setPointNames(self.getPointNames())
-        self._adjustCountAndNames('feature', ret)
-
-        ret._relPath = self.relativePath
-        ret._absPath = self.absolutePath
-
-        self.validate()
-
-        return ret
-
-    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, removing those points that are specified by the input.
-
-        toDelete: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a point will return True if it is to
-             be deleted
-          4. a filter function, as a string, containing a comparison operator
-             between a feature name and a value (i.e 'feat1<10')
-
-        start and end: parameters indicating range based deletion. If range
-        based deletion is employed, toDelete must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.points, respectively.
-
-        number: the quantity of points that are to be deleted, the default
-        None means unrestricted deletion.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        points are determined by point order, otherwise it is uniform random
-        across the space of possible points.
-
-        """
-        ret = self._genericStructuralFrontend('delete', 'point', toDelete,
-                                              start, end, number, randomize)
-        self._adjustCountAndNames('point', ret)
-        self.validate()
-
-
-    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, removing those features that are specified by the input.
-
-        toDelete: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a feature will return True if it is to
-             be deleted
-          4. a filter function, as a string, containing a comparison operator
-             between a point name and a value (i.e 'point1<10')
-
-        start and end: parameters indicating range based deletion. If range
-        based deletion is employed, toDelete must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.features, respectively.
-
-        number: the quantity of features that are to be deleted, the default
-        None means unrestricted deletion.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        features are determined by feature order, otherwise it is uniform random
-        across the space of possible features.
-
-        """
-        ret = self._genericStructuralFrontend('delete', 'feature', toDelete,
-                                              start, end, number, randomize)
-        self._adjustCountAndNames('feature', ret)
-        self.validate()
-
-
-    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, retaining those points that are specified by the input.
-
-        toRetain: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a point will return True if it is to
-             be retained
-          4. a filter function, as a string, containing a comparison operator
-             between a feature name and a value (i.e 'feat1<10')
-
-        start and end: parameters indicating range based retention. If range
-        based retention is employed, toRetain must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.points, respectively.
-
-        number: the quantity of points that are to be retained, the default
-        None means unrestricted retention.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        points are determined by point order, otherwise it is uniform random
-        across the space of possible points.
-
-        """
-        ref = self._genericStructuralFrontend('retain', 'point', toRetain,
-                                              start, end, number, randomize)
-        ref.setFeatureNames(self.getFeatureNames())
-        ref._relPath = self.relativePath
-        ref._absPath = self.absolutePath
-
-        self.referenceDataFrom(ref)
-
-        self.validate()
-
-
-    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
-        """
-        Modify this object, retaining those features that are specified by the input.
-
-        toRetain: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a feature will return True if it is to
-             be retained
-          4. a filter function, as a string, containing a comparison operator
-             between a point name and a value (i.e 'point1<10')
-
-        start and end: parameters indicating range based retention. If range
-        based retention is employed, toRetain must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.features, respectively.
-
-        number: the quantity of features that are to be retained, the default
-        None means unrestricted retention.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        features are determined by feature order, otherwise it is uniform random
-        across the space of possible features.
-
-        """
-        ref = self._genericStructuralFrontend('retain', 'feature', toRetain,
-                                              start, end, number, randomize)
-        ref.setPointNames(self.getPointNames())
-
-        ref._relPath = self.relativePath
-        ref._absPath = self.absolutePath
-
-        self.referenceDataFrom(ref)
-
-        self.validate()
-
-
-    def countPoints(self, condition):
-        """
-        Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
-        condition: can be a string or a function object.
-        """
-        return self._genericStructuralFrontend('count', 'point', condition)
-
-
-    def countFeatures(self, condition):
-        """
-        Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
-        condition: can be a string or a function object.
-        """
-        return self._genericStructuralFrontend('count', 'feature', condition)
-
-
     def referenceDataFrom(self, other):
         """
-        Modifies the internal data of this object to refer to the same data as other. In other
-        words, the data wrapped by both the self and other objects resides in the
-        same place in memory. Other must be an object of the same type as
-        the calling object. Also, the shape of other should be consistent with the set
-        of featureNames currently in this object. None is always returned.
+        Redefine the object data using the data from another object.
 
+        Modify the internal data of this object to refer to the same
+        data as other. In other words, the data wrapped by both the self
+        and ``other`` objects resides in the same place in memory.
+
+        Parameters
+        ----------
+        other : UML data object
+            Must be of the same type as the calling object. Also, the
+            shape of other should be consistent with the shape of this
+            object.
+
+        Examples
+        --------
+        TODO
         """
         # this is called first because it checks the data type
         self._referenceDataFrom_implementation(other)
@@ -2828,16 +1804,23 @@ class Base(object):
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
-        Return a new object which has the same data (and featureNames, depending on
-        the return type) as this object. To return a specific kind of UML data
-        object, one may specify the format parameter to be 'List', 'Matrix', or
-        'Sparse'. To specify a raw return type (which will not include feature names),
-        one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
-        'scypy csc', 'list of dict' or 'dict of list'.
+        Duplicate an object in another format.
 
+        Return a new object which has the same data (and names,
+        depending on the return type) as this object.
+
+        Parameters
+        ----------
+        format : str
+            To return a specific kind of UML data object, one may
+            specify the format parameter to be 'List', 'Matrix', or
+            'Sparse'. To specify a raw return type (which will not
+            include feature names), one may specify 'python list',
+            'numpy array', or 'numpy matrix', 'scipy csr', 'scypy csc',
+            'list of dict' or 'dict of list'.
         """
-        #make lower case, strip out all white space and periods, except if format
-        # is one of the accepted UML data types
+        #make lower case, strip out all white space and periods, except if
+        # format is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
             format = format.lower()
             format = format.strip()
@@ -2845,26 +1828,34 @@ class Base(object):
             format = ''.join(tokens)
             tokens = format.split('.')
             format = ''.join(tokens)
-            if format not in ['pythonlist', 'numpyarray', 'numpymatrix', 'scipycsr', 'scipycsc',
-                              'listofdict', 'dictoflist']:
-                msg = "The only accepted asTypes are: 'List', 'Matrix', 'Sparse'"
-                msg += ", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', 'scipy csc'"
-                msg += ", 'list of dict', and 'dict of list'"
+            if format not in ['pythonlist', 'numpyarray', 'numpymatrix',
+                              'scipycsr', 'scipycsc', 'listofdict',
+                              'dictoflist']:
+                msg = "The only accepted asTypes are: 'List', 'Matrix', "
+                msg += "'Sparse', 'python list', 'numpy array', "
+                msg += "'numpy matrix', 'scipy csr', 'scipy csc', "
+                msg += "'list of dict', and 'dict of list'"
                 raise ArgumentException(msg)
 
-        # we only allow 'numpyarray' and 'pythonlist' to be used with the outpuAs1D flag
+        # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
             if format != 'numpyarray' and format != 'pythonlist':
-                raise ArgumentException("Cannot output as 1D if format != 'numpy array' or 'python list'")
-            if self.points != 1 and self.features != 1:
-                raise ArgumentException("To output as 1D there may either be only one point or one feature")
+                msg = "Only 'numpy array' or 'python list' can output 1D"
+                raise ArgumentException(msg)
+            if self._pointCount != 1 and self._featureCount != 1:
+                msg = "To output as 1D there may either be only one point or "
+                msg += " one feature"
+                raise ArgumentException(msg)
 
         # certain shapes and formats are incompatible
         if format.startswith('scipy'):
-            if self.points == 0 or self.features == 0:
-                raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
+            if self._pointCount == 0 or self._featureCount == 0:
+                msg = "scipy formats cannot output point or feature empty "
+                msg += "objects"
+                raise ArgumentException(msg)
 
-        ret = self._copyAs_implementation_base(format, rowsArePoints, outputAs1D)
+        ret = self._copyAs_implementation_base(format, rowsArePoints,
+                                               outputAs1D)
 
         if isinstance(ret, UML.data.Base):
             ret._name = self.name
@@ -2874,9 +1865,10 @@ class Base(object):
         return ret
 
     def _copyAs_implementation_base(self, format, rowsArePoints, outputAs1D):
-        # in copyAs, we've already limited outputAs1D to the 'numpyarray' and 'python list' formats
+        # in copyAs, we've already limited outputAs1D to the 'numpyarray'
+        # and 'python list' formats
         if outputAs1D:
-            if self.points == 0 or self.features == 0:
+            if self._pointCount == 0 or self._featureCount == 0:
                 if format == 'numpyarray':
                     return numpy.array([])
                 if format == 'pythonlist':
@@ -2889,11 +1881,11 @@ class Base(object):
         # we enforce very specific shapes in the case of emptiness along one
         # or both axes
         if format == 'pythonlist':
-            if self.points == 0:
+            if self._pointCount == 0:
                 return []
-            if self.features == 0:
+            if self._featureCount == 0:
                 ret = []
-                for i in range(self.points):
+                for _ in range(self._pointCount):
                     ret.append([])
                 return ret
 
@@ -2905,8 +1897,8 @@ class Base(object):
                 self._copyNames(ret)
 
         def _createListOfDict(data, featureNames):
-            # creates a list of dictionaries mapping feature names to the point's values
-            # dictionaries are in point order
+            # creates a list of dictionaries mapping feature names to the
+            # point's values dictionaries are in point order
             listofdict = []
             for point in data:
                 feature_dict = {}
@@ -2917,12 +1909,12 @@ class Base(object):
             return listofdict
 
         def _createDictOfList(data, featureNames, nFeatures):
-            # creates a python dict maps feature names to python lists containing
-            # all of that feature's values
+            # creates a python dict maps feature names to python lists
+            # containing all of that feature's values
             dictoflist = {}
             for i in range(nFeatures):
                 feature = featureNames[i]
-                values_list = data[:,i].tolist()
+                values_list = data[:, i].tolist()
                 dictoflist[feature] = values_list
             return dictoflist
 
@@ -2931,11 +1923,14 @@ class Base(object):
                 ret.transpose()
             elif format == 'listofdict':
                 ret = ret.transpose()
-                ret = _createListOfDict(data=ret, featureNames=self.getPointNames())
+                ret = _createListOfDict(data=ret,
+                                        featureNames=self.points.getNames())
                 return ret
             elif format == 'dictoflist':
                 ret = ret.transpose()
-                ret = _createDictOfList(data=ret, featureNames=self.getPointNames(), nFeatures=self.points)
+                ret = _createDictOfList(data=ret,
+                                        featureNames=self.points.getNames(),
+                                        nFeatures=self._pointCount)
                 return ret
             elif format != 'pythonlist':
                 ret = ret.transpose()
@@ -2943,27 +1938,30 @@ class Base(object):
                 ret = numpy.transpose(ret).tolist()
 
         if format == 'listofdict':
-            ret = _createListOfDict(data=ret, featureNames=self.getFeatureNames())
+            ret = _createListOfDict(data=ret,
+                                    featureNames=self.features.getNames())
         if format == 'dictoflist':
-            ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self.features)
+            ret = _createDictOfList(data=ret,
+                                    featureNames=self.features.getNames(),
+                                    nFeatures=self._featureCount)
 
         return ret
 
-    def _copyNames (self, CopyObj):
+    def _copyNames(self, CopyObj):
         if self._pointNamesCreated():
-            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNamesInverse = self.points.getNames()
             CopyObj.pointNames = copy.copy(self.pointNames)
             # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.index = self.getPointNames()
+            #     CopyObj.data.index = self.points.getNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
 
         if self._featureNamesCreated():
-            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNamesInverse = self.features.getNames()
             CopyObj.featureNames = copy.copy(self.featureNames)
             # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.columns = self.getFeatureNames()
+            #     CopyObj.data.columns = self.features.getNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
@@ -2971,189 +1969,41 @@ class Base(object):
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
-    def copyPoints(self, toCopy=None, start=None, end=None, number=None, randomize=False):
-        """
-        Returns an object containing those points that are specified by the input, without
-        modification to this object.
-
-        toCopy: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a point will return True if it is to
-             be copied
-          4. a filter function, as a string, containing a comparison operator
-             between a feature name and a value (i.e 'feat1<10')
-
-        start and end: parameters indicating range based copying. If range
-        based copying is employed, toCopy must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.points, respectively.
-
-        number: the quantity of points that are to be copied, the default
-        None means unrestricted copying.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        points are determined by point order, otherwise it is uniform random
-        across the space of possible points.
-
-        """
-        ret = self._genericStructuralFrontend('copy', 'point', toCopy, start, end,
-                                              number, randomize)
-
-        ret.setFeatureNames(self.getFeatureNames())
-
-        ret._relPath = self.relativePath
-        ret._absPath = self.absolutePath
-
-        self.validate()
-        return ret
-
-
-    def copyFeatures(self, toCopy=None, start=None, end=None, number=None, randomize=False):
-        """
-        Returns an object containing those features that are specified by the input, without
-        modification to this object.
-
-        toCopy: may take the form of any of the following:
-          1. a single identifier (name or index)
-          2. an iterable, list-like container of identifiers
-          3. a function that when given a feature will return True if it is to
-             be copied
-          4. a filter function, as a string, containing a comparison operator
-             between a point name and a value (i.e 'point1<10')
-
-        start and end: parameters indicating range based copying. If range
-        based copying is employed, toCopy must be None, and vice versa. If
-        only one of start and end are non-None, the other defaults to 0 and
-        self.features, respectively.
-
-        number: the quantity of features that are to be copied, the default
-        None means unrestricted copying.
-
-        randomize: indicates whether random sampling is to be used in
-        conjunction with the number parameter, if randomize is False, the chosen
-        features are determined by feature order, otherwise it is uniform random
-        across the space of possible features.
-
-        """
-        ret = self._genericStructuralFrontend('copy', 'feature', toCopy, start, end,
-                                              number, randomize)
-
-        ret.setPointNames(self.getPointNames())
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        return ret
-
-
-    def transformEachPoint(self, function, points=None):
-        """
-        Modifies this object to contain the results of the given function
-        calculated on the specified points in this object.
-
-        function: must accept the view of a point as an argument
-
-        points: may be None to indicate application to all points, a single
-        point identifier (name or index) or an iterable, list-like container of
-        point identifiers to limit application only to those specified.
-
-        """
-        if self.points == 0:
-            raise ImproperActionException("We disallow this function when there are 0 points")
-        if self.features == 0:
-            raise ImproperActionException("We disallow this function when there are 0 features")
-        if function is None:
-            raise ArgumentException("function must not be None")
-        if points is not None:
-            points = self._constructIndicesList('point', points)
-
-        self.validate()
-
-        self._transformEachPoint_implementation(function, points)
-
-
-    def transformEachFeature(self, function, features=None):
-        """
-        Modifies this object to contain the results of the given function
-        calculated on the specified features in this object.
-
-        function: must accept the view of a feature as an argument
-
-        features: may be None to indicate application to all features, a single
-        feature identifier (name or index) or an iterable, list-like container
-        of feature identifiers to limit application only to those specified.
-
-        """
-        if self.points == 0:
-            raise ImproperActionException("We disallow this function when there are 0 points")
-        if self.features == 0:
-            raise ImproperActionException("We disallow this function when there are 0 features")
-        if function is None:
-            raise ArgumentException("function must not be None")
-        if features is not None:
-            features = self._constructIndicesList('feature', features)
-
-        self.validate()
-
-        self._transformEachFeature_implementation(function, features)
-
-
-    def transformEachElement(self, toTransform, points=None, features=None, preserveZeros=False,
-                             skipNoneReturnValues=False):
-        """
-        Modifies this object to contain the results of toTransform for each element.
-
-        toTransform: May be a function in the form of toTransform(elementValue)
-        or toTransform(elementValue, pointNum, featureNum), or a dictionary
-        mapping the current element [key] to the transformed element [value].
-
-        points: Limit to only elements of the specified points; may be None for
-        all points, a single identifier (name or index), or an iterable,
-        list-like container of identifiers.
-
-        features: Limit to only elements of the specified features; may be None
-        for all features, a single identifier (name or index), or an iterable,
-        list-like container of identifiers.
-
-        preserveZeros: If True it does not apply toTransform to elements in
-        the data that are 0, and that 0 is not modified.
-
-        skipNoneReturnValues: If True, any time toTransform() returns None, the
-        value originally in the data will remain unmodified.
-
-        """
-        if points is not None:
-            points = self._constructIndicesList('point', points)
-        if features is not None:
-            features = self._constructIndicesList('feature', features)
-
-        self.validate()
-
-        self._transformEachElement_implementation(toTransform, points, features, preserveZeros, skipNoneReturnValues)
-
-
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         """
-        Revise the contents of the calling object so that it contains the provided
-        values in the given location.
+        Replace values in the data with other values.
 
-        values - Either a constant value or a UML object whose size is consistent
-        with the given start and end indices.
+        Revise the contents of the calling object so that it contains
+        the provided values in the given location.
 
-        pointStart - the inclusive ID of the first point in the calling object
-        whose contents will be modified.
+        Parameters
+        ----------
+        values : constant or UML data object
+            * constant - a constant value with which to fill the data
+              seletion.
+            * UML data object - Size must be consistent with the given
+              start and end indices.
+        pointStart : int or str
+            The inclusive index or name of the first point in the
+            calling object whose contents will be modified.
+        featureStart : int or str
+            The inclusive index or name of the first feature in the
+            calling object whose contents will be modified.
+        pointEnd : int or str
+            The inclusive index or name of the last point in the calling
+            object whose contents will be modified.
+        featureEnd : int or str
+            The inclusive index or name of the last feature in the
+            calling object whose contents will be modified.
 
-        featureStart - the inclusive ID of the first feature in the calling object
-        whose contents will be modified.
 
-        pointEnd - the inclusive ID of the last point in the calling object
-        whose contents will be modified.
+        See Also
+        --------
+        fillUsingAllData, points.fill, features.fill
 
-        featureEnd - the inclusive ID of the last feature in the calling object
-        whose contents will be modified.
-
+        Examples
+        --------
+        TODO
         """
         psIndex = self._getPointIndex(pointStart)
         peIndex = self._getPointIndex(pointEnd)
@@ -3165,102 +2015,124 @@ class Base(object):
             msg += "equal to pointEnd (" + str(pointEnd) + ")."
             raise ArgumentException(msg)
         if fsIndex > feIndex:
-            msg = "featureStart (" + str(featureStart) + ") must be less than or "
-            msg += "equal to featureEnd (" + str(featureEnd) + ")."
+            msg = "featureStart (" + str(featureStart) + ") must be less than "
+            msg += "or equal to featureEnd (" + str(featureEnd) + ")."
             raise ArgumentException(msg)
 
         if isinstance(values, UML.data.Base):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
-            if values.points != prange:
-                msg = "When the values argument is a UML data object, the size "
-                msg += "of values must match the range of modification. There are "
-                msg += str(values.points) + " points in values, yet pointStart ("
-                msg += str(pointStart) + ") and pointEnd ("
-                msg += str(pointEnd) + ") define a range of length " + str(prange)
+            if len(values.points) != prange:
+                msg = "When the values argument is a UML data object, the "
+                msg += "size of values must match the range of modification. "
+                msg += "There are " + str(len(values.points)) + " points in "
+                msg += "values, yet pointStart (" + str(pointStart) + ")"
+                msg += "and pointEnd (" + str(pointEnd) + ") define a range "
+                msg += "of length " + str(prange)
                 raise ArgumentException(msg)
-            if values.features != frange:
-                msg = "When the values argument is a UML data object, the size "
-                msg += "of values must match the range of modification. There are "
-                msg += str(values.features) + " features in values, yet featureStart ("
-                msg += str(featureStart) + ") and featureEnd ("
-                msg += str(featureEnd) + ") define a range of length " + str(frange)
+            if len(values.features) != frange:
+                msg = "When the values argument is a UML data object, the "
+                msg += "size of values must match the range of modification. "
+                msg += "There are " + str(len(values.features)) + " features "
+                msg += "in values, yet featureStart (" + str(featureStart)
+                msg += ") and featureEnd (" + str(featureEnd) + ") define a "
+                msg += "range of length " + str(frange)
                 raise ArgumentException(msg)
             if values.getTypeString() != self.getTypeString():
                 values = values.copyAs(self.getTypeString())
 
-        elif dataHelpers._looksNumeric(values) or isinstance(values, six.string_types):
+        elif (dataHelpers._looksNumeric(values)
+              or isinstance(values, six.string_types)):
             pass  # no modificaitons needed
         else:
-            msg = "values may only be a UML data object, or a single numeric value, yet "
-            msg += "we received something of " + str(type(values))
+            msg = "values may only be a UML data object, or a single numeric "
+            msg += "value, yet we received something of " + str(type(values))
             raise ArgumentException(msg)
 
-        self._fillWith_implementation(values, psIndex, fsIndex, peIndex, feIndex)
+        self._fillWith_implementation(values, psIndex, fsIndex,
+                                      peIndex, feIndex)
         self.validate()
 
-
-    def handleMissingValues(self, method='remove points', features=None, arguments=None,
-                            alsoTreatAsMissing=[], markMissing=False):
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
+                         features=None, returnModified=False):
         """
-        This function is to remove, replace or impute missing values in an UML
-        container data object.
+        Replace matching values calculated using the entire data object.
 
-        method - a string in the form of one of the following:
-        'remove points', 'remove features', 'feature mean', 'feature median',
-        'feature mode', 'zero', 'constant', 'forward fill', 'backward fill',
-        'interpolate'
+        Fill matching values with values based on the context of the
+        entire dataset.
 
-        features - can be None to indicate all features, a single feature
-        identifier (name or index) or an iterable, list-like container of
-        feature identifiers. In this function, only those features in the input
-        'features' will be processed.
+        Parameters
+        ----------
+        match : value, list, or function
+            * value - a value to locate within each feature
+            * list - values to locate within each feature
+            * function - must accept a single value and return True if
+              the value is a match. Certain match types can be imported
+              from UML's match module: missing, nonNumeric, zero, etc.
+        fill : function
+            a function in the format fill(feature, match) or
+            fill(feature, match, arguments) and return the transformed
+            data as a list of lists. Certain fill methods can be
+            imported from UML's fill module:
+            kNeighborsRegressor, kNeighborsClassifier
+        arguments : dict
+            Any additional arguments being passed to the fill
+            function.
+        points : identifier or list of identifiers
+            Select specific points to apply fill to. If points is None,
+            the fill will be applied to all points.
+        features : identifier or list of identifiers
+            Select specific features to apply fill to. If features is
+            None, the fill will be applied to all features.
+        returnModified : return an object containing True for the
+            modified values in each feature and False for unmodified
+            values.
 
-        arguments - for some kind of methods, we need to setup arguments.
-        for method = 'remove points', 'remove features', arguments can be 'all'
-        or 'any' etc.
-        for method = 'constant', arguments must be a value
-        for method = 'interpolate', arguments can be a dict which stores inputs
-        for numpy.interp
+        See Also
+        --------
+        fillWith, points.fill, features.fill
 
-        alsoTreatAsMissing - a list. In this function, numpy.NaN and None are
-        always treated as missing. You can add extra values which should be
-        treated as missing values too, in alsoTreatAsMissing.
-
-        markMissing - True or False. If it is True, then extra columns for those
-        features will be added, in which 0 (False) or 1 (True) will be filled to
-        indicate if the value in a cell is originally missing or not.
-
+        Examples
+        --------
+        TODO
         """
-        #convert features to a list of index
-        if features is not None:
-            featuresList = self._constructIndicesList('feature', features)
+        if returnModified:
+            modified = self.elements.calculate(match, points=points,
+                                               features=features)
+            modNames = [name + "_modified" for name
+                        in modified.features.getNames()]
+            modified.features.setNames(modNames)
+            if points is not None and features is not None:
+                modified = modified[points, features]
+            elif points is not None:
+                modified = modified[points, :]
+            elif features is not None:
+                modified = modified[:, features]
         else:
-            featuresList = list(range(self._getfeatureCount()))
+            modified = None
 
-        #convert single value alsoTreatAsMissing to a list
-        if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, six.string_types):
-            alsoTreatAsMissing = [alsoTreatAsMissing]
+        tmpData = fill(self.copy(), match, arguments)
+        if points is None and features is None:
+            self.referenceDataFrom(tmpData)
+        else:
+            def transform(value, i, j):
+                return tmpData[i, j]
+            self.elements.transform(transform, points, features)
 
-        if isinstance(self, UML.data.DataFrame):
-            #for DataFrame, pass column names instead of indices
-            featuresList = [self.getFeatureName(i) for i in featuresList]
-
-        self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
-
+        return modified
 
     def _flattenNames(self, discardAxis):
         """
-        Helper calculating the axis names for the unflattend axis after a flatten operation.
-
+        Helper calculating the axis names for the unflattend axis after
+        a flatten operation.
         """
         self._validateAxis(discardAxis)
         if discardAxis == 'point':
-            keepNames = self.getFeatureNames()
-            dropNames = self.getPointNames()
+            keepNames = self.features.getNames()
+            dropNames = self.points.getNames()
         else:
-            keepNames = self.getPointNames()
-            dropNames = self.getFeatureNames()
+            keepNames = self.points.getNames()
+            dropNames = self.features.getNames()
 
         ret = []
         for d in dropNames:
@@ -3271,30 +2143,39 @@ class Base(object):
 
     def flattenToOnePoint(self):
         """
-        Adjust this object in place so that the same values are all in a single point.
+        Modify this object so that its values are in a single point.
 
-        Each feature in the result maps to exactly one value from the original object.
-        The order of values respects the point order from the original object,
-        if there were n features in the original, the first n values in the result
-        will exactly match the first point, the nth to (2n-1)th values will exactly
-        match the original second point, etc. The feature names will be transformed
-        such that the value at the intersection of the "pn_i" named point and "fn_j"
-        named feature from the original object will have a feature name of "fn_j | pn_i".
-        The single point will have a name of "Flattened".
+        Each feature in the result maps to exactly one value from the
+        original object. The order of values respects the point order
+        from the original object, if there were n features in the
+        original, the first n values in the result will exactly match
+        the first point, the nth to (2n-1)th values will exactly match
+        the original second point, etc. The feature names will be
+        transformed such that the value at the intersection of the
+        "pn_i" named point and "fn_j" named feature from the original
+        object will have a feature name of "fn_j | pn_i". The single
+        point will have a name of "Flattened". This is an inplace
+        operation.
 
-        Raises: ImproperActionException if an axis has length 0
+        See Also
+        --------
+        unflattenFromOnePoint
 
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0:
-            msg = "Can only flattenToOnePoint when there is one or more points. " \
-                  "This object has 0 points."
+        if self._pointCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more "
+            msg += "points. This object has 0 points."
             raise ImproperActionException(msg)
-        if self.features == 0:
-            msg = "Can only flattenToOnePoint when there is one or more features. " \
-                  "This object has 0 features."
+        if self._featureCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more "
+            msg += "features. This object has 0 features."
             raise ImproperActionException(msg)
 
-        # TODO: flatten nameless Objects without the need to generate default names for them.
+        # TODO: flatten nameless Objects without the need to generate default
+        # names for them.
         if not self._pointNamesCreated():
             self._setAllDefault('point')
         if not self._featureNamesCreated():
@@ -3302,38 +2183,46 @@ class Base(object):
 
         self._flattenToOnePoint_implementation()
 
-        self._featureCount = self.points * self.features
+        self._featureCount = self._pointCount * self._featureCount
         self._pointCount = 1
-        self.setFeatureNames(self._flattenNames('point'))
-        self.setPointNames(['Flattened'])
-
+        self.features.setNames(self._flattenNames('point'))
+        self.points.setNames(['Flattened'])
 
     def flattenToOneFeature(self):
         """
-        Adjust this object in place so that the same values are all in a single feature.
+        Modify this object so that its values are in a single feature.
 
-        Each point in the result maps to exactly one value from the original object.
-        The order of values respects the feature order from the original object,
-        if there were n points in the original, the first n values in the result
-        will exactly match the first feature, the nth to (2n-1)th values will exactly
-        match the original second feature, etc. The point names will be transformed
-        such that the value at the intersection of the "pn_i" named point and "fn_j"
-        named feature from the original object will have a point name of "pn_i | fn_j".
-        The single feature will have a name of "Flattened".
+        Each point in the result maps to exactly one value from the
+        original object. The order of values respects the feature order
+        from the original object, if there were n points in the
+        original, the first n values in the result will exactly match
+        the first feature, the nth to (2n-1)th values will exactly
+        match the original second feature, etc. The point names will be
+        transformed such that the value at the intersection of the
+        "pn_i" named point and "fn_j" named feature from the original
+        object will have a point name of "pn_i | fn_j". The single
+        feature will have a name of "Flattened". This is an inplace
+        operation.
 
-        Raises: ImproperActionException if an axis has length 0
+        See Also
+        --------
+        unflattenFromOneFeature
 
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0:
-            msg = "Can only flattenToOneFeature when there is one or more points. " \
-                  "This object has 0 points."
+        if self._pointCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more "
+            msg += "points. This object has 0 points."
             raise ImproperActionException(msg)
-        if self.features == 0:
-            msg = "Can only flattenToOneFeature when there is one or more features. " \
-                  "This object has 0 features."
+        if self._featureCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more "
+            msg += "features. This object has 0 features."
             raise ImproperActionException(msg)
 
-        # TODO: flatten nameless Objects without the need to generate default names for them.
+        # TODO: flatten nameless Objects without the need to generate default
+        # names for them.
         if not self._pointNamesCreated():
             self._setAllDefault('point')
         if not self._featureNamesCreated():
@@ -3341,53 +2230,60 @@ class Base(object):
 
         self._flattenToOneFeature_implementation()
 
-        self._pointCount = self.points * self.features
+        self._pointCount = self._pointCount * self._featureCount
         self._featureCount = 1
-        self.setPointNames(self._flattenNames('feature'))
-        self.setFeatureNames(['Flattened'])
-
+        self.points.setNames(self._flattenNames('feature'))
+        self.features.setNames(['Flattened'])
 
     def _unflattenNames(self, addedAxis, addedAxisLength):
         """
-        Helper calculating the new axis names after an unflattening operation.
-
+        Helper calculating the new axis names after an unflattening
+        operation.
         """
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
-            both = self.getFeatureNames()
-            keptAxisLength = self.features // addedAxisLength
-            allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
+            both = self.features.getNames()
+            keptAxisLength = self._featureCount // addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent(
+                'point', addedAxisLength, keptAxisLength)
         else:
-            both = self.getPointNames()
-            keptAxisLength = self.points // addedAxisLength
-            allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
+            both = self.points.getNames()
+            keptAxisLength = self._pointCount // addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent(
+                'feature', addedAxisLength, keptAxisLength)
 
         if allDefault:
             addedAxisName = None
             keptAxisName = None
         else:
-            # we consider the split of the elements into keptAxisLength chunks (of
-            # which there will be addedAxisLength number of chunks), and want the
-            # index of the first of each chunk. We allow that first name to be
-            # representative for that chunk: all will have the same stuff past
-            # the vertical bar.
+            # we consider the split of the elements into keptAxisLength chunks
+            # (of which there will be addedAxisLength number of chunks), and
+            # want the index of the first of each chunk. We allow that first
+            # name to be representative for that chunk: all will have the same
+            # stuff past the vertical bar.
             locations = range(0, len(both), keptAxisLength)
             addedAxisName = [both[n].split(" | ")[1] for n in locations]
-            keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
+            keptAxisName = [name.split(" | ")[0] for name
+                            in both[:keptAxisLength]]
 
         return addedAxisName, keptAxisName
 
     def _namesAreFlattenFormatConsistent(self, flatAxis, newFLen, newUFLen):
         """
-        Helper which validates the formatting of axis names prior to unflattening.
+        Helper which validates the formatting of axis names prior to
+        unflattening.
 
-        Will raise ImproperActionException if an inconsistency with the formatting
-        done by the flatten operations is discovered. Returns True if all the names
-        along the unflattend axis are default, False otherwise.
-
+        Will raise ImproperActionException if an inconsistency with the
+        formatting done by the flatten operations is discovered. Returns
+        True if all the names along the unflattend axis are default,
+        False otherwise.
         """
-        flat = self.getPointNames() if flatAxis == 'point' else self.getFeatureNames()
-        formatted = self.getFeatureNames() if flatAxis == 'point' else self.getPointNames()
+        if flatAxis == 'point':
+            flat = self.points.getNames()
+            formatted = self.features.getNames()
+        else:
+            flat = self.features.getNames()
+            formatted = self.points.getNames()
 
         def checkIsDefault(axisName):
             ret = False
@@ -3402,19 +2298,19 @@ class Base(object):
         # check the contents of the names along the flattened axis
         isDefault = checkIsDefault(flat[0])
         isExact = flat == ['Flattened']
+        msg = "In order to unflatten this object, the names must be "
+        msg += "consistent with the results from a flatten call. "
         if not (isDefault or isExact):
-            msg = "In order to unflatten this object, the names must be " \
-                  "consistent with the results from a flatten call. Therefore, " \
-                  "the " + flatAxis + " name for this object ('" + flat[0] + "') must " \
-                  "either be a default name or exactly the string 'Flattened'"
+            msg += "Therefore, the {axis} name for this object ('{axisName}')"
+            msg += "must either be a default name or the string 'Flattened'"
+            msg = msg.format(axis=flatAxis, axisName=flat[0])
             raise ImproperActionException(msg)
 
         # check the contents of the names along the unflattend axis
-        msg = "In order to unflatten this object, the names must be " \
-              "consistent with the results from a flatten call. Therefore, " \
-              "the " + flatAxis + " names for this object must either be all " \
-              "default, or they must be ' | ' split names with name values " \
-              "consistent with the positioning from a flatten call."
+        msg += "Therefore, the {axis} names for this object must either be "
+        msg += "all default, or they must be ' | ' split names with name "
+        msg += "values consistent with the positioning from a flatten call."
+        msg.format(axis=flatAxis)
         # each name - default or correctly formatted
         allDefaultStatus = None
         for name in formatted:
@@ -3448,38 +2344,47 @@ class Base(object):
 
         return allDefaultStatus
 
-
     def unflattenFromOnePoint(self, numPoints):
         """
-        Adjust this point vector in place to an object that it could have been flattend from.
+        Adjust a flattened point vector to contain multiple points.
 
-        This is an inverse of the method flattenToOnePoint: if an object foo with n
-        points calls the flatten method, then this method with n as the argument, the
-        result should be identical to the original foo. It is not limited to objects
-        that have previously had flattenToOnePoint called on them; any object whose
-        structure and names are consistent with a previous call to flattenToOnePoint
-        may call this method. This includes objects with all default names.
+        This is an inverse of the method ``flattenToOnePoint``: if an
+        object foo with n points calls the flatten method, then this
+        method with n as the argument, the result should be identical to
+        the original foo. It is not limited to objects that have
+        previously had ``flattenToOnePoint`` called on them; any object
+        whose structure and names are consistent with a previous call to
+        flattenToOnePoint may call this method. This includes objects
+        with all default names. This is an inplace operation.
 
-        Raises: ArgumentException if numPoints does not divide the length of the point
-        vector.
+        Parameters
+        ----------
+        numPoints : int
+            The number of points in the modified object.
 
-        Raises: ImproperActionException if an axis has length 0, there is more than one
-        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+        See Also
+        --------
+        flattenToOnePoint
 
+        Examples
+        --------
+        TODO
         """
-        if self.features == 0:
-            msg = "Can only unflattenFromOnePoint when there is one or more features. " \
-                  "This object has 0 features."
+        if self._featureCount == 0:
+            msg = "Can only unflattenFromOnePoint when there is one or more "
+            msg += "features.  This object has 0 features."
             raise ImproperActionException(msg)
-        if self.points != 1:
-            msg = "Can only unflattenFromOnePoint when there is only one point. " \
-                  "This object has " + str(self.points) + " points."
+        if self._pointCount != 1:
+            msg = "Can only unflattenFromOnePoint when there is only one "
+            msg += "point.  This object has " + str(self._pointCount)
+            msg += "points."
             raise ImproperActionException(msg)
-        if self.features % numPoints != 0:
-            msg = "The argument numPoints (" + str(numPoints) + ") must be a divisor of " \
-                  "this object's featureCount (" + str(self.features) + ") otherwise " \
-                  "it will not be possible to equally divide the elements into the desired " \
-                  "number of points."
+        if self._featureCount % numPoints != 0:
+            msg = "The argument numPoints (" + str(numPoints) + ") must be a "
+            msg += "divisor of  this object's featureCount ("
+            msg += str(self._featureCount) + ") otherwise  it will not be "
+            msg += "possible to equally divide the elements into the desired "
+            msg += "number of points."
             raise ArgumentException(msg)
 
         if not self._pointNamesCreated():
@@ -3489,44 +2394,53 @@ class Base(object):
 
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
-        self._featureCount = self.features // numPoints
+        self._featureCount = self._featureCount // numPoints
         self._pointCount = numPoints
-        self.setPointNames(ret[0])
-        self.setFeatureNames(ret[1])
-
+        self.points.setNames(ret[0])
+        self.features.setNames(ret[1])
 
     def unflattenFromOneFeature(self, numFeatures):
         """
-        Adjust this feature vector in place to an object that it could have been flattend from.
+        Adjust a flattened feature vector to contain multiple features.
 
-        This is an inverse of the method flattenToOneFeature: if an object foo with n
-        features calls the flatten method, then this method with n as the argument, the
-        result should be identical to the original foo. It is not limited to objects
-        that have previously had flattenToOneFeature called on them; any object whose
-        structure and names are consistent with a previous call to flattenToOneFeature
-        may call this method. This includes objects with all default names.
+        This is an inverse of the method ``flattenToOneFeature``: if an
+        object foo with n features calls the flatten method, then this
+        method with n as the argument, the result should be identical to
+        the original foo. It is not limited to objects that have
+        previously had ``flattenToOneFeature`` called on them; any
+        object whose structure and names are consistent with a previous
+        call to flattenToOnePoint may call this method. This includes
+        objects with all default names. This is an inplace operation.
 
-        Raises: ArgumentException if numPoints does not divide the length of the point
-        vector.
+        Parameters
+        ----------
+        numFeatures : int
+            The number of features in the modified object.
 
-        Raises: ImproperActionException if an axis has length 0, there is more than one
-        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+        See Also
+        --------
+        flattenToOneFeature
 
+        Examples
+        --------
+        TODO
         """
-        if self.points == 0:
-            msg = "Can only unflattenFromOneFeature when there is one or more points. " \
-                  "This object has 0 points."
+        if self._pointCount == 0:
+            msg = "Can only unflattenFromOneFeature when there is one or more "
+            msg += "points. This object has 0 points."
             raise ImproperActionException(msg)
-        if self.features != 1:
-            msg = "Can only unflattenFromOneFeature when there is only one feature. " \
-                  "This object has " + str(self.features) + " features."
+        if self._featureCount != 1:
+            msg = "Can only unflattenFromOneFeature when there is only one "
+            msg += "feature. This object has " + str(self._featureCount)
+            msg += " features."
             raise ImproperActionException(msg)
 
-        if self.points % numFeatures != 0:
-            msg = "The argument numFeatures (" + str(numFeatures) + ") must be a divisor of " \
-                  "this object's pointCount (" + str(self.points) + ") otherwise " \
-                  "it will not be possible to equally divide the elements into the desired " \
-                  "number of features."
+        if self._pointCount % numFeatures != 0:
+            msg = "The argument numFeatures (" + str(numFeatures) + ") must "
+            msg += "be a divisor of this object's pointCount ("
+            msg += str(self._pointCount) + ") otherwise "
+            msg += "it will not be possible to equally divide the elements "
+            msg += "into the desired number of features."
             raise ArgumentException(msg)
 
         if not self._pointNamesCreated():
@@ -3536,10 +2450,10 @@ class Base(object):
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
-        self._pointCount = self.points // numFeatures
+        self._pointCount = self._pointCount // numFeatures
         self._featureCount = numFeatures
-        self.setPointNames(ret[1])
-        self.setFeatureNames(ret[0])
+        self.points.setNames(ret[1])
+        self.features.setNames(ret[0])
 
 
     ###############################################################
@@ -3548,100 +2462,31 @@ class Base(object):
     ###############################################################
     ###############################################################
 
-    def elementwiseMultiply(self, other):
-        """
-        Perform element wise multiplication of this UML data object against the
-        provided other UML data object, with the result being stored in-place in
-        the calling object. Both objects must contain only numeric data. The
-        pointCount and featureCount of both objects must be equal. The types of
-        the two objects may be different. None is always returned.
-
-        """
-        if not isinstance(other, UML.data.Base):
-            raise ArgumentException("'other' must be an instance of a UML data object")
-
-        if self.points != other.points:
-            raise ArgumentException("The number of points in each object must be equal.")
-        if self.features != other.features:
-            raise ArgumentException("The number of features in each object must be equal.")
-
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
-
-        self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
-        self._validateEqualNames('feature', 'feature', 'elementwiseMultiply', other)
-
-        try:
-            self._elementwiseMultiply_implementation(other)
-        except Exception as e:
-            #TODO: improve how the exception is catch
-            self._numericValidation()
-            other._numericValidation()
-            raise(e)
-
-        (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
-        self.setPointNames(retPNames)
-        self.setFeatureNames(retFNames)
-        self.validate()
-
-    def elementwisePower(self, other):
-        # other is UML or single numerical value
-        singleValue = dataHelpers._looksNumeric(other)
-        if not singleValue and not isinstance(other, UML.data.Base):
-            raise ArgumentException("'other' must be an instance of a UML data object or a single numeric value")
-
-        if isinstance(other, UML.data.Base):
-            # same shape
-            if self.points != other.points:
-                raise ArgumentException("The number of points in each object must be equal.")
-            if self.features != other.features:
-                raise ArgumentException("The number of features in each object must be equal.")
-
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
-
-        if isinstance(other, UML.data.Base):
-            def powFromRight(val, pnum, fnum):
-                try:
-                    return val ** other[pnum, fnum]
-                except Exception as e:
-                    self._numericValidation()
-                    other._numericValidation()
-                    raise(e)
-            self.transformEachElement(powFromRight)
-        else:
-            def powFromRight(val, pnum, fnum):
-                try:
-                    return val ** other
-                except Exception as e:
-                    self._numericValidation()
-                    other._numericValidation()
-                    raise(e)
-            self.transformEachElement(powFromRight)
-
-        self.validate()
-
     def __mul__(self, other):
         """
-        Perform matrix multiplication or scalar multiplication on this object depending on
-        the input 'other'
-
+        Perform matrix multiplication or scalar multiplication on this
+        object depending on the input ``other``.
         """
-        if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
+        if (not isinstance(other, UML.data.Base)
+                and not dataHelpers._looksNumeric(other)):
             return NotImplemented
 
         # Test element type self
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do a multiplication when points or features is empty")
+        if self._pointCount == 0 or self._featureCount == 0:
+            msg = "Cannot do a multiplication when points or features is empty"
+            raise ImproperActionException(msg)
 
         # test element type other
         if isinstance(other, UML.data.Base):
-            if other.points == 0 or other.features == 0:
-                raise ImproperActionException("Cannot do a multiplication when points or features is empty")
+            if len(other.points) == 0 or len(other.features) == 0:
+                msg = "Cannot do a multiplication when points or features is "
+                msg += "empty"
+                raise ImproperActionException(msg)
 
-            if self.features != other.points:
-                raise ArgumentException("The number of features in the calling object must "
-                                        + "match the point in the callee object.")
+            if self._featureCount != len(other.points):
+                msg = "The number of features in the calling object must "
+                msg += "match the point in the callee object."
+                raise ArgumentException(msg)
 
             self._validateEqualNames('feature', 'point', '__mul__', other)
 
@@ -3651,13 +2496,13 @@ class Base(object):
             #TODO: improve how the exception is catch
             self._numericValidation()
             other._numericValidation()
-            raise(e)
+            raise e
 
         if isinstance(other, UML.data.Base):
             if self._pointNamesCreated():
-                ret.setPointNames(self.getPointNames())
+                ret.points.setNames(self.points.getNames())
             if other._featureNamesCreated():
-                ret.setFeatureNames(other.getFeatureNames())
+                ret.features.setNames(other.features.getNames())
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
@@ -3666,7 +2511,9 @@ class Base(object):
         return ret
 
     def __rmul__(self, other):
-        """	Perform scalar multiplication with this object on the right """
+        """
+        Perform scalar multiplication with this object on the right
+        """
         if dataHelpers._looksNumeric(other):
             return self.__mul__(other)
         else:
@@ -3674,9 +2521,8 @@ class Base(object):
 
     def __imul__(self, other):
         """
-        Perform in place matrix multiplication or scalar multiplication, depending in the
-        input 'other'
-
+        Perform in place matrix multiplication or scalar multiplication,
+        depending in the input ``other``.
         """
         ret = self.__mul__(other)
         if ret is not NotImplemented:
@@ -3687,178 +2533,168 @@ class Base(object):
 
     def __add__(self, other):
         """
-        Perform addition on this object, element wise if 'other' is a UML data
-        object, or element wise with a scalar if other is some kind of numeric
-        value.
-
+        Perform addition on this object, element wise if 'other' is a
+        UML data object, or element wise with a scalar if other is some
+        kind of numeric value.
         """
         return self._genericNumericBinary('__add__', other)
 
     def __radd__(self, other):
-        """ Perform scalar addition with this object on the right """
+        """
+        Perform scalar addition with this object on the right
+        """
         return self._genericNumericBinary('__radd__', other)
 
     def __iadd__(self, other):
         """
-        Perform in-place addition on this object, element wise if 'other' is a UML data
-        object, or element wise with a scalar if other is some kind of numeric
-        value.
-
+        Perform in-place addition on this object, element wise if
+        ``other`` is a UML data object, or element wise with a scalar if
+        ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__iadd__', other)
 
     def __sub__(self, other):
         """
-        Subtract from this object, element wise if 'other' is a UML data
-        object, or element wise by a scalar if other is some kind of numeric
-        value.
-
+        Subtract from this object, element wise if ``other`` is a UML
+        data object, or element wise by a scalar if ``other`` is some
+        kind of numeric value.
         """
         return self._genericNumericBinary('__sub__', other)
 
     def __rsub__(self, other):
         """
-        Subtract each element of this object from the given scalar
-
+        Subtract each element of this object from the given scalar.
         """
         return self._genericNumericBinary('__rsub__', other)
 
     def __isub__(self, other):
         """
-        Subtract (in place) from this object, element wise if 'other' is a UML data
-        object, or element wise with a scalar if other is some kind of numeric
-        value.
-
+        Subtract (in place) from this object, element wise if ``other``
+        is a UML data object, or element wise with a scalar if ``other``
+        is some kind of numeric value.
         """
         return self._genericNumericBinary('__isub__', other)
 
     def __div__(self, other):
         """
-        Perform division using this object as the numerator, element wise if 'other'
-        is a UML data object, or element wise by a scalar if other is some kind of
-        numeric value.
-
+        Perform division using this object as the numerator, elementwise
+        if ``other`` is a UML data object, or element wise by a scalar
+        if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__div__', other)
 
     def __rdiv__(self, other):
         """
-        Perform element wise division using this object as the denominator, and the
-        given scalar value as the numerator
-
+        Perform element wise division using this object as the
+        denominator, and the given scalar value as the numerator.
         """
         return self._genericNumericBinary('__rdiv__', other)
 
     def __idiv__(self, other):
         """
-        Perform division (in place) using this object as the numerator, element
-        wise if 'other' is a UML data object, or element wise by a scalar if other
-        is some kind of numeric value.
-
+        Perform division (in place) using this object as the numerator,
+        elementwise if ``other`` is a UML data object, or elementwise by
+        a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__idiv__', other)
 
     def __truediv__(self, other):
         """
-        Perform true division using this object as the numerator, element wise
-        if 'other' is a UML data object, or element wise by a scalar if other is
-        some kind of numeric value.
-
+        Perform true division using this object as the numerator,
+        elementwise if ``other`` is a UML data object, or element wise
+        by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__truediv__', other)
 
     def __rtruediv__(self, other):
         """
-        Perform element wise true division using this object as the denominator,
-        and the given scalar value as the numerator
-
+        Perform element wise true division using this object as the
+        denominator, and the given scalar value as the numerator.
         """
         return self._genericNumericBinary('__rtruediv__', other)
 
     def __itruediv__(self, other):
         """
-        Perform true division (in place) using this object as the numerator, element
-        wise if 'other' is a UML data object, or element wise by a scalar if other
-        is some kind of numeric value.
-
+        Perform true division (in place) using this object as the
+        numerator, elementwise if ``other`` is a UML data object, or
+        elementwise by a scalar if ``other`` is some kind of numeric
+        value.
         """
         return self._genericNumericBinary('__itruediv__', other)
 
     def __floordiv__(self, other):
         """
-        Perform floor division using this object as the numerator, element wise
-        if 'other' is a UML data object, or element wise by a scalar if other is
-        some kind of numeric value.
-
+        Perform floor division using this object as the numerator,
+        elementwise if ``other`` is a UML data object, or elementwise by
+        a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__floordiv__', other)
 
     def __rfloordiv__(self, other):
         """
-        Perform element wise floor division using this object as the denominator,
-        and the given scalar value as the numerator
+        Perform elementwise floor division using this object as the
+        denominator, and the given scalar value as the numerator.
 
         """
         return self._genericNumericBinary('__rfloordiv__', other)
 
     def __ifloordiv__(self, other):
         """
-        Perform floor division (in place) using this object as the numerator, element
-        wise if 'other' is a UML data object, or element wise by a scalar if other
-        is some kind of numeric value.
-
+        Perform floor division (in place) using this object as the
+        numerator, elementwise if ``other`` is a UML data object, or
+        elementwise by a scalar if ```other``` is some kind of numeric
+        value.
         """
         return self._genericNumericBinary('__ifloordiv__', other)
 
     def __mod__(self, other):
         """
-        Perform mod using the elements of this object as the dividends, element wise
-        if 'other' is a UML data object, or element wise by a scalar if other is
-        some kind of numeric value.
-
+        Perform mod using the elements of this object as the dividends,
+        elementwise if ``other`` is a UML data object, or elementwise by
+        a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__mod__', other)
 
     def __rmod__(self, other):
         """
-        Perform mod using the elements of this object as the divisors, and the
-        given scalar value as the dividend
-
+        Perform mod using the elements of this object as the divisors,
+        and the given scalar value as the dividend.
         """
         return self._genericNumericBinary('__rmod__', other)
 
     def __imod__(self, other):
         """
-        Perform mod (in place) using the elements of this object as the dividends,
-        element wise if 'other' is a UML data object, or element wise by a scalar
-        if other is some kind of numeric value.
-
+        Perform mod (in place) using the elements of this object as the
+        dividends, elementwise if 'other' is a UML data object, or
+        elementwise by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__imod__', other)
 
     @to2args
     def __pow__(self, other, z):
         """
-        Perform exponentiation (iterated __mul__) using the elements of this object
-        as the bases, element wise if 'other' is a UML data object, or element wise
-        by a scalar if other is some kind of numeric value.
-
+        Perform exponentiation (iterated __mul__) using the elements of
+        this object as the bases, elemen wise if ``other`` is a UML data
+        object, or elementwise by a scalar if ``other`` is some kind of
+        numeric value.
         """
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do ** when points or features is empty")
+        if self._pointCount == 0 or self._featureCount == 0:
+            msg = "Cannot do ** when points or features is empty"
+            raise ImproperActionException(msg)
         if not dataHelpers._looksNumeric(other):
-            raise ArgumentException("'other' must be an instance of a scalar")
+            msg = "'other' must be an instance of a scalar"
+            raise ArgumentException(msg)
         if other != int(other):
             raise ArgumentException("other may only be an integer type")
         if other < 0:
             raise ArgumentException("other must be greater than zero")
 
         if self._pointNamesCreated():
-            retPNames = self.getPointNames()
+            retPNames = self.points.getNames()
         else:
             retPNames = None
         if self._featureNamesCreated():
-            retFNames = self.getFeatureNames()
+            retFNames = self.features.getNames()
         else:
             retFNames = None
 
@@ -3871,13 +2707,16 @@ class Base(object):
         if other == 0 or other % 2 == 0:
             identityPNames = 'automatic' if retPNames is None else retPNames
             identityFNames = 'automatic' if retFNames is None else retFNames
-            identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                      pointNames=identityPNames, featureNames=identityFNames)
+            identity = UML.createData(self.getTypeString(),
+                                      numpy.eye(self._pointCount),
+                                      pointNames=identityPNames,
+                                      featureNames=identityFNames)
         if other == 0:
             return identity
 
-        # this means that we don't start with a multiplication at the ones place,
-        # so we need to reserve the identity as the in progress return value
+        # this means that we don't start with a multiplication at the ones
+        # place, so we need to reserve the identity as the in progress return
+        # value
         if other % 2 == 0:
             ret = identity
         else:
@@ -3897,8 +2736,8 @@ class Base(object):
             # shift right to put the next digit in the ones place
             curr = curr >> 1
 
-        ret.setPointNames(retPNames)
-        ret.setFeatureNames(retFNames)
+        ret.points.setNames(retPNames)
+        ret.features.setNames(retFNames)
 
         ret._name = dataHelpers.nextDefaultObjectName()
 
@@ -3906,25 +2745,28 @@ class Base(object):
 
     def __ipow__(self, other):
         """
-        Perform in-place exponentiation (iterated __mul__) using the elements
-        of this object as the bases, element wise if 'other' is a UML data
-        object, or element wise by a scalar if other is some kind of numeric
-        value.
-
+        Perform in-place exponentiation (iterated __mul__) using the
+        elements of this object as the bases, element wise if ``other``
+        is a UML data object, or elementwise by a scalar if ``other`` is
+        some kind of numeric value.
         """
         ret = self.__pow__(other)
         self.referenceDataFrom(ret)
         return self
 
     def __pos__(self):
-        """ Return this object. """
+        """
+        Return this object.
+        """
         ret = self.copy()
         ret._name = dataHelpers.nextDefaultObjectName()
 
         return ret
 
     def __neg__(self):
-        """ Return this object where every element has been multiplied by -1 """
+        """
+        Return this object where every element has been multiplied by -1
+        """
         ret = self.copy()
         ret *= -1
         ret._name = dataHelpers.nextDefaultObjectName()
@@ -3932,16 +2774,18 @@ class Base(object):
         return ret
 
     def __abs__(self):
-        """ Perform element wise absolute value on this object """
-        ret = self.calculateForEachElement(abs)
+        """
+        Perform element wise absolute value on this object
+        """
+        ret = self.elements.calculate(abs)
         if self._pointNamesCreated():
-            ret.setPointNames(self.getPointNames())
+            ret.points.setNames(self.points.getNames())
         else:
-            ret.setPointNames(None)
+            ret.points.setNames(None)
         if self._featureNamesCreated():
-            ret.setFeatureNames(self.getFeatureNames())
+            ret.features.setNames(self.features.getNames())
         else:
-            ret.setPointNames(None)
+            ret.points.setNames(None)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
@@ -3949,30 +2793,35 @@ class Base(object):
         return ret
 
     def _numericValidation(self):
-        if self.points > 0:
+        if self._pointCount > 0:
             try:
-                self.calculateForEachElement(dataHelpers._checkNumeric)
+                self.elements.calculate(dataHelpers._checkNumeric)
             except ValueError:
-                   raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+                msg = "This data object contains non numeric data, cannot do "
+                msg += "this operation"
+                raise ArgumentException(msg)
 
     def _genericNumericBinary_sizeValidation(self, opName, other):
-        if self.points != other.points:
+        if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
-            msg += "(self=" + str(self.points) + " vs other="
-            msg += str(other.points) + ")"
+            msg += "(self=" + str(self._pointCount) + " vs other="
+            msg += str(len(other.points)) + ")"
             raise ArgumentException(msg)
-        if self.features != other.features:
-            raise ArgumentException("The number of features in each object must be equal.")
+        if self._featureCount != len(other.features):
+            msg = "The number of features in each object must be equal."
+            raise ArgumentException(msg)
 
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
-
+        if self._pointCount == 0 or self._featureCount == 0:
+            msg = "Cannot do " + opName + " when points or features is empty"
+            raise ImproperActionException(msg)
 
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
 
         if not isUML and not dataHelpers._looksNumeric(other):
-            raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
+            msg = "'other' must be an instance of a UML data object or a "
+            msg += "scalar"
+            raise ArgumentException(msg)
 
         # Test element type self
         self._numericValidation()
@@ -3981,23 +2830,25 @@ class Base(object):
         if isUML:
             other._numericValidation()
 
-        divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
-                    '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                    '__mod__', '__rmod__', '__imod__', ]
+        divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__',
+                    '__rtruediv__', '__itruediv__', '__floordiv__',
+                    '__rfloordiv__', '__ifloordiv__', '__mod__', '__rmod__',
+                    '__imod__', ]
         if isUML and opName in divNames:
             if other.containsZero():
-                raise ZeroDivisionError("Cannot perform " + opName + " when the second argument"
-                                        + "contains any zeros")
+                msg = "Cannot perform " + opName + " when the second argument "
+                msg += "contains any zeros"
+                raise ZeroDivisionError(msg)
             if isinstance(other, UML.data.Matrix):
                 if False in numpy.isfinite(other.data):
-                    raise ArgumentException("Cannot perform " + opName + " when the second argument"
-                                            + "contains any NaNs or Infs")
+                    msg = "Cannot perform " + opName + " when the second "
+                    msg += "argument contains any NaNs or Infs"
+                    raise ArgumentException(msg)
         if not isUML and opName in divNames:
             if other == 0:
-                msg = "Cannot perform " + opName + " when the second argument"
-                msg += + "is zero"
+                msg = "Cannot perform " + opName + " when the second argument "
+                msg += "is zero"
                 raise ZeroDivisionError(msg)
-
 
     def _genericNumericBinary(self, opName, other):
 
@@ -4006,7 +2857,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
@@ -4017,29 +2868,29 @@ class Base(object):
 
         if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
             if self._pointNamesCreated():
-                retPNames = self.getPointNames()
+                retPNames = self.points.getNames()
             if self._featureNamesCreated():
-                retFNames = self.getFeatureNames()
+                retFNames = self.features.getNames()
         # else (everything else that uses this helper is a binary scalar op)
         else:
-            (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
-
+            (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self,
+                                                                      other)
         try:
             ret = self._genericNumericBinary_implementation(opName, other)
         except Exception as e:
             self._genericNumericBinary_validation(opName, other)
-            raise(e)
+            raise e
 
 
         if retPNames is not None:
-            ret.setPointNames(retPNames)
+            ret.points.setNames(retPNames)
         else:
-            ret.setPointNames(None)
+            ret.points.setNames(None)
 
         if retFNames is not None:
-            ret.setFeatureNames(retFNames)
+            ret.features.setNames(retFNames)
         else:
-            ret.setFeatureNames(None)
+            ret.features.setNames(None)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
@@ -4066,237 +2917,11 @@ class Base(object):
 
         return ret
 
-    #################################
-    #################################
-    ###   Statistical functions   ###
-    #################################
-    #################################
-
-
-    def pointSimilarities(self, similarityFunction):
-        """ """
-        return self._axisSimilaritiesBackend(similarityFunction, 'point')
-
-    def featureSimilarities(self, similarityFunction):
-        """ """
-        return self._axisSimilaritiesBackend(similarityFunction, 'feature')
-
-    def _axisSimilaritiesBackend(self, similarityFunction, axis):
-        acceptedPretty = [
-            'correlation', 'covariance', 'dot product', 'sample covariance',
-            'population covariance'
-        ]
-        accepted = list(map(dataHelpers.cleanKeywordInput, acceptedPretty))
-
-        msg = "The similarityFunction must be equivaltent to one of the "
-        msg += "following: "
-        msg += str(acceptedPretty) + ", but '" + str(similarityFunction)
-        msg += "' was given instead. Note: casing and whitespace is "
-        msg += "ignored when checking the input."
-
-        if not isinstance(similarityFunction, six.string_types):
-            raise ArgumentException(msg)
-
-        cleanFuncName = dataHelpers.cleanKeywordInput(similarityFunction)
-
-        if cleanFuncName not in accepted:
-            raise ArgumentException(msg)
-
-        if cleanFuncName == 'correlation':
-            toCall = UML.calculate.correlation
-        elif cleanFuncName == 'covariance' or cleanFuncName == 'samplecovariance':
-            toCall = UML.calculate.covariance
-        elif cleanFuncName == 'populationcovariance':
-            def populationCovariance(X, X_T):
-                return UML.calculate.covariance(X, X_T, False)
-
-            toCall = populationCovariance
-        elif cleanFuncName == 'dotproduct':
-            def dotProd(X, X_T):
-                return X * X_T
-
-            toCall = dotProd
-
-        transposed = self.copy()
-        transposed.transpose()
-
-        if axis == 'point':
-            ret = toCall(self, transposed)
-        else:
-            ret = toCall(transposed, self)
-
-        # TODO validation or result.
-
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
-
-        return ret
-
-    def pointStatistics(self, statisticsFunction):
-        """ """
-        return self._axisStatisticsBackend(statisticsFunction, 'point')
-
-    def featureStatistics(self, statisticsFunction, groupByFeature=None):
-        """ """
-        if groupByFeature is None:
-            return self._axisStatisticsBackend(statisticsFunction, 'feature')
-        else:
-            res = self.groupByFeature(groupByFeature)
-            for k in res:
-                res[k] = res[k]._axisStatisticsBackend(statisticsFunction, 'feature')
-            return res
-
-    def _axisStatisticsBackend(self, statisticsFunction, axis):
-        cleanFuncName = self._validateStatisticalFunctionInputString(statisticsFunction)
-
-        if cleanFuncName == 'max':
-            toCall = UML.calculate.maximum
-        elif cleanFuncName == 'mean':
-            toCall = UML.calculate.mean
-        elif cleanFuncName == 'median':
-            toCall = UML.calculate.median
-        elif cleanFuncName == 'min':
-            toCall = UML.calculate.minimum
-        elif cleanFuncName == 'uniquecount':
-            toCall = UML.calculate.uniqueCount
-        elif cleanFuncName == 'proportionmissing':
-            toCall = UML.calculate.proportionMissing
-        elif cleanFuncName == 'proportionzero':
-            toCall = UML.calculate.proportionZero
-        elif cleanFuncName == 'std' or cleanFuncName == 'standarddeviation':
-            def sampleStandardDeviation(values):
-                return UML.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName == 'samplestd' or cleanFuncName == 'samplestandarddeviation':
-            def sampleStandardDeviation(values):
-                return UML.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName == 'populationstd' or cleanFuncName == 'populationstandarddeviation':
-            toCall = UML.calculate.standardDeviation
-
-        if axis == 'point':
-            ret = self.calculateForEachPoint(toCall)
-            ret.setPointNames(self.getPointNames())
-            ret.setFeatureName(0, cleanFuncName)
-        else:
-            ret = self.calculateForEachFeature(toCall)
-            ret.setPointName(0, cleanFuncName)
-            ret.setFeatureNames(self.getFeatureNames())
-        return ret
-
     ############################
     ############################
     ###   Helper functions   ###
     ############################
     ############################
-
-    def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
-                                   end=None, number=None, randomize=False):
-        if axis == 'point':
-            axisLength = self.points
-            hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
-            viewIterator = self.pointIterator
-        else:
-            axisLength = self.features
-            hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
-            viewIterator = self.featureIterator
-
-        self._validateStructuralArguments(structure, axis, target, start, end,
-                                          number, randomize)
-        if target is not None:
-            if isinstance(target, six.string_types):
-                if hasNameChecker1(target):
-                    target = self._getIndex(target, axis)
-                    targetList = [target]
-                #if axis=point and target is not a point name, or
-                # if axis=feature and target is not a feature name,
-                # then check if it's a valid query string
-                else:
-                    optrDict = {'<=': operator.le, '>=': operator.ge,
-                                '!=': operator.ne, '==': operator.eq,
-                                '<': operator.lt, '>': operator.gt}
-                    for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
-                        if optr in target:
-                            targetList = target.split(optr)
-                            optr = '==' if optr == '=' else optr
-                            #after splitting at the optr, 2 items must be in the list
-                            if len(targetList) != 2:
-                                msg = "the target({0}) is a ".format(target)
-                                msg += "query string but there is an error"
-                                raise ArgumentException(msg)
-                            nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
-                            nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
-                            valueOfFeatureOrPoint = valueOfFeatureOrPoint.strip()
-
-                            #when axis=point, check if the feature exists or not
-                            #when axis=feature, check if the point exists or not
-                            if not hasNameChecker2(nameOfFeatureOrPoint):
-                                msg = "the {0} '{1}' doesn't exist".format(
-                                  'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
-                                raise ArgumentException(msg)
-
-                            optrOperator = optrDict[optr]
-                            #convert valueOfFeatureOrPoint from a string, if possible
-                            try:
-                                valueOfFeatureOrPoint = float(valueOfFeatureOrPoint)
-                            except ValueError:
-                                pass
-                            #convert query string to a function
-                            def target_f(x):
-                                return optrOperator(x[nameOfFeatureOrPoint], valueOfFeatureOrPoint)
-
-                            target_f.vectorized = True
-                            target_f.nameOfFeatureOrPoint = nameOfFeatureOrPoint
-                            target_f.valueOfFeatureOrPoint = valueOfFeatureOrPoint
-                            target_f.optr = optrOperator
-                            target = target_f
-                            break
-                    # the target can't be converted to a function
-                    else:
-                        msg = "'{0}' is not a valid ".format(target)
-                        msg += '{0} name nor a valid query string'.format(axis)
-                        raise ArgumentException(msg)
-            # list-like container types
-            if not hasattr(target, '__call__'):
-                argName = 'to' + structure.capitalize()
-                targetList = self._constructIndicesList(axis, target, argName)
-            # boolean function
-            else:
-                # construct list from function
-                targetList = []
-                for targetID, view in enumerate(viewIterator()):
-                    if target(view):
-                        targetList.append(targetID)
-
-        elif start is not None or end is not None:
-            start = 0 if start is None else self._getIndex(start, axis)
-            end = axisLength - 1 if end is None else self._getIndex(end, axis)
-            self._validateStartEndRange(start, end, axisLength)
-
-            # end + 1 because our range is inclusive
-            targetList = list(range(start,end + 1))
-
-        else:
-            targetList = [value for value in range(axisLength)]
-
-        if number:
-            if number > len(targetList):
-                msg = "The value for 'number' ({0}) ".format(number)
-                msg += "is greater than the number of {0}s ".format(axis)
-                msg += "to {0} ({1})".format(structure, len(targetList))
-                raise ArgumentException(msg)
-            if randomize:
-                targetList = pythonRandom.sample(targetList, number)
-            else:
-                targetList = targetList[:number]
-
-        if structure == 'count':
-            return len(targetList)
-        else:
-            return self._structuralBackend_implementation(structure, axis, targetList)
-
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
                            fnames, pnameSep):
@@ -4334,12 +2959,14 @@ class Base(object):
 
         return dataTable, dataWidths
 
-    def _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold, nameHold):
-        """Prepare feature names for string output. Grab only those names that
-        fit according to the given width limitation, process them for length,
-        omit them if they are default. Returns a list of prepared names, and
-        a list of the length of each name in the return.
-
+    def _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold,
+                             nameHold):
+        """
+        Prepare feature names for string output. Grab only those names
+        that fit according to the given width limitation, process them
+        for length, omit them if they are default. Returns a list of
+        prepared names, and a list of the length of each name in the
+        return.
         """
         colHoldWidth = len(colHold)
         colHoldTotal = len(colSep) + colHoldWidth
@@ -4357,8 +2984,8 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = self.features // 2
-        if self.features % 2 == 1:
+        endIndex = self._featureCount // 2
+        if self._featureCount % 2 == 1:
             endIndex *= -1
             endIndex -= 1
         currIndex = 0
@@ -4366,9 +2993,9 @@ class Base(object):
         while totalWidth < maxWidth and currIndex != endIndex:
             nameIndex = currIndex
             if currIndex < 0:
-                nameIndex = self.features + currIndex
+                nameIndex = self._featureCount + currIndex
 
-            currName = self.getFeatureName(nameIndex)
+            currName = self.features.getName(nameIndex)
 
             if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 currName = ""
@@ -4382,7 +3009,7 @@ class Base(object):
             # test: total width is under max without column holder
             rawStillUnder = totalWidth - (colHoldTotal) < maxWidth
             # test: the column we are trying to add is the last one possible
-            allCols = rawStillUnder and (numAdded == (self.features - 1))
+            allCols = rawStillUnder and (numAdded == (self._featureCount - 1))
             # only add this column if it won't put us over the limit,
             # OR if it is the last one (and under the limit without the col
             # holder)
@@ -4390,16 +3017,16 @@ class Base(object):
                 numAdded += 1
                 currNames.append(currName)
 
-                # the width value goes in different lists depending on the index
+                # the width value goes in different lists depending on index
                 if currIndex < 0:
                     currIndex = abs(currIndex)
                 else:
                     currIndex = (-1 * currIndex) - 1
 
-        # combine the tables. Have to reverse rTable because entries were appended
-        # in a right to left order
+        # combine the tables. Have to reverse rTable because entries were
+        # appended in a right to left order
         rNames.reverse()
-        if numAdded == self.features:
+        if numAdded == self._featureCount:
             lNames += rNames
         else:
             lNames += [colHold] + rNames
@@ -4407,27 +3034,30 @@ class Base(object):
         return lNames
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
-        """Prepare point names for string output. Grab only those names that
-        fit according to the given row limitation, process them for length,
-        omit them if they are default. Returns a list of prepared names, and
-        a int bounding the length of each name representation.
-
+        """
+        Prepare point names for string output. Grab only those names
+        that fit according to the given row limitation, process them for
+        length, omit them if they are default. Returns a list of
+        prepared names, and a int bounding the length of each name
+        representation.
         """
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows, self.points)
+        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows,
+                                                      self._pointCount)
 
         # we pull indices from two lists: tRowIDs and bRowIDs
         for sourceIndex in range(2):
             source = list([tRowIDs, bRowIDs])[sourceIndex]
 
             # add in the rowHolder, if needed
-            if sourceIndex == 1 and len(bRowIDs) + len(tRowIDs) < self.points:
+            if (sourceIndex == 1
+                    and len(bRowIDs) + len(tRowIDs) < self._pointCount):
                 names.append(rowHolder)
 
             for i in source:
-                pname = self.getPointName(i)
+                pname = self.points.getName(i)
                 # omit default valued names
                 if pname[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     pname = ""
@@ -4445,7 +3075,8 @@ class Base(object):
         return names, pnamesWidth
 
     def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
-                               maxStrLength=19, colSep=' ', colHold='--', rowHold='|', strHold='...'):
+                               maxStrLength=19, colSep=' ', colHold='--',
+                               rowHold='|', strHold='...'):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -4457,12 +3088,11 @@ class Base(object):
         will all be the same, a length we will designate as n. The sum of
         the individual strings in each inner list will be less than or
         equal to maxWidth - ((n-1) * len(colSep)).
-
         """
-        if self.points == 0 or self.features == 0:
+        if self._pointCount == 0 or self._featureCount == 0:
             return [[]], []
 
-        if maxHeight < 2 and maxHeight != self.points:
+        if maxHeight < 2 and maxHeight != self._pointCount:
             msg = "If the number of points in this object is two or greater, "
             msg += "then we require that the input argument maxHeight also "
             msg += "be greater than or equal to two."
@@ -4474,16 +3104,17 @@ class Base(object):
 
         #setup a bundle of default values
         if maxHeight is None:
-            maxHeight = self.points
+            maxHeight = self._pointCount
         if maxWidth is None:
             maxWidth = float('inf')
 
-        maxRows = min(maxHeight, self.points)
+        maxRows = min(maxHeight, self._pointCount)
         maxDataRows = maxRows
 
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows, self.points)
+        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows,
+                                                      self._pointCount)
         combinedRowIDs = tRowIDs + bRowIDs
-        if len(combinedRowIDs) < self.points:
+        if len(combinedRowIDs) < self._pointCount:
             rowHolderIndex = len(tRowIDs)
         else:
             rowHolderIndex = sys.maxsize
@@ -4501,8 +3132,8 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = self.features // 2
-        if self.features % 2 == 1:
+        endIndex = self._featureCount // 2
+        if self._featureCount % 2 == 1:
             endIndex *= -1
             endIndex -= 1
         currIndex = 0
@@ -4517,7 +3148,10 @@ class Base(object):
                 rID = combinedRowIDs[i]
                 val = self[rID, currIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
-                valLimited = valFormed if len(valFormed) < maxStrLength else valFormed[:nameCutIndex] + strHold
+                if len(valFormed) < maxStrLength:
+                    valLimited = valFormed
+                else:
+                    valLimited = valFormed[:nameCutIndex] + strHold
                 valLen = len(valLimited)
                 if valLen > currWidth:
                     currWidth = valLen
@@ -4532,7 +3166,7 @@ class Base(object):
             # test: total width is under max without column holder
             allCols = totalWidth - (cHoldTotal) < maxWidth
             # test: the column we are trying to add is the last one possible
-            allCols = allCols and (numAdded == (self.features - 1))
+            allCols = allCols and (numAdded == (self._featureCount - 1))
             # only add this column if it won't put us over the limit
             if totalWidth < maxWidth or allCols:
                 numAdded += 1
@@ -4542,7 +3176,7 @@ class Base(object):
                     else:
                         currTable[i].append(currCol[i])
 
-                # the width value goes in different lists depending on the index
+                # the width value goes in different lists depending on index
                 if currIndex < 0:
                     currIndex = abs(currIndex)
                     rColWidths.append(currWidth)
@@ -4550,10 +3184,10 @@ class Base(object):
                     currIndex = (-1 * currIndex) - 1
                     lColWidths.append(currWidth)
 
-        # combine the tables. Have to reverse rTable because entries were appended
-        # in a right to left order
+        # combine the tables. Have to reverse rTable because entries were
+        # appended in a right to left order
         rColWidths.reverse()
-        if numAdded == self.features:
+        if numAdded == self._featureCount:
             lColWidths += rColWidths
         else:
             lColWidths += [cHoldWidth] + rColWidths
@@ -4564,7 +3198,7 @@ class Base(object):
             else:
                 toAdd = []
 
-            if numAdded == self.features:
+            if numAdded == self._featureCount:
                 lTable[rowIndex] += toAdd
             else:
                 lTable[rowIndex] += [colHold] + toAdd
@@ -4591,13 +3225,15 @@ class Base(object):
 
     def _pointNameDifference(self, other):
         """
-        Returns a set containing those pointNames in this object that are not also in the input object.
-
+        Returns a set containing those pointNames in this object that
+        are not also in the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine pointName difference")
+            msg = "Must provide another representation type to determine "
+            msg += "pointName difference"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
@@ -4605,27 +3241,32 @@ class Base(object):
 
     def _featureNameDifference(self, other):
         """
-        Returns a set containing those featureNames in this object that are not also in the input object.
-
+        Returns a set containing those featureNames in this object that
+        are not also in the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine featureName difference")
+            msg = "Must provide another representation type to determine "
+            msg += "featureName difference"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return six.viewkeys(self.featureNames) - six.viewkeys(other.featureNames)
+        return (six.viewkeys(self.featureNames)
+                - six.viewkeys(other.featureNames))
 
     def _pointNameIntersection(self, other):
         """
-        Returns a set containing only those pointNames that are shared by this object and the input object.
-
+        Returns a set containing only those pointNames that are shared
+        by this object and the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine pointName intersection")
+            msg = "Must provide another representation type to determine "
+            msg += "pointName intersection"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
@@ -4633,28 +3274,32 @@ class Base(object):
 
     def _featureNameIntersection(self, other):
         """
-        Returns a set containing only those featureNames that are shared by this object and the input object.
-
+        Returns a set containing only those featureNames that are shared
+        by this object and the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine featureName intersection")
+            msg = "Must provide another representation type to determine "
+            msg += "featureName intersection"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return six.viewkeys(self.featureNames) & six.viewkeys(other.featureNames)
-
+        return (six.viewkeys(self.featureNames)
+                & six.viewkeys(other.featureNames))
 
     def _pointNameSymmetricDifference(self, other):
         """
-        Returns a set containing only those pointNames not shared between this object and the input object.
-
+        Returns a set containing only those pointNames not shared
+        between this object and the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine pointName difference")
+            msg = "Must provide another representation type to determine "
+            msg += "pointName difference"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
@@ -4662,27 +3307,32 @@ class Base(object):
 
     def _featureNameSymmetricDifference(self, other):
         """
-        Returns a set containing only those featureNames not shared between this object and the input object.
-
+        Returns a set containing only those featureNames not shared
+        between this object and the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine featureName difference")
+            msg = "Must provide another representation type to determine "
+            msg += "featureName difference"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return six.viewkeys(self.featureNames) ^ six.viewkeys(other.featureNames)
+        return (six.viewkeys(self.featureNames)
+                ^ six.viewkeys(other.featureNames))
 
     def _pointNameUnion(self, other):
         """
-        Returns a set containing all pointNames in either this object or the input object.
-
+        Returns a set containing all pointNames in either this object or
+        the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine pointNames union")
+            msg = "Must provide another representation type to determine "
+            msg += "pointNames union"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
@@ -4690,36 +3340,40 @@ class Base(object):
 
     def _featureNameUnion(self, other):
         """
-        Returns a set containing all featureNames in either this object or the input object.
-
+        Returns a set containing all featureNames in either this object
+        or the input object.
         """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
-            raise ArgumentException("Must provide another representation type to determine featureName union")
+            msg = "Must provide another representation type to determine "
+            msg += "featureName union"
+            raise ArgumentException(msg)
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return six.viewkeys(self.featureNames) | six.viewkeys(other.featureNames)
-
+        return (six.viewkeys(self.featureNames)
+                | six.viewkeys(other.featureNames))
 
     def _equalPointNames(self, other):
         if other is None or not isinstance(other, Base):
             return False
-        return self._equalNames(self.getPointNames(), other.getPointNames())
+        return self._equalNames(self.points.getNames(),
+                                other.points.getNames())
 
     def _equalFeatureNames(self, other):
         if other is None or not isinstance(other, Base):
             return False
-        return self._equalNames(self.getFeatureNames(), other.getFeatureNames())
+        return (self._equalNames(self.features.getNames(),
+                                 other.features.getNames()))
 
     def _equalNames(self, selfNames, otherNames):
-        """Private function to determine equality of either pointNames of
-        featureNames. It ignores equality of default values, considering only
-        whether non default names consistent (position by position) and
-        uniquely positioned (if a non default name is present in both, then
-        it is in the same position in both).
-
+        """
+        Private function to determine equality of either pointNames of
+        featureNames. It ignores equality of default values, considering
+        only whether non default names consistent (position by position)
+        and uniquely positioned (if a non default name is present in
+        both, then it is in the same position in both).
         """
         if len(selfNames) != len(otherNames):
             return False
@@ -4730,8 +3384,14 @@ class Base(object):
     def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
 
         def _validateEqualNames_implementation():
-            lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
-            rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
+            if leftAxis == 'point':
+                lnames = self.points.getNames()
+            else:
+                lnames = self.features.getNames()
+            if rightAxis == 'point':
+                rnames = other.points.getNames()
+            else:
+                rnames = other.features.getNames()
             inconsistencies = self._inconsistentNames(lnames, rnames)
 
             if inconsistencies != {}:
@@ -4741,8 +3401,8 @@ class Base(object):
                     rname = '"' + rnames[i] + '"'
                     table.append([lname, str(i), rname])
 
-                msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
-                msg += "calling left." + callSym + "(right) \n"
+                msg = leftAxis + " to " + rightAxis + " name inconsistencies "
+                msg += "when calling left." + callSym + "(right) \n"
                 msg += UML.logger.tableString.tableString(table)
                 print(msg, file=sys.stderr)
                 raise ArgumentException(msg)
@@ -4760,18 +3420,16 @@ class Base(object):
             if self._featureNamesCreated() or other._pointNamesCreated():
                 _validateEqualNames_implementation()
 
-
     def _inconsistentNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
-        between the given two sets. It ignores equality of default values,
-        considering only whether non default names consistent (position by
-        position) and uniquely positioned (if a non default name is present
-        in both, then it is in the same position in both). The return value
-        is a dict between integer IDs and the pair of offending names at
-        that position in both objects.
+        between the given two sets. It ignores equality of default
+        values, considering only whether non default names consistent
+        (position by position) and uniquely positioned (if a non default
+        name is present in both, then it is in the same position in
+        both). The return value is a dict between integer IDs and the
+        pair of offending names at that position in both objects.
 
         Assumptions: the size of the two name sets is equal.
-
         """
         inconsistencies = {}
 
@@ -4798,18 +3456,16 @@ class Base(object):
 
         return inconsistencies
 
-
     def _unequalNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
-        between the given two sets. It ignores equality of default values,
-        considering only whether non default names consistent (position by
-        position) and uniquely positioned (if a non default name is present
-        in both, then it is in the same position in both). The return value
-        is a dict between integer IDs and the pair of offending names at
-        that position in both objects.
+        between the given two sets. It ignores equality of default
+        values, considering only whether non default names consistent
+        (position by position) and uniquely positioned (if a non default
+        name is present in both, then it is in the same position in
+        both). The return value is a dict between integer IDs and the
+        pair of offending names at that position in both objects.
 
         Assumptions: the size of the two name sets is equal.
-
         """
         inconsistencies = {}
 
@@ -4830,57 +3486,6 @@ class Base(object):
 
         return inconsistencies
 
-
-    def _validateReorderedNames(self, axis, callSym, other):
-        """
-        Validate axis names to check to see if they are equal ignoring order.
-        Raises an exception if the objects do not share exactly the same names,
-        or requires reordering in the presence of default names.
-        """
-        if axis == 'point':
-            lnames = self.getPointNames()
-            rnames = other.getPointNames()
-            lGetter = self.getPointIndex
-            rGetter = other.getPointIndex
-        else:
-            lnames = self.getFeatureNames()
-            rnames = other.getFeatureNames()
-            lGetter = self.getFeatureIndex
-            rGetter = other.getFeatureIndex
-
-        inconsistencies = self._inconsistentNames(lnames, rnames)
-
-        if len(inconsistencies) != 0:
-            # check for the presence of default names; we don't allow reordering
-            # in that case.
-            msgBase = "When calling caller." + callSym + "(callee) we require that the "
-            msgBase += axis + " names all contain the same names, regardless of order."
-            msg = copy.copy(msgBase)
-            msg += "However, when default names are present, we don't allow reordering "
-            msg += "to occur: either all names must be specified, or the order must be "
-            msg += "the same."
-
-            if True in [x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX for x in lnames]:
-                raise ArgumentException(msg)
-            if True in [x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX for x in rnames]:
-                raise ArgumentException(msg)
-
-            ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
-            # names are not the same.
-            if len(ldiff) != 0:
-                rdiff = numpy.setdiff1d(rnames, lnames, assume_unique=True)
-                msgBase += "Yet, the following names were unmatched (caller names "
-                msgBase += "on the left, callee names on the right):\n"
-
-                table = [['ID', 'name', '', 'ID', 'name']]
-                for i, (lname, rname) in enumerate(zip(ldiff, rdiff)):
-                    table.append([lGetter(lname), lname, "   ", rGetter(rname), rname])
-
-                msg += UML.logger.tableString.tableString(table)
-                print(msg, file=sys.stderr)
-
-                raise ArgumentException(msg)
-
     def _getPointIndex(self, identifier):
         return self._getIndex(identifier, 'point')
 
@@ -4888,40 +3493,45 @@ class Base(object):
         return self._getIndex(identifier, 'feature')
 
     def _getIndex(self, identifier, axis):
-        num = self.points if axis == 'point' else self.features
-        nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
+        if axis == 'point':
+            num = self._pointCount
+            axisObj = getattr(self, 'points')
+        else:
+            num = self._featureCount
+            axisObj = getattr(self, 'features')
         accepted = (six.string_types, int, numpy.integer)
 
         toReturn = identifier
         if num == 0:
-            msg = "There are no valid " + axis + " identifiers; this object has 0 "
-            msg += axis + "s"
+            msg = "There are no valid " + axis + "identifiers; "
+            msg += "this object has 0 " + axis + "s"
             raise ArgumentException(msg)
         if identifier is None:
             msg = "An identifier cannot be None."
             raise ArgumentException(msg)
         if not isinstance(identifier, accepted):
-            msg = "The identifier must be either a string (a valid " + axis
-            msg += " name) or an integer (python or numpy) index between 0 and "
-            msg += str(num - 1) + " inclusive. Instead we got: " + str(identifier)
+            msg = "The identifier must be either a string (a valid "
+            msg += axis + " name) or an integer (python or numpy) index "
+            msg += "between 0 and " + str(num - 1) + " inclusive. "
+            msg += "Instead we got: " + str(identifier)
             raise ArgumentException(msg)
         if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
                 toReturn = identifier
             if identifier < 0 or identifier >= num:
-                msg = "The given index " + str(identifier) + " is outside of the range "
-                msg += "of possible indices in the " + axis + " axis (0 to "
-                msg += str(num - 1) + ")."
+                msg = "The given index " + str(identifier) + " is outside of "
+                msg += "the range of possible indices in the " + axis
+                msg += " axis (0 to " + str(num - 1) + ")."
                 raise ArgumentException(msg)
         if isinstance(identifier, six.string_types):
             try:
-                toReturn = nameGetter(identifier)
+                toReturn = axisObj.getIndex(identifier)
             except KeyError:
-                msg = "The " + axis + " name '" + identifier + "' cannot be found."
+                msg = "The " + axis + " name '" + identifier
+                msg += "' cannot be found."
                 raise ArgumentException(msg)
         return toReturn
-
 
     def _nextDefaultName(self, axis):
         self._validateAxis(axis)
@@ -4952,236 +3562,6 @@ class Base(object):
             invNames.append(defaultName)
             names[defaultName] = i
 
-    def _addPointName(self, pointName):
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
-
-    def _addFeatureName(self, featureName):
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
-
-    def _addName(self, name, selfNames, selfNamesInv, axis):
-        """
-        Name the next vector outside of the current possible range on the given axis using the
-        provided name.
-
-        name may be either a string, or None if you want a default name. If the name is
-        not a string, or already being used as another name on this axis, an
-        ArgumentException will be raised.
-
-        """
-        if name is not None and not isinstance(name, six.string_types):
-            raise ArgumentException("The name must be a string")
-        if name in selfNames:
-            raise ArgumentException("This name is already in use")
-
-        if name is None:
-            name = self._nextDefaultName(axis)
-
-        self._incrementDefaultIfNeeded(name, axis)
-
-        numInAxis = len(selfNamesInv)
-        selfNamesInv.append(name)
-        selfNames[name] = numInAxis
-
-    def _removePointNameAndShift(self, toRemove):
-        """
-        Removes the specified name from pointNames, changing the indices
-        of other pointNames to fill in the missing index.
-
-        toRemove must be a non None string or integer, specifying either a current pointName
-        or the index of a current pointName in the given axis.
-
-        """
-        self._removeNameAndShift(toRemove, 'point', self.pointNames, self.pointNamesInverse)
-
-    def _removeFeatureNameAndShift(self, toRemove):
-        """
-        Removes the specified name from featureNames, changing the indices
-        of other featureNames to fill in the missing index.
-
-        toRemove must be a non None string or integer, specifying either a current featureNames
-        or the index of a current featureNames in the given axis.
-
-        """
-        self._removeNameAndShift(toRemove, 'feature', self.featureNames, self.featureNamesInverse)
-
-    def _removeNameAndShift(self, toRemove, axis, selfNames, selfNamesInv):
-        """
-        Removes the specified name from the name set for the given axis, changing the indices
-        of other names to fill in the missing index.
-
-        toRemove must be a non None string or integer, specifying either a current name
-        or the index of a current name in the given axis.
-
-        axis must be either 'point' or 'feature'
-
-        selfNames must be the names dict associated with the provided axis in this object
-
-        selfNamesInv must be the indices to names dict associated with the provided axis
-        in this object
-
-		"""
-        #this will throw the appropriate exceptions, if need be
-        index = self._getIndex(toRemove, axis)
-        name = selfNamesInv[index]
-        numInAxis = len(selfNamesInv)
-
-        del selfNames[name]
-        # remapping each index starting with the one we removed
-        for i in range(index, numInAxis - 1):
-            nextName = selfNamesInv[i + 1]
-            selfNames[nextName] = i
-
-        #delete from inverse, since list, del will deal with 'remapping'
-        del selfNamesInv[index]
-
-
-    def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
-        """
-        Changes the featureName specified by previous to the supplied input featureName.
-
-        oldIdentifier must be a non None string or integer, specifying either a current featureName
-        or the index of a current featureName. newFeatureName may be either a string not currently
-        in the featureName set, or None for an default featureName. newFeatureName may begin with the
-        default prefix
-
-        """
-        self._validateAxis(axis)
-        if axis == 'point':
-            names = self.pointNames
-            invNames = self.pointNamesInverse
-            index = self._getPointIndex(oldIdentifier)
-        else:
-            names = self.featureNames
-            invNames = self.featureNamesInverse
-            index = self._getFeatureIndex(oldIdentifier)
-
-        if newName is not None:
-            if not isinstance(newName, six.string_types):
-                raise ArgumentException("The new name must be either None or a string")
-            #			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
-            #				raise ArgumentException("Cannot manually add a featureName with the default prefix")
-        if newName in names:
-            if invNames[index] == newName:
-                return
-            raise ArgumentException("This name '" + newName + "' is already in use")
-
-        if newName is None:
-            newName = self._nextDefaultName(axis)
-
-        #remove the current featureName
-        oldName = invNames[index]
-        del names[oldName]
-
-        # setup the new featureName
-        invNames[index] = newName
-        names[newName] = index
-        self._incrementDefaultIfNeeded(newName, axis)
-
-    def _setNamesFromList(self, assignments, count, axis):
-        if axis == 'point':
-            def checkAndSet(val):
-                if val >= self._nextDefaultValuePoint:
-                    self._nextDefaultValuePoint = val + 1
-        else:
-            def checkAndSet(val):
-                if val >= self._nextDefaultValueFeature:
-                    self._nextDefaultValueFeature = val + 1
-
-        self._validateAxis(axis)
-        if assignments is None:
-            self._setAllDefault(axis)
-            return
-
-        if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large (" + str(len(assignments))
-                msg += "); this axis is empty"
-                raise ArgumentException(msg)
-            self._setNamesFromDict({}, count, axis)
-            return
-        if len(assignments) != count:
-            msg = "assignments may only be an ordered container type, with as "
-            msg += "many entries (" + str(len(assignments)) + ") as this axis "
-            msg += "is long (" + str(count) + ")"
-            raise ArgumentException(msg)
-
-        for name in assignments:
-            if name is not None and not isinstance(name, six.string_types):
-                msg = 'assignments must contain only string values'
-                raise ArgumentException(msg)
-            if name is not None and name.startswith(DEFAULT_PREFIX):
-                try:
-                    num = int(name[DEFAULT_PREFIX_LENGTH:])
-                # Case: default prefix with non-integer suffix. This cannot
-                # cause a future integer suffix naming collision, so we
-                # can ignore it.
-                except ValueError:
-                    continue
-                checkAndSet(num)
-
-        #convert to dict so we only write the checking code once
-        temp = {}
-        for index in range(len(assignments)):
-            name = assignments[index]
-            # take this to mean fill it in with a default name
-            if name is None:
-                name = self._nextDefaultName(axis)
-            if name in temp:
-                raise ArgumentException("Cannot input duplicate names: " + str(name))
-            temp[name] = index
-        assignments = temp
-
-        self._setNamesFromDict(assignments, count, axis)
-
-    def _setNamesFromDict(self, assignments, count, axis):
-        self._validateAxis(axis)
-        if assignments is None:
-            self._setAllDefault(axis)
-            return
-        if not isinstance(assignments, dict):
-            raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
-        if count == 0:
-            if len(assignments) > 0:
-                raise ArgumentException("assignments is too large; this axis is empty ")
-            if axis == 'point':
-                self.pointNames = {}
-                self.pointNamesInverse = []
-            else:
-                self.featureNames = {}
-                self.featureNamesInverse = []
-            return
-        if len(assignments) != count:
-            raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
-
-        # at this point, the input must be a dict
-        #check input before performing any action
-        for name in assignments.keys():
-            if not None and not isinstance(name, six.string_types):
-                raise ArgumentException("Names must be strings")
-            if not isinstance(assignments[name], int):
-                raise ArgumentException("Indices must be integers")
-            if assignments[name] < 0 or assignments[name] >= count:
-                countName = 'pointCount' if axis == 'point' else 'featureCount'
-                raise ArgumentException("Indices must be within 0 to self." + countName + " - 1")
-
-        reverseMap = [None] * len(assignments)
-        for name in assignments.keys():
-            self._incrementDefaultIfNeeded(name, axis)
-            reverseMap[assignments[name]] = name
-
-        # have to copy the input, could be from another object
-        if axis == 'point':
-            self.pointNames = copy.deepcopy(assignments)
-            self.pointNamesInverse = reverseMap
-        else:
-            self.featureNames = copy.deepcopy(assignments)
-            self.featureNamesInverse = reverseMap
-
-
     def _constructIndicesList(self, axis, values, argName=None):
         """
         Construct a list of indices from a valid integer (python or numpy) or
@@ -5209,10 +3589,10 @@ class Base(object):
 
         return indicesList
 
-
     def _validateAxis(self, axis):
         if axis != 'point' and axis != 'feature':
-            raise ArgumentException('axis parameter may only be "point" or "feature"')
+            msg = 'axis parameter may only be "point" or "feature"'
+            raise ArgumentException(msg)
 
     def _incrementDefaultIfNeeded(self, name, axis):
         self._validateAxis(axis)
@@ -5232,183 +3612,6 @@ class Base(object):
                 if nameNum >= self._nextDefaultValueFeature:
                     self._nextDefaultValueFeature = nameNum + 1
 
-
-    def _validateValueIsNotNone(self, name, value):
-        if value is None:
-            msg = "The argument named " + name + " must not have a value of None"
-            raise ArgumentException(msg)
-
-    def _validateValueIsUMLDataObject(self, name, value, same):
-        if not isinstance(value, UML.data.Base):
-            msg = "The argument named " + name + " must be an instance "
-            msg += "of the UML.data.Base class. The value we recieved was "
-            msg += str(value) + ", had the type " + str(type(value))
-            msg += ", and a method resolution order of "
-            msg += str(inspect.getmro(value.__class__))
-            raise ArgumentException(msg)
-
-    def _shapeCompareString(self, argName, argValue):
-        selfPoints = self.points
-        sps = "" if selfPoints == 1 else "s"
-        selfFeats = self.features
-        sfs = "" if selfFeats == 1 else "s"
-        argPoints = argValue.points
-        aps = "" if argPoints == 1 else "s"
-        argFeats = argValue.features
-        afs = "" if argFeats == 1 else "s"
-
-        ret = "Yet, " + argName + " has "
-        ret += str(argPoints) + " point" + aps + " and "
-        ret += str(argFeats) + " feature" + afs + " "
-        ret += "while the caller has "
-        ret += str(selfPoints) + " point" + sps + " and "
-        ret += str(selfFeats) + " feature" + sfs + "."
-
-        return ret
-
-    def _validateObjHasSameNumberOfFeatures(self, argName, argValue):
-        selfFeats = self.features
-        argFeats = argValue.features
-
-        if selfFeats != argFeats:
-            msg = "The argument named " + argName + " must have the same number "
-            msg += "of features as the caller object. "
-            msg += self._shapeCompareString(argName, argValue)
-            raise ArgumentException(msg)
-
-    def _validateObjHasSameNumberOfPoints(self, argName, argValue):
-        selfPoints = self.points
-        argValuePoints = argValue.points
-        if selfPoints != argValuePoints:
-            msg = "The argument named " + argName + " must have the same number "
-            msg += "of points as the caller object. "
-            msg += self._shapeCompareString(argName, argValue)
-            raise ArgumentException(msg)
-
-    def _validateEmptyNamesIntersection(self, axis, argName, argValue):
-        self._validateAxis(axis)
-        if axis == 'point':
-            intersection = self._pointNameIntersection(argValue)
-            nString = 'pointNames'
-        elif axis == 'feature':
-            intersection = self._featureNameIntersection(argValue)
-            nString = 'featureNames'
-
-        shared = []
-        if intersection:
-            for name in intersection:
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    shared.append(name)
-
-        if shared != []:
-            truncated = False
-            if len(shared) > 10:
-                full = len(shared)
-                shared = shared[:10]
-                truncated = True
-
-            msg = "The argument named " + argName + " must not share any "
-            msg += nString + " with the calling object, yet the following "
-            msg += "names occured in both: "
-            msg += UML.exceptions.prettyListString(shared)
-            if truncated:
-                msg += "... (only first 10 entries out of " + str(full)
-                msg += " total)"
-            raise ArgumentException(msg)
-
-
-    def _setAddedCountAndNames(self, axis, addedObj, insertedBefore):
-        self._validateAxis(axis)
-        if axis == 'point':
-            selfNames = self.getPointNames()
-            insertedNames = addedObj.getPointNames()
-            setSelfNames = self.setPointNames
-            self._setpointCount(self.points + addedObj.points)
-        else:
-            selfNames = self.getFeatureNames()
-            insertedNames = addedObj.getFeatureNames()
-            setSelfNames = self.setFeatureNames
-            self._setfeatureCount(self.features + addedObj.features)
-        # ensure no collision with default names
-        adjustedNames = []
-        for name in insertedNames:
-            if name.startswith(DEFAULT_PREFIX):
-                adjustedNames.append(self._nextDefaultName(axis))
-            else:
-                adjustedNames.append(name)
-        startNames = selfNames[:insertedBefore]
-        endNames = selfNames[insertedBefore:]
-
-        newNames = startNames + adjustedNames + endNames
-        setSelfNames(newNames)
-
-
-    def _alignNames(self, axis, other):
-        """
-        Sort the point or feature names of the passed object to match this object.
-        If sorting is necessary, a copy will be returned to prevent modification
-        of the passed object, otherwise the original object will be returned.
-        Assumes validation of the names has already occurred.
-        """
-        self._validateAxis(axis)
-        if axis == 'point':
-            namesCreated = self._pointNamesCreated()
-            selfNames = self.getPointNames
-            otherNames = other.getPointNames
-            def sorter(obj, names):
-                return getattr(obj, 'sortPoints')(sortHelper=names)
-        else:
-            namesCreated = self._featureNamesCreated()
-            selfNames = self.getFeatureNames
-            otherNames = other.getFeatureNames
-            def sorter(obj, names):
-                return getattr(obj, 'sortFeatures')(sortHelper=names)
-
-        # This may not look exhaustive, but because of the previous call to _validateInsertableData
-        # before this helper, most of the other cases will have already caused an exception
-        if namesCreated:
-            allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
-            reorder = selfNames() != otherNames()
-            if not allDefault and reorder:
-                # use copy when reordering so other object is not modified
-                other = other.copy()
-                sorter(other, selfNames())
-
-        return other
-
-    def _validateInsertableData(self, axis, toAdd):
-        """
-        Responsible for all the validation necessary before inserting an object
-
-        """
-        self._validateAxis(axis)
-        self._validateValueIsNotNone('toAdd', toAdd)
-        self._validateValueIsUMLDataObject('toAdd', toAdd, True)
-        if axis == 'point':
-            self._validateObjHasSameNumberOfFeatures('toAdd', toAdd)
-            # this helper ignores default names - so we can only have an intersection of
-            # names when BOTH objects have names created.
-            if self._pointNamesCreated() and toAdd._pointNamesCreated():
-                self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            # helper looks for name inconsistency that can be resolved by reordering -
-            # definitionally, if one object has all default names, there can be no
-            # inconsistency, so both objects must have names assigned for this to
-            # be relevant.
-            if self._featureNamesCreated() and toAdd._featureNamesCreated():
-                self._validateReorderedNames('feature', 'addPoints', toAdd)
-        else:
-            self._validateObjHasSameNumberOfPoints('toAdd', toAdd)
-            # this helper ignores default names - so we can only have an intersection of
-            # names when BOTH objects have names created.
-            if self._featureNamesCreated() and toAdd._featureNamesCreated():
-                self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            # helper looks for name inconsistency that can be resolved by reordering -
-            # definitionally, if one object has all default names, there can be no
-            # inconsistency, so both objects must have names assigned for this to
-            # be relevant.
-            if self._pointNamesCreated() and toAdd._pointNamesCreated():
-                self._validateReorderedNames('point', 'addFeatures', toAdd)
-
     def _validateMatPlotLibImport(self, error, name):
         if error is not None:
             msg = "The module matplotlib is required to be installed "
@@ -5419,31 +3622,6 @@ class Base(object):
 
             raise ImportError(msg)
 
-    def _validateStatisticalFunctionInputString(self, statisticsFunction):
-        acceptedPretty = [
-            'max', 'mean', 'median', 'min', 'unique count', 'proportion missing',
-            'proportion zero', 'standard deviation', 'std', 'population std',
-            'population standard deviation', 'sample std',
-            'sample standard deviation'
-        ]
-        accepted = list(map(dataHelpers.cleanKeywordInput, acceptedPretty))
-
-        msg = "The statisticsFunction must be equivaltent to one of the "
-        msg += "following: "
-        msg += str(acceptedPretty) + ", but '" + str(statisticsFunction)
-        msg += "' was given instead. Note: casing and whitespace is "
-        msg += "ignored when checking the statisticsFunction."
-
-        if not isinstance(statisticsFunction, six.string_types):
-            raise ArgumentException(msg)
-
-        cleanFuncName = dataHelpers.cleanKeywordInput(statisticsFunction)
-
-        if cleanFuncName not in accepted:
-            raise ArgumentException(msg)
-
-        return cleanFuncName
-
     def _validateRangeOrder(self, startName, startVal, endName, endVal):
         """
         Validate a range where both values are inclusive.
@@ -5452,74 +3630,104 @@ class Base(object):
             msg = "When specifying a range, the arguments were resolved to "
             msg += "having the values " + startName
             msg += "=" + str(startVal) + " and " + endName + "=" + str(endVal)
-            msg += ", yet the starting value is not allowed to be greater than "
-            msg += "the ending value (" + str(startVal) + ">" + str(endVal)
-            msg += ")"
+            msg += ", yet the starting value is not allowed to be greater "
+            msg += "than the ending value (" + str(startVal) + ">"
+            msg += str(endVal) + ")"
 
             raise ArgumentException(msg)
 
-    def _adjustCountAndNames(self, axis, other):
-        """
-        Adjust the count and names (when names have been generated) for this object,
-        removing the names that have been extracted to the other object
-        """
-        if axis == 'point':
-            self._pointCount -= other.points
-            if self._pointNamesCreated():
-                idxList= []
-                for name in other.getPointNames():
-                    idxList.append(self.pointNames[name])
-                idxList= sorted(idxList)
-                for i in range(len(idxList)):
-                    del self.pointNamesInverse[idxList[i] - i]
-                self.pointNames = {pt:idx for idx, pt in enumerate(self.pointNamesInverse)}
+    ####################
+    # Abstract Methods #
+    ####################
 
-        else:
-            self._featureCount -= other.features
-            if self._featureNamesCreated():
-                idxList= []
-                for name in other.getFeatureNames():
-                    idxList.append(self.featureNames[name])
-                idxList= sorted(idxList)
-                for i in range(len(idxList)):
-                    del self.featureNamesInverse[idxList[i] - i]
-                self.featureNames = {pt:idx for idx, pt in enumerate(self.featureNamesInverse)}
+    @abstractmethod
+    def _isIdentical_implementation(self, other):
+        pass
 
+    @abstractmethod
+    def _writeFile_implementation(self, outPath, format, includePointNames,
+                                  includeFeatureNames):
+        pass
 
-    def _validateStartEndRange(self, start, end, axisLength):
-        """check that the start and end values are valid"""
-        if start < 0 or start > axisLength:
-            msg = "start must be a valid index, in the range of possible "
-            msg += axis + 's'
-            raise ArgumentException(msg)
-        if end < 0 or end > axisLength:
-            msg = "end must be a valid index, in the range of possible "
-            msg += axis + 's'
-            raise ArgumentException(msg)
-        if start > end:
-            raise ArgumentException("The start index cannot be greater than the end index")
+    @abstractmethod
+    def _getTypeString_implementation(self):
+        pass
 
-    def _validateStructuralArguments(self, structure, axis, target, start, end,
-                                    number, randomize):
-        targetName = 'to' + structure.capitalize()
-        if target is None and start is None and end is None and number is None:
-            msg = "You must provide a value for {0}, ".format(targetName)
-            msg += " or start/end, or number."
-            raise ArgumentException(msg)
-        if number is not None and number < 1:
-            msg = "number must be greater than zero"
-            raise ArgumentException(msg)
-        if number is None and randomize:
-            msg = "randomize selects a random subset of {0}s to ".format(axis)
-            msg += "{0}. When randomize=True, the number ".format(structure)
-            msg += "argument cannot be None"
-            raise ArgumentException(msg)
-        if target is not None:
-            if start is not None or end is not None:
-                msg = "Range removal is exclusive, to use it, "
-                msg += "{0} must be None".format(targetName)
-                raise ArgumentException(msg)
+    @abstractmethod
+    def _getitem_implementation(self, x, y):
+        pass
 
+    @abstractmethod
+    def _view_implementation(self, pointStart, pointEnd, featureStart,
+                             featureEnd):
+        pass
+
+    @abstractmethod
+    def _validate_implementation(self, level):
+        pass
+
+    @abstractmethod
+    def _containsZero_implementation(self):
+        pass
+
+    @abstractmethod
+    def _transpose_implementation(self):
+        pass
+
+    @abstractmethod
+    def _referenceDataFrom_implementation(self, other):
+        pass
+
+    @abstractmethod
+    def _copyAs_implementation(self, format):
+        pass
+
+    @abstractmethod
+    def _fillWith_implementation(self, values, pointStart, featureStart,
+                                 pointEnd, featureEnd):
+        pass
+
+    @abstractmethod
+    def _flattenToOnePoint_implementation(self):
+        pass
+
+    @abstractmethod
+    def _flattenToOneFeature_implementation(self):
+        pass
+
+    @abstractmethod
+    def _unflattenFromOnePoint_implementation(self, numPoints):
+        pass
+
+    @abstractmethod
+    def _unflattenFromOneFeature_implementation(self, numFeatures):
+        pass
+
+    @abstractmethod
+    def _mul__implementation(self, other):
+        pass
+
+class BasePoints(Axis, Points):
+    def __init__(self, source, **kwds):
+        self._source = source
+        self._axis = 'point'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
+        super(BasePoints, self).__init__(**kwds)
+
+class BaseFeatures(Axis, Features):
+    def __init__(self, source, **kwds):
+        self._source = source
+        self._axis = 'feature'
+        kwds['axis'] = self._axis
+        kwds['source'] = self._source
+        super(BaseFeatures, self).__init__(**kwds)
+
+class BaseElements(Elements):
+    def __init__(self, source, **kwds):
+        self._source = source
+        kwds['source'] = self._source
+        super(BaseElements, self).__init__(**kwds)
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""
