@@ -17,9 +17,6 @@ class ElementsView(Elements):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, **kwds):
-        super(ElementsView, self).__init__(**kwds)
-
     def transform(self, toTransform, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False):
         readOnlyException("transform")

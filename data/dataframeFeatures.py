@@ -81,8 +81,7 @@ class DataFrameFeaturesView(AxisView, DataFrameFeatures):
     """
     Limit functionality of DataFrameFeatures to read-only
     """
-    def __init__(self, **kwds):
-        super(DataFrameFeaturesView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

@@ -25,7 +25,6 @@ class DataFrameAxis(Axis):
     source : UML data object
         The object containing point and feature data.
     """
-
     def _setName_implementation(self, oldIdentifier, newName):
         super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
                                                            newName)

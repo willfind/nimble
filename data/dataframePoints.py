@@ -81,8 +81,7 @@ class DataFramePointsView(AxisView, DataFramePoints):
     """
     Limit functionality of DataFramePoints to read-only
     """
-    def __init__(self, **kwds):
-        super(DataFramePointsView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

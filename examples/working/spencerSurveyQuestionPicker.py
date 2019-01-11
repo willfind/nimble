@@ -31,7 +31,7 @@ try:
     cmp(1, 1)
 except:
     from UML.data.base import cmp#python3
-from UML.data.base import cmp_to_key
+from UML.data.dataHelpers import cmp_to_key
 
 
 def rSquared(knownValues, predictedValues):
@@ -67,11 +67,11 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
         #create the features for the current labelNum, and exclude irrelevant poins
         currentFeatures = data.copy()
         currentFeatures.points.extract(functionsToExcludePoints[labelNumber]) #get rid of points that aren't relevant to this label
-        
+
         #remove all the different labels from the features
         labelsMatrix = currentFeatures.features.extract(featuresToPredict)
 
-        #get the labels we'll be predicting 
+        #get the labels we'll be predicting
         featureToPredict = featuresToPredict[labelNumber]
         currentLabels = labelsMatrix.features.copy(featureToPredict)
 
@@ -158,7 +158,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         testYs[i] = testYs[i].copy()
 
     if mode == "remove features":
-        #prevent us from modifying the original objects 
+        #prevent us from modifying the original objects
         for i in range(len(trainXs)):
             trainXs[i] = trainXs[i].copy()
             testXs[i] = testXs[i].copy()
@@ -216,20 +216,20 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 elif mode == "add features":
                     featureNameToDrop = origTrainXs[labelNum].features.getName(featureNumToDrop)
                     #if we've already added this feature, skip it
-                    if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue 
+                    if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue
                     #print "trainXWithoutFeature", trainXWithoutFeature
                     #print "origTrainXs[labelNum].features.copy(featureNumToDrop)", origTrainXs[labelNum].features.copy(featureNumToDrop)
                     trainXWithoutFeature.features.add(origTrainXs[labelNum].features.copy(featureNumToDrop))
                 else: raise Exception("Unknown mode!")
-                
+
                 algorithmName = predictionAlgorithms[labelNum]
-                if "Logistic" in algorithmName: 
+                if "Logistic" in algorithmName:
                     #C = tuple([10.0**k for k in xrange(-6, 6)])
                     C = 10**9 #large means no regularization #a large value for C results in less regularization
                     #trainXWithoutFeature.show("trainXWithoutFeature")
                     #trainXWithoutFeature.writeFile("trainXWithoutFeature_saved.csv")
                     #trainXWithoutFeature.show("trainY")
-                    #trainY.writeFile("trainY_saved.csv") 
+                    #trainY.writeFile("trainY_saved.csv")
                     #print "trainXWithoutFeature type", trainXWithoutFeature.getTypeString()
                     #print "trainXWithoutFeature type", trainY.getTypeString()
                     trainXWithoutFeature.show("trainXWithoutFeature")
@@ -246,7 +246,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 errorsForThisFeatureDrop.append(error)
 
             #if this is not a feature we're already done with
-            if len(errorsForThisFeatureDrop) > 0: 
+            if len(errorsForThisFeatureDrop) > 0:
                 #raise Exception("There were no errors recorded!" + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].features.getName(featureNumToDrop))
                 combinedErrorForFeatureDrop = numpy.mean(errorsForThisFeatureDrop)
                 if numpy.isnan(combinedErrorForFeatureDrop): raise Exception("nan error value from: " + str(errorsForThisFeatureDrop) + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].features.getName(featureNumToDrop))
@@ -304,7 +304,7 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
     for labelNum, trainX, trainY, testX, testY in zip(list(range(len(trainXs))), trainXs, trainYs, testXs, testYs):
         algorithmName = predictionAlgorithms[labelNum]
         featureToPredict = featuresToPredict[labelNum]
-        if "Logistic" in algorithmName: 
+        if "Logistic" in algorithmName:
             #C = tuple([10.0**k for k in xrange(-6, 6)])
             C = 10**9
             #error = trainAndTest(algorithmName, trainX, trainY, testX=testX, testY=testY, performanceFunction=fractionIncorrect, C=C)
@@ -402,7 +402,7 @@ def testgetBestFeaturesAndErrors():
     feature0Mean = numpy.mean(numpy.matrix(data)[:, 0])
     for row in data:
         #set p1
-        row[-2] = 10*row[0] + row[1] + 100*row[3] + noiseLevel*numpy.random.normal(0,1) 
+        row[-2] = 10*row[0] + row[1] + 100*row[3] + noiseLevel*numpy.random.normal(0,1)
         #set p2
         #if row[0] > row[3] + noiseLevel*numpy.random.uniform(0,1): row[5] = 1
         if row[3] + noiseLevel*numpy.random.normal(0,1) > feature0Mean: row[-1] = 1
@@ -411,18 +411,18 @@ def testgetBestFeaturesAndErrors():
     data.insert(0, featureNames) #put the column headers at the top of the data
     data = createData("Matrix", data, featureNames=True)
     fractionOfDataForTesting = 1.0/3.0
-    
+
     print("data\n", data)
 
     functionsToExcludePoints = [lambda r: False, lambda r: False]
     predictionAlgorithms = ["SciKitLearn.Ridge", "SciKitLearn.LogisticRegression"]
-    
+
     numFeaturesToKeep = 3
 
     trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data.copy(), fractionOfDataForTesting=fractionOfDataForTesting, featuresToPredict=featuresToPredict, functionsToExcludePoints=functionsToExcludePoints)
     #getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode, plot=False, verbose=False):
     bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features")
-    
+
     print("errorsHash:", errorsHash)
     print("parametersHash", parametersHash)
     print("bestFeatures", bestFeatures)
@@ -713,6 +713,6 @@ if __name__ == "__main__":
     if doPlot:
         pylab.show()
 
-    
-                
+
+
 

@@ -107,8 +107,6 @@ class SparseFeaturesView(AxisView, SparseFeatures):
     """
     Limit functionality of SparseFeatures to read-only
     """
-    def __init__(self, **kwds):
-        super(SparseFeaturesView, self).__init__(**kwds)
 
     #########################
     # Query implementations #

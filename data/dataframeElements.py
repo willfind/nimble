@@ -102,5 +102,4 @@ class DataFrameElementsView(ElementsView, DataFrameElements):
     """
     Limit functionality of DataFrameElements to read-only
     """
-    def __init__(self, **kwds):
-        super(DataFrameElementsView, self).__init__(**kwds)
+    pass

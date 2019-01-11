@@ -97,5 +97,4 @@ class MatrixElementsView(ElementsView, MatrixElements):
     """
     Limit functionality of MatrixElements to read-only
     """
-    def __init__(self, **kwds):
-        super(MatrixElementsView, self).__init__(**kwds)
+    pass

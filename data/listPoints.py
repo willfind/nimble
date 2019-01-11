@@ -91,8 +91,7 @@ class ListPointsView(AxisView, ListPoints):
     """
     Limit functionality of ListPoints to read-only
     """
-    def __init__(self, **kwds):
-        super(ListPointsView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

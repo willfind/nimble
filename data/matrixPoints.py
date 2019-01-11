@@ -83,8 +83,7 @@ class MatrixPointsView(AxisView, MatrixPoints):
     """
     Limit functionality of MatrixPoints to read-only
     """
-    def __init__(self, **kwds):
-        super(MatrixPointsView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

@@ -22,9 +22,6 @@ class AxisView(Axis):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, **kwds):
-        super(AxisView, self).__init__(**kwds)
-
     def _getNames(self):
         if isinstance(self, Points):
             start = self._source._pStart

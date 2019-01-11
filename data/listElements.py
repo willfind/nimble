@@ -92,5 +92,4 @@ class ListElementsView(ElementsView, ListElements):
     """
     Limit functionality of ListElements to read-only
     """
-    def __init__(self, **kwds):
-        super(ListElementsView, self).__init__(**kwds)
+    pass

@@ -188,5 +188,4 @@ class SparseElementsView(ElementsView, SparseElements):
     """
     Limit functionality of SparseElements to read-only
     """
-    def __init__(self, **kwds):
-        super(SparseElementsView, self).__init__(**kwds)
+    pass

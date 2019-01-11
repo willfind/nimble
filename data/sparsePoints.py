@@ -106,8 +106,6 @@ class SparsePointsView(AxisView, SparsePoints):
     """
     Limit functionality of SparsePoints to read-only
     """
-    def __init__(self, **kwds):
-        super(SparsePointsView, self).__init__(**kwds)
 
     #########################
     # Query implementations #

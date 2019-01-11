@@ -90,8 +90,7 @@ class ListFeaturesView(AxisView, ListFeatures):
     """
     Limit functionality of ListFeatures to read-only
     """
-    def __init__(self, **kwds):
-        super(ListFeaturesView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

@@ -3708,16 +3708,13 @@ class Base(object):
         pass
 
 class BasePoints(Axis, Points):
-    def __init__(self, **kwds):
-        super(BasePoints, self).__init__(**kwds)
+    pass
 
 class BaseFeatures(Axis, Features):
-    def __init__(self, **kwds):
-        super(BaseFeatures, self).__init__(**kwds)
+    pass
 
 class BaseElements(Elements):
-    def __init__(self, **kwds):
-        super(BaseElements, self).__init__(**kwds)
+    pass
 
 def cmp(x, y):
     if x < y:
