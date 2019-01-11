@@ -22,12 +22,9 @@ class MatrixAxis(Axis):
 
     Parameters
     ----------
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, **kwds):
-        super(MatrixAxis, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #

@@ -35,17 +35,14 @@ class Axis(object):
     ----------
     source : UML data object
         The object containing point and feature data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
+    def __init__(self, source):
         self._source = source
         if isinstance(self, Points):
             self._axis = 'point'
         else:
             self._axis = 'feature'
-        super(Axis, self).__init__(**kwds)
+        super(Axis, self).__init__()
 
     def __iter__(self):
         return AxisIterator(self)

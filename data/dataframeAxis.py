@@ -22,12 +22,9 @@ class DataFrameAxis(Axis):
 
     Parameters
     ----------
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, **kwds):
-        super(DataFrameAxis, self).__init__(**kwds)
 
     def _setName_implementation(self, oldIdentifier, newName):
         super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
