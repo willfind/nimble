@@ -523,7 +523,6 @@ class Base(object):
         --------
         TODO
         """
-
         def findKey1(point, by):#if by is a string or int
             return point[by]
 
@@ -599,7 +598,6 @@ class Base(object):
 
         return uniqueCount
 
-    @logCapture
     def hashCode(self):
         """
         Returns a hash for this matrix.
@@ -627,7 +625,7 @@ class Base(object):
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
 
-    def isApproximatelyEqual(self, other, useLog=None):
+    def isApproximatelyEqual(self, other):
         """
         Determine if the data in both objects is likely the same.
 
@@ -800,7 +798,7 @@ class Base(object):
     ###   Subclass implemented information querying functions   ###
     ###############################################################
     ###############################################################
-    @logCapture
+
     def isIdentical(self, other):
         if not self._equalFeatureNames(other):
             return False
@@ -809,7 +807,6 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
-    @logCapture
     def writeFile(self, outPath, format=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
@@ -1244,7 +1241,6 @@ class Base(object):
 
         self._validate_implementation(level)
 
-    @logCapture
     def containsZero(self):
         """
         Evaluate if the object contains one or more zero values.
@@ -1473,6 +1469,7 @@ class Base(object):
         print(context)
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
+
 
     def plot(self, outPath=None, includeColorbar=False):
         self._plot(outPath, includeColorbar)
