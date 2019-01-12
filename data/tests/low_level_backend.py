@@ -15,7 +15,7 @@ points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
-points.getIndices, features.getIndices, getIndicesList
+points.getIndices, features.getIndices, constructIndicesList
 
 """
 
@@ -33,7 +33,7 @@ from UML.data import available
 from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
-from UML.data.dataHelpers import getIndicesList
+from UML.data.dataHelpers import constructIndicesList
 from nose.tools import *
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
@@ -1046,10 +1046,10 @@ class LowLevelBackend(object):
 
 
     #########################
-    # getIndicesList #
+    # constructIndicesList #
     #########################
 
-    def getIndicesList_backend(self, container):
+    def constructIndicesList_backend(self, container):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
@@ -1063,47 +1063,47 @@ class LowLevelBackend(object):
         strFts1D = container(['f2', 'f3'])
         mixFts1D = container([1, 'f3'])
 
-        assert getIndicesList(toTest, 'point', intPts1D) == expected
-        assert getIndicesList(toTest, 'point', strPts1D) == expected
-        assert getIndicesList(toTest, 'point', mixPts1D) == expected
-        assert getIndicesList(toTest, 'feature', intFts1D) == expected
-        assert getIndicesList(toTest, 'feature', strFts1D) == expected
-        assert getIndicesList(toTest, 'feature', mixFts1D) == expected
+        assert constructIndicesList(toTest, 'point', intPts1D) == expected
+        assert constructIndicesList(toTest, 'point', strPts1D) == expected
+        assert constructIndicesList(toTest, 'point', mixPts1D) == expected
+        assert constructIndicesList(toTest, 'feature', intFts1D) == expected
+        assert constructIndicesList(toTest, 'feature', strFts1D) == expected
+        assert constructIndicesList(toTest, 'feature', mixFts1D) == expected
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
     def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
-        getIndicesList(toTest, ['p1', 'p2', 'p3'])
+        constructIndicesList(toTest, ['p1', 'p2', 'p3'])
 
-    def testgetIndicesList_pythonList(self):
-        self.getIndicesList_backend(lambda lst: lst)
+    def testconstructIndicesList_pythonList(self):
+        self.constructIndicesList_backend(lambda lst: lst)
 
-    def testgetIndicesList_pythonTuple(self):
-        self.getIndicesList_backend(lambda lst: tuple(lst))
+    def testconstructIndicesList_pythonTuple(self):
+        self.constructIndicesList_backend(lambda lst: tuple(lst))
 
-    def testgetIndicesList_pythonGenerator(self):
-        self.getIndicesList_backend(lambda lst: (val for val in lst))
+    def testconstructIndicesList_pythonGenerator(self):
+        self.constructIndicesList_backend(lambda lst: (val for val in lst))
 
-    def testgetIndicesList_UMLObjects(self):
+    def testconstructIndicesList_UMLObjects(self):
         for retType in available:
-            self.getIndicesList_backend(
+            self.constructIndicesList_backend(
                 lambda lst: createData(retType, lst, elementType=object))
 
-    def testgetIndicesList_numpyArray(self):
-        self.getIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
+    def testconstructIndicesList_numpyArray(self):
+        self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
 
-    def testgetIndicesList_pandasSeries(self):
-        self.getIndicesList_backend(lambda lst: pandas.Series(lst))
+    def testconstructIndicesList_pandasSeries(self):
+        self.constructIndicesList_backend(lambda lst: pandas.Series(lst))
 
-    def testgetIndicesList_handmadeIterator(self):
-        self.getIndicesList_backend(lambda lst: SimpleIterator(*lst))
+    def testconstructIndicesList_handmadeIterator(self):
+        self.constructIndicesList_backend(lambda lst: SimpleIterator(*lst))
 
-    def testgetIndicesList_handmadeGetItemOnly(self):
-        self.getIndicesList_backend(lambda lst: GetItemOnly(*lst))
+    def testconstructIndicesList_handmadeGetItemOnly(self):
+        self.constructIndicesList_backend(lambda lst: GetItemOnly(*lst))
 
-    def testgetIndicesList_singleInteger(self):
+    def testconstructIndicesList_singleInteger(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
@@ -1111,10 +1111,10 @@ class LowLevelBackend(object):
 
         index = 2
 
-        assert getIndicesList(toTest, 'point', index) == expected
-        assert getIndicesList(toTest, 'feature', index) == expected
+        assert constructIndicesList(toTest, 'point', index) == expected
+        assert constructIndicesList(toTest, 'feature', index) == expected
 
-    def testgetIndicesList_singleString(self):
+    def testconstructIndicesList_singleString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
@@ -1123,10 +1123,10 @@ class LowLevelBackend(object):
         ptIndex = 'p3'
         ftIndex = 'f3'
 
-        assert getIndicesList(toTest, 'point', ptIndex) == expected
-        assert getIndicesList(toTest, 'feature', ftIndex) == expected
+        assert constructIndicesList(toTest, 'point', ptIndex) == expected
+        assert constructIndicesList(toTest, 'feature', ftIndex) == expected
 
-    def testgetIndicesList_pythonRange(self):
+    def testconstructIndicesList_pythonRange(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
@@ -1134,100 +1134,100 @@ class LowLevelBackend(object):
 
         testRange = range(1,3)
 
-        assert getIndicesList(toTest, 'point', testRange) == expected
-        assert getIndicesList(toTest, 'feature', testRange) == expected
+        assert constructIndicesList(toTest, 'point', testRange) == expected
+        assert constructIndicesList(toTest, 'feature', testRange) == expected
 
     @raises(ArgumentException)
-    def testgetIndicesList_singleFloat(self):
+    def testconstructIndicesList_singleFloat(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         ptIndex = 2.0
 
-        getIndicesList(toTest, 'point', ptIndex)
+        constructIndicesList(toTest, 'point', ptIndex)
 
     @raises(ArgumentException)
-    def testgetIndicesList_floatIteratable(self):
+    def testconstructIndicesList_floatIteratable(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         ftIndex = [2.0]
 
-        getIndicesList(toTest, 'feature', ftIndex)
+        constructIndicesList(toTest, 'feature', ftIndex)
 
     @raises(ArgumentException)
-    def testgetIndicesList_floatInList(self):
+    def testconstructIndicesList_floatInList(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         ptIndex = [0, 'p2', 2.0]
 
-        getIndicesList(toTest, 'point', ptIndex)
+        constructIndicesList(toTest, 'point', ptIndex)
 
     @raises(ArgumentException)
-    def testgetIndicesList_InvalidIndexInteger(self):
+    def testconstructIndicesList_InvalidIndexInteger(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         ftIndex = [2, 3]
 
-        getIndicesList(toTest, 'feature', ftIndex)
+        constructIndicesList(toTest, 'feature', ftIndex)
 
     @raises(ArgumentException)
-    def testgetIndicesList_InvalidIndexString(self):
+    def testconstructIndicesList_InvalidIndexString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         ftIndex = ['f3', 'f4']
 
-        getIndicesList(toTest, 'feature', ftIndex)
+        constructIndicesList(toTest, 'feature', ftIndex)
 
     @raises(ArgumentException)
-    def testgetIndicesList_handmadeNotIterable(self):
-        self.getIndicesList_backend(lambda lst: NotIterable(*lst))
+    def testconstructIndicesList_handmadeNotIterable(self):
+        self.constructIndicesList_backend(lambda lst: NotIterable(*lst))
 
     @raises(ArgumentException)
-    def testgetIndicesList_numpyMatrix(self):
-        self.getIndicesList_backend(lambda lst: numpy.matrix(lst))
+    def testconstructIndicesList_numpyMatrix(self):
+        self.constructIndicesList_backend(lambda lst: numpy.matrix(lst))
 
     @raises(ArgumentException)
-    def testgetIndicesList_pandasDataFrame(self):
-        self.getIndicesList_backend(lambda lst: pandas.DataFrame(lst))
+    def testconstructIndicesList_pandasDataFrame(self):
+        self.constructIndicesList_backend(lambda lst: pandas.DataFrame(lst))
 
     @raises(ArgumentException)
-    def testgetIndicesList_handmade2DOne(self):
+    def testconstructIndicesList_handmade2DOne(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         list2D = [['f1','f2']]
 
-        getIndicesList(toTest, 'feature', list2D)
+        constructIndicesList(toTest, 'feature', list2D)
 
     @raises(ArgumentException)
-    def testgetIndicesList_handmade2DTwo(self):
+    def testconstructIndicesList_handmade2DTwo(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         array2D = numpy.array([[1,2,3],[4,5,6]])
 
-        getIndicesList(toTest, 'feature', array2D)
+        constructIndicesList(toTest, 'feature', array2D)
 
     @raises(ArgumentException)
-    def testgetIndicesList_handmade2DThree(self):
+    def testconstructIndicesList_handmade2DThree(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
         iter2D = SimpleIterator([1,'p2'])
 
-        getIndicesList(toTest, 'point', iter2D)
+        constructIndicesList(toTest, 'point', iter2D)
 
     ########################
     # inheritBaseDocstring #

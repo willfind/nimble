@@ -426,7 +426,7 @@ def valuesToPythonList(values, argName):
 
     return valuesList
 
-def getIndicesList(obj, axis, values, argName=None):
+def constructIndicesList(obj, axis, values, argName=None):
     """
     Construct a list of indices from a valid integer (python or numpy) or
     string, or an iterable, list-like container of valid integers and/or

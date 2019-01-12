@@ -21,7 +21,7 @@ from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
-from .dataHelpers import valuesToPythonList, getIndicesList
+from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString
 
 class Axis(object):
@@ -239,7 +239,7 @@ class Axis(object):
             sortBy = axisObj._getIndex(sortBy)
 
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            indices = getIndicesList(self._source, self._axis, sortHelper)
+            indices = constructIndicesList(self._source, self._axis, sortHelper)
             if len(indices) != axisCount:
                 msg = "This object contains {0} {1}s, "
                 msg += "but sortHelper has {2} identifiers"
@@ -370,7 +370,7 @@ class Axis(object):
         if function is None:
             raise ArgumentException("function must not be None")
         if limitTo is not None:
-            limitTo = getIndicesList(self._source, self._axis, limitTo)
+            limitTo = constructIndicesList(self._source, self._axis, limitTo)
 
         self._transform_implementation(function, limitTo)
 
@@ -383,7 +383,7 @@ class Axis(object):
     def _calculate(self, function, limitTo):
         if limitTo is not None:
             limitTo = copy.copy(limitTo)
-            limitTo = getIndicesList(self._source, self._axis, limitTo)
+            limitTo = constructIndicesList(self._source, self._axis, limitTo)
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperActionException(msg)
@@ -1081,7 +1081,7 @@ class Axis(object):
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
             argName = 'to' + structure.capitalize()
-            targetList = getIndicesList(self._source, axis, target, argName)
+            targetList = constructIndicesList(self._source, axis, target, argName)
         # boolean function
         elif target is not None:
             # construct list from function
