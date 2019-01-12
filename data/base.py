@@ -1151,14 +1151,12 @@ class Base(object):
         if pointStart is None:
             pointStart = 0
         else:
-            axisObj = self._getAxis('point')
-            pointStart = axisObj.getIndex(pointStart)
+            pointStart = self.points.getIndex(pointStart)
 
         if pointEnd is None:
             pointEnd = self._pointCount
         else:
-            axisObj = self._getAxis('point')
-            pointEnd = axisObj.getIndex(pointEnd)
+            pointEnd = self.points.getIndex(pointEnd)
             # this is the only case that could be problematic and needs
             # checking
             self._validateRangeOrder("pointStart", pointStart,
@@ -1169,14 +1167,12 @@ class Base(object):
         if featureStart is None:
             featureStart = 0
         else:
-            axisObj = self._getAxis('feature')
-            featureStart = axisObj.getIndex(featureStart)
+            featureStart = self.features.getIndex(featureStart)
 
         if featureEnd is None:
             featureEnd = self._featureCount
         else:
-            axisObj = self._getAxis('feature')
-            featureEnd = axisObj.getIndex(featureEnd)
+            featureEnd = self.features.getIndex(featureEnd)
             # this is the only case that could be problematic and needs
             # checking
             self._validateRangeOrder("featureStart", featureStart,

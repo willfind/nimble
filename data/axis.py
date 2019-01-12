@@ -272,11 +272,9 @@ class Axis(object):
     #     # TODO: flatten nameless Objects without the need to generate default
     #     # names for them.
     #     if not self._source._pointNamesCreated():
-    #         axisObj = self._source._getAxis('point')
-    #         axisObj._setAllDefault()
+    #         self._source.points._setAllDefault()
     #     if not self._source._featureNamesCreated():
-    #         axisObj = self._source._getAxis('feature')
-    #         axisObj._setAllDefault()
+    #         self._source.features._setAllDefault()
     #
     #     self._flattenToOne_implementation()
     #
@@ -339,11 +337,9 @@ class Axis(object):
     #         raise ArgumentException(msg)
     #
     #     if not self._source._pointNamesCreated():
-    #         axisObj = self._source._getAxis('point')
-    #         axisObj._setAllDefault()
+    #         self._source.points._setAllDefault()
     #     if not self._source._featureNamesCreated():
-    #         axisObj = self._source._getAxis('feature')
-    #         axisObj._setAllDefault()
+    #         self._source.features._setAllDefault()
     #
     #     self._unflattenFromOne_implementation(divideInto)
     #     ret = self._unflattenNames(divideInto)
