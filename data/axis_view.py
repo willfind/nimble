@@ -4,7 +4,6 @@ base class for read only axis views of data objects.
 """
 from __future__ import absolute_import
 
-from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 from .base_view import readOnlyException

@@ -161,10 +161,9 @@ class Axis(object):
 
     def _hasName(self, name):
         try:
-            self._source.getIndex(name)
+            self._getIndex(name)
             return True
-        # keyError if not in dict, TypeError if names is None
-        except (KeyError, TypeError):
+        except ArgumentException:
             return False
 
     #########################
@@ -1055,12 +1054,11 @@ class Axis(object):
                                    randomize=False):
         axis = self._axis
         axisLength = len(self)
+        hasNameChecker1 = self._hasName
         if axis == 'point':
-            hasNameChecker1 = self._source.hasPointName
-            hasNameChecker2 = self._source.hasFeatureName
+            hasNameChecker2 = self._source.features._hasName
         else:
-            hasNameChecker1 = self._source.hasFeatureName
-            hasNameChecker2 = self._source.hasPointName
+            hasNameChecker2 = self._source.points._hasName
 
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)

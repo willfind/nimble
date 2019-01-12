@@ -346,20 +346,6 @@ class Base(object):
         """Returns True if self.name has a default value"""
         return self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 
-    def hasPointName(self, name):
-        try:
-            self.points.getIndex(name)
-            return True
-        except ArgumentException:
-            return False
-
-    def hasFeatureName(self, name):
-        try:
-            self.features.getIndex(name)
-            return True
-        except ArgumentException:
-            return False
-
     ###########################
     # Higher Order Operations #
     ###########################
