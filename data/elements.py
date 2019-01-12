@@ -11,7 +11,7 @@ import six
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from . import dataHelpers
-from .dataHelpers import valuesToPythonList
+from .dataHelpers import valuesToPythonList, getIndicesList
 
 class Elements(object):
     """
@@ -96,9 +96,9 @@ class Elements(object):
         TODO
         """
         if points is not None:
-            points = self._source._constructIndicesList('point', points)
+            points = getIndicesList(self._source, 'point', points)
         if features is not None:
-            features = self._source._constructIndicesList('feature', features)
+            features = getIndicesList(self._source, 'feature', features)
 
         self._transform_implementation(toTransform, points, features,
                                        preserveZeros, skipNoneReturnValues)
@@ -158,9 +158,9 @@ class Elements(object):
             oneArg = True
 
         if points is not None:
-            points = self._source._constructIndicesList('point', points)
+            points = getIndicesList(self._source, 'point', points)
         if features is not None:
-            features = self._source._constructIndicesList('feature', features)
+            features = getIndicesList(self._source, 'feature', features)
 
         if outputType is not None:
             optType = outputType

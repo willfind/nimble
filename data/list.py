@@ -407,15 +407,6 @@ class List(Base):
                 # we only want to change how List and pythonlist copying is
                 # done we also temporarily convert self.data to a python list
                 # for copyAs
-                if self._pointNamesCreated():
-                    pNames = self.points.getNames()
-                else:
-                    pNames = None
-                if self._featureNamesCreated():
-                    fNames = self.features.getNames()
-                else:
-                    fNames = None
-
                 if ((len(self.points) == 0 or len(self.features) == 0)
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
@@ -437,8 +428,9 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm, pointNames=pNames,
-                                featureNames=fNames)
+                    return List(listForm,
+                                pointNames=self.points._getNamesNoGeneration(),
+                                featureNames=self.features._getNamesNoGeneration())
                 else:
                     return listForm
 

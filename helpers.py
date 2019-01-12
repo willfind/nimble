@@ -618,7 +618,7 @@ def initDataObject(
     if keepPoints != 'all':
         cleaned = []
         for val in keepPoints:
-            converted = ret._getPointIndex(val)
+            converted = ret.points.getIndex(val)
             if converted not in cleaned:
                 cleaned.append(converted)
         if len(cleaned) == len(ret.points):
@@ -629,7 +629,7 @@ def initDataObject(
     if keepFeatures != 'all':
         cleaned = []
         for val in keepFeatures:
-            converted = ret._getFeatureIndex(val)
+            converted = ret.features.getIndex(val)
             if converted not in cleaned:
                 cleaned.append(converted)
 

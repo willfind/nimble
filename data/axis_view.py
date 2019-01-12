@@ -4,6 +4,10 @@ base class for read only axis views of data objects.
 """
 from __future__ import absolute_import
 
+import six
+import numpy
+
+from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 from .base_view import readOnlyException
@@ -35,15 +39,14 @@ class AxisView(Axis):
         if isinstance(self, Points):
             start = self._source._pStart
             end = self._source._pEnd
+            if not self._namesCreated():
+                self._source._source.points._setAllDefault()
+            namesList = self._source._source.pointNamesInverse
         else:
             start = self._source._fStart
             end = self._source._fEnd
-
-        if not self._namesCreated():
-            self._source._source._setAllDefault(self._axis)
-        if isinstance(self, Points):
-            namesList = self._source._source.pointNamesInverse
-        else:
+            if not self._namesCreated():
+                self._source._source.features._setAllDefault()
             namesList = self._source._source.featureNamesInverse
 
         return namesList[start:end]
@@ -51,7 +54,10 @@ class AxisView(Axis):
     def _getName(self, index):
         return self._getNames()[index]
 
-    def _getIndex(self, name):
+    def _getIndices(self, names):
+        return [self._getIndex(n) for n in names]
+
+    def _getIndexByName(self, name):
         if isinstance(self, Points):
             start = self._source._pStart
             end = self._source._pEnd
@@ -65,8 +71,11 @@ class AxisView(Axis):
         else:
             raise KeyError()
 
-    def _getIndices(self, names):
-        return [self._getIndex(n) for n in names]
+    def _namesCreated(self):
+        if isinstance(self, Points):
+            return not self._source._source.pointNames is None
+        else:
+            return not self._source._source.featureNames is None
 
     ####################################
     # Low Level Operations, Disallowed #

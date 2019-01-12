@@ -14,6 +14,9 @@ from six.moves import range
 import numpy
 
 from UML.exceptions import ArgumentException
+from UML import importModule
+
+pd = importModule('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -422,3 +425,31 @@ def valuesToPythonList(values, argName):
         raise ArgumentException(msg)
 
     return valuesList
+
+def getIndicesList(obj, axis, values, argName=None):
+    """
+    Construct a list of indices from a valid integer (python or numpy) or
+    string, or an iterable, list-like container of valid integers and/or
+    strings
+
+    """
+    if argName is None:
+        argName = axis + 's'
+    # pandas DataFrames are iterable but do not iterate through the values
+    if pd and isinstance(values, pd.DataFrame):
+        msg = "A pandas DataFrame object is not a valid input "
+        msg += "for '{0}'. ".format(argName)
+        msg += "Only one-dimensional objects are accepted."
+        raise ArgumentException(msg)
+
+    valuesList = valuesToPythonList(values, argName)
+    try:
+        axisObj = obj._getAxis(axis)
+        indicesList = [axisObj.getIndex(val) for val in valuesList]
+    except ArgumentException as ae:
+        msg = "Invalid value for the argument '{0}'. ".format(argName)
+        # add more detail to msg; slicing to exclude quotes
+        msg += str(ae)[1:-1]
+        raise ArgumentException(msg)
+
+    return indicesList
