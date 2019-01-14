@@ -1237,10 +1237,11 @@ class Axis(object):
             funcName = 'features.add'
 
         if objOffAxisLen != addOffAxisLen:
-            msg = "The argument 'toAdd' must have the same number of {axis}s "
-            msg += "as the caller object. This object contains {objCount} "
-            msg += "{axis}s and toAdd contains {addCount} {axis}s."
-            msg = msg.format(axis=self._axis, objCount=objOffAxisLen,
+            msg = "The argument 'toAdd' must have the same number of "
+            msg += "{offAxis}s as the caller object. This object contains "
+            msg += "{objCount} {offAxis}s and toAdd contains {addCount} "
+            msg += "{offAxis}s."
+            msg = msg.format(offAxis=offAxis, objCount=objOffAxisLen,
                              addCount=addOffAxisLen)
             raise ArgumentException(msg)
 

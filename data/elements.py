@@ -171,7 +171,10 @@ class Elements(object):
         if oneArg:
             if not preserveZeros:
                 # check if the function preserves zero values
-                preserveZeros = function(0) == 0
+                try:
+                    preserveZeros = function(0) == 0
+                except Exception:
+                    preserveZeros = False
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
