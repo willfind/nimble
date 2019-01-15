@@ -116,3 +116,18 @@ class AxisView(Axis):
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None):
         readOnlyException('normalize')
+
+    # TODO Need separate PointsView and FeaturesView objects for these
+    # This will also allow for using the wrapper to inherit the correct
+    # documentation.
+
+    def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
+                                  featureForValues):
+        readOnlyException('splitByCollapsingFeatures')
+
+    def combineByExpandingFeatures(self, featureWithFeatureNames,
+                                   featureWithValues):
+        readOnlyException('combineByExpandingFeatures')
+
+    def splitByParsing(self, feature, rule, resultingNames):
+        readOnlyException('splitByParsing')

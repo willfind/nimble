@@ -429,7 +429,8 @@ def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
                                    numRetPoints, numRetFeatures):
     """
     Helper function for modifying the underlying data for
-    splitPointsByCollapsingFeatures. Used in all non-sparse implementations.
+    points.splitByCollapsingFeatures. Used in all non-sparse
+    implementations.
     """
     fill = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
     fill[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
@@ -447,7 +448,8 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
                                   numRetFeatures):
     """
     Helper function for modifying the underlying data for
-    combinePointsByExpandingFeatures. Used in all non-sparse implementations.
+    combinePointsByExpandingFeatures. Used in all non-sparse
+    implementations.
     """
     fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
                        dtype=numpy.object_)

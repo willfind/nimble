@@ -246,21 +246,6 @@ class BaseView(Base):
     def unflattenFromOneFeature(self, numFeatures):
         readOnlyException("unflattenFromOneFeature")
 
-    @exception_docstring
-    def splitPointsByCollapsingFeatures(self, featuresToCollapse,
-                                        featureForNames, featureForValues):
-        readOnlyException("splitPointsByCollapsingFeatures")
-
-    @exception_docstring
-    def combinePointsByExpandingFeatures(self, featureWithFeatureNames,
-                                         featureWithValues):
-        readOnlyException("combinePointsByExpandingFeatures")
-
-    @exception_docstring
-    def splitFeatureByParsing(self, feature, rule, resultingNames):
-        readOnlyException("splitFeatureByParsing")
-
-
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###

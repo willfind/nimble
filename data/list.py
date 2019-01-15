@@ -21,8 +21,6 @@ from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import fillArrayWithCollapsedFeatures
-from .dataHelpers import fillArrayWithExpandedFeatures
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -386,51 +384,6 @@ class List(Base):
 
         self.data = result
         self._numFeatures = numFeatures
-
-    def _splitPointsByCollapsingFeatures_implementation(self,
-            featuresToCollapse, collapseIndices, retainIndices,
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = []
-        retainData = []
-        for pt in self.data:
-            collapseFeatures = []
-            retainFeatures = []
-            for idx in collapseIndices:
-                collapseFeatures.append(pt[idx])
-            for idx in retainIndices:
-                retainFeatures.append(pt[idx])
-            collapseData.append(collapseFeatures)
-            retainData.append(retainFeatures)
-
-        tmpData = fillArrayWithCollapsedFeatures(
-            featuresToCollapse, retainData, numpy.array(collapseData),
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
-
-        self.data = tmpData.tolist()
-        self._numFeatures = numRetFeatures
-
-    def _combinePointsByExpandingFeatures_implementation(self,
-            uniqueDict, namesIdx, uniqueNames, numRetFeatures):
-        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
-
-        self.data = tmpData.tolist()
-        self._numFeatures = numRetFeatures
-
-    def _splitFeatureByParsing_implementation(self,
-            featureIndex, splitList, numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self.points), numRetFeatures), dtype=numpy.object_)
-
-        tmpData[:,:featureIndex] = [ft[:featureIndex] for ft in self.data]
-        for i in range(numResultingFts):
-            newFeat = []
-            for lst in splitList:
-                newFeat.append(lst[i])
-            tmpData[:,featureIndex + i] = newFeat
-        tmpData[:,featureIndex + numResultingFts:] = [ft[featureIndex + 1:] for ft in self.data]
-
-        self.data = tmpData.tolist()
-        self._numFeatures = numRetFeatures
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]

@@ -19,8 +19,6 @@ from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import fillArrayWithCollapsedFeatures
-from .dataHelpers import fillArrayWithExpandedFeatures
 
 scipy = UML.importModule('scipy.io')
 
@@ -256,39 +254,6 @@ class Matrix(Base):
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         numPoints = len(self.points) // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
-
-    def _splitPointsByCollapsingFeatures_implementation(self,
-            featuresToCollapse, collapseIndices, retainIndices,
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = self.data[:, collapseIndices]
-        retainData = self.data[:, retainIndices]
-
-        tmpData = fillArrayWithCollapsedFeatures(
-            featuresToCollapse, retainData, collapseData, currNumPoints,
-            currFtNames, numRetPoints, numRetFeatures)
-
-        self.data = numpy.matrix(tmpData)
-
-    def _combinePointsByExpandingFeatures_implementation(self,
-            uniqueDict, namesIdx, uniqueNames, numRetFeatures):
-        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
-
-        self.data = numpy.matrix(tmpData)
-
-    def _splitFeatureByParsing_implementation(self,
-            featureIndex, splitList, numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self.points), numRetFeatures), dtype=numpy.object_)
-
-        tmpData[:,:featureIndex] = self.data[:, :featureIndex]
-        for i in range(numResultingFts):
-            newFeat = []
-            for lst in splitList:
-                newFeat.append(lst[i])
-            tmpData[:,featureIndex + i] = newFeat
-        tmpData[:,featureIndex + numResultingFts:] = self.data[:, featureIndex + 1:]
-
-        self.data = numpy.matrix(tmpData)
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]

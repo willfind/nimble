@@ -15,7 +15,8 @@ isApproximatelyEqual, trainAndTestSets
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
 points.normalize, features.normalize, points.fill, features.fill,
-fillUsingAllData
+fillUsingAllData, points.splitByCollapsingFeatures,
+points.combineByExpandingFeatures, features.splitByParsing
 """
 
 from __future__ import absolute_import
@@ -2206,11 +2207,11 @@ class HighLevelModifying(DataTestObject):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    ###################################
-    # splitPointsByCollapsingFeatures #
-    ###################################
+    ####################################
+    # points.splitByCollapsingFeatures #
+    ####################################
 
-    def test_splitPointsByCollapsingFeatures_sequentialFeatures(self):
+    def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
         ptNames = ["0", "1", "2"]
         ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
@@ -2231,20 +2232,20 @@ class HighLevelModifying(DataTestObject):
         nameFeatureValues = "ftValues"
         test0 = toTest.copy()
         toCollapse = ["coll0", "coll1", "coll2", "coll3"]
-        test0.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test0 == exp
 
         test1 = toTest.copy()
         toCollapse = [2, 3, 4, 5]
-        test1.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test1 == exp
 
         test2 = toTest.copy()
         toCollapse = [2, "coll1", 4, "coll3"]
-        test2.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test2 == exp
 
-    def test_splitPointsByCollapsingFeatures_nonSequentialFeatures(self):
+    def test_points_splitByCollapsingFeatures_nonSequentialFeatures(self):
         data = [[1,0,2,0,3,4], [5,1,6,1,7,8], [-1,2,-2,2,-3,-4]]
         ptNames = ["0", "1", "2"]
         ftNames = ["coll0", "ret0", "coll1", "ret1", "coll2", "coll3"]
@@ -2265,20 +2266,20 @@ class HighLevelModifying(DataTestObject):
         nameFeatureValues = "ftValues"
         test0 = toTest.copy()
         toCollapse = ["coll3", "coll1", "coll2", "coll0"]
-        test0.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test0 == exp
 
         test1 = toTest.copy()
         toCollapse = [5, 2, 4, 0]
-        test1.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test1 == exp
 
         test2 = toTest.copy()
         toCollapse = [5, "coll1", "coll2", 0]
-        test2.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test2 == exp
 
-    def test_splitPointsByCollapsingFeatures_noPointNames(self):
+    def test_points_splitByCollapsingFeatures_noPointNames(self):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
         ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
 
@@ -2292,10 +2293,10 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor(expData, featureNames=expFNames)
 
         toCollapse = ["coll0", "coll1", "coll2", "coll3"]
-        toTest.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert toTest == exp
 
-    def test_splitPointsByCollapsingFeatures_noNames(self):
+    def test_points_splitByCollapsingFeatures_noNames(self):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
 
         toTest = self.constructor(data)
@@ -2313,14 +2314,14 @@ class HighLevelModifying(DataTestObject):
         exp.features.setName(3, "ftValues")
 
         toCollapse = [2, 3, 4, 5]
-        toTest.splitPointsByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert toTest == exp
 
-    ####################################
-    # combinePointsByExpandingFeatures #
-    ####################################
+    #####################################
+    # points.combineByExpandingFeatures #
+    #####################################
 
-    def test_combinePointsByExpandingFeatures(self):
+    def test_points_combineByExpandingFeatures(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
@@ -2338,18 +2339,18 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
 
         test0 = toTest.copy()
-        test0.combinePointsByExpandingFeatures('run', 'time')
+        test0.points.combineByExpandingFeatures('run', 'time')
         assert test0 == exp
 
         test1 = toTest.copy()
-        test1.combinePointsByExpandingFeatures(2, 3)
+        test1.points.combineByExpandingFeatures(2, 3)
         assert test1 == exp
 
         test2 = toTest.copy()
-        test2.combinePointsByExpandingFeatures('run', 3)
+        test2.points.combineByExpandingFeatures('run', 3)
         assert test2 == exp
 
-    def test_combinePointsByExpandingFeatures_withMissing(self):
+    def test_points_combineByExpandingFeatures_withMissing(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2],
@@ -2366,10 +2367,10 @@ class HighLevelModifying(DataTestObject):
         expPNames = ["0", "2", "5", "7"]
         exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
 
-        toTest.combinePointsByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', 'time')
         assert toTest == exp
 
-    def test_combinePointsByExpandingFeatures_nonConcurrentNamesAndValues(self):
+    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
         data = [[100, "r1", 'p1', 9.5], [100, "r2", 'p1', 9.9], [100, "r3", 'p1', 9.8],
                 [100, "r1", 'p2', 6.5], [100, "r2", 'p2', 6.0], [100, "r3", 'p2', 5.9],
                 [100, "r1", 'p3', 11], [100, "r2", 'p3', 11.2], [100, "r3", 'p3', 11.0],
@@ -2386,10 +2387,10 @@ class HighLevelModifying(DataTestObject):
         expPNames = ["0", "3", "6", "9"]
         exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
 
-        toTest.combinePointsByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', 'time')
         assert toTest == exp
 
-    def test_combinePointsByExpandingFeatures_noPointNames(self):
+    def test_points_combineByExpandingFeatures_noPointNames(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
@@ -2404,10 +2405,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
         exp = self.constructor(expData, featureNames=expFNames)
 
-        toTest.combinePointsByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', 'time')
         assert toTest == exp
 
-    def test_combinePointsByExpandingFeatures_noNames(self):
+    def test_points_combineByExpandingFeatures_noNames(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
@@ -2423,11 +2424,11 @@ class HighLevelModifying(DataTestObject):
         exp.features.setName(3, 'r2')
         exp.features.setName(4, 'r3')
 
-        toTest.combinePointsByExpandingFeatures(2, 3)
+        toTest.points.combineByExpandingFeatures(2, 3)
         assert toTest == exp
 
     @raises(ArgumentException)
-    def test_combinePointsByExpandingFeatures_2valuesSameFeature(self):
+    def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r1', 11.0], # r1 in p3 twice
@@ -2436,13 +2437,13 @@ class HighLevelModifying(DataTestObject):
         fNames = ['type', 'dist', 'run', 'time']
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        toTest.combinePointsByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', 'time')
 
-    #########################
-    # splitFeatureByParsing #
-    #########################
+    ###########################
+    # features.splitByParsing #
+    ###########################
 
-    def test_splitFeatureByParsing_integer(self):
+    def test_features_splitByParsing_integer(self):
         data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
         pNames = ["0", "1", "2"]
         fNames = ["f0", "merged", "f1"]
@@ -2452,10 +2453,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ["f0", "split0", "split1", "f1"]
         exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
 
-        toTest.splitFeatureByParsing(1, 1, ["split0", "split1"])
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_string(self):
+    def test_features_splitByParsing_string(self):
         data = [["a-1", 0], ["b-2", 1], ["c-3", 2]]
         pNames = ["a", "b", "c"]
         fNames = ["merged", "f0"]
@@ -2465,10 +2466,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ["split0", "split1", "f0"]
         exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
 
-        toTest.splitFeatureByParsing(0, '-', ["split0", "split1"])
+        toTest.features.splitByParsing(0, '-', ["split0", "split1"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_listIntegers(self):
+    def test_features_splitByParsing_listIntegers(self):
         data = [[0, "a1z9000AAA"], [1, "b2y8000BBB"], [2, "c3x7000CCC"]]
         pNames = ["0", "1", "2"]
         fNames = ["f0", "merged"]
@@ -2479,10 +2480,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ["f0", "split0", "split1", "split2", "split3"]
         exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
 
-        toTest.splitFeatureByParsing("merged", [2,4,7], ["split0", "split1", "split2", "split3"])
+        toTest.features.splitByParsing("merged", [2,4,7], ["split0", "split1", "split2", "split3"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_listStrings(self):
+    def test_features_splitByParsing_listStrings(self):
         data = [[0, "a1/9000-AAA"], [1, "b2/8000-BBB"], [2, "c3/7000-CCC"]]
         pNames = ["0", "1", "2"]
         fNames = ["f0", "merged"]
@@ -2493,10 +2494,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ["f0", "split0", "split1", "split2"]
         exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
 
-        toTest.splitFeatureByParsing(1, ['/','-'], ["split0", "split1", "split2"])
+        toTest.features.splitByParsing(1, ['/','-'], ["split0", "split1", "split2"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_listMixed(self):
+    def test_features_splitByParsing_listMixed(self):
         data = [[0, "a1/9z000-AAA"], [1, "b2/8y000-BBB"], [2, "c3/7x000-CCC"]]
         pNames = ["0", "1", "2"]
         fNames = ["f0", "merged"]
@@ -2507,10 +2508,10 @@ class HighLevelModifying(DataTestObject):
         expFNames = ["f0", "split0", "split1", "split2", "split3"]
         exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
 
-        toTest.splitFeatureByParsing(1, ['/', 5, '-'], ["split0", "split1", "split2", "split3"])
+        toTest.features.splitByParsing(1, ['/', 5, '-'], ["split0", "split1", "split2", "split3"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_function(self):
+    def test_features_splitByParsing_function(self):
         data = [["a1z9000AAA"], ["b2y8000BBB"], ["c3x7000CCC"]]
         pNames = ["a", "b", "c"]
         fNames = ["merged"]
@@ -2523,10 +2524,10 @@ class HighLevelModifying(DataTestObject):
         def splitter(value):
             return value.split('000')
 
-        toTest.splitFeatureByParsing("merged", splitter, ["split0", "split1"])
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_regex(self):
+    def test_features_splitByParsing_regex(self):
         data = [["a1z9000AAA", '001'], ["b2y8000BBB", '001'], ["c3x7000CCC", '002']]
         pNames = ["a", "b", "c"]
         fNames = ["merged", "f0"]
@@ -2540,10 +2541,10 @@ class HighLevelModifying(DataTestObject):
             import re
             return re.split('[xyz]', value)
 
-        toTest.splitFeatureByParsing("merged", splitter, ["split0", "split1"])
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
         assert toTest == exp
 
-    def test_splitFeatureByParsing_noNames(self):
+    def test_features_splitByParsing_noNames(self):
         data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
         toTest = self.constructor(data)
 
@@ -2552,26 +2553,26 @@ class HighLevelModifying(DataTestObject):
         exp.features.setName(1,"split0")
         exp.features.setName(2,"split1")
 
-        toTest.splitFeatureByParsing(1, 1, ["split0", "split1"])
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp
 
     @raises(ArgumentException)
-    def test_splitFeatureByParsing_shortSplitList(self):
+    def test_features_splitByParsing_shortSplitList(self):
         data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
         pNames = ["a", "b", "c"]
         fNames = ["merged", "f0"]
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        toTest.splitFeatureByParsing("merged", '-', ["split0", "split1"])
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
 
     @raises(ArgumentException)
-    def test_splitFeatureByParsing_longSplitList(self):
+    def test_features_splitByParsing_longSplitList(self):
         data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
         pNames = ["a", "b", "c"]
         fNames = ["merged", "f0"]
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        toTest.splitFeatureByParsing("merged", '-', ["split0", "split1"])
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
 
 class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
     pass

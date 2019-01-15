@@ -8,13 +8,17 @@ functionality component is located in axis.py.
 """
 from __future__ import absolute_import
 from abc import abstractmethod
+from collections import OrderedDict
+
+from UML.exceptions import ArgumentException
 
 class Points(object):
     """
     Methods that can be called on the a UML data objects point axis.
     """
-    def __init__(self):
-        pass
+    def __init__(self, source):
+        self._source = source
+        super(Points, self).__init__()
 
     ########################
     # Low Level Operations #
@@ -718,6 +722,209 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo)
 
+    def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
+                                  featureForValues):
+        """
+        TODO
+
+        Split each point in this object into k points, one point for
+        each featureName/value pair in featuresToCollapse. For all k
+        points, the uncollapsed features are copied from the original
+        point. The collapsed features are replaced by only two features
+        which are filled with a unique featureName/value pair for each
+        of the k points. An object containing n points, m features and k
+        features-to-collapse will result in this object containing
+        (n * m) points and (m - k + 2) features.
+
+        Parameters
+        ----------
+        featuresToCollapse : list
+            Names and/or indices of the features that will be collapsed.
+            The first of the two resulting features will contain the
+            names of these features. The second resulting feature will
+            contain the values of this feature.
+        featureForNames : str
+            Describe the feature which will contain the collapsed
+            feature names.
+        featureForValues : str
+            Describe the feature which will contain the values from the
+            collapsed features.
+
+        Notes
+        -----
+        ``
+        A visualization:
+        data.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
+                                              'month', 'temp')
+
+              data (before)                     data (after)
+        +------------------------+       +---------------------+
+        | city | jan | feb | mar |       | city | month | temp |
+        +------+-----+-----+-----+       +------+-------+------+
+        | NYC  | 4   | 5   | 10  |       | NYC  | jan   | 4    |
+        +------+-----+-----+-----+  -->  +------+-------+------+
+        | LA   | 20  | 21  | 21  |       | NYC  | feb   | 5    |
+        +------+-----+-----+-----+       +------+-------+------+
+        | CHI  | 0   | 2   | 7   |       | NYC  | mar   | 10   |
+        +------+-----+-----+-----+       +------+-------+------+
+                                         | LA   | jan   | 20   |
+                                         +------+-------+------+
+                                         | LA   | feb   | 21   |
+                                         +------+-------+------+
+                                         | LA   | mar   | 21   |
+                                         +------+-------+------+
+                                         | CHI  | jan   | 0    |
+                                         +------+-------+------+
+                                         | CHI  | feb   | 2    |
+                                         +------+-------+------+
+                                         | CHI  | mar   | 7    |
+                                         +------+-------+------+
+        ``
+        This function was inspired by the gather function from the tidyr
+        library created by Hadley Wickham in the R programming language.
+
+        Examples
+        --------
+        TODO
+        """
+        points = self._source.points
+        features = self._source.features
+        numCollapsed = len(featuresToCollapse)
+        collapseIndices = [self._source._getFeatureIndex(ft)
+                           for ft in featuresToCollapse]
+        retainIndices = [idx for idx in range(len(features))
+                         if idx not in collapseIndices]
+        currNumPoints = len(points)
+        currFtNames = [features.getName(idx) for idx in collapseIndices]
+        numRetPoints = len(points) * numCollapsed
+        numRetFeatures = len(features) - numCollapsed + 2
+
+        self._splitByCollapsingFeatures_implementation(
+            featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+
+        self._source._pointCount = numRetPoints
+        self._source._featureCount = numRetFeatures
+        ftNames = [features.getName(idx) for idx in retainIndices]
+        ftNames.extend([featureForNames, featureForValues])
+        features.setNames(ftNames)
+        if self._source._pointNamesCreated():
+            appendedPts = []
+            for name in points.getNames():
+                for i in range(numCollapsed):
+                    appendedPts.append("{0}_{1}".format(name, i))
+            points.setNames(appendedPts)
+
+        self._source.validate()
+
+    def combineByExpandingFeatures(self, featureWithFeatureNames,
+                                   featureWithValues):
+        """
+        TODO
+
+        Combine any points containing matching values at every feature
+        except featureWithFeatureNames and featureWithValues. Each
+        combined point will expand its features to include a new feature
+        for each unique value invfeatureWithFeatureNames. The
+        corresponding featureName/value pairs invfeatureWithFeatureNames
+        and featureWithValues from each point willvbecome the values for
+        the expanded features for the combined points. If a combined
+        point lacks a featureName/value pair for any given feature,
+        numpy.nan will be assigned as the value at that feature. The
+        combined point name will be assigned the point name of the first
+        instance of that point, if point names are present.
+
+        An object containing n points with k being unique at every
+        feature except featureWithFeatureNames and featureWithValues,
+        m features, and j unique values in featureWithFeatureNames will
+        be modified to include k points and (m - 2 + j) features.
+
+        Parameters
+        ----------
+        featureWithFeatureNames : identifier
+            The name or index of the feature containing the values that
+            will become the names of the features in the combined
+            points.
+        featureWithValues : identifier
+            The name or index of the feature of values that corresponds
+            to the values in featureWithFeatureNames.
+
+        Notes
+        -----
+        ``
+        data.combinePointsByExpandingFeatures('dist', 'time')
+
+               data (before)                       data (after)
+        +-----------+------+-------+      +-----------+------+-------+
+        | athlete   | dist | time  |      | athlete   | 100m | 200m  |
+        +-----------+------+-------+      +-----------+------+-------+
+        | Bolt      | 100m | 9.81  |      | Bolt      | 9.81 | 19.78 |
+        +-----------+------+-------+  ->  +-----------+------+-------+
+        | Bolt      | 200m | 19.78 |      | Gatlin    | 9.89 | nan   |
+        +-----------+------+-------+      +-----------+------+-------+
+        | Gatlin    | 100m | 9.89  |      | de Grasse | 9.91 | 20.02 |
+        +-----------+------+-------+      +-----------+------+-------+
+        | de Grasse | 200m | 20.02 |
+        +-----------+------+-------+
+        | de Grasse | 100m | 9.91  |
+        +-----------+------+-------+
+        ``
+        This function was inspired by the spread function from the tidyr
+        library created by Hadley Wickham in the R programming language.
+
+        Examples
+        --------
+        TODO
+        """
+        namesIdx = self._source._getFeatureIndex(featureWithFeatureNames)
+        valuesIdx = self._source._getFeatureIndex(featureWithValues)
+        uncombinedIdx = [i for i in range(len(self._source.features))
+                         if i not in (namesIdx, valuesIdx)]
+
+        # using OrderedDict supports point name setting
+        unique = OrderedDict()
+        pNames = []
+        for idx, row in enumerate(self._source.points):
+            uncombined = tuple(row[uncombinedIdx])
+            if uncombined not in unique:
+                unique[uncombined] = {}
+                if self._source._pointNamesCreated():
+                    pNames.append(self._source.points.getName(idx))
+            if row[namesIdx] in unique[uncombined]:
+                msg = "The point at index {0} cannot be combined ".format(idx)
+                msg += "because there is already a value for the feature "
+                msg += "{0} in another point which this ".format(row[namesIdx])
+                msg += "point would be combined with."
+                raise ArgumentException(msg)
+            unique[uncombined][row[namesIdx]] = row[valuesIdx]
+
+        uniqueNames = []
+        for name in self._source[:, featureWithFeatureNames]:
+            if name not in uniqueNames:
+                uniqueNames.append(name)
+        numRetFeatures = len(self._source.features) + len(uniqueNames) - 2
+
+        self._combineByExpandingFeatures_implementation(unique, namesIdx,
+                                                        uniqueNames,
+                                                        numRetFeatures)
+
+        self._source._featureCount = numRetFeatures
+        self._source._pointCount = len(unique)
+
+        fNames = [self._source.features.getName(i) for i in uncombinedIdx]
+        for name in reversed(uniqueNames):
+            fNames.insert(namesIdx, name)
+        self._source.features.setNames(fNames)
+
+        if self._source._pointNamesCreated():
+            self._source.points.setNames(pNames)
+
+        self._source.validate()
+
+    ####################
+    # Query functions #
+    ###################
+
     def nonZeroIterator(self):
         """
         Iterate through each non-zero value following the point order.
@@ -732,10 +939,6 @@ class Points(object):
         TODO
         """
         return self._nonZeroIterator()
-
-    #########################
-    # Statistical functions #
-    #########################
 
     def similarities(self, similarityFunction):
         """
@@ -874,6 +1077,17 @@ class Points(object):
 
     @abstractmethod
     def _normalize(self, subtract, divide, applyResultTo):
+        pass
+
+    @abstractmethod
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        pass
+
+    @abstractmethod
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
         pass
 
     @abstractmethod

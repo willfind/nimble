@@ -16,8 +16,6 @@ from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import inheritDocstringsFactory
-from .dataHelpers import fillArrayWithCollapsedFeatures
-from .dataHelpers import fillArrayWithExpandedFeatures
 
 pd = UML.importModule('pandas')
 scipy = UML.importModule('scipy.sparse')
@@ -251,39 +249,6 @@ class DataFrame(Base):
         numPoints = len(self.points) // numFeatures
         self.data = pd.DataFrame(
             self.data.values.reshape((numPoints, numFeatures), order='F'))
-
-    def _splitPointsByCollapsingFeatures_implementation(self,
-            featuresToCollapse, collapseIndices, retainIndices,
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = self.data.values[:, collapseIndices]
-        retainData = self.data.values[:, retainIndices]
-
-        tmpData = fillArrayWithCollapsedFeatures(
-            featuresToCollapse, retainData, np.array(collapseData),
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
-
-        self.data = pd.DataFrame(tmpData)
-
-    def _combinePointsByExpandingFeatures_implementation(self,
-            uniqueDict, namesIdx, uniqueNames, numRetFeatures):
-        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
-
-        self.data = pd.DataFrame(tmpData)
-
-    def _splitFeatureByParsing_implementation(self,
-            featureIndex, splitList, numRetFeatures, numResultingFts):
-        tmpData = np.empty(shape=(len(self.points), numRetFeatures), dtype=np.object_)
-
-        tmpData[:,:featureIndex] = self.data.values[:, :featureIndex]
-        for i in range(numResultingFts):
-            newFeat = []
-            for lst in splitList:
-                newFeat.append(lst[i])
-            tmpData[:,featureIndex + i] = newFeat
-        tmpData[:,featureIndex + numResultingFts:] = self.data.values[:, featureIndex + 1:]
-
-        self.data = pd.DataFrame(tmpData)
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]

@@ -82,6 +82,26 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='F')
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._source.data[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._source.data[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = numpy.matrix(tmpData)
+
     #########################
     # Query implementations #
     #########################
