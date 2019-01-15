@@ -13,6 +13,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .points import Points
+from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
 
@@ -114,8 +115,7 @@ class DataFramePoints(DataFrameAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFramePointsView(AxisView, DataFramePoints, DataFrameAxis, Axis,
-                          Points):
+class DataFramePointsView(DataFramePoints, AxisView, PointsView):
     """
     Limit functionality of DataFramePoints to read-only
     """

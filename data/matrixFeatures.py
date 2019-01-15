@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
+from .features_view import FeaturesView
 
 class MatrixFeatures(MatrixAxis, Axis, Features):
     """
@@ -109,7 +110,7 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixFeaturesView(AxisView, MatrixFeatures, MatrixAxis, Axis, Features):
+class MatrixFeaturesView(MatrixFeatures, AxisView, FeaturesView):
     """
     Limit functionality of MatrixFeatures to read-only
     """

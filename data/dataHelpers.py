@@ -404,6 +404,29 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
+def readOnlyException(name):
+    """
+    The exception to raise for functions that are disallowed in view
+    objects.
+    """
+    msg = "The " + name + " method is disallowed for View objects. View "
+    msg += "objects are read only, yet this method modifies the object"
+    raise ImproperActionException(msg)
+
+# prepend a message that view objects will raise an exception to Base docstring
+def exceptionDocstringFactory(cls):
+    def exceptionDocstring(func):
+        name = func.__name__
+        baseDoc = getattr(cls, name).__doc__
+        if baseDoc is not None:
+            viewMsg = "The {0} method is object modifying and ".format(name)
+            viewMsg += "will always raise an exception for view objects.\n\n"
+            viewMsg += "For reference, the docstring for this method "
+            viewMsg += "when objects can be modified is below:\n"
+            func.__doc__ = viewMsg + baseDoc
+        return func
+    return exceptionDocstring
+
 def valuesToPythonList(values, argName):
     """
     Create a python list of values from an integer (python or numpy),

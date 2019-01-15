@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
+from .features_view import FeaturesView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -144,7 +145,7 @@ class SparseFeatures(SparseAxis, Axis, Features):
                                        shape=shape)
         self._source._sorted = None
 
-class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
+class SparseFeaturesView(SparseFeatures, AxisView, FeaturesView):
     """
     Limit functionality of SparseFeatures to read-only
     """

@@ -3,7 +3,7 @@ Defines a subclass of the Elements object, which serves as the primary
 base class for read only elements views of data objects.
 """
 from .elements import Elements
-from .base_view import readOnlyException
+from .dataHelpers import readOnlyException
 
 class ElementsView(Elements):
     """

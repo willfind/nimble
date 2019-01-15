@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
+from .points_view import PointsView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -176,7 +177,7 @@ class SparsePoints(SparseAxis, Axis, Points):
                                        shape=(len(uniqueDict), numRetFeatures))
         self._source._sorted = None
 
-class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
+class SparsePointsView(SparsePoints, AxisView, PointsView):
     """
     Limit functionality of SparsePoints to read-only
     """

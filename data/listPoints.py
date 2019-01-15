@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .points import Points
+from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
 
@@ -135,7 +136,7 @@ class ListPoints(ListAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class ListPointsView(AxisView, ListPoints, ListAxis, Axis, Points):
+class ListPointsView(ListPoints, AxisView, PointsView):
     """
     Limit functionality of ListPoints to read-only
     """

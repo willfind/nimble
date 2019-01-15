@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
+from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
 
@@ -114,7 +115,7 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
+class MatrixPointsView(MatrixPoints, AxisView, PointsView):
     """
     Limit functionality of MatrixPoints to read-only
     """

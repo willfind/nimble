@@ -11,6 +11,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .features import Features
+from .features_view import FeaturesView
 
 class ListFeatures(ListAxis, Axis, Features):
     """
@@ -120,7 +121,7 @@ class ListFeatures(ListAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class ListFeaturesView(AxisView, ListFeatures, ListAxis, Axis, Features):
+class ListFeaturesView(ListFeatures, AxisView, FeaturesView):
     """
     Limit functionality of ListFeatures to read-only
     """

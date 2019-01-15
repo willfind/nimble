@@ -13,6 +13,7 @@ from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
+from .features_view import FeaturesView
 
 pd = UML.importModule('pandas')
 if pd:
@@ -109,8 +110,7 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
-                            Features):
+class DataFrameFeaturesView(DataFrameFeatures, AxisView, FeaturesView):
     """
     Limit functionality of DataFrameFeatures to read-only
     """
