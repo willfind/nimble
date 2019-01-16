@@ -336,7 +336,7 @@ class Base(object):
 
     def _anyDefaultFeatureNames(self):
         """
-        Returns True if any default feature names exists or if pointNames have
+        Returns True if any default feature names exists or if featureNames have
         not been created.
         """
         if self._featureNamesCreated():

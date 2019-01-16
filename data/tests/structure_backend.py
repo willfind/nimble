@@ -8754,7 +8754,7 @@ class StructureModifying(StructureShared):
 
     @raises(ArgumentException)
     def test_merge_exception_pointStrictMissingOnFeature(self):
-        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
         fNamesL = ['id', 'f1', 'f2']
         fNamesR = ['di', 'f3', 'f4' ]
@@ -8820,17 +8820,6 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
 
-    @raises(ArgumentException)
-    def test_merge_exception_pointStrictMissingOnFeature(self):
-        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
-        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
-        fNamesL = ['id', 'f1', 'f2']
-        fNamesR = ['di', 'f3', 'f4' ]
-        pNames = ['a', 'b', 'c']
-        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-        leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-
     def merge_backend(self, left, right, expected, on=None, includeStrict=False):
 
         combinations = [
@@ -8850,7 +8839,8 @@ class StructureModifying(StructureShared):
             ft = combinations[i][1]
             try:
                 test = left.copy()
-                test.merge(right, point=pt, feature=ft, onFeature=on)
+                tRight = right.copy()
+                test.merge(tRight, point=pt, feature=ft, onFeature=on)
                 assert test == exp
             except ArgumentException:
                 assert exp is ArgumentException
