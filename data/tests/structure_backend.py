@@ -10664,15 +10664,6 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
 
-    @raises(ArgumentException)
-    def test_merge_pointStrict_featureIntersection_onFeature_noNames(self):
-        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-        dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-        leftObj = self.constructor(dataL)
-        rightObj = self.constructor(dataR)
-
-        leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
-
         #################
         # featureStrict #
         #################
