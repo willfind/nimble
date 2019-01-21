@@ -10,6 +10,7 @@ import six
 
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
+from UML.logger import enableLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import logCaptureFactory
@@ -60,7 +61,6 @@ class Elements(object):
     # Structural Operations #
     #########################
 
-    @logCapture
     def transform(self, toTransform, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   useLog=None):
@@ -100,6 +100,11 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.transform)
+            return wrapped(toTransform, points, features, preserveZeros,
+                           skipNoneReturnValues, useLog=False)
+
         if points is not None:
             points = self._source._constructIndicesList('point', points)
         if features is not None:
@@ -114,7 +119,6 @@ class Elements(object):
     # Higher Order Operations #
     ###########################
 
-    @logCapture
     def calculate(self, function, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   outputType=None, useLog=None):
@@ -157,6 +161,11 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.calculate)
+            return wrapped(function, points, features, preserveZeros,
+                           skipNoneReturnValues, useLog=False)
+
         oneArg = False
         try:
             function(0, 0, 0)
@@ -310,7 +319,7 @@ class Elements(object):
     ########################
     # Numerical Operations #
     ########################
-    @logCapture
+
     def multiply(self, other, useLog=None):
         """
         Multiply objects element-wise.
@@ -332,6 +341,10 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.multiply)
+            return wrapped(other, useLog=False)
+
         if not isinstance(other, UML.data.Base):
             msg = "'other' must be an instance of a UML data object"
             raise ArgumentException(msg)
@@ -367,7 +380,6 @@ class Elements(object):
         self._source.features.setNames(retFNames)
         self._source.validate()
 
-    @logCapture
     def power(self, other, useLog=None):
         """
         Raise the elements of this object to a power.
@@ -389,6 +401,10 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.power)
+            return wrapped(other, useLog=False)
+
         # other is UML or single numerical value
         singleValue = dataHelpers._looksNumeric(other)
         if not singleValue and not isinstance(other, UML.data.Base):

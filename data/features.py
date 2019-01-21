@@ -9,6 +9,8 @@ functionality component is located in axis.py.
 from __future__ import absolute_import
 from abc import abstractmethod
 
+import UML
+from UML.logger import enableLogging, directCall
 from .dataHelpers import logCaptureFactory
 
 logCapture = logCaptureFactory('features')
@@ -192,7 +194,6 @@ class Features(object):
     # Structural Operations #
     #########################
 
-    @logCapture
     def copy(self, toCopy=None, start=None, end=None, number=None,
              randomize=False, useLog=None):
         """
@@ -243,9 +244,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.copy)
+            else:
+                wrapped = directCall(self.copy)
+            return wrapped(toCopy, start, end, number, randomize,
+                           useLog=False)
+
         return self._copy(toCopy, start, end, number, randomize)
 
-    @logCapture
     def extract(self, toExtract=None, start=None, end=None, number=None,
                 randomize=False, useLog=None):
         """
@@ -297,9 +305,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.extract)
+            else:
+                wrapped = directCall(self.extract)
+            return wrapped(toExtract, start, end, number, randomize,
+                           useLog=False)
+
         return self._extract(toExtract, start, end, number, randomize)
 
-    @logCapture
     def delete(self, toDelete=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
         """
@@ -347,9 +362,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.delete)
+            else:
+                wrapped = directCall(self.delete)
+            return wrapped(toDelete, start, end, number, randomize,
+                           useLog=False)
+
         self._delete(toDelete, start, end, number, randomize)
 
-    @logCapture
     def retain(self, toRetain=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
         """
@@ -397,6 +419,14 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.retain)
+            else:
+                wrapped = directCall(self.retain)
+            return wrapped(toRetain, start, end, number, randomize,
+                           useLog=False)
+
         self._retain(toRetain, start, end, number, randomize)
 
     def count(self, condition):
@@ -426,7 +456,6 @@ class Features(object):
         """
         return self._count(condition)
 
-    @logCapture
     def sort(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Arrange the features in this object.
@@ -448,6 +477,13 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.sort)
+            else:
+                wrapped = directCall(self.sort)
+            return wrapped(sortBy, sortHelper, useLog=False)
+
         self._sort(sortBy, sortHelper)
 
     # def flattenToOne(self):
@@ -504,7 +540,6 @@ class Features(object):
     #     """
     #     self._unflattenFromOne(numFeatures)
 
-    @logCapture
     def transform(self, function, features=None, useLog=None):
         """
         Modify this object by applying a function to each feature.
@@ -531,13 +566,19 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transform)
+            else:
+                wrapped = directCall(self.transform)
+            return wrapped(function, features, useLog=False)
+
         self._transform(function, features)
 
     ###########################
     # Higher Order Operations #
     ###########################
 
-    @logCapture
     def calculate(self, function, features=None, useLog=None):
         """
         Return a new object with a calculation applied to each feature.
@@ -567,9 +608,15 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.calculate)
+            else:
+                wrapped = directCall(self.calculate)
+            return wrapped(function, features, useLog=False)
+
         return self._calculate(function, features)
 
-    @logCapture
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
         Insert more features into this object.
@@ -603,9 +650,15 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.add)
+            else:
+                wrapped = directCall(self.add)
+            return wrapped(toAdd, insertBefore, useLog=False)
+
         self._add(toAdd, insertBefore)
 
-    @logCapture
     def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
@@ -626,9 +679,15 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.mapReduce)
+            else:
+                wrapped = directCall(self.mapReduce)
+            return wrapped(mapper, reducer, useLog=False)
+
         return self._mapReduce(mapper, reducer)
 
-    @logCapture
     def shuffle(self, useLog=None):
         """
         Permute the indexing of the features to a random order.
@@ -643,9 +702,15 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.shuffle)
+            else:
+                wrapped = directCall(self.shuffle)
+            return wrapped(useLog=False)
+
         self._shuffle()
 
-    @logCapture
     def fill(self, match, fill, arguments=None, features=None,
              returnModified=False, useLog=None):
         """
@@ -691,9 +756,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fill)
+            else:
+                wrapped = directCall(self.fill)
+            return wrapped(match, fill, arguments, features, returnModified,
+                           useLog=False)
+
         return self._fill(match, fill, arguments, features, returnModified)
 
-    @logCapture
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
         """
@@ -734,6 +806,13 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.normalize)
+            else:
+                wrapped = directCall(self.normalize)
+            return wrapped(subtract, divide, applyResultTo, useLog=False)
+
         self._normalize(subtract, divide, applyResultTo)
 
     def nonZeroIterator(self):

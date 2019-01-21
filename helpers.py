@@ -29,8 +29,7 @@ if not hasattr(itertools, 'ifilter'):#in python3, itertools.ifilter is not there
 
 import UML
 
-from UML.logger import Stopwatch
-from UML.logger.uml_logger import logCapture
+from UML.logger import enableLogging, logCapture
 
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.exceptions import PackageException
@@ -2500,7 +2499,6 @@ def generateAllPairs(items):
 
     return pairs
 
-@logCapture
 def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', useLog=None,
                          **kwarguments):
     """
@@ -2508,6 +2506,11 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
+    if enableLogging(useLog):
+        wrapped = logCapture(crossValidateBackend)
+        return wrapped(learnerName, X, Y, performanceFunction, arguments,
+                       folds, scoreMode, useLog=False, **kwarguments)
+
     if not isinstance(X, Base):
         raise ArgumentException("X must be a Base object")
     if Y is not None:
@@ -2610,8 +2613,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
-    UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
-                                         performanceOfEachCombination, merged, folds)
+    UML.logger.active.logCrossValidation(X, Y, learnerName, merged, performanceFunction,
+                                         performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
 
@@ -2907,12 +2910,12 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
     #todo verify that your list of lists is valid initializer for all datatypes, not just matrix
     #then convert
     #finally make matrix object out of the list of points w/ labels in last column of each vector/entry:
-    pointsObj = UML.createData('Matrix', pointsList)
+    pointsObj = UML.createData('Matrix', pointsList, useLog=False)
 
-    labelsObj = UML.createData('Matrix', labelsList)
+    labelsObj = UML.createData('Matrix', labelsList, useLog=False)
 
     #todo change actuallavels to something like associatedClusterCentroid
-    noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList)
+    noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList, useLog=False)
 
     #convert datatype if not matrix
     if returnType.lower() != 'matrix':
