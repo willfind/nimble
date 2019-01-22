@@ -233,12 +233,11 @@ def hasNonDefault(obj, axis):
 
     getter = obj.points.getName if axis == 'point' else obj.features.getName
 
-    ret = False
     for index in possibleIndices:
         if not getter(index).startswith(DEFAULT_PREFIX):
-            ret = True
+            return True
 
-    return ret
+    return False
 
 
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
@@ -422,3 +421,18 @@ def valuesToPythonList(values, argName):
         raise ArgumentException(msg)
 
     return valuesList
+
+def allDataIdentical(arr1, arr2):
+    """
+    Checks for equality between all points in the arrays. Arrays containing
+    NaN values in the same positions will also be considered equal
+    """
+    try:
+        # check the values that are not equal
+        checkPos = arr1 != arr2
+        # if values are nan, conversion to float dtype will be successful
+        test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
+        test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
+        return numpy.isnan(test1).all() and numpy.isnan(test2).all()
+    except Exception:
+        return False
