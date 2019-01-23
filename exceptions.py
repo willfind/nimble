@@ -2,41 +2,89 @@
 Module defining exceptions to be used in UML.
 
 """
-
-
 from __future__ import absolute_import
 from six.moves import range
-class PackageException(Exception):
-    """
-    Exception to be thrown when a package is not installed, but needed
-    """
 
+class UMLException(Exception):
+    """
+    Override Python's Exception, requiring a value upon instantiation.
+    """
     def __init__(self, value):
         self.value = value
+        self.className = self.__class__.__name__
 
     def __str__(self):
         return repr(self.value)
 
     def __repr__(self):
-        return "PackageException(%s)" % repr(self.value)
+        return "{0}({1})".format(self.className, repr(self.value))
 
+class ArgumentException(UMLException):
+    pass
 
-class ArgumentException(Exception):
+class InvalidArgumentType(UMLException, TypeError):
     """
-    Exception to be thrown when the value of an argument of some function
-    renders it impossible to complete the operation that function is meant
-    to perform.
+    Raised when an argument type causes a failure.
+
+    This exception occurs when the type of an argument is not accepted.
+    This operation does not accept this type for this argument. This is
+    a subclass of Python's TypeError.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
+class InvalidArgumentValue(UMLException, ValueError):
+    """
+    Raised when an argument value causes a failure.
 
-    def __str__(self):
-        return repr(self.value)
+    This exception occurs when the value of an argument is not accepted.
+    This operation may only accept a limited set of possible values for
+    this argument, a sentinel value may be preventing this operation, or
+    the value may be disallowed for this operation. This is a subclass
+    of Python's ValueError.
+    """
+    pass
 
-    def __repr__(self):
-        return "ArgumentException(" + repr(self.value) + ")"
+class InvalidTypeCombination(UMLException, TypeError):
+    """
+    Raised when the types of two or more arguments causes a failure.
 
+    This exception occurs when the type of a certain argument is based
+    on another argument. The type may be accepted for this argument in
+    other instances but not in this specific case. This is a subclass of
+    Python's TypeError.
+    """
+    pass
+
+class InvalidValueCombination(UMLException, TypeError):
+    """
+    Raised when the values of two or more arguments causes a failure.
+
+    This exception occurs when the value of a certain argument is based
+    on another argument. The value may be accepted for this argument in
+    other instances but not in this specific case. This is a subclass of
+    Python's ValueError.
+    """
+    pass
+
+class InvalidObjectValue(UMLException, ValueError):
+    """
+    Raised when a value related to the object causes a failure.
+
+    This exception occurs when the calling object has a characteristic
+    that prevents this operation. These often occur due to a value in
+    the object's data or value describing the object's shape preventing
+    the operation, but any other value describing this object could also
+    cause this exception. This is a subclass of Python's ValueError.
+    """
+    pass
+
+class PackageException(UMLException, ImportError):
+    """
+    Raised when a package is not installed, but needed.
+
+    This is a subclass of Python's ImportError.
+    """
+    pass
 
 class MissingEntryException(Exception):
     """
@@ -54,44 +102,26 @@ class MissingEntryException(Exception):
             errMessage += ", " + entryName
         errMessage += '. \n' + repr(self.value)
 
-
-class ImproperActionException(Exception):
+class ImproperActionException(UMLException, TypeError):
     """
-    Exception to be thrown if calling a function does not make sense in a
-    certain context (i.e. calling call.turnOn() when the car object is already
-    running) or is otherwise not allowed.
+    Raised calling a function does not make sense in a certain context.
+
+    As an example, calling call.turnOn() when the car object is already
+    running. This is a subclass of Python's TypeError.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class EmptyFileException(Exception):
+class EmptyFileException(UMLException):
     """
-        Exception to be thrown if a file to be read is empty
+    Raised a file to be read is empty
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class FileFormatException(Exception):
+class FileFormatException(UMLException):
     """
-        Exception to be thrown if the formatting of a file is not
-        as expected
+    Raised when the formatting of a file is not as expected.
     """
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
+    pass
 
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
