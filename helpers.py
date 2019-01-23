@@ -31,7 +31,7 @@ import UML
 
 from UML.logger import Stopwatch
 
-from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import ArgumentException, ImproperActionException, InvalidArgumentValue
 from UML.exceptions import PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
@@ -82,8 +82,9 @@ def findBestInterface(package):
     for interface in UML.interfaces.available:
         if interface.isAlias(package):
             return interface
-
-    raise ArgumentException("package '" + package + "' was not associated with any of the available package interfaces")
+    msg = "package '" + package
+    msg += "' was not associated with any of the available package interfaces"
+    raise InvalidArgumentValue(msg)
 
 
 def _learnerQuery(name, queryType):
@@ -2035,7 +2036,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     try:
         currInterface = findBestInterface(customPackageName)
-    except ArgumentException:
+    except InvalidArgumentValue:
         currInterface = UML.interfaces.CustomLearnerInterface(customPackageName)
         UML.interfaces.available.append(currInterface)
 

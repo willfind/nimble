@@ -10,7 +10,7 @@ import numpy
 import math
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.randomness import numpyRandom
 from six.moves import range
 
@@ -95,7 +95,7 @@ def detectBestResult(functionToCheck):
                             msg = "In repeated trials with different known values, "
                             msg += "functionToCheck was inconsistent in attributing "
                             msg += "high versus low values to optimal predictions."
-                            result = ArgumentException(msg)
+                            result = InvalidArgumentValue(msg)
                         # erroneous call on what should be acceptable data;
                         # report the error to the user
                         else:
@@ -123,7 +123,7 @@ def detectBestResult(functionToCheck):
                         msg = "Over trials with different knowns, "
                         msg += "functionToCheck was inconsistent in attributing "
                         msg += "high versus low values to optimal predictions."
-                        result = ArgumentException(msg)
+                        result = InvalidArgumentValue(msg)
 
         # record the result, regardless of whether it was successful, nan,
         # or an exception
@@ -159,7 +159,7 @@ def raiseException(preface, outputs):
     msg += " (best scores) " + str(outputs[1])
     msg += " (all scores) " + str(outputs[2])
 
-    raise ArgumentException(preface + msg)
+    raise InvalidArgumentValue(preface + msg)
 
 
 def _runTrialGivenParameters(toCheck, knowns, predictionType):

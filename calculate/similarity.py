@@ -1,17 +1,21 @@
 from __future__ import absolute_import
-import UML
+
 import numpy
 
-from UML.exceptions import ArgumentException
+import UML
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.calculate import fractionIncorrect
 from UML.calculate import varianceFractionRemaining
 
 
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):
-        raise ArgumentException("predictedValues must be derived class of UML.data.Base")
+        msg = "predictedValues must be derived class of UML.data.Base"
+        raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
-        raise ArgumentException("predictedValues must be labels only; this has more than one feature")
+        msg = "predictedValues must be labels only; this has more than "
+        msg += "one feature"
+        raise InvalidArgumentValue(msg)
 
 
 def cosineSimilarity(knownValues, predictedValues):

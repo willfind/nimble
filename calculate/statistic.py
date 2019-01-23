@@ -4,7 +4,8 @@ import math
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination, PackageException
 
 scipy = UML.importModule('scipy')
 
@@ -289,7 +290,6 @@ def _isNumericalPoint(point):
         return False
 
 
-
 def residuals(toPredict, controlVars):
     """
     Calculate the residuals of toPredict, by a linear regression model using the controlVars.
@@ -315,10 +315,10 @@ def residuals(toPredict, controlVars):
 
     if not isinstance(toPredict, UML.data.Base):
         msg = "toPredict must be a UML data object"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     if not isinstance(controlVars, UML.data.Base):
         msg = "controlVars must be a UML data object"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     tpP = len(toPredict.points)
     tpF = len(toPredict.features)
@@ -328,15 +328,15 @@ def residuals(toPredict, controlVars):
     if tpP != cvP:
         msg = "toPredict and controlVars must have the same number of points: ("
         msg += str(tpP) + ") vs (" + str(cvP) + ")"
-        raise ArgumentException(msg)
+        raise InvalidValueCombination(msg)
     if tpP == 0 or tpF == 0:
         msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
         msg += "nonzero features (" + str(tpF) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if cvP == 0 or cvF == 0:
         msg = "controlVars must have nonzero points (" + str(cvP) + ") and "
         msg += "nonzero features (" + str(cvF) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()

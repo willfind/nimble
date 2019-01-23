@@ -1,6 +1,5 @@
 """
 Tests for UML.calculate.statistics
-
 """
 
 # Many of the functions in UML.calculate.statitic are tested not directly
@@ -10,9 +9,14 @@ Tests for UML.calculate.statistics
 
 
 from __future__ import absolute_import
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-
+from six.moves import range
 from nose.tools import raises
 from nose.tools import assert_almost_equal
 
@@ -20,10 +24,9 @@ import UML
 from UML import createData
 from UML.calculate import standardDeviation
 from UML.calculate import quartiles
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination, PackageException
 from UML.helpers import generateRegressionData
-from six.moves import range
-
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
@@ -252,24 +255,29 @@ def testIsNumericalPoint():
 #############
 # residuals #
 #############
-
+@raises(PackageException)
+@mock.patch('UML.calculate.statistic.scipy', new=None)
+def test_residuals_exception_sciPyNotInstalled():
+    pred = UML.createData("Matrix", [[2],[3],[4]])
+    control = UML.createData("Matrix", [[2],[3],[4]])
+    UML.calculate.residuals(pred, control)
 
 # L not uml object
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 def test_residuals_exception_toPredictNotUML():
     pred = [[1],[2],[3]]
     control = UML.createData("Matrix", [[2],[3],[4]])
     UML.calculate.residuals(pred, control)
 
 # R not uml object
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 def test_residuals_exception_controlVarsNotUML():
     pred = UML.createData("Matrix", [[2],[3],[4]])
     control = [[1],[2],[3]]
     UML.calculate.residuals(pred, control)
 
 # diff number of points
-@raises(ArgumentException)
+@raises(InvalidValueCombination)
 def test_residauls_exception_differentNumberOfPoints():
     pred = UML.createData("Matrix", [[2],[3],[4]])
     control = UML.createData("Matrix", [[2],[3],[4],[5]])
@@ -285,7 +293,7 @@ def test_residuals_exception_zeroAxisOnParam():
         control = controlOrig.copy().points.extract(lambda x: False)
         UML.calculate.residuals(pred, control)
         assert False  # expected ArgumentException
-    except ArgumentException as ae:
+    except InvalidArgumentValue as ae:
 #        print ae
         pass
 
@@ -293,7 +301,7 @@ def test_residuals_exception_zeroAxisOnParam():
         pred = predOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(pred, controlOrig)
         assert False  # expected ArgumentException
-    except ArgumentException as ae:
+    except InvalidArgumentValue as ae:
 #        print ae
         pass
 
@@ -301,7 +309,7 @@ def test_residuals_exception_zeroAxisOnParam():
         control = controlOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(predOrig, control)
         assert False  # expected ArgumentException
-    except ArgumentException as ae:
+    except InvalidArgumentValue as ae:
 #        print ae
         pass
 

@@ -28,7 +28,8 @@ import inspect
 import tempfile
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidTypeCombination, InvalidObjectValue
 import six
 from future.utils import raise_
 
@@ -36,7 +37,6 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
     """
     An extension of the the standard python SafeConfigParser which will
     preserve comments present in the configuration file.
-
     """
 
     def _getComment(self, section, option):
@@ -262,7 +262,7 @@ class SessionConfiguration(object):
             if option is not None:
                 msg = "If specifying an option, one must also specify "
                 msg += "a section"
-                raise ArgumentException(msg)
+                raise InvalidTypeCombination(msg)
             else:
                 pass  # if None, None is specified, we will return false
         return success
@@ -330,17 +330,17 @@ class SessionConfiguration(object):
         key = (section, option)
         if key in self.hooks and self.hooks[key] is None:
             msg = "The hook for (" + str(key) + ") has been previously set as "
-            msg += "None, subsequently disabling this featre on that section /"
-            msg += " option combination"
-            raise ArgumentException(msg)
+            msg += "None, subsequently disabling this feature on that section "
+            msg += "/ option combination"
+            raise InvalidObjectValue(msg)
 
         if toCall is not None:
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
             if len(UML.helpers.inspectArguments(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         self.hooks[key] = toCall
 
@@ -348,7 +348,6 @@ class SessionConfiguration(object):
         """
         Set a value which will immediately be reflected in the configuration
         file.
-
         """
         self.set(section, option, value)
         self.saveChanges(section, option)
@@ -401,7 +400,7 @@ class SessionConfiguration(object):
         # check: is this section the name of an interface
         try:
             ignore = True
-            # raises argument exception if not an interface name
+            # raises InvalidArgumentValue if not an interface name
             interface = UML.helpers.findBestInterface(section)
             ignore = False
             acceptedNames = interface.optionNames
@@ -410,10 +409,10 @@ class SessionConfiguration(object):
                 msg += "which only allows the options: "
                 msg += str(acceptedNames)
                 msg += " but " + option + " was given instead"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
-        except ArgumentException:
+        except InvalidArgumentValue:
             einfo = sys.exc_info()
             if not ignore:
                 raise_(einfo[1], None, einfo[2])
@@ -459,7 +458,7 @@ class SessionConfiguration(object):
         if section is None:
             if option is not None:
                 msg = "If section is None, option must also be None"
-                raise UML.exceptions.ArgumentException(msg)
+                raise InvalidTypeCombination(msg)
             # save all
             for sec in self.changes.keys():
                 if isinstance(self.changes[sec], ToDelete):

@@ -5,7 +5,8 @@ from nose.tools import *
 
 import UML
 from UML import createData
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanFeaturewiseRootMeanSquareError
@@ -14,10 +15,10 @@ from UML.calculate import meanFeaturewiseRootMeanSquareError
 # _computeError #
 #################
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testGenericErrorCalculatorEmptyKnownInput():
     """
-        Test that _computeError raises an exception if knownLabels is empty
+    Test that _computeError raises an exception if knownLabels is empty
     """
     knownLabels = numpy.array([])
     predictedLabels = numpy.array([1, 2, 3])
@@ -28,10 +29,10 @@ def testGenericErrorCalculatorEmptyKnownInput():
     UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testGenericErrorCalculatorEmptyPredictedInput():
     """
-        Test that _computeError raises an exception if predictedLabels is empty
+    Test that _computeError raises an exception if predictedLabels is empty
     """
     knownLabels = numpy.array([1, 2, 3])
     predictedLabels = numpy.array([])
@@ -45,8 +46,8 @@ def testGenericErrorCalculatorEmptyPredictedInput():
 @raises(ZeroDivisionError)
 def testGenericErrorCalculatorDivideByZero():
     """
-        Test that _computeError raises a divide by zero exception if the outerFunction argument
-        would lead to division by zero.
+    Test that _computeError raises a divide by zero exception if the
+    outerFunction argument would lead to division by zero.
     """
     knownLabels = numpy.array([1, 2, 3])
     predictedLabels = numpy.array([1, 2, 3])
@@ -73,11 +74,11 @@ def testGenericErrorCalculator():
 # Mean Absolute Error #
 #######################
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testMeanAbsoluteErrorEmptyKnownValues():
     """
-        Check that the mean absolute error calculator correctly throws an
-        exception if knownLabels vector is empty
+    Check that the mean absolute error calculator correctly throws an
+    exception if knownLabels vector is empty
     """
     knownLabels = numpy.array([])
     predictedLabels = numpy.array([1, 2, 3])
@@ -88,11 +89,11 @@ def testMeanAbsoluteErrorEmptyKnownValues():
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testMeanAbsoluteErrorEmptyPredictedValues():
     """
-        Check that the mean absolute error calculator correctly throws an
-        exception if predictedLabels vector is empty
+    Check that the mean absolute error calculator correctly throws an
+    exception if predictedLabels vector is empty
     """
     predictedLabels = numpy.array([])
     knownLabels = numpy.array([1, 2, 3])
@@ -105,9 +106,9 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
 
 def testMeanAbsoluteError():
     """
-        Check that the mean absolute error calculator works correctly when
-        all inputs are zero, or predictions are exactly the same as all known
-        values, and are non-zero
+    Check that the mean absolute error calculator works correctly when
+    all inputs are zero, or predictions are exactly the same as all known
+    values, and are non-zero
     """
     predictedLabels = numpy.array([0, 0, 0])
     knownLabels = numpy.array([0, 0, 0])
@@ -148,11 +149,10 @@ def testMeanAbsoluteError():
 # Root mean squared error #
 ###########################
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testRmseEmptyKnownValues():
     """
     rootMeanSquareError calculator throws exception if knownLabels is empty
-
     """
     knownLabels = numpy.array([])
     predictedLabels = numpy.array([1, 2, 3])
@@ -163,7 +163,7 @@ def testRmseEmptyKnownValues():
     rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testRmseEmptyPredictedValues():
     """
     rootMeanSquareError calculator throws exception if predictedLabels is empty
@@ -180,9 +180,9 @@ def testRmseEmptyPredictedValues():
 
 def testRmse():
     """
-        Check that the rootMeanSquareError calculator works correctly when
-        all inputs are zero, and when all known values are
-        the same as predicted values.
+    Check that the rootMeanSquareError calculator works correctly when
+    all inputs are zero, and when all known values are
+    the same as predicted values.
     """
     predictedLabels = numpy.array([[0], [0], [0]])
     knownLabels = numpy.array([[0], [0], [0]])
@@ -217,7 +217,7 @@ def testRmse():
 # meanFeaturewiseRootMeanSquareError #
 ######################################
 
-@raises(ArgumentException)
+@raises(InvalidValueCombination)
 def testMFRMSE_badshapePoints():
     predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
     knownLabels = numpy.array([[0, 0], [0, 0], [0, 0]])
@@ -228,7 +228,7 @@ def testMFRMSE_badshapePoints():
     meanFeaturewiseRootMeanSquareError(knowns, predicted)
 
 
-@raises(ArgumentException)
+@raises(InvalidValueCombination)
 def testMFRMSE_badshapeFeatures():
     predictedLabels = numpy.array([[0], [0], [0], [0]])
     knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])

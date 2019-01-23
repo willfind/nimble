@@ -14,42 +14,56 @@ from UML.data import Base
 from UML.data import Matrix
 from math import sqrt
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination
 from six.moves import range
 
 
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):
-        raise ArgumentException("predictedValues must be derived class of UML.data.Base")
+        msg = "predictedValues must be derived class of UML.data.Base"
+        raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
-        raise ArgumentException("predictedValues must be labels only; this has more than one feature")
+        msg = "predictedValues must be labels only; this has more than "
+        msg += "one feature"
+        raise InvalidArgumentValue(msg)
 
 
 def _computeError(knownValues, predictedValues, loopFunction, compressionFunction):
     """
-        A generic function to compute different kinds of error metrics.  knownValues
-        is a 1d Base object with one known label (or number) per row. predictedValues is a 1d Base
-        object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
-        to the same point as the ith row in predictedValues. loopFunction is a function to be applied
-        to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
-        a predicted label, and runningTotal, which contains the successive output of loopFunction.
-        compressionFunction is a function that should take two arguments: runningTotal, the final
-        output of loopFunction, and n, the number of values in knownValues/predictedValues.
+    A generic function to compute different kinds of error metrics.  knownValues
+    is a 1d Base object with one known label (or number) per row. predictedValues is a 1d Base
+    object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
+    to the same point as the ith row in predictedValues. loopFunction is a function to be applied
+    to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
+    a predicted label, and runningTotal, which contains the successive output of loopFunction.
+    compressionFunction is a function that should take two arguments: runningTotal, the final
+    output of loopFunction, and n, the number of values in knownValues/predictedValues.
     """
     knownIsEmpty = len(knownValues.points) == 0 or len(knownValues.features) == 0
     predIsEmpty = len(predictedValues.points) == 0 or len(predictedValues.features) == 0
-    if knownValues is None or not isinstance(knownValues, Base) or knownIsEmpty:
-        raise ArgumentException("Empty 'knownValues' argument in error calculator")
-    if predictedValues is None or not isinstance(predictedValues, Base) or predIsEmpty:
-        raise ArgumentException("Empty 'predictedValues' argument in error calculator")
+    if knownValues is None or not isinstance(knownValues, Base):
+        msg = "knownValues must be derived class of UML.data.Base"
+        raise InvalidArgumentType(msg)
+    if knownIsEmpty:
+        msg = "Empty 'knownValues' argument in error calculator"
+        raise InvalidArgumentValue(msg)
+    if predictedValues is None or not isinstance(predictedValues, Base):
+        msg = "predictedValues must be derived class of UML.data.Base"
+        raise InvalidArgumentType(msg)
+    if predIsEmpty:
+        msg = "Empty 'predictedValues' argument in error calculator"
+        raise InvalidArgumentValue(msg)
 
     if len(knownValues.points) != len(predictedValues.points):
-        msg = "The knownValues and predictedValues must have the same number of points"
-        raise ArgumentException(msg)
+        msg = "The knownValues and predictedValues must have the same number "
+        msg += "of points"
+        raise InvalidValueCombination(msg)
 
     if len(knownValues.features) != len(predictedValues.features):
-        msg = "The knownValues and predictedValues must have the same number of features"
-        raise ArgumentException(msg)
+        msg = "The knownValues and predictedValues must have the same number "
+        msg += "of features"
+        raise InvalidValueCombination(msg)
 
     if not isinstance(knownValues, Matrix):
         knownValues = knownValues.copyAs(format="Matrix")
@@ -74,15 +88,16 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
             raise ZeroDivisionError('Tried to divide by zero when calculating performance metric')
             return
     else:
-        raise ArgumentException("Empty argument(s) in error calculator")
+        raise InvalidArgumentValue("Empty argument(s) in error calculator")
 
     return runningTotal
 
 
 def rootMeanSquareError(knownValues, predictedValues):
     """
-        Compute the root mean square error.  Assumes that knownValues and predictedValues contain
-        numerical values, rather than categorical data.
+    Compute the root mean square error.  Assumes that knownValues and
+    predictedValues contain numerical values, rather than categorical
+    data.
     """
     _validatePredictedAsLabels(predictedValues)
     return _computeError(knownValues, predictedValues, lambda x, y, z: z + (y - x) ** 2, lambda x, y: sqrt(x / y))
@@ -90,15 +105,15 @@ def rootMeanSquareError(knownValues, predictedValues):
 
 rootMeanSquareError.optimal = 'min'
 
-
 def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
-    """For 2d prediction data, compute the RMSE of each feature, then average
-    the results.
+    """
+    For 2d prediction data, compute the RMSE of each feature, then
+    average the results.
     """
     if len(knownValues.features) != len(predictedValues.features):
-        raise ArgumentException("The known and predicted data must have the same number of features")
+        raise InvalidValueCombination("The known and predicted data must have the same number of features")
     if len(knownValues.points) != len(predictedValues.points):
-        raise ArgumentException("The known and predicted data must have the same number of points")
+        raise InvalidValueCombination("The known and predicted data must have the same number of points")
 
     results = []
     for i in range(len(knownValues.features)):
@@ -126,8 +141,9 @@ meanAbsoluteError.optimal = 'min'
 
 def fractionIncorrect(knownValues, predictedValues):
     """
-        Compute the proportion of incorrect predictions within a set of
-        instances.  Assumes that values in knownValues and predictedValues are categorical.
+    Compute the proportion of incorrect predictions within a set of
+    instances.  Assumes that values in knownValues and predictedValues
+    are categorical.
     """
     _validatePredictedAsLabels(predictedValues)
     return _computeError(knownValues, predictedValues, lambda x, y, z: z if x == y else z + 1, lambda x, y: x / y)
@@ -142,8 +158,10 @@ def varianceFractionRemaining(knownValues, predictedValues):
     predicted values. This will be equal to 1 - UML.calculate.rsquared() of
     the same inputs.
     """
-    if len(knownValues.points) != len(predictedValues.points): raise Exception("Objects had different numbers of points")
-    if len(knownValues.features) != len(predictedValues.features): raise Exception(
+    if len(knownValues.points) != len(predictedValues.points):
+        raise InvalidValueCombination("Objects had different numbers of points")
+    if len(knownValues.features) != len(predictedValues.features):
+        raise InvalidValueCombination(
         "Objects had different numbers of features. Known values had " + str(
             len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
     diffObject = predictedValues - knownValues
