@@ -31,8 +31,8 @@ import UML
 
 from UML.logger import Stopwatch
 
-from UML.exceptions import ArgumentException, ImproperActionException, InvalidArgumentValue
-from UML.exceptions import PackageException
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
+from UML.exceptions import InvalidValueCombination, PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
 from UML.data import Matrix  # needed for 1s or 0s obj creation
@@ -102,7 +102,7 @@ def _learnerQuery(name, queryType):
     elif queryType == 'defaults':
         toCallName = 'getLearnerDefaultValues'
     else:
-        raise ArgumentException("Unrecognized queryType: " + queryType)
+        raise InvalidArgumentValue("Unrecognized queryType: " + queryType)
 
     interface = findBestInterface(package)
     return getattr(interface, toCallName)(learnerName)
@@ -225,22 +225,25 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
                          featureNames, name):
     retAllowed = copy.copy(UML.data.available)
     if returnType not in retAllowed:
-        raise ArgumentException("returnType must be a value in " + str(retAllowed))
+        msg = "returnType must be a value in " + str(retAllowed)
+        if not isinstance(returnType, six.string_types):
+            raise InvalidArgumentType(msg)
+        raise InvalidArgumentValue(msg)
 
     if numPoints < 0:
         msg = "numPoints must be 0 or greater, yet " + str(numPoints)
         msg += " was given."
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     if numFeatures < 0:
-        msg = "numFeatures must be 0 or greater, yet " + str(numPoints)
+        msg = "numFeatures must be 0 or greater, yet " + str(numFeatures)
         msg += " was given."
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     if numPoints == 0 and numFeatures == 0:
         msg = "Either one of numPoints (" + str(numPoints) + ") or "
         msg += "numFeatures (" + str(numFeatures) + ") must be non-zero."
-        raise ArgumentException(msg)
+        raise InvalidValueCombination(msg)
 
     if returnType == 'Sparse':
         if not scipy:
@@ -320,11 +323,15 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
         # double nested list contained list-type forced values from the first row
         values = [list(rawData[0].values())]
-        keys = list(rawData[0].keys())
-        for row in rawData[1:]:
-            if list(row.keys()) != keys:
-                msg = "keys don't match."
-                raise ArgumentException(msg)
+        # in py3 keys() returns a dict_keys object comparing equality of these
+        # objects is valid, but converting to lists for comparison can fail
+        keys = rawData[0].keys()
+        for i, row in enumerate(rawData[1:]):
+            if row.keys() != keys:
+                msg = "The keys at index {i} do not match ".format(i=i)
+                msg += "the keys at index 0. Each dictionary in the list must "
+                msg += "contain the same key values."
+                raise InvalidArgumentValue(msg)
             values.append(list(row.values()))
         rawData = numpy.matrix(values, dtype=elementType)
         featureNames = keys
@@ -732,7 +739,7 @@ def createDataFromFile(
                 msg = "The data could not be accessed from the webpage. "
                 msg += "HTTP Status: {0}, ".format(response.status_code)
                 msg += "Reason: {0}".format(response.reason)
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             # check python version
             py3 = sys.version_info[0] == 3
@@ -1040,14 +1047,14 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
             if str(val) in tempPointNames:
                 msg = "The point name " + str(val) + " was given more "
                 msg += "than once in this file"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             tempPointNames[setRow] = str(val)
         # indicates a feature name
         elif rowEq and not colEq:
             if str(val) in tempFeatureNames:
                 msg = "The feature name " + str(val) + " was given more "
                 msg += "than once in this file"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             tempFeatureNames[setCol] = str(val)
         # intersection of point and feature names. ignore
         else:
@@ -1070,7 +1077,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
                     msg += "data, at least one of the rows "
                     msg += str(zeroPlaced) + " and " + str(i) + " must "
                     msg += "have a non zero value"
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
                 # make a zero of the same dtype as the data
                 name = str(numpy.array([0], dtype=data.dtype)[0])
                 zeroPlaced = i
@@ -1079,7 +1086,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
             if name in retNames:
                 msg = "The " + axisName + " name " + name + " was "
                 msg += "given more than once in this file"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             retNames.append(name)
         return retNames
 
@@ -1272,13 +1279,12 @@ def _selectionNameValidation(keep, hasNames, kind):
         if hasNames is False:
             # in this case we have no names for reference,
             # so no strings should be in the list
-            for val in keep:
-                if not isinstance(val, int):
-                    msg = "No " + kind + " names were provided by the user, and "
-                    msg += "they are not being extracted from the data, "
-                    msg += 'therefore only interger valued indices are '
-                    msg += 'allowed in the ' + paramName + 's parameter'
-                    raise ArgumentException(msg)
+            if not all(isinstance(val, int) for val in keep):
+                msg = "No " + kind + " names were provided by the user, and "
+                msg += "they are not being extracted from the data, "
+                msg += 'therefore only integer valued indices are '
+                msg += 'allowed in the ' + paramName + 's parameter'
+                raise InvalidArgumentValue(msg)
 
 
 def _csv_getFNamesAndAnalyzeRows(
@@ -1360,7 +1366,7 @@ def _setupAndValidationForFeatureSelection(
                 except ValueError:
                     msg = 'keepFeatures included a name (' + val + ') '
                     msg += 'which was not found in the featureNames'
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
             cleaned.append(selIndex)
             assert selIndex is not None
 
@@ -1378,7 +1384,7 @@ def _setupAndValidationForFeatureSelection(
                 msg += ") and ("
                 msg += str(keepFeatures[i])
                 msg += ") respectably."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             else:
                 found[cleaned[i]] = i
 
@@ -1389,7 +1395,7 @@ def _setupAndValidationForFeatureSelection(
                 msg += str(cleaned[i])
                 msg += ") is not in the range of 0 to "
                 msg += str(numFeatures - 1)  # we want inclusive end points
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         # initialize, but only if we know we'll be adding something
         keepFeatures = cleaned
@@ -1415,7 +1421,7 @@ def _raiseSelectionDuplicateException(kind, i1, i2, values):
     msg += ") and ("
     msg += str(values[i2])
     msg += ") respectably."
-    raise ArgumentException(msg)
+    raise InvalidArgumentValue(msg)
 
 
 def _validationForPointSelection(keepPoints, pointNames):
@@ -1437,9 +1443,9 @@ def _validationForPointSelection(keepPoints, pointNames):
             msg += "). The value ("
             msg += str(keepPoints[i])
             msg += ") was less than 0, yet we only allow valid non-negative "
-            msg += "interger indices or point names as values."
+            msg += "integer indices or point names as values."
             msg += str(numFeatures - 1)  # we want inclusive end points
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         if isinstance(pointNames, list):
             if isinstance(keepPoints[i], six.string_types):
@@ -1448,7 +1454,7 @@ def _validationForPointSelection(keepPoints, pointNames):
                 except ValueError:
                     msg = 'keepPoints included a name (' + keepPoints[i] + ') '
                     msg += 'which was not found in the provided pointNames'
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
             else:
                 cleaned.append(keepPoints[i])
 
@@ -1466,7 +1472,7 @@ def _validationForPointSelection(keepPoints, pointNames):
                 msg += ") and ("
                 msg += str(keepPoints[i])
                 msg += ") respectably."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             else:
                 found[cleaned[i]] = i
 
@@ -1477,7 +1483,7 @@ def _validationForPointSelection(keepPoints, pointNames):
                 msg += str(cleaned[i])
                 msg += ") is not in the range of 0 to "
                 msg += str(len(pointNames) - 1)  # we want inclusive end points
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         # only do this if cleaned is non-empty / we have provided pointnames
         return cleaned
@@ -1498,14 +1504,14 @@ def _namesDictToList(names, kind, paramName):
             msg += "two keys with the same value. Interpreted as names, "
             msg += "this means that two " + kind + "s had the same name, "
             msg += "which is disallowed."
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         if position < 0 or position >= len(ret):
             msg = "The dict valued parameter " + paramName + " contained "
             msg += "a key with a value (" + position + "), yet the only "
             msg += "acceptable possible position values would be in the "
             msg += "range 0 to " + str(len(ret))
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         ret[position] = key
 
@@ -1521,7 +1527,7 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
         dialect = csv.Sniffer().sniff(openFile.readline())
     elif len(inputSeparator) > 1:
         msg = "inputSeparator must be a single character"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     elif inputSeparator == '\t':
         dialect = csv.excel_tab
     else:
@@ -1749,11 +1755,11 @@ def _loadcsvUsingPython(
     # check to see if all of the wanted points in keepPoints were
     # found in the data
     if notYetFoundPoints is not None and len(notYetFoundPoints) > 0:
-        msg = "The following entiries in keepPoints were not found "
+        msg = "The following entries in keepPoints were not found "
         msg += "in the data:"
         for key in notYetFoundPoints:
             msg += " (" + str(key) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     # the List form of featsToRemoveSet
     featsToRemoveList = list(featsToRemoveSet)
@@ -2028,7 +2034,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
     for currInterface in UML.interfaces.available:
         if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
             if currInterface.isAlias(customPackageName):
-                raise ArgumentException(
+                raise InvalidArgumentValue(
                     "The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
 
     # do validation before we potentially construct an interface to a custom package
@@ -2057,7 +2063,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 def deregisterCustomLearnerBacked(customPackageName, learnerName, save):
     currInterface = findBestInterface(customPackageName)
     if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
     origOptions = currInterface.optionNames
     empty = currInterface.deregisterLearner(learnerName)
@@ -2201,7 +2207,9 @@ def copyLabels(dataSet, dependentVar):
         #from knownValues
         labels = dataSet.features.copy([dependentVar])
     else:
-        raise ArgumentException("Missing or improperly formatted indicator for known labels in computeMetrics")
+        msg = "Missing or improperly formatted indicator for known labels "
+        msg += "in computeMetrics"
+        raise InvalidArgumentType(msg)
 
     return labels
 
@@ -2225,7 +2233,7 @@ def executeCode(code, inputHash):
     """
     #inputHash = inputHash.copy() #make a copy so we don't modify it... but it doesn't seem necessary
     if isSingleLineOfCode(code):
-        return executeOneLinerCode(code, inputHash) #it's one line of text (with ;'s to seperate statemetns')
+        return executeOneLinerCode(code, inputHash) #it's one line of text (with ;'s to separate statements')
     elif isinstance(code, (str, six.text_type)):
         return executeFunctionCode(code, inputHash) #it's the text of a function definition
     else:
@@ -2234,10 +2242,11 @@ def executeCode(code, inputHash):
 
 def executeOneLinerCode(codeText, inputHash):
     """Execute the given code stored as text in codeText, starting with the variable values specified in inputHash
-    This function assumes the code consists of just one line (with multiple statements seperated by semi-colans.
+    This function assumes the code consists of just one line (with multiple statements separated by semi-colons.
     Note: if the last statement in the line starts X=... then the X= gets stripped off (to prevent it from getting broken by A=(X=...)).
     """
-    if not isSingleLineOfCode(codeText): raise Exception("The code text was not just one line of code.")
+    if not isSingleLineOfCode(codeText):
+        raise InvalidArgumentValue("The code text was not just one line of code.")
     codeText = codeText.strip()
     localVariables = inputHash.copy()
     pieces = codeText.split(";")
@@ -2258,7 +2267,8 @@ def executeFunctionCode(codeText, inputHash):
     """Execute the given code stored as text in codeText, starting with the variable values specified in inputHash
     This function assumes the code consists of an entire function definition.
     """
-    if not "def" in codeText: raise Exception("No function definition was found in this code!")
+    if not "def" in codeText:
+        raise InvalidArgumentValue("No function definition was found in this code!")
     localVariables = {}
     exec (codeText, globals(), localVariables)    #apply the code, which declares the function definition
     #foundFunc = False
@@ -2269,7 +2279,8 @@ def executeFunctionCode(codeText, inputHash):
 
 
 def isSingleLineOfCode(codeText):
-    if not isinstance(codeText, (str, six.text_type)): return False
+    if not isinstance(codeText, (str, six.text_type)):
+        return False
     codeText = codeText.strip()
     try:
         codeText.strip().index("\n")
@@ -2508,25 +2519,28 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     to use explicitly.
     """
     if not isinstance(X, Base):
-        raise ArgumentException("X must be a Base object")
+        raise InvalidArgumentType("X must be a Base object")
     if Y is not None:
         if not isinstance(Y, (Base, int, six.string_types, list)):
-            raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
+            msg = "Y must be a Base object or an index (int) from X where "
+            msg += "Y's data can be found"
+            raise InvalidArgumentType(msg)
         if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
             Y = X.features.extract(Y)
 
         if len(Y.features) > 1 and scoreMode != 'label':
-            msg = "When dealing with multi dimentional outputs / predictions, "
+            msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "then the scoreMode flag is required to be set to 'label'"
-            raise ArgumentException(msg)
+            raise InvalidValueCombination(msg)
 
         if not len(X.points) == len(Y.points):
             #todo support indexing if Y is an index for X instead
-            raise ArgumentException("X and Y must contain the same number of points.")
+            msg += "X and Y must contain the same number of points."
+            raise InvalidValueCombination(msg)
 
     if folds == 0:
-        raise ArgumentException("Tried to cross validate over 0 folds")
+        raise InvalidArgumentValue("Tried to cross validate over 0 folds")
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
@@ -2638,22 +2652,28 @@ def makeFoldIterator(dataList, folds):
     the list has as many (training, testing) tuples as the length of the input list
 
     """
-    if dataList is None or len(dataList) == 0:
-        raise ArgumentException("dataList may not be None, or empty")
+    if dataList is None:
+        raise InvalidArgumentType('dataList may not be None')
+    if len(dataList) == 0:
+        raise InvalidArgumentValue("dataList may not be or empty")
 
     points = len(dataList[0].points)
     for data in dataList:
         if data is not None:
             if len(data.points) == 0:
-                raise ArgumentException(
-                    "One of the objects has 0 points, it is impossible to specify a valid number of folds")
+                msg = "One of the objects has 0 points, it is impossible to "
+                msg += "specify a valid number of folds"
+                raise InvalidValueCombination(msg)
             if len(data.points) != len(dataList[0].points):
-                raise ArgumentException("All data objects in the list must have the same number of points and features")
+                msg = "All data objects in the list must have the same number "
+                msg += "of points and features"
+                raise InvalidValueCombination(msg)
 
     # note: we want truncation here
     numInFold = int(points / folds)
     if numInFold == 0:
-        raise ArgumentException("Must specify few enough folds so there is a point in each")
+        msg = "Must specify few enough folds so there is a point in each"
+        raise InvalidArgumentValue(msg)
 
     # randomly select the folded portions
     indices = list(range(points))
@@ -2736,8 +2756,10 @@ class ArgumentIterator:
         self.rawArgumentInput = rawArgumentInput
         self.index = 0
         if not isinstance(rawArgumentInput, dict):
-            raise ArgumentException(
-                "ArgumentIterator objects require dictionary's to initialize- e.g. {'a':(1,2,3), 'b':(4,5)} This is the form default generated by **args in a function argument.")
+            msg = "ArgumentIterator objects require dictionary's to "
+            msg += "initialize- e.g. {'a':(1,2,3), 'b':(4,5)} This is the "
+            msg += "form default generated by **args in a function argument."
+            raise InvalidArgumentType(msg)
 
         # i.e. if rawArgumentInput == {}
         if len(rawArgumentInput) == 0:
@@ -2950,11 +2972,15 @@ def sumAbsoluteDifference(dataOne, dataTwo):
 
     #compare shapes of data to make sure a comparison is sensible.
     if len(dataOne.features) != len(dataTwo.features):
-        raise ArgumentException(
-            "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of features.")
+        msg = "Can't calculate difference between corresponding entries in "
+        msg += "dataOne and dataTwo, the underlying data has different "
+        msg += "numbers of features."
+        raise InvalidValueCombination(msg)
     if len(dataOne.points) != len(dataTwo.points):
-        raise ArgumentException(
-            "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of points.")
+        msg = "Can't calculate difference between corresponding entries in "
+        msg += "dataOne and dataTwo, the underlying data has different "
+        msg += "numbers of points."
+        raise InvalidValueCombination(msg)
 
     numpyOne = dataOne.copyAs('numpyarray')
     numpyTwo = dataTwo.copyAs('numpyarray')
@@ -3001,7 +3027,7 @@ class LearnerInspector:
         Example output: 'classification', 'regression', 'other'
         """
         if not isinstance(learnerName, six.string_types):
-            raise ArgumentException("learnerName must be a string")
+            raise InvalidArgumentType("learnerName must be a string")
         return self._classifyAlgorithmDecisionTree(learnerName)
 
     #todo pull from each 'trail' function to find out what possible results it can have
@@ -3111,7 +3137,7 @@ class LearnerInspector:
 
         try:
             sumError = sumAbsoluteDifference(runResults, noiselessTestLabels)
-        except ArgumentException as e:
+        except InvalidValueCombination as e:
             return 'other'
 
         #if the labels are repeated from those that were trained on, then it is a classifier
@@ -3153,7 +3179,7 @@ class LearnerInspector:
 
         try:
             sumError = sumAbsoluteDifference(runResults, testLabels) #should be identical to noiselessTestLabels
-        except ArgumentException:
+        except InvalidValueCombination:
             return 'other'
 
         if sumError > self.NEAR_THRESHHOLD:
@@ -3167,37 +3193,39 @@ class LearnerInspector:
 def _validScoreMode(scoreMode):
     """ Check that a scoreMode flag to train() trainAndApply(), etc. is an accepted value """
     scoreMode = scoreMode.lower()
-    if scoreMode != 'label' and scoreMode != 'bestscore' and scoreMode != 'allscores':
-        raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+    if scoreMode not in ['label', 'bestscore', 'allscores']:
+        msg ="scoreMode may only be 'label' 'bestScore' or 'allScores'"
+        raise InvalidArgumentValue(msg)
 
 
 def _validMultiClassStrategy(multiClassStrategy):
     """ Check that a multiClassStrategy flag to train() trainAndApply(), etc. is an accepted value """
     multiClassStrategy = multiClassStrategy.lower()
-    if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll'.lower() and multiClassStrategy != 'OneVsOne'.lower():
-        raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
+    if multiClassStrategy not in ['default', 'onevsall', 'onevsone']:
+        msg = "multiClassStrategy may be 'default' 'OneVsAll' or 'OneVsOne'"
+        raise InvalidArgumentValue(msg)
 
 
 def _unpackLearnerName(learnerName):
     """Split a learnerName parameter into the portion defining the package,
     and the portion defining the learner.
-
     """
     splitList = learnerName.split('.', 1)
     if len(splitList) < 2:
         msg = "Recieved the ill formed learner name '" + learnerName + "'. "
         msg += "The learner name must identify both the desired package and learner"
         msg += ", separated by a dot. Example:'mlpy.KNN'"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     package = splitList[0]
     learnerName = splitList[1]
     return (package, learnerName)
 
 
 def _validArguments(arguments):
-    """ Check that an arguments parmeter to train() trainAndApply(), etc. is an accepted format """
+    """ Check that an arguments parameter to train() trainAndApply(), etc. is an accepted format """
     if not isinstance(arguments, dict):
-        raise ArgumentException("The 'arguments' parameter must be a dictionary")
+        msg = "The 'arguments' parameter must be a dictionary"
+        raise InvalidArgumentType(msg)
 
 
 def _mergeArguments(argumentsParam, kwargsParam):
@@ -3219,9 +3247,10 @@ def _mergeArguments(argumentsParam, kwargsParam):
     for k in smaller:
         val = smaller[k]
         if k in ret and ret[k] != val:
-            raise ArgumentException("The two dicts disagree. key= " + str(k) +
-                                    " | arguments value= " + str(argumentsParam[k]) + " | **kwargs value= " +
-                                    str(kwargsParam[k]))
+            msg = "The two dicts disagree. key= " + str(k)
+            msg += " | arguments value= " + str(argumentsParam[k])
+            msg += " | **kwargs value= " + str(kwargsParam[k])
+            raise InvalidValueCombination(msg)
         ret[k] = val
 
     return ret
@@ -3230,39 +3259,45 @@ def _mergeArguments(argumentsParam, kwargsParam):
 def _validData(trainX, trainY, testX, testY, testRequired):
     """ Check that the data parameters to train() trainAndApply(), etc. are in accepted formats """
     if not isinstance(trainX, Base):
-        raise ArgumentException("trainX may only be an object derived from Base")
+        msg = "trainX may only be an object derived from Base"
+        raise InvalidArgumentType(msg)
 
     if trainY is not None:
         if not (isinstance(trainY, Base) or isinstance(trainY, (six.string_types, int, numpy.int64))):
-            raise ArgumentException(
-                "trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+            msg = "trainY may only be an object derived from Base, or an ID "
+            msg += "of the feature containing labels in testX"
+            raise InvalidArgumentType(msg)
         if isinstance(trainY, Base):
         #			if not len(trainY.features) == 1:
-        #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+        #				raise InvalidArgumentType("If trainY is a Data object, then it may only have one feature")
             if not len(trainY.points) == len(trainX.points):
-                raise ArgumentException(
-                    "If trainY is a Data object, then it must have the same number of points as trainX")
+                msg = "If trainY is a Data object, then it must have the same "
+                msg += "number of points as trainX"
+                raise InvalidValueCombination(msg)
 
     # testX is allowed to be None, sometimes it is appropriate to have it be filled using
     # the trainX argument (ie things which transform data, or learn internal structure)
     if testRequired[0] and testX is None:
-        raise ArgumentException("testX must be provided")
+        raise InvalidArgumentType("testX must be provided")
     if testX is not None:
         if not isinstance(testX, Base):
-            raise ArgumentException("testX may only be an object derived from Base")
+            msg += "testX may only be an object derived from Base"
+            raise InvalidArgumentType(msg)
 
     if testRequired[1] and testY is None:
-        raise ArgumentException("testY must be provided")
+        raise InvalidArgumentType("testY must be provided")
     if testY is not None:
         if not isinstance(testY, (Base, six.string_types, int, int)):
-            raise ArgumentException(
-                "testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+            msg = "testY may only be an object derived from Base, or an ID "
+            msg += "of the feature containing labels in testX"
+            raise InvalidArgumentType(msg)
         if isinstance(trainY, Base):
         #			if not len(trainY.features) == 1:
-        #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+        #				raise InvalidArgumentType("If trainY is a Data object, then it may only have one feature")
             if not len(trainY.points) == len(trainX.points):
-                raise ArgumentException(
-                    "If trainY is a Data object, then it must have the same number of points as trainX")
+                msg = "If trainY is a Data object, then it must have the same "
+                msg += "number of points as trainX"
+                raise InvalidValueCombination(msg)
 
 
 def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
@@ -3278,13 +3313,14 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
 
     if needToCheck:
         if scoreMode is not None and scoreMode != 'label':
-            msg = "When dealing with multi dimentional outputs / predictions, "
+            msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "the scoreMode flag is required to be set to 'label'"
-            raise ArgumentException(msg)
+            raise InvalidValueCombination(msg)
         if multiClassStrategy is not None and multiClassStrategy != 'default':
-            msg = "When dealing with multi dimentional outputs / predictions, "
-            msg += "the multiClassStrategy flag is required to be set to 'default'"
-            raise ArgumentException(msg)
+            msg = "When dealing with multi dimensional outputs / predictions, "
+            msg += "the multiClassStrategy flag is required to be set to "
+            msg += "'default'"
+            raise InvalidValueCombination(msg)
 
 
 def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
@@ -3423,7 +3459,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
         return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
     else:
-        raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
+        msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
+        raise InvalidArgumentValue(msg)
 
 
 def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
@@ -3568,7 +3605,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         #wrap data in Base container
         return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
     else:
-        raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
+        msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
+        raise InvalidArgumentValue(msg)
 
 
 def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,

@@ -19,7 +19,7 @@ import copy
 
 import UML
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue, NewImproperActionException
 from six.moves import range
 
 # Contains path to mlpy root directory
@@ -153,7 +153,8 @@ class Mlpy(UniversalInterface):
         elif transform is not None:
             ret = init[0] + learn[0] + transform[0]
         else:
-            raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
+            msg = "Cannot get parameter names for leaner " + learnerName
+            raise InvalidArgumentValue(msg)
 
         return [ret]
 
@@ -283,11 +284,11 @@ class Mlpy(UniversalInterface):
 
         if 'kernel' in arguments:
             if arguments['kernel'] is None and trainX is not None and len(trainX.points) != len(trainX.features):
-                raise ArgumentException(
+                raise InvalidArgumentValue(
                     "For this learner, in the absence of specifying a kernel, the trainX parameter must be square (representing the inner product space of the features)")
 
             if isinstance(arguments['kernel'], self.mlpy.KernelExponential):
-                raise ArgumentException(
+                raise NewImproperActionException(
                     "This interface disallows the use of KernelExponential; it is bugged in some versions of mlpy")
 
         customDict['useT'] = False

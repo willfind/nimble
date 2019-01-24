@@ -9,7 +9,7 @@ import UML
 from nose.tools import *
 import numpy.testing
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue, NewImproperActionException
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 
 
@@ -103,7 +103,7 @@ def testMlpyHandmadeKernelPCA():
     assert len(ret.data[0]) == 1
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testMlpyHandmadeInnerProductTrainingPCAException():
     """ Test mlpy by calling a kernel based leaner with no kernel or transformed data """
     data = [[1, 1], [2, 2], [3, 3], [7, 7]]
@@ -209,7 +209,7 @@ def testMlpyRegression():
     assert ret is not None
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testMlpyOLSDisallowed():
     """ Test mlpy's broken OLS Learner is disallowed """
     variables = ["Y", "x1", "x2"]
@@ -222,7 +222,7 @@ def testMlpyOLSDisallowed():
     UML.trainAndApply("mlpy.OLS", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testMlpyLARSDisallowed():
     """ Test mlpy's broken LARS Learner is disallowed """
     variables = ["Y", "x1", "x2"]
@@ -301,7 +301,7 @@ def testMlpyKernelLearners():
     assert ret is not None
 
 
-@raises(ArgumentException)
+@raises(NewImproperActionException)
 def testMlpyKernelExponentialDisallowed():
     """ Test mlpy that trying to use KernelExponential throws an exception """
     variables = ["Y", "x1", "x2"]

@@ -22,6 +22,9 @@ class UMLException(Exception):
 class ArgumentException(UMLException):
     pass
 
+class ImproperActionException(UMLException, TypeError):
+    pass
+
 class InvalidArgumentType(UMLException, TypeError):
     """
     Raised when an argument type causes a failure.
@@ -66,17 +69,27 @@ class InvalidValueCombination(UMLException, TypeError):
     """
     pass
 
-class InvalidObjectValue(UMLException, ValueError):
+class NewImproperActionException(UMLException, TypeError):
     """
-    Raised when a value related to the object causes a failure.
+    Raised when an operation on an object is not supported.
 
-    This exception occurs when the calling object has a characteristic
-    that prevents this operation. These often occur due to a value in
-    the object's data or value describing the object's shape preventing
-    the operation, but any other value describing this object could also
-    cause this exception. This is a subclass of Python's ValueError.
+    A method or operation is disallowed due to current attributes of the
+    object. As an example, calling car.turnOn() when the car object is
+    already running. This is a subclass of Python's TypeError.
     """
     pass
+
+# class InvalidObjectValue(UMLException, ValueError):
+#     """
+#     Raised when a value related to the object causes a failure.
+#
+#     This exception occurs when the calling object has a characteristic
+#     that prevents this operation. These often occur due to a value in
+#     the object's data or value describing the object's shape preventing
+#     the operation, but any other value describing this object could also
+#     cause this exception. This is a subclass of Python's ValueError.
+#     """
+#     pass
 
 class PackageException(UMLException, ImportError):
     """
@@ -101,15 +114,6 @@ class MissingEntryException(Exception):
         for entryName in self.entryNames[1:]:
             errMessage += ", " + entryName
         errMessage += '. \n' + repr(self.value)
-
-class ImproperActionException(UMLException, TypeError):
-    """
-    Raised calling a function does not make sense in a certain context.
-
-    As an example, calling call.turnOn() when the car object is already
-    running. This is a subclass of Python's TypeError.
-    """
-    pass
 
 class EmptyFileException(UMLException):
     """

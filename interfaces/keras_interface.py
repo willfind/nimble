@@ -15,7 +15,6 @@ import logging
 
 import UML
 
-from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.helpers import inspectArguments

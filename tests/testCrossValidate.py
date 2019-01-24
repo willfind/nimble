@@ -1,6 +1,6 @@
-"""Tests for the user facing functions for cross validation and
+"""
+Tests for the user facing functions for cross validation and
 the backend helpers they rely on.
-
 """
 
 from __future__ import absolute_import
@@ -20,7 +20,7 @@ from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidValueCombination
 from UML.calculate import *
 from UML.randomness import pythonRandom
 from UML.helpers import computeMetrics
@@ -227,37 +227,37 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     try:
         crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
     try:
         crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
     try:
         crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
     try:
         crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
     try:
         crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
     try:
         crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except ArgumentException:
+    except InvalidValueCombination:
         pass
 
 

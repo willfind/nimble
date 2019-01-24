@@ -17,6 +17,7 @@ import numpy
 
 import UML
 from UML import fill
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.randomness import pythonRandom
 from .points import Points
@@ -918,7 +919,7 @@ class Axis(object):
                 name = self._source._nextDefaultName(self._axis)
             if name in temp:
                 msg = "Cannot input duplicate names: " + str(name)
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             temp[name] = index
         assignments = temp
 

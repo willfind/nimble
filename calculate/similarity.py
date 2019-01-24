@@ -20,6 +20,9 @@ def _validatePredictedAsLabels(predictedValues):
 
 def cosineSimilarity(knownValues, predictedValues):
     _validatePredictedAsLabels(predictedValues)
+    if not isinstance(knownValues, UML.data.Base):
+        msg = "knownValues must be derived class of UML.data.Base"
+        raise InvalidArgumentType(msg)
 
     known = knownValues.copyAs(format="numpy array").flatten()
     predicted = predictedValues.copyAs(format="numpy array").flatten()

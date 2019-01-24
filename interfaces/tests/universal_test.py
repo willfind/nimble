@@ -11,7 +11,7 @@ import os
 
 import UML
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.helpers import generateClassificationData
 
@@ -152,21 +152,21 @@ TestObject = TestInterface()
 
 # TODO tests involving default arguments
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test__validateArgumentDistributionMissingArgument():
     learner = 'l0'
     arguments = {'l0a0': 1}
     TestObject._validateArgumentDistribution(learner, arguments)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test__validateArgumentDistributionOverlappingArgumentsFlat():
     learner = 'l2'
     arguments = {'dup': 1, 'sub': 'subFunc'}
     TestObject._validateArgumentDistribution(learner, arguments)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test__validateArgumentDistributionExtraArgument():
     learner = 'l1'
     arguments = {'l1a0': 1, 'l5a100': 11}
@@ -240,25 +240,31 @@ def test_eachExposedPresent():
 
 class AlwaysWarnInterface(UniversalInterface):
     def __init__(self):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         super(AlwaysWarnInterface, self).__init__()
+
+    def writeWarningToStdErr(self):
+        try: #py2
+            sys.stderr.write('WARN TEST\n')
+        except TypeError: #py3
+            sys.stderr.write(b'WARN TEST\n')
 
     def accessible(self):
         return True
 
     def _listLearnersBackend(self):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return ['foo']
 
     def _findCallableBackend(self, name):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return 'fooCallableBackend'
 
     def _getParameterNamesBackend(self, name):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return [[]]
 
@@ -266,7 +272,7 @@ class AlwaysWarnInterface(UniversalInterface):
         return self._getParameterNames(name)
 
     def _getDefaultValuesBackend(self, name):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return [{}]
 
@@ -274,19 +280,19 @@ class AlwaysWarnInterface(UniversalInterface):
         return self._getDefaultValues(name)
 
     def learnerType(self, name):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         pass
 
     def _getScores(self, learner, testX, arguments, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         num = len(testX.points)
         raw = [0] * num
         return UML.createData("Matrix", raw)
 
     def _getScoresOrder(self, learner):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return [0, 1]
 
@@ -300,32 +306,32 @@ class AlwaysWarnInterface(UniversalInterface):
         return "AlwaysWarn"
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return (trainX, trainY, testX, arguments)
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return outputValue
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return (learnerName, trainX, trainY, arguments)
 
     def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         pass
 
     def _applier(self, learner, testX, arguments, customDict):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         return testX
 
     def _getAttributes(self, learnerBackend):
-        sys.stderr.write('WARN TEST\n')
+        self.writeWarningToStdErr()
         sys.stderr.flush()
         pass
 

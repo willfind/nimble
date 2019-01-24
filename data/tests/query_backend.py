@@ -7,18 +7,21 @@ points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator
 """
-
 from __future__ import absolute_import
 from __future__ import print_function
 import math
 import tempfile
-import numpy
 import os
 import os.path
+from functools import reduce
+from copy import deepcopy
+
+import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
-
-from copy import deepcopy
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 import UML
 from UML import loadData
@@ -27,11 +30,8 @@ from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import ArgumentException
-from six.moves import map
-from six.moves import range
-from six.moves import zip
-from functools import reduce
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -338,7 +338,7 @@ class QueryBackend(DataTestObject):
 
         try:
             LoadObj = loadData(tmpFile.name)
-        except ArgumentException as ae:
+        except InvalidArgumentValue:
             assert True
         else:
             assert False

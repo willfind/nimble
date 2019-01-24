@@ -29,7 +29,7 @@ import tempfile
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidTypeCombination, InvalidObjectValue
+from UML.exceptions import InvalidTypeCombination, NewImproperActionException
 import six
 from future.utils import raise_
 
@@ -332,7 +332,7 @@ class SessionConfiguration(object):
             msg = "The hook for (" + str(key) + ") has been previously set as "
             msg += "None, subsequently disabling this feature on that section "
             msg += "/ option combination"
-            raise InvalidObjectValue(msg)
+            raise NewImproperActionException(msg)
 
         if toCall is not None:
             if not hasattr(toCall, '__call__'):

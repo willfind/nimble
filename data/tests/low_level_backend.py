@@ -27,20 +27,19 @@ try:
 except:
     import mock
 
+from six.moves import range
+from nose.tools import *
+
 from UML import createData
 from UML.data import Base
 from UML.data import available
 from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
-from nose.tools import *
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
-
-from six.moves import range
 from UML.randomness import pythonRandom
-
-
 
 ###########
 # helpers #
@@ -469,7 +468,7 @@ class LowLevelBackend(object):
         nonStringName = ['one', 'two', 3]
         toTest.points.setNames(nonStringName)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNonUniqueStringInList(self):
         """ Test points.setNames() for ArgumentException when a list element is not unique """
         toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
@@ -645,7 +644,7 @@ class LowLevelBackend(object):
         nonStringFeatureNames = ['one', 'two', 3]
         toTest.features.setNames(nonStringFeatureNames)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonUniqueStringInList(self):
         """ Test features.setNames() for ArgumentException when a list element is not unique """
         toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])

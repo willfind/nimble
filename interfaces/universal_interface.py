@@ -4,7 +4,6 @@
 
 
 """
-
 from __future__ import absolute_import
 import inspect
 import copy
@@ -15,7 +14,7 @@ import sys
 import numbers
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import prettyListString
 from UML.exceptions import prettyDictString
 from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
@@ -256,10 +255,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     def _confirmValidLearner(self, learnerName):
         allLearners = self.listLearners()
         if not learnerName in allLearners:
-            raise ArgumentException("" + learnerName + " is not the name of a learner exposed by this interface")
+            msg = learnerName
+            msg += " is not the name of a learner exposed by this interface"
+            raise InvalidArgumentValue(msg)
         learnerCall = self.findCallable(learnerName)
         if learnerCall is None:
-            raise ArgumentException("" + learnerName + " was not found in this package")
+            msg = learnerName + " was not found in this package"
+            raise InvalidArgumentValue(msg)
 
 
     def _trainBackend(self, learnerName, trainX, trainY, arguments, timer):
@@ -301,13 +303,15 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
     def setOption(self, option, value):
         if option not in self.optionNames:
-            raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
+            msg = str(option) + " is not one of the accepted configurable option names"
+            raise InvalidArgumentValue(msg)
 
         UML.settings.set(self.getCanonicalName(), option, value)
 
     def getOption(self, option):
         if option not in self.optionNames:
-            raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
+            msg = str(option) + " is not one of the accepted configurable option names"
+            raise InvalidArgumentValue(msg)
 
         # empty string is the sentinal value indicating that the configuration
         # file has an option of that name, but the UML user hasn't set a value
@@ -442,7 +446,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 else:
                     subParamGroup = self._getParameterNames(currCallName)
 
-                msg = "MISSING LEARNERING PARAMETER! "
+                msg = "MISSING LEARNING PARAMETER! "
                 msg += "When trying to validate arguments for "
                 msg += currCallName + ", "
                 msg += "we couldn't find a value for the parameter named "
@@ -467,7 +471,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     msg += ". The full mapping of inputs actually provided was: "
                     msg += prettyDictString(original) + ". "
 
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         # if this pool of arguments is not shared, then this is the last subcall,
         # and we can finalize the allocations
@@ -522,7 +526,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 msg += ". The full mapping of inputs actually provided was: "
                 msg += prettyDictString(original) + ". "
 
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             delayedAllocations = {}
 
@@ -653,10 +657,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 msg += ". The full mapping of inputs actually provided was: "
                 msg += prettyDictString(arguments) + ". "
 
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
             msg = "Missing required params in each possible set: " + str(missing)
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
         return bestIndex
 
     def _formatScoresToOvA(self, learnerName, learner, testX, applyResults, rawScores, arguments, customDict):
@@ -1393,7 +1397,7 @@ class TrainedLearners(TrainedLearner):
 
 
         else:
-            raise(ArgumentException('Wrong multiclassification method.'))
+            raise NewImproperActionException('Wrong multiclassification method.')
 
 
 ###########

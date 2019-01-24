@@ -14,7 +14,6 @@ _visible = collectVisiblePythonModules(interfacePath)
 _visibleTests = collectVisiblePythonModules(testsPath)
 _possible = collectUnexpectedInterfaces(_visible)
 
-
 def _noInstances(superClass, toCheck):
     for obj in toCheck:
         if isinstance(obj, superClass):

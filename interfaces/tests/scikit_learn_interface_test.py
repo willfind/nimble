@@ -18,7 +18,7 @@ from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociat
 
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
 from UML.helpers import generateClusteredPoints
@@ -230,7 +230,7 @@ def testSciKitLearnListLearners():
                     for key in dSet.keys():
                         assert key in pSet
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testSciKitLearnExcludedLearners():
     trainX = UML.createData('Matrix', [1,2,3])
     apply = UML.trainAndApply(toCall('KernelCenterer'), trainX)
@@ -636,10 +636,10 @@ def testGetAttributesCallable():
             tl = UML.train(fullName, X, Y)
         # this is meant to safely bypass those learners that have required
         # arguments or require unique data
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if printExceptions:
                 print (learner + " : " + lType)
-                print(ae)
+                print(iav)
         tl.getAttributes()
 
 
