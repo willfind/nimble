@@ -177,7 +177,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # labels and get predictions on the test set.
                 trainedLearners = []
                 for label in labelSet:
-                    relabeler.func_defaults = (label,)
+                    relabeler.__defaults__ = (label,)
                     trainLabels = trainY.points.calculate(relabeler)
                     trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
                                                        timer=timer)
