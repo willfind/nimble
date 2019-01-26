@@ -63,7 +63,7 @@ class AxisView(Axis):
         if possible >= start and possible < end:
             return possible - start
         else:
-            raise KeyError()
+            raise KeyError(name)
 
     def _getIndices(self, names):
         return [self._getIndex(n) for n in names]

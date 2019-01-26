@@ -1,11 +1,10 @@
 from __future__ import absolute_import
+
+from six.moves import range
 from nose.tools import *
 
 from UML.logger.stopwatch import Stopwatch
 from UML.exceptions import ImproperActionException
-from UML.exceptions import MissingEntryException
-from six.moves import range
-
 
 def testBasicFuncs():
     watch = Stopwatch()
@@ -47,7 +46,7 @@ def testDoubleStart():
     watch.start('test')
 
 
-@raises(MissingEntryException)
+@raises(ImproperActionException)
 def testStopMissingEntry():
     watch = Stopwatch()
     watch.start('test')
@@ -61,7 +60,7 @@ def testCalcRunTimeImproperAction():
     watch.calcRunTime('test')
 
 
-@raises(MissingEntryException)
+@raises(ImproperActionException)
 def testCalcRunTimeMissingEntry():
     watch = Stopwatch()
     watch.start('test')

@@ -7,9 +7,7 @@ on task name.
 from __future__ import absolute_import
 import time
 
-from UML.exceptions import MissingEntryException
 from UML.exceptions import ImproperActionException
-
 
 class Stopwatch(object):
     def __init__(self):
@@ -40,7 +38,7 @@ class Stopwatch(object):
             is already an entry for taskName.
         """
         if taskName not in self.startTimes or taskName not in self.isRunningStatus:
-            raise MissingEntryException([taskName], "Tried to stop task that was not started in Stopwatch.stop()")
+            raise ImproperActionException("Tried to stop task '" + taskName + "'' that was not started in Stopwatch.stop()")
         elif not self.isRunningStatus[taskName]:
             raise ImproperActionException("Unable to stop task that has already stopped")
 
@@ -91,8 +89,7 @@ class Stopwatch(object):
         ImproperActionException.
         """
         if taskName not in self.cumulativeTimes or taskName not in self.isRunningStatus:
-            raise MissingEntryException([taskName],
-                                        "Missing entry when trying to calculate total task run time: " + str(taskName))
+            raise ImproperActionException("Missing entry when trying to calculate total task run time: " + str(taskName))
         elif self.isRunningStatus[taskName] == True:
             raise ImproperActionException(
                 'Can\'t calculate total running time for ' + taskName + ', as it is still running')

@@ -610,7 +610,10 @@ class List(Base):
 
             def __getitem__(self, key):
                 if key < 0 or key >= self.fRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the feature axis (0 "
+                    msg += "to " + str(self.fRange - 1) + ")."
+                    raise IndexError(msg)
 
                 return self.source.data[self.limit][key + self.fStart]
 
@@ -641,7 +644,10 @@ class List(Base):
 
             def __getitem__(self, key):
                 if key < 0 or key >= self.pRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the point axis (0 "
+                    msg += "to " + str(self.pRange - 1) + ")."
+                    raise IndexError(msg)
 
                 self.fviewer.setLimit(key + self.pStart)
                 return self.fviewer

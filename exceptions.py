@@ -81,34 +81,11 @@ class PackageException(UMLException, ImportError):
     """
     pass
 
-class MissingEntryException(Exception):
-    """
-    Exception to be thrown when a dictionary or other data structure is missing
-    an entry that is necessary for the proper completion of an operation.
-    """
-
-    def __init__(self, entryNames, value):
-        self.entryNames = entryNames
-        self.value = value
-
-    def __str__(self):
-        errMessage = "Missing entry names: " + self.entryNames[0]
-        for entryName in self.entryNames[1:]:
-            errMessage += ", " + entryName
-        errMessage += '. \n' + repr(self.value)
-
-class EmptyFileException(UMLException):
-    """
-    Raised a file to be read is empty
-    """
-    pass
-
-class FileFormatException(UMLException):
+class FileFormatException(UMLException, ValueError):
     """
     Raised when the formatting of a file is not as expected.
     """
     pass
-
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """

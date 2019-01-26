@@ -677,7 +677,7 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
             and hasattr(function, 'valueOfFeatureOrPoint')
             and hasattr(function, 'optr')):
         msg = "some important attribute is missing in the input function"
-        raise InvalidArgumentValue(msg)
+        raise AttributeError(msg)
     if axis == "point":
         #convert name of feature to index of feature
         index = function.nameOfFeatureOrPoint

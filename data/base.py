@@ -999,7 +999,7 @@ class Base(object):
         if y.__class__ is int or y.__class__ is numpy.integer:
             if y < -length or y >= length:
                 msg = "The given index " + str(y) + " is outside of the range "
-                msg += "of possible indices in the point axis (0 to "
+                msg += "of possible indices in the feature axis (0 to "
                 msg += str(length - 1) + ")."
                 raise IndexError(msg)
             if y >= 0:
