@@ -5,7 +5,7 @@ from nose.tools import raises
 import UML
 from UML import fill
 from UML import match
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 
 def test_fillFactory_matchNumeric_fillNumeric():
@@ -127,9 +127,9 @@ def backend_fill(func, data, match, expected=None):
             # if no matches, the return may be a UML object otherwise a list
             expObj = UML.createData(t, expected)
             assert func(toTest, match) == expected
-        # for ArgumentException
+        # for InvalidArgumentValue or InvalidValueCombination
         else:
-            assert isinstance(func(toTest, match), ArgumentException)
+            assert isinstance(func(toTest, match), InvalidArgumentValue)
 
 def test_mean_noMatches():
     data = [1, 2, 2, 9]
@@ -264,7 +264,7 @@ def test_interpolate_withArguments():
         toTest = UML.createData(t, data)
         assert fill.interpolate(toTest, match, arguments) == expected
 
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 def test_interpolate_badArguments():
     data = [1,2,5]
     arguments = 11

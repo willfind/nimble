@@ -292,7 +292,7 @@ def test_residuals_exception_zeroAxisOnParam():
         pred = predOrig.copy().points.extract(lambda x: False)
         control = controlOrig.copy().points.extract(lambda x: False)
         UML.calculate.residuals(pred, control)
-        assert False  # expected ArgumentException
+        assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
         pass
@@ -300,7 +300,7 @@ def test_residuals_exception_zeroAxisOnParam():
     try:
         pred = predOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(pred, controlOrig)
-        assert False  # expected ArgumentException
+        assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
         pass
@@ -308,7 +308,7 @@ def test_residuals_exception_zeroAxisOnParam():
     try:
         control = controlOrig.copy().features.extract(lambda x: False)
         UML.calculate.residuals(predOrig, control)
-        assert False  # expected ArgumentException
+        assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
         pass
@@ -317,7 +317,7 @@ def test_residuals_exception_zeroAxisOnParam():
 def test_residuals_matches_SKL():
     try:
         UML.helpers.findBestInterface("scikitlearn")
-    except ArgumentException:
+    except InvalidArgumentValue:
         return
 
     # with handmade data

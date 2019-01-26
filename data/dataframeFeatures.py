@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
@@ -55,16 +55,16 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            # currRet might return an ArgumentException with a message which
+            # currRet might return an InvalidArgumentValue with a message which
             # needs to be formatted with the axis and current index before
             # being raised
-            if isinstance(currRet, ArgumentException):
+            if isinstance(currRet, InvalidArgumentValue):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
             if len(currRet) != len(self._source.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             self._source.data.iloc[:, j] = currRet
 

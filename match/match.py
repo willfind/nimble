@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import numpy
 import six
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 
 
 def missing(value):
@@ -77,7 +77,7 @@ def anyAllValuesBackend(quantity, data, match):
     try:
         # 1D data
         return quantity([match(val) for val in data])
-    except ArgumentException:
+    except InvalidArgumentValue:
         # 2D data
         if quantity is any:
             # if any feature contains a match we can return True

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from UML.exceptions import InvalidArgumentType
 
+from UML.exceptions import InvalidArgumentType
 
 def elementwiseMultiply(left, right):
     """

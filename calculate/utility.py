@@ -6,13 +6,14 @@ functions.
 
 from __future__ import absolute_import
 import inspect
-import numpy
 import math
+
+import numpy
+from six.moves import range
 
 import UML
 from UML.exceptions import InvalidArgumentValue
 from UML.randomness import numpyRandom
-from six.moves import range
 
 
 def detectBestResult(functionToCheck):
@@ -38,7 +39,7 @@ def detectBestResult(functionToCheck):
     returns: Either 'min' or 'max'; the former if lower values returned from
     functionToCheck are associated with correctness of predictions, the later
     if larger values are associated with correctness. If we are unable to
-    determine which is correct, then an ArgumentException is thrown.
+    determine which is correct, then an InvalidArgumentValue is thrown.
     """
     if hasattr(functionToCheck, 'optimal'):
         if functionToCheck.optimal == 'min':

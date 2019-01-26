@@ -4,7 +4,7 @@ import copy
 
 from UML.match import convertMatchToFunction
 from UML.match import anyValues
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 def factory(match, fill, arguments=None):
     """
@@ -47,13 +47,13 @@ def mean(vector, match):
         msg += "unmatched values and all values for the {0} at index {1} "
         msg += "returned a match"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     mean = UML.calculate.mean(unmatched)
     if mean is None:
         msg = "Cannot calculate mean. The {0} at index {1} "
         msg += "contains non-numeric values or is all NaN values"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     return [mean if match(val) else val for val in vector]
 
 
@@ -70,13 +70,13 @@ def median(vector, match):
         msg += "unmatched values and all values for the {0} at index {1} "
         msg += "returned a match"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     median = UML.calculate.median(unmatched)
     if median is None:
         msg = "Cannot calculate median. The {0} at index {1} "
         msg += "contains non-numeric values or is all NaN values"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     return [median if match(val) else val for val in vector]
 
 def mode(vector, match):
@@ -92,7 +92,7 @@ def mode(vector, match):
         msg += "unmatched values and all values for the {0} at index {1} "
         msg += "returned a match"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     mode = UML.calculate.mode(unmatched)
     return [mode if match(val) else val for val in vector]
 
@@ -105,7 +105,7 @@ def forwardFill(vector, match):
         msg = "Unable to provide a forward fill value for the {0} at "
         msg += "index {1} because the first value is a match"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     ret = []
     for v in vector:
         if match(v):
@@ -124,7 +124,7 @@ def backwardFill(vector, match):
         msg = "Unable to provide a backward fill value for the {0} at "
         msg += "index {1} because the last value is a match"
         # return so msg can be formatted before being raised
-        return ArgumentException(msg)
+        return InvalidArgumentValue(msg)
     ret = []
     for v in reversed(vector):
         # prepend since we are working backward
@@ -149,7 +149,7 @@ def interpolate(vector, match, arguments=None):
             tmpArguments['x'] = x
         except Exception:
             msg = 'for fill.interpolate, arguments must be None or a dict.'
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
     else:
         xp = [i for i,v in enumerate(vector) if not match(v)]
         fp = [v for i,v in enumerate(vector) if not match(v)]

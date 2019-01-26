@@ -9,7 +9,8 @@ import numpy
 import six
 
 import UML
-from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import NewImproperActionException
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList
 
@@ -251,8 +252,9 @@ class Elements(object):
             func = lambda x: eval('x'+condition)
             ret = self.calculate(function=func, outputType='Matrix')
         else:
-            msg = 'function can only be a function or str, not else'
-            raise ArgumentException(msg)
+            msg = 'function can only be a function or string containing a '
+            msg += 'comparison operator and a value'
+            raise InvalidArgumentType(msg)
         return int(numpy.sum(ret.data))
 
     def countUnique(self, points=None, features=None):
@@ -325,18 +327,18 @@ class Elements(object):
         """
         if not isinstance(other, UML.data.Base):
             msg = "'other' must be an instance of a UML data object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if len(self._source.points) != len(other.points):
             msg = "The number of points in each object must be equal."
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
         if len(self._source.features) != len(other.features):
             msg = "The number of features in each object must be equal."
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
-            raise ImproperActionException(msg)
+            raise NewImproperActionException(msg)
 
         self._source._validateEqualNames('point', 'point',
                                          'elements.multiply', other)
@@ -384,20 +386,20 @@ class Elements(object):
         if not singleValue and not isinstance(other, UML.data.Base):
             msg = "'other' must be an instance of a UML data object "
             msg += "or a single numeric value"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(other, UML.data.Base):
             # same shape
             if len(self._source.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if len(self._source.features) != len(other.features):
                 msg = "The number of features in each object must be equal."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
-            raise ImproperActionException(msg)
+            raise NewImproperActionException(msg)
 
         if isinstance(other, UML.data.Base):
             def powFromRight(val, pnum, fnum):
@@ -405,7 +407,7 @@ class Elements(object):
                     return val ** other[pnum, fnum]
                 except Exception as e:
                     self._source._numericValidation()
-                    other._numericValidation()
+                    other._numericValidation(right=True)
                     raise e
             self._source.elements.transform(powFromRight)
         else:
@@ -414,7 +416,7 @@ class Elements(object):
                     return val ** other
                 except Exception as e:
                     self._source._numericValidation()
-                    other._numericValidation()
+                    other._numericValidation(right=True)
                     raise e
             self._source.elements.transform(powFromRight)
 

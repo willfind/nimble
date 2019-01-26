@@ -15,17 +15,16 @@ import inspect
 import sys
 import pdb
 import functools
-import numpy
 import random
+
+import numpy
+from six.moves import range
 
 import UML
 from UML.data import Base
 from UML.data import BaseView
-from UML.exceptions import ArgumentException
 from UML.helpers import inspectArguments
 from UML.randomness import pythonRandom
-from six.moves import range
-
 
 numberOperations = 100
 numPoints = 4

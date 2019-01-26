@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import absolute_import
 import math
+
 import numpy
 
 import UML
@@ -305,9 +306,10 @@ def residuals(toPredict, controlVars):
     Returns: UML data object of the same size as toPredict, containing the calculated
     residuals.
 
-    Raises: ArgumentException if toPredict and controlVars are not UML data objects
-    of if they have a different number of points.
-
+    Raises: InvalidArgumentType if toPredict and controlVars are not UML
+    data objects and InvalidArgumentValue if either has nonzero points
+    or features and InvalidValueCombination if they have a different
+    number of points.
     """
     if scipy is None:
         msg = "scipy must be installed in order to use the residuals function."

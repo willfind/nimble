@@ -30,8 +30,8 @@ from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -401,14 +401,14 @@ class QueryBackend(DataTestObject):
 
         assert toTest[1, 'one'] == 4
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_getitem_nonIntConvertableFloatSingleKey(self):
         data = [[0, 1, 2, 3]]
         toTest = self.constructor(data)
 
         assert toTest[0.1] == 0
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_getitem_nonIntConvertableFloatTupleKey(self):
         data = [[0, 1], [2, 3]]
         toTest = self.constructor(data)
@@ -596,30 +596,30 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(pointStart=1.5)
             assert False  # pointStart is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(pointEnd=5)
             assert False  # pointEnd > pointCount didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if textCheck:
-                print(ae)
+                print(iav)
 
         try:
             toTest.view(pointEnd=1.4)
             assert False  # pointEnd is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(pointStart='7', pointEnd='4')
             assert False  # pointStart > pointEnd didn't raise exception
-        except ArgumentException as ae:
+        except InvalidValueCombination as ivc:
             if textCheck:
-                print(ae)
+                print(ivc)
 
     def test_view_featureStart_featureEnd_validation(self):
         pointNames = ['1', '4', '7']
@@ -632,30 +632,30 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(featureStart=1.5)
             assert False  # featureStart is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(featureEnd=4)
             assert False  # featureEnd > featureCount didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if textCheck:
-                print(ae)
+                print(iav)
 
         try:
             toTest.view(featureEnd=1.4)
             assert False  # featureEnd is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(featureStart='three', featureEnd='two')
             assert False  # featureStart > featureEnd didn't raise exception
-        except ArgumentException as ae:
+        except InvalidValueCombination as ivc:
             if textCheck:
-                print(ae)
+                print(ivc)
 
 
     def test_ViewAccess_AllLimits(self):
@@ -1023,7 +1023,7 @@ class QueryBackend(DataTestObject):
         assert pnames == ['', 'one', '', 'three']
         assert bound == len('three')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
         randGen = UML.createRandomData("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
@@ -1090,12 +1090,12 @@ class QueryBackend(DataTestObject):
     # points.similarities / features.similarities #
     ###############################################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_similarities_InvalidParamType(self):
         """ Test points.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_similarities_InvalidParamType(self):
         """ Test features.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(False)
@@ -1109,12 +1109,12 @@ class QueryBackend(DataTestObject):
         else:
             obj.features.similarities({"hello": 5})
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_similarities_UnexpectedString(self):
         """ Test points.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_similarities_UnexpectedString(self):
         """ Test features.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(False)
@@ -1358,14 +1358,14 @@ class QueryBackend(DataTestObject):
         assert sameAsOrigT == trans
 
     # test input function validation
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def todotest_points_similarities_FuncValidation(self):
-        """ Test points.similarities raises exception for invalid funcitions """
+        """ Test points.similarities raises exception for invalid functions """
         self.backend_Sim_FuncValidation(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def todotest_features_similarities_FuncValidation(self):
-        """ Test features.similarities raises exception for invalid funcitions """
+        """ Test features.similarities raises exception for invalid functions """
         self.backend_Sim_FuncValidation(False)
 
     def backend_Sim_FuncValidation(self, axis):
@@ -1779,12 +1779,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_pointStatistics_unexpectedString(self):
         """ Test pointStatistics returns correct std results """
         self.backend_Stat_unexpectedString(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_featureStatistics_unexpectedString(self):
         """ Test featureStatistics returns correct std results """
         self.backend_Stat_unexpectedString(False)

@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import numpy
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
@@ -51,16 +51,16 @@ class MatrixPoints(MatrixAxis, Axis, Points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
-            # currRet might return an ArgumentException with a message which
+            # currRet might return an InvalidArgumentValue with a message which
             # needs to be formatted with the axis and current index before
             # being raised
-            if isinstance(currRet, ArgumentException):
+            if isinstance(currRet, InvalidArgumentValue):
                 currRet.value = currRet.value.format('point', i)
                 raise currRet
             if len(currRet) != len(self._source.features):
                 msg = "function must return an iterable with as many elements "
                 msg += "as features in this object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             try:
                 currRet = numpy.array(currRet, dtype=numpy.float)
             except ValueError:

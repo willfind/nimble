@@ -13,7 +13,7 @@ import six
 from six.moves import range
 import numpy
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -309,12 +309,12 @@ def validateInputString(string, accepted, paramName):
     msg += "ignored when checking the " + paramName
 
     if not isinstance(string, six.string_types):
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     cleanFuncName = cleanKeywordInput(string)
 
     if cleanFuncName not in acceptedClean:
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     return cleanFuncName
 
@@ -418,7 +418,7 @@ def valuesToPythonList(values, argName):
     except TypeError:
         msg = "The argument '{0}' is not an integer ".format(argName)
         msg += "(python or numpy), string, or an iterable container object."
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     return valuesList
 

@@ -9,7 +9,7 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType
 from .axis import Axis
 from .points import Points
 from .base import cmp_to_key
@@ -132,7 +132,7 @@ class ListAxis(Axis):
 
         if sortHelper is not None and scorer is None and comparator is None:
             msg = "sortHelper is neither a scorer or a comparator"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         # make array of views
         viewArray = []

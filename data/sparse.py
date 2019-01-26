@@ -13,8 +13,8 @@ from six.moves import zip
 
 import UML
 import UML.data
-from UML.exceptions import ArgumentException, PackageException
-from UML.exceptions import ImproperActionException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException, NewImproperActionException
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -59,7 +59,7 @@ class Sparse(Base):
                 and (not scipy.sparse.isspmatrix(data))):
             msg = "the input data can only be a scipy sparse matrix or a "
             msg += "numpy matrix or CooWithEmpty or CooDummy."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
             if reuseData:
@@ -190,11 +190,11 @@ class Sparse(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -235,7 +235,7 @@ class Sparse(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
         self._sorted = other._sorted
@@ -542,7 +542,7 @@ class Sparse(Base):
             return 0
         else:
             msg = 'self._sorted is not either point nor feature.'
-            raise ImproperActionException(msg)
+            raise NewImproperActionException(msg)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -623,7 +623,7 @@ class Sparse(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the "
                         msg += "same feature"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentValue(msg)
                     if len(nansL) > 0:
                         # fill any nan values in left with the corresponding
                         # right value
@@ -1021,7 +1021,7 @@ class Sparse(Base):
 
     def _sortInternal(self, axis):
         if axis != 'point' and axis != 'feature':
-            raise ArgumentException("invalid axis type")
+            raise InvalidArgumentValue("invalid axis type")
 
         if (self._sorted == axis
                 or len(self.points) == 0
@@ -1040,7 +1040,7 @@ class Sparse(Base):
 
 def _sortInternal_coo_matrix(obj, sortAs):
     if sortAs != 'row-major' and sortAs != 'col-major':
-        raise ArgumentException("invalid axis type")
+        raise InvalidArgumentValue("invalid axis type")
 
     # sort least significant axis first
     if sortAs == "row-major":

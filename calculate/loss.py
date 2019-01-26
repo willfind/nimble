@@ -7,17 +7,16 @@ level of correctness in the predicted values.
 """
 
 from __future__ import absolute_import
+from math import sqrt
+
 import numpy
+from six.moves import range
 
 import UML
 from UML.data import Base
 from UML.data import Matrix
-from math import sqrt
-
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidValueCombination
-from six.moves import range
-
 
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):

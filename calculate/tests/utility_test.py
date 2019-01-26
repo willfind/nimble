@@ -4,6 +4,7 @@ Tests for the functions defined in UML.calculate.utility
 """
 
 from __future__ import absolute_import
+
 import numpy
 from nose.tools import *
 
@@ -16,7 +17,6 @@ from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import rSquared
 from UML.calculate import varianceFractionRemaining
-
 from UML.exceptions import InvalidArgumentValue
 
 ####################

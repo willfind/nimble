@@ -12,7 +12,8 @@ import numpy
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -48,7 +49,7 @@ class Matrix(Base):
             # and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix "
             msg += "or ListPassThrough."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
             if reuseData:
@@ -113,11 +114,11 @@ class Matrix(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -191,7 +192,7 @@ class Matrix(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
 
@@ -361,7 +362,7 @@ class Matrix(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the "
                         msg += "same feature"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentValue(msg)
                     if nansL.any():
                         # fill any nan values in left with the corresponding
                         # right value
@@ -656,7 +657,7 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
         viewMaker = outerObject.pointView
     else:
         if axis != "feature":
-            raise ArgumentException("axis must be 'point' or 'feature'")
+            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
         maxVal = outerObject.data.shape[1]
         viewMaker = outerObject.featureView
     ret = numpy.zeros(maxVal, dtype=numpy.float)
@@ -676,7 +677,7 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
             and hasattr(function, 'valueOfFeatureOrPoint')
             and hasattr(function, 'optr')):
         msg = "some important attribute is missing in the input function"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if axis == "point":
         #convert name of feature to index of feature
         index = function.nameOfFeatureOrPoint
@@ -685,7 +686,7 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
         queryData = outerObject.data[:, indexOfFeature]
     else:
         if axis != "feature":
-            raise ArgumentException("axis must be 'point' or 'feature'")
+            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
         #convert name of point to index of point
         index = function.nameOfFeatureOrPoint
         indexOfPoint = outerObject.points.getIndex(index)

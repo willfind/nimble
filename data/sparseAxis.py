@@ -8,7 +8,7 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from .axis import Axis
 from .points import Points
 from .base import cmp_to_key
@@ -103,7 +103,7 @@ class SparseAxis(Axis):
 
         if sortHelper is not None and scorer is None and comparator is None:
             msg = "sortHelper is neither a scorer or a comparator"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if comparator is not None:
             # make array of views
@@ -181,10 +181,10 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an ArgumentException with a message
+                # currRet might return an InvalidArgumentValue with a message
                 # which needs to be formatted with the axis and current index
                 # before being raised
-                if isinstance(currOut, ArgumentException):
+                if isinstance(currOut, InvalidArgumentValue):
                     currOut.value = currOut.value.format(self._axis, viewID)
                     raise currOut
 
@@ -196,7 +196,7 @@ class SparseAxis(Axis):
             if not hasattr(currOut, '__getitem__'):
                 msg = "function must return random accessible data "
                 msg += "(ie has a __getitem__ attribute)"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
             for i, retVal in enumerate(currOut):
                 if retVal != 0:

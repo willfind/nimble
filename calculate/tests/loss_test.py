@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-import numpy
 
+import numpy
 from nose.tools import *
 
 import UML

@@ -1,19 +1,18 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import numpy
 import math
 from math import fabs
 
+import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
+from six.moves import range
 
 import UML
-
 from UML import learnerType
 from UML import createData
-
-from UML.exceptions import ArgumentException, ImproperActionException, InvalidArgumentValue, InvalidValueCombination
-
+from UML.exceptions import ImproperActionException, InvalidArgumentValue
+from UML.exceptions import InvalidValueCombination
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
@@ -30,9 +29,6 @@ from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
-from six.moves import range
-
-
 
 ##########
 # TESTER #

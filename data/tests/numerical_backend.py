@@ -19,18 +19,16 @@ import os
 import os.path
 
 from nose.tools import *
-
-import UML
-
-from UML.exceptions import ArgumentException
-from UML.exceptions import ImproperActionException
-
-from UML.data.tests.baseObject import DataTestObject
-
-from UML.randomness import numpyRandom
-from UML.randomness import pythonRandom
 import six
 from six.moves import range
+
+import UML
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import NewImproperActionException
+from UML.data.tests.baseObject import DataTestObject
+from UML.randomness import numpyRandom
+from UML.randomness import pythonRandom
+
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -163,7 +161,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
         ret = toCall(other)
         if ret != NotImplemented:
             assert False
-    except ArgumentException:
+    except InvalidArgumentValue:
         pass
     # if it isn't the exception we expect, pass it on
     except:
@@ -345,7 +343,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
         ret = toCall(other)
         if ret != NotImplemented:
             assert False
-    except ArgumentException:
+    except InvalidArgumentValue:
         pass
     # if it isn't the exception we expect, pass it on
     except:
@@ -407,7 +405,7 @@ def back_selfNotNumericException(callerCon, calleeCon, attr1, attr2=None):
         caller = callerCon(data1)
         callee = calleeConstructor(data2, calleeCon)
     except:
-        raise ArgumentException("Data type doesn't support non numeric data")
+        raise NewImproperActionException("Data type doesn't support non numeric data")
     toCall = getattr(caller, attr1)
     if attr2 is not None:
         toCall = getattr(toCall, attr2)
@@ -623,25 +621,25 @@ def wrapAndCall(toWrap, expected, *args):
 
 def run_full_backendDivMod(constructor, npEquiv, UMLOp, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, UMLOp))
-    wrapAndCall(back_byInfException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
 
     run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity)
 
 
 def run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity):
-    wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
+    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, UMLOp))
 
-    wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_selfNotNumericException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_otherNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_pShapeException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pShapeException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_fShapeException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fShapeException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pEmptyException, NewImproperActionException, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fEmptyException, NewImproperActionException, *(constructor, constructor, UMLOp))
 
     back_autoVsNumpyObjCallee(constructor, npEquiv, UMLOp, inplace, sparsity)
 
@@ -655,13 +653,13 @@ def run_full_backendDivMod_rop(constructor, npEquiv, UMLOp, inplace, sparsity):
 
 
 def run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity):
-    wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
+    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, UMLOp))
 
-    wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_selfNotNumericException, NewImproperActionException, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pEmptyException, NewImproperActionException, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fEmptyException, NewImproperActionException, *(constructor, constructor, UMLOp))
 
     back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
 
@@ -672,17 +670,17 @@ class NumericalDataSafe(DataTestObject):
     # __mul__ #
     ###########
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_mul_selfNotNumericException(self):
         """ Test __mul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__mul__')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_mul_otherNotNumericException(self):
         """ Test __mul__ raises exception if param object has non numeric data """
         back_otherNotNumericException(self.constructor, self.constructor, '__mul__')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_mul_shapeException(self):
         """ Test __mul__ raises exception the shapes of the object don't fit correctly """
         data1 = [[1, 2], [4, 5], [7, 8]]
@@ -692,7 +690,7 @@ class NumericalDataSafe(DataTestObject):
 
         caller * callee
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_mul_pEmptyException(self):
         """ Test __mul__ raises exception for point empty data """
         data = []
@@ -703,7 +701,7 @@ class NumericalDataSafe(DataTestObject):
 
         caller * callee
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_mul_fEmptyException(self):
         """ Test __mul__ raises exception for feature empty data """
         data = [[], []]
@@ -1048,16 +1046,16 @@ class NumericalDataSafe(DataTestObject):
         constructor = self.constructor
         UMLOp = '__pow__'
         inputs = (constructor, UMLOp)
-        wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
+        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
 
         inputs = (constructor, int, UMLOp)
-        wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
+        wrapAndCall(back_selfNotNumericException, NewImproperActionException, *inputs)
 
         inputs = (constructor, constructor, UMLOp)
-        wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
+        wrapAndCall(back_pEmptyException, NewImproperActionException, *inputs)
 
         inputs = (constructor, constructor, UMLOp)
-        wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
+        wrapAndCall(back_fEmptyException, NewImproperActionException, *inputs)
 
     def test_pow_autoVsNumpyScalar(self):
         """ Test __pow__ with automated data and a scalar argument, against numpy operations """
@@ -1166,37 +1164,37 @@ class NumericalModifying(DataTestObject):
     # elements.power #
     ##################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_elements_power_otherObjectExceptions(self):
         """ Test elements.power raises exception when param is not a UML data object """
         back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_power_selfNotNumericException(self):
         """ Test elements.power raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'power')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_power_otherNotNumericException(self):
         """ Test elements.power raises exception if param object has non numeric data """
         back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'power')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_power_pShapeException(self):
         """ Test elements.power raises exception the shapes of the object don't fit correctly """
         back_pShapeException(self.constructor, self.constructor, 'elements', 'power')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_power_fShapeException(self):
         """ Test elements.power raises exception the shapes of the object don't fit correctly """
         back_fShapeException(self.constructor, self.constructor, 'elements', 'power')
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_elements_power_pEmptyException(self):
         """ Test elements.power raises exception for point empty data """
         back_pEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_elements_power_fEmptyException(self):
         """ Test elements.power raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
@@ -1244,37 +1242,37 @@ class NumericalModifying(DataTestObject):
     # elements.multiply #
     #####################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_elements_multiply_otherObjectExceptions(self):
         """ Test elements.multiply raises exception when param is not a UML data object """
         back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_multiply_selfNotNumericException(self):
         """ Test elements.multiply raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_multiply_otherNotNumericException(self):
         """ Test elements.multiply raises exception if param object has non numeric data """
         back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_multiply_pShapeException(self):
         """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
         back_pShapeException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_elements_multiply_fShapeException(self):
         """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
         back_fShapeException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_elements_multiply_pEmptyException(self):
         """ Test elements.multiply raises exception for point empty data """
         back_pEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_elements_multiply_fEmptyException(self):
         """ Test elements.multiply raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
@@ -1372,7 +1370,7 @@ class NumericalModifying(DataTestObject):
             toCall = getattr(getattr(caller, 'elements'), 'multiply')
             ret = toCall(other)
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         # if it isn't the exception we expect, pass it on
         except:
@@ -1406,17 +1404,17 @@ class NumericalModifying(DataTestObject):
     # __imul__ #
     ############
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_imul_selfNotNumericException(self):
         """ Test __imul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__imul__')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_imul_otherNotNumericException(self):
         """ Test __imul__ raises exception if param object has non numeric data """
         back_otherNotNumericException(self.constructor, self.constructor, '__imul__')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_imul_shapeException(self):
         """ Test __imul__ raises exception the shapes of the object don't fit correctly """
         data1 = [[1, 2], [4, 5], [7, 8]]
@@ -1426,7 +1424,7 @@ class NumericalModifying(DataTestObject):
 
         caller.__imul__(callee)
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_imul_pEmptyException(self):
         """ Test __imul__ raises exception for point empty data """
         data = []
@@ -1437,7 +1435,7 @@ class NumericalModifying(DataTestObject):
 
         caller *= callee
 
-    @raises(ImproperActionException)
+    @raises(NewImproperActionException)
     def test_imul_fEmptyException(self):
         """ Test __imul__ raises exception for feature empty data """
         data = [[], []]
@@ -1623,16 +1621,16 @@ class NumericalModifying(DataTestObject):
         constructor = self.constructor
         UMLOp = '__ipow__'
         inputs = (constructor, UMLOp)
-        wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
+        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
 
         inputs = (constructor, int, UMLOp)
-        wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
+        wrapAndCall(back_selfNotNumericException, NewImproperActionException, *inputs)
 
         inputs = (constructor, constructor, UMLOp)
-        wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
+        wrapAndCall(back_pEmptyException, NewImproperActionException, *inputs)
 
         inputs = (constructor, constructor, UMLOp)
-        wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
+        wrapAndCall(back_fEmptyException, NewImproperActionException, *inputs)
 
     def test_ipow_autoVsNumpyScalar(self):
         """ Test __ipow__ with automated data and a scalar argument, against numpy operations """
