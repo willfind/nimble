@@ -13,10 +13,10 @@ from nose.plugins.attrib import attr
 
 import UML
 scipy = UML.importModule('scipy.sparse')
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue, InvalidValueCombination
 
 
-@raises(ArgumentException)
+@raises(InvalidValueCombination)
 def testShogun_shapemismatchException():
     """ Test shogun raises exception when the shape of the train and test data don't match """
     variables = ["Y", "x1", "x2"]
@@ -30,7 +30,7 @@ def testShogun_shapemismatchException():
     ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testShogun_singleClassException():
     """ Test shogun raises exception when the training data only has a single label """
     variables = ["Y", "x1", "x2"]
@@ -44,9 +44,9 @@ def testShogun_singleClassException():
     ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testShogun_multiClassDataToBinaryAlg():
-    """ Test shogun() raises ArgumentException when passing multiclass data to a binary classifier """
+    """ Test shogun() raises InvalidArgumentValue when passing multiclass data to a binary classifier """
     variables = ["Y", "x1", "x2"]
     data = [[5, -11, -5], [1, 0, 1], [2, 3, 2]]
     trainingObj = UML.createData('Matrix', data, featureNames=variables)

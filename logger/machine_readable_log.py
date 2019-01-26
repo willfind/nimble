@@ -7,7 +7,7 @@ import types
 import UML
 from .uml_logger import UmlLogger
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType
 import six
 from six.moves import range
 from six.moves import zip
@@ -36,7 +36,7 @@ class MachineReadableLogger(UmlLogger):
             if isinstance(dataFileName, str):
                 logLine += "fileName:" + dataFileName
             else:
-                raise ArgumentException("dataFileName must be a string")
+                raise InvalidArgumentType("dataFileName must be a string")
 
         if baseDataType is not None:
             if isinstance(baseDataType, str):
@@ -44,7 +44,7 @@ class MachineReadableLogger(UmlLogger):
                     logLine += ",dataObjectType:" + baseDataType
                 logLine += "dataObjectType:" + baseDataType
             else:
-                raise ArgumentException("baseDataType must be a string")
+                raise InvalidArgumentType("baseDataType must be a string")
 
         if name is not None:
             if isinstance(name, str):
@@ -52,7 +52,7 @@ class MachineReadableLogger(UmlLogger):
                     logLine += ",dataObjectType:" + baseDataType
                 logLine += "dataObjectName:" + name
             else:
-                raise ArgumentException("name must be a string")
+                raise InvalidArgumentType("name must be a string")
 
         self.logMessage(logLine)
 

@@ -38,7 +38,7 @@ import UML
 from UML import match
 from UML import fill
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination, NewImproperActionException
+from UML.exceptions import InvalidValueCombination, ImproperActionException
 from UML.data.tests.baseObject import DataTestObject
 from UML.randomness import numpyRandom
 
@@ -110,7 +110,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.points.calculate(None)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_calculate_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -121,7 +121,7 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_calculate_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -216,7 +216,7 @@ class HighLevelDataSafe(DataTestObject):
     # .features.calculate() #
     #########################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_calculate_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -231,7 +231,7 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.features.calculate(emitAllEqual)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_calculate_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -471,9 +471,9 @@ class HighLevelDataSafe(DataTestObject):
     # points.mapReduce() #
     ######################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_mapReduce_argumentExceptionNoFeatures(self):
-        """ Test points.mapReduce() for NewImproperActionException when there are no features  """
+        """ Test points.mapReduce() for ImproperActionException when there are no features  """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
@@ -568,9 +568,9 @@ class HighLevelDataSafe(DataTestObject):
     # features.mapReduce() #
     ########################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_mapReduce_argumentExceptionNoPoints(self):
-        """ Test features.mapReduce() for NewImproperActionException when there are no points  """
+        """ Test features.mapReduce() for ImproperActionException when there are no points  """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
@@ -998,7 +998,7 @@ class HighLevelModifying(DataTestObject):
     # replaceFeatureWithBinaryFeatures #
     ####################################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_replaceFeatureWithBinaryFeatures_PemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a point empty object """
         data = [[], []]
@@ -1006,7 +1006,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a feature empty object """
         data = [[], []]
@@ -1052,7 +1052,7 @@ class HighLevelModifying(DataTestObject):
     # transformFeatureToIntegers #
     ##############################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_transformFeatureToIntegers_PemptyException(self):
         """ Test transformFeatureToIntegers() with an point empty object """
         data = [[], []]
@@ -1060,7 +1060,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_transformFeatureToIntegers_FemptyException(self):
         """ Test transformFeatureToIntegers() with an feature empty object """
         data = [[], []]

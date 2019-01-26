@@ -9,7 +9,7 @@ from nose.tools import *
 
 import UML
 from UML.calculate import confidenceIntervalHelper
-from UML.exceptions import PackageException, NewImproperActionException
+from UML.exceptions import PackageException, ImproperActionException
 
 def getPredictions():
     predRaw = [252.7, 247.7] * 12
@@ -43,7 +43,7 @@ def testCannotImportSciPy():
     pred = getPredictions()
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)
 
-@raises(NewImproperActionException)
+@raises(ImproperActionException)
 def testPredictionsInvalidShape():
     pred = getPredictions()
     toAdd = UML.createData('Matrix', numpy.ones((len(pred.points), 1)))

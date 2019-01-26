@@ -10,7 +10,7 @@ import six
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import NewImproperActionException
+from UML.exceptions import ImproperActionException
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList
 
@@ -338,7 +338,7 @@ class Elements(object):
 
         if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         self._source._validateEqualNames('point', 'point',
                                          'elements.multiply', other)
@@ -399,7 +399,7 @@ class Elements(object):
 
         if len(self._source.points) == 0 or len(self._source.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         if isinstance(other, UML.data.Base):
             def powFromRight(val, pnum, fnum):

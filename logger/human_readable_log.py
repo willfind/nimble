@@ -8,7 +8,7 @@ import os.path
 from .tableString import *
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType
 from .uml_logger import UmlLogger
 import six
 from six.moves import range
@@ -41,9 +41,9 @@ class HumanReadableLogger(UmlLogger):
         Log information about a data object
         """
         if baseDataObject is None:
-            raise ArgumentException("logData() cannot do anything with a null data object")
+            raise InvalidArgumentType("logData() cannot do anything with a null data object")
         elif not isinstance(baseDataObject, UML.data.Base):
-            raise ArgumentException("logData() requires an object of type UML.data.Base to work")
+            raise InvalidArgumentType("logData() requires an object of type UML.data.Base to work")
 
         self.logMessage('*' * 37 + " DATA " + '*' * 37)
         self.logMessage("FEATURE REPORT")

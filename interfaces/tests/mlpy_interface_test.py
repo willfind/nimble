@@ -9,7 +9,7 @@ import UML
 from nose.tools import *
 import numpy.testing
 
-from UML.exceptions import InvalidArgumentValue, NewImproperActionException
+from UML.exceptions import InvalidArgumentValue, ImproperActionException
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 
 
@@ -301,7 +301,7 @@ def testMlpyKernelLearners():
     assert ret is not None
 
 
-@raises(NewImproperActionException)
+@raises(ImproperActionException)
 def testMlpyKernelExponentialDisallowed():
     """ Test mlpy that trying to use KernelExponential throws an exception """
     variables = ["Y", "x1", "x2"]

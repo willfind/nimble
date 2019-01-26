@@ -40,7 +40,7 @@ from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidTypeCombination, InvalidValueCombination
-from UML.exceptions import NewImproperActionException
+from UML.exceptions import ImproperActionException
 from UML.randomness import numpyRandom
 from UML.data.tests.baseObject import DataTestObject
 
@@ -502,7 +502,7 @@ class StructureDataSafe(StructureShared):
         except InvalidValueCombination as ivc:
             print(ivc)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_copy_outputAs1DWrongShape(self):
         """ Test copyAs will raise exception when given an unallowed shape """
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -2517,14 +2517,14 @@ class StructureModifying(StructureShared):
             toTest1.features.add(toTest2)
 
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_add_exception_outOfOrder_with_defaults(self):
-        """ Test points.add() for NewImproperActionException when toInsert and self contain a mix of set names and default names not in the same order"""
+        """ Test points.add() for ImproperActionException when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('point')
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_add_exception_outOfOrder_with_defaults(self):
-        """ Test features.add() for NewImproperActionException when toInsert and self contain a mix of set names and default names not in the same order"""
+        """ Test features.add() for ImproperActionException when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('feature')
 
 
@@ -2557,12 +2557,12 @@ class StructureModifying(StructureShared):
         """ Test features.add() to right when the calling object is feature empty """
         self.backend_add_emptyObject('feature')
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_add_fromEmpty_top(self):
         """ Test points.add() with an insertBefore ID when the calling object is point empty raises exception """
         self.backend_add_emptyObject('point', 0)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_add_fromEmpty_left(self):
         """ Test features.add() with an insertBefore ID when the calling object is feature empty raises exception """
         self.backend_add_emptyObject('feature', 0)
@@ -3121,9 +3121,9 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_sort_exceptionIndicesPEmpty(self):
-        """ tests points.sort() throws an NewImproperActionException when given invalid indices """
+        """ tests points.sort() throws an ImproperActionException when given invalid indices """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
@@ -3293,9 +3293,9 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_sort_exceptionIndicesFEmpty(self):
-        """ tests features.sort() throws an NewImproperActionException when given invalid indices """
+        """ tests features.sort() throws an ImproperActionException when given invalid indices """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
@@ -7303,7 +7303,7 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.points.transform(None)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -7314,7 +7314,7 @@ class StructureModifying(StructureShared):
 
         origObj.points.transform(emitLower)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_points_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -7411,7 +7411,7 @@ class StructureModifying(StructureShared):
     # features.transform() #
     ########################
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -7426,7 +7426,7 @@ class StructureModifying(StructureShared):
 
         origObj.features.transform(emitAllEqual)
 
-    @raises(NewImproperActionException)
+    @raises(ImproperActionException)
     def test_features_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -8000,13 +8000,13 @@ class StructureModifying(StructureShared):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
 
         pempty = self.constructor(numpy.empty((0,2)))
-        exceptionHelper(pempty, target, [], NewImproperActionException, checkMsg)
+        exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
 
         fempty = self.constructor(numpy.empty((4,0)))
-        exceptionHelper(fempty, target, [], NewImproperActionException, checkMsg)
+        exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [], NewImproperActionException, checkMsg)
+        exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
 
 
     # flatten single p/f - see name changes
@@ -8123,10 +8123,10 @@ class StructureModifying(StructureShared):
         single = (0,2) if axis == 'point' else (2,0)
 
         singleEmpty = self.constructor(numpy.empty(single))
-        exceptionHelper(singleEmpty, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
 
 
     # exceptions: opposite vector, 2d data
@@ -8142,10 +8142,10 @@ class StructureModifying(StructureShared):
         vecShape = (4,1) if axis == 'point' else (1,4)
 
         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-        exceptionHelper(wrongVector, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
 
         rectangle = self.constructor(numpyRandom.rand(4,4))
-        exceptionHelper(rectangle, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
 
 
     # excpetion: numPoints / numFeatures does not divide length of mega P/F
@@ -8184,13 +8184,13 @@ class StructureModifying(StructureShared):
         # non-default name, flattened axis
         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # all non-default names, unflattened axis
         names = ["a", "b", "c", "d"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # single non-default name, unflattened axis
         testObj = self.constructor(data)
@@ -8198,7 +8198,7 @@ class StructureModifying(StructureShared):
             testObj.features.setName(1, "non-default")
         else:
             testObj.points.setName(2, "non-default")
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
     # exception: unflattening would destroy an axis name
     def test_unflattenFromOnePoint_nameFormatInconsistent(self):
@@ -8221,19 +8221,19 @@ class StructureModifying(StructureShared):
             testObj.features.setName(1, None)
         else:
             testObj.points.setName(1, None)
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # unflattened axis, inconsistent along original unflattened axis
         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
         # unflattened axis, inconsistent along original flattened axis
         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], NewImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
 
 
     # unflatten something that was flattened - include name transformation

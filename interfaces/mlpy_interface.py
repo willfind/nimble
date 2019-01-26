@@ -19,7 +19,7 @@ import copy
 
 import UML
 
-from UML.exceptions import InvalidArgumentValue, NewImproperActionException
+from UML.exceptions import InvalidArgumentValue, ImproperActionException
 from six.moves import range
 
 # Contains path to mlpy root directory
@@ -288,7 +288,7 @@ class Mlpy(UniversalInterface):
                     "For this learner, in the absence of specifying a kernel, the trainX parameter must be square (representing the inner product space of the features)")
 
             if isinstance(arguments['kernel'], self.mlpy.KernelExponential):
-                raise NewImproperActionException(
+                raise ImproperActionException(
                     "This interface disallows the use of KernelExponential; it is bugged in some versions of mlpy")
 
         customDict['useT'] = False

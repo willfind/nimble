@@ -10,7 +10,7 @@ import math
 
 import UML
 from .tableString import tableString
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidValueCombination
 import six
 from six.moves import range
 
@@ -213,11 +213,11 @@ def appendColumns(appendTo, appendFrom):
         They must have the same number of rows, but can have different numbers
         of columns.  I.e. len(appendTo) == len(appendFrom), but
         len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
-        If they do not have the same number of rows, an ArgumentException is
-        raised.
+        If they do not have the same number of rows, an InvalidValueCombination
+        is raised.
     """
     if len(appendTo) != len(appendFrom):
-        raise ArgumentException("Can't merge two matrices with different numbers of rows: " +
+        raise InvalidValueCombination("Can't merge two matrices with different numbers of rows: " +
                                 str(len(appendTo)) + " != " + str(len(appendFrom)))
 
     for i in range(len(appendTo)):

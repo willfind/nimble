@@ -26,7 +26,7 @@ from six.moves import zip
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import NewImproperActionException, PackageException
+from UML.exceptions import ImproperActionException, PackageException
 from UML.exceptions import InvalidTypeCombination, InvalidValueCombination
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
@@ -385,7 +385,7 @@ class Base(object):
         msg += ") and the number of features ("
         msg += str(self._featureCount)
         msg += ") are both greater than 1"
-        raise NewImproperActionException(msg)
+        raise ImproperActionException(msg)
 
     def nameIsDefault(self):
         """Returns True if self.name has a default value"""
@@ -433,7 +433,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(featureToReplace)
         # extract col.
@@ -496,7 +496,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(featureToConvert)
 
@@ -858,7 +858,7 @@ class Base(object):
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "We do not allow writing to file when an object has "
             msg += "0 points or features"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         self.validate()
 
@@ -1120,7 +1120,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "ID is invalid, This object contains no points"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         index = self._getPointIndex(ID)
         return self.view(index, index, None, None)
@@ -1135,7 +1135,7 @@ class Base(object):
         """
         if self._featureCount == 0:
             msg = "ID is invalid, This object contains no features"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         index = self._getFeatureIndex(ID)
         return self.view(None, None, index, index)
@@ -1890,14 +1890,14 @@ class Base(object):
             if self._pointCount != 1 and self._featureCount != 1:
                 msg = "To output as 1D there may either be only one point or "
                 msg += " one feature"
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
 
         # certain shapes and formats are incompatible
         if format.startswith('scipy'):
             if self._pointCount == 0 or self._featureCount == 0:
                 msg = "scipy formats cannot output point or feature empty "
                 msg += "objects"
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
 
         ret = self._copyAs_implementation_base(format, rowsArePoints,
                                                outputAs1D)
@@ -2213,11 +2213,11 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._featureCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "features. This object has 0 features."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         # TODO: flatten nameless Objects without the need to generate default
         # names for them.
@@ -2260,11 +2260,11 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._featureCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "features. This object has 0 features."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         # TODO: flatten nameless Objects without the need to generate default
         # names for them.
@@ -2318,7 +2318,7 @@ class Base(object):
         Helper which validates the formatting of axis names prior to
         unflattening.
 
-        Will raise NewImproperActionException if an inconsistency with the
+        Will raise ImproperActionException if an inconsistency with the
         formatting done by the flatten operations is discovered. Returns
         True if all the names along the unflattend axis are default,
         False otherwise.
@@ -2349,7 +2349,7 @@ class Base(object):
             msg += "Therefore, the {axis} name for this object ('{axisName}')"
             msg += "must either be a default name or the string 'Flattened'"
             msg = msg.format(axis=flatAxis, axisName=flat[0])
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         # check the contents of the names along the unflattend axis
         msg += "Therefore, the {axis} names for this object must either be "
@@ -2365,10 +2365,10 @@ class Base(object):
                 allDefaultStatus = isDefault
             else:
                 if isDefault != allDefaultStatus:
-                    raise NewImproperActionException(msg)
+                    raise ImproperActionException(msg)
 
             if not (isDefault or formatCorrect):
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
 
         # consistency only relevant if we have non-default names
         if not allDefaultStatus:
@@ -2377,7 +2377,7 @@ class Base(object):
                 same = formatted[newUFLen*i].split(' | ')[1]
                 for name in formatted[newUFLen*i:newUFLen*(i+1)]:
                     if same != name.split(' | ')[1]:
-                        raise NewImproperActionException(msg)
+                        raise ImproperActionException(msg)
 
             # seen values - consistent wrt original unflattend axis names
             for i in range(newUFLen):
@@ -2385,7 +2385,7 @@ class Base(object):
                 for j in range(newFLen):
                     name = formatted[i + (j * newUFLen)]
                     if same != name.split(' | ')[0]:
-                        raise NewImproperActionException(msg)
+                        raise ImproperActionException(msg)
 
         return allDefaultStatus
 
@@ -2418,12 +2418,12 @@ class Base(object):
         if self._featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more "
             msg += "features.  This object has 0 features."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._pointCount != 1:
             msg = "Can only unflattenFromOnePoint when there is only one "
             msg += "point.  This object has " + str(self._pointCount)
             msg += "points."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._featureCount % numPoints != 0:
             msg = "The argument numPoints (" + str(numPoints) + ") must be a "
             msg += "divisor of  this object's featureCount ("
@@ -2473,12 +2473,12 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more "
             msg += "points. This object has 0 points."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._featureCount != 1:
             msg = "Can only unflattenFromOneFeature when there is only one "
             msg += "feature. This object has " + str(self._featureCount)
             msg += " features."
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         if self._pointCount % numFeatures != 0:
             msg = "The argument numFeatures (" + str(numFeatures) + ") must "
@@ -2781,14 +2781,14 @@ class Base(object):
         # Test element type self
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do a multiplication when points or features is empty"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         # test element type other
         if isinstance(other, UML.data.Base):
             if len(other.points) == 0 or len(other.features) == 0:
                 msg = "Cannot do a multiplication when points or features is "
                 msg += "empty"
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
 
             if self._featureCount != len(other.points):
                 msg = "The number of features in the calling object must "
@@ -2987,7 +2987,7 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do ** when points or features is empty"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a scalar"
             raise InvalidArgumentType(msg)
@@ -3124,7 +3124,7 @@ class Base(object):
 
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do " + opName + " when points or features is empty"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
@@ -3816,7 +3816,7 @@ class Base(object):
         if num == 0:
             msg = "There are no valid " + axis + "identifiers; "
             msg += "this object has 0 " + axis + "s"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if identifier is None:
             msg = "An identifier cannot be None."
             raise InvalidArgumentType(msg)

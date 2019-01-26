@@ -17,13 +17,7 @@ class UMLException(Exception):
         return repr(self.value)
 
     def __repr__(self):
-        return "{0}({1})".format(self.className, repr(self.value))
-
-class ArgumentException(UMLException):
-    pass
-
-class ImproperActionException(UMLException, TypeError):
-    pass
+        return "{cls}({val})".format(cls=self.className, val=repr(self.value))
 
 class InvalidArgumentType(UMLException, TypeError):
     """
@@ -58,7 +52,7 @@ class InvalidTypeCombination(UMLException, TypeError):
     """
     pass
 
-class InvalidValueCombination(UMLException, TypeError):
+class InvalidValueCombination(UMLException, ValueError):
     """
     Raised when the values of two or more arguments causes a failure.
 
@@ -69,7 +63,7 @@ class InvalidValueCombination(UMLException, TypeError):
     """
     pass
 
-class NewImproperActionException(UMLException, TypeError):
+class ImproperActionException(UMLException, TypeError):
     """
     Raised when an operation on an object is not supported.
 
@@ -78,18 +72,6 @@ class NewImproperActionException(UMLException, TypeError):
     already running. This is a subclass of Python's TypeError.
     """
     pass
-
-# class InvalidObjectValue(UMLException, ValueError):
-#     """
-#     Raised when a value related to the object causes a failure.
-#
-#     This exception occurs when the calling object has a characteristic
-#     that prevents this operation. These often occur due to a value in
-#     the object's data or value describing the object's shape preventing
-#     the operation, but any other value describing this object could also
-#     cause this exception. This is a subclass of Python's ValueError.
-#     """
-#     pass
 
 class PackageException(UMLException, ImportError):
     """

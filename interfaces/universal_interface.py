@@ -1397,7 +1397,7 @@ class TrainedLearners(TrainedLearner):
 
 
         else:
-            raise NewImproperActionException('Wrong multiclassification method.')
+            raise ImproperActionException('Wrong multiclassification method.')
 
 
 ###########

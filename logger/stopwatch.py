@@ -72,10 +72,10 @@ class Stopwatch(object):
 
     def isRunning(self, taskName):
         """
-            Check if the stopwatch is currently timing a task with taskName (i.e. the timer has been
-            started but not stopped for said task).  Returns true if start() has been called for
-            this taskName but neither stop() nor reset() have been called for this taskName.  Otherwise
-            returns false.
+        Check if the stopwatch is currently timing a task with taskName (i.e. the timer has been
+        started but not stopped for said task).  Returns true if start() has been called for
+        this taskName but neither stop() nor reset() have been called for this taskName.  Otherwise
+        returns false.
         """
         if taskName in self.isRunningStatus:
             if self.isRunningStatus[taskName] == True:
@@ -85,10 +85,10 @@ class Stopwatch(object):
 
     def calcRunTime(self, taskName):
         """
-            Calculate the time it took for the task associated with taskName to complete,
-            based on the stored start time and stop time.  If the timer is still timing the
-            task associated with taskName (i.e. isRunning(taskName) is True), raises an
-            ImproperActionException.
+        Calculate the time it took for the task associated with taskName to complete,
+        based on the stored start time and stop time.  If the timer is still timing the
+        task associated with taskName (i.e. isRunning(taskName) is True), raises an
+        ImproperActionException.
         """
         if taskName not in self.cumulativeTimes or taskName not in self.isRunningStatus:
             raise MissingEntryException([taskName],

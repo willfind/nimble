@@ -18,7 +18,7 @@ import numpy
 import UML
 from UML import fill
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import NewImproperActionException
+from UML.exceptions import ImproperActionException
 from UML.exceptions  import InvalidTypeCombination, InvalidValueCombination
 from UML.randomness import pythonRandom
 from .points import Points
@@ -83,7 +83,7 @@ class Axis(object):
         if len(self) == 0:
             msg = "Cannot set any {0} names; this object has no {0}s"
             msg = msg.format(self._axis)
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if namesDict is None:
             self._source._setAllDefault(self._axis)
         self._setName_implementation(oldIdentifier, newName)
@@ -335,10 +335,10 @@ class Axis(object):
     def _transform(self, function, limitTo):
         if self._source._pointCount == 0:
             msg = "We disallow this function when there are 0 points"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if self._source._featureCount == 0:
             msg = "We disallow this function when there are 0 features"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if function is None:
             raise InvalidArgumentType("function must not be None")
         if limitTo is not None:
@@ -358,10 +358,10 @@ class Axis(object):
             limitTo = self._source._constructIndicesList(self._axis, limitTo)
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if len(self._source.features) == 0:
             msg = "We disallow this function when there are 0 features"
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
         if function is None:
             raise InvalidArgumentType("function must not be None")
 
@@ -458,7 +458,7 @@ class Axis(object):
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
-            raise NewImproperActionException(msg)
+            raise ImproperActionException(msg)
 
         if mapper is None or reducer is None:
             raise InvalidArgumentType("The arguments must not be None")
@@ -889,7 +889,7 @@ class Axis(object):
             if len(assignments) > 0:
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
             self._setNamesFromDict({}, count)
             return
         if len(assignments) != count:
@@ -938,7 +938,7 @@ class Axis(object):
         if count == 0:
             if len(assignments) > 0:
                 msg = "assignments is too large; this axis is empty"
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
             if isinstance(self, Points):
                 self._source.pointNames = {}
                 self._source.pointNamesInverse = []
@@ -1338,9 +1338,9 @@ class Axis(object):
             msg += "or the order must be the same."
 
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in lnames):
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
-                raise NewImproperActionException(msg)
+                raise ImproperActionException(msg)
 
             ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
             # names are not the same.
