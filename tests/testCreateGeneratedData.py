@@ -11,7 +11,7 @@ import copy
 from nose.tools import *
 
 import UML
-from UML.exceptions import InvalidArgumentValue, InvalidValueCombination
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
 
@@ -161,7 +161,7 @@ def back_constant_sizeChecking(toTest):
     try:
         toTest("Matrix", 0, 0)
         assert False  # expected InvalidArgumentValue for 0 by 0 sized object
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
     except Exception:
         assert False  # expected InvalidArgumentValue for 0 by 0 sized object

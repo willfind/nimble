@@ -25,7 +25,7 @@ from UML import createData
 from UML.calculate import standardDeviation
 from UML.calculate import quartiles
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination, PackageException
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.helpers import generateRegressionData
 
 def testStDev():
@@ -277,7 +277,7 @@ def test_residuals_exception_controlVarsNotUML():
     UML.calculate.residuals(pred, control)
 
 # diff number of points
-@raises(InvalidValueCombination)
+@raises(InvalidArgumentValueCombination)
 def test_residauls_exception_differentNumberOfPoints():
     pred = UML.createData("Matrix", [[2],[3],[4]])
     control = UML.createData("Matrix", [[2],[3],[4],[5]])

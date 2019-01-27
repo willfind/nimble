@@ -16,7 +16,7 @@ import UML
 from UML.data import Base
 from UML.data import Matrix
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination
+from UML.exceptions import InvalidArgumentValueCombination
 
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, UML.data.Base):
@@ -57,12 +57,12 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
     if len(knownValues.points) != len(predictedValues.points):
         msg = "The knownValues and predictedValues must have the same number "
         msg += "of points"
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
 
     if len(knownValues.features) != len(predictedValues.features):
         msg = "The knownValues and predictedValues must have the same number "
         msg += "of features"
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
 
     if not isinstance(knownValues, Matrix):
         knownValues = knownValues.copyAs(format="Matrix")
@@ -110,9 +110,9 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     average the results.
     """
     if len(knownValues.features) != len(predictedValues.features):
-        raise InvalidValueCombination("The known and predicted data must have the same number of features")
+        raise InvalidArgumentValueCombination("The known and predicted data must have the same number of features")
     if len(knownValues.points) != len(predictedValues.points):
-        raise InvalidValueCombination("The known and predicted data must have the same number of points")
+        raise InvalidArgumentValueCombination("The known and predicted data must have the same number of points")
 
     results = []
     for i in range(len(knownValues.features)):
@@ -158,9 +158,9 @@ def varianceFractionRemaining(knownValues, predictedValues):
     the same inputs.
     """
     if len(knownValues.points) != len(predictedValues.points):
-        raise InvalidValueCombination("Objects had different numbers of points")
+        raise InvalidArgumentValueCombination("Objects had different numbers of points")
     if len(knownValues.features) != len(predictedValues.features):
-        raise InvalidValueCombination(
+        raise InvalidArgumentValueCombination(
         "Objects had different numbers of features. Known values had " + str(
             len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
     diffObject = predictedValues - knownValues

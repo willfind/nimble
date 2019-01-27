@@ -4,7 +4,6 @@ from six.moves import range
 from nose.tools import *
 
 from UML.logger.stopwatch import Stopwatch
-from UML.exceptions import ImproperActionException
 
 def testBasicFuncs():
     watch = Stopwatch()
@@ -39,35 +38,35 @@ def testBasicFuncs():
     assert watch.calcRunTime('test') == 0.0
 
 
-@raises(ImproperActionException)
+@raises(TypeError)
 def testDoubleStart():
     watch = Stopwatch()
     watch.start('test')
     watch.start('test')
 
 
-@raises(ImproperActionException)
+@raises(TypeError)
 def testStopMissingEntry():
     watch = Stopwatch()
     watch.start('test')
     watch.stop('uncle')
 
 
-@raises(ImproperActionException)
+@raises(TypeError)
 def testCalcRunTimeImproperAction():
     watch = Stopwatch()
     watch.start('test')
     watch.calcRunTime('test')
 
 
-@raises(ImproperActionException)
+@raises(TypeError)
 def testCalcRunTimeMissingEntry():
     watch = Stopwatch()
     watch.start('test')
     watch.calcRunTime('uncle')
 
 
-@raises(ImproperActionException)
+@raises(TypeError)
 def testImproperActionStop():
     watch = Stopwatch()
     watch.start('test')

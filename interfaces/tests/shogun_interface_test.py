@@ -13,10 +13,10 @@ from nose.plugins.attrib import attr
 
 import UML
 scipy = UML.importModule('scipy.sparse')
-from UML.exceptions import InvalidArgumentValue, InvalidValueCombination
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
 
 
-@raises(InvalidValueCombination)
+@raises(InvalidArgumentValueCombination)
 def testShogun_shapemismatchException():
     """ Test shogun raises exception when the shape of the train and test data don't match """
     variables = ["Y", "x1", "x2"]

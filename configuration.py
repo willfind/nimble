@@ -18,20 +18,20 @@ will ensure that the configuration file reflects all available options.
 
 # Note: .ini format's option names are not case sensitive?
 
-
 from __future__ import absolute_import
-import six.moves.configparser
 import os
 import copy
 import sys
 import inspect
 import tempfile
+from future.utils import raise_
+
+import six
+import six.moves.configparser
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidTypeCombination, ImproperActionException
-import six
-from future.utils import raise_
+from UML.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
 
 class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParser):
     """
@@ -262,7 +262,7 @@ class SessionConfiguration(object):
             if option is not None:
                 msg = "If specifying an option, one must also specify "
                 msg += "a section"
-                raise InvalidTypeCombination(msg)
+                raise InvalidArgumentTypeCombination(msg)
             else:
                 pass  # if None, None is specified, we will return false
         return success
@@ -332,7 +332,7 @@ class SessionConfiguration(object):
             msg = "The hook for (" + str(key) + ") has been previously set as "
             msg += "None, subsequently disabling this feature on that section "
             msg += "/ option combination"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         if toCall is not None:
             if not hasattr(toCall, '__call__'):
@@ -458,7 +458,7 @@ class SessionConfiguration(object):
         if section is None:
             if option is not None:
                 msg = "If section is None, option must also be None"
-                raise InvalidTypeCombination(msg)
+                raise InvalidArgumentTypeCombination(msg)
             # save all
             for sec in self.changes.keys():
                 if isinstance(self.changes[sec], ToDelete):

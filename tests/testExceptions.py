@@ -7,8 +7,8 @@ from nose.tools import raises
 
 from UML.exceptions import UMLException
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidTypeCombination, InvalidValueCombination
-from UML.exceptions import ImproperActionException, PackageException
+from UML.exceptions import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
+from UML.exceptions import ImproperObjectAction, PackageException
 from UML.exceptions import FileFormatException
 
 @raises(TypeError)
@@ -54,6 +54,12 @@ def test_UMLException_customSubClassInheritance():
         pass
 
     try:
+        raise CustomException('custom message')
+        assert False
+    except Exception:
+        pass
+
+    try:
         raise UMLException('exception')
         assert False
     except CustomException:
@@ -81,8 +87,8 @@ def back_UMLExceptions(exception, subClassOf=None):
         except subClassOf:
             pass
 
-def test_ImproperActionException():
-    back_UMLExceptions(ImproperActionException, TypeError)
+def test_ImproperObjectAction():
+    back_UMLExceptions(ImproperObjectAction, TypeError)
 
 def test_InvalidArgumentType():
     back_UMLExceptions(InvalidArgumentType, TypeError)
@@ -90,11 +96,11 @@ def test_InvalidArgumentType():
 def test_InvalidArgumentValue():
     back_UMLExceptions(InvalidArgumentValue, ValueError)
 
-def test_InvalidTypeCombination():
-    back_UMLExceptions(InvalidTypeCombination, TypeError)
+def test_InvalidArgumentTypeCombination():
+    back_UMLExceptions(InvalidArgumentTypeCombination, TypeError)
 
-def test_InvalidValueCombination():
-    back_UMLExceptions(InvalidValueCombination, ValueError)
+def test_InvalidArgumentValueCombination():
+    back_UMLExceptions(InvalidArgumentValueCombination, ValueError)
 
 def test_PackageException():
     back_UMLExceptions(PackageException, ImportError)

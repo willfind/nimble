@@ -88,7 +88,7 @@ LogLikelihoodSumDrop5Percent.optimal = 'min'
 def filterLowest(obj, toDrop=.05):
     obj = obj.copy()
     if len(obj.points) != 1 and len(obj.features) != 1:
-        raise UML.exceptions.ImproperActionException("Obj must be vector shaped")
+        raise UML.exceptions.ImproperObjectAction("Obj must be vector shaped")
     if len(obj.points) != 1:
         obj.transpose()
 

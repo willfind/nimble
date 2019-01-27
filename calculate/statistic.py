@@ -6,7 +6,7 @@ import numpy
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination, PackageException
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 
 scipy = UML.importModule('scipy')
 
@@ -308,7 +308,7 @@ def residuals(toPredict, controlVars):
 
     Raises: InvalidArgumentType if toPredict and controlVars are not UML
     data objects and InvalidArgumentValue if either has nonzero points
-    or features and InvalidValueCombination if they have a different
+    or features and InvalidArgumentValueCombination if they have a different
     number of points.
     """
     if scipy is None:
@@ -330,7 +330,7 @@ def residuals(toPredict, controlVars):
     if tpP != cvP:
         msg = "toPredict and controlVars must have the same number of points: ("
         msg += str(tpP) + ") vs (" + str(cvP) + ")"
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
     if tpP == 0 or tpF == 0:
         msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
         msg += "nonzero features (" + str(tpF) + ")"

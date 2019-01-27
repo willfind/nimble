@@ -9,12 +9,16 @@ import inspect
 import copy
 import abc
 import functools
-import numpy
 import sys
 import numbers
+import warnings
+
+import numpy
+import six
+from six.moves import range
 
 import UML
-from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValue, ImproperObjectAction
 from UML.exceptions import prettyListString
 from UML.exceptions import prettyDictString
 from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
@@ -23,11 +27,7 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
-
 from UML.helpers import _mergeArguments, generateAllPairs, countWins, inspectArguments
-import six
-from six.moves import range
-import warnings
 
 cloudpickle = UML.importModule('cloudpickle')
 
@@ -1397,7 +1397,7 @@ class TrainedLearners(TrainedLearner):
 
 
         else:
-            raise ImproperActionException('Wrong multiclassification method.')
+            raise ImproperObjectAction('Wrong multiclassification method.')
 
 
 ###########

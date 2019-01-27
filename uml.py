@@ -16,7 +16,7 @@ import math
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination, PackageException
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
@@ -898,7 +898,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             msg += "set, yet no performanceFunction was specified. Either one "
             msg += "must be specified (see UML.calculate for out-of-the-box "
             msg += "options) or there must be no choices in the parameters."
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
         #if we are logging this run, we need to start the timer
         if useLog:

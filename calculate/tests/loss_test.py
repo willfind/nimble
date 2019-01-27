@@ -6,7 +6,7 @@ from nose.tools import *
 import UML
 from UML import createData
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanFeaturewiseRootMeanSquareError
@@ -217,7 +217,7 @@ def testRmse():
 # meanFeaturewiseRootMeanSquareError #
 ######################################
 
-@raises(InvalidValueCombination)
+@raises(InvalidArgumentValueCombination)
 def testMFRMSE_badshapePoints():
     predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
     knownLabels = numpy.array([[0, 0], [0, 0], [0, 0]])
@@ -228,7 +228,7 @@ def testMFRMSE_badshapePoints():
     meanFeaturewiseRootMeanSquareError(knowns, predicted)
 
 
-@raises(InvalidValueCombination)
+@raises(InvalidArgumentValueCombination)
 def testMFRMSE_badshapeFeatures():
     predictedLabels = numpy.array([[0], [0], [0], [0]])
     knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])

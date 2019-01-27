@@ -26,8 +26,8 @@ from six.moves import zip
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperActionException, PackageException
-from UML.exceptions import InvalidTypeCombination, InvalidValueCombination
+from UML.exceptions import ImproperObjectAction, PackageException
+from UML.exceptions import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from .points import Points
@@ -385,7 +385,7 @@ class Base(object):
         msg += ") and the number of features ("
         msg += str(self._featureCount)
         msg += ") are both greater than 1"
-        raise ImproperActionException(msg)
+        raise TypeError(msg)
 
     def nameIsDefault(self):
         """Returns True if self.name has a default value"""
@@ -433,7 +433,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         index = self._getFeatureIndex(featureToReplace)
         # extract col.
@@ -496,7 +496,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         index = self._getFeatureIndex(featureToConvert)
 
@@ -858,7 +858,7 @@ class Base(object):
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "We do not allow writing to file when an object has "
             msg += "0 points or features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         self.validate()
 
@@ -1120,7 +1120,7 @@ class Base(object):
         """
         if self._pointCount == 0:
             msg = "ID is invalid, This object contains no points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         index = self._getPointIndex(ID)
         return self.view(index, index, None, None)
@@ -1135,7 +1135,7 @@ class Base(object):
         """
         if self._featureCount == 0:
             msg = "ID is invalid, This object contains no features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         index = self._getFeatureIndex(ID)
         return self.view(None, None, index, index)
@@ -1886,18 +1886,18 @@ class Base(object):
         if outputAs1D:
             if format != 'numpyarray' and format != 'pythonlist':
                 msg = "Only 'numpy array' or 'python list' can output 1D"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if self._pointCount != 1 and self._featureCount != 1:
                 msg = "To output as 1D there may either be only one point or "
                 msg += " one feature"
-                raise ImproperActionException(msg)
+                raise ImproperObjectAction(msg)
 
         # certain shapes and formats are incompatible
         if format.startswith('scipy'):
             if self._pointCount == 0 or self._featureCount == 0:
                 msg = "scipy formats cannot output point or feature empty "
                 msg += "objects"
-                raise ImproperActionException(msg)
+                raise InvalidArgumentValue(msg)
 
         ret = self._copyAs_implementation_base(format, rowsArePoints,
                                                outputAs1D)
@@ -2058,11 +2058,11 @@ class Base(object):
         if psIndex > peIndex:
             msg = "pointStart (" + str(pointStart) + ") must be less than or "
             msg += "equal to pointEnd (" + str(pointEnd) + ")."
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         if fsIndex > feIndex:
             msg = "featureStart (" + str(featureStart) + ") must be less than "
             msg += "or equal to featureEnd (" + str(featureEnd) + ")."
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
         if isinstance(values, UML.data.Base):
             prange = (peIndex - psIndex) + 1
@@ -2074,7 +2074,7 @@ class Base(object):
                 msg += "values, yet pointStart (" + str(pointStart) + ")"
                 msg += "and pointEnd (" + str(pointEnd) + ") define a range "
                 msg += "of length " + str(prange)
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if len(values.features) != frange:
                 msg = "When the values argument is a UML data object, the "
                 msg += "size of values must match the range of modification. "
@@ -2082,7 +2082,7 @@ class Base(object):
                 msg += "in values, yet featureStart (" + str(featureStart)
                 msg += ") and featureEnd (" + str(featureEnd) + ") define a "
                 msg += "range of length " + str(frange)
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if values.getTypeString() != self.getTypeString():
                 values = values.copyAs(self.getTypeString())
 
@@ -2213,11 +2213,11 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._featureCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "features. This object has 0 features."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         # TODO: flatten nameless Objects without the need to generate default
         # names for them.
@@ -2260,11 +2260,11 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._featureCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "features. This object has 0 features."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         # TODO: flatten nameless Objects without the need to generate default
         # names for them.
@@ -2318,7 +2318,7 @@ class Base(object):
         Helper which validates the formatting of axis names prior to
         unflattening.
 
-        Will raise ImproperActionException if an inconsistency with the
+        Will raise ImproperObjectAction if an inconsistency with the
         formatting done by the flatten operations is discovered. Returns
         True if all the names along the unflattend axis are default,
         False otherwise.
@@ -2349,7 +2349,7 @@ class Base(object):
             msg += "Therefore, the {axis} name for this object ('{axisName}')"
             msg += "must either be a default name or the string 'Flattened'"
             msg = msg.format(axis=flatAxis, axisName=flat[0])
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         # check the contents of the names along the unflattend axis
         msg += "Therefore, the {axis} names for this object must either be "
@@ -2365,10 +2365,10 @@ class Base(object):
                 allDefaultStatus = isDefault
             else:
                 if isDefault != allDefaultStatus:
-                    raise ImproperActionException(msg)
+                    raise ImproperObjectAction(msg)
 
             if not (isDefault or formatCorrect):
-                raise ImproperActionException(msg)
+                raise ImproperObjectAction(msg)
 
         # consistency only relevant if we have non-default names
         if not allDefaultStatus:
@@ -2377,7 +2377,7 @@ class Base(object):
                 same = formatted[newUFLen*i].split(' | ')[1]
                 for name in formatted[newUFLen*i:newUFLen*(i+1)]:
                     if same != name.split(' | ')[1]:
-                        raise ImproperActionException(msg)
+                        raise ImproperObjectAction(msg)
 
             # seen values - consistent wrt original unflattend axis names
             for i in range(newUFLen):
@@ -2385,7 +2385,7 @@ class Base(object):
                 for j in range(newFLen):
                     name = formatted[i + (j * newUFLen)]
                     if same != name.split(' | ')[0]:
-                        raise ImproperActionException(msg)
+                        raise ImproperObjectAction(msg)
 
         return allDefaultStatus
 
@@ -2418,12 +2418,12 @@ class Base(object):
         if self._featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more "
             msg += "features.  This object has 0 features."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._pointCount != 1:
             msg = "Can only unflattenFromOnePoint when there is only one "
             msg += "point.  This object has " + str(self._pointCount)
-            msg += "points."
-            raise ImproperActionException(msg)
+            msg += " points."
+            raise ImproperObjectAction(msg)
         if self._featureCount % numPoints != 0:
             msg = "The argument numPoints (" + str(numPoints) + ") must be a "
             msg += "divisor of  this object's featureCount ("
@@ -2473,12 +2473,12 @@ class Base(object):
         if self._pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more "
             msg += "points. This object has 0 points."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._featureCount != 1:
             msg = "Can only unflattenFromOneFeature when there is only one "
             msg += "feature. This object has " + str(self._featureCount)
             msg += " features."
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         if self._pointCount % numFeatures != 0:
             msg = "The argument numFeatures (" + str(numFeatures) + ") must "
@@ -2552,7 +2552,7 @@ class Base(object):
         # NOTE could return this object?
         if point == 'strict' and feature == 'strict':
             msg = 'Both point and feature cannot be strict'
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         tmpOther = other.copy()
         if point == 'strict':
             axis = 'point'
@@ -2609,11 +2609,11 @@ class Base(object):
                 raise InvalidArgumentValue(msg)
             if len(set(self[:, onFeature])) != len(self.points):
                 msg = "when point='strict', onFeature must contain only unique values"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if sorted(self[:, onFeature]) != sorted(tmpOther[:, onFeature]):
                 msg = "When point='strict', onFeature must have a unique, "
                 msg += "matching value in each object"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
         return self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
 
@@ -2622,11 +2622,11 @@ class Base(object):
         if (onFeature is None and point == "intersection") and not (self._pointNamesCreated() and other._pointNamesCreated()):
             msg = "Point names are required in both objects when "
             msg += "point='intersection'"
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         if feature == "intersection" and not (self._featureNamesCreated() and other._featureNamesCreated()):
             msg = "Feature names are required in both objects when "
             msg += "feature='intersection'"
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
         defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
         if onFeature is not None:
@@ -2781,14 +2781,14 @@ class Base(object):
         # Test element type self
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do a multiplication when points or features is empty"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         # test element type other
         if isinstance(other, UML.data.Base):
             if len(other.points) == 0 or len(other.features) == 0:
                 msg = "Cannot do a multiplication when points or features is "
                 msg += "empty"
-                raise ImproperActionException(msg)
+                raise ImproperObjectAction(msg)
 
             if self._featureCount != len(other.points):
                 msg = "The number of features in the calling object must "
@@ -2987,7 +2987,7 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do ** when points or features is empty"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a scalar"
             raise InvalidArgumentType(msg)
@@ -3124,7 +3124,7 @@ class Base(object):
 
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do " + opName + " when points or features is empty"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
@@ -3816,7 +3816,7 @@ class Base(object):
         if num == 0:
             msg = "There are no valid " + axis + "identifiers; "
             msg += "this object has 0 " + axis + "s"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if identifier is None:
             msg = "An identifier cannot be None."
             raise InvalidArgumentType(msg)
@@ -3945,7 +3945,7 @@ class Base(object):
             msg += "than the ending value (" + str(startVal) + ">"
             msg += str(endVal) + ")"
 
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
     ####################
     # Abstract Methods #

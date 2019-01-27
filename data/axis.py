@@ -18,8 +18,8 @@ import numpy
 import UML
 from UML import fill
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import ImproperActionException
-from UML.exceptions  import InvalidTypeCombination, InvalidValueCombination
+from UML.exceptions import ImproperObjectAction
+from UML.exceptions  import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
 from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
@@ -83,7 +83,7 @@ class Axis(object):
         if len(self) == 0:
             msg = "Cannot set any {0} names; this object has no {0}s"
             msg = msg.format(self._axis)
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if namesDict is None:
             self._source._setAllDefault(self._axis)
         self._setName_implementation(oldIdentifier, newName)
@@ -196,10 +196,10 @@ class Axis(object):
         if sortBy is not None and sortHelper is not None:
             msg = "Cannot specify a feature to sort by and a helper function. "
             msg += "Either sortBy or sortHelper must be None"
-            raise InvalidTypeCombination(msg)
+            raise InvalidArgumentTypeCombination(msg)
         if sortBy is None and sortHelper is None:
             msg = "Either sortBy or sortHelper must not be None"
-            raise InvalidTypeCombination(msg)
+            raise InvalidArgumentTypeCombination(msg)
 
         if isinstance(self, Points):
             otherAxis = 'feature'
@@ -335,10 +335,10 @@ class Axis(object):
     def _transform(self, function, limitTo):
         if self._source._pointCount == 0:
             msg = "We disallow this function when there are 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._source._featureCount == 0:
             msg = "We disallow this function when there are 0 features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if function is None:
             raise InvalidArgumentType("function must not be None")
         if limitTo is not None:
@@ -358,10 +358,10 @@ class Axis(object):
             limitTo = self._source._constructIndicesList(self._axis, limitTo)
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if len(self._source.features) == 0:
             msg = "We disallow this function when there are 0 features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if function is None:
             raise InvalidArgumentType("function must not be None")
 
@@ -458,7 +458,7 @@ class Axis(object):
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         if mapper is None or reducer is None:
             raise InvalidArgumentType("The arguments must not be None")
@@ -631,7 +631,7 @@ class Axis(object):
                 msg += "must have the same number of " + offAxis
                 msg += "s (" + str(alsoOffLen) + ") as the calling object "
                 msg += "(" + str(callOffLen) + ")"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
         # actually check that objects are the correct shape/size
         objArg = False
@@ -889,7 +889,7 @@ class Axis(object):
             if len(assignments) > 0:
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
-                raise ImproperActionException(msg)
+                raise InvalidArgumentValue(msg)
             self._setNamesFromDict({}, count)
             return
         if len(assignments) != count:
@@ -938,7 +938,7 @@ class Axis(object):
         if count == 0:
             if len(assignments) > 0:
                 msg = "assignments is too large; this axis is empty"
-                raise ImproperActionException(msg)
+                raise InvalidArgumentValue(msg)
             if isinstance(self, Points):
                 self._source.pointNames = {}
                 self._source.pointNamesInverse = []
@@ -1338,9 +1338,9 @@ class Axis(object):
             msg += "or the order must be the same."
 
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in lnames):
-                raise ImproperActionException(msg)
+                raise ImproperObjectAction(msg)
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
-                raise ImproperActionException(msg)
+                raise ImproperObjectAction(msg)
 
             ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
             # names are not the same.
@@ -1480,7 +1480,7 @@ def _validateStructuralArguments(structure, axis, target, start, end,
     if all(param is None for param in [target, start, end, number]):
         msg = "You must provide a value for {0}, ".format(targetName)
         msg += " or start/end, or number."
-        raise InvalidTypeCombination(msg)
+        raise InvalidArgumentTypeCombination(msg)
     if number is not None and number < 1:
         msg = "number must be greater than zero"
         raise InvalidArgumentValue(msg)
@@ -1488,12 +1488,12 @@ def _validateStructuralArguments(structure, axis, target, start, end,
         msg = "randomize selects a random subset of "
         msg += "{0}s to {1}. ".format(axis, structure)
         msg += "When randomize=True, the number argument cannot be None"
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
     if target is not None:
         if start is not None or end is not None:
             msg = "Range removal is exclusive, to use it, "
             msg += "{0} must be None".format(targetName)
-            raise InvalidTypeCombination(msg)
+            raise InvalidArgumentTypeCombination(msg)
 
 def _validateStartEndRange(start, end, axis, axisLength):
     """
@@ -1509,7 +1509,7 @@ def _validateStartEndRange(start, end, axis, axisLength):
         raise InvalidArgumentValue(msg)
     if start > end:
         msg = "The start index cannot be greater than the end index"
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
 
 def _stringToFunction(string, axis, nameChecker):
     """

@@ -7,8 +7,6 @@ on task name.
 from __future__ import absolute_import
 import time
 
-from UML.exceptions import ImproperActionException
-
 class Stopwatch(object):
     def __init__(self):
         self.startTimes = dict()
@@ -23,7 +21,7 @@ class Stopwatch(object):
         TODO: May need to change that to raising an exception, instead of overwriting).
         """
         if taskName in self.isRunningStatus and self.isRunningStatus[taskName] == True:
-            raise ImproperActionException("Task: " + taskName + " has already been started.")
+            raise TypeError("Task: " + taskName + " has already been started.")
         else:
             self.startTimes[taskName] = time.clock()
             if taskName not in self.cumulativeTimes:
@@ -38,9 +36,9 @@ class Stopwatch(object):
             is already an entry for taskName.
         """
         if taskName not in self.startTimes or taskName not in self.isRunningStatus:
-            raise ImproperActionException("Tried to stop task '" + taskName + "'' that was not started in Stopwatch.stop()")
+            raise TypeError("Tried to stop task '" + taskName + "'' that was not started in Stopwatch.stop()")
         elif not self.isRunningStatus[taskName]:
-            raise ImproperActionException("Unable to stop task that has already stopped")
+            raise TypeError("Unable to stop task that has already stopped")
 
         self.stopTimes[taskName] = time.clock()
         self.isRunningStatus[taskName] = False
@@ -85,13 +83,13 @@ class Stopwatch(object):
         """
         Calculate the time it took for the task associated with taskName to complete,
         based on the stored start time and stop time.  If the timer is still timing the
-        task associated with taskName (i.e. isRunning(taskName) is True), raises an
-        ImproperActionException.
+        task associated with taskName (i.e. isRunning(taskName) is True), raises a
+        TypeError.
         """
         if taskName not in self.cumulativeTimes or taskName not in self.isRunningStatus:
-            raise ImproperActionException("Missing entry when trying to calculate total task run time: " + str(taskName))
+            raise TypeError("Missing entry when trying to calculate total task run time: " + str(taskName))
         elif self.isRunningStatus[taskName] == True:
-            raise ImproperActionException(
+            raise TypeError(
                 'Can\'t calculate total running time for ' + taskName + ', as it is still running')
         else:
             return self.cumulativeTimes[taskName]

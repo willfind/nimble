@@ -37,7 +37,7 @@ from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination, ImproperActionException
+from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.randomness import pythonRandom
 
 ###########
@@ -344,7 +344,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier="three", newName="two")
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_points_setName_exceptionNoPoints(self):
         toTest = self.constructor()
         toTest.points.setName("hello", "2")
@@ -420,7 +420,7 @@ class LowLevelBackend(object):
     #	toTest = self.constructor(featureNames=["hello"])
     #	toTest.features.setName("hello",DEFAULT_PREFIX + "2")
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_features_setName_exceptionNoFeatures(self):
         toTest = self.constructor()
         toTest.features.setName("hello", "2")
@@ -475,9 +475,9 @@ class LowLevelBackend(object):
         nonUnique = ['1', '2', '3', '1']
         toTest.points.setNames(nonUnique)
 
-    @raises(ImproperActionException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNoPointsList(self):
-        """ Test points.setNames() for ImproperActionException when there are no points to name """
+        """ Test points.setNames() for ImproperObjectAction when there are no points to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.points.setNames(toAssign)
@@ -531,9 +531,9 @@ class LowLevelBackend(object):
         nonIntIndex = {"one": "one"}
         toTest.points.setNames(nonIntIndex)
 
-    @raises(ImproperActionException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNoPointsDict(self):
-        """ Test points.setNames() for ImproperActionException when there are no points to name """
+        """ Test points.setNames() for ImproperObjectAction when there are no points to name """
         toTest = self.constructor(pointNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.points.setNames(toAssign)
@@ -603,9 +603,9 @@ class LowLevelBackend(object):
         nonIntIndex = {"one": "one"}
         toTest.features.setNames(nonIntIndex)
 
-    @raises(ImproperActionException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNoFeaturesDict(self):
-        """ Test features.setNames() for ImproperActionException when there are no features to name """
+        """ Test features.setNames() for ImproperObjectAction when there are no features to name """
         toTest = self.constructor(featureNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.features.setNames(toAssign)
@@ -652,9 +652,9 @@ class LowLevelBackend(object):
         nonUnique = ['1', '2', '3', '1']
         toTest.features.setNames(nonUnique)
 
-    @raises(ImproperActionException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNoFeaturesList(self):
-        """ Test features.setNames() for ImproperActionException when there are no features to name """
+        """ Test features.setNames() for ImproperObjectAction when there are no features to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.features.setNames(toAssign)
@@ -1038,7 +1038,7 @@ class LowLevelBackend(object):
         nOne = self.constructor(psize=11, fsize=1)
         assert len(nOne) == 11
 
-    @raises(ImproperActionException)
+    @raises(TypeError)
     def test_len_exception(self):
         nn = self.constructor(psize=11, fsize=33)
         len(nn)

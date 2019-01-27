@@ -31,7 +31,7 @@ from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination
+from UML.exceptions import InvalidArgumentValueCombination
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -617,7 +617,7 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(pointStart='7', pointEnd='4')
             assert False  # pointStart > pointEnd didn't raise exception
-        except InvalidValueCombination as ivc:
+        except InvalidArgumentValueCombination as ivc:
             if textCheck:
                 print(ivc)
 
@@ -653,7 +653,7 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(featureStart='three', featureEnd='two')
             assert False  # featureStart > featureEnd didn't raise exception
-        except InvalidValueCombination as ivc:
+        except InvalidArgumentValueCombination as ivc:
             if textCheck:
                 print(ivc)
 

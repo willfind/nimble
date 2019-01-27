@@ -127,7 +127,7 @@ def backend_fill(func, data, match, expected=None):
             # if no matches, the return may be a UML object otherwise a list
             expObj = UML.createData(t, expected)
             assert func(toTest, match) == expected
-        # for InvalidArgumentValue or InvalidValueCombination
+        # for InvalidArgumentValue or InvalidArgumentValueCombination
         else:
             assert isinstance(func(toTest, match), InvalidArgumentValue)
 

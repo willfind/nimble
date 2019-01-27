@@ -3,7 +3,7 @@ import os
 
 import six
 
-from UML.exceptions import InvalidTypeCombination
+from UML.exceptions import InvalidArgumentTypeCombination
 
 """
 	Handle logging of creating and testing learners.  Currently
@@ -98,7 +98,7 @@ class UmlLogger(object):
         Send pertinent information about the loading of some data set to the log file
         """
         if dataFileName is None and baseDataType is None and name is None:
-            raise InvalidTypeCombination("logLoad requires at least one non-None argument")
+            raise InvalidArgumentTypeCombination("logLoad requires at least one non-None argument")
         else:
             self._logLoad_implementation(dataFileName, baseDataType, name)
 

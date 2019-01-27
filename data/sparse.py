@@ -14,7 +14,7 @@ from six.moves import zip
 import UML
 import UML.data
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import PackageException, ImproperActionException
+from UML.exceptions import PackageException, ImproperObjectAction
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -542,7 +542,7 @@ class Sparse(Base):
             return 0
         else:
             msg = 'self._sorted is not either point nor feature.'
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):

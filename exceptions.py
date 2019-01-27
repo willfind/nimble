@@ -41,7 +41,7 @@ class InvalidArgumentValue(UMLException, ValueError):
     """
     pass
 
-class InvalidTypeCombination(UMLException, TypeError):
+class InvalidArgumentTypeCombination(UMLException, TypeError):
     """
     Raised when the types of two or more arguments causes a failure.
 
@@ -52,7 +52,7 @@ class InvalidTypeCombination(UMLException, TypeError):
     """
     pass
 
-class InvalidValueCombination(UMLException, ValueError):
+class InvalidArgumentValueCombination(UMLException, ValueError):
     """
     Raised when the values of two or more arguments causes a failure.
 
@@ -63,13 +63,13 @@ class InvalidValueCombination(UMLException, ValueError):
     """
     pass
 
-class ImproperActionException(UMLException, TypeError):
+class ImproperObjectAction(UMLException, TypeError):
     """
-    Raised when an operation on an object is not supported.
+    Raised when the characteristics of the object prevent the operation.
 
-    A method or operation is disallowed due to current attributes of the
-    object. As an example, calling car.turnOn() when the car object is
-    already running. This is a subclass of Python's TypeError.
+    This exception occurs when an operation cannot be completed due to
+    the object's attribute value or an invalid value in the object's
+    data.
     """
     pass
 

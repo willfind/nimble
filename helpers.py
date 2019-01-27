@@ -32,7 +32,7 @@ import UML
 from UML.logger import Stopwatch
 
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import InvalidValueCombination, PackageException
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
 from UML.data import Matrix  # needed for 1s or 0s obj creation
@@ -243,7 +243,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
     if numPoints == 0 and numFeatures == 0:
         msg = "Either one of numPoints (" + str(numPoints) + ") or "
         msg += "numFeatures (" + str(numFeatures) + ") must be non-zero."
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
 
     if returnType == 'Sparse':
         if not scipy:
@@ -2532,12 +2532,12 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         if len(Y.features) > 1 and scoreMode != 'label':
             msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "then the scoreMode flag is required to be set to 'label'"
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
         if not len(X.points) == len(Y.points):
             #todo support indexing if Y is an index for X instead
             msg += "X and Y must contain the same number of points."
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
     if folds == 0:
         raise InvalidArgumentValue("Tried to cross validate over 0 folds")
@@ -2663,11 +2663,11 @@ def makeFoldIterator(dataList, folds):
             if len(data.points) == 0:
                 msg = "One of the objects has 0 points, it is impossible to "
                 msg += "specify a valid number of folds"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if len(data.points) != len(dataList[0].points):
                 msg = "All data objects in the list must have the same number "
                 msg += "of points and features"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
     # note: we want truncation here
     numInFold = int(points / folds)
@@ -2975,12 +2975,12 @@ def sumAbsoluteDifference(dataOne, dataTwo):
         msg = "Can't calculate difference between corresponding entries in "
         msg += "dataOne and dataTwo, the underlying data has different "
         msg += "numbers of features."
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
     if len(dataOne.points) != len(dataTwo.points):
         msg = "Can't calculate difference between corresponding entries in "
         msg += "dataOne and dataTwo, the underlying data has different "
         msg += "numbers of points."
-        raise InvalidValueCombination(msg)
+        raise InvalidArgumentValueCombination(msg)
 
     numpyOne = dataOne.copyAs('numpyarray')
     numpyTwo = dataTwo.copyAs('numpyarray')
@@ -3137,7 +3137,7 @@ class LearnerInspector:
 
         try:
             sumError = sumAbsoluteDifference(runResults, noiselessTestLabels)
-        except InvalidValueCombination as e:
+        except InvalidArgumentValueCombination as e:
             return 'other'
 
         #if the labels are repeated from those that were trained on, then it is a classifier
@@ -3179,7 +3179,7 @@ class LearnerInspector:
 
         try:
             sumError = sumAbsoluteDifference(runResults, testLabels) #should be identical to noiselessTestLabels
-        except InvalidValueCombination:
+        except InvalidArgumentValueCombination:
             return 'other'
 
         if sumError > self.NEAR_THRESHHOLD:
@@ -3250,7 +3250,7 @@ def _mergeArguments(argumentsParam, kwargsParam):
             msg = "The two dicts disagree. key= " + str(k)
             msg += " | arguments value= " + str(argumentsParam[k])
             msg += " | **kwargs value= " + str(kwargsParam[k])
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         ret[k] = val
 
     return ret
@@ -3273,7 +3273,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             if not len(trainY.points) == len(trainX.points):
                 msg = "If trainY is a Data object, then it must have the same "
                 msg += "number of points as trainX"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
     # testX is allowed to be None, sometimes it is appropriate to have it be filled using
     # the trainX argument (ie things which transform data, or learn internal structure)
@@ -3297,7 +3297,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             if not len(trainY.points) == len(trainX.points):
                 msg = "If trainY is a Data object, then it must have the same "
                 msg += "number of points as trainX"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
 
 def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
@@ -3315,12 +3315,12 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
         if scoreMode is not None and scoreMode != 'label':
             msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "the scoreMode flag is required to be set to 'label'"
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
         if multiClassStrategy is not None and multiClassStrategy != 'default':
             msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "the multiClassStrategy flag is required to be set to "
             msg += "'default'"
-            raise InvalidValueCombination(msg)
+            raise InvalidArgumentValueCombination(msg)
 
 
 def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,

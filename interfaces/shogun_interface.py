@@ -32,7 +32,7 @@ import UML
 
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
-from UML.exceptions import InvalidArgumentValue, InvalidValueCombination
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -307,10 +307,10 @@ class Shogun(UniversalInterface):
                 customDict['pointLen'] = len(trainX.features) if trainX is not None else len(testX.features)
             if trainX is not None and len(trainX.features) != customDict['pointLen']:
                 msg = "Length of points in the training data and testing data must be the same"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
             if testX is not None and len(testX.features) != customDict['pointLen']:
                 msg = "Length of points in the training data and testing data must be the same"
-                raise InvalidValueCombination(msg)
+                raise InvalidArgumentValueCombination(msg)
 
         trainXTrans = None
         if trainX is not None:

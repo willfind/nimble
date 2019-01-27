@@ -4,7 +4,7 @@ import math
 import numpy
 
 import UML
-from UML.exceptions import ImproperActionException, PackageException
+from UML.exceptions import ImproperObjectAction, PackageException
 scipy = UML.importModule('scipy.stats')
 
 
@@ -18,7 +18,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 
     if len(errors.features) != 1:
         msg = "The errors vector may only have one feature"
-        raise ImproperActionException(msg)
+        raise ImproperObjectAction(msg)
 
     if transform is None:
         transform = lambda x: x

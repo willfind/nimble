@@ -11,8 +11,7 @@ from six.moves import range
 import UML
 from UML import learnerType
 from UML import createData
-from UML.exceptions import ImproperActionException, InvalidArgumentValue
-from UML.exceptions import InvalidValueCombination
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
@@ -38,7 +37,7 @@ class FoldIteratorTester(object):
     def __init__(self, constructor):
         self.constructor = constructor
 
-    @raises(InvalidValueCombination)
+    @raises(InvalidArgumentValueCombination)
     def test_makeFoldIterator_exceptionPEmpty(self):
         """ Test makeFoldIterator() for InvalidArgumentValue when object is point empty """
         data = [[], []]
@@ -311,7 +310,7 @@ def testGenerateClusteredPoints():
 
 
 def testSumDifferenceFunction():
-    """ Function verifies that for different shaped matricies, generated via createData, sumAbsoluteDifference() throws an InvalidValueCombination."""
+    """ Function verifies that for different shaped matricies, generated via createData, sumAbsoluteDifference() throws an InvalidArgumentValueCombination."""
 
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
@@ -324,7 +323,7 @@ def testSumDifferenceFunction():
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         failedShape = True
     assert (failedShape)
 
@@ -338,7 +337,7 @@ def testSumDifferenceFunction():
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         failedShape = True
     assert (failedShape)
 
@@ -353,7 +352,7 @@ def testSumDifferenceFunction():
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         failedShape = True
     assert (failedShape is False)
 
@@ -484,7 +483,7 @@ def testtrainAndApplyOneVsOne():
                     assert results3FeatureMap[j] == str(float(3))
 
 
-@raises(InvalidValueCombination)
+@raises(InvalidArgumentValueCombination)
 def testMergeArgumentsException():
     """ Test helpers._mergeArguments will throw the exception it should """
     args = {1: 'a', 2: 'b', 3: 'd'}

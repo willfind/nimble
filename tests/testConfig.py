@@ -7,13 +7,13 @@ from __future__ import absolute_import
 import tempfile
 import copy
 import os
-import six.moves.configparser
 
 from nose.tools import raises
+import six.moves.configparser
 
 import UML
-from UML.exceptions import ImproperActionException
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import ImproperObjectAction
 from UML.configuration import configSafetyWrapper
 
 
@@ -186,7 +186,7 @@ def test_settings_HooksException_unCallable():
     UML.settings.hook("TestS", "TestOp", 5)
 
 
-@raises(ImproperActionException)
+@raises(ImproperObjectAction)
 @configSafetyWrapper
 def test_settings_HooksException_unHookable():
     """ Test SessionConfiguration.hook() throws exception for unhookable combo """

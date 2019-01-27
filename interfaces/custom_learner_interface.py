@@ -187,7 +187,7 @@ class CustomLearnerInterface(UniversalInterface):
             return learner.labelList
         else:
             msg = "Can only get scores order for a classifying learner"
-            raise ImproperActionException(msg)
+            raise InvalidArgumentValue(msg)
 
     def isAlias(self, name):
         """

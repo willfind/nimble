@@ -20,7 +20,7 @@ from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
 
-from UML.exceptions import InvalidValueCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import *
 from UML.randomness import pythonRandom
 from UML.helpers import computeMetrics
@@ -227,37 +227,37 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     try:
         crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
         assert False
-    except InvalidValueCombination:
+    except InvalidArgumentValueCombination:
         pass
 
 
