@@ -27,7 +27,8 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction, PackageException
-from UML.exceptions import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from .points import Points

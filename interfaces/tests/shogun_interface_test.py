@@ -13,7 +13,8 @@ from nose.plugins.attrib import attr
 
 import UML
 scipy = UML.importModule('scipy.sparse')
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 
 
 @raises(InvalidArgumentValueCombination)

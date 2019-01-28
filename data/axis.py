@@ -19,7 +19,8 @@ import UML
 from UML import fill
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import ImproperObjectAction
-from UML.exceptions  import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH

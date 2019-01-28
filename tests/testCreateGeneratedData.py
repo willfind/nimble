@@ -11,7 +11,8 @@ import copy
 from nose.tools import *
 
 import UML
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
 

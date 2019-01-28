@@ -11,7 +11,8 @@ from six.moves import range
 import UML
 from UML import learnerType
 from UML import createData
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface

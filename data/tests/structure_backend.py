@@ -39,8 +39,9 @@ from UML.data import Sparse
 from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction, ImproperObjectAction
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
+from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 from UML.data.tests.baseObject import DataTestObject
 

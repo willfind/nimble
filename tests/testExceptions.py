@@ -7,7 +7,8 @@ from nose.tools import raises
 
 from UML.exceptions import UMLException
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentTypeCombination, InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import ImproperObjectAction, PackageException
 from UML.exceptions import FileFormatException
 
