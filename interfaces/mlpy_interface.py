@@ -646,6 +646,8 @@ class Mlpy(UniversalInterface):
         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
         return (newArgs, ret[1], ret[2], newDefaults)
 
+    def version(self):
+        return self.mlpy.__version__
 
 class _Kmeans(object):
     def __init__(self, k, plus=False, seed=0):
