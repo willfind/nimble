@@ -3937,7 +3937,6 @@ class Base(object):
             msg += ", yet the starting value is not allowed to be greater "
             msg += "than the ending value (" + str(startVal) + ">"
             msg += str(endVal) + ")"
-
             raise ArgumentException(msg)
 
     ####################
