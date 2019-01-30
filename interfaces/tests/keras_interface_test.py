@@ -5,10 +5,16 @@ Unit tests for keras_interface.py
 
 from __future__ import absolute_import
 
+import numpy as np
+from keras import __version__ as kerasVersion
+
 import UML
 from UML import createData
+from UML.interfaces.keras_interface import Keras
 
-import numpy as np
+def test_Keras_version():
+    interface = Keras()
+    assert interface.version() == kerasVersion
 
 def testKerasAPI():
     """

@@ -972,6 +972,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         pass
 
+    @abc.abstractmethod
+    def version(self):
+        """
+        Return a string of the version of this interface.
+        """
+        pass
+
 ##################
 # TrainedLearner #
 ##################

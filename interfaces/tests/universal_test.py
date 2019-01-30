@@ -130,6 +130,9 @@ class TestInterface(UniversalInterface):
     def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
         pass
 
+    def version(self):
+        return "0.0.0"
+
     def exposedOne(self):
         return 1
 
@@ -218,6 +221,14 @@ def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
     ret = TestObject._validateArgumentDistribution(learner, arguments)
     assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
 
+
+###############
+### version ###
+###############
+
+def test_version():
+    ret = TestObject.version()
+    assert ret == "0.0.0"
 
 #########################
 ### exposed functions ###
