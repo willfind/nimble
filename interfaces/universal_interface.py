@@ -177,7 +177,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # labels and get predictions on the test set.
                 trainedLearners = []
                 for label in labelSet:
-                    relabeler.func_defaults = (label,)
+                    relabeler.__defaults__ = (label,)
                     trainLabels = trainY.points.calculate(relabeler)
                     trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
                                                        timer=timer)
@@ -969,6 +969,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         used to retrieve argument names, and the value of the function's
         __name__ attribute will be its name in TrainedLearner.
 
+        """
+        pass
+
+    @abc.abstractmethod
+    def version(self):
+        """
+        Return a string of the version of this interface.
         """
         pass
 

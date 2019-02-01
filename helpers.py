@@ -15,7 +15,6 @@ import inspect
 import numpy
 import importlib
 import numbers
-import requests
 from io import StringIO, BytesIO
 
 import os.path
@@ -46,7 +45,6 @@ from UML.randomness import numpyRandom
 import six
 from six.moves import range
 from six.moves import zip
-from future.utils import raise_
 try:
     from sys import intern
     class Py2Key:#for python3
@@ -67,6 +65,7 @@ except:
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
+requests = UML.importModule('requests')
 
 
 def findBestInterface(package):
@@ -591,7 +590,7 @@ def initDataObject(
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except:
-            raise_(einfo[1], None, einfo[2])
+            six.reraise(einfo[0], einfo[1], einfo[2])
 
 
     def makeCmp(keepList, outerObj, axis):
@@ -727,6 +726,10 @@ def createDataFromFile(
     # an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
+            if requests is None:
+                msg = "To load data from a webpage, the requests module must "
+                msg += "be installed"
+                raise PackageException(msg)
             response = requests.get(data, stream=True)
             if not response.ok:
                 msg = "The data could not be accessed from the webpage. "
@@ -1438,7 +1441,6 @@ def _validationForPointSelection(keepPoints, pointNames):
             msg += str(keepPoints[i])
             msg += ") was less than 0, yet we only allow valid non-negative "
             msg += "interger indices or point names as values."
-            msg += str(numFeatures - 1)  # we want inclusive end points
             raise ArgumentException(msg)
 
         if isinstance(pointNames, list):
