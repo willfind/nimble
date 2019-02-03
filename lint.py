@@ -36,7 +36,7 @@ REQ_IGNORE = [
     'consider-using-in',
     'protected-member',
     'unused-argument',
-    'duplicate-code'
+    'duplicate-code',
     'no-self-use',
     'chained-comparison',
 ]
