@@ -14,7 +14,6 @@ from __future__ import print_function
 import os
 import sys
 import json
-
 from pylint.lint import Run
 from pylint import epylint as lint
 
@@ -34,9 +33,12 @@ REQ_IGNORE = [
     'no-else-return',
     'len-as-condition',
     'consider-using-enumerate',
+    'consider-using-in',
     'protected-member',
     'unused-argument',
     'duplicate-code'
+    'no-self-use',
+    'chained-comparison',
 ]
 
 def getOutputs(commandString):
