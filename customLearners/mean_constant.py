@@ -1,4 +1,9 @@
+"""
+Contains the MeanConstant custom learner class.
+"""
+
 from __future__ import absolute_import
+
 import numpy
 
 import UML

@@ -1,17 +1,15 @@
 """
-
-For a simple classifier you could implement a k-nearest neighbors classifier.
-For any point you want to predict, just compute the Euclidean distance of that
-point to every point in the training set. Then sort this list. Take the k 
-points that have the lowest distance, and for your prediction use whichever 
-label occurs most (among those k training points with lowest distances to the
-point you are predicting).
-
+For a simple classifier you could implement a k-nearest neighbors
+classifier. For any point you want to predict, just compute the
+Euclidean distance of that point to every point in the training set.
+Then sort this list. Take the k points that have the lowest distance,
+and for your prediction use whichever label occurs most (among those k
+training points with lowest distances to the point you are predicting).
 If there is a tie, use k=1
-
 """
 
 from __future__ import absolute_import
+
 import UML
 from UML.customLearners import CustomLearner
 from UML.exceptions import PackageException
@@ -53,9 +51,8 @@ class KNNClassifier(CustomLearner):
     def getScores(self, testX):
         """
         If this learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception. The scores
-        must be returned in the natural ordering of the classes.
-
+        class on each data point, otherwise raise an exception. The
+        scores must be returned in the natural ordering of the classes.
         """
         ret = None
         for p in testX.points:
@@ -76,9 +73,8 @@ class KNNClassifier(CustomLearner):
 
     def _generatePointsSortedByDistance(self, test):
         """
-        Return a matrix where each row contains a point ID, and the distance to
-        the point test
-
+        Return a matrix where each row contains a point ID, and the
+        distance to the point test.
         """
         if not scipy:
             msg = "scipy is not available"
@@ -95,10 +91,10 @@ class KNNClassifier(CustomLearner):
 
     def _voteNearest(self, votes):
         """
-        Takes a data object where each row contains a point ID, and the distance
-        to the point we want to classify. Uses the point ID's to find labels in
-        self.trainY, letting those be the votes. In case of a tie, we revert to
-        k=1.
+        Takes a data object where each row contains a point ID, and the
+        distance to the point we want to classify. Uses the point ID's
+        to find labels in self.trainY, letting those be the votes. In
+        case of a tie, we revert to k=1.
         """
         topK = votes.points.copy(end=self.k - 1)
 

@@ -1,6 +1,11 @@
+"""
+Contains the CustomLearner class.
+"""
+
 from __future__ import absolute_import
 import abc
 import inspect
+
 import numpy
 import six
 from six.moves import range
@@ -10,14 +15,14 @@ from UML.helpers import inspectArguments
 
 class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     """
-    Base class defining a hierarchy of objects which encapsulate what is needed
-    to be a single learner callable through the Custom Universal Interface. At
-    minimum, a subclass must provide an implementation for the method apply()
-    and at least one out of train() or incrementalTrain(). If incrementalTrain()
-    is implemented yet train() is not, then incremental train is used in place
-    of calls to train(). Furthermore, a subclass must not require any arguments
-    for its __init__() method.
-
+    Base class defining a hierarchy of objects which encapsulate what is
+    needed to be a single learner callable through the Custom Universal
+    Interface. At minimum, a subclass must provide an implementation for
+    the method apply() and at least one out of train() or
+    incrementalTrain(). If incrementalTrain() is implemented yet train()
+    is not, then incremental train is used in place of calls to train().
+    Furthermore, a subclass must not require any arguments for its
+    __init__() method.
     """
 
     def __init__(self):
@@ -26,28 +31,40 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     @classmethod
     def validateSubclass(cls, check):
         """
-        Class method called during custom learner registration which ensures
-        the the given class conforms to the custom learner specification.
+        Class method called during custom learner registration which
+        ensures the the given class conforms to the custom learner
+        specification.
         """
         # check learnerType
-        accepted = ["unknown", 'regression', 'classification', 'featureselection', 'dimensionalityreduction']
-        if not hasattr(check, 'learnerType') or check.learnerType not in accepted:
-            raise TypeError(
-                "The custom learner must have a class variable named 'learnerType' with a value from the list " + str(
-                    accepted))
+        accepted = ["unknown", 'regression', 'classification',
+                    'featureselection', 'dimensionalityreduction']
+        if (not hasattr(check, 'learnerType')
+                or check.learnerType not in accepted):
+            msg = "The custom learner must have a class variable named "
+            msg += "'learnerType' with a value from the list " + str(accepted)
+            raise TypeError(msg)
 
         # check train / apply params
         trainInfo = inspectArguments(check.train)
         incInfo = inspectArguments(check.incrementalTrain)
         applyInfo = inspectArguments(check.apply)
-        if trainInfo[0][0] != 'self' or trainInfo[0][1] != 'trainX' or trainInfo[0][2] != 'trainY':
-            raise TypeError(
-                "The train method of a CustomLearner must have 'trainX' and 'trainY' as its first two (non 'self') parameters")
-        if incInfo[0][0] != 'self' or incInfo[0][1] != 'trainX' or incInfo[0][2] != 'trainY':
-            raise TypeError(
-                "The incrementalTrain method of a CustomLearner must have 'trainX' and 'trainY' as its first two (non 'self') parameters")
+        if (trainInfo[0][0] != 'self'
+                or trainInfo[0][1] != 'trainX'
+                or trainInfo[0][2] != 'trainY'):
+            msg = "The train method of a CustomLearner must have 'trainX' and "
+            msg += " 'trainY' as its first two (non 'self') parameters"
+            raise TypeError(msg)
+        if (incInfo[0][0] != 'self'
+                or incInfo[0][1] != 'trainX'
+                or incInfo[0][2] != 'trainY'):
+            msg = "The incrementalTrain method of a CustomLearner must have "
+            msg += "'trainX' and 'trainY' as its first two (non 'self') "
+            msg += "parameters"
+            raise TypeError(msg)
         if applyInfo[0][0] != 'self' or applyInfo[0][1] != 'testX':
-            raise TypeError("The apply method of a CustomLearner must have 'testX' as its first (non 'self') parameter")
+            msg = "The apply method of a CustomLearner must have 'testX' as "
+            msg += "its first (non 'self') parameter"
+            raise TypeError(msg)
 
         # need either train or incremental train
         def overridden(func):
@@ -71,20 +88,26 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         if getScoresImplemented:
             getScoresInfo = inspectArguments(check.getScores)
             if getScoresInfo != applyInfo:
-                raise TypeError("The signature for the getScores() method must be the same as the apply() method")
+                msg = "The signature for the getScores() method must be the "
+                msg += "same as the apply() method"
+                raise TypeError(msg)
 
         # check the return type of options() is legit
         options = check.options()
         if not isinstance(options, list):
-            raise TypeError("The classmethod options must return a list of stings")
+            msg = "The classmethod options must return a list of stings"
+            raise TypeError(msg)
         for name in options:
             if not isinstance(name, six.string_types):
-                raise TypeError("The classmethod options must return a list of stings")
+                msg = "The classmethod options must return a list of stings"
+                raise TypeError(msg)
 
         # check that we can instantiate this subclass
         initInfo = inspectArguments(check.__init__)
         if len(initInfo[0]) > 1 or initInfo[0][0] != 'self':
-            raise TypeError("The __init__() method for this class must only have self as an argument")
+            msg = "The __init__() method for this class must only have self "
+            msg += "as an argument"
+            raise TypeError(msg)
 
 
         # instantiate it so that the abc stuff gets validated
@@ -94,7 +117,8 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     def getLearnerParameterNames(cls):
         """
         Class method used by the a custom learner interface to supply
-        learner parameters to the user through the standard UML functions.
+        learner parameters to the user through the standard UML
+        functions.
         """
         return cls.getTrainParameters() + cls.getApplyParameters()
 
@@ -105,7 +129,9 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         learner parameter default values to the user through the
         standard UML functions.
         """
-        return dict(list(cls.getTrainDefaults().items()) + list(cls.getApplyDefaults().items()))
+        trainDefaults = cls.getTrainDefaults().items()
+        applyDefaults = cls.getApplyDefaults().items()
+        return dict(list(trainDefaults) + list(applyDefaults))
 
     @classmethod
     def getTrainParameters(cls):
@@ -119,11 +145,11 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     @classmethod
     def getTrainDefaults(cls):
         """
-        Class method used to determine the default values of only the train
-        method.
+        Class method used to determine the default values of only the
+        train method.
         """
         info = inspectArguments(cls.train)
-        (objArgs, v, k, d) = info
+        (objArgs, _, _, d) = info
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -142,11 +168,11 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     @classmethod
     def getApplyDefaults(cls):
         """
-        Class method used to determine the default values of only the apply
-        method.
+        Class method used to determine the default values of only the
+        apply method.
         """
         info = inspectArguments(cls.apply)
-        (objArgs, v, k, d) = info
+        (objArgs, _, _, d) = info
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -156,16 +182,16 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     @classmethod
     def options(self):
         """
-        Class function which supplies the names of the configuration options
-        associated with this learner.
+        Class function which supplies the names of the configuration
+        options associated with this learner.
         """
         return []
 
     def getScores(self, testX):
         """
         If this learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception. The scores
-        must be returned in the natural ordering of the classes.
+        class on each data point, otherwise raise an exception. The
+        scores must be returned in the natural ordering of the classes.
 
         This method may be optionally overridden by a concrete subclass.
         """
@@ -186,7 +212,8 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
 
     def incrementalTrainForInterface(self, trainX, trainY, arguments):
         if self.__class__.learnerType == 'classification':
-            self.labelList = numpy.union1d(self.labelList, trainY.copyAs('numpyarray').flatten())
+            flattenedY = trainY.copyAs('numpyarray').flatten()
+            self.labelList = numpy.union1d(self.labelList, flattenedY)
         self.incrementalTrain(trainX, trainY)
         return self
 
@@ -199,7 +226,8 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         return self.apply(testX, **useArgs)
 
     def incrementalTrain(self, trainX, trainY):
-        raise RuntimeError("This learner does not support incremental training")
+        msg = "This learner does not support incremental training"
+        raise RuntimeError(msg)
 
     @abc.abstractmethod
     def train(self, trainX, trainY):
@@ -208,5 +236,3 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def apply(self, testX):
         pass
-
-

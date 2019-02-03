@@ -44,8 +44,6 @@ from .dataHelpers import valuesToPythonList
 pd = UML.importModule('pandas')
 
 cython = UML.importModule('cython')
-if cython is None or not cython.compiled:
-    from math import sin, cos
 
 cloudpickle = UML.importModule('cloudpickle')
 
@@ -72,7 +70,7 @@ except ImportError as e:
 
 def to2args(f):
     """
-    this function is for __pow__. In cython, __pow__ must have 3
+    This function is for __pow__. In cython, __pow__ must have 3
     arguments and default can't be used there so this function is used
     to convert a function with 3 arguments to a function with 2
     arguments when it is used in python environment.
@@ -82,7 +80,10 @@ def to2args(f):
     return tmpF
 
 def hashCodeFunc(elementValue, pointNum, featureNum):
-    return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
+    """
+    Generate hash code.
+    """
+    return ((math.sin(pointNum) + math.cos(featureNum)) / 2.0) * elementValue
 
 class Base(object):
     """
@@ -218,6 +219,10 @@ class Base(object):
 
     @property
     def shape(self):
+        """
+        The number of points and features in the object in the format
+        (points, features).
+        """
         return self._pointCount, self._featureCount
 
     def _getPoints(self):
@@ -225,6 +230,9 @@ class Base(object):
 
     @property
     def points(self):
+        """
+        An object handling functions manipulating data by points.
+        """
         return self._points
 
     def _getFeatures(self):
@@ -232,6 +240,9 @@ class Base(object):
 
     @property
     def features(self):
+        """
+        An object handling functions manipulating data by features.
+        """
         return self._features
 
     def _getElements(self):
@@ -239,6 +250,9 @@ class Base(object):
 
     @property
     def elements(self):
+        """
+        An object handling functions manipulating data by each element.
+        """
         return self._elements
 
     def _setpointCount(self, value):
@@ -325,8 +339,8 @@ class Base(object):
 
     def _anyDefaultPointNames(self):
         """
-        Returns True if any default point names exists or if pointNames have
-        not been created.
+        Returns True if any default point names exists or if pointNames
+        have not been created.
         """
         if self._pointNamesCreated():
             return any([name.startswith(DEFAULT_PREFIX) for name
@@ -336,8 +350,8 @@ class Base(object):
 
     def _anyDefaultFeatureNames(self):
         """
-        Returns True if any default feature names exists or if featureNames have
-        not been created.
+        Returns True if any default feature names exists or if
+        featureNames have not been created.
         """
         if self._featureNamesCreated():
             return any([name.startswith(DEFAULT_PREFIX) for name
@@ -347,7 +361,8 @@ class Base(object):
 
     def _allDefaultPointNames(self):
         """
-        Returns True if all point names are default or have not been created
+        Returns True if all point names are default or have not been
+        created.
         """
         if self._pointNamesCreated():
             return all([name.startswith(DEFAULT_PREFIX) for name
@@ -357,7 +372,8 @@ class Base(object):
 
     def _allDefaultFeatureNames(self):
         """
-        Returns True if all feature names are default or have not been created
+        Returns True if all feature names are default or have not been
+        created.
         """
         if self._featureNamesCreated():
             return all([name.startswith(DEFAULT_PREFIX) for name
@@ -387,10 +403,15 @@ class Base(object):
         raise ImproperActionException(msg)
 
     def nameIsDefault(self):
-        """Returns True if self.name has a default value"""
+        """
+        Returns True if self.name has a default value
+        """
         return self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 
     def hasPointName(self, name):
+        """
+        Return True if the provided name is a point name.
+        """
         try:
             self.points.getIndex(name)
             return True
@@ -398,6 +419,9 @@ class Base(object):
             return False
 
     def hasFeatureName(self, name):
+        """
+        Return True if the provided name is a feature name.
+        """
         try:
             self.features.getIndex(name)
             return True
@@ -824,6 +848,12 @@ class Base(object):
     ###############################################################
 
     def isIdentical(self, other):
+        """
+        Check for equality between two objects.
+
+        Return True if all values and names in the other object match
+        the values and names in this object.
+        """
         if not self._equalFeatureNames(other):
             return False
         if not self._equalPointNames(other):
@@ -1476,7 +1506,6 @@ class Base(object):
 
         nameLength: a bound on the maximum number of characters we allow
         for each point or feature name.
-
         """
         if description is not None:
             print(description)
@@ -1566,7 +1595,6 @@ class Base(object):
         xMin: the least value shown on the x axis of the resultant plot.
 
         xMax: the largest value shown on the x axis of teh resultant plot
-
         """
         self._plotFeatureDistribution(feature, outPath, xMin, xMax)
 
@@ -2534,17 +2562,21 @@ class Base(object):
             msg = "point must be 'strict', 'left', 'union', or 'intersection'"
             raise ArgumentException(msg)
         if feature not in valid:
-            msg = "feature must be 'strict', 'left', 'union', or 'intersection'"
+            msg = "feature must be 'strict', 'left', 'union', or "
+            msg += "'intersection'"
             raise ArgumentException(msg)
 
         if point == 'strict' or feature == 'strict':
-            return self._genericStrictMerge_implementation(other, point, feature, onFeature)
+            return self._genericStrictMerge_implementation(
+                other, point, feature, onFeature)
         else:
             return self._genericMergeFrontend(other, point, feature, onFeature)
 
-    def _genericStrictMerge_implementation(self, other, point, feature, onFeature):
+    def _genericStrictMerge_implementation(self, other, point, feature,
+                                           onFeature):
         """
-        Validation and helper function when point or feature is set to strict
+        Validation and helper function when point or feature is set to
+        strict.
         """
         # NOTE could return this object?
         if point == 'strict' and feature == 'strict':
@@ -2592,7 +2624,8 @@ class Base(object):
             elif not hasNamesL and hasNamesR:
                 setNamesL(namesR())
             elif not hasNamesL and not hasNamesR:
-                strictNames = ['_STRICT' + DEFAULT_PREFIX + str(i) for i in range(countL)]
+                strictPrefix = '_STRICT' + DEFAULT_PREFIX
+                strictNames = [strictPrefix + str(i) for i in range(countL)]
                 setNamesL(strictNames)
                 setNamesR(strictNames)
         # if using strict with onFeature instead of point names, we need to
@@ -2602,36 +2635,45 @@ class Base(object):
                 self[0, onFeature]
                 tmpOther[0, onFeature]
             except KeyError:
-                msg = "could not locate feature '{0}' in both objects".format(onFeature)
+                msg = "could not locate feature '{0}' ".format(onFeature)
+                msg += "in both objects"
                 raise ArgumentException(msg)
             if len(set(self[:, onFeature])) != len(self.points):
-                msg = "when point='strict', onFeature must contain only unique values"
+                msg = "when point='strict', onFeature must contain only "
+                msg += "unique values"
                 raise ArgumentException(msg)
             if sorted(self[:, onFeature]) != sorted(tmpOther[:, onFeature]):
                 msg = "When point='strict', onFeature must have a unique, "
                 msg += "matching value in each object"
                 raise ArgumentException(msg)
 
-        return self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
+        return self._genericMergeFrontend(tmpOther, point, feature, onFeature,
+                                          axis)
 
-    def _genericMergeFrontend(self, other, point, feature, onFeature, strict=None):
+    def _genericMergeFrontend(self, other, point, feature, onFeature,
+                              strict=None):
         # validation
-        if (onFeature is None and point == "intersection") and not (self._pointNamesCreated() and other._pointNamesCreated()):
+        bothNamesCreated = (self._pointNamesCreated()
+                            and other._pointNamesCreated())
+        if ((onFeature is None and point == "intersection")
+                and not bothNamesCreated):
             msg = "Point names are required in both objects when "
             msg += "point='intersection'"
             raise ArgumentException(msg)
-        if feature == "intersection" and not (self._featureNamesCreated() and other._featureNamesCreated()):
+        bothNamesCreated = (self._featureNamesCreated()
+                            and other._featureNamesCreated())
+        if feature == "intersection" and not bothNamesCreated:
             msg = "Feature names are required in both objects when "
             msg += "feature='intersection'"
             raise ArgumentException(msg)
-        defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
-        defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
+
         if onFeature is not None:
             try:
                 self[0, onFeature]
                 other[0, onFeature]
             except KeyError:
-                msg = "could not locate feature '{0}' in both objects".format(onFeature)
+                msg = "could not locate feature '{0}' ".format(onFeature)
+                msg += "in both objects"
                 raise ArgumentException(msg)
             uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
             uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
@@ -2640,8 +2682,6 @@ class Base(object):
                 msg += "contains only unique values in one or both objects."
                 raise ArgumentException(msg)
 
-        numPtsL = len(self.points)
-        numFtsL = len(self.features)
         matchingFts = self._getMatchingNames('feature', other)
         matchingFtIdx = [[], []]
         for name in matchingFts:
@@ -2657,7 +2697,7 @@ class Base(object):
 
         if strict == 'feature':
             if ('_STRICT' in self.features.getName(0)
-                  and '_STRICT' in other.features.getName(0)):
+                    and '_STRICT' in other.features.getName(0)):
                 # objects did not have feature names
                 self.featureNames = None
                 self.featureNamesInverse = None
@@ -2692,7 +2732,7 @@ class Base(object):
 
         if strict == 'point':
             if ('_STRICT' in self.points.getName(0)
-                  and '_STRICT' in other.points.getName(0)):
+                    and '_STRICT' in other.points.getName(0)):
                 # objects did not have point names
                 self.pointNames = None
                 self.pointNamesInverse = None
@@ -2748,7 +2788,7 @@ class Base(object):
             otherNames = other.points.getNames()
         else:
             if (not self._featureNamesCreated()
-                  or not other._featureNamesCreated()):
+                    or not other._featureNamesCreated()):
                 return matches
             selfNames = self.features.getNames()
             otherNames = other.features.getNames()
@@ -4007,10 +4047,18 @@ class Base(object):
         pass
 
     @abstractmethod
+    def _merge_implementation(self, other, point, feature, onFeature,
+                              matchingFtIdx):
+        pass
+
+    @abstractmethod
     def _mul__implementation(self, other):
         pass
 
 class BasePoints(Axis, Points):
+    """
+    Access to point axis for Base object.
+    """
     def __init__(self, source, **kwds):
         self._source = source
         self._axis = 'point'
@@ -4019,6 +4067,9 @@ class BasePoints(Axis, Points):
         super(BasePoints, self).__init__(**kwds)
 
 class BaseFeatures(Axis, Features):
+    """
+    Access to feature axis for Base object.
+    """
     def __init__(self, source, **kwds):
         self._source = source
         self._axis = 'feature'
@@ -4027,13 +4078,18 @@ class BaseFeatures(Axis, Features):
         super(BaseFeatures, self).__init__(**kwds)
 
 class BaseElements(Elements):
+    """
+    Access to elements for Base object.
+    """
     def __init__(self, source, **kwds):
         self._source = source
         kwds['source'] = self._source
         super(BaseElements, self).__init__(**kwds)
 
 def cmp_to_key(mycmp):
-    """Convert a cmp= function for python2 into a key= function for python3"""
+    """
+    Convert a cmp= function for python2 into a key= function for python3
+    """
     class K:
         def __init__(self, obj, *args):
             self.obj = obj

@@ -1572,6 +1572,9 @@ def _stringToFunction(string, axis, nameChecker):
     return target
 
 class AxisIterator(object):
+    """
+    Object providing iteration through each item in the axis.
+    """
     def __init__(self, source):
         self._source = source
         self._position = 0
@@ -1606,6 +1609,9 @@ class EmptyIt(object):
         return self
 
     def next(self):
+        """
+        Raise StopIteration since this object is point or feature empty.
+        """
         raise StopIteration
 
     def __next__(self):
