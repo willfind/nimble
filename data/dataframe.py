@@ -185,13 +185,13 @@ class DataFrame(Base):
         """
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray)
+            return UML.createData('DataFrame', dataArray, useLog=False)
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray)
+            return UML.createData('Sparse', dataArray, useLog=False)
         if format == 'List':
-            return UML.createData('List', dataArray)
+            return UML.createData('List', dataArray, useLog=False)
         if format == 'Matrix':
-            return UML.createData('Matrix', dataArray)
+            return UML.createData('Matrix', dataArray, useLog=False)
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
@@ -209,7 +209,7 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
 
-        return UML.createData('DataFrame', dataArray)
+        return UML.createData('DataFrame', dataArray, useLog=False)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -463,7 +463,7 @@ class DataFrame(Base):
         pNames = self.points.getNames()
         fNames = self.features.getNames()
         return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True)
+                              featureNames=fNames, reuseData=True, useLog=False)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):

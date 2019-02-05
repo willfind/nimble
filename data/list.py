@@ -288,30 +288,30 @@ class List(Base):
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Sparse', emptyData)
-            return UML.createData('Sparse', self.data)
+                return UML.createData('Sparse', emptyData, useLog=False)
+            return UML.createData('Sparse', self.data, useLog=False)
 
         if format is None or format == 'List':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('List', emptyData)
+                return UML.createData('List', emptyData, useLog=False)
             else:
-                return UML.createData('List', self.data)
+                return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Matrix', emptyData)
+                return UML.createData('Matrix', emptyData, useLog=False)
             else:
-                return UML.createData('Matrix', self.data)
+                return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('DataFrame', emptyData)
+                return UML.createData('DataFrame', emptyData, useLog=False)
             else:
-                return UML.createData('DataFrame', self.data)
+                return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -576,7 +576,7 @@ class List(Base):
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin)
+                    intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID

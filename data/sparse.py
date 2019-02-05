@@ -243,16 +243,16 @@ class Sparse(Base):
     def _copyAs_implementation(self, format):
 
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data)
+            ret = UML.createData('Sparse', self.data, useLog=False)
             # Due to duplicate removal done in createData, we cannot guarantee
             # that the internal sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data)
+            return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data)
+            return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data)
+            return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -868,7 +868,7 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self.data * other.data
 
-        return UML.createData('Sparse', retData)
+        return UML.createData('Sparse', retData, useLog=False)
 
     def _scalarMultiply_implementation(self, scalar):
         """
@@ -1194,7 +1194,7 @@ class SparseView(BaseView, Sparse):
     def _copyAs_implementation(self, format):
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
-            intermediate = UML.createData('Matrix', emptyStandin)
+            intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
             return intermediate.copyAs(format)
 
         if format == 'numpyarray':
@@ -1268,13 +1268,13 @@ class SparseView(BaseView, Sparse):
             selfConv = self.copyAs("Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
-            ret = UML.createData("Sparse", ret.data)
+            ret = UML.createData("Sparse", ret.data, useLog=False)
             return ret
 
         selfConv = self.copyAs("Sparse")
 
         toCall = getattr(selfConv, implName)
         ret = toCall(other)
-        ret = UML.createData(self.getTypeString(), ret.data)
+        ret = UML.createData(self.getTypeString(), ret.data, useLog=False)
 
         return ret
