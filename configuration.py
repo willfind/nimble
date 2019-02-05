@@ -5,42 +5,44 @@ configuration of UML.
 During UML initialization, there is a specific order to tasks relating
 to configuration. Before any operation that might rely on being able to
 access UML.settings (for example, interface initialization) we must load
-it from file, so that in the normal course of operations, user set values
-are available to be used accross UML. Alternatively, in the case that there
-is a new source of user set options (for example, an interface that has
-been loaded for the first time) we still load from the config file first,
-then do initialization of all of the those modules that might need access
-to UML.settings, using hard coded defaults if needed, then at the end
-of UML initialization we will always perform a syncing helper, which
-will ensure that the configuration file reflects all available options.
-
+it from file, so that in the normal course of operations, user set
+values are available to be used accross UML. Alternatively, in the case
+that there is a new source of user set options (for example, an
+interface that has been loaded for the first time) we still load from
+the config file first, then do initialization of all of the those
+modules that might need access to UML.settings, using hard coded
+defaults if needed, then at the end of UML initialization we will always
+perform a syncing helper, which will ensure that the configuration file
+reflects all available options.
 """
 
 # Note: .ini format's option names are not case sensitive?
 
-
 from __future__ import absolute_import
-import six.moves.configparser
 import os
 import copy
 import sys
-import inspect
 import tempfile
+import inspect
+
+import six
+from six.moves import configparser
 
 import UML
 from UML.exceptions import ArgumentException
-import six
 
-class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParser):
+currentFile = inspect.getfile(inspect.currentframe())
+UMLPath = os.path.dirname(os.path.abspath(currentFile))
+
+class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
     """
     An extension of the the standard python SafeConfigParser which will
     preserve comments present in the configuration file.
-
     """
 
     def _getComment(self, section, option):
         """
-        Returns None if the appropriate section doesn't exist
+        Returns None if the appropriate section doesn't exist.
         """
         try:
             return self._comments[section][option]
@@ -49,17 +51,18 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
 
 
     def write(self, fp):
-        """Write an .ini-format representation of the configuration state,
+        """
+        Write an .ini-format representation of the configuration state,
         including any saved comments from when loaded.
         """
         if self._defaults:
-            secComment = self._getComment(six.moves.configparser.DEFAULTSECT, None)
+            secComment = self._getComment(configparser.DEFAULTSECT, None)
             if secComment is not None:
                 fp.write(secComment)
 
-            fp.write("[%s]\n" % six.moves.configparser.DEFAULTSECT)
+            fp.write("[%s]\n" % configparser.DEFAULTSECT)
             for (key, value) in self._defaults.items():
-                optComment = self._getComment(six.moves.configparser.DEFAULTSECT, key)
+                optComment = self._getComment(configparser.DEFAULTSECT, key)
                 if optComment is not None:
                     fp.write(optComment)
                 fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
@@ -86,7 +89,8 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
             fp.write("\n")
 
     def _read(self, fp, fpname):
-        """Parse a sectioned setup file.
+        """
+        Parse a sectioned setup file.
 
         The sections in setup file contains a title line at the top,
         indicated by a name in square brackets (`[]'), plus key/value
@@ -138,7 +142,7 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
                     sectname = mo.group('header')
                     if sectname in self._sections:
                         cursect = self._sections[sectname]
-                    elif sectname == six.moves.configparser.DEFAULTSECT:
+                    elif sectname == configparser.DEFAULTSECT:
                         cursect = self._defaults
 
                         comments[sectname] = self._dict()
@@ -156,7 +160,9 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
                     optname = None
                 # no section header in the file?
                 elif cursect is None:
-                    raise six.moves.configparser.MissingSectionHeaderError(fpname, lineno, line)
+                    raise configparser.MissingSectionHeaderError(fpname,
+                                                                 lineno,
+                                                                 line)
                 # an option line?
                 else:
                     mo = self._optcre.match(line)
@@ -189,7 +195,7 @@ class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParse
                         # raised at the end of the file and will contain a
                         # list of all bogus lines
                         if e is None:
-                            e = six.moves.configparser.ParsingError(fpname)
+                            e = configparser.ParsingError(fpname)
                         e.append(lineno, repr(line))
         # if any parsing errors occurred, raise an exception
         if e is not None:
@@ -214,14 +220,14 @@ class ToDelete(object):
 
 class SessionConfiguration(object):
     """
-    Class through which UML user interacts with the saveable configuration
-    options define behavior dependent on the host system. The backend is
-    a SortedConfigParser (essentially a SafeConfigParser where sections and
-    options are written in sorted order) object which deals with the file
-    I/O of the INI formated file on disk. This wrapper class allows for
-    temporary changes to that configuration set and gives the user control
-    over which changes should be saved and when.
-
+    Class through which UML user interacts with the saveable
+    configuration options define behavior dependent on the host system.
+    The backend is a SortedConfigParser (essentially a SafeConfigParser
+    where sections and options are written in sorted order) object which
+    deals with the file I/O of the INI formated file on disk. This
+    wrapper class allows for temporary changes to that configuration set
+    and gives the user control over which changes should be saved and
+    when.
     """
 
     def __init__(self, path):
@@ -231,16 +237,18 @@ class SessionConfiguration(object):
         self.cp.read(path)
         self.path = path
 
-        self.changes = {} # dict of section name to dict of option name to value
+        # dict of section name to dict of option name to value
+        self.changes = {}
         self.hooks = {}
 
     def delete(self, section, option):
         """
-        Mark a particual option, or an entire section for deletion. The
-        in memory object will act as if deletion has already occured, but
-        the configuration file will not be affected until a saveChanges
-        call.
+        Remove a section and/or option.
 
+        Mark a particual option or an entire section for deletion. The
+        in memory object will act as if deletion has already occured,
+        but the configuration file will not be affected until a
+        saveChanges call.
         """
         success = False
 
@@ -281,7 +289,7 @@ class SessionConfiguration(object):
                     ret[k] = v
             for kSec in self.changes:
                 if kSec == section:
-                    # toDelete sentinal value, therefore we treat it as not being there
+                    # ToDelete sentinal value, so treat it as not being there
                     if isinstance(self.changes[kSec], ToDelete):
                         found = False
                     else:
@@ -292,24 +300,24 @@ class SessionConfiguration(object):
                             else:
                                 ret[kOpt] = self.changes[kSec][kOpt]
             if not found:
-                raise six.moves.configparser.NoSectionError()
+                raise configparser.NoSectionError()
             return ret
         # Otherwise, treat it as a request for a single option,
         else:
             if section in self.changes:
                 if isinstance(self.changes[section], ToDelete):
-                    raise six.moves.configparser.NoSectionError(section)
+                    raise configparser.NoSectionError(section)
                 if option in self.changes[section]:
                     ret = self.changes[section][option]
                     if isinstance(ret, ToDelete):
-                        raise six.moves.configparser.NoOptionError(section, option)
+                        raise configparser.NoOptionError(section, option)
                     return ret
                 else:  # option not in self.change[section]
                     try:
                         fromFile = self.cp.get(section, option)
                         return fromFile
-                    except six.moves.configparser.NoSectionError:
-                        raise six.moves.configparser.NoOptionError(section, option)
+                    except configparser.NoSectionError:
+                        raise configparser.NoOptionError(section, option)
             fromFile = self.cp.get(section, option)
             return fromFile
 
@@ -324,7 +332,6 @@ class SessionConfiguration(object):
         None is a sentinal value that may be assigned as a hook.
         It disallows hooking on for this section option combination
         for the remainder of the session.
-
         """
         key = (section, option)
         if key in self.hooks and self.hooks[key] is None:
@@ -345,18 +352,20 @@ class SessionConfiguration(object):
 
     def setDefault(self, section, option, value):
         """
-        Set a value which will immediately be reflected in the configuration
-        file.
+        Permanently set a value in the configuration file.
 
+        Set a value which will immediately be reflected in the
+        configuration file.
         """
         self.set(section, option, value)
         self.saveChanges(section, option)
 
     def deleteDefault(self, section, option):
         """
-        Delete a value which will immediately be reflected in the configuration
-        file.
+        Permanently remove a value from the configuration file.
 
+        Delete a value which will immediately be reflected in the
+        configuration file.
         """
         self.delete(section, option)
         self.saveChanges(section, option)
@@ -364,9 +373,11 @@ class SessionConfiguration(object):
 
     def set(self, section, option, value):
         """
-        Set an option for this session. saveChanges can be called to make
-        this change permanant by saving it to the configuration file.
+        Set an option for this session.
 
+        This change will apply only to this session. saveChanges can be
+        called to make this change permanent by saving it to the
+        configuration file.
         """
         # if we are setting a value which matches the
         # value in file, we should adjust the changes
@@ -392,9 +403,9 @@ class SessionConfiguration(object):
                             if len(self.changes[section]) == 0:
                                 del self.changes[section]
                             return
-        except six.moves.configparser.NoSectionError:
+        except configparser.NoSectionError:
             pass
-        except six.moves.configparser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
         # check: is this section the name of an interface
@@ -417,7 +428,8 @@ class SessionConfiguration(object):
             if not ignore:
                 six.reraise(einfo[0], einfo[1], einfo[2])
 
-        if not section in self.changes or isinstance(self.changes[section], ToDelete):
+        if (not section in self.changes
+                or isinstance(self.changes[section], ToDelete)):
             self.changes[section] = {}
         self.changes[section][option] = value
 
@@ -428,14 +440,15 @@ class SessionConfiguration(object):
 
     def saveChanges(self, section=None, option=None):
         """
+        Permanently set changes made to the configuration file.
+
         Depending on the values of the inputs, three levels of saving
         are allowed. If both section and option are specified, that
         specific value will be written to file. If only section is
         specified and option is None, then any changes in that section
-        will be written to file. And if both section and option are None,
-        then all changes will be written to file. If section is None
-        and option is not None, an exception is raised.
-
+        will be written to file. And if both section and option are
+        None, then all changes will be written to file. If section is
+        None and option is not None, an exception is raised.
         """
         # if no changes have been made, nothing needs to be saved.
         if self.changes == {}:
@@ -483,7 +496,8 @@ class SessionConfiguration(object):
                             pass
                     else:
                         for opt in self.changes[section]:
-                            changeIndividual(section, opt, self.changes[section][opt])
+                            changeIndividual(section, opt,
+                                             self.changes[section][opt])
 
                     del self.changes[section]
             else:
@@ -507,8 +521,9 @@ class SessionConfiguration(object):
 
 def loadSettings():
     """
-    Function which reads the configuration file and loads the values into
-    a SessionConfiguration. The SessionConfiguration object is then returned.
+    Function which reads the configuration file and loads the values
+    into a SessionConfiguration. The SessionConfiguration object is then
+    returned.
     """
     target = os.path.join(UML.UMLPath, 'configuration.ini')
 
@@ -527,7 +542,6 @@ def syncWithInterfaces(settingsObj):
     names and default values. This is called during UML initialization
     after available interfaces have been detected, but before a user
     could have to rely on accessing options for that interface.
-
     """
     origChanges = copy.copy(settingsObj.changes)
     newChanges = {}
@@ -553,10 +567,11 @@ def syncWithInterfaces(settingsObj):
         for opName in optionNames:
             try:
                 settingsObj.get(interfaceName, opName)
-            except six.moves.configparser.NoOptionError:
+            except configparser.NoOptionError:
                 settingsObj.set(interfaceName, opName, "")
             if (interfaceName, opName) in origChanges:
-                newChanges[(interfaceName, opName)] = origChanges[(interfaceName, opName)]
+                origValue = origChanges[(interfaceName, opName)]
+                newChanges[(interfaceName, opName)] = origValue
 
     # save all changes that were made
     settingsObj.saveChanges()
@@ -569,13 +584,15 @@ def syncWithInterfaces(settingsObj):
 
 
 def configSafetyWrapper(toWrap):
-    """Decorator which ensures the safety of UML.settings, the configuraiton
-    file, and associated global UML state. To be used to wrap unit tests
-    which intersect with configuration functionality"""
-
+    """
+    Decorator which ensures the safety of UML.settings, the
+    configuration file, and associated global UML state. To be used to
+    wrap unit tests which intersect with configuration functionality.
+    """
     def wrapped(*args):
         backupFile = tempfile.TemporaryFile()
-        configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
+        configFilePath = os.path.join(UML.UMLPath, 'configuration.ini')
+        configurationFile = open(configFilePath, 'r')
         if sys.version_info.major < 3:
             backupFile.write(configurationFile.read())
         else:
@@ -590,11 +607,11 @@ def configSafetyWrapper(toWrap):
             toWrap(*args)
         finally:
             backupFile.seek(0)
-            configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
+            configurationFile = open(configFilePath, 'w')
             if sys.version_info.major < 3:
                 configurationFile.write(backupFile.read())
             else:
-                configurationFile.write(backupFile.read().decode())#python3
+                configurationFile.write(backupFile.read().decode()) # python3
             configurationFile.close()
 
             UML.settings = UML.configuration.loadSettings()
@@ -602,11 +619,13 @@ def configSafetyWrapper(toWrap):
             UML.settings.hooks = backupHooks
             UML.interfaces.available = backupAvailable
 
-            # this guarantees that if these options had been changed in the wrapped
-            # function, that active logger will have the correct open files before
-            # we continue on
-            UML.settings.set("logger", 'location', UML.settings.get("logger", 'location'))
-            UML.settings.set("logger", 'name', UML.settings.get("logger", 'name'))
+            # this guarantees that if these options had been changed in the
+            # wrapped function, that active logger will have the correct open
+            # files before we continue on
+            loggerLocation = UML.settings.get("logger", 'location')
+            loggerName = UML.settings.get("logger", 'name')
+            UML.settings.set("logger", 'location', loggerLocation)
+            UML.settings.set("logger", 'name', loggerName)
             UML.settings.saveChanges("logger")
 
     wrapped.__name__ = toWrap.__name__

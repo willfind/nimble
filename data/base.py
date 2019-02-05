@@ -698,7 +698,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML data object
+        other : UML Base object
             The object with which to compare approximate equality with
             this object.
 
@@ -732,7 +732,7 @@ class Base(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
             A copy of this object
 
         Examples
@@ -1210,7 +1210,7 @@ class Base(object):
         Returns
         -------
         UML view object
-            A UML data object with read-only access.
+            A UML Base object with read-only access.
 
         See Also
         --------
@@ -1845,7 +1845,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML data object
+        other : UML Base object
             Must be of the same type as the calling object. Also, the
             shape of other should be consistent with the shape of this
             object.
@@ -1882,7 +1882,7 @@ class Base(object):
         Parameters
         ----------
         format : str
-            To return a specific kind of UML data object, one may
+            To return a specific kind of UML Base object, one may
             specify the format parameter to be 'List', 'Matrix', or
             'Sparse'. To specify a raw return type (which will not
             include feature names), one may specify 'python list',
@@ -2048,10 +2048,10 @@ class Base(object):
 
         Parameters
         ----------
-        values : constant or UML data object
+        values : constant or UML Base object
             * constant - a constant value with which to fill the data
               seletion.
-            * UML data object - Size must be consistent with the given
+            * UML Base object - Size must be consistent with the given
               start and end indices.
         pointStart : int or str
             The inclusive index or name of the first point in the
@@ -2093,7 +2093,7 @@ class Base(object):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
             if len(values.points) != prange:
-                msg = "When the values argument is a UML data object, the "
+                msg = "When the values argument is a UML Base object, the "
                 msg += "size of values must match the range of modification. "
                 msg += "There are " + str(len(values.points)) + " points in "
                 msg += "values, yet pointStart (" + str(pointStart) + ")"
@@ -2101,7 +2101,7 @@ class Base(object):
                 msg += "of length " + str(prange)
                 raise ArgumentException(msg)
             if len(values.features) != frange:
-                msg = "When the values argument is a UML data object, the "
+                msg = "When the values argument is a UML Base object, the "
                 msg += "size of values must match the range of modification. "
                 msg += "There are " + str(len(values.features)) + " features "
                 msg += "in values, yet featureStart (" + str(featureStart)
@@ -2115,7 +2115,7 @@ class Base(object):
               or isinstance(values, six.string_types)):
             pass  # no modificaitons needed
         else:
-            msg = "values may only be a UML data object, or a single numeric "
+            msg = "values may only be a UML Base object, or a single numeric "
             msg += "value, yet we received something of " + str(type(values))
             raise ArgumentException(msg)
 
@@ -2878,7 +2878,7 @@ class Base(object):
     def __add__(self, other):
         """
         Perform addition on this object, element wise if 'other' is a
-        UML data object, or element wise with a scalar if other is some
+        UML Base object, or element wise with a scalar if other is some
         kind of numeric value.
         """
         return self._genericNumericBinary('__add__', other)
@@ -2892,7 +2892,7 @@ class Base(object):
     def __iadd__(self, other):
         """
         Perform in-place addition on this object, element wise if
-        ``other`` is a UML data object, or element wise with a scalar if
+        ``other`` is a UML Base object, or element wise with a scalar if
         ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__iadd__', other)
@@ -2914,7 +2914,7 @@ class Base(object):
     def __isub__(self, other):
         """
         Subtract (in place) from this object, element wise if ``other``
-        is a UML data object, or element wise with a scalar if ``other``
+        is a UML Base object, or element wise with a scalar if ``other``
         is some kind of numeric value.
         """
         return self._genericNumericBinary('__isub__', other)
@@ -2922,7 +2922,7 @@ class Base(object):
     def __div__(self, other):
         """
         Perform division using this object as the numerator, elementwise
-        if ``other`` is a UML data object, or element wise by a scalar
+        if ``other`` is a UML Base object, or element wise by a scalar
         if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__div__', other)
@@ -2937,7 +2937,7 @@ class Base(object):
     def __idiv__(self, other):
         """
         Perform division (in place) using this object as the numerator,
-        elementwise if ``other`` is a UML data object, or elementwise by
+        elementwise if ``other`` is a UML Base object, or elementwise by
         a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__idiv__', other)
@@ -2945,7 +2945,7 @@ class Base(object):
     def __truediv__(self, other):
         """
         Perform true division using this object as the numerator,
-        elementwise if ``other`` is a UML data object, or element wise
+        elementwise if ``other`` is a UML Base object, or element wise
         by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__truediv__', other)
@@ -2960,7 +2960,7 @@ class Base(object):
     def __itruediv__(self, other):
         """
         Perform true division (in place) using this object as the
-        numerator, elementwise if ``other`` is a UML data object, or
+        numerator, elementwise if ``other`` is a UML Base object, or
         elementwise by a scalar if ``other`` is some kind of numeric
         value.
         """
@@ -2969,7 +2969,7 @@ class Base(object):
     def __floordiv__(self, other):
         """
         Perform floor division using this object as the numerator,
-        elementwise if ``other`` is a UML data object, or elementwise by
+        elementwise if ``other`` is a UML Base object, or elementwise by
         a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__floordiv__', other)
@@ -2985,7 +2985,7 @@ class Base(object):
     def __ifloordiv__(self, other):
         """
         Perform floor division (in place) using this object as the
-        numerator, elementwise if ``other`` is a UML data object, or
+        numerator, elementwise if ``other`` is a UML Base object, or
         elementwise by a scalar if ```other``` is some kind of numeric
         value.
         """
@@ -2994,7 +2994,7 @@ class Base(object):
     def __mod__(self, other):
         """
         Perform mod using the elements of this object as the dividends,
-        elementwise if ``other`` is a UML data object, or elementwise by
+        elementwise if ``other`` is a UML Base object, or elementwise by
         a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__mod__', other)
@@ -3009,7 +3009,7 @@ class Base(object):
     def __imod__(self, other):
         """
         Perform mod (in place) using the elements of this object as the
-        dividends, elementwise if 'other' is a UML data object, or
+        dividends, elementwise if 'other' is a UML Base object, or
         elementwise by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__imod__', other)
@@ -3091,7 +3091,7 @@ class Base(object):
         """
         Perform in-place exponentiation (iterated __mul__) using the
         elements of this object as the bases, element wise if ``other``
-        is a UML data object, or elementwise by a scalar if ``other`` is
+        is a UML Base object, or elementwise by a scalar if ``other`` is
         some kind of numeric value.
         """
         ret = self.__pow__(other)
@@ -3163,7 +3163,7 @@ class Base(object):
         isUML = isinstance(other, UML.data.Base)
 
         if not isUML and not dataHelpers._looksNumeric(other):
-            msg = "'other' must be an instance of a UML data object or a "
+            msg = "'other' must be an instance of a UML Base object or a "
             msg += "scalar"
             raise ArgumentException(msg)
 

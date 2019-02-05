@@ -18,7 +18,7 @@ class MatrixPoints(MatrixAxis, Axis, Points):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The object containing the points data.
     kwds
         Included due to best practices so args may automatically be

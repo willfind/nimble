@@ -29,7 +29,7 @@ class SparseAxis(Axis):
     axis : str
         The axis ('point' or 'feature') which the function will be
         applied to.
-    source : UML data object
+    source : UML Base object
         The object containing point and feature data.
     kwds
         Included due to best practices so args may automatically be

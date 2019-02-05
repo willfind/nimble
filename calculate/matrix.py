@@ -5,8 +5,8 @@ from UML.data import Base
 
 def elementwiseMultiply(left, right):
     """
-    Perform element wise multiplication of two provided UML data objects
-    with the result being returned in a separate UML data object. Both
+    Perform element wise multiplication of two provided UML Base objects
+    with the result being returned in a separate UML Base object. Both
     objects must contain only numeric data. The pointCount and featureCount
     of both objects must be equal. The types of the two objects may be
     different. None is always returned.
@@ -14,7 +14,7 @@ def elementwiseMultiply(left, right):
     """
     # check left is UML
     if not isinstance(left, Base):
-        raise ArgumentException("'left' must be an instance of a UML data object")
+        raise ArgumentException("'left' must be an instance of a UML Base object")
 
     left = left.copy()
     left.elementwiseMultiply(right)
@@ -29,7 +29,7 @@ def elementwisePower(left, right):
     """
     # check left is UML
     if not isinstance(left, Base):
-        raise ArgumentException("'left' must be an instance of a UML data object")
+        raise ArgumentException("'left' must be an instance of a UML Base object")
 
     left = left.copy()
     left.elementwisePower(right)

@@ -294,18 +294,18 @@ def residuals(toPredict, controlVars):
     """
     Calculate the residuals of toPredict, by a linear regression model using the controlVars.
 
-    toPredict: UML data object, where each feature will be used as the independant
+    toPredict: UML Base object, where each feature will be used as the independant
     variable in a separate linear regression model with the controlVars as the
     dependant variables.
 
-    controlVars: UML data object, with the same number of points as toPredict. Each
+    controlVars: UML Base object, with the same number of points as toPredict. Each
     point will be used as the dependant variables to do predictions for the
     corresponding point in toPredict.
 
-    Returns: UML data object of the same size as toPredict, containing the calculated
+    Returns: UML Base object of the same size as toPredict, containing the calculated
     residuals.
 
-    Raises: ArgumentException if toPredict and controlVars are not UML data objects
+    Raises: ArgumentException if toPredict and controlVars are not UML Base objects
     of if they have a different number of points.
 
     """
@@ -314,10 +314,10 @@ def residuals(toPredict, controlVars):
         raise PackageException(msg)
 
     if not isinstance(toPredict, UML.data.Base):
-        msg = "toPredict must be a UML data object"
+        msg = "toPredict must be a UML Base object"
         raise ArgumentException(msg)
     if not isinstance(controlVars, UML.data.Base):
-        msg = "controlVars must be a UML data object"
+        msg = "controlVars must be a UML Base object"
         raise ArgumentException(msg)
 
     tpP = len(toPredict.points)

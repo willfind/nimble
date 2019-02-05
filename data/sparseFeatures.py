@@ -22,7 +22,7 @@ class SparseFeatures(SparseAxis, Axis, Features):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The object containing features data.
     kwds
         Included due to best practices so args may automatically be

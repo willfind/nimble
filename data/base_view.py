@@ -37,7 +37,7 @@ class BaseView(Base):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The UML object that this is a view into.
     pointStart : int
         The inclusive index of the first point this view will have

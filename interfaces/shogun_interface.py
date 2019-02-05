@@ -860,7 +860,7 @@ def _remapLabelsRange(toRemap):
     """
     Transform toRemap so its n unique values are mapped into the value range 0 to n-1
 
-    toRemap: must be a UML data object with a single feature. The contained values
+    toRemap: must be a UML Base object with a single feature. The contained values
     will be transformed, on a first come first serve basis, into the values 0 to n-1
     where n is the number of unique values. This object is modified by this function.
 

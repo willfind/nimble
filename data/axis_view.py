@@ -18,7 +18,7 @@ class AxisView(Axis):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The UML object that this is a view into.
     axis : str
         Either 'point' or 'feature'.

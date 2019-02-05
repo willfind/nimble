@@ -22,7 +22,7 @@ class Elements(object):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The object containing the elements.
     kwds
         Included due to best practices so args may automatically be
@@ -306,8 +306,8 @@ class Elements(object):
         """
         Multiply objects element-wise.
 
-        Perform element-wise multiplication of this UML data object
-        against the provided ``other`` UML data object, with the result
+        Perform element-wise multiplication of this UML Base object
+        against the provided ``other`` UML Base object, with the result
         being stored in-place in the calling object. Both objects must
         contain only numeric data. The pointCount and featureCount of
         both objects must be equal. The types of the two objects may be
@@ -324,7 +324,7 @@ class Elements(object):
         TODO
         """
         if not isinstance(other, UML.data.Base):
-            msg = "'other' must be an instance of a UML data object"
+            msg = "'other' must be an instance of a UML Base object"
             raise ArgumentException(msg)
 
         if len(self._source.points) != len(other.points):
@@ -382,7 +382,7 @@ class Elements(object):
         # other is UML or single numerical value
         singleValue = dataHelpers._looksNumeric(other)
         if not singleValue and not isinstance(other, UML.data.Base):
-            msg = "'other' must be an instance of a UML data object "
+            msg = "'other' must be an instance of a UML Base object "
             msg += "or a single numeric value"
             raise ArgumentException(msg)
 

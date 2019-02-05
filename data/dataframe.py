@@ -381,8 +381,8 @@ class DataFrame(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other
-        UML data object. Both object must contain only numeric data.
+        Matrix multiply this UML Base object against the provided other
+        UML Base object. Both object must contain only numeric data.
         The featureCount of the calling object must equal the pointCount
         of the other object. The types of the two objects may be
         different, and the return is guaranteed to be the same type as
@@ -400,7 +400,7 @@ class DataFrame(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided
+        Multiply every element of this UML Base object by the provided
         scalar. This object must contain only numeric data. The 'scalar'
         parameter must be a numeric data type. The returned object will
         be the inplace modification of the calling object.

@@ -36,7 +36,7 @@ class Axis(object):
     axis : str
         The axis ('point' or 'feature') which the function will be
         applied to.
-    source : UML data object
+    source : UML Base object
         The object containing point and feature data.
     kwds
         Included due to best practices so args may automatically be
@@ -535,12 +535,12 @@ class Axis(object):
         if subtract is not None:
             if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
+                msg += "an int, float, string, or is a UML Base object"
                 raise ArgumentException(msg)
         if divide is not None:
             if not isinstance(divide, allowedTypes):
                 msg = "The argument named divide must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
+                msg += "an int, float, string, or is a UML Base object"
                 raise ArgumentException(msg)
 
         # check that if it is a string, it is one of the accepted values

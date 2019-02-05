@@ -28,7 +28,7 @@ if __name__ == "__main__":
     testXRaw = numpyRandom.randint(-10, 10, (testPoints, feats))
     testYRaw = testXRaw.dot(targetCoefs)
 
-    # encapsulate in UML data objects
+    # encapsulate in UML Base objects
     trainX = UML.createData("Matrix", trainXRaw)
     trainY = UML.createData("Matrix", trainYRaw)
     testX = UML.createData("Matrix", testXRaw)

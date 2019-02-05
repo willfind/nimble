@@ -11,7 +11,7 @@ from abc import abstractmethod
 
 class Points(object):
     """
-    Methods that can be called on the a UML data objects point axis.
+    Methods that can be called on the a UML Base objects point axis.
     """
     def __init__(self):
         pass
@@ -228,7 +228,7 @@ class Points(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See Also
         --------
@@ -281,7 +281,7 @@ class Points(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See Also
         --------
@@ -546,7 +546,7 @@ class Points(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See also
         --------
@@ -571,8 +571,8 @@ class Points(object):
 
         Parameters
         ----------
-        toAdd : UML data object
-            The UML data object whose contents we will be including
+        toAdd : UML Base object
+            The UML Base object whose contents we will be including
             in this object. Must have the same number of features as the
             calling object, but not necessarily in the same order. Must
             not share any point names with the calling object.
@@ -687,29 +687,29 @@ class Points(object):
 
         Parameters
         ----------
-        subtract : number, str, UML data object
+        subtract : number, str, UML Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though pointStatistics)
-            * UML data object - If a vector shaped object is given, then
+            * UML Base object - If a vector shaped object is given, then
               the value associated with each point will be subtracted
               from all values of that point. Otherwise, the values in
               the object are used for elementwise subtraction
-        divide : number, str, UML data object
+        divide : number, str, UML Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though pointStatistics)
-            * UML data object - If a vector shaped object is given, then
+            * UML Base object - If a vector shaped object is given, then
               the value associated with each point will be used in
               division of all values for that point. Otherwise, the
               values in the object are used for elementwise division.
-        applyResultTo : UML data object, statistical method
-            If a UML data object is given, then perform the same
+        applyResultTo : UML Base object, statistical method
+            If a UML Base object is given, then perform the same
             operations to it as are applied to the calling object.
             However, if a statistical method is specified as subtract or
             divide, then concrete values are first calculated only from
             querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a UML data object
+            on applyResultTo using the results; as if a UML Base object
             was given for the subtract or divide arguments.
 
         Examples
@@ -753,7 +753,7 @@ class Points(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         Examples
         --------
@@ -776,7 +776,7 @@ class Points(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         Examples
         --------
