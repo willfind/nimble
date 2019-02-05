@@ -22,7 +22,7 @@ from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import validateInputString
+from .dataHelpers import validateInputString, logCaptureFactory
 
 class Axis(object):
     """
@@ -362,8 +362,6 @@ class Axis(object):
         if function is None:
             raise ArgumentException("function must not be None")
 
-        self._source.validate()
-
         ret = self._calculate_implementation(function, limitTo)
 
         if isinstance(self, Points):
@@ -385,6 +383,8 @@ class Axis(object):
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
+
+        self._source.validate()
 
         return ret
 
@@ -451,7 +451,7 @@ class Axis(object):
 
         if targetCount == 0:
             return UML.createData(self._source.getTypeString(),
-                                  numpy.empty(shape=(0, 0)))
+                                  numpy.empty(shape=(0, 0)), useLog=False)
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
@@ -487,7 +487,7 @@ class Axis(object):
             if redRet is not None:
                 (redKey, redValue) = redRet
                 ret.append([redKey, redValue])
-        ret = UML.createData(self._source.getTypeString(), ret)
+        ret = UML.createData(self._source.getTypeString(), ret, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -1250,10 +1250,11 @@ class Axis(object):
             funcName = 'features.add'
 
         if objOffAxisLen != addOffAxisLen:
-            msg = "The argument 'toAdd' must have the same number of {axis}s "
-            msg += "as the caller object. This object contains {objCount} "
-            msg += "{axis}s and toAdd contains {addCount} {axis}s."
-            msg = msg.format(axis=self._axis, objCount=objOffAxisLen,
+            msg = "The argument 'toAdd' must have the same number of "
+            msg += "{offAxis}s as the caller object. This object contains "
+            msg += "{objCount} {offAxis}s and toAdd contains {addCount} "
+            msg += "{offAxis}s."
+            msg = msg.format(offAxis=offAxis, objCount=objOffAxisLen,
                              addCount=addOffAxisLen)
             raise ArgumentException(msg)
 
@@ -1601,7 +1602,6 @@ class AxisIterator(object):
             self._position += 1
             return value
         else:
-            self._position = 0
             raise StopIteration
 
     def __next__(self):

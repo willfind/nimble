@@ -27,6 +27,7 @@ from six.moves import zip
 import UML
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
+from UML.logger import enableLogging, directCall
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from .points import Points
@@ -40,6 +41,7 @@ from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
 from .dataHelpers import valuesToPythonList
+from .dataHelpers import logCaptureFactory
 
 pd = UML.importModule('pandas')
 
@@ -67,6 +69,8 @@ try:
         matplotlib.use('Agg')
 except ImportError as e:
     mplError = e
+
+logCapture = logCaptureFactory()
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
@@ -303,7 +307,7 @@ class Base(object):
 
     def _pointNamesCreated(self):
         """
-        Returns True if point default names have been created/assigned
+        Returns True if point names have been created/assigned
         to the object.
         If the object does not have points it returns False.
         """
@@ -314,12 +318,54 @@ class Base(object):
 
     def _featureNamesCreated(self):
         """
-        Returns True if feature default names have been created/assigned
+        Returns True if feature names have been created/assigned
         to the object.
         If the object does not have features it returns False.
         """
         if self.featureNamesInverse is None:
             return False
+        else:
+            return True
+
+    def _anyDefaultPointNames(self):
+        """
+        Returns True if any default point names exists or if pointNames have
+        not been created.
+        """
+        if self._pointNamesCreated():
+            return any([name.startswith(DEFAULT_PREFIX) for name
+                        in self.points.getNames()])
+        else:
+            return True
+
+    def _anyDefaultFeatureNames(self):
+        """
+        Returns True if any default feature names exists or if featureNames have
+        not been created.
+        """
+        if self._featureNamesCreated():
+            return any([name.startswith(DEFAULT_PREFIX) for name
+                        in self.features.getNames()])
+        else:
+            return True
+
+    def _allDefaultPointNames(self):
+        """
+        Returns True if all point names are default or have not been created
+        """
+        if self._pointNamesCreated():
+            return all([name.startswith(DEFAULT_PREFIX) for name
+                        in self.points.getNames()])
+        else:
+            return True
+
+    def _allDefaultFeatureNames(self):
+        """
+        Returns True if all feature names are default or have not been created
+        """
+        if self._featureNamesCreated():
+            return all([name.startswith(DEFAULT_PREFIX) for name
+                        in self.features.getNames()])
         else:
             return True
 
@@ -366,7 +412,7 @@ class Base(object):
     # Higher Order Operations #
     ###########################
 
-    def replaceFeatureWithBinaryFeatures(self, featureToReplace):
+    def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         """
         Create binary features for each unique value in a feature.
 
@@ -388,6 +434,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.replaceFeatureWithBinaryFeatures)
+            else:
+                wrapped = directCall(self.replaceFeatureWithBinaryFeatures)
+            return wrapped(featureToReplace, useLog=False)
+
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
             raise ImproperActionException(msg)
@@ -434,7 +487,7 @@ class Base(object):
 
         return toConvert.features.getNames()
 
-    def transformFeatureToIntegers(self, featureToConvert):
+    def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """
         Represent each unique value in a feature with a unique integer.
 
@@ -451,6 +504,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transformFeatureToIntegers)
+            else:
+                wrapped = directCall(self.transformFeatureToIntegers)
+            return wrapped(featureToConvert, useLog=False)
+
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
             raise ImproperActionException(msg)
@@ -490,7 +550,7 @@ class Base(object):
 
         self.features.add(converted)
 
-    def groupByFeature(self, by, countUniqueValueOnly=False):
+    def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
         Group data object by one or more features.
 
@@ -517,6 +577,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.groupByFeature)
+            else:
+                wrapped = directCall(self.groupByFeature)
+            return wrapped(by, countUniqueValueOnly, useLog=False)
+
         def findKey1(point, by):#if by is a string or int
             return point[by]
 
@@ -675,7 +742,8 @@ class Base(object):
         """
         return self.copyAs(self.getTypeString())
 
-    def trainAndTestSets(self, testFraction, labels=None, randomOrder=True):
+    def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
+                         useLog=None):
         """
         Divide the data into training and testing sets.
 
@@ -715,6 +783,14 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.trainAndTestSets)
+            else:
+                wrapped = directCall(self.trainAndTestSets)
+            return wrapped(testFraction, labels, randomOrder,
+                           useLog=False)
+
         toSplit = self.copy()
         if randomOrder:
             toSplit.points.shuffle()
@@ -731,6 +807,7 @@ class Base(object):
         if labels is None:
             toSplit.name = self.name + " trainX"
             testX.name = self.name + " testX"
+
             return toSplit, testX
 
         # safety for empty objects
@@ -754,7 +831,7 @@ class Base(object):
     ########################################
     ########################################
 
-    def featureReport(self, maxFeaturesToCover=50, displayDigits=2):
+    def featureReport(self, maxFeaturesToCover=50, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing
         summary and statistical information about each feature in the
@@ -762,18 +839,32 @@ class Base(object):
         features, only information about 50 of those features will be
         reported.
         """
-        return produceFeaturewiseReport(
+        logger = UML.logger.active
+        logger.position += 1
+        ret = produceFeaturewiseReport(
             self, maxFeaturesToCover=maxFeaturesToCover,
             displayDigits=displayDigits)
+        logger.position -= 1
+        if enableLogging(useLog):
+            logger.logData("feature", ret)
+            logger.log(logger.logType, logger.logInfo)
+        return ret
 
-    def summaryReport(self, displayDigits=2):
+    def summaryReport(self, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing summary
         information about the data set contained in this object.  Includes
         proportion of missing values, proportion of zero values, total # of
         points, and number of features.
         """
-        return produceAggregateReport(self, displayDigits=displayDigits)
+        logger = UML.logger.active
+        logger.position += 1
+        ret = produceAggregateReport(self, displayDigits=displayDigits)
+        logger.position -= 1
+        if enableLogging(useLog):
+            logger.logData("summary", ret)
+            logger.log(logger.logType, logger.logInfo)
+        return ret
 
     ###############################################################
     ###############################################################
@@ -1064,8 +1155,9 @@ class Base(object):
                      in range(start, stop, step)]
             else:
                 y = [self._processSingleY(yi)[0] for yi in y]
-
-        return self.points.copy(toCopy=x).features.copy(toCopy=y)
+        ret = self.points.copy(toCopy=x, useLog=False)
+        ret = ret.features.copy(toCopy=y, useLog=False)
+        return ret
 
     def pointView(self, ID):
         """
@@ -1240,7 +1332,6 @@ class Base(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
     def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19):
         """
@@ -1325,7 +1416,6 @@ class Base(object):
             out += line
 
         return out
-
 
     def __repr__(self):
         indent = '    '
@@ -1728,7 +1818,7 @@ class Base(object):
     ##################################################################
     ##################################################################
 
-    def transpose(self):
+    def transpose(self, useLog=None):
         """
         Invert the feature and point indices of the data.
 
@@ -1740,6 +1830,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transpose)
+            else:
+                wrapped = directCall(self.transpose)
+            return wrapped(useLog=False)
+
         self._transpose_implementation()
 
         self._pointCount, self._featureCount = (self._featureCount,
@@ -1765,7 +1862,7 @@ class Base(object):
 
         self.validate()
 
-    def referenceDataFrom(self, other):
+    def referenceDataFrom(self, other, useLog=None):
         """
         Redefine the object data using the data from another object.
 
@@ -1784,6 +1881,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.referenceDataFrom)
+            else:
+                wrapped = directCall(self.referenceDataFrom)
+            return wrapped(other, useLog=False)
+
         # this is called first because it checks the data type
         self._referenceDataFrom_implementation(other)
         self.pointNames = other.pointNames
@@ -1969,7 +2073,8 @@ class Base(object):
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
+    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
+                 useLog=None):
         """
         Replace values in the data with other values.
 
@@ -2005,6 +2110,14 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fillWith)
+            else:
+                wrapped = directCall(self.fillWith)
+            return wrapped(values, pointStart, featureStart, pointEnd,
+                           featureEnd, useLog=False)
+
         psIndex = self._getPointIndex(pointStart)
         peIndex = self._getPointIndex(pointEnd)
         fsIndex = self._getFeatureIndex(featureStart)
@@ -2054,7 +2167,7 @@ class Base(object):
         self.validate()
 
     def fillUsingAllData(self, match, fill, arguments=None, points=None,
-                         features=None, returnModified=False):
+                         features=None, returnModified=False, useLog=None):
         """
         Replace matching values calculated using the entire data object.
 
@@ -2072,7 +2185,7 @@ class Base(object):
         fill : function
             a function in the format fill(feature, match) or
             fill(feature, match, arguments) and return the transformed
-            data as a list of lists. Certain fill methods can be
+            data as a UML data object. Certain fill methods can be
             imported from UML's fill module:
             kNeighborsRegressor, kNeighborsClassifier
         arguments : dict
@@ -2096,6 +2209,14 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fillUsingAllData)
+            else:
+                wrapped = directCall(self.fillUsingAllData)
+            return wrapped(match, fill, arguments, points, features,
+                           returnModified, useLog=False)
+
         if returnModified:
             modified = self.elements.calculate(match, points=points,
                                                features=features)
@@ -2141,7 +2262,7 @@ class Base(object):
 
         return ret
 
-    def flattenToOnePoint(self):
+    def flattenToOnePoint(self, useLog=None):
         """
         Modify this object so that its values are in a single point.
 
@@ -2165,6 +2286,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.flattenToOnePoint)
+            else:
+                wrapped = directCall(self.flattenToOnePoint)
+            return wrapped(useLog=False)
+
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
@@ -2180,7 +2308,6 @@ class Base(object):
             self._setAllDefault('point')
         if not self._featureNamesCreated():
             self._setAllDefault('feature')
-
         self._flattenToOnePoint_implementation()
 
         self._featureCount = self._pointCount * self._featureCount
@@ -2188,7 +2315,7 @@ class Base(object):
         self.features.setNames(self._flattenNames('point'))
         self.points.setNames(['Flattened'])
 
-    def flattenToOneFeature(self):
+    def flattenToOneFeature(self, useLog=None):
         """
         Modify this object so that its values are in a single feature.
 
@@ -2212,6 +2339,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.flattenToOneFeature)
+            else:
+                wrapped = directCall(self.flattenToOneFeature)
+            return wrapped(useLog=False)
+
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
@@ -2344,7 +2478,7 @@ class Base(object):
 
         return allDefaultStatus
 
-    def unflattenFromOnePoint(self, numPoints):
+    def unflattenFromOnePoint(self, numPoints, useLog=None):
         """
         Adjust a flattened point vector to contain multiple points.
 
@@ -2370,6 +2504,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.unflattenFromOnePoint)
+            else:
+                wrapped = directCall(self.unflattenFromOnePoint)
+            return wrapped(numPoints, useLog=False)
+
         if self._featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more "
             msg += "features.  This object has 0 features."
@@ -2399,7 +2540,7 @@ class Base(object):
         self.points.setNames(ret[0])
         self.features.setNames(ret[1])
 
-    def unflattenFromOneFeature(self, numFeatures):
+    def unflattenFromOneFeature(self, numFeatures, useLog=None):
         """
         Adjust a flattened feature vector to contain multiple features.
 
@@ -2425,6 +2566,13 @@ class Base(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.unflattenFromOneFeature)
+            else:
+                wrapped = directCall(self.unflattenFromOneFeature)
+            return wrapped(numFeatures, useLog=False)
+
         if self._pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more "
             msg += "points. This object has 0 points."
@@ -2455,6 +2603,268 @@ class Base(object):
         self.points.setNames(ret[1])
         self.features.setNames(ret[0])
 
+    def merge(self, other, point='strict', feature='union', onFeature=None):
+        """
+        Merge data from another object into this object based on point names or
+        a common feature between the objects. How the data will be merged is
+        based upon the string arguments provided to point and feature.
+
+        If onFeature is None, the objects will be merged on the point names.
+        Otherwise, the objects will be merged on the feature provided.
+        onFeature allows for duplicate values to be present in the provided
+        feature, however, one of the objects must contain only unique values
+        for each point when onFeature is provided.
+
+        The allowed strings for the point and feature arguments are as follows:
+
+        'strict': The points/features in the callee exactly match the
+          points/features in the caller, however, they may be in a different
+          order. If onFeature is None and no names are provided, it will be
+          assumed the order is the same.
+
+        'union': Return all points/features from the caller and callee. If
+          onFeature is None, unnamed points/features will be assumed to be
+          unique. Any missing data from the caller and callee will be filled
+          with numpy.NaN
+
+        'intersection': Return only points/features shared between the caller
+          and callee. If onFeature is None, point/feature names are required.
+
+        'left': Return only the points/features from the caller. Any
+          missing data from the callee will be filled with numpy.NaN
+        """
+        point = point.lower()
+        feature = feature.lower()
+        valid = ['strict', 'left', 'union', 'intersection']
+        if point not in valid:
+            msg = "point must be 'strict', 'left', 'union', or 'intersection'"
+            raise ArgumentException(msg)
+        if feature not in valid:
+            msg = "feature must be 'strict', 'left', 'union', or 'intersection'"
+            raise ArgumentException(msg)
+
+        if point == 'strict' or feature == 'strict':
+            return self._genericStrictMerge_implementation(other, point, feature, onFeature)
+        else:
+            return self._genericMergeFrontend(other, point, feature, onFeature)
+
+    def _genericStrictMerge_implementation(self, other, point, feature, onFeature):
+        """
+        Validation and helper function when point or feature is set to strict
+        """
+        # NOTE could return this object?
+        if point == 'strict' and feature == 'strict':
+            msg = 'Both point and feature cannot be strict'
+            raise ArgumentException(msg)
+        tmpOther = other.copy()
+        if point == 'strict':
+            axis = 'point'
+            countL = len(self.points)
+            countR = len(tmpOther.points)
+            hasNamesL = not self._allDefaultPointNames()
+            hasNamesR = not tmpOther._allDefaultPointNames()
+            namesL = self.points.getNames
+            namesR = tmpOther.points.getNames
+            setNamesL = self.points.setNames
+            setNamesR = tmpOther.points.setNames
+            point = "intersection"
+        else:
+            axis = 'feature'
+            countL = len(self.features)
+            countR = len(tmpOther.features)
+            hasNamesL = not self._allDefaultFeatureNames()
+            hasNamesR = not tmpOther._allDefaultFeatureNames()
+            namesL = self.features.getNames
+            namesR = tmpOther.features.getNames
+            setNamesL = self.features.setNames
+            setNamesR = tmpOther.features.setNames
+            feature = "intersection"
+
+        if countL != countR:
+            msg = "Both objects must have the same number of "
+            msg += "{0}s when {0}='strict'".format(axis)
+            raise ArgumentException(msg)
+        if hasNamesL and hasNamesR:
+            if sorted(namesL()) != sorted(namesR()):
+                msg = "When {0}='strict', the {0}s names ".format(axis)
+                msg += "may be in a different order but must match exactly"
+                raise ArgumentException(msg)
+        # since strict implies that the points or features are the same,
+        # if one object does not have names along the axis, but the length
+        # matches, we will assume that the unnamed should have the same names
+        if onFeature is None:
+            if hasNamesL and not hasNamesR:
+                setNamesR(namesL())
+            elif not hasNamesL and hasNamesR:
+                setNamesL(namesR())
+            elif not hasNamesL and not hasNamesR:
+                strictNames = ['_STRICT' + DEFAULT_PREFIX + str(i) for i in range(countL)]
+                setNamesL(strictNames)
+                setNamesR(strictNames)
+        # if using strict with onFeature instead of point names, we need to
+        # make sure each id has a unique match in the other object
+        elif axis == 'point':
+            try:
+                self[0, onFeature]
+                tmpOther[0, onFeature]
+            except KeyError:
+                msg = "could not locate feature '{0}' in both objects".format(onFeature)
+                raise ArgumentException(msg)
+            if len(set(self[:, onFeature])) != len(self.points):
+                msg = "when point='strict', onFeature must contain only unique values"
+                raise ArgumentException(msg)
+            if sorted(self[:, onFeature]) != sorted(tmpOther[:, onFeature]):
+                msg = "When point='strict', onFeature must have a unique, "
+                msg += "matching value in each object"
+                raise ArgumentException(msg)
+
+        return self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
+
+    def _genericMergeFrontend(self, other, point, feature, onFeature, strict=None):
+        # validation
+        if (onFeature is None and point == "intersection") and not (self._pointNamesCreated() and other._pointNamesCreated()):
+            msg = "Point names are required in both objects when "
+            msg += "point='intersection'"
+            raise ArgumentException(msg)
+        if feature == "intersection" and not (self._featureNamesCreated() and other._featureNamesCreated()):
+            msg = "Feature names are required in both objects when "
+            msg += "feature='intersection'"
+            raise ArgumentException(msg)
+        defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
+        defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
+        if onFeature is not None:
+            try:
+                self[0, onFeature]
+                other[0, onFeature]
+            except KeyError:
+                msg = "could not locate feature '{0}' in both objects".format(onFeature)
+                raise ArgumentException(msg)
+            uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
+            uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
+            if not (uniqueFtL or uniqueFtR):
+                msg = "UML only supports joining on a feature which "
+                msg += "contains only unique values in one or both objects."
+                raise ArgumentException(msg)
+
+        numPtsL = len(self.points)
+        numFtsL = len(self.features)
+        matchingFts = self._getMatchingNames('feature', other)
+        matchingFtIdx = [[], []]
+        for name in matchingFts:
+            idxL = self.features.getIndex(name)
+            idxR = other.features.getIndex(name)
+            matchingFtIdx[0].append(idxL)
+            matchingFtIdx[1].append(idxR)
+
+        if self.getTypeString() != other.getTypeString():
+            other = other.copyAs(self.getTypeString())
+        self._merge_implementation(other, point, feature, onFeature,
+                                   matchingFtIdx)
+
+        if strict == 'feature':
+            if ('_STRICT' in self.features.getName(0)
+                  and '_STRICT' in other.features.getName(0)):
+                # objects did not have feature names
+                self.featureNames = None
+                self.featureNamesInverse = None
+            elif '_STRICT' in self.features.getName(0):
+                # use feature names from other object
+                self.features.setNames(other.features.getNames())
+        elif feature == "intersection":
+            if self._featureNamesCreated():
+                ftNames = [n for n in self.features.getNames()
+                           if n in matchingFts]
+                self.features.setNames(ftNames)
+        elif feature == "union":
+            if self._featureNamesCreated() and other._featureNamesCreated():
+                ftNamesL = self.features.getNames()
+                ftNamesR = [name for name in other.features.getNames()
+                            if name not in matchingFts]
+                ftNames = ftNamesL + ftNamesR
+                self.features.setNames(ftNames)
+            elif self._featureNamesCreated():
+                ftNamesL = self.features.getNames()
+                ftNamesR = [DEFAULT_PREFIX + str(i) for i
+                            in range(len(other.features))]
+                ftNames = ftNamesL + ftNamesR
+                self.features.setNames(ftNames)
+            elif other._featureNamesCreated():
+                ftNamesL = [DEFAULT_PREFIX + str(i) for i
+                            in range(len(self.features))]
+                ftNamesR = other.features.getNames()
+                ftNames = ftNamesL + ftNamesR
+                self.features.setNames(ftNames)
+        # no name setting needed for left
+
+        if strict == 'point':
+            if ('_STRICT' in self.points.getName(0)
+                  and '_STRICT' in other.points.getName(0)):
+                # objects did not have point names
+                self.pointNames = None
+                self.pointNamesInverse = None
+            elif '_STRICT' in self.points.getName(0):
+                # use point names from other object
+                self.points.setNames(other.points.getNames())
+        elif onFeature is None and point == 'left':
+            if self._pointNamesCreated():
+                self.points.setNames(self.points.getNames())
+        elif onFeature is None and point == 'intersection':
+            # default names cannot be included in intersection
+            ptNames = [name for name in self.points.getNames()
+                       if name in other.points.getNames()
+                       and not name.startswith(DEFAULT_PREFIX)]
+            self.points.setNames(ptNames)
+        elif onFeature is None:
+            # union cases
+            if self._pointNamesCreated() and other._pointNamesCreated():
+                ptNamesL = self.points.getNames()
+                if other._anyDefaultPointNames():
+                    # handle default name conflicts
+                    ptNamesR = [self._nextDefaultName('point') if
+                                n.startswith(DEFAULT_PREFIX) else n
+                                for n in self.points.getNames()]
+                else:
+                    ptNamesR = other.points.getNames()
+                ptNames = ptNamesL + [name for name in ptNamesR
+                                      if name not in ptNamesL]
+                self.points.setNames(ptNames)
+            elif self._pointNamesCreated():
+                ptNamesL = self.points.getNames()
+                ptNamesR = [self._nextDefaultName('point') for _
+                            in range(len(other.points))]
+                ptNames = ptNamesL + ptNamesR
+                self.points.setNames(ptNames)
+            elif other._pointNamesCreated():
+                ptNamesL = [other._nextDefaultName('point') for _
+                            in range(len(self.points))]
+                ptNamesR = other.points.getNames()
+                ptNames = ptNamesL + ptNamesR
+                self.points.setNames(ptNames)
+        else:
+            self.pointNamesInverse = None
+            self.pointNames = None
+
+
+    def _getMatchingNames(self, axis, other):
+        matches = []
+        if axis == 'point':
+            if not self._pointNamesCreated() or not other._pointNamesCreated():
+                return matches
+            selfNames = self.points.getNames()
+            otherNames = other.points.getNames()
+        else:
+            if (not self._featureNamesCreated()
+                  or not other._featureNamesCreated()):
+                return matches
+            selfNames = self.features.getNames()
+            otherNames = other.features.getNames()
+        allNames = selfNames + otherNames
+        hasMatching = len(set(allNames)) != len(allNames)
+        if hasMatching:
+            for name in selfNames:
+                if name in otherNames:
+                    matches.append(name)
+        return matches
 
     ###############################################################
     ###############################################################
@@ -2710,7 +3120,8 @@ class Base(object):
             identity = UML.createData(self.getTypeString(),
                                       numpy.eye(self._pointCount),
                                       pointNames=identityPNames,
-                                      featureNames=identityFNames)
+                                      featureNames=identityFNames,
+                                      useLog=False)
         if other == 0:
             return identity
 
@@ -3633,7 +4044,6 @@ class Base(object):
             msg += ", yet the starting value is not allowed to be greater "
             msg += "than the ending value (" + str(startVal) + ">"
             msg += str(endVal) + ")"
-
             raise ArgumentException(msg)
 
     ####################
