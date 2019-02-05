@@ -8,15 +8,12 @@ import shutil
 import time
 import ast
 import sys
-try:
-    from StringIO import StringIO
-except:
-    from io import StringIO
 import sqlite3
 
 from nose import with_setup
 from nose.tools import raises
 import six
+from six import StringIO
 import numpy
 
 import UML
@@ -155,6 +152,7 @@ def testRunTypeFunctionsUseLog():
                                     testXObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndApply'" in logInfo
+
     # trainAndTest
     performance = UML.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
                                    testXObj, testYObj,

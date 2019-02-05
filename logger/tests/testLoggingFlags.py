@@ -68,7 +68,7 @@ def runAndCheck(toCall, useLog):
     # count number of starting log entries
     startCount = logEntryCount(logger)
 
-    # call the
+    # call the function we're testing for log control
     toCall(trainX, trainY, testX, testY, useLog)
     # make sure it has the expected effect on the count
     endCount = logEntryCount(logger)
@@ -179,14 +179,10 @@ def test_TrainedLearner_test():
 
     backend(wrapped, runAndCheck)
 
-# ??????????????????
-# incremental train?
-# reTrain?
-
 @configSafetyWrapper
-def backendDeep(toCall, setter, validator):
+def backendDeep(toCall, validator):
     UML.settings.set('logger', 'enabledByDefault', 'True')
-    setter('True')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
     # the deep logging flag is continget on global and local
     # control, so we confirm that in those instances where
@@ -196,7 +192,7 @@ def backendDeep(toCall, setter, validator):
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
     assert startT3 == endT3
 
-    setter('False')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
     (startF2, endF2) = validator(toCall, useLog=None) # 1 logs added
@@ -209,9 +205,9 @@ def backendDeep(toCall, setter, validator):
     assert (endT2 - startT2) - 1 == (endF2 - startF2)
 
     UML.settings.set('logger', 'enabledByDefault', 'False')
-    setter('True')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
-    # the deep logging flag is continget on global and local
+    # the deep logging flag is contingent on global and local
     # control, so we confirm that logging is called or
     # not appropriately
     (startT1, endT1) = validator(toCall, useLog=True) # 2 logs added
@@ -220,7 +216,7 @@ def backendDeep(toCall, setter, validator):
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
     assert startT3 == endT3
 
-    setter('False')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
     (startF2, endF2) = validator(toCall, useLog=None) # 0 logs added
@@ -238,10 +234,7 @@ def test_Deep_crossValidate():
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def test_Deep_crossValidateReturnAll():
     def wrapped(trainX, trainY, testX, testY, useLog):
@@ -249,10 +242,7 @@ def test_Deep_crossValidateReturnAll():
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def test_Deep_crossValidateReturnBest():
     def wrapped(trainX, trainY, testX, testY, useLog):
@@ -260,10 +250,7 @@ def test_Deep_crossValidateReturnBest():
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
@@ -272,10 +259,7 @@ def test_Deep_train():
                          performanceFunction=fractionIncorrect, useLog=useLog,
                          k=k)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
@@ -284,10 +268,7 @@ def test_Deep_trainAndApply():
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog, k=k)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
@@ -296,10 +277,7 @@ def test_Deep_trainAndTest():
                                 performanceFunction=fractionIncorrect,
                                 useLog=useLog, k=k)
 
-    def setter(val):
-        UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
-
-    backendDeep(wrapped, setter, runAndCheck)
+    backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, useLog):
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
@@ -387,71 +365,45 @@ def test_summaryReport():
 
     backend(wrapped, prepAndCheck)
 
-def flattenUnflattenPrepAndCheck(flattenCall, unflattenCall, useLog):
-    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
-            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
-            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    pNames = ['p' + str(i) for i in range(18)]
-    fNames = ['f0', 'f1', 'f2']
-    # createData not logged
-    dataObj = UML.createData("Matrix", data, pointNames=pNames,
-                             featureNames=fNames, useLog=False)
-
-    logger = UML.logger.active
-    # count number of starting log entries
-    startCount = logEntryCount(logger)
-
-    # flatten then unflatten the object
-    flattenCall(dataObj, useLog)
-    unflattenCall(dataObj, useLog)
-    # make sure it has the expected effect on the count
-    endCount = logEntryCount(logger)
-
-    return (startCount, endCount)
-
 @configSafetyWrapper
-def flattenUnflattenBackend(flattenCall, unflattenCall, validator):
+def flattenUnflattenBackend(toCall, validator):
     # for each combination of local and global, call and check
 
     UML.settings.set('logger', 'enabledByDefault', 'True')
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=True)
+    (start, end) = validator(toCall, useLog=True)
     assert start + 2 == end
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=None)
+    (start, end) = validator(toCall, useLog=None)
     assert start + 2 == end
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=False)
+    (start, end) = validator(toCall, useLog=False)
     assert start == end
 
     UML.settings.set('logger', 'enabledByDefault', 'False')
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=True)
+    (start, end) = validator(toCall, useLog=True)
     assert start + 2 == end
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=None)
+    (start, end) = validator(toCall, useLog=None)
     assert start == end
 
-    (start, end) = validator(flattenCall, unflattenCall, useLog=False)
+    (start, end) = validator(toCall, useLog=False)
     assert start == end
 
 def test_flattenUnflatten_pointAxis():
-    def wrappedFlatten(obj, useLog):
-        return obj.flattenToOnePoint(useLog=useLog)
-    def wrappedUnflatten(obj, useLog):
-        return obj.unflattenFromOnePoint(18, useLog=useLog)
+    def wrapped_Flatten_UnFlatten(obj, useLog):
+        obj.flattenToOnePoint(useLog=useLog)
+        obj.unflattenFromOnePoint(18, useLog=useLog)
 
-    flattenUnflattenBackend(wrappedFlatten, wrappedUnflatten,
-                            flattenUnflattenPrepAndCheck)
+    flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
 
 def test_flattenUnflatten_featureAxis():
-    def wrappedFlatten(obj, useLog):
-        return obj.flattenToOneFeature(useLog=useLog)
-    def wrappedUnflatten(obj, useLog):
-        return obj.unflattenFromOneFeature(3, useLog=useLog)
+    def wrapped_Flatten_UnFlatten(obj, useLog):
+        obj.flattenToOneFeature(useLog=useLog)
+        obj.unflattenFromOneFeature(3, useLog=useLog)
 
-    flattenUnflattenBackend(wrappedFlatten, wrappedUnflatten,
-                            flattenUnflattenPrepAndCheck)
+    flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
 
 ############################
 # Points/Features/Elements #
@@ -491,13 +443,19 @@ def test_elements_calculate():
     def wrapped(obj, useLog):
         return obj.elements.calculate(lambda x: len(x), features=0, useLog=useLog)
 
+    backend(wrapped, prepAndCheck)
+
 def test_points_calculate():
     def wrapped(obj, useLog):
         return obj.points.calculate(lambda x: len(x), useLog=useLog)
 
+    backend(wrapped, prepAndCheck)
+
 def test_features_calculate():
     def wrapped(obj, useLog):
         return obj.features.calculate(lambda x: len(x), features=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
 
 def test_points_shuffle():
     def wrapped(obj, useLog):
@@ -571,6 +529,31 @@ def test_features_retain():
 
     backend(wrapped, prepAndCheck)
 
+def test_points_copy():
+    def wrapped(obj, useLog):
+        return obj.points.copy(toCopy=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_copy():
+    def wrapped(obj, useLog):
+        return obj.features.copy(toCopy=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_fill():
+    def wrapped(obj, useLog):
+        return obj.points.fill(match=1, fill=11, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_fill():
+    def wrapped(obj, useLog):
+        return obj.features.fill(match=1, fill=11, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+
 def test_points_transform():
     def wrapped(obj, useLog):
         return obj.points.transform(lambda x: [point for point in x], useLog=useLog)
@@ -604,3 +587,4 @@ def test_features_add():
         return obj.features.add(toAppend, useLog=useLog)
 
     backend(wrapped, prepAndCheck)
+

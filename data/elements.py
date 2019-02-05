@@ -229,7 +229,7 @@ class Elements(object):
                     f += 1
                 p += 1
 
-            ret = UML.createData(optType, valueArray)
+            ret = UML.createData(optType, valueArray, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -468,17 +468,17 @@ class Elements(object):
             values = function(toCalculate)
             # check if values has numeric dtype
             if numpy.issubdtype(values.dtype, numpy.number):
-                return UML.createData(outputType, values)
+                return UML.createData(outputType, values, useLog=False)
 
             return UML.createData(outputType, values,
-                                  elementType=numpy.object_)
+                                  elementType=numpy.object_, useLog=False)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
             values = function(toCalculate)
             return UML.createData(outputType, values,
-                                  elementType=numpy.object_)
+                                  elementType=numpy.object_, useLog=False)
 
     #####################
     # Abstract Methods  #
