@@ -26,7 +26,7 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.logger import Stopwatch
+from UML.logger import enableLogging, logCapture
 from UML.exceptions import ArgumentException
 from UML.exceptions import PackageException
 from UML.exceptions import FileFormatException
@@ -63,6 +63,7 @@ except:
 #in python3, itertools.ifilter is not there anymore. it is filter.
 if not hasattr(itertools, 'ifilter'):
     itertools.ifilter = filter
+
 
 def findBestInterface(package):
     """
@@ -2690,6 +2691,11 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
+    if enableLogging(useLog):
+        wrapped = logCapture(crossValidateBackend)
+        return wrapped(learnerName, X, Y, performanceFunction, arguments,
+                       folds, scoreMode, useLog=False, **kwarguments)
+
     if not isinstance(X, Base):
         raise ArgumentException("X must be a Base object")
     if Y is not None:
@@ -2713,15 +2719,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
 
     if folds == 0:
         raise ArgumentException("Tried to cross validate over 0 folds")
-
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = useLog.lower() == 'true'
-    deepLog = False
-    if useLog:
-        deepLog = UML.settings.get('logger',
-                                   'enableCrossValidationDeepLogging')
-        deepLog = deepLog.lower() == 'true'
 
     merged = _mergeArguments(arguments, kwarguments)
 
@@ -2765,7 +2762,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             curRunResult = UML.trainAndApply(
                 learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                 testX=curTestingX, arguments=curArgumentCombination,
-                scoreMode=scoreMode, useLog=deepLog)
+                scoreMode=scoreMode, useLog=useLog)
 
             performanceOfEachCombination[argSetIndex][0] = (
                 curArgumentCombination)
@@ -2813,19 +2810,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
-    # log results of this cross validation
-    if useLog:
-        # TODO: should we have an actual timer here? if we do should we remove
-        # the CV timing from logRun?
-        timer = None
-
-        # (self, trainData, trainLabels, learnerName, metric, performance,
-        #  timer, learnerArgs, folds)
-        UML.logger.active.logCrossValidation(X, Y, learnerName,
-                                             performanceFunction,
-                                             performanceOfEachCombination,
-                                             timer, merged, folds)
-
+    UML.logger.active.logCrossValidation(X, Y, learnerName, merged,
+                                         performanceFunction,
+                                         performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
 
@@ -3154,12 +3141,13 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     # then convert
     # finally make matrix object out of the list of points w/ labels in last
     # column of each vector/entry:
-    pointsObj = UML.createData('Matrix', pointsList)
+    pointsObj = UML.createData('Matrix', pointsList, useLog=False)
 
-    labelsObj = UML.createData('Matrix', labelsList)
+    labelsObj = UML.createData('Matrix', labelsList, useLog=False)
 
     # todo change actuallavels to something like associatedClusterCentroid
-    noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList)
+    noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList,
+                                        useLog=False)
 
     # convert datatype if not matrix
     if returnType.lower() != 'matrix':
@@ -3595,8 +3583,7 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
 
 
 def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
-                          scoreMode='label', useLog=None, timer=None,
-                          **kwarguments):
+                          scoreMode='label', useLog=None, **kwarguments):
     """
     Calls on trainAndApply() to train and evaluate the learner defined
     by 'learnerName.'  Assumes there are multiple (>2) class labels, and
@@ -3636,10 +3623,6 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         "enabledByDefault" configuration option. If True, send to the
         logger regardless of the global option. If False, do **NOT**
         send to the logger, regardless of the global option.
-    timer : UML.logger.Stopwatch
-        If logging was initiated in a call higher in the stack, then the
-        timing object constructed there will be passed down through this
-        parameter.
     kwarguments
         Keyword arguments specified variables that are passed to the
         learner. To make use of multiple permutations, specify different
@@ -3667,25 +3650,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = useLog.lower() == 'true'
-    deepLog = False
-    if useLog:
-        deepLog = UML.settings.get('logger',
-                                   'enableMultiClassStrategyDeepLogging')
-        deepLog = deepLog.lower() == 'true'
-
-    #if we are logging this run, we need to start the timer
-    if useLog:
-        if timer is None:
-            timer = Stopwatch()
-
-        timer.start('train')
-
-    # For each pair of class labels: remove all points with one of those
-    # labels, train a classifier on those points, get predictions based on
-    # that model, and put the points back into the data object
+    # For each pair of class labels: remove all points with one of those labels,
+    # train a classifier on those points, get predictions based on that model,
+    # and put the points back into the data object
     rawPredictions = None
     predictionFeatureID = 0
     for pair in labelPairs:
@@ -3697,7 +3664,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         #train classifier on that data; apply it to the test set
         partialResults = UML.trainAndApply(learnerName, pairData,
                                            pairTrueLabels, testX, output=None,
-                                           arguments=merged, useLog=deepLog)
+                                           arguments=merged, useLog=useLog)
         #put predictions into table of predictions
         if rawPredictions is None:
             rawPredictions = partialResults.copyAs(format="List")
@@ -3708,9 +3675,6 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         pairData.features.add(pairTrueLabels)
         trainX.points.add(pairData)
         predictionFeatureID += 1
-
-    if useLog:
-        timer.stop('train')
 
     #set up the return data based on which format has been requested
     if scoreMode.lower() == 'label'.lower():
@@ -3756,8 +3720,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
 
 
 def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
-                          scoreMode='label', useLog=None, timer=None,
-                          **kwarguments):
+                          scoreMode='label', useLog=None, **kwarguments):
     """
     Calls on trainAndApply() to train and evaluate the learner defined
     by 'learnerName.'  Assumes there are multiple (>2) class labels, and
@@ -3797,10 +3760,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         "enabledByDefault" configuration option. If True, send to the
         logger regardless of the global option. If False, do **NOT**
         send to the logger, regardless of the global option.
-    timer : UML.logger.Stopwatch
-        If logging was initiated in a call higher in the stack, then the
-        timing object constructed there will be passed down through this
-        parameter.
     kwarguments
         Keyword arguments specified variables that are passed to the
         learner. To make use of multiple permutations, specify different
@@ -3825,22 +3784,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
     labelVector.transpose()
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = useLog.lower() == 'true'
-    deepLog = False
-    if useLog:
-        deepLog = UML.settings.get('logger',
-                                   'enableMultiClassStrategyDeepLogging')
-        deepLog = deepLog.lower() == 'true'
-
-    #if we are logging this run, we need to start the timer
-    if useLog:
-        if timer is None:
-            timer = Stopwatch()
-
-        timer.start('train')
-
     # For each class label in the set of labels:  convert the true
     # labels in trainY into boolean labels (1 if the point
     # has 'label', 0 otherwise.)  Train a classifier with the processed
@@ -3858,7 +3801,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         trainLabels = trainY.points.calculate(relabeler)
         oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels,
                                             testX, output=None,
-                                            arguments=merged, useLog=deepLog)
+                                            arguments=merged, useLog=useLog)
         # put all results into one Base container, of the same type as trainX
         if rawPredictions is None:
             rawPredictions = oneLabelResults
@@ -3870,9 +3813,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
             # corresponding class label
             oneLabelResults.features.setName(0, str(label))
             rawPredictions.features.add(oneLabelResults)
-
-    if useLog:
-        timer.stop('train')
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.points.calculate(
@@ -3940,11 +3880,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
     _validArguments(kwarguments)
     merged = _mergeArguments(arguments, kwarguments)
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = useLog.lower() == 'true'
-
-    timer = Stopwatch() if useLog else None
+    # timer = Stopwatch() if useLog else None
 
     # if testY is in testX, we need to extract it before we call a
     # trainAndApply type function
@@ -3953,19 +3889,22 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
         testY = testX.features.extract([testY])
 
     predictions = f(learnerName, trainX, trainY, testX, merged,
-                    scoreMode='label', useLog=useLog, timer=timer)
+                    scoreMode='label', useLog=False)
 
     # now compute performance metric(s) for the set of winning predictions
     results = computeMetrics(testY, None, predictions, performanceFunction)
 
+    metrics = {}
+    for key, value in zip([performanceFunction], [results]):
+        metrics[key.__name__] = value
+
     # Send this run to the log, if desired
-    if useLog:
-        if not isinstance(performanceFunction, list):
-            performanceFunction = [performanceFunction]
-            results = [results]
-        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName,
-                                 performanceFunction, predictions, results,
-                                 timer, extraInfo=merged)
+    # if useLog:
+    #     if not isinstance(performanceFunction, list):
+    #         performanceFunction = [performanceFunction]
+    #         results = [results]
+    #     UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY, learnerName,
+    #                              merged, metrics, timer)
 
     return results
 
@@ -4113,6 +4052,6 @@ def inspectArguments(func):
     """
     try:
         argspec = inspect.getfullargspec(func)[:4] #py3
-    except:
+    except AttributeError:
         argspec = inspect.getargspec(func) #py2
     return argspec

@@ -23,7 +23,7 @@ from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVs
 from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
-from UML.logger import Stopwatch
+from UML.logger import logCapture, Stopwatch, enableLogging, directCall
 
 from UML.helpers import _mergeArguments, generateAllPairs, countWins, inspectArguments
 import six
@@ -1035,14 +1035,13 @@ class TrainedLearner(object):
         setup for training was the same.
 
         """
-        if useLog is None:
-            useLog = UML.settings.get("logger", "enabledByDefault")
-            useLog = True if useLog.lower() == 'true' else False
-
-        timer = None
-        if useLog:
-            timer = Stopwatch()
-            timer.start("test")
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(TrainedLearner.test)
+            else:
+                wrapped = directCall(TrainedLearner.test)
+            return wrapped(self, testX, testY, performanceFunction, arguments,
+                               output, scoreMode, useLog, **kwarguments)
 
         #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, multiClassStrategy)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
@@ -1053,19 +1052,15 @@ class TrainedLearner(object):
         pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
         performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
 
-        if useLog:
-            timer.stop('test')
-            fullName = self.interface.getCanonicalName() + self.learnerName
-            # Signature:
-            # (self, trainData, trainLabels, testData, testLabels, function,
-            # metrics, predictions, performance, timer, extraInfo=None,
-            # numFolds=None)
-            UML.logger.active.logRun(
-                trainData=None, trainLabels=None, testData=testX,
-                testLabels=testY, function=fullName,
-                metrics=[performanceFunction], predictions=pred,
-                performance=[performance], timer=timer,
-                extraInfo=mergedArguments, numFolds=None)
+        fullName = self.interface.getCanonicalName() + self.learnerName
+        # Signature:
+        # (umlFunction, trainData, trainLabels, testData, testLabels,
+        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None)
+        UML.logger.active.logRun("TrainedLearner.test",
+            trainData=None, trainLabels=None, testData=testX,
+            testLabels=testY, learnerFunction=fullName,
+            arguments=mergedArguments, metrics=performance,
+            extraInfo=None, numFolds=None)
 
         return performance
 
@@ -1090,16 +1085,16 @@ class TrainedLearner(object):
         on.
 
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(TrainedLearner.apply)
+            else:
+                wrapped = directCall(TrainedLearner.apply)
+            return wrapped(self, testX, arguments, output, scoreMode,
+                           useLog=False, **kwarguments)
+
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-        if useLog is None:
-            useLog = UML.settings.get("logger", "enabledByDefault")
-            useLog = True if useLog.lower() == 'true' else False
-
-        timer = None
-        if useLog:
-            timer = Stopwatch()
-            timer.start("apply")
 
         #			self.interface._validateOutputFlag(output)
         #			self.interface._validateScoreModeFlag(scoreMode)
@@ -1138,18 +1133,15 @@ class TrainedLearner(object):
 
             ret = labels
 
-        if useLog:
-            timer.stop('apply')
-            fullName = self.interface.getCanonicalName() + self.learnerName
-            # Signature:
-            # (self, trainData, trainLabels, testData, testLabels, function,
-            # metrics, predictions, performance, timer, extraInfo=None,
-            # numFolds=None)
-            UML.logger.active.logRun(
-                trainData=None, trainLabels=None, testData=testX,
-                testLabels=None, function=fullName, metrics=None,
-                predictions=ret, performance=None, timer=timer,
-                extraInfo=mergedArguments, numFolds=None)
+        fullName = self.interface.getCanonicalName() + self.learnerName
+        # Signature:
+        # (self, umlFunction, trainData, trainLabels, testData, testLabels,
+        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None
+        UML.logger.active.logRun("TrainedLearner.apply",
+            trainData=None, trainLabels=None, testData=testX,
+            testLabels=None, learnerFunction=fullName,
+            arguments=mergedArguments, metrics=None,
+            extraInfo=None, numFolds=None)
 
         return ret
 
@@ -1280,6 +1272,7 @@ class TrainedLearners(TrainedLearner):
         self.trainedLearnersList = trainedLearners
         self.method = method
         self.labelSet = labelSet
+        self.arguments = trainedLearners[0].arguments
         self.has2dOutput = trainedLearners[0].has2dOutput
         self.transformedArguments = trainedLearners[0].transformedArguments
         self.interface = trainedLearners[0].interface

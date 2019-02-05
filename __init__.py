@@ -48,6 +48,8 @@ from .uml import learnerDefaultValues
 from .uml import crossValidate
 from .uml import crossValidateReturnAll
 from .uml import crossValidateReturnBest
+from .uml import log
+from .uml import showLog
 from .uml import learnerType
 from .uml import loadData
 from .uml import loadTrainedLearner
@@ -80,14 +82,14 @@ UML.helpers.autoRegisterFromSettings()
 UML.configuration.syncWithInterfaces(UML.settings)
 
 # initialize the logging file
-UML.logger.log_manager.initLoggerAndLogConfig()
+UML.logger.uml_logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
            'crossValidateReturnAll', 'crossValidateReturnBest',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'normalizeData', 'ones', 'registerCustomLearner',
+           'log', 'normalizeData', 'ones', 'registerCustomLearner',
            'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
-           'train', 'trainAndApply', 'trainAndTest',
+           'showLog', 'train', 'trainAndApply', 'trainAndTest',
            'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
