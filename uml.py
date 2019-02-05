@@ -4,8 +4,6 @@ uml import.
 """
 
 from __future__ import absolute_import
-import inspect
-import os
 import copy
 
 import six.moves.configparser
@@ -40,10 +38,6 @@ from UML.calculate import detectBestResult
 cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
-
-UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-
-
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
         featureNames='automatic', elementType='float', name=None):
@@ -69,12 +63,18 @@ def createRandomData(
         sampled from uniform integer distribution [1 100]. Zeros are not
         counted in/do not affect the aforementioned sampling
         distribution.
-    pointNames : str, list
+    pointNames : 'automatic', list, dict
         Names to be associated with the points in the returned object.
-        If 'automatic', default names will be generated.
-    featureNames : str, list
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all points in the data are assigned a name and the names
+        for each point are unique.
+    featureNames : 'automatic', list, dict
         Names to be associated with the features in the returned object.
-        If 'automatic', default names will be generated.
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all features in the data are assigned a name and the
+        names for each feature are unique.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -182,12 +182,18 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
         The number of points in the returned object.
     numFeatures : int
         The number of features in the returned object.
-    pointNames : str, list
+    pointNames : 'automatic', list, dict
         Names to be associated with the points in the returned object.
-        If 'automatic', default names will be generated.
-    featureNames : str, list
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all points in the data are assigned a name and the names
+        for each point are unique.
+    featureNames : 'automatic', list, dict
         Names to be associated with the features in the returned object.
-        If 'automatic', default names will be generated.
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all features in the data are assigned a name and the
+        names for each feature are unique.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -222,12 +228,18 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
         The number of points in the returned object.
     numFeatures : int
         The number of features in the returned object.
-    pointNames : str, list
+    pointNames : 'automatic', list, dict
         Names to be associated with the points in the returned object.
-        If 'automatic', default names will be generated.
-    featureNames : str, list
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all points in the data are assigned a name and the names
+        for each point are unique.
+    featureNames : 'automatic', list, dict
         Names to be associated with the features in the returned object.
-        If 'automatic', default names will be generated.
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all features in the data are assigned a name and the
+        names for each feature are unique.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -264,12 +276,18 @@ def identity(returnType, size, pointNames='automatic',
         May be any of the allowed types specified in UML.data.available.
     size : int
         The number of points and features in the returned object.
-    pointNames : str, list
+    pointNames : 'automatic', list, dict
         Names to be associated with the points in the returned object.
-        If 'automatic', default names will be generated.
-    featureNames : str, list
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all points in the data are assigned a name and the names
+        for each point are unique.
+    featureNames : 'automatic', list, dict
         Names to be associated with the features in the returned object.
-        If 'automatic', default names will be generated.
+        If 'automatic', default names will be generated. Otherwise, may
+        be specified explictly by some list-like or dict-like object, so
+        long as all features in the data are assigned a name and the
+        names for each feature are unique.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -309,7 +327,7 @@ def identity(returnType, size, pointNames='automatic',
                               featureNames=featureNames, name=name)
 
 
-def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={},
+def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
                   **kwarguments):
     """
     Modify data according to a produced model.
@@ -594,7 +612,7 @@ def createData(
         elementType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False, useLog=None,
         reuseData=False, inputSeparator='automatic',
-        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
         replaceMissingWith=numpy.nan):
     """
     Function to instantiate one of the UML data container types.
@@ -614,7 +632,7 @@ def createData(
         dataframes) as long as they specify a 2d matrix of data.
         Alternatively, the data may be read from a file, specified
         either as a string path, or a currently open file-like object.
-    pointNames : bool, list, dict
+    pointNames : 'automatic', bool, list, dict
         Specifices the source for point names in the returned object.
         By default, a value of 'automatic' indicates that this function
         should attempt to detect the presence of pointNames in the data
@@ -627,7 +645,7 @@ def createData(
         by some list-like or dict-like object, so long as all points
         in the data are assigned a name and the names for each point are
         unique.
-    featureNames : bool, list, dict
+    featureNames : 'automatic', bool, list, dict
         Specifices the source for feature names in the returned object.
         By default, a value of 'automatic' indicates that this function
         should attempt to detect the presence of featureNames in the
@@ -766,7 +784,7 @@ def createData(
         raise ArgumentException(msg)
 
 
-def crossValidate(learnerName, X, Y, performanceFunction, arguments={},
+def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
                   numFolds=10, scoreMode='label', useLog=None, **kwarguments):
     """
     Perform K-fold cross validation.
@@ -826,7 +844,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={},
 #                            numFolds, scoreMode, useLog, **kwarguments)
 
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
-                           arguments={}, numFolds=10, scoreMode='label',
+                           arguments=None, numFolds=10, scoreMode='label',
                            useLog=None, **kwarguments):
     """
     Return all results of K-fold cross validation.
@@ -897,7 +915,7 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
 
 
 def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
-                            arguments={}, numFolds=10, scoreMode='label',
+                            arguments=None, numFolds=10, scoreMode='label',
                             useLog=None, **kwarguments):
     """
     Return the best result of K-fold cross validation.
@@ -1056,7 +1074,7 @@ def learnerType(learnerNames):
 
 
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
-          arguments={}, scoreMode='label', multiClassStrategy='default',
+          arguments=None, scoreMode='label', multiClassStrategy='default',
           useLog=None, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
           done2dOutputFlagCheck=False, **kwarguments):
@@ -1139,7 +1157,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
 
     if useLog:
         timer = Stopwatch()
@@ -1166,7 +1184,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
         #modify numFolds if needed
         numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
-        # sig (learnerName, X, Y, performanceFunction, arguments={},
+        # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
         results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
@@ -1196,7 +1214,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
 
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
-                  performanceFunction=None, arguments={}, output=None,
+                  performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default', useLog=None,
                   **kwarguments):
     """
@@ -1287,7 +1305,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
 
     if useLog:
         timer = Stopwatch()
@@ -1320,7 +1338,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
-                 performanceFunction, arguments={}, output=None,
+                 performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default', useLog=None,
                  **kwarguments):
     """
@@ -1419,7 +1437,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
 
     #if we are logging this run, we need to start the timer
     if useLog:
@@ -1449,7 +1467,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
-                               numFolds=10, arguments={}, output=None,
+                               numFolds=10, arguments=None, output=None,
                                scoreMode='label', multiClassStrategy='default',
                                useLog=None, **kwarguments):
     """

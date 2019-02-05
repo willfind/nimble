@@ -41,9 +41,11 @@ pd = UML.importModule('pandas')
 requests = UML.importModule('requests')
 
 try:
-    from sys import intern
-    class Py2Key:#for python3
-
+    intern = sys.intern
+    class Py2Key:
+        """
+        Key for python3.
+        """
         __slots__ = ("value", "typestr")
 
         def __init__(self, value):
@@ -56,7 +58,7 @@ try:
             except TypeError:
                 return self.typestr < other.typestr
 except:
-    Py2Key = None#for python2
+    Py2Key = None # for python2
 
 #in python3, itertools.ifilter is not there anymore. it is filter.
 if not hasattr(itertools, 'ifilter'):
@@ -105,15 +107,18 @@ def _learnerQuery(name, queryType):
 
 
 def isAllowedRaw(data, allowLPT=False):
+    """
+    Verify raw data is one of the accepted types.
+    """
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
     if scipy and scipy.sparse.issparse(data):
         return True
-    if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
+    if isinstance(data, (tuple, list, dict, numpy.ndarray, numpy.matrix)):
         return True
 
     if pd:
-        if type(data) in [pd.DataFrame, pd.Series, pd.SparseDataFrame]:
+        if isinstance(data, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
             return True
 
     return False
@@ -324,7 +329,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                 rawData = transposeMatrix(rawData)
             pointNames = None
 
-        else:#rawData={}
+        else: # rawData={}
             featureNames = None
             rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
             pointNames = None
@@ -448,8 +453,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
           returnType == 'DataFrame'):
         pass
     elif (elementType is None and
-         scipy and scipy.sparse.isspmatrix(rawData) and
-         returnType == 'Sparse'):
+          scipy and scipy.sparse.isspmatrix(rawData) and
+          returnType == 'Sparse'):
         pass
     elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
         # if the input data is a np matrix, then convert it anyway to make sure
@@ -468,7 +473,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
             lenPts = len(pointNames) if pointNames else 0
             rawData = numpy.matrix(numpy.empty([lenPts, lenFts]),
                                    dtype=elementType)
-        elif type(rawData[0]) == list and len(rawData[0]) == 0:
+        elif isinstance(rawData[0], list) and len(rawData[0]) == 0:
             rawData = numpy.matrix(numpy.empty([len(rawData), lenFts]),
                                    dtype=elementType)
         # if there are actually elements, we attempt to convert them
@@ -566,7 +571,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path, keepPoints,
         keepFeatures, elementType=None, reuseData=False,
-        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
         replaceMissingWith=numpy.nan):
     """
     1. Set up autoType
@@ -614,7 +619,7 @@ def initDataObject(
                          featureNames=featureNames, name=name,
                          paths=pathsToPass, elementType=elementType,
                          reuseData=reuseData)
-    except Exception as e:
+    except Exception:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
@@ -1022,7 +1027,7 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = rawData[:,0].toarray().flatten().tolist()
+        retPNames = rawData[:, 0].toarray().flatten().tolist()
         retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]
@@ -1162,6 +1167,9 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
 
 
 def _intFloatOrString(inString):
+    """
+    Try to convert strings to numeric types or empty strings to None.
+    """
     ret = inString
     try:
         ret = int(inString)
@@ -1188,6 +1196,9 @@ def _defaultParser(line):
 
 
 def isEmptyRaw(raw):
+    """
+    Determine if raw data contains no values.
+    """
     if raw is None:
         return True
     if raw == []:
@@ -1197,9 +1208,13 @@ def isEmptyRaw(raw):
 
     return False
 
-def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
-    failPN = True if pointNames is True else False
-    failFN = True if featureNames is True else False
+def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
+                           secondValues):
+    """
+    Determine if first row or column contains names.
+    """
+    failPN = isinstance(pointNames, bool) and pointNames
+    failFN = isinstance(featureNames, bool) and featureNames
     if isEmptyRaw(firstValues):
         return (failPN, failFN)
     if isEmptyRaw(secondValues):
@@ -1209,26 +1224,29 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
 
     def teq(double):
         x, y = double
-        return type(x) != type(y)
+        return not isinstance(x, type(y))
 
-    if (pointNames is True or pointNames == 'automatic') and firstValues[0] == 'point_names':
-        allText = all(map(lambda x: isinstance(x,six.string_types), firstValues[1:]))
-        allDiff = all(map(teq, zip(firstValues[1:],secondValues[1:])))
+    if ((pointNames is True or pointNames == 'automatic')
+            and firstValues[0] == 'point_names'):
+        allText = all(map(lambda x: isinstance(x, six.string_types),
+                          firstValues[1:]))
+        allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x,six.string_types), firstValues))
-        allDiff = all(map(teq, zip(firstValues,secondValues)))
+        allText = all(map(lambda x: isinstance(x, six.string_types),
+                          firstValues))
+        allDiff = all(map(teq, zip(firstValues, secondValues)))
 
     if featureNames == 'automatic' and allText and allDiff:
         featureNames = True
-    # If we've reached this point, there is no chance to resolve 'automatic' to True
-    if featureNames is 'automatic':
+    # At this point, there is no chance to resolve 'automatic' to True
+    if featureNames == 'automatic':
         featureNames = False
 
     if featureNames is True and pointNames == 'automatic':
         if firstValues[0] == 'point_names':
             pointNames = True
-    # If we've reached this point, there is no chance to resolve 'automatic' to True
-    if pointNames is 'automatic':
+    # At this point, there is no chance to resolve 'automatic' to True
+    if pointNames == 'automatic':
         pointNames = False
 
     return (pointNames, featureNames)
@@ -1241,7 +1259,6 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
     the first line of data. For point names the trigger is the first
     line of data contains the feature names, and the first value of that
     line is 'point_names'
-
     """
     startPosition = openFile.tell()
 
@@ -1256,7 +1273,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
         currLine = openFile.readline()
         if currLine.strip() == '':
             # only change set value if we allow detection
-            if featureNames is 'automatic':
+            if featureNames == 'automatic':
                 # we set this so the names are extracted later
                 featureNames = True
 
@@ -1279,8 +1296,8 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
         firstDataRow = list(map(_intFloatOrString, firstDataRow))
     if secondDataRow is not None:
         secondDataRow = list(map(_intFloatOrString, secondDataRow))
-    (pointNames, featureNames) = autoDetectNamesFromRaw(pointNames, featureNames,
-                                                        firstDataRow, secondDataRow)
+    (pointNames, featureNames) = autoDetectNamesFromRaw(
+        pointNames, featureNames, firstDataRow, secondDataRow)
 
     # reset everything to make the loop easier
     openFile.seek(startPosition)
@@ -1331,7 +1348,6 @@ def _selectionNameValidation(keep, hasNames, kind):
     are specified, if we have no source of names that only integer
     values are in the specification list. This is generic over whether
     points or features are selected.
-
     """
     kind = kind.lower()
     paramName = 'keep' + kind.capitalize()
@@ -1341,23 +1357,23 @@ def _selectionNameValidation(keep, hasNames, kind):
             # so no strings should be in the list
             for val in keep:
                 if not isinstance(val, int):
-                    msg = "No " + kind + " names were provided by the user, and "
-                    msg += "they are not being extracted from the data, "
-                    msg += 'therefore only interger valued indices are '
+                    msg = "No " + kind + " names were provided by the user, "
+                    msg += "and they are not being extracted from the data, "
+                    msg += 'therefore only integer valued indices are '
                     msg += 'allowed in the ' + paramName + 's parameter'
                     raise ArgumentException(msg)
 
 
-def _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines, dialect):
+def _csv_getFNamesAndAnalyzeRows(pointNames, featureNames, openFile,
+                                 lineReader, skippedLines, dialect):
     """
     If needed, take the first row from the lineReader to define the
     feature names. Regardless of whether feature names are desired,
     we will analyze the row we read to determine the number of columns,
-    the number of features (columns without point names), the line number
-    in the file of the row we use to define number of features / columns,
-    and whether or not that row was interpreted as feature names or data.
-
+    the number of features (columns without point names), the line
+    number in the file of the row we use to define number of features /
+    columns, and whether or not that row was interpreted as feature
+    names or data.
     """
     if featureNames is True:
         fnamesRow = next(lineReader)
@@ -1389,8 +1405,8 @@ def _csv_getFNamesAndAnalyzeRows(
     return retFNames, numFeatures, numColumns, columnsDefIndex, columnsDefSrc
 
 
-def _validateRowLength(
-        row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex, delimiter):
+def _validateRowLength(row, numColumns, lineIndex, columnsDefSrc,
+                       columnsDefIndex, delimiter):
     """
     Given a row read from a csv line reader, and the expected length of
     that row, raise an appropriately worded exception if there is a
@@ -1412,9 +1428,8 @@ def _setupAndValidationForFeatureSelection(
     Once feature names have been determined, we can validate and clean
     the keep features parameter; transforming any name to an index, and
     checking that all indices are valid. At the same time, we also setup
-    the data structures needed to record which features are being excluded
-    from every row we will eventually read in.
-
+    the data structures needed to record which features are being
+    excluded from every row we will eventually read in.
     """
     if keepFeatures != 'all':
         cleaned = []
@@ -1498,7 +1513,8 @@ def _validationForPointSelection(keepPoints, pointNames):
         else:
             found[keepPoints[i]] = i
 
-        if not isinstance(keepPoints[i], six.string_types) and keepPoints[i] < 0:
+        if (not isinstance(keepPoints[i], six.string_types)
+                and keepPoints[i] < 0):
             msg = "Invalid value in keepPoints parameter at index ("
             msg += str(i)
             msg += "). The value ("
@@ -1581,7 +1597,7 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
     "find the dialect to pass to csv.reader based on inputSeparator"
     startPosition = openFile.tell()
     # skip commented lines
-    skipped = _advancePastComments(openFile)
+    _ = _advancePastComments(openFile)
     if inputSeparator == 'automatic':
         # detect the delimiter from the first line of data
         dialect = csv.Sniffer().sniff(openFile.readline())
@@ -1600,56 +1616,60 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
     return dialect
 
 
-def _loadcsvUsingPython(
-        openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures, **kwargs):
+def _loadcsvUsingPython(openFile, pointNames, featureNames,
+                        ignoreNonNumericalFeatures, keepPoints, keepFeatures,
+                        **kwargs):
     """
-    Loads a csv file using a reader from python's csv module
+    Loads a csv file using a reader from python's csv module.
 
-    openFile - An open file like object. The data will be read from where
-    the file currently points to.
+    Parameters
+    ----------
+    openFile : open file like object
+        The data will be read from where the file currently points to.
+    pointNames : 'automatic', bool, list, dict
+        May be 'automatic', True, False, a list or a dict. The first
+        value indicates to detect whether pointNames should be extracted
+        or not. True indicates the first column of values is to be taken
+        as the pointNames. False indicates that the names are not
+        embedded. Finally, the names may have been provided by the user
+        as a list or dict, meaning nothing is extracted, and those
+        objects are passed on in the return value.
+    featureNames : 'automatic', bool, list, dict
+        May be 'automatic', True, False, a list or a dict. The first
+        value indicates to detect whether featureNames should be
+        extracted or not. True indicates the first row of values is to
+        be taken as the featureNames. False indicates that the names are
+        not embedded. Finally, the names may have been provided by the
+        user as a list or dict, meaning nothing is extracted, and those
+        objects are passed on in the return value.
+    ignoreNonNumericalFeatures : bool
+        Value indicating whether, when loading from a file, features
+        containing non numercal data shouldn't be loaded into the final
+        object. For example, you may be loading a file which has a
+        column of strings; setting this flag to true will allow you to
+        load that file into a Matrix object (which may contain floats
+        only). If there is point or feature selection occurring, then
+        only those values within selected points and features are
+        considered when determining whether to apply this operation.
+    keepPoints : 'all', list
+        The value 'all' indicates that all possible points found in the
+        file will be included. Alternatively, may be a list containing
+        either names or indices (or a mix) of those points they want to
+        be selected from the raw data.
+    keepFeatures : 'all', list
+        The value 'all' indicates that all possible features found in
+        the file will be included. Alternatively, may be a list
+        containing either names or indices (or a mix) of those features
+        they want to be selected from the raw data.
 
-    pointNames - May be 'automatic', True, False, a list or a dict. The
-    first value indicates to detect whether pointNames should be extracted
-    or not. True indicates the first column of values is to be taken as
-    the pointNames. False indicates that the names are not embedded.
-    Finally, the names may have been provided by the user as a list or
-    dict, meaning nothing is extracted, and those objects are passed on
-    in the return value.
-
-    featureNames - May be 'automatic', True, False, a list or a dict. The
-    first value indicates to detect whether featureNames should be extracted
-    or not. True indicates the first row of values is to be taken as
-    the featureNames. False indicates that the names are not embedded.
-    Finally, the names may have been provided by the user as a list or
-    dict, meaning nothing is extracted, and those objects are passed on
-    in the return value.
-
-    ignoreNonNumericalFeatures - True or False value indicating	whether,
-    when loading from a file, features containing non numercal data
-    shouldn't be loaded into the final object. For example, you may be
-    loading a file which has a column of strings; setting this flag to true
-    will allow you to load that file into a Matrix object (which may contain
-    floats only). If there is point or feature selection occurring, then only
-    those values within selected points and features are considered when
-    determining whether to apply this operation.
-
-    keepPoints - The value 'all' indicates that all possible points found
-    in the file will be included. Alternatively, may be a list containing
-    either names or indices (or a mix) of those points they want to be
-    selected from the raw data.
-
-    keepFeatures - The value 'all' indicates that all possible features
-    found in the file will be included. Alternatively, may be a list
-    containing either names or indices (or a mix) of those features they
-    want to be selected from the raw data.
-
-    Returns a tuple of values: the data read from the file, pointNames
-    (those extracted from the data, or the same value as passed in),
-    featureNames (same sematics as pointNames), and either True or
-    False indicating if the keepPoints and keepFeatures parameters
-    were applied in this function call.
-
+    Returns
+    -------
+    tuple
+        The data read from the file, pointNames (those extracted from
+        the data, or the same value as passed in), featureNames (same
+        sematics as pointNames), and either True or False indicating if
+        the keepPoints and keepFeatures parameters were applied in this
+        function call.
     """
     inputSeparator = kwargs['inputSeparator']
     dialect = _detectDialectFromSeparator(openFile, inputSeparator)
@@ -1687,11 +1707,11 @@ def _loadcsvUsingPython(
     columnsDefIndex = namesAndMore[3]
     columnsDefSrc = namesAndMore[4]
 
-    # Validataion: check that if we have no source of names, and specific
+    # Validation: check that if we have no source of names, and specific
     # values are specified for selection, that they are specified only
     # with integer indices, NOT names.
-    hasPointNames = not (pointNames is False)
-    hasFeatureNames = not (featureNames is False)
+    hasPointNames = not pointNames is False
+    hasFeatureNames = not featureNames is False
     _selectionNameValidation(keepPoints, hasPointNames, 'point')
     _selectionNameValidation(keepFeatures, hasFeatureNames, 'feature')
 
@@ -1767,8 +1787,9 @@ def _loadcsvUsingPython(
             currPName = row[0]
             row = row[1:]
             # validate keepPoints, given new information
-            if keepPoints != 'all' and pointIndex in keepPoints and \
-                            currPName in keepPoints:
+            if (keepPoints != 'all'
+                    and pointIndex in keepPoints
+                    and currPName in keepPoints):
                 _raiseSelectionDuplicateException(
                     "keepPoints", keepPoints.index(pointIndex),
                     keepPoints.index(currPName), keepPoints)
@@ -1783,7 +1804,8 @@ def _loadcsvUsingPython(
         elif currPName in keepPoints:
             del notYetFoundPoints[currPName]
             if retData is not None:
-                keepPointsValToIndex[pointIndex] = keepPointsValToIndex[currPName]
+                currIndex = keepPointsValToIndex[currPName]
+                keepPointsValToIndex[pointIndex] = currIndex
                 del keepPointsValToIndex[currPName]
             isSelected = True
         elif pointIndex in keepPoints:
@@ -1798,7 +1820,8 @@ def _loadcsvUsingPython(
                 retPNames.append(currPName)
             # process the remaining data
             toAdd = convertAndFilterRow(row, addedIndex, removeRecord,
-                                        featsToRemoveSet, ignoreNonNumericalFeatures)
+                                        featsToRemoveSet,
+                                        ignoreNonNumericalFeatures)
             data.append(toAdd)
             if retData is not None:
                 retData[keepPointsValToIndex[pointIndex]] = toAdd
@@ -1831,8 +1854,10 @@ def _loadcsvUsingPython(
     # selection paramters, and this is a convenient and efficient place to
     # do so. If we don't need to do either of those things, then we
     # don't even enter the helper
-    removalNeeded = not list(removeRecord.keys()) == [0] and not list(removeRecord.keys()) == []
-    reorderNeeded = keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key)
+    removalNeeded = (list(removeRecord.keys()) != [0]
+                     and list(removeRecord.keys()) != [])
+    reorderNeeded = (keepFeatures != 'all'
+                     and keepFeatures != sorted(keepFeatures, key=Py2Key))
     if removalNeeded or reorderNeeded:
         _removalCleanupAndSelectionOrdering(
             data, removeRecord, featsToRemoveList, keepFeatures)
@@ -1845,7 +1870,8 @@ def _loadcsvUsingPython(
         for i in range(len(retFNames)):
             # if it is a feature that has been removed from the data,
             # we skip over and don't copy it.
-            if removeListIndex < len(featsToRemoveList) and i == featsToRemoveList[removeListIndex]:
+            if (removeListIndex < len(featsToRemoveList)
+                    and i == featsToRemoveList[removeListIndex]):
                 removeListIndex += 1
             else:
                 retFNames[copyIndex] = retFNames[i]
@@ -1897,27 +1923,27 @@ def _adjustNamesGivenKeepList(retNames, keepList, needsRemoval):
 def _removalCleanupAndSelectionOrdering(
         data, record, fullRemoveList, keepFeatures):
     """
-    Adjust the given data so that the features to remove as contained in the
-    dict record are appropriately removed from each row. Since removal is
-    done only after first sighting of an unwanted value, then the rows prior
-    to the first sighting still have that feature. Therefore, this function
-    iterates the rows in the data, removing features until the point where
-    they were discovered.
+    Adjust the given data so that the features to remove as contained in
+    the dict record are appropriately removed from each row. Since
+    removal is done only after first sighting of an unwanted value, then
+    the rows prior to the first sighting still have that feature.
+    Therefore, this function iterates the rows in the data, removing
+    features until the point where they were discovered.
 
-    Also: if keepFeatures defines an ordering other than
-    the one present in the file, then we will adjust the order of the data
-    in this helper. The actual selection has already occured during the
-    csv reading loop.
+    Also: if keepFeatures defines an ordering other than the one present
+    in the file, then we will adjust the order of the data in this
+    helper. The actual selection has already occured during the csv
+    reading loop.
 
     Because data shares references with retData in _loadcsvUsingPython,
     this does not change the contents of the parameter data, only the
-    lists referenced by it
-
+    lists referenced by it.
     """
     # feature order adjustment will take place at the same time as unwanted
     # column removal. This just defines a triggering variable.
     adjustFeatureOrder = False
-    if keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key):
+    if (keepFeatures != 'all'
+            and keepFeatures != sorted(keepFeatures, key=Py2Key)):
         adjustFeatureOrder = True
         # maps the index of the column to the position that it should
         # be copied into.
@@ -1956,7 +1982,8 @@ def _removalCleanupAndSelectionOrdering(
             shift = 0  # the amount we have to shift each index downward
             copyIndex = 0
             for i in range(len(absRemoveList)):
-                if addedIndex < len(record[rowIndex]) and absRemoveList[i] == record[rowIndex][addedIndex]:
+                if (addedIndex < len(record[rowIndex])
+                        and absRemoveList[i] == record[rowIndex][addedIndex]):
                     shift += 1
                     addedIndex += 1
                 else:
@@ -2003,26 +2030,29 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
                         ignoreNonNumericalFeatures):
     """
     Process a row as read by a python csv reader such that the values
-    are converted to numeric types if possible, and the unwanted features
-    are filtered (with the appropriate book keeping operations performed)
+    are converted to numeric types if possible, and the unwanted
+    features are filtered (with the appropriate book keeping operations
+    performed).
 
-    row - a python list of string values
-
-    pointIndex - the index of this row, as counted by the number of rows
-    returned by the csv reader, excluding a row if it was used as the
-    pointNames. Equivalent to the index of the point matching this row
-    in the returned data
-
-    record - a dict mapping row indices to those features discovered to be
-    undesirable at that row index
-
-    toRemoveSet - a set containing all of the features to ignore, that
-    are known up to this row. Any features we discover we want to ignore
-    at this row are added to this set in this function.
-
-    ignoreNonNumericalFeatures - flag indicating whether features containing
-    non numerical values will be removed from the data
-
+    Parameters
+    ----------
+    row : list
+        A python list of string values
+    pointIndex : int
+        The index of this row, as counted by the number of rows returned
+        by the csv reader, excluding a row if it was used as the
+        pointNames. Equivalent to the index of the point matching this
+        row in the returned data.
+    record : dict
+        Maps row indices to those features discovered to be undesirable
+        at that row index.
+    toRemoveSet : set
+        Contains all of the features to ignore, that are known up to
+        this row. Any features we discover we want to ignore at this row
+        are added to this set in this function.
+    ignoreNonNumericalFeatures : bool
+        Flag indicating whether features containing non numerical values
+        will be removed from the data.
     """
     # We use copying of values and then returning the appropriate range
     # to simulate removal of unwanted features
@@ -2035,7 +2065,8 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
         if i in toRemoveSet:
             pass
         # A new feature to ignore, have to do book keeping
-        elif isinstance(processed, six.string_types) and ignoreNonNumericalFeatures:
+        elif (isinstance(processed, six.string_types)
+              and ignoreNonNumericalFeatures):
             if pointIndex in record:
                 record[pointIndex].append(i)
             else:
@@ -2064,15 +2095,16 @@ _loadmtxForDataFrame = _loadmtxForAuto
 
 
 def autoRegisterFromSettings():
-    """Helper which looks at the learners listed in UML.settings under
-    the 'RegisteredLearners' section and makes sure they are registered"""
-
+    """
+    Helper which looks at the learners listed in UML.settings under
+    the 'RegisteredLearners' section and makes sure they are registered.
+    """
     # query for all entries in 'RegisteredLearners' section
     toRegister = UML.settings.get('RegisteredLearners', None)
     # call register custom learner on them
     for key in toRegister:
         try:
-            (packName, learnerName) = key.split('.')
+            (packName, _) = key.split('.')
             (modPath, attrName) = toRegister[key].rsplit('.', 1)
         except Exception:
             continue
@@ -2090,20 +2122,32 @@ def autoRegisterFromSettings():
 
 
 def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
+    """
+    Backend for registering custom Learners in UML.
+
+    A save value of true will run saveChanges(), modifying the config
+    file. When save is False the changes will exist only for that
+    session, unless saveChanges() is called later in the session.
+    """
     # detect name collision
     for currInterface in UML.interfaces.available:
-        if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+        if not isinstance(currInterface,
+                          UML.interfaces.CustomLearnerInterface):
             if currInterface.isAlias(customPackageName):
-                raise ArgumentException(
-                    "The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
+                msg = "The customPackageName '" + customPackageName
+                msg += "' cannot be used: it is an accepted alias of a "
+                msg += "non-custom package"
+                raise ArgumentException(msg)
 
-    # do validation before we potentially construct an interface to a custom package
+    # do validation before we potentially construct an interface to a
+    # custom package
     UML.customLearners.CustomLearner.validateSubclass(learnerClassObject)
 
     try:
         currInterface = findBestInterface(customPackageName)
     except ArgumentException:
-        currInterface = UML.interfaces.CustomLearnerInterface(customPackageName)
+        currInterface = UML.interfaces.CustomLearnerInterface(
+            customPackageName)
         UML.interfaces.available.append(currInterface)
 
     currInterface.registerLearnerClass(learnerClassObject)
@@ -2121,10 +2165,19 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
+    """
+    Backend for deregistering custom Learners in UML.
+
+    A save value of true will run saveChanges(), modifying the config
+    file. When save is False the changes will exist only for that
+    session, unless saveChanges() is called later in the session.
+    """
     currInterface = findBestInterface(customPackageName)
     if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
-        raise ArgumentException(
-            "May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
+        msg = "May only attempt to deregister learners from the interfaces of "
+        msg += "custom packages. '" + customPackageName
+        msg += "' is not a custom package"
+        raise ArgumentException(msg)
     origOptions = currInterface.optionNames
     empty = currInterface.deregisterLearner(learnerName)
     newOptions = currInterface.optionNames
@@ -2152,9 +2205,9 @@ def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
 
 def countWins(predictions):
     """
-    Count how many contests were won by each label in the set.  If a class label doesn't
-    win any predictions, it will not be included in the results.  Return a dictionary:
-    {classLabel: # of contests won}
+    Count how many contests were won by each label in the set.  If a
+    class label doesn't win any predictions, it will not be included in
+    the results.  Return a dictionary: {classLabel: # of contests won}.
     """
     predictionCounts = {}
     for prediction in predictions:
@@ -2168,25 +2221,26 @@ def countWins(predictions):
 
 def extractWinningPredictionLabel(predictions):
     """
-    Provided a list of tournament winners (class labels) for one point/row in a test set,
-    choose the label that wins the most tournaments.  Returns the winning label.
+    Provided a list of tournament winners (class labels) for one
+    point/row in a test set, choose the label that wins the most
+    tournaments.  Returns the winning label.
     """
     #Count how many times each class won
     predictionCounts = countWins(predictions)
 
     #get the class that won the most tournaments
     #TODO: what if there are ties?
-    return max(six.iterkeys(predictionCounts), key=(lambda key: predictionCounts[key]))
+    return max(six.iterkeys(predictionCounts),
+               key=(lambda key: predictionCounts[key]))
 
 
 def extractWinningPredictionIndex(predictionScores):
     """
-    Provided a list of confidence scores for one point/row in a test set,
-    return the index of the column (i.e. label) of the highest score.  If
-    no score in the list of predictionScores is a number greater than negative
-    infinity, returns None.
+    Provided a list of confidence scores for one point/row in a test
+    set, return the index of the column (i.e. label) of the highest
+    score.  If no score in the list of predictionScores is a number
+    greater than negative infinity, returns None.
     """
-
     maxScore = float("-inf")
     maxScoreIndex = -1
     for i in range(len(predictionScores)):
@@ -2203,10 +2257,10 @@ def extractWinningPredictionIndex(predictionScores):
 
 def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
     """
-    Provided a list of confidence scores for one point/row in a test set,
-    return the index of the column (i.e. label) of the highest score.  If
-    no score in the list of predictionScores is a number greater than negative
-    infinity, returns None.
+    Provided a list of confidence scores for one point/row in a test
+    set, return the index of the column (i.e. label) of the highest
+    score.  If no score in the list of predictionScores is a number
+    greater than negative infinity, returns None.
     """
     allScores = extractConfidenceScores(predictionScores, featureNamesItoN)
 
@@ -2225,11 +2279,10 @@ def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
 
 def extractConfidenceScores(predictionScores, featureNamesItoN):
     """
-    Provided a list of confidence scores for one point/row in a test set,
-    and a dict mapping indices to featureNames, return a dict mapping
-    featureNames to scores.
+    Provided a list of confidence scores for one point/row in a test
+    set, and a dict mapping indices to featureNames, return a dict
+    mapping featureNames to scores.
     """
-
     if predictionScores is None or len(predictionScores) == 0:
         return None
 
@@ -2244,19 +2297,28 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
 
 def copyLabels(dataSet, dependentVar):
     """
-        A helper function to simplify the process of obtaining a 1-dimensional matrix of class
-        labels from a data matrix.  Useful in functions which have an argument that may be
-        a column index or a 1-dimensional matrix.  If 'dependentVar' is an index, this function
-        will return a copy of the column in 'dataSet' indexed by 'dependentVar'.  If 'dependentVar'
-        is itself a column (1-dimensional matrix w/shape (nx1)), dependentVar will be returned.
+    A helper function to simplify the process of obtaining a
+    1-dimensional matrix of class labels from a data matrix.  Useful in
+    functions which have an argument that may be a column index or a
+    1-dimensional matrix.  If 'dependentVar' is an index, this function
+    will return a copy of the column in 'dataSet' indexed by
+    'dependentVar'.  If 'dependentVar' is itself a column (1-dimensional
+    matrix w/shape (nx1)), dependentVar will be returned.
 
-        dataSet:  matrix containing labels and, possibly, features.  May be empty if 'dependentVar'
-        is a 1-column matrix containing labels.
+    Parameters
+    ----------
+    dataSet : matrix
+        Contains labels and, possibly, features.  May be empty if
+        'dependentVar' is a 1-column matrix containing labels.
+    dependentVar: int, matrix
+        Either a column index indicating which column in dataSet
+        contains class labels, or a matrix containing 1 column of class
+        labels.
 
-        dependentVar: Either a column index indicating which column in dataSet contains class labels,
-        or a matrix containing 1 column of class labels.
-
-        returns A 1-column matrix of class labels
+    Returns
+    -------
+    matrix
+        A 1-column matrix of class labels.
     """
     if isinstance(dependentVar, Base):
         #The known Indicator argument already contains all known
@@ -2267,16 +2329,22 @@ def copyLabels(dataSet, dependentVar):
         #from knownValues
         labels = dataSet.features.copy([dependentVar])
     else:
-        raise ArgumentException("Missing or improperly formatted indicator for known labels in computeMetrics")
+        msg = "Missing or improperly formatted indicator for known labels in "
+        msg += "computeMetrics"
+        raise ArgumentException(msg)
 
     return labels
 
 
 def applyCodeVersions(functionTextList, inputHash):
-    """applies all the different various versions of code that can be generated from functionText to each of the variables specified in inputHash, where
-    data is plugged into the variable with name inputVariableName. Returns the result of each application as a list.
-    functionTextList is a list of text objects, each of which defines a python function
-    inputHash is of the form {variable1Name:variable1Value, variable2Name:variable2Value, ...}
+    """
+    Applies all the different various versions of code that can be
+    generated from functionText to each of the variables specified in
+    inputHash, where data is plugged into the variable with name
+    inputVariableName. Returns the result of each application as a list.
+    functionTextList is a list of text objects, each of which defines a
+    python function inputHash is of the form:
+    {variable1Name:variable1Value, variable2Name:variable2Value, ...}.
     """
     results = []
     for codeText in functionTextList:
@@ -2285,57 +2353,80 @@ def applyCodeVersions(functionTextList, inputHash):
 
 
 def executeCode(code, inputHash):
-    """Execute the given code stored as text in codeText, starting with the variable values specified in inputHash
-    This function assumes the code consists of EITHER an entire function definition OR a single line of code with
-    statements seperated by semi-colons OR as a python function object.
     """
-    #inputHash = inputHash.copy() #make a copy so we don't modify it... but it doesn't seem necessary
+    Execute the given code stored as text in codeText, starting with the
+    variable values specified in inputHash. This function assumes the
+    code consists of EITHER an entire function definition OR a single
+    line of code with statements seperated by semi-colons OR as a python
+    function object.
+    """
+    #make a copy so we don't modify it... but it doesn't seem necessary
+    #inputHash = inputHash.copy()
     if isSingleLineOfCode(code):
-        return executeOneLinerCode(code, inputHash) #it's one line of text (with ;'s to seperate statemetns')
+        #it's one line of text (with ;'s to separate statements)
+        return executeOneLinerCode(code, inputHash)
     elif isinstance(code, (str, six.text_type)):
-        return executeFunctionCode(code, inputHash) #it's the text of a function definition
+        #it's the text of a function definition
+        return executeFunctionCode(code, inputHash)
     else:
-        return code(**inputHash)    #assume it's a function itself
+        # assume it's a function itself
+        return code(**inputHash)
 
 
 def executeOneLinerCode(codeText, inputHash):
-    """Execute the given code stored as text in codeText, starting with the variable values specified in inputHash
-    This function assumes the code consists of just one line (with multiple statements seperated by semi-colans.
-    Note: if the last statement in the line starts X=... then the X= gets stripped off (to prevent it from getting broken by A=(X=...)).
     """
-    if not isSingleLineOfCode(codeText): raise Exception("The code text was not just one line of code.")
+    Execute the given code stored as text in codeText, starting with the
+    variable values specified in inputHash. This function assumes the
+    code consists of just one line (with multiple statements seperated
+    by semi-colons.
+    Note: if the last statement in the line starts X=... then the X=
+    gets stripped off (to prevent it from getting broken by A=(X=...)).
+    """
+    if not isSingleLineOfCode(codeText):
+        msg = "The code text was not just one line of code."
+        raise ArgumentException(msg)
     codeText = codeText.strip()
     localVariables = inputHash.copy()
     pieces = codeText.split(";")
     lastPiece = pieces[-1].strip()
-    lastPiece = re.sub("\A([\w])+[\s]*=", "",
-                       lastPiece) #if the last statement begins with something like X = ... this removes the X = part.
+    # remove 'X =' if the last statement begins with something like X = ...
+    lastPiece = re.sub(r"\A([\w])+[\s]*=", "", lastPiece)
     lastPiece = lastPiece.strip()
     pieces[-1] = "RESULTING_VALUE_ZX7_ = (" + lastPiece + ")"
     codeText = ";".join(pieces)
     #oneLiner = True
 
     #	print "Code text: "+str(codeText)
-    exec (codeText, globals(), localVariables)    #apply the code
+    exec(codeText, globals(), localVariables)    #apply the code
     return localVariables["RESULTING_VALUE_ZX7_"]
 
 
 def executeFunctionCode(codeText, inputHash):
-    """Execute the given code stored as text in codeText, starting with the variable values specified in inputHash
-    This function assumes the code consists of an entire function definition.
     """
-    if not "def" in codeText: raise Exception("No function definition was found in this code!")
+    Execute the given code stored as text in codeText, starting with the
+    variable values specified in inputHash. This function assumes the
+    code consists of an entire function definition.
+    """
+    if not "def" in codeText:
+        msg = "No function definition was found in this code!"
+        raise ArgumentException(msg)
     localVariables = {}
-    exec (codeText, globals(), localVariables)    #apply the code, which declares the function definition
+    # apply the code, which declares the function definition
+    exec(codeText, globals(), localVariables)
     #foundFunc = False
     #result = None
-    for varName, varValue in six.iteritems(localVariables):
+    for varValue in six.itervalues(localVariables):
         if "function" in str(type(varValue)):
             return varValue(**inputHash)
+    return None
 
 
 def isSingleLineOfCode(codeText):
-    if not isinstance(codeText, (str, six.text_type)): return False
+    """
+    Determine if a code string is a single line.
+    """
+    if not isinstance(codeText, (str, six.text_type)):
+        return False
     codeText = codeText.strip()
     try:
         codeText.strip().index("\n")
@@ -2344,12 +2435,12 @@ def isSingleLineOfCode(codeText):
         return True
 
 
-def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, maxTrainSize, stepSize, gap,
-                           minTestSize, maxTestSize):
+def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize,
+                           maxTrainSize, stepSize, gap, minTestSize,
+                           maxTestSize):
     """
-    Helper which will calculate the start and end of the training and testing sizes given the current
-    position in the full data set.
-
+    Helper which will calculate the start and end of the training and
+    testing sizes given the current position in the full data set.
     """
     #	set_trace()
     # determine the location of endTrain.
@@ -2358,12 +2449,15 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
     #		set_trace()
         endTrain = _jumpForward(allData, orderedFeature, 0, minTrainSize, -1)
     else:
-        endTrain = _jumpForward(allData, orderedFeature, currEndTrain, stepSize)
+        endTrain = _jumpForward(allData, orderedFeature, currEndTrain,
+                                stepSize)
 
     # the value we don't want to split from the training set
     nonSplit = allData[endTrain, orderedFeature]
-    # we're doing a lookahead here, thus -1 from the last possible index, and  +1 to our lookup
-    while (endTrain < len(allData.points) - 1 and allData[endTrain + 1, orderedFeature] == nonSplit):
+    # we're doing a lookahead here, thus -1 from the last possible index,
+    # and  +1 to our lookup
+    while (endTrain < len(allData.points) - 1
+           and allData[endTrain + 1, orderedFeature] == nonSplit):
         endTrain += 1
 
     if endTrain == len(allData.points) - 1:
@@ -2373,12 +2467,10 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
     startTrain = _jumpBack(allData, orderedFeature, endTrain, maxTrainSize, -1)
     if startTrain < 0:
         startTrain = 0
-    #	if _diffLessThan(allData, orderedFeature, startTrain, endTrain, minTrainSize):
-    #		return _incrementTrialWindows(allData, orderedFeature, currEndTrain+1, minTrainSize, maxTrainSize, stepSize, gap, minTestSize, maxTestSize)
-    #		return None
 
-    # we get the start and end of the test set by counting forward from endTrain
-    # speciffically, we go forward by one, and as much more forward as specified by gap
+    # we get the start and end of the test set by counting forward from
+    # endTrain speciffically, we go forward by one, and as much more forward
+    # as specified by gap
     startTest = _jumpForward(allData, orderedFeature, endTrain + 1, gap)
     if startTest >= len(allData.points):
         return None
@@ -2387,7 +2479,6 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
     if endTest >= len(allData.points):
         endTest = len(allData.points) - 1
     if _diffLessThan(allData, orderedFeature, startTest, endTest, minTestSize):
-    #		return _incrementTrialWindows(allData, orderedFeature, currEndTrain+1, minTrainSize, maxTrainSize, stepSize, gap, minTestSize, maxTestSize)
         return None
 
     return (startTrain, endTrain, startTest, endTest)
@@ -2398,8 +2489,9 @@ def _jumpBack(allData, orderedFeature, start, delta, intCaseOffset=0):
         endPoint = start
         startVal = datetime.timedelta(float(allData[start, orderedFeature]))
         # loop as long as we don't run off the end of the data
-        while (endPoint > 0):
-            if (startVal - datetime.timedelta(float(allData[endPoint - 1, orderedFeature])) > delta):
+        while endPoint > 0:
+            prevVal = float(allData[endPoint - 1, orderedFeature])
+            if (startVal - datetime.timedelta(prevVal)) > delta:
                 break
             endPoint = endPoint - 1
     else:
@@ -2413,8 +2505,9 @@ def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
         endPoint = start
         startVal = datetime.timedelta(float(allData[start, orderedFeature]))
         # loop as long as we don't run off the end of the data
-        while (endPoint < len(allData.points) - 1):
-            if (datetime.timedelta(float(allData[endPoint + 1, orderedFeature])) - startVal > delta):
+        while endPoint < (len(allData.points) - 1):
+            nextVal = float(allData[endPoint + 1, orderedFeature])
+            if (datetime.timedelta(nextVal) - startVal) > delta:
                 break
             endPoint = endPoint + 1
     else:
@@ -2425,8 +2518,10 @@ def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
 
 def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
     if isinstance(delta, datetime.timedelta):
-        startVal = datetime.timedelta(float(allData[startPoint, orderedFeature]))
-        endVal = datetime.timedelta(float(allData[endPoint, orderedFeature]))
+        startFloat = float(allData[startPoint, orderedFeature])
+        startVal = datetime.timedelta(startFloat)
+        endFloat = float(allData[endPoint, orderedFeature])
+        endVal = datetime.timedelta(endFloat)
         return (endVal - startVal) < delta
     else:
         return (endPoint - startPoint + 1) < delta
@@ -2434,35 +2529,45 @@ def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
 
 #def evaluate(metric, knownData, knownLabels, predictedLabels)
 
-def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
+def computeMetrics(dependentVar, knownData, predictedData,
+                   performanceFunction):
     """
-        Using the provided metric, compare the known data or labels to the
-        predicted data or labels and calculate the performance of the learner
-        which produced the predicted data.
+    Calculate the performance of the learner.
 
-        dependentVar: either an int/string (or list of int/string) indicating the
-        feature IDs in knownData containing the known labels, or a data object
-        that contains the known labels.
+    Using the provided metric, compare the known data or labels to the
+    predicted data or labels and calculate the performance of the
+    learner which produced the predicted data.
 
-        knownData: data object containing the known labels of the training set,
-        as well as the features of the training set. Can be None if 'dependentVar'
-        is an object containing the labels.
+    Parameters
+    ----------
+    dependentVar : indentifier, list, UML Base object
+        Indicate the feature names or indices in knownData containing
+        the known labels, or a data object that contains the known
+        labels.
+    knownData : UML Base object
+        Data object containing the known labels of the training set, as
+        well as the features of the training set. Can be None if
+        'dependentVar' is an object containing the labels.
+    predictedData : UML Base object
+        Data object containing predicted labels/data. Assumes that the
+        predicted label (or labels) in the nth row of predictedLabels
+        is associated with the same data point/instance as the label in
+        the nth row of knownLabels.
+    performanceFunction : function
+        A python function that returns a single numeric value evaluating
+        performance. The function must take either two or three args.
+        In the two arg case, they must be two sets of data or labels to
+        be compared. In the three arg case, the first two args are the
+        same as in the two arg case, and the third arg must take the
+        value of what is to be considered the negative label in this
+        binary classification problem. See UML.calculate for a number of
+        built in examples.
 
-        predictedData: data object containing predicted labels/data. Assumes
-        that the predicted label (or labels) in the nth row of predictedLabels
-        is associated with the same data point/instance as the label in the nth
-        row of knownLabels.
-
-        performanceFunction: a python function that returns a single numeric value
-        evaluating performance. The function must take either two or three args.
-        In the two arg case, they must be two sets of data or labels to be compared.
-        In the three arg case, the first two args are the same as in the two arg
-        case, and the third arg must take the value of what is to be considered
-        the negative label in this binary classification problem. See UML.calculate
-        for a number of built in examples.
-
-        Returns: a single numeric value measuring the performance of the learner
-        that produced the given data.
+    Returns
+    -------
+    Value
+        Measurement of the performance of the learner that produced the
+        given data.
     """
     if dependentVar is None or isinstance(dependentVar, Base):
         #The known Indicator argument already contains all known
@@ -2479,10 +2584,13 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
 
 
 def confusion_matrix_generator(knownY, predictedY):
-    """ Given two vectors, one of known class labels (as strings) and one of predicted labels,
-    compute the confusion matrix.  Returns a 2-dimensional dictionary in which outer label is
-    keyed by known label, inner label is keyed by predicted label, and the value stored is the count
-    of instances for each combination.  Works for an indefinite number of class labels.
+    """
+    Given two vectors, one of known class labels (as strings) and one of
+    predicted labels, compute the confusion matrix.  Returns a
+    2-dimensional dictionary in which outer label is keyed by known
+    label, inner label is keyed by predicted label, and the value stored
+    is the count of instances for each combination.  Works for an
+    indefinite number of class labels.
     """
     confusionCounts = {}
     for known, predicted in zip(knownY, predictedY):
@@ -2503,12 +2611,14 @@ def confusion_matrix_generator(knownY, predictedY):
 
 
 def print_confusion_matrix(confusionMatrix):
-    """ Print a confusion matrix in human readable form, with
-    rows indexed by known labels, and columns indexed by predictedlabels.
-    confusionMatrix is a 2-dimensional dictionary, that is also primarily
-    indexed by known labels, and secondarily indexed by predicted labels,
-    with the value at confusionMatrix[knownLabel][predictedLabel] being the
-    count of posts that fell into that slot.  Does not need to be sorted.
+    """
+    Print a confusion matrix in human readable form, with rows indexed
+    by known labels, and columns indexed by predictedlabels.
+    confusionMatrix is a 2-dimensional dictionary, that is also
+    primarily indexed by known labels, and secondarily indexed by
+    predicted labels, with the value at
+    confusionMatrix[knownLabel][predictedLabel] being the count of posts
+    that fell into that slot.  Does not need to be sorted.
     """
     #print heading
     print("*" * 30 + "Confusion Matrix" + "*" * 30)
@@ -2535,8 +2645,13 @@ def print_confusion_matrix(confusionMatrix):
 
 
 def checkPrintConfusionMatrix():
-    X = {"classLabel": ["A", "B", "C", "C", "B", "C", "A", "B", "C", "C", "B", "C", "A", "B", "C", "C", "B", "C"]}
-    Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C"]
+    """
+    Check print ouptut of confusion matrix.
+    """
+    X = {"classLabel": ["A", "B", "C", "C", "B", "C", "A", "B", "C", "C",
+                        "B", "C", "A", "B", "C", "C", "B", "C"]}
+    Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A",
+         "C", "C", "A", "B", "C"]
     functions = [confusion_matrix_generator]
     classLabelIndex = "classLabel"
     confusionMatrixResults = computeMetrics(classLabelIndex, X, Y, functions)
@@ -2546,11 +2661,11 @@ def checkPrintConfusionMatrix():
 
 def generateAllPairs(items):
     """
-        Given a list of items, generate a list of all possible pairs
-        (2-combinations) of items from the list, and return as a list
-        of tuples.  Assumes that no two items in the list refer to the same
-        object or number.  If there are duplicates in the input list, there
-        will be duplicates in the output list.
+    Given a list of items, generate a list of all possible pairs
+    (2-combinations) of items from the list, and return as a list
+    of tuples.  Assumes that no two items in the list refer to the same
+    object or number.  If there are duplicates in the input list, there
+    will be duplicates in the output list.
     """
     if items is None or len(items) == 0:
         return None
@@ -2566,18 +2681,22 @@ def generateAllPairs(items):
     return pairs
 
 
-def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', useLog=None,
-                         **kwarguments):
+def crossValidateBackend(learnerName, X, Y, performanceFunction,
+                         arguments=None, folds=10, scoreMode='label',
+                         useLog=None, **kwarguments):
     """
-    Same signature as UML.crossValidate, except that the argument 'numFolds' is replaced with 'folds'
-    which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
+    Same signature as UML.crossValidate, except that the argument
+    'numFolds' is replaced with 'folds' which is allowed to be either an
+    int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
     if not isinstance(X, Base):
         raise ArgumentException("X must be a Base object")
     if Y is not None:
         if not isinstance(Y, (Base, int, six.string_types, list)):
-            raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
+            msg = "Y must be a Base object or an index (int) from X where Y's "
+            msg += "data can be found"
+            raise ArgumentException(msg)
         if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
             Y = X.features.extract(Y)
@@ -2589,18 +2708,20 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 
         if not len(X.points) == len(Y.points):
             #todo support indexing if Y is an index for X instead
-            raise ArgumentException("X and Y must contain the same number of points.")
+            msg = "X and Y must contain the same number of points."
+            raise ArgumentException(msg)
 
     if folds == 0:
         raise ArgumentException("Tried to cross validate over 0 folds")
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
     deepLog = False
     if useLog:
-        deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+        deepLog = UML.settings.get('logger',
+                                   'enableCrossValidationDeepLogging')
+        deepLog = deepLog.lower() == 'true'
 
     merged = _mergeArguments(arguments, kwarguments)
 
@@ -2618,11 +2739,12 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     for i in range(numArgSets):
         performanceOfEachCombination.append([None, []])
 
-    # control variables determining if we save all results before calculating performance
-    # or if we can calculate for each fold and then avg the results.
+    # control variables determining if we save all results before calculating
+    # performance or if we can calculate for each fold and then avg the results
     perfNone = performanceFunction is None
     if not perfNone:
-        canAvgFolds = hasattr(performanceFunction, 'avgFolds') and performanceFunction.avgFolds
+        canAvgFolds = (hasattr(performanceFunction, 'avgFolds')
+                       and performanceFunction.avgFolds)
     else:
         canAvgFolds = False
 
@@ -2640,19 +2762,25 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # given this fold, do a run for each argument combination
         for curArgumentCombination in argumentCombinationIterator:
             #run algorithm on the folds' training and testing sets
-            curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
-                                             testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode,
-                                             useLog=deepLog)
+            curRunResult = UML.trainAndApply(
+                learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
+                testX=curTestingX, arguments=curArgumentCombination,
+                scoreMode=scoreMode, useLog=deepLog)
 
-            performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
+            performanceOfEachCombination[argSetIndex][0] = (
+                curArgumentCombination)
 
             if canAvgFolds:
-                #calculate error of prediction, according to performanceFunction
-                curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction)
+                # calculate error of prediction, using performanceFunction
+                curPerformance = computeMetrics(curTestingY, None,
+                                                curRunResult,
+                                                performanceFunction)
 
-                performanceOfEachCombination[argSetIndex][1].append(curPerformance)
+                performanceOfEachCombination[argSetIndex][1].append(
+                    curPerformance)
             else:
-                performanceOfEachCombination[argSetIndex][1].append(curRunResult)
+                performanceOfEachCombination[argSetIndex][1].append(
+                    curRunResult)
 
             argSetIndex += 1
 
@@ -2666,8 +2794,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         argumentCombinationIterator.reset()
 
     # We consume the saved results, either by averaging the individual results
-    # calculations for each fold, or combining the saved predictions and calculating
-    # performance of the entire set.
+    # calculations for each fold, or combining the saved predictions and
+    # calculating performance of the entire set.
     for i, (curArgSet, results) in enumerate(performanceOfEachCombination):
         # average score from each fold (works for one fold as well)
         if canAvgFolds:
@@ -2677,8 +2805,10 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             for resultIndex in range(1, len(results)):
                 results[0].points.add(results[resultIndex])
 
-            # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
-            finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
+            # TODO raise RuntimeError(
+            #     "How do we guarantee Y and results are in same order?")
+            finalPerformance = computeMetrics(collectedY, None, results[0],
+                                              performanceFunction)
 
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
@@ -2689,9 +2819,12 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # the CV timing from logRun?
         timer = None
 
-        # (self, trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
-        UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
-                                             performanceOfEachCombination, timer, merged, folds)
+        # (self, trainData, trainLabels, learnerName, metric, performance,
+        #  timer, learnerArgs, folds)
+        UML.logger.active.logCrossValidation(X, Y, learnerName,
+                                             performanceFunction,
+                                             performanceOfEachCombination,
+                                             timer, merged, folds)
 
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
@@ -2699,10 +2832,10 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 
 def makeFoldIterator(dataList, folds):
     """
-    Takes a list of data objects and a number of folds, returns an iterator
-    which will return a list containing the folds for each object, where
-    the list has as many (training, testing) tuples as the length of the input list
-
+    Takes a list of data objects and a number of folds, returns an
+    iterator which will return a list containing the folds for each
+    object, where the list has as many (training, testing) tuples as the
+    length of the input list.
     """
     if dataList is None or len(dataList) == 0:
         raise ArgumentException("dataList may not be None, or empty")
@@ -2711,15 +2844,19 @@ def makeFoldIterator(dataList, folds):
     for data in dataList:
         if data is not None:
             if len(data.points) == 0:
-                raise ArgumentException(
-                    "One of the objects has 0 points, it is impossible to specify a valid number of folds")
+                msg = "One of the objects has 0 points, it is impossible to "
+                msg += "specify a valid number of folds"
+                raise ArgumentException(msg)
             if len(data.points) != len(dataList[0].points):
-                raise ArgumentException("All data objects in the list must have the same number of points and features")
+                msg = "All data objects in the list must have the same number "
+                msg += "of points and features"
+                raise ArgumentException(msg)
 
     # note: we want truncation here
     numInFold = int(points / folds)
     if numInFold == 0:
-        raise ArgumentException("Must specify few enough folds so there is a point in each")
+        msg = "Must specify few enough folds so there is a point in each"
+        raise ArgumentException(msg)
 
     # randomly select the folded portions
     indices = list(range(points))
@@ -2750,11 +2887,14 @@ class _foldIteratorClass():
         return self
 
     def next(self):
+        """
+        Get next item.
+        """
         if self.index >= len(self.foldList):
             raise StopIteration
-        # we're going to be separating training and testing sets through extraction,
-        # so we have to copy the data in order not to destroy the original sets
-        # across multiple folds
+        # we're going to be separating training and testing sets through
+        # extraction, so we have to copy the data in order not to destroy the
+        # original sets across multiple folds
         copiedList = []
         for data in self.dataList:
             if data is None:
@@ -2762,11 +2902,14 @@ class _foldIteratorClass():
             else:
                 copiedList.append(data.copy())
 
-            # we want each training set to be permuted wrt its ordering in the original
-            # data. This is setting up a permutation to be applied to each object
-            #		indices = range(0, len(copiedList[0].points) - len(self.foldList[self.index]))
+            # we want each training set to be permuted wrt its ordering in the
+            # original data. This is setting up a permutation to be applied to
+            # each object
+            #		indices = range(0, len(copiedList[0].points)
+            #                              - len(self.foldList[self.index])))
             #		pythonRandom.shuffle(indices)
-        indices = numpy.arange(0, len(copiedList[0].points) - len(self.foldList[self.index]))
+        indices = numpy.arange(0, (len(copiedList[0].points)
+                                   - len(self.foldList[self.index])))
         numpyRandom.shuffle(indices)
 
         resultsList = []
@@ -2790,11 +2933,12 @@ class ArgumentIterator:
     e.g. {'a':(1,2,3), 'b':(4,5)}
 
     ArgumentBuilder generates permutations of dict in the format:
-    {'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5}, {'a':2, 'b':5}, {'a':3, 'b':5}
+    {'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5},
+    {'a':2, 'b':5}, {'a':3, 'b':5}
     and supports popping one such permutation at a time via pop().
 
     Convenience methods:
-    hasNext() - check if all permutations have been popped. Returns boolean.
+    hasNext() - Boolean check if all permutations have been popped.
     reset() - reset object so pop() again returns first permutation.
     """
 
@@ -2802,8 +2946,10 @@ class ArgumentIterator:
         self.rawArgumentInput = rawArgumentInput
         self.index = 0
         if not isinstance(rawArgumentInput, dict):
-            raise ArgumentException(
-                "ArgumentIterator objects require dictionary's to initialize- e.g. {'a':(1,2,3), 'b':(4,5)} This is the form default generated by **args in a function argument.")
+            msg = "ArgumentIterator objects require dictionary's to "
+            msg += "initialize  - e.g. {'a':(1,2,3), 'b':(4,5)} This is the "
+            msg += "form default generated by **args in a function argument."
+            raise ArgumentException(msg)
 
         # i.e. if rawArgumentInput == {}
         if len(rawArgumentInput) == 0:
@@ -2815,22 +2961,20 @@ class ArgumentIterator:
                 try:
                     if isinstance(rawArgumentInput[key], tuple):
                         self.numPermutations *= len(rawArgumentInput[key])
-                except(TypeError): #taking len of non tuple
+                except TypeError: # taking len of non tuple
                     pass #numPermutations not increased
-            self.permutationsList = _buildArgPermutationsList([], {}, 0, rawArgumentInput)
+            self.permutationsList = _buildArgPermutationsList([], {}, 0,
+                                                              rawArgumentInput)
 
-            assert (len(self.permutationsList) == self.numPermutations)
+            assert len(self.permutationsList) == self.numPermutations
 
     def __iter__(self):
         return self
 
-    def hasNext(self):
-        if self.index >= self.numPermutations:
-            return False
-        else:
-            return True
-
     def next(self):
+        """
+        Get next item.
+        """
         if self.index >= self.numPermutations:
             self.index = 0
             raise StopIteration
@@ -2843,13 +2987,17 @@ class ArgumentIterator:
         return self.next()
 
     def reset(self):
+        """
+        Reset index to 0.
+        """
         self.index = 0
 
 #example call: _buildArgPermutationsList([],{},0,arg)
-def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgInput):
+def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
+                              rawArgInput):
     """
-    Recursive function that generates a list of dicts, where each dict is a permutation
-    of rawArgInput's values.
+    Recursive function that generates a list of dicts, where each dict
+    is a permutation of rawArgInput's values.
 
     Should be called externally with:
     listOfDicts = []
@@ -2861,40 +3009,43 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
     example:
     if rawArgInput is {'a':(1,2,3), 'b':(4,5)}
     then _buildArgPermutationsList([],{},0,rawArgInput)
-    returns [{'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5}, {'a':2, 'b':5}, {'a':3, 'b':5},]
+    returns [{'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4},
+             {'a':1, 'b':5}, {'a':2, 'b':5}, {'a':3, 'b':5},]
     """
 
-    #stop condition: if current dict has a value for every key
-    #append a DEEP COPY of the dict to the listOfDicts. Copy is deep
-    #because dict entries will be changed when recursive stack is popped.
-    #Only complete, and distict dicts are appended to listOfDicts
+    # stop condition: if current dict has a value for every key
+    # append a DEEP COPY of the dict to the listOfDicts. Copy is deep
+    # because dict entries will be changed when recursive stack is popped.
+    # Only complete, and distict dicts are appended to listOfDicts
     if curKeyIndex >= len(list(rawArgInput.keys())):
         listOfDicts.append(copy.deepcopy(curCompoundArg))
         return listOfDicts
 
     else:
-        #retrieve all values for the current key being populated
+        # retrieve all values for the current key being populated
         curKey = list(rawArgInput.keys())[curKeyIndex]
         curValues = rawArgInput[curKey]
 
         try:
             if not isinstance(curValues, tuple):
                 raise TypeError()
-            #if there are multiple values, add one key-value pair to the
-            #the current dict, make recursive call to build the rest of the dict
-            #then after it returns, remove current key-value pair and add the
-            #next pair.
+            # if there are multiple values, add one key-value pair to the
+            # the current dict, make recursive call to build the rest of the
+            # dict then after it returns, remove current key-value pair and add
+            # the next pair.
             valueIterator = iter(curValues)
             for value in valueIterator:
                 curCompoundArg[curKey] = value
-                listOfDicts = _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
+                listOfDicts = _buildArgPermutationsList(
+                    listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
                 del curCompoundArg[curKey]
         #if there is only one value, curValues is not iterable, so add
         #curKey[value] to the dict and make recursive call.
         except TypeError:
             value = curValues
             curCompoundArg[curKey] = value
-            listOfDicts = _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
+            listOfDicts = _buildArgPermutationsList(
+                listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
             del curCompoundArg[curKey]
 
         return listOfDicts
@@ -2902,58 +3053,69 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
 
 def generateClassificationData(labels, pointsPer, featuresPer):
     """
-    Randomly generate sensible data for a classification problem. Returns a tuple of tuples,
-    where the first value is a tuple containing (trainX, trainY) and the second value is
-    a tuple containing (testX ,testY)
-
+    Randomly generate sensible data for a classification problem.
+    Returns a tuple of tuples, where the first value is a tuple
+    containing (trainX, trainY) and the second value is a tuple
+    containing (testX ,testY).
     """
     #add noise to the features only
-    trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(labels, pointsPer, featuresPer,
-                                                                           addFeatureNoise=True, addLabelNoise=False,
-                                                                           addLabelColumn=False)
-    testData, testLabels, noiselessTestLabels = generateClusteredPoints(labels, 1, featuresPer, addFeatureNoise=True,
-                                                                        addLabelNoise=False, addLabelColumn=False)
+    trainData, _, noiselessTrainLabels = generateClusteredPoints(
+        labels, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=False, addLabelColumn=False)
+    testData, _, noiselessTestLabels = generateClusteredPoints(
+        labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False,
+        addLabelColumn=False)
 
     return ((trainData, noiselessTrainLabels), (testData, noiselessTestLabels))
 
 
 def generateRegressionData(labels, pointsPer, featuresPer):
     """
-    Randomly generate sensible data for a regression problem. Returns a tuple of tuples,
-    where the first value is a tuple containing (trainX, trainY) and the second value is
-    a tuple containing (testX ,testY)
-
+    Randomly generate sensible data for a regression problem. Returns a
+    tuple of tuples, where the first value is a tuple containing
+    (trainX, trainY) and the second value is a tuple containing
+    (testX ,testY).
     """
     #add noise to both the features and the labels
-    regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(labels, pointsPer, featuresPer,
-                                                                                    addFeatureNoise=True,
-                                                                                    addLabelNoise=True,
-                                                                                    addLabelColumn=False)
-    regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(labels, 1, featuresPer,
-                                                                                 addFeatureNoise=True,
-                                                                                 addLabelNoise=True,
-                                                                                 addLabelColumn=False)
+    regressorTrainData, trainLabels, _ = generateClusteredPoints(
+        labels, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=True, addLabelColumn=False)
+    regressorTestData, testLabels, _ = generateClusteredPoints(
+        labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True,
+        addLabelColumn=False)
 
     return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
 
-#with class-based refactor:
-#todo add scale control as paramater for generateClusteredPoints - remember to scale noise term accordingly
-def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoint, addFeatureNoise=True,
-                            addLabelNoise=True, addLabelColumn=False, returnType='Matrix'):
+# with class-based refactor:
+# todo add scale control as paramater for generateClusteredPoints
+#  - remember to scale noise term accordingly
+def generateClusteredPoints(numClusters, numPointsPerCluster,
+                            numFeaturesPerPoint, addFeatureNoise=True,
+                            addLabelNoise=True, addLabelColumn=False,
+                            returnType='Matrix'):
     """
-    Function to generate Data object with arbitrary number of points, number of clusters, and number of features.
+    Function to generate Data object with arbitrary number of points,
+    number of clusters, and number of features.
 
-    The function returns the dataset in an object, 'labels' for each point in the dataset (noise optional), and
-    the 'noiseless' labels for the points, which is the central value used to define the feature values for each point
+    The function returns the dataset in an object, 'labels' for each
+    point in the dataset (noise optional), and the 'noiseless' labels
+    for the points, which is the central value used to define the
+    feature values for each point.
 
     generateClusteredPoints() outputs a dataset of the following format:
-    each point associated with a cluster has numFeaturesPerPoint features. The value of each entry in the feature vector
-    is clusterNumber+noise. Each point in the cluster has the same feature vector, with different noise.
+    each point associated with a cluster has numFeaturesPerPoint
+    features. The value of each entry in the feature vector is
+    clusterNumber+noise. Each point in the cluster has the same feature
+    vector, with different noise.
 
-    NOTE: if addFeatureNoise and addLabelNoise are false, then the 'clusters' are actually all
-    contain just repeated points, where each point in the cluster has the same features and the same labels
+    NOTE: if addFeatureNoise and addLabelNoise are false, then the
+    'clusters' are actually all contain just repeated points, where each
+    point in the cluster has the same features and the same labels.
 
-    returns tuple of UML.Base objects: (pointsObj, labelsObj, noiselessLabelsObj)
+    Returns
+    -------
+    tuple of UML.Base objects:
+    (pointsObj, labelsObj, noiselessLabelsObj)
     """
 
     pointsList = []
@@ -2964,11 +3126,13 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
         return pythonRandom.random() * 0.0001 - 0.00005
 
     for curCluster in range(numClusters):
-        for curPoint in range(numPointsPerCluster):
-            curFeatureVector = [float(curCluster) for x in range(numFeaturesPerPoint)]
+        for _ in range(numPointsPerCluster):
+            curFeatureVector = [float(curCluster) for x
+                                in range(numFeaturesPerPoint)]
 
             if addFeatureNoise:
-                curFeatureVector = [_noiseTerm() + entry for entry in curFeatureVector]
+                curFeatureVector = [_noiseTerm() + entry for entry
+                                    in curFeatureVector]
 
             if addLabelNoise:
                 curLabel = _noiseTerm() + curCluster
@@ -2985,17 +3149,19 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
             clusterNoiselessLabelList.append([float(curCluster)])
 
 
-    #todo verify that your list of lists is valid initializer for all datatypes, not just matrix
-    #then convert
-    #finally make matrix object out of the list of points w/ labels in last column of each vector/entry:
+    # todo verify that your list of lists is valid initializer for all
+    # datatypes, not just matrix
+    # then convert
+    # finally make matrix object out of the list of points w/ labels in last
+    # column of each vector/entry:
     pointsObj = UML.createData('Matrix', pointsList)
 
     labelsObj = UML.createData('Matrix', labelsList)
 
-    #todo change actuallavels to something like associatedClusterCentroid
+    # todo change actuallavels to something like associatedClusterCentroid
     noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList)
 
-    #convert datatype if not matrix
+    # convert datatype if not matrix
     if returnType.lower() != 'matrix':
         pointsObj = pointsObj.copyAs(returnType)
         labelsObj = labelsObj.copyAs(returnType)
@@ -3006,21 +3172,28 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
 
 def sumAbsoluteDifference(dataOne, dataTwo):
     """
-    Aggregates absolute difference between corresponding entries in base objects dataOne and dataTwo.
+    Aggregates absolute difference between corresponding entries in base
+    objects dataOne and dataTwo.
 
-    Checks to see that the vectors (which must be base objects) are of the same shape, first.
-    Next it iterates through the corresponding points in each vector/matrix and appends the absolute difference
+    Checks to see that the vectors (which must be base objects) are of
+    the same shape, first. Next it iterates through the corresponding
+    points in each vector/matrix and appends the absolute difference
     between corresponding points to a list.
+
     Finally, the function returns the sum of the absolute differences.
     """
 
     #compare shapes of data to make sure a comparison is sensible.
     if len(dataOne.features) != len(dataTwo.features):
-        raise ArgumentException(
-            "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of features.")
+        msg = "Can't calculate difference between corresponding entries in "
+        msg += "dataOne and dataTwo, the underlying data has different "
+        msg += "numbers of features."
+        raise ArgumentException(msg)
     if len(dataOne.points) != len(dataTwo.points):
-        raise ArgumentException(
-            "Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of points.")
+        msg = "Can't calculate difference between corresponding entries in "
+        msg += "dataOne and dataTwo, the underlying data has different "
+        msg += "numbers of points."
+        raise ArgumentException(msg)
 
     numpyOne = dataOne.copyAs('numpyarray')
     numpyTwo = dataTwo.copyAs('numpyarray')
@@ -3035,69 +3208,85 @@ def sumAbsoluteDifference(dataOne, dataTwo):
 
 
 class LearnerInspector:
-    """Class using heirustics to classify the 'type' of problem an algorithm is meant to work on.
+    """
+    Class using heirustics to classify the 'type' of problem an
+    algorithm is meant to work on.
     e.g. classification, regression, dimensionality reduction, etc.
 
     Use:
-    A LearnerInspector object generates private datasets that are intentionally constructed to
-    invite particular results when an algorithm is run on them. Once a user has a LearnerInspector
-    object, she can call learnerType(algorithmName) and get the 'best guess' type for that algorithm.
+    A LearnerInspector object generates private datasets that are
+    intentionally constructed to invite particular results when an
+    algorithm is run on them. Once a user has a LearnerInspector object,
+    she can call learnerType(algorithmName) and get the 'best guess'
+    type for that algorithm.
 
     Note:
-    If characterizing multiple algorithms, use the SAME LearnerInspector object, and call learnerType()
-    once for each algorithm you are trying to classify.
+    If characterizing multiple algorithms, use the SAME LearnerInspector
+    object, and call learnerType() once for each algorithm you are
+    trying to classify.
     """
 
     def __init__(self):
-        """Caches the regressor and classifier datasets, to speed up learnerType() calls
-        for multiple learners.
         """
-
-        self.NEAR_THRESHHOLD = .1 # TODO why is it this value??? should see how it is used and revise
+        Caches the regressor and classifier datasets, to speed up
+        learnerType() calls for multiple learners.
+        """
+        # TODO why is it this value??? should see how it is used and revise
+        self.NEAR_THRESHHOLD = .1
         self.EXACT_THRESHHOLD = .00000001
 
         #initialize datasets for tests
-        self.regressorDataTrain, self.regressorDataTest = self._regressorDataset()
+        self.regressorDataTrain, self.regressorDataTest = (
+            self._regressorDataset())
         #todo use classifier
-        self.classifierDataTrain, self.classifierDataTest = self._classifierDataset()
+        self.classifierDataTrain, self.classifierDataTest = (
+            self._classifierDataset())
 
     def learnerType(self, learnerName):
-        """Returns, as a string, the heuristically determined best guess for the type
-        of problem the learnerName learner is designed to run on.
+        """
+        Returns, as a string, the heuristically determined best guess
+        for the type of problem the learnerName learner is designed to
+        run on.
         Example output: 'classification', 'regression', 'other'
         """
         if not isinstance(learnerName, six.string_types):
             raise ArgumentException("learnerName must be a string")
         return self._classifyAlgorithmDecisionTree(learnerName)
 
-    #todo pull from each 'trail' function to find out what possible results it can have
-    #then make sure that you've covered all possible combinations
+    # todo pull from each 'trail' function to find out what possible results
+    # it can have then make sure that you've covered all possible combinations
     def _classifyAlgorithmDecisionTree(self, learnerName):
-        """Implements a decision tree based off of the predicted labels returned from
-        the datasets.
+        """
+        Implements a decision tree based off of the predicted labels
+        returned from the datasets.
 
-        Fundamentally, if the classifier dataset has no error, that means the algorithm
-        is likely a classifier, but it could be a regressor, if its error is low, however,
-        the algorithm is likely a regressor, and if its error is high, or the algorithm
-        crashes with the dataset, then the algorithm is likely neither classifier nor regressor.
+        Fundamentally, if the classifier dataset has no error, that
+        means the algorithm is likely a classifier, but it could be a
+        regressor, if its error is low, however, the algorithm is likely
+        a regressor, and if its error is high, or the algorithm crashes
+        with the dataset, then the algorithm is likely neither
+        classifier nor regressor.
 
-        Next, if the classifier dataset had no error, we want to see if the error on the
-        regressor dataset is low. Also, we want to see if the algorithm is capable of generating
-        labels that it hasn't seen (interpolating a la a regressor).
+        Next, if the classifier dataset had no error, we want to see if
+        the error on the regressor dataset is low. Also, we want to see
+        if the algorithm is capable of generating labels that it hasn't
+        seen (interpolating a la a regressor).
 
-        If the algorithm doesn't produce any new labels, despite no repeated labels, then
-        we assume it is a classifier. If the error on the classifier dataset is low, however,
-        and the algorithm interpolates labels, then we assume it is a regressor.
+        If the algorithm doesn't produce any new labels, despite no
+        repeated labels, then we assume it is a classifier. If the error
+        on the classifier dataset is low, however, and the algorithm
+        interpolates labels, then we assume it is a regressor.
         """
 
         regressorTrialResult = self._regressorTrial(learnerName)
         classifierTrialResult = self._classifierTrial(learnerName)
 
-        #decision tree:
-        #if classifier tests gives exact results
-        if classifierTrialResult == 'exact': #could be classifier or regressor at this point
-            #if when given unrepeating labels, algorithm generates duplicate of already seen labels,
-            #it is classifer
+        # decision tree:
+        # if classifier tests gives exact results
+        if classifierTrialResult == 'exact':
+            # could be classifier or regressor at this point
+            # if when given unrepeating labels, algorithm generates duplicate
+            # of already seen labels, it is classifer
             if regressorTrialResult == 'repeated_labels':
                 return 'classification'
             if regressorTrialResult == 'near':
@@ -3105,22 +3294,27 @@ class LearnerInspector:
             if regressorTrialResult == 'other':
                 return 'classification'
             #should be covered by all cases, raise exception
-            raise AttributeError(
-                'Decision tree needs to be updated to account for other results from regressorTrialResult')
+            msg = 'Decision tree needs to be updated to account for other '
+            msg += 'results from regressorTrialResult'
+            raise AttributeError(msg)
 
-        # if the classifer data set genereated a low error, but not exact, it is regressor
+        # if the classifer data set genereated a low error, but not exact,
+        # it is regressor
         elif classifierTrialResult == 'near':
             return 'regression'
 
-        #if the classifier dataset doesn't see classifier or regerssor behavior, return other
-        #todo this is where to insert future sensors for other types of algorithms, but
-        #currently we can only resolve classifiers, regressors, and other.
+        # if the classifier dataset doesn't see classifier or regressor
+        # behavior, return other
+        # todo this is where to insert future sensors for other types of
+        # algorithms, but currently we can only resolve classifiers,
+        # regressors, and other.
         else:
             return 'other'
 
     def _regressorDataset(self):
-        """Generates clustered points, where the labels of the points within a single cluster are all very similar,
-        but non-identical
+        """
+        Generates clustered points, where the labels of the points
+        within a single cluster are all very similar, but non-identical.
         """
 
         clusterCount = 3
@@ -3128,21 +3322,22 @@ class LearnerInspector:
         featuresPer = 5
 
         #add noise to both the features and the labels
-        regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer,
-                                                                                        featuresPer,
-                                                                                        addFeatureNoise=True,
-                                                                                        addLabelNoise=True,
-                                                                                        addLabelColumn=False)
-        regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer,
-                                                                                     addFeatureNoise=True,
-                                                                                     addLabelNoise=True,
-                                                                                     addLabelColumn=False)
+        regressorTrainData, trainLabels, noiselessTrainLabels = (
+            generateClusteredPoints(clusterCount, pointsPer, featuresPer,
+                                    addFeatureNoise=True, addLabelNoise=True,
+                                    addLabelColumn=False))
+        regressorTestData, testLabels, noiselessTestLabels = (
+            generateClusteredPoints(clusterCount, 1, featuresPer,
+                                    addFeatureNoise=True, addLabelNoise=True,
+                                    addLabelColumn=False))
 
-        return (
-        (regressorTrainData, trainLabels, noiselessTrainLabels), (regressorTestData, testLabels, noiselessTestLabels))
+        return ((regressorTrainData, trainLabels, noiselessTrainLabels),
+                (regressorTestData, testLabels, noiselessTestLabels))
 
     def _classifierDataset(self):
-        """Generates clustered points, hwere the labels of the points within each cluster are all identical.
+        """
+        Generates clustered points, hwere the labels of the points
+        within each cluster are all identical.
         """
 
         clusterCount = 3
@@ -3150,44 +3345,48 @@ class LearnerInspector:
         featuresPer = 5
 
         #add noise to the features only
-        trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                                                               addFeatureNoise=True,
-                                                                               addLabelNoise=False,
-                                                                               addLabelColumn=False)
-        testData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer,
-                                                                            addFeatureNoise=True, addLabelNoise=False,
-                                                                            addLabelColumn=False)
+        trainData, trainLabels, noiselessTrainLabels = (
+            generateClusteredPoints(clusterCount, pointsPer, featuresPer,
+                                    addFeatureNoise=True, addLabelNoise=False,
+                                    addLabelColumn=False))
+        testData, testLabels, noiselessTestLabels = (
+            generateClusteredPoints(clusterCount, 1, featuresPer,
+                                    addFeatureNoise=True, addLabelNoise=False,
+                                    addLabelColumn=False))
 
-        return ((trainData, trainLabels, noiselessTrainLabels), (testData, testLabels, noiselessTestLabels))
+        return ((trainData, trainLabels, noiselessTrainLabels),
+                (testData, testLabels, noiselessTestLabels))
 
     def _regressorTrial(self, learnerName):
-        """Run trainAndApply on the regressor dataset and make judgments about the learner based on
-        the results of trainAndApply
         """
-
+        Run trainAndApply on the regressor dataset and make judgments
+        about the learner based on the results of trainAndApply.
+        """
         #unpack already-initialized datasets
-        regressorTrainData, trainLabels, noiselessTrainLabels = self.regressorDataTrain
-        regressorTestData, testLabels, noiselessTestLabels = self.regressorDataTest
+        regressorTrainData, trainLabels, _ = self.regressorDataTrain
+        regressorTestData, _, noiselessTestLabels = self.regressorDataTest
 
         try:
-            runResults = UML.trainAndApply(learnerName, trainX=regressorTrainData, trainY=trainLabels,
-                                           testX=regressorTestData)
-        except Exception as e:
+            runResults = UML.trainAndApply(
+                learnerName, trainX=regressorTrainData, trainY=trainLabels,
+                testX=regressorTestData)
+        except Exception:
             return 'other'
 
         try:
             sumError = sumAbsoluteDifference(runResults, noiselessTestLabels)
-        except ArgumentException as e:
+        except ArgumentException:
             return 'other'
 
-        #if the labels are repeated from those that were trained on, then it is a classifier
-        #so pass back that labels are repeated
+        # if the labels are repeated from those that were trained on, then
+        # it is a classifier so pass back that labels are repeated
         # if runResults are all in trainLabels, then it's repeating:
         alreadySeenLabelsList = []
         for curPointIndex in range(len(trainLabels.points)):
             alreadySeenLabelsList.append(trainLabels[curPointIndex, 0])
 
-        #check if the learner generated any new label (one it hadn't seen in training)
+        # check if the learner generated any new label
+        # (one it hadn't seen in training)
         unseenLabelFound = False
         for curResultPointIndex in range(len(runResults.points)):
             if runResults[curResultPointIndex, 0] not in alreadySeenLabelsList:
@@ -3204,21 +3403,23 @@ class LearnerInspector:
 
 
     def _classifierTrial(self, learnerName):
-        """Run trainAndApply on the classifer dataset and make judgments about the learner based on
-        the results of trainAndApply.
         """
-
+        Run trainAndApply on the classifer dataset and make judgments
+        about the learner based on the results of trainAndApply.
+        """
         #unpack initialized datasets
-        trainData, trainLabels, noiselessTrainLabels = self.classifierDataTrain
-        testData, testLabels, noiselessTestLabels = self.classifierDataTest
+        trainData, trainLabels, _ = self.classifierDataTrain
+        testData, testLabels, _ = self.classifierDataTest
 
         try:
-            runResults = UML.trainAndApply(learnerName, trainX=trainData, trainY=trainLabels, testX=testData)
-        except Exception as e:
+            runResults = UML.trainAndApply(learnerName, trainX=trainData,
+                                           trainY=trainLabels, testX=testData)
+        except Exception:
             return 'other'
 
         try:
-            sumError = sumAbsoluteDifference(runResults, testLabels) #should be identical to noiselessTestLabels
+            # should be identical to noiselessTestLabels
+            sumError = sumAbsoluteDifference(runResults, testLabels)
         except ArgumentException:
             return 'other'
 
@@ -3231,29 +3432,42 @@ class LearnerInspector:
 
 
 def _validScoreMode(scoreMode):
-    """ Check that a scoreMode flag to train() trainAndApply(), etc. is an accepted value """
+    """
+    Check that a scoreMode flag to train() trainAndApply(), etc. is an
+    accepted value.
+    """
     scoreMode = scoreMode.lower()
-    if scoreMode != 'label' and scoreMode != 'bestscore' and scoreMode != 'allscores':
-        raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+    if (scoreMode != 'label'
+            and scoreMode != 'bestscore'
+            and scoreMode != 'allscores'):
+        msg = "scoreMode may only be 'label' 'bestScore' or 'allScores'"
+        raise ArgumentException(msg)
 
 
 def _validMultiClassStrategy(multiClassStrategy):
-    """ Check that a multiClassStrategy flag to train() trainAndApply(), etc. is an accepted value """
+    """
+    Check that a multiClassStrategy flag to train() trainAndApply(),
+    etc. is an accepted value.
+    """
     multiClassStrategy = multiClassStrategy.lower()
-    if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll'.lower() and multiClassStrategy != 'OneVsOne'.lower():
-        raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
+    if (multiClassStrategy != 'default'
+            and multiClassStrategy != 'OneVsAll'.lower()
+            and multiClassStrategy != 'OneVsOne'.lower()):
+        msg = "multiClassStrategy may only be 'default' 'OneVsAll' "
+        msg += "or 'OneVsOne'"
+        raise ArgumentException(msg)
 
 
 def _unpackLearnerName(learnerName):
-    """Split a learnerName parameter into the portion defining the package,
+    """
+    Split a learnerName parameter into the portion defining the package,
     and the portion defining the learner.
-
     """
     splitList = learnerName.split('.', 1)
     if len(splitList) < 2:
         msg = "Recieved the ill formed learner name '" + learnerName + "'. "
-        msg += "The learner name must identify both the desired package and learner"
-        msg += ", separated by a dot. Example:'mlpy.KNN'"
+        msg += "The learner name must identify both the desired package and "
+        msg += "learner, separated by a dot. Example:'mlpy.KNN'"
         raise ArgumentException(msg)
     package = splitList[0]
     learnerName = splitList[1]
@@ -3261,18 +3475,29 @@ def _unpackLearnerName(learnerName):
 
 
 def _validArguments(arguments):
-    """ Check that an arguments parmeter to train() trainAndApply(), etc. is an accepted format """
-    if not isinstance(arguments, dict):
-        raise ArgumentException("The 'arguments' parameter must be a dictionary")
+    """
+    Check that an arguments parmeter to train() trainAndApply(), etc. is
+    an accepted format.
+    """
+    if not isinstance(arguments, dict) and arguments is not None:
+        msg = "The 'arguments' parameter must be a dictionary or None"
+        raise ArgumentException(msg)
 
 
 def _mergeArguments(argumentsParam, kwargsParam):
     """
-    Takes two dicts and returns a new dict of them merged together. Will throw an exception if
-    the two inputs have contradictory values for the same key.
-
+    Takes two dicts and returns a new dict of them merged together. Will
+    throw an exception if the two inputs have contradictory values for
+    the same key.
     """
     ret = {}
+    if argumentsParam is None:
+        argumentsParam = {}
+    # UniversalInterface uses this helper to merge params a little differently,
+    # arguments (which might be None) is passed as kwargsParam so in that case
+    # we need to set kwargsParam to {}.
+    if kwargsParam is None:
+        kwargsParam = {}
     if len(argumentsParam) < len(kwargsParam):
         smaller = argumentsParam
         larger = kwargsParam
@@ -3285,50 +3510,65 @@ def _mergeArguments(argumentsParam, kwargsParam):
     for k in smaller:
         val = smaller[k]
         if k in ret and ret[k] != val:
-            raise ArgumentException("The two dicts disagree. key= " + str(k) +
-                                    " | arguments value= " + str(argumentsParam[k]) + " | **kwargs value= " +
-                                    str(kwargsParam[k]))
+            msg = "The two dicts disagree. key= " + str(k)
+            msg += " | arguments value= " + str(argumentsParam[k])
+            msg += " | **kwargs value= " + str(kwargsParam[k])
+            raise ArgumentException(msg)
         ret[k] = val
 
     return ret
 
 
 def _validData(trainX, trainY, testX, testY, testRequired):
-    """ Check that the data parameters to train() trainAndApply(), etc. are in accepted formats """
+    """
+    Check that the data parameters to train() trainAndApply(), etc. are
+    in accepted formats.
+    """
     if not isinstance(trainX, Base):
-        raise ArgumentException("trainX may only be an object derived from Base")
+        msg = "trainX may only be an object derived from Base"
+        raise ArgumentException(msg)
 
     if trainY is not None:
-        if not (isinstance(trainY, Base) or isinstance(trainY, (six.string_types, int, numpy.int64))):
-            raise ArgumentException(
-                "trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+        if not isinstance(trainY, (Base, six.string_types, int, numpy.int64)):
+            msg = "trainY may only be an object derived from Base, or an "
+            msg += "ID of the feature containing labels in testX"
+            raise ArgumentException(msg)
         if isinstance(trainY, Base):
         #			if not len(trainY.features) == 1:
-        #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+        #               msg = "If trainY is a Data object, then it may only "
+        #               msg += "have one feature"
+        #				raise ArgumentException(msg)
             if not len(trainY.points) == len(trainX.points):
-                raise ArgumentException(
-                    "If trainY is a Data object, then it must have the same number of points as trainX")
+                msg = "If trainY is a Data object, then it must have the same "
+                msg += "number of points as trainX"
+                raise ArgumentException(msg)
 
-    # testX is allowed to be None, sometimes it is appropriate to have it be filled using
-    # the trainX argument (ie things which transform data, or learn internal structure)
+    # testX is allowed to be None, sometimes it is appropriate to have it be
+    # filled using the trainX argument (ie things which transform data, or
+    # learn internal structure)
     if testRequired[0] and testX is None:
         raise ArgumentException("testX must be provided")
     if testX is not None:
         if not isinstance(testX, Base):
-            raise ArgumentException("testX may only be an object derived from Base")
+            msg = "testX may only be an object derived from Base"
+            raise ArgumentException(msg)
 
     if testRequired[1] and testY is None:
         raise ArgumentException("testY must be provided")
     if testY is not None:
         if not isinstance(testY, (Base, six.string_types, int, int)):
-            raise ArgumentException(
-                "testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+            msg = "testY may only be an object derived from Base, or an ID "
+            msg += "of the feature containing labels in testX"
+            raise ArgumentException(msg)
         if isinstance(trainY, Base):
         #			if not len(trainY.features) == 1:
-        #				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+        #               msg = "If trainY is a Data object, then it may only "
+        #               msg += "have one feature"
+        #				raise ArgumentException(msg)
             if not len(trainY.points) == len(trainX.points):
-                raise ArgumentException(
-                    "If trainY is a Data object, then it must have the same number of points as trainX")
+                msg = "If trainY is a Data object, then it must have the same "
+                msg += "number of points as trainX"
+                raise ArgumentException(msg)
 
 
 def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
@@ -3349,52 +3589,65 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             raise ArgumentException(msg)
         if multiClassStrategy is not None and multiClassStrategy != 'default':
             msg = "When dealing with multi dimentional outputs / predictions, "
-            msg += "the multiClassStrategy flag is required to be set to 'default'"
+            msg += "the multiClassStrategy flag is required to be set to "
+            msg += "'default'"
             raise ArgumentException(msg)
 
 
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
+                          scoreMode='label', useLog=None, timer=None,
                           **kwarguments):
     """
-    Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
-    there are multiple (>2) class labels, and uses the one vs. one method of splitting the
-    training set into 2-label subsets. Tests performance using the metric function(s) found in
-    performanceMetricFunctions.
+    Calls on trainAndApply() to train and evaluate the learner defined
+    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
+    uses the one vs. one method of splitting the training set into
+    2-label subsets. Tests performance using the metric function(s)
+    found in performanceMetricFunctions.
 
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-
-        trainX: data set to be used for training (as some form of Base object)
-
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-
-        testX: data set to be used for testing (as some form of Base object)
-
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-
-        scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
-        labels is selected, this function returns a single column with a predicted label for
-        each point in the test set.  If bestScore is selected, this function returns an object
-        with two columns: the first has the predicted label, the second  has that label's score.
-        If allScores is selected, returns a Base object with each row containing a score for
-        each possible class label.  The class labels are the featureNames of the Base object,
-        so the list of scores in each row is not sorted by score, but by the order of class label
-        found in featureNames.
-
-        useLog - local control for whether to send results/timing to the logger.
+    Parameters
+    ----------
+    trainX: UML Base object
+        Data to be used for training.
+    trainY: identifier, UML Base object
+        A name or index of the feature in ``trainX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``trainX``.
+    testX : UML Base object
+        data set on which the trained learner will be applied (i.e.
+        performing prediction, transformation, etc. as appropriate to
+        the learner).
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To make use of multiple permutations, specify different values
+        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
+        error score for  the learner when the learner was passed all
+        three values of ``k``, separately. These will be merged with
+        kwarguments for the learner.
+    scoreMode : str
+        In the case of a classifying learner, this specifies the type of
+        output wanted: 'label' if we class labels are desired,
+        'bestScore' if both the class label and the score associated
+        with that class are desired, or 'allScores' if a matrix
+        containing the scores for every class label are desired.
+    useLog : bool, None
+        Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-
-        timer: If logging was initiated in a call higher in the stack, then the timing object
-        constructed there will be passed down through this parameter.
-
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
-
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    timer : UML.logger.Stopwatch
+        If logging was initiated in a call higher in the stack, then the
+        timing object constructed there will be passed down through this
+        parameter.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. To make use of multiple permutations, specify different
+        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with arguments.
     """
     _validData(trainX, trainY, testX, None, [True, False])
     _validArguments(arguments)
@@ -3407,8 +3660,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         trainX.features.add(trainY)
         trainY = len(trainX.features) - 1
 
-    # Get set of unique class labels, then generate list of all 2-combinations of
-    # class labels
+    # Get set of unique class labels, then generate list of all 2-combinations
+    # of class labels
     labelVector = trainX.features.copy([trainY])
     labelVector.transpose()
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
@@ -3416,11 +3669,12 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
     deepLog = False
     if useLog:
-        deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+        deepLog = UML.settings.get('logger',
+                                   'enableMultiClassStrategyDeepLogging')
+        deepLog = deepLog.lower() == 'true'
 
     #if we are logging this run, we need to start the timer
     if useLog:
@@ -3429,23 +3683,27 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
         timer.start('train')
 
-    # For each pair of class labels: remove all points with one of those labels,
-    # train a classifier on those points, get predictions based on that model,
-    # and put the points back into the data object
+    # For each pair of class labels: remove all points with one of those
+    # labels, train a classifier on those points, get predictions based on
+    # that model, and put the points back into the data object
     rawPredictions = None
     predictionFeatureID = 0
     for pair in labelPairs:
         #get all points that have one of the labels in pair
-        pairData = trainX.points.extract(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+        pairData = trainX.points.extract(
+            lambda point: ((point[trainY] == pair[0])
+                           or (point[trainY] == pair[1])))
         pairTrueLabels = pairData.features.extract(trainY)
         #train classifier on that data; apply it to the test set
-        partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged,
-                                           useLog=deepLog)
+        partialResults = UML.trainAndApply(learnerName, pairData,
+                                           pairTrueLabels, testX, output=None,
+                                           arguments=merged, useLog=deepLog)
         #put predictions into table of predictions
         if rawPredictions is None:
             rawPredictions = partialResults.copyAs(format="List")
         else:
-            partialResults.features.setName(0, 'predictions-' + str(predictionFeatureID))
+            predName = 'predictions-' + str(predictionFeatureID)
+            partialResults.features.setName(0, predName)
             rawPredictions.features.add(partialResults.copyAs(format="List"))
         pairData.features.add(pairTrueLabels)
         trainX.points.add(pairData)
@@ -3460,8 +3718,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         ret.features.setName(0, "winningLabel")
         return ret
     elif scoreMode.lower() == 'bestScore'.lower():
-        #construct a list of lists, with each row in the list containing the predicted
-        #label and score of that label for the corresponding row in rawPredictions
+        # construct a list of lists, with each row in the list containing the
+        # predicted label and score of that label for the corresponding row in
+        # rawPredictions
         predictionMatrix = rawPredictions.copyAs(format="python list")
         tempResultsList = []
         for row in predictionMatrix:
@@ -3472,11 +3731,13 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+        resultsContainer = UML.createData("List", tempResultsList,
+                                          featureNames=featureNames)
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
-        labelIndexDict = {str(v): k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+        zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
+        labelIndexDict = {str(v): k for k, v in zipIndexLabel}
         predictionMatrix = rawPredictions.copyAs(format="python list")
         resultsContainer = []
         for row in predictionMatrix:
@@ -3487,52 +3748,67 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
 
-        return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+        return UML.createData(rawPredictions.getTypeString(), resultsContainer,
+                              featureNames=columnHeaders)
     else:
-        raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
+        msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
+        raise ArgumentException(msg)
 
 
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
+                          scoreMode='label', useLog=None, timer=None,
                           **kwarguments):
     """
-    Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
-    there are multiple (>2) class labels, and uses the one vs. all method of splitting the
-    training set into 2-label subsets. Tests performance using the metric function(s) found in
-    performanceMetricFunctions.
+    Calls on trainAndApply() to train and evaluate the learner defined
+    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
+    uses the one vs. all method of splitting the training set into
+    2-label subsets. Tests performance using the metric function(s)
+    found in performanceMetricFunctions.
 
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-
-        trainX: data set to be used for training (as some form of Base object)
-
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-
-        testX: data set to be used for testing (as some form of Base object)
-
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-
-        scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
-        labels is selected, this function returns a single column with a predicted label for
-        each point in the test set.  If bestScore is selected, this function returns an object
-        with two columns: the first has the predicted label, the second  has that label's score.
-        If allScores is selected, returns a Base object with each row containing a score for
-        each possible class label.  The class labels are the featureNames of the Base object,
-        so the list of scores in each row is not sorted by score, but by the order of class label
-        found in featureNames.
-
-        useLog - local control for whether to send results/timing to the logger.
+    Parameters
+    ----------
+    trainX: UML Base object
+        Data to be used for training.
+    trainY: identifier, UML Base object
+        A name or index of the feature in ``trainX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``trainX``.
+    testX : UML Base object
+        data set on which the trained learner will be applied (i.e.
+        performing prediction, transformation, etc. as appropriate to
+        the learner).
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To make use of multiple permutations, specify different values
+        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
+        error score for  the learner when the learner was passed all
+        three values of ``k``, separately. These will be merged with
+        kwarguments for the learner.
+    scoreMode : str
+        In the case of a classifying learner, this specifies the type of
+        output wanted: 'label' if we class labels are desired,
+        'bestScore' if both the class label and the score associated
+        with that class are desired, or 'allScores' if a matrix
+        containing the scores for every class label are desired.
+    useLog : bool, None
+        Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-
-        timer: If logging was initiated in a call higher in the stack, then the timing object
-        constructed there will be passed down through this parameter.
-
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    timer : UML.logger.Stopwatch
+        If logging was initiated in a call higher in the stack, then the
+        timing object constructed there will be passed down through this
+        parameter.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. To make use of multiple permutations, specify different
+        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with arguments.
     """
     _validData(trainX, trainY, testX, None, [True, False])
     _validArguments(arguments)
@@ -3551,11 +3827,12 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
     deepLog = False
     if useLog:
-        deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+        deepLog = UML.settings.get('logger',
+                                   'enableMultiClassStrategyDeepLogging')
+        deepLog = deepLog.lower() == 'true'
 
     #if we are logging this run, we need to start the timer
     if useLog:
@@ -3569,23 +3846,28 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     # has 'label', 0 otherwise.)  Train a classifier with the processed
     # labels and get predictions on the test set.
     rawPredictions = None
-    for label in labelSet:
-        def relabeler(point):
-            if point[0] != label:
-                return 0
-            else:
-                return 1
 
+    def relabeler(point, label=None):
+        if point[0] != label:
+            return 0
+        else:
+            return 1
+
+    for label in labelSet:
+        relabeler.__defaults__ = (label,)
         trainLabels = trainY.points.calculate(relabeler)
-        oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged,
-                                            useLog=deepLog)
-        #put all results into one Base container, of the same type as trainX
+        oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels,
+                                            testX, output=None,
+                                            arguments=merged, useLog=deepLog)
+        # put all results into one Base container, of the same type as trainX
         if rawPredictions is None:
             rawPredictions = oneLabelResults
-            #as it's added to results object, rename each column with its corresponding class label
+            # as it's added to results object, rename each column with its
+            # corresponding class label
             rawPredictions.features.setName(0, str(label))
         else:
-            #as it's added to results object, rename each column with its corresponding class label
+            # as it's added to results object, rename each column with its
+            # corresponding class label
             oneLabelResults.features.setName(0, str(label))
             rawPredictions.features.add(oneLabelResults)
 
@@ -3593,32 +3875,39 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         timer.stop('train')
 
     if scoreMode.lower() == 'label'.lower():
-        winningPredictionIndices = rawPredictions.points.calculate(extractWinningPredictionIndex).copyAs(
-            format="python list")
+        winningPredictionIndices = rawPredictions.points.calculate(
+            extractWinningPredictionIndex).copyAs(format="python list")
         winningLabels = []
         for [winningIndex] in winningPredictionIndices:
             winningLabels.append([labelSet[int(winningIndex)]])
-        return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
+        return UML.createData(rawPredictions.getTypeString(), winningLabels,
+                              featureNames=['winningLabel'])
 
     elif scoreMode.lower() == 'bestScore'.lower():
-        #construct a list of lists, with each row in the list containing the predicted
-        #label and score of that label for the corresponding row in rawPredictions
+        # construct a list of lists, with each row in the list containing the
+        # predicted label and score of that label for the corresponding row in
+        # rawPredictions
         predictionMatrix = rawPredictions.copyAs(format="python list")
         indexToLabel = rawPredictions.features.getNames()
         tempResultsList = []
         for row in predictionMatrix:
-            bestLabelAndScore = extractWinningPredictionIndexAndScore(row, indexToLabel)
-            tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
+            bestLabelAndScore = extractWinningPredictionIndexAndScore(
+                row, indexToLabel)
+            tempResultsList.append([bestLabelAndScore[0],
+                                    bestLabelAndScore[1]])
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+        resultsContainer = UML.createData("List", tempResultsList,
+                                          featureNames=featureNames)
         return resultsContainer
 
     elif scoreMode.lower() == 'allScores'.lower():
         #create list of Feature Names/Column Headers for final return object
         columnHeaders = sorted([str(i) for i in labelSet])
-        #create map between label and index in list, so we know where to put each value
-        labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+        #create map between label and index in list, so we know where to put
+        # each value
+        zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
+        labelIndexDict = {v: k for k, v in zipIndexLabel}
         featureNamesItoN = rawPredictions.features.getNames()
         predictionMatrix = rawPredictions.copyAs(format="python list")
         resultsContainer = []
@@ -3632,17 +3921,20 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
         #wrap data in Base container
-        return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+        return UML.createData(rawPredictions.getTypeString(), resultsContainer,
+                              featureNames=columnHeaders)
     else:
-        raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
+        msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
+        raise ArgumentException(msg)
 
 
-def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
+                         arguments=None, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
-    This function is the base model of function trainAndTestOneVsOne and trainAndTestOneVsAll
+    This function is the base model of function trainAndTestOneVsOne and
+    trainAndTestOneVsAll.
     """
-
     _validData(trainX, trainY, testX, testY, [True, True])
     _validArguments(arguments)
     _validArguments(kwarguments)
@@ -3650,19 +3942,20 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
 
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
 
     timer = Stopwatch() if useLog else None
 
-    # if testY is in testX, we need to extract it before we call a trainAndApply type function
+    # if testY is in testX, we need to extract it before we call a
+    # trainAndApply type function
     if isinstance(testY, (six.string_types, int, int)):
         testX = testX.copy()
         testY = testX.features.extract([testY])
 
-    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog,
-                                        timer=timer)
+    predictions = f(learnerName, trainX, trainY, testX, merged,
+                    scoreMode='label', useLog=useLog, timer=timer)
 
-    #now we need to compute performance metric(s) for the set of winning predictions
+    # now compute performance metric(s) for the set of winning predictions
     results = computeMetrics(testY, None, predictions, performanceFunction)
 
     # Send this run to the log, if desired
@@ -3670,78 +3963,147 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         if not isinstance(performanceFunction, list):
             performanceFunction = [performanceFunction]
             results = [results]
-        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
+        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName,
+                                 performanceFunction, predictions, results,
                                  timer, extraInfo=merged)
 
     return results
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
+                         arguments=None, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
-    Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
-    there are multiple (>2) class labels, and uses the one vs. all method of splitting the
-    training set into 2-label subsets. Tests performance using the metric function(s) found in
-    performanceMetricFunctions.
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-        trainX: data set to be used for training (as some form of Base object)
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-        testX: data set to be used for testing (as some form of Base object)
-        testY: used to retrieve the known class labels of the test data. Either contains
-        the labels themselves or an index (numerical or string) that defines their
-        location in the testX object.
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-        performanceFunction: single or iterable collection of functions that can take two collections
-        of corresponding labels - one of true labels, one of predicted labels - and return a
-        performance metric.
-        useLog - local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
-    """
-    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsAll, \
-                                arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
+    Calls on trainAndApply() to train and evaluate the learner defined
+    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
+    uses the one vs. all method of splitting the training set into
+    2-label subsets. Tests performance using the metric function(s)
+    found in performanceMetricFunctions.
 
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+    Parameters
+    ----------
+    learnerName : str
+        Name of the learner to be called, in the form 'package.learner'
+    trainX: UML Base object
+        Data to be used for training.
+    trainY: identifier, UML Base object
+        A name or index of the feature in ``trainX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``trainX``.
+    testX: UML Base object
+        Data to be used for testing.
+    testY : identifier, UML Base object
+        A name or index of the feature in ``testX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``testX``.
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To make use of multiple permutations, specify different values
+        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
+        error score for  the learner when the learner was passed all
+        three values of ``k``, separately. These will be merged with
+        kwarguments for the learner.
+    performanceFunction : function
+        If cross validation is triggered to select from the given
+        argument set, then this function will be used to generate a
+        performance score for the run. Function is of the form:
+        def func(knownValues, predictedValues).
+        Look in UML.calculate for pre-made options. Default is None,
+        since if there is no parameter selection to be done, it is not
+        used.
+    useLog : bool, None
+        Local control for whether to send results/timing to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. To make use of multiple permutations, specify different
+        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with arguments.
+    """
+    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX,
+                                trainY=trainY, testX=testX, testY=testY,
+                                f=trainAndApplyOneVsAll, arguments=arguments,
+                                performanceFunction=performanceFunction,
+                                useLog=useLog, **kwarguments)
+
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
+                         arguments=None, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
-    Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
-    testing, and computing performance measures to be handled.  Takes in a learner's name
-    and training and testing data sets, trains a learner, passes the test data to the
-    computed model, gets results, and calculates performance based on those results.
-    Arguments:
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-        trainX: data set to be used for training (as some form of Base object)
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-        testX: data set to be used for testing (as some form of Base object)
-        testY: used to retrieve the known class labels of the test data. Either
-        contains the labels themselves or an index (numerical or string) that defines their locale
-        in the testX object.
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-        performanceFunction: single or iterable collection of functions that can take two collections
-        of corresponding labels - one of true labels, one of predicted labels - and return a
-        performance metric.
-        useLog - local control for whether to send results/timing to the logger.
+    Wrapper class for trainAndApplyOneVsOne.  Useful if you want the
+    entire process of training, testing, and computing performance
+    measures to be handled.  Takes in a learner's name and training and
+    testing data sets, trains a learner, passes the test data to the
+    computed model, gets results, and calculates performance based on
+    those results.
+
+    Parameters
+    ----------
+    learnerName : str
+        Name of the learner to be called, in the form 'package.learner'
+    trainX: UML Base object
+        Data to be used for training.
+    trainY: identifier, UML Base object
+        A name or index of the feature in ``trainX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``trainX``.
+    testX: UML Base object
+        Data to be used for testing.
+    testY : identifier, UML Base object
+        A name or index of the feature in ``testX`` containing the
+        labels or another UML Base object containing the labels that
+        correspond to ``testX``.
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To make use of multiple permutations, specify different values
+        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
+        error score for  the learner when the learner was passed all
+        three values of ``k``, separately. These will be merged with
+        kwarguments for the learner.
+    performanceFunction : function
+        If cross validation is triggered to select from the given
+        argument set, then this function will be used to generate a
+        performance score for the run. Function is of the form:
+        def func(knownValues, predictedValues).
+        Look in UML.calculate for pre-made options. Default is None,
+        since if there is no parameter selection to be done, it is not
+        used.
+    useLog : bool, None
+        Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
-    Returns: A dictionary associating the name or code of performance metrics with the results
-    of those metrics, computed using the predictions of 'learnerName' on testX.
-    Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. To make use of multiple permutations, specify different
+        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with arguments.
+
+    Returns
+    -------
+    dict
+        A dictionary associating the name or code of performance metrics
+        with the results of those metrics, computed using the
+        predictions of 'learnerName' on testX.
+        Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
     """
-    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsOne, \
-                                arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
+    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX,
+                                trainY=trainY, testX=testX, testY=testY,
+                                f=trainAndApplyOneVsOne,
+                                arguments=arguments,
+                                performanceFunction=performanceFunction,
+                                useLog=useLog, **kwarguments)
 
 
 def inspectArguments(func):
