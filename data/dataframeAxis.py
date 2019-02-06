@@ -207,11 +207,11 @@ class DataFrameAxis(Axis):
         if isinstance(self, Points):
             return UML.createData('DataFrame', uniqueData,
                                   pointNames=axisNames,
-                                  featureNames=offAxisNames)
+                                  featureNames=offAxisNames, useLog=False)
         else:
             return UML.createData('DataFrame', uniqueData,
                                   pointNames=offAxisNames,
-                                  featureNames=axisNames)
+                                  featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

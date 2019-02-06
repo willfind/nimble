@@ -175,11 +175,11 @@ class MatrixAxis(Axis):
                                                    uniqueIndices)
         if isinstance(self, Points):
             return UML.createData('Matrix', uniqueData, pointNames=axisNames,
-                          featureNames=offAxisNames)
+                          featureNames=offAxisNames, useLog=False)
         else:
             return UML.createData('Matrix', uniqueData,
                                   pointNames=offAxisNames,
-                                  featureNames=axisNames)
+                                  featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

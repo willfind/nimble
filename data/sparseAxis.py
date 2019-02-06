@@ -404,13 +404,13 @@ class SparseAxis(Axis):
             uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
                                     shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=axisNames,
-                                  featureNames=offAxisNames)
+                                  featureNames=offAxisNames, useLog=False)
         else:
             shape = (len(self._source.points), axisCount)
             uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
                                     shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
-                                  featureNames=axisNames)
+                                  featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

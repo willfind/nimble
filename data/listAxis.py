@@ -202,10 +202,10 @@ class ListAxis(Axis):
                                                    uniqueIndices)
         if isinstance(self, Points):
             return UML.createData('List', uniqueData, pointNames=axisNames,
-                                  featureNames=offAxisNames)
+                                  featureNames=offAxisNames, useLog=False)
         else:
             return UML.createData('List', uniqueData, pointNames=offAxisNames,
-                                  featureNames=axisNames)
+                                  featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #
