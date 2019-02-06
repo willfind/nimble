@@ -8,8 +8,8 @@ from __future__ import absolute_import
 from functools import reduce
 
 import numpy
-from numpy.testing import assert_equal
 from six.moves import range
+from six.moves import zip
 
 import UML
 import UML.data
@@ -18,15 +18,18 @@ from UML.exceptions import ImproperActionException
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
-from .dataHelpers import inheritDocstringsFactory
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
+from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import allDataIdentical
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
     from scipy.io import mmwrite
+
 pd = UML.importModule('pandas')
 
 @inheritDocstringsFactory(Base)
@@ -121,13 +124,10 @@ class Sparse(Base):
             tmpRight = other.copy()
             tmpLeft._sortInternal('feature')
             tmpRight._sortInternal('feature')
-            try:
-                assert_equal(tmpLeft.data.data, tmpRight.data.data)
-                assert_equal(tmpLeft.data.row, tmpRight.data.row)
-                assert_equal(tmpLeft.data.col, tmpRight.data.col)
-                return True
-            except Exception:
-                return False
+
+            return (allDataIdentical(tmpLeft.data.data, tmpRight.data.data)
+                    and allDataIdentical(tmpLeft.data.row, tmpRight.data.row)
+                    and allDataIdentical(tmpLeft.data.col, tmpRight.data.col))
 
     def _getTypeString_implementation(self):
         return 'Sparse'
@@ -243,16 +243,16 @@ class Sparse(Base):
     def _copyAs_implementation(self, format):
 
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data)
+            ret = UML.createData('Sparse', self.data, useLog=False)
             # Due to duplicate removal done in createData, we cannot guarantee
             # that the internal sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data)
+            return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data)
+            return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data)
+            return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -544,6 +544,183 @@ class Sparse(Base):
             msg = 'self._sorted is not either point nor feature.'
             raise ImproperActionException(msg)
 
+    def _merge_implementation(self, other, point, feature, onFeature,
+                              matchingFtIdx):
+        if self._sorted != 'feature':
+            self._sortInternal('feature')
+        if other._sorted != 'feature':
+            other._sortInternal('feature')
+        leftFtCount = len(self.features)
+        rightFtCount = len(other.features) - len(matchingFtIdx[0])
+        if onFeature:
+            onIdxL = self.features.getIndex(onFeature)
+            onIdxR = other.features.getIndex(onFeature)
+            leftData = self.data.data
+            leftRow = self.data.row
+            leftCol = self.data.col
+            rightData = other.data.data.copy()
+            rightRow = other.data.row.copy()
+            rightCol = other.data.col.copy()
+        else:
+            onIdxL = 0
+            onIdxR = 0
+            leftData = self.data.data.astype(numpy.object_)
+            if not self._anyDefaultPointNames():
+                leftData = numpy.append([self.points.getNames()], leftData)
+            elif self._pointNamesCreated():
+                # differentiate default names between objects;
+                # note still start with DEFAULT_PREFIX
+                leftNames = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
+                             for n in self.points.getNames()]
+                leftData = numpy.append([leftNames], leftData)
+            else:
+                leftNames = [DEFAULT_PREFIX + str(i) for i
+                             in range(len(self.points))]
+                leftData = numpy.append(leftNames, leftData)
+            leftRow = numpy.append([i for i in range(len(self.points))],
+                                   self.data.row)
+            leftCol = numpy.append([0 for _ in range(len(self.points))],
+                                   self.data.col + 1)
+            rightData = other.data.data.copy().astype(numpy.object_)
+            if not other._anyDefaultPointNames():
+                rightData = numpy.append([other.points.getNames()], rightData)
+            elif other._pointNamesCreated():
+                # differentiate default names between objects;
+                # note still start with DEFAULT_PREFIX
+                rightNames = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
+                              for n in other.points.getNames()]
+                rightData = numpy.append([rightNames], rightData)
+            else:
+                rtRange = range(self.shape[0], self.shape[0] + other.shape[0])
+                rightNames = [DEFAULT_PREFIX + str(i) for i in rtRange]
+                rightData = numpy.append(rightNames, rightData)
+            rightRow = numpy.append([i for i in range(len(other.points))],
+                                    other.data.row.copy())
+            rightCol = numpy.append([0 for i in range(len(other.points))],
+                                    other.data.col.copy() + 1)
+            matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+            matchingFtIdx[0].insert(0, 0)
+            matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+            matchingFtIdx[1].insert(0, 0)
+
+        mergedData = numpy.empty((0, 0), dtype=numpy.object_)
+        mergedRow = []
+        mergedCol = []
+        matched = []
+        nextPt = 0
+        numPts = 0
+
+        for ptIdxL, target in enumerate(leftData[leftCol == onIdxL]):
+            rowIdxR = numpy.where(rightData[rightCol == onIdxR] == target)[0]
+            if len(rowIdxR) > 0:
+                for ptIdxR in rowIdxR:
+                    ptL = leftData[leftRow == ptIdxL]
+                    ptR = rightData[rightRow == ptIdxR]
+                    matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
+                    nansL = ptL[matchingFtIdx[0]] != ptL[matchingFtIdx[0]]
+                    nansR = ptR[matchingFtIdx[1]] != ptR[matchingFtIdx[1]]
+                    acceptableValues = matches + nansL + nansR
+                    if not all(acceptableValues):
+                        msg = "The objects contain different values for the "
+                        msg += "same feature"
+                        raise ArgumentException(msg)
+                    if len(nansL) > 0:
+                        # fill any nan values in left with the corresponding
+                        # right value
+                        for i, value in enumerate(ptL[matchingFtIdx[0]]):
+                            if value != value:
+                                fill = ptR[matchingFtIdx[1]][i]
+                                ptL[matchingFtIdx[0]][i] = fill
+                    ptR = ptR[[i for i in range(len(ptR))
+                               if i not in matchingFtIdx[1]]]
+                    pt = numpy.append(ptL, ptR)
+                    if feature == "intersection":
+                        pt = pt[matchingFtIdx[0]]
+                        leftFtCount = len(matchingFtIdx[0])
+                    elif onFeature and feature == "left":
+                        pt = pt[:len(self.features)]
+                    elif feature == "left":
+                        pt = pt[:len(self.features) + 1]
+                    if onFeature is None:
+                        pt = pt[1:]
+                    matched.append(target)
+                    mergedData = numpy.append(mergedData, pt)
+                    mergedRow.extend([nextPt] * len(pt))
+                    mergedCol.extend([i for i in range(len(pt))])
+                    nextPt += 1
+                    numPts += 1
+            elif point in ["union", "left"]:
+                ptL = leftData[leftRow == ptIdxL]
+                if onFeature:
+                    numNaN = len(other.features) - len(matchingFtIdx[1])
+                    ptR = [numpy.nan] * numNaN
+                else:
+                    numNaN = len(other.features) - len(matchingFtIdx[1]) + 1
+                    ptR = [numpy.nan] * numNaN
+                pt = numpy.append(ptL, ptR)
+                if feature == "intersection":
+                    pt = pt[matchingFtIdx[0]]
+                elif onFeature and feature == "left":
+                    pt = pt[:len(self.features)]
+                elif feature == "left":
+                    pt = pt[:len(self.features) + 1]
+                if onFeature is None:
+                    pt = pt[1:]
+                mergedData = numpy.append(mergedData, pt)
+                mergedRow.extend([nextPt] * len(pt))
+                mergedCol.extend([i for i in range(len(pt))])
+                nextPt += 1
+                numPts += 1
+
+        if point == 'union':
+            for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
+                if target not in matched:
+                    if onFeature:
+                        nanList = [numpy.nan] * len(self.features)
+                        ptL = numpy.array(nanList, dtype=numpy.object_)
+                    else:
+                        nanList = [numpy.nan] * (len(self.features) + 1)
+                        ptL = numpy.array(nanList, dtype=numpy.object_)
+                    fill = rightData[(rightRow == ptIdxR)][matchingFtIdx[1]]
+                    ptL[matchingFtIdx[0]] = fill
+                    # only unmatched points from right
+                    notMatchedR = numpy.in1d(rightCol, matchingFtIdx[1],
+                                             invert=True)
+                    ptR = rightData[(rightRow == ptIdxR) & (notMatchedR)]
+                    pt = numpy.append(ptL, ptR)
+                    if feature == "intersection":
+                        pt = pt[matchingFtIdx[0]]
+                    elif onFeature and feature == "left":
+                        pt = pt[:len(self.features)]
+                    elif feature == "left":
+                        pt = pt[:len(self.features) + 1]
+                    if onFeature is None:
+                        # remove pointNames column added
+                        pt = pt[1:]
+                    mergedData = numpy.append(mergedData, pt)
+                    mergedRow.extend([nextPt] * len(pt))
+                    mergedCol.extend([i for i in range(len(pt))])
+                    nextPt += 1
+                    numPts += 1
+
+        numFts = leftFtCount + rightFtCount
+        if onFeature and feature == "intersection":
+            numFts = len(matchingFtIdx[0])
+        elif feature == "intersection":
+            numFts = len(matchingFtIdx[0]) - 1
+        elif feature == "left":
+            numFts = len(self.features)
+        if len(mergedData) == 0:
+            mergedData = []
+
+        self._featureCount = numFts
+        self._pointCount = numPts
+
+        self.data = coo_matrix((mergedData, (mergedRow, mergedCol)),
+                               shape=(numPts, numFts))
+
+        self._sorted = None
+
     def _getitem_implementation(self, x, y):
         """
         currently, we sort the data first and then do binary search
@@ -691,7 +868,7 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self.data * other.data
 
-        return UML.createData('Sparse', retData)
+        return UML.createData('Sparse', retData, useLog=False)
 
     def _scalarMultiply_implementation(self, scalar):
         """
@@ -1015,9 +1192,36 @@ class SparseView(BaseView, Sparse):
         return self._source[adjX, adjY]
 
     def _copyAs_implementation(self, format):
+        if format == "Sparse":
+            sourceData = self._source.data.data.copy()
+            sourceRow = self._source.data.row.copy()
+            sourceCol = self._source.data.col.copy()
+
+            keep = ((sourceRow >= self._pStart) &
+                     (sourceRow < self._pEnd) &
+                     (sourceCol >= self._fStart) &
+                     (sourceCol < self._fEnd))
+            keepData = sourceData[keep]
+            keepRow = sourceRow[keep]
+            keepCol = sourceCol[keep]
+            if self._pStart > 0:
+                keepRow = list(map(lambda x: x - self._pStart, keepRow))
+            if self._fStart > 0:
+                keepCol = list(map(lambda x: x - self._fStart, keepCol))
+
+            coo = coo_matrix((keepData, (keepRow, keepCol)),
+                             shape=(len(self.points), len(self.features)))
+            pNames = None
+            fNames = None
+            if self._pointNamesCreated():
+                pNames=self.points.getNames()
+            if self._featureNamesCreated():
+                fNames=self.features.getNames()
+            return Sparse(coo, pointNames=pNames, featureNames=fNames)
+
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
-            intermediate = UML.createData('Matrix', emptyStandin)
+            intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
             return intermediate.copyAs(format)
 
         if format == 'numpyarray':
@@ -1031,7 +1235,7 @@ class SparseView(BaseView, Sparse):
         limited = limited.features.copy(start=self._fStart,
                                         end=self._fEnd - 1)
 
-        if format is None or format == 'Sparse':
+        if format is None:
             return limited
         else:
             return limited._copyAs_implementation(format)
@@ -1091,13 +1295,13 @@ class SparseView(BaseView, Sparse):
             selfConv = self.copyAs("Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
-            ret = UML.createData("Sparse", ret.data)
+            ret = UML.createData("Sparse", ret.data, useLog=False)
             return ret
 
         selfConv = self.copyAs("Sparse")
 
         toCall = getattr(selfConv, implName)
         ret = toCall(other)
-        ret = UML.createData(self.getTypeString(), ret.data)
+        ret = UML.createData(self.getTypeString(), ret.data, useLog=False)
 
         return ret

@@ -12,6 +12,7 @@ from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 from .base import cmp_to_key
+from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 class MatrixAxis(Axis):
     """
@@ -159,6 +160,26 @@ class MatrixAxis(Axis):
             newName = self._getName(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
+
+    ##############################
+    # High Level implementations #
+    ##############################
+
+    def _unique_implementation(self):
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._source,
+                                                             self._axis)
+        if numpy.array_equal(self._source.data, uniqueData):
+            return self._source.copy()
+
+        axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
+                                                   uniqueIndices)
+        if isinstance(self, Points):
+            return UML.createData('Matrix', uniqueData, pointNames=axisNames,
+                          featureNames=offAxisNames, useLog=False)
+        else:
+            return UML.createData('Matrix', uniqueData,
+                                  pointNames=offAxisNames,
+                                  featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

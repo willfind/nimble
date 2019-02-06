@@ -12,6 +12,12 @@ from collections import OrderedDict
 
 from UML.exceptions import ArgumentException
 
+import UML
+from UML.logger import enableLogging, directCall
+from .dataHelpers import logCaptureFactory
+
+logCapture = logCaptureFactory('points')
+
 class Points(object):
     """
     Methods that can be called on the a UML data objects point axis.
@@ -193,7 +199,7 @@ class Points(object):
     #########################
 
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False):
+             randomize=False, useLog=None):
         """
         Return a copy of certain points of this object.
 
@@ -242,10 +248,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.copy)
+            else:
+                wrapped = directCall(self.copy)
+            return wrapped(toCopy, start, end, number, randomize,
+                           useLog=False)
+
         return self._copy(toCopy, start, end, number, randomize)
 
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False):
+                randomize=False, useLog=None):
         """
         Move certain points of this object into their own object.
 
@@ -295,10 +309,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.extract)
+            else:
+                wrapped = directCall(self.extract)
+            return wrapped(toExtract, start, end, number, randomize,
+                           useLog=False)
+
         return self._extract(toExtract, start, end, number, randomize)
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Remove certain points from this object.
 
@@ -344,10 +366,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.delete)
+            else:
+                wrapped = directCall(self.delete)
+            return wrapped(toDelete, start, end, number, randomize,
+                           useLog=False)
+
         self._delete(toDelete, start, end, number, randomize)
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Keep only certain points of this object.
 
@@ -393,6 +423,14 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.retain)
+            else:
+                wrapped = directCall(self.retain)
+            return wrapped(toRetain, start, end, number, randomize,
+                           useLog=False)
+
         self._retain(toRetain, start, end, number, randomize)
 
     def count(self, condition):
@@ -422,7 +460,7 @@ class Points(object):
         """
         return self._count(condition)
 
-    def sort(self, sortBy=None, sortHelper=None):
+    def sort(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Arrange the points in this object.
 
@@ -443,6 +481,13 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.sort)
+            else:
+                wrapped = directCall(self.sort)
+            return wrapped(sortBy, sortHelper, useLog=False)
+
         self._sort(sortBy, sortHelper)
 
     # def flattenToOne(self):
@@ -499,7 +544,7 @@ class Points(object):
     #     """
     #     self._unflattenFromOne(numPoints)
 
-    def transform(self, function, points=None):
+    def transform(self, function, points=None, useLog=None):
         """
         Modify this object by applying a function to each point.
 
@@ -525,13 +570,20 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transform)
+            else:
+                wrapped = directCall(self.transform)
+            return wrapped(function, points, useLog=False)
+
         self._transform(function, points)
 
     ###########################
     # Higher Order Operations #
     ###########################
 
-    def calculate(self, function, points=None):
+    def calculate(self, function, points=None, useLog=None):
         """
         Return a new object with a calculation applied to each point.
 
@@ -560,9 +612,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.calculate)
+            else:
+                wrapped = directCall(self.calculate)
+            return wrapped(function, points, useLog=False)
+
         return self._calculate(function, points)
 
-    def add(self, toAdd, insertBefore=None):
+    def add(self, toAdd, insertBefore=None, useLog=None):
         """
         Insert more points into this object.
 
@@ -595,9 +654,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.add)
+            else:
+                wrapped = directCall(self.add)
+            return wrapped(toAdd, insertBefore, useLog=False)
+
         self._add(toAdd, insertBefore)
 
-    def mapReduce(self, mapper, reducer):
+    def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
 
@@ -617,9 +683,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.mapReduce)
+            else:
+                wrapped = directCall(self.mapReduce)
+            return wrapped(mapper, reducer, useLog=False)
+
         return self._mapReduce(mapper, reducer)
 
-    def shuffle(self):
+    def shuffle(self, useLog=None):
         """
         Permute the indexing of the points to a random order.
 
@@ -633,10 +706,17 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.shuffle)
+            else:
+                wrapped = directCall(self.shuffle)
+            return wrapped(useLog=False)
+
         self._shuffle()
 
     def fill(self, match, fill, arguments=None, points=None,
-             returnModified=False):
+             returnModified=False, useLog=None):
         """
         Replace given values in each point with other values.
 
@@ -679,9 +759,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fill)
+            else:
+                wrapped = directCall(self.fill)
+            return wrapped(match, fill, arguments, points, returnModified,
+                           useLog=False)
+
         return self._fill(match, fill, arguments, points, returnModified)
 
-    def normalize(self, subtract=None, divide=None, applyResultTo=None):
+    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+                  useLog=None):
         """
         Modify all points in this object using the given operations.
 
@@ -720,6 +809,13 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.normalize)
+            else:
+                wrapped = directCall(self.normalize)
+            return wrapped(subtract, divide, applyResultTo, useLog=False)
+
         self._normalize(subtract, divide, applyResultTo)
 
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
@@ -940,6 +1036,18 @@ class Points(object):
         """
         return self._nonZeroIterator()
 
+    def unique(self):
+        """
+        Return a new object with only unique points. If point names are
+        present, the point name of the first instance of the unique
+        point in this object will be assigned.
+        """
+        return self._unique()
+
+    #########################
+    # Statistical functions #
+    #########################
+
     def similarities(self, similarityFunction):
         """
         Calculate similarities between points.
@@ -1092,6 +1200,10 @@ class Points(object):
 
     @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _unique(self):
         pass
 
     @abstractmethod

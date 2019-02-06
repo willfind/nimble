@@ -193,6 +193,10 @@ class SparsePointsView(SparsePoints, AxisView, PointsView):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
+    def _unique_implementation(self):
+        unique = self._source.copyAs('Sparse')
+        return unique.points._unique_implementation()
+
 class nzIt(object):
     """
     Non-zero iterator to return when iterating through each feature.
