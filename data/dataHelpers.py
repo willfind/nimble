@@ -9,6 +9,7 @@ import copy
 import math
 import string
 import inspect
+
 import re
 from functools import wraps
 import sys
@@ -408,6 +409,51 @@ def inheritDocstringsFactory(toInherit):
 
         return cls
     return inheritDocstring
+
+def nonSparseAxisUniqueArray(obj, axis):
+    obj._validateAxis(axis)
+    if obj.getTypeString() == 'DataFrame':
+        # faster than numpy.array(obj.data)
+        data = obj.data.values
+    else:
+        data = numpy.array(obj.data, dtype=numpy.object_)
+    if axis == 'feature':
+        data = data.transpose()
+
+    unique = set()
+    uniqueIndices = []
+    for i, values in enumerate(data):
+        if tuple(values) not in unique:
+            unique.add(tuple(values))
+            uniqueIndices.append(i)
+    uniqueData = data[uniqueIndices]
+
+    if axis == 'feature':
+        uniqueData = uniqueData.transpose()
+
+    return uniqueData, uniqueIndices
+
+def uniqueNameGetter(obj, axis, uniqueIndices):
+    obj._validateAxis(axis)
+    if axis == 'point':
+        hasAxisNames = obj._pointNamesCreated()
+        hasOffAxisNames = obj._featureNamesCreated()
+        getAxisName = obj.points.getName
+        getOffAxisNames = obj.features.getNames
+    else:
+        hasAxisNames = obj._featureNamesCreated()
+        hasOffAxisNames = obj._pointNamesCreated()
+        getAxisName = obj.features.getName
+        getOffAxisNames = obj.points.getNames
+
+    axisNames = False
+    offAxisNames = False
+    if hasAxisNames:
+        axisNames = [getAxisName(i) for i in uniqueIndices]
+    if hasOffAxisNames:
+        offAxisNames = getOffAxisNames()
+
+    return axisNames, offAxisNames
 
 def valuesToPythonList(values, argName):
     """
