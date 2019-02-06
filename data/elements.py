@@ -277,12 +277,9 @@ class Elements(object):
         """
         Count of each unique value in the data.
 
-        Returns a dictionary containing each unique value as a key and
-        the number of times that value occurs as the value.
-
         Parameters
         ----------
-        points
+        points : identifier, list of identifiers
             May be None indicating application to all points, a single
             name or index or an iterable of points and/or indices.
         features : identifier, list of identifiers
@@ -292,6 +289,8 @@ class Elements(object):
         Returns
         -------
         dict
+            Each unique value as keys and the number of times that
+            value occurs as values.
 
         See Also
         --------

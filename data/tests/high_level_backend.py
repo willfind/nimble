@@ -1094,8 +1094,6 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = test.features.unique()
 
-        print(ret)
-        print(exp)
         assert ret == exp
 
     def test_features_unique_noNames(self):
