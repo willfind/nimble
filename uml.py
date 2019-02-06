@@ -5,9 +5,9 @@ uml import.
 
 from __future__ import absolute_import
 import copy
+import six.moves.configparser
 from dateutil.parser import parse
 
-import six.moves.configparser
 import numpy
 import six
 from six.moves import range
@@ -376,14 +376,17 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     (_, trueLearnerName) = _unpackLearnerName(learnerName)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments=arguments, useLog=False, **kwarguments)
-    normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False, **kwarguments)
+    tl = UML.train(learnerName, trainX, trainY, arguments=arguments,
+                   useLog=False, **kwarguments)
+    normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False,
+                               **kwarguments)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=arguments, useLog=False, **kwarguments)
+        normalizedTest = tl.apply(testX, arguments=arguments, useLog=False,
+                                  **kwarguments)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
@@ -396,8 +399,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         testX.name = testX.name + " " + trueLearnerName
 
     merged = _mergeArguments(arguments, kwarguments)
-    UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None, learnerName, merged, None)
+    UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None,
+                             learnerName, merged, None)
 
+    return None
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
     """
@@ -869,8 +874,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         return wrapped(learnerName, X, Y, performanceFunction, arguments,
                        numFolds, scoreMode, useLog, **kwarguments)
 
-    bestResult = crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments,
-                                         numFolds, scoreMode, useLog, **kwarguments)
+    bestResult = crossValidateReturnBest(learnerName, X, Y,
+                                         performanceFunction, arguments,
+                                         numFolds, scoreMode, useLog,
+                                         **kwarguments)
 
     return bestResult[1]
 
@@ -1255,7 +1262,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
                                      multiClassStrategy, bestArgument, useLog)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
-    UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, bestArgument, None)
+    UML.logger.active.logRun("train", trainX, trainY, None, None, funcString,
+                             bestArgument, None)
 
     return trainedLearner
 
@@ -1497,7 +1505,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                multiClassStrategy=multiClassStrategy,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
-    predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
+    predictions = trainedLearner.apply(testX, {}, output, scoreMode,
+                                       useLog=useLog)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
 
     metrics = {}
@@ -1626,14 +1635,27 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
 
 def log(logType, logInfo):
     """
-    log will enter a log entry into the active logger's database files. The log entry will
-    include a timestamp and a run number in addition to the logType and logInfo
+    Enter an entry into active logger's database file.
 
-    ARGUMENTS:
-    logType: A string of the type of log entered. "load", "prep", "run", and "crossVal" types
-             have builtin processing for logInfo. A default processing of logInfo will be used
-             for unrecognized types
-    logInfo: A python string, list or dictionary containing any information to be logged
+    The log entry will include a timestamp and a run number in addition
+    to the ``logType`` and ``logInfo``.
+
+    Parameters
+    ----------
+    logType : str
+        A string of the type of log entered. "load", "prep", "run", and
+        "crossVal" types have builtin processing for logInfo. A default
+        processing of logInfo will be used for unrecognized types.
+    logInfo : str, list, dict
+        Contains any information to be logged.
+
+    See Also
+    --------
+    showLog
+
+    Examples
+    --------
+    TODO
     """
     if not isinstance(logType, six.string_types):
         msg = "logType must be a string"
@@ -1644,64 +1666,87 @@ def log(logType, logInfo):
     UML.logger.active.log(logType, logInfo)
 
 
-def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
-            maximumEntries=100, searchForText=None, regex=False, saveToFileName=None, append=False):
-        """
-        showLog parses the active logfile based on the arguments passed and prints a
-        human readable interpretation of the log file.
+def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
+            endDate=None, maximumEntries=100, searchForText=None, regex=False,
+            saveToFileName=None, append=False):
+    """
+    Output contents of the logger's database file.
 
-        ARGUMENTS:
-        levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
-                        to 3 (most detail). Default is 2
-              Level 1:  Data loading, data preparation and preprocessing, custom user logs
-              Level 2:  Outputs basic information about each run. Includes timestamp, run number,
-                        learner name, train and test object details, parameter, metric, and
-                        timer data if available
-              Level 3:  Cross Validation data
+    Create a human readable interpretation of the log file based on
+    the arguments passed and print or write to a file.
 
-        leastRunsAgo:   The integer value for the least number of runs since the most recent
-                        run to include in the log. Default is 0
+    Parameters
+    ----------
+    levelOfDetail:  int
+        The value for the level of detail from 1, the least detail,
+        to 3 (most detail). Default is 2.
+        * Level 1 - Data loading, data preparation and
+          preprocessing, custom user logs.
+        * Level 2 - Outputs basic information about each run.
+          Includes timestamp, run number, learner name, train and
+          test object details, parameter, metric, and timer data if
+          available.
+        * Level 3 - Include cross-validation data.
+    leastRunsAgo : int
+        The least number of runs since the most recent run to
+        include in the log. Default is 0.
+    mostRunsAgo : int
+        The most number of runs since the most recent run to
+        include in the log. Default is 2.
+    startDate :  str, datetime
+        A string or datetime object of the date to begin adding runs
+        to the log.
+        Acceptable formats:
+        * "YYYY-MM-DD"
+        * "YYYY-MM-DD HH:MM"
+        * "YYYY-MM-DD HH:MM:SS"
+    endDate : str, datetime
+        A string or datetime object of the date to stop adding runs
+        to the log.
+        See ``startDate`` for formatting.
+    maximumEntries : int
+        Maximum number of entries to allow before stopping the log.
+        None will allow all entries provided from the query. Default
+        is 100.
+    searchForText :  str, regex
+        Search for in each log entry. Default is None.
+    saveToFileName : str
+        The name of a file to write the human readable log. It will
+        be saved in the same directory as the logger database.
+        Default is None, showLog will print to standard out.
+    append : bool
+        Append logs to the file in saveToFileName instead of
+        overwriting file. Default is False.
 
-        mostRunsAgo:    The integer value for the least number of runs since the most recent
-                        run to include in the log. Default is 2
+    See Also
+    --------
+    log
 
-        startDate:      A string or datetime.datetime object of the date to begin adding runs to the log.
-                        Acceptable formats:
-                          "YYYY-MM-DD"
-                          "YYYY-MM-DD HH:MM"
-                          "YYYY-MM-DD HH:MM:SS"
-
-        endDate:        A string or datetime.datetime object of the date to stop adding runs to the log.
-                        See startDate for formatting.
-
-        maximumEntries: Maximum number of entries to allow before stopping the log
-                        Default is 100. None will allow all entries provided from the query
-        searchForText:  string or regular expression to search for in each log entry.
-                        Default is None
-
-        saveToFileName: The name of a file where the human readable log will be saved.
-                        Default is None, showLog will print to standard out
-
-        append:         Append logs to the file in saveToFileName instead of overwriting file.
-                        Default is False
-        """
-        if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
-            msg = "levelOfDetail must be 1, 2, or 3"
+    Examples
+    --------
+    TODO
+    """
+    if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
+        msg = "levelOfDetail must be 1, 2, or 3"
+        raise ArgumentException(msg)
+    if (startDate is not None
+            and endDate is not None
+            and startDate > endDate):
+        startDate = parse(startDate)
+        endDate = parse(endDate)
+        msg = "The startDate must be before the endDate"
+        raise ArgumentException(msg)
+    if leastRunsAgo is not None:
+        if leastRunsAgo < 0:
+            msg = "leastRunsAgo must be greater than zero"
             raise ArgumentException(msg)
-        if startDate is not None and endDate is not None and startDate > endDate:
-            startDate = parse(startDate)
-            endDate = parse(endDate)
-            msg = "The startDate must be before the endDate"
+        if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
+            msg = "mostRunsAgo must be greater than or equal to "
+            msg += "leastRunsAgo"
             raise ArgumentException(msg)
-        if leastRunsAgo is not None:
-            if leastRunsAgo < 0:
-                msg = "leastRunsAgo must be greater than zero"
-                raise ArgumentException(msg)
-            if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
-                msg = "mostRunsAgo must be greater than or equal to leastRunsAgo"
-                raise ArgumentException(msg)
-        UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                                  maximumEntries, searchForText, regex, saveToFileName, append)
+    UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo,
+                              startDate, endDate, maximumEntries,
+                              searchForText, regex, saveToFileName, append)
 
 
 def loadData(inputPath):

@@ -57,7 +57,7 @@ try:
                 return self.value < other.value
             except TypeError:
                 return self.typestr < other.typestr
-except:
+except Exception:
     Py2Key = None # for python2
 
 #in python3, itertools.ifilter is not there anymore. it is filter.
@@ -632,7 +632,7 @@ def initDataObject(
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
-        except:
+        except Exception:
             six.reraise(einfo[0], einfo[1], einfo[2])
 
 
@@ -899,7 +899,7 @@ def _loadmtxForAuto(
     openFile.seek(startPosition)
     try:
         data = scipy.io.mmread(openFile)#python 2
-    except:
+    except Exception:
         if hasattr(openFile, 'name'):
             tempName = openFile.name
         else:
@@ -3650,9 +3650,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
-    # For each pair of class labels: remove all points with one of those labels,
-    # train a classifier on those points, get predictions based on that model,
-    # and put the points back into the data object
+    # For each pair of class labels: remove all points with one of those
+    # labels, train a classifier on those points, get predictions based on
+    # that model, and put the points back into the data object
     rawPredictions = None
     predictionFeatureID = 0
     for pair in labelPairs:
@@ -3903,8 +3903,8 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
     #     if not isinstance(performanceFunction, list):
     #         performanceFunction = [performanceFunction]
     #         results = [results]
-    #     UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY, learnerName,
-    #                              merged, metrics, timer)
+    #     UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY,
+    #                              learnerName, merged, metrics, timer)
 
     return results
 

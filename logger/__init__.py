@@ -6,4 +6,3 @@ from .uml_logger import logCapture
 from .uml_logger import enableLogging
 from .uml_logger import directCall
 from .stopwatch import Stopwatch
-
