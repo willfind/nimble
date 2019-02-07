@@ -868,4 +868,4 @@ def initLoggerAndLogConfig():
         UML.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
         UML.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
-    UML.logger.active = UmlLogger(location, name)
+    return UmlLogger(location, name)

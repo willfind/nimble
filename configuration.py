@@ -46,7 +46,7 @@ class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
         """
         try:
             return self._comments[section][option]
-        except:
+        except Exception:
             return None
 
 
@@ -477,7 +477,7 @@ class SessionConfiguration(object):
                 if isinstance(self.changes[sec], ToDelete):
                     try:
                         self.cp.remove_section(sec)
-                    except:
+                    except Exception:
                         pass
                 else:
                     for opt in self.changes[sec]:
@@ -492,7 +492,7 @@ class SessionConfiguration(object):
                     if isinstance(self.changes[section], ToDelete):
                         try:
                             self.cp.remove_section(section)
-                        except:
+                        except Exception:
                             pass
                     else:
                         for opt in self.changes[section]:
@@ -554,7 +554,7 @@ def syncWithInterfaces(settingsObj):
 
         # check that all present are valid names
         if settingsObj.cp.has_section(interfaceName):
-            for (opName, value) in settingsObj.cp.items(interfaceName):
+            for (opName, _) in settingsObj.cp.items(interfaceName):
                 if opName not in optionNames:
                     settingsObj.cp.remove_option(interfaceName, opName)
         else:

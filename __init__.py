@@ -27,7 +27,6 @@ import UML.logger
 # Import those functions that we want to be accessible in the
 # top level
 from UML.randomness import setRandomSeed
-
 from .uml import train
 from .uml import trainAndApply
 from .uml import trainAndTest
@@ -82,7 +81,7 @@ UML.helpers.autoRegisterFromSettings()
 UML.configuration.syncWithInterfaces(UML.settings)
 
 # initialize the logging file
-UML.logger.uml_logger.initLoggerAndLogConfig()
+UML.logger.active = UML.logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
            'crossValidateReturnAll', 'crossValidateReturnBest',
