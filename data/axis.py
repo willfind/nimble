@@ -727,6 +727,15 @@ class Axis(object):
 
         return self._nonZeroIterator_implementation()
 
+    def _unique(self):
+        ret = self._unique_implementation()
+
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
+
+        ret.validate()
+        return ret
+
     ###################
     # Query functions #
     ###################

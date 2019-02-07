@@ -643,46 +643,6 @@ class Base(object):
 
         return res
 
-    def countEachUniqueValue(self, points=None, features=None):
-        """
-        The unique values and the number of occurrences in the data.
-
-        Parameters
-        ----------
-        points : identifier, list of identifiers
-            May be a single point name or index, an iterable,
-            container of point names and/or indices. None indicates
-            application to all points.
-        features : identifier, list of identifiers
-            May be a single feature name or index, an iterable,
-            container of feature names and/or indices. None indicates
-            application to all features.
-
-        Returns
-        -------
-        dict
-            Each unique value as keys and a count of the number of times
-            that value occurs as values.
-
-        Examples
-        --------
-        TODO
-        """
-        uniqueCount = {}
-        if points is None:
-            points = [i for i in range(self._pointCount)]
-        if features is None:
-            features = [i for i in range(self._featureCount)]
-        points = valuesToPythonList(points, 'points')
-        features = valuesToPythonList(features, 'features')
-        for i in points:
-            for j in features:
-                val = self[i, j]
-                temp = uniqueCount.get(val, 0)
-                uniqueCount[val] = temp + 1
-
-        return uniqueCount
-
     def hashCode(self):
         """
         Returns a hash for this matrix.

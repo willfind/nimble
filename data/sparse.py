@@ -1192,6 +1192,33 @@ class SparseView(BaseView, Sparse):
         return self._source[adjX, adjY]
 
     def _copyAs_implementation(self, format):
+        if format == "Sparse":
+            sourceData = self._source.data.data.copy()
+            sourceRow = self._source.data.row.copy()
+            sourceCol = self._source.data.col.copy()
+
+            keep = ((sourceRow >= self._pStart) &
+                     (sourceRow < self._pEnd) &
+                     (sourceCol >= self._fStart) &
+                     (sourceCol < self._fEnd))
+            keepData = sourceData[keep]
+            keepRow = sourceRow[keep]
+            keepCol = sourceCol[keep]
+            if self._pStart > 0:
+                keepRow = list(map(lambda x: x - self._pStart, keepRow))
+            if self._fStart > 0:
+                keepCol = list(map(lambda x: x - self._fStart, keepCol))
+
+            coo = coo_matrix((keepData, (keepRow, keepCol)),
+                             shape=(len(self.points), len(self.features)))
+            pNames = None
+            fNames = None
+            if self._pointNamesCreated():
+                pNames=self.points.getNames()
+            if self._featureNamesCreated():
+                fNames=self.features.getNames()
+            return Sparse(coo, pointNames=pNames, featureNames=fNames)
+
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
             intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
@@ -1208,7 +1235,7 @@ class SparseView(BaseView, Sparse):
         limited = limited.features.copy(start=self._fStart,
                                         end=self._fEnd - 1)
 
-        if format is None or format == 'Sparse':
+        if format is None:
             return limited
         else:
             return limited._copyAs_implementation(format)

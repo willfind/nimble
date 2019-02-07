@@ -636,9 +636,9 @@ class List(Base):
                 self.pRange = pEnd - pStart
                 self.fStart = fStart
                 self.fEnd = fEnd
-                self.fviewer = FeatureViewer(self.source, fStart, fEnd)
 
             def __getitem__(self, key):
+                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
                 if key < 0 or key >= self.pRange:
                     raise IndexError("")
 

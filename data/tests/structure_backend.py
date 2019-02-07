@@ -426,17 +426,41 @@ class StructureDataSafe(StructureShared):
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = numpy.array(data).T
 
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
+        for retType in UML.data.available:
 
-        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+            out = orig.copyAs(retType, rowsArePoints=False)
 
-        assert out == desired
+            desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
+
+            assert out == desired
+
+        out = orig.copyAs(format='pythonlist', rowsArePoints=False)
+
+        assert out == dataT.tolist()
+
+        out = orig.copyAs(format='numpyarray', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        out = orig.copyAs(format='numpymatrix', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        if scipy:
+
+            out = orig.copyAs(format='scipycsr', rowsArePoints=False)
+
+            assert numpy.array_equal(out.toarray(), dataT)
+
+            out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+
+            assert numpy.array_equal(out.toarray(), dataT)
 
         out = orig.copyAs(format='list of dict', rowsArePoints=False)
 
