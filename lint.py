@@ -31,6 +31,8 @@ def notRequired(warning):
         'chained-comparison',
         'comparison-with-itself',
         'duplicate-code',
+        'eval-used',
+        'exec-used',
         'fixme',
         'invalid-name',
         'len-as-condition',
@@ -153,8 +155,11 @@ def printWarningSummary(warnings):
     if errors:
         print('{} are errors which must be corrected.'.format(len(errors)))
         print('    See ERRORS section above.')
-    else:
-        print('*This code satisfies the UML minimum linter requirements*')
+    if not reqOnly and not errors:
+        msg = '* This code satisfies the UML minimum linter requirements *'
+        print('*' * len(msg))
+        print(msg)
+        print('*' * len(msg))
 
 if __name__ == '__main__':
     hasConfig = False
