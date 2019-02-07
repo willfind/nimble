@@ -82,6 +82,13 @@ def startAlternateControl(seed=None):
     unit tests, to either protect later calls from the modifications in
     this section, or to ensure consistency regardless of the current
     state of randomness in UML.
+
+    Parameters
+    ----------
+    seed : int
+        Seed for random state. Must be convertible to 32 bit unsigned
+        integer for compliance with numpy. If seed is None, then we use
+        os system time.
     """
     global _saved
     _saved = (pythonRandom.getstate(), numpyRandom.get_state())

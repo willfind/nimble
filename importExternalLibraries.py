@@ -10,6 +10,10 @@ def importModule(name):
     ----------
     name : str
         The package name.
+
+    Example
+    -------
+    mlpy = importModule('mlpy')
     """
     try:
         return __import__(name)

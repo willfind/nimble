@@ -1,3 +1,7 @@
+"""
+Base class for a CustomLearner.
+"""
+
 from __future__ import absolute_import
 import copy
 
@@ -10,15 +14,12 @@ from UML.interfaces.universal_interface import UniversalInterface
 
 class CustomLearnerInterface(UniversalInterface):
     """
-
+    Base class for a CustomLearner.
     """
 
     _ignoreNames = ['trainX', 'trainY', 'testX']
 
     def __init__(self, packageName):
-        """
-
-        """
         self.name = packageName
         self.registeredLearners = {}
         self._configurableOptionNamesAvailable = []
@@ -27,11 +28,11 @@ class CustomLearnerInterface(UniversalInterface):
 
     def registerLearnerClass(self, learnerClass):
         """
-        Record the given learnerClass as being accessible through this particular interface.
-        The parameter is assumed to be class object which is a subclass of CustomLearner and
-        has been validated by CustomLearner.validateSubclass(); no sanity checking is performed
-        in this method.
-
+        Record the given learnerClass as being accessible through this
+        particular interface. The parameter is assumed to be class
+        object which is a subclass of CustomLearner and has been
+        validated by CustomLearner.validateSubclass(); no sanity
+        checking is performed in this method.
         """
         self.registeredLearners[learnerClass.__name__] = learnerClass
 
@@ -52,14 +53,16 @@ class CustomLearnerInterface(UniversalInterface):
 
     def deregisterLearner(self, learnerName):
         """
-        Remove accessibility of the learner with the given name from this interface.
+        Remove accessibility of the learner with the given name from
+        this interface.
 
-        Returns True of there are other learners still accessible through this interface,
-        False if there are not.
-
+        Returns True of there are other learners still accessible
+        through this interface, False if there are not.
         """
         if not learnerName in self.registeredLearners:
-            raise ArgumentException("Given learnerName does not refer to a learner accessible through this interface")
+            msg = "Given learnerName does not refer to a learner accessible "
+            msg += "through this interface"
+            raise ArgumentException(msg)
 
         # TODO remove option names
         toRemove = self.registeredLearners[learnerName].options()
@@ -82,9 +85,8 @@ class CustomLearnerInterface(UniversalInterface):
 
     def accessible(self):
         """
-        Return true if the package underlying this interface is currently accessible,
-        False otherwise.
-
+        Return true if the package underlying this interface is
+        currently accessible, False otherwise.
         """
         return True
 
@@ -98,19 +100,26 @@ class CustomLearnerInterface(UniversalInterface):
 
     def learnerType(self, name):
         """
-        Returns a string referring to the action the learner takes out of the possibilities:
-        classifier, regressor, featureSelection, dimensionalityReduction
+        Returns a string referring to the action the learner takes out
+        of the possibilities: classifier, regressor, featureSelection,
+        dimensionalityReduction
         TODO
-
         """
         return self.registeredLearners[name].learnerType
 
 
     def _findCallableBackend(self, name):
         """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
+        Find reference to the callable with the given name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the callable.
+
+        Returns
+        -------
+        Reference to in-package function or constructor.
         """
         if name in self.registeredLearners:
             return self.registeredLearners[name]
@@ -119,21 +128,36 @@ class CustomLearnerInterface(UniversalInterface):
 
     def _getParameterNamesBackend(self, name):
         """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
+        Find params for instantiation and function calls.
+
+        Parameters
+        ----------
+        name : str
+            The name of the class or function.
+
+        Returns
+        -------
+        List of list of param names to make the chosen call.
         """
         return self.getLearnerParameterNames(name)
 
     def _getLearnerParameterNamesBackend(self, learnerName):
         """
-        Find all parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of list of param names
+        Find learner parameter names for a trainAndApply() call.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+
+        Returns
+        -------
+        List of list of param names
         """
         ret = None
         if learnerName in self.registeredLearners:
-            temp = self.registeredLearners[learnerName].getLearnerParameterNames()
+            learner = self.registeredLearners[learnerName]
+            temp = learner.getLearnerParameterNames()
             after = []
             for value in temp:
                 if value not in self._ignoreNames:
@@ -144,21 +168,36 @@ class CustomLearnerInterface(UniversalInterface):
 
     def _getDefaultValuesBackend(self, name):
         """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
+        Find default values.
+
+        Parameters
+        ----------
+        name : str
+            The name of the class or function.
+
+        Returns
+        -------
+        List of dict of param names to default values.
         """
         return self.getLearnerDefaultValues(name)
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
         """
-        Find all default values for parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of dict of param names to default values
+        Find learner default parameter values for trainAndApply() call.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+
+        Returns
+        -------
+        List of dict of param names to default values
         """
         ret = None
         if learnerName in self.registeredLearners:
-            temp = self.registeredLearners[learnerName].getLearnerDefaultValues()
+            learner = self.registeredLearners[learnerName]
+            temp = learner.getLearnerDefaultValues()
             after = {}
             for key in temp:
                 if key not in self._ignoreNames:
@@ -172,62 +211,64 @@ class CustomLearnerInterface(UniversalInterface):
         """
         If the learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception.
-
         """
         return learner.getScores(testX)
 
     def _getScoresOrder(self, learner):
         """
-        If the learner is a classifier, then return a list of the the labels corresponding
-        to each column of the return from getScores
-
+        If the learner is a classifier, then return a list of the the
+        labels corresponding to each column of the return from
+        getScores.
         """
         if learner.learnerType == 'classification':
             return learner.labelList
         else:
-            raise ArgumentException("Can only get scores order for a classifying learner")
+            msg = "Can only get scores order for a classifying learner"
+            raise ArgumentException(msg)
 
     def isAlias(self, name):
         """
-        Returns true if the name is an accepted alias for this interface
-
+        Determine if the name is an accepted alias for this interface.
         """
         return name.lower() == self.getCanonicalName().lower()
 
 
     def getCanonicalName(self):
         """
-        Returns the string name that will uniquely identify this interface
-
+        The string name that will uniquely identify this interface.
         """
         return self.name
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
         """
-        Method called before any package level function which transforms all
-        parameters provided by a UML user.
+        Method called before any package level function which transforms
+        all parameters provided by a UML user.
 
-        trainX, trainY, and testX are filled with the values of the parameters of the same name
-        to a call to trainAndApply() or train() and are sometimes empty when being called
-        by other functions. For example, a call to apply() will have trainX and trainY be None.
-        The arguments parameter is a dictionary mapping names to values of all other
-        parameters associated with the learner, each of which may need to be processed.
+        trainX, trainY, and testX are filled with the values of the
+        parameters of the same name to a call to trainAndApply() or
+        train() and are sometimes empty when being called by other
+        functions. For example, a call to apply() will have trainX and
+        trainY be None. The arguments parameter is a dictionary mapping
+        names to values of all other parameters associated with the
+        learner, each of which may need to be processed.
 
-        The return value of this function must be a tuple mirroring the structure of
-        the inputs. Specifically, four values are required: the transformed versions of
-        trainX, trainY, testX, and arguments in that specific order.
-
+        The return value of this function must be a tuple mirroring the
+        structure of the inputs. Specifically, four values are required:
+        the transformed versions of trainX, trainY, testX, and arguments
+        in that specific order.
         """
         retArgs = None
         if arguments is not None:
             retArgs = copy.copy(arguments)
         return (trainX, trainY, testX, retArgs)
 
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
         """
-        Method called before any package level function which transforms the returned
-        value into a format appropriate for a UML user.
-
+        Method called before any package level function which transforms
+        the returned value into a format appropriate for a UML user.
         """
         if isinstance(outputValue, UML.data.Base):
             return outputValue
@@ -236,34 +277,74 @@ class CustomLearnerInterface(UniversalInterface):
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         """
-        build a learner and perform training with the given data
-        TAKES name of learner, transformed arguments
-        RETURNS an in package object to be wrapped by a TrainedLearner object
+        Build a learner and perform training with the given data.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+        trainX : UML.data.Base
+            The training data.
+        trainY : UML.data.Base
+            The training labels.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        An in package object to be wrapped by a TrainedLearner object.
         """
         ret = self.registeredLearners[learnerName]()
         return ret.trainForInterface(trainX, trainY, arguments)
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
         """
-        Given an already trained online learner, extend it's training with the given data
-        TAKES trained learner, transformed arguments,
-        RETURNS the learner after this batch of training
+        Extend the training of an an already trained online learner.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+        trainX : UML.data.Base
+            The training data.
+        trainY : UML.data.Base
+            The training labels.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        The learner after this batch of training
         """
         return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
     def _applier(self, learner, testX, arguments, customDict):
         """
-        use the given learner to do testing/prediction on the given test set
-        TAKES a TrainedLearner object that can be tested on
-        RETURNS UML friendly results
+        Perform testing/prediction on the test set using TrainedLearner.
+
+        Parameters
+        ----------
+        learnerName : str
+            A TrainedLearner object that can be tested on.
+        testX : UML.data.Base
+            The testing data.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        UML friendly results.
         """
         return learner.applyForInterface(testX, arguments)
 
     def _getAttributes(self, learnerBackend):
         """
-        Returns whatever attributes might be available for the given learner. For
-        example, in the case of linear regression, TODO
-
+        Returns whatever attributes might be available for the given
+        learner. For example, in the case of linear regression, TODO
         """
         contents = dir(learnerBackend)
         excluded = dir(CustomLearner)
@@ -276,33 +357,32 @@ class CustomLearnerInterface(UniversalInterface):
 
     def _optionDefaults(self, option):
         """
-        Define package default values that will be used for as long as a default
-        value hasn't been registered in the UML configuration file. For example,
-        these values will always be used the first time an interface is instantiated.
-
+        Define package default values that will be used for as long as a
+        default value hasn't been registered in the UML configuration
+        file. For example, these values will always be used the first
+        time an interface is instantiated.
         """
         return None
 
 
     def _configurableOptionNames(self):
         """
-        Returns a list of strings, where each string is the name of a configurable
-        option of this interface whose value will be stored in UML's configuration
-        file.
-
+        Returns a list of strings, where each string is the name of a
+        configurable option of this interface whose value will be stored
+        in UML's configuration file.
         """
         return self._configurableOptionNamesAvailable
 
     def _exposedFunctions(self):
         """
-        Returns a list of references to functions which are to be wrapped
-        in I/O transformation, and exposed as attributes of all TrainedLearner
-        objects returned by this interface's train() function. If None, or an
-        empty list is returned, no functions will be exposed. Each function
-        in this list should be a python function, the inspect module will be
-        used to retrieve argument names, and the value of the function's
-        __name__ attribute will be its name in TrainedLearner.
-
+        Returns a list of references to functions which are to be
+        wrapped in I/O transformation, and exposed as attributes of all
+        TrainedLearner objects returned by this interface's train()
+        function. If None, or an empty list is returned, no functions
+        will be exposed. Each function in this list should be a python
+        function, the inspect module will be used to retrieve argument
+        names, and the value of the function's __name__ attribute will
+        be its name in TrainedLearner.
         """
         return []
 
