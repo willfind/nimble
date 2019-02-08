@@ -22,7 +22,7 @@ from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import validateInputString
+from .dataHelpers import validateInputString, logCaptureFactory
 
 class Axis(object):
     """
@@ -359,8 +359,6 @@ class Axis(object):
         if function is None:
             raise ArgumentException("function must not be None")
 
-        self._source.validate()
-
         ret = self._calculate_implementation(function, limitTo)
 
         if isinstance(self, Points):
@@ -382,6 +380,8 @@ class Axis(object):
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
+
+        self._source.validate()
 
         return ret
 
@@ -448,7 +448,7 @@ class Axis(object):
 
         if targetCount == 0:
             return UML.createData(self._source.getTypeString(),
-                                  numpy.empty(shape=(0, 0)))
+                                  numpy.empty(shape=(0, 0)), useLog=False)
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
@@ -484,7 +484,7 @@ class Axis(object):
             if redRet is not None:
                 (redKey, redValue) = redRet
                 ret.append([redKey, redValue])
-        ret = UML.createData(self._source.getTypeString(), ret)
+        ret = UML.createData(self._source.getTypeString(), ret, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -718,11 +718,24 @@ class Axis(object):
                 if alsoIsObj:
                     applyResultTo /= divide
 
+    ###################
+    # Query functions #
+    ###################
+
     def _nonZeroIterator(self):
         if self._source._pointCount == 0 or self._source._featureCount == 0:
             return EmptyIt()
 
         return self._nonZeroIterator_implementation()
+
+    def _unique(self):
+        ret = self._unique_implementation()
+
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
+
+        ret.validate()
+        return ret
 
     ###################
     # Query functions #
@@ -1363,13 +1376,15 @@ class Axis(object):
         names has already occurred.
         """
         if axis == 'point':
-            namesCreated = self._source._pointNamesCreated()
+            objNamesCreated = self._source._pointNamesCreated()
+            toAddNamesCreated = toAdd._pointNamesCreated()
             objNames = self._source.points.getNames
             toAddNames = toAdd.points.getNames
             def sorter(obj, names):
                 return obj.points.sort(sortHelper=names)
         else:
-            namesCreated = self._source._featureNamesCreated()
+            objNamesCreated = self._source._featureNamesCreated()
+            toAddNamesCreated = toAdd._featureNamesCreated()
             objNames = self._source.features.getNames
             toAddNames = toAdd.features.getNames
             def sorter(obj, names):
@@ -1378,10 +1393,13 @@ class Axis(object):
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toAdd cases
         # will have already caused an exception
-        if namesCreated:
-            allDefault = all(n.startswith(DEFAULT_PREFIX) for n in objNames())
+        if objNamesCreated and toAddNamesCreated:
+            objAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                for n in objNames())
+            toAddAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                  for n in toAddNames())
             reorder = objNames() != toAddNames()
-            if not allDefault and reorder:
+            if not (objAllDefault or toAddAllDefault) and reorder:
                 # use copy when reordering so toAdd object is not modified
                 toAdd = toAdd.copy()
                 sorter(toAdd, objNames())
@@ -1589,7 +1607,6 @@ class AxisIterator(object):
             self._position += 1
             return value
         else:
-            self._position = 0
             raise StopIteration
 
     def __next__(self):

@@ -8,10 +8,15 @@ import UML
 
 from nose.tools import *
 import numpy.testing
+from mlpy import __version__ as mlpyVersion
 
 from UML.exceptions import ArgumentException
+from UML.interfaces.mlpy_interface import Mlpy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 
+def test_Mlpy_version():
+    interface = Mlpy()
+    assert interface.version() == mlpyVersion
 
 def testMlpyHandmadeSVMClassification():
     """ Test mlpy() by calling on SVM classification with handmade output """

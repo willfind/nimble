@@ -4,10 +4,13 @@ List object.
 """
 from __future__ import absolute_import
 
+import numpy
+
 from UML.exceptions import ArgumentException
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .features import Features
+from .features_view import FeaturesView
 
 class ListFeatures(ListAxis, Features):
     """
@@ -79,6 +82,28 @@ class ListFeatures(ListAxis, Features):
     #     self._source.data = result
     #     self._source._numFeatures = numFeatures
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = [ft[:featureIndex] for ft
+                                     in self._source.data]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = [ft[featureIndex + 1:] for ft in self._source.data]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = tmpData.tolist()
+        self._source._numFeatures = numRetFeatures
+
     #########################
     # Query implementations #
     #########################
@@ -86,7 +111,7 @@ class ListFeatures(ListAxis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class ListFeaturesView(AxisView, ListFeatures):
+class ListFeaturesView(FeaturesView, AxisView, ListFeatures):
     """
     Limit functionality of ListFeatures to read-only
     """

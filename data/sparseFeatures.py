@@ -10,6 +10,7 @@ import UML
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
+from .features_view import FeaturesView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -103,7 +104,38 @@ class SparseFeatures(SparseAxis, Features):
     #     self._source.data = coo_matrix((data, (row, col)), newShape)
     #     self._source._sorted = 'feature'
 
-class SparseFeaturesView(AxisView, SparseFeatures):
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        keep = self._source.data.col != featureIndex
+        tmpData = self._source.data.data[keep]
+        tmpRow = self._source.data.row[keep]
+        tmpCol = self._source.data.col[keep]
+
+        shift = tmpCol > featureIndex
+        tmpCol[shift] = tmpCol[shift] + numResultingFts - 1
+
+        for idx in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[idx])
+            tmpData = numpy.concatenate((tmpData, newFeat))
+            newRows = [i for i in range(len(self._source.points))]
+            tmpRow = numpy.concatenate((tmpRow, newRows))
+            newCols = [featureIndex + idx for _
+                       in range(len(self._source.points))]
+            tmpCol = numpy.concatenate((tmpCol, newCols))
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        shape = (len(self._source.points), numRetFeatures)
+        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                       shape=shape)
+        self._source._sorted = None
+
+class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
     """
     Limit functionality of SparseFeatures to read-only
     """
@@ -114,6 +146,10 @@ class SparseFeaturesView(AxisView, SparseFeatures):
 
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
+
+    def _unique_implementation(self):
+        unique = self._source.copyAs('Sparse')
+        return unique.features._unique_implementation()
 
 class nzIt(object):
     """

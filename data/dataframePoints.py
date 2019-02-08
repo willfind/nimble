@@ -5,11 +5,16 @@ DataFrame object.
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy
+
 import UML
 from UML.exceptions import ArgumentException
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .points import Points
+from .points_view import PointsView
+from .dataHelpers import fillArrayWithCollapsedFeatures
+from .dataHelpers import fillArrayWithExpandedFeatures
 
 pd = UML.importModule('pandas')
 if pd:
@@ -70,6 +75,29 @@ class DataFramePoints(DataFrameAxis, Points):
     #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='C'))
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        collapseData = self._source.data.values[:, collapseIndices]
+        retainData = self._source.data.values[:, retainIndices]
+
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, numpy.array(collapseData),
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+
+        self._source.data = pd.DataFrame(tmpData)
+
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures)
+
+        self._source.data = pd.DataFrame(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -77,7 +105,7 @@ class DataFramePoints(DataFrameAxis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFramePointsView(AxisView, DataFramePoints):
+class DataFramePointsView(PointsView, AxisView, DataFramePoints):
     """
     Limit functionality of DataFramePoints to read-only
     """

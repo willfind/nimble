@@ -10,6 +10,7 @@ from UML.exceptions import ArgumentException
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
+from .features_view import FeaturesView
 
 class MatrixFeatures(MatrixAxis, Features):
     """
@@ -72,6 +73,26 @@ class MatrixFeatures(MatrixAxis, Features):
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='F')
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._source.data[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._source.data[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = numpy.matrix(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -79,7 +100,7 @@ class MatrixFeatures(MatrixAxis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixFeaturesView(AxisView, MatrixFeatures):
+class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     """
     Limit functionality of MatrixFeatures to read-only
     """

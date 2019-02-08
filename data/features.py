@@ -9,12 +9,23 @@ functionality component is located in axis.py.
 from __future__ import absolute_import
 from abc import abstractmethod
 
+import numpy
+import six
+
+import UML
+from UML.exceptions import ArgumentException
+from UML.logger import enableLogging, directCall
+from .dataHelpers import logCaptureFactory
+
+logCapture = logCaptureFactory('features')
+
 class Features(object):
     """
     Methods that can be called on the a UML data objects feature axis.
     """
-    def __init__(self):
-        pass
+    def __init__(self, source):
+        self._source = source
+        super(Features, self).__init__()
 
     ########################
     # Low Level Operations #
@@ -189,7 +200,7 @@ class Features(object):
     #########################
 
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False):
+             randomize=False, useLog=None):
         """
         Return a copy of certain features of this object.
 
@@ -238,10 +249,18 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.copy)
+            else:
+                wrapped = directCall(self.copy)
+            return wrapped(toCopy, start, end, number, randomize,
+                           useLog=False)
+
         return self._copy(toCopy, start, end, number, randomize)
 
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False):
+                randomize=False, useLog=None):
         """
         Move certain features of this object into their own object.
 
@@ -291,10 +310,18 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.extract)
+            else:
+                wrapped = directCall(self.extract)
+            return wrapped(toExtract, start, end, number, randomize,
+                           useLog=False)
+
         return self._extract(toExtract, start, end, number, randomize)
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Remove certain features from this object.
 
@@ -340,10 +367,18 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.delete)
+            else:
+                wrapped = directCall(self.delete)
+            return wrapped(toDelete, start, end, number, randomize,
+                           useLog=False)
+
         self._delete(toDelete, start, end, number, randomize)
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Keep only certain features of this object.
 
@@ -389,6 +424,14 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.retain)
+            else:
+                wrapped = directCall(self.retain)
+            return wrapped(toRetain, start, end, number, randomize,
+                           useLog=False)
+
         self._retain(toRetain, start, end, number, randomize)
 
     def count(self, condition):
@@ -418,7 +461,7 @@ class Features(object):
         """
         return self._count(condition)
 
-    def sort(self, sortBy=None, sortHelper=None):
+    def sort(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Arrange the features in this object.
 
@@ -439,6 +482,13 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.sort)
+            else:
+                wrapped = directCall(self.sort)
+            return wrapped(sortBy, sortHelper, useLog=False)
+
         self._sort(sortBy, sortHelper)
 
     # def flattenToOne(self):
@@ -495,7 +545,7 @@ class Features(object):
     #     """
     #     self._unflattenFromOne(numFeatures)
 
-    def transform(self, function, features=None):
+    def transform(self, function, features=None, useLog=None):
         """
         Modify this object by applying a function to each feature.
 
@@ -521,13 +571,20 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transform)
+            else:
+                wrapped = directCall(self.transform)
+            return wrapped(function, features, useLog=False)
+
         self._transform(function, features)
 
     ###########################
     # Higher Order Operations #
     ###########################
 
-    def calculate(self, function, features=None):
+    def calculate(self, function, features=None, useLog=None):
         """
         Return a new object with a calculation applied to each feature.
 
@@ -556,9 +613,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.calculate)
+            else:
+                wrapped = directCall(self.calculate)
+            return wrapped(function, features, useLog=False)
+
         return self._calculate(function, features)
 
-    def add(self, toAdd, insertBefore=None):
+    def add(self, toAdd, insertBefore=None, useLog=None):
         """
         Insert more features into this object.
 
@@ -591,10 +655,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.add)
+            else:
+                wrapped = directCall(self.add)
+            return wrapped(toAdd, insertBefore, useLog=False)
+
         self._add(toAdd, insertBefore)
 
-
-    def mapReduce(self, mapper, reducer):
+    def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
 
@@ -614,9 +684,16 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.mapReduce)
+            else:
+                wrapped = directCall(self.mapReduce)
+            return wrapped(mapper, reducer, useLog=False)
+
         return self._mapReduce(mapper, reducer)
 
-    def shuffle(self):
+    def shuffle(self, useLog=None):
         """
         Permute the indexing of the features to a random order.
 
@@ -630,10 +707,17 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.shuffle)
+            else:
+                wrapped = directCall(self.shuffle)
+            return wrapped(useLog=False)
+
         self._shuffle()
 
     def fill(self, match, fill, arguments=None, features=None,
-             returnModified=False):
+             returnModified=False, useLog=None):
         """
         Replace given values in each feature with other values.
 
@@ -677,9 +761,18 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fill)
+            else:
+                wrapped = directCall(self.fill)
+            return wrapped(match, fill, arguments, features, returnModified,
+                           useLog=False)
+
         return self._fill(match, fill, arguments, features, returnModified)
 
-    def normalize(self, subtract=None, divide=None, applyResultTo=None):
+    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+                  useLog=None):
         """
         Modify all features in this object using the given operations.
 
@@ -718,7 +811,142 @@ class Features(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.normalize)
+            else:
+                wrapped = directCall(self.normalize)
+            return wrapped(subtract, divide, applyResultTo, useLog=False)
+
         self._normalize(subtract, divide, applyResultTo)
+
+    def splitByParsing(self, feature, rule, resultingNames):
+        """
+        Split a feature into multiple features.
+
+        Parse an existing feature and divide it into separate parts.
+        Each value must split into a number of values equal to the
+        length of ``resultingNames``.
+
+        Parameters
+        ----------
+        feature : indentifier
+            The name or index of the feature to parse and split.
+        rule : str, int, list, function
+            * string - split the value at any instance of the character
+              string. This works in the same way as python's built-in
+              split() function; removing this string.
+            * integer - the index position where the split will occur.
+              Unlike a string, no characters will be removed when using
+              integer. All characters before the index will be split
+              from characters at and after the index.
+            * list - may contain integer and/or string values
+            * function - any function accepting a value as input,
+              splitting the  value and returning a list of the split
+              values.
+        resultingNames : list
+            Strings defining the names of the split features.
+
+        Notes
+        -----
+        ``
+        data.splitFeatureByParsing(location, ', ', ['city', 'country'])
+
+              data (before)                      data (after)
+        +-------------------------+      +-----------+--------------+
+        | location                |      | city      | country      |
+        +-------------------------+      +-----------+--------------+
+        | Cape Town, South Africa |      | Cape Town | South Africa |
+        +-------------------------+  ->  +-----------+--------------+
+        | Lima, Peru              |      | Lima      | Peru         |
+        +-------------------------+      +-----------+--------------+
+        | Moscow, Russia          |      | Moscow    | Russia       |
+        +-------------------------+      +-----------+--------------+
+
+        data.splitFeatureByParsing(0, 3, ['category', 'id'])
+
+            data (before)                        data (after)
+        +---------+----------+          +----------+-----+----------+
+        | product | quantity |          | category | id  | quantity |
+        +---------+----------+          +----------+-----+----------+
+        | AGG932  | 44       |          | AGG      | 932 | 44       |
+        +---------+----------+          +----------+-----+----------+
+        | AGG734  | 11       |    ->    | AGG      | 734 | 11       |
+        +---------+----------+          +----------+-----+----------+
+        | HEQ892  | 1        |          | HEQ      | 892 | 1        |
+        +---------+----------+          +----------+-----+----------+
+        | LEQ331  | 2        |          | LEQ      | 331 | 2        |
+        +---------+----------+          +----------+-----+----------+
+        ``
+        This function was inspired by the separate function from the
+        tidyr library created by Hadley Wickham in the R programming
+        language.
+
+        Examples
+        --------
+        TODO
+        """
+        if not (isinstance(rule, (int, numpy.integer, six.string_types))
+                or hasattr(rule, '__iter__')
+                or hasattr(rule, '__call__')):
+            msg = "rule must be an integer, string, iterable of integers "
+            msg += "and/or strings, or a function"
+            raise ArgumentException(msg)
+
+        splitList = []
+        numResultingFts = len(resultingNames)
+        for i, value in enumerate(self._source[:, feature]):
+            if isinstance(rule, six.string_types):
+                splitList.append(value.split(rule))
+            elif isinstance(rule, (int, numpy.number)):
+                splitList.append([value[:rule], value[rule:]])
+            elif hasattr(rule, '__iter__'):
+                split = []
+                startIdx = 0
+                for item in rule:
+                    if isinstance(item, six.string_types):
+                        split.append(value[startIdx:].split(item)[0])
+                        # find index of value from startIdx on, o.w. will only
+                        # ever return first instance. Add len of previous
+                        # values to get actual index and add one to bypass this
+                        # item in next iteration
+                        startIdx = (value[startIdx:].index(item) +
+                                    len(value[:startIdx]) + 1)
+                    elif isinstance(item, (int, numpy.integer)):
+                        split.append(value[startIdx:item])
+                        startIdx = item
+                    else:
+                        msg = "A list of items for rule may only contain "
+                        msg += " integers and strings"
+                        raise ArgumentException(msg)
+                split.append(value[startIdx:])
+                splitList.append(split)
+            else:
+                splitList.append(rule(value))
+            if len(splitList[-1]) != numResultingFts:
+                msg = "The value at index {0} split into ".format(i)
+                msg += "{0} values, ".format(len(splitList[-1]))
+                msg += "but resultingNames contains "
+                msg += "{0} features".format(numResultingFts)
+                raise ArgumentException(msg)
+
+        featureIndex = self._source._getFeatureIndex(feature)
+        numRetFeatures = len(self._source.features) - 1 + numResultingFts
+
+        self._splitByParsing_implementation(featureIndex, splitList,
+                                            numRetFeatures, numResultingFts)
+
+        self._source._featureCount = numRetFeatures
+        fNames = self._source.features.getNames()[:featureIndex]
+        fNames.extend(resultingNames)
+        fNames.extend(self._source.features.getNames()[featureIndex + 1:])
+        self._source.features.setNames(fNames)
+
+        self._source.validate()
+
+    ###################
+    # Query functions #
+    ###################
 
     def nonZeroIterator(self):
         """
@@ -734,6 +962,14 @@ class Features(object):
         TODO
         """
         return self._nonZeroIterator()
+
+    def unique(self):
+        """
+        Return a new object with only unique features. If feature names
+        are present, the feature name of the first instance of the
+        unique feature in this object will be assigned.
+        """
+        return self._unique()
 
     #########################
     # Statistical functions #
@@ -876,6 +1112,11 @@ class Features(object):
 
     @abstractmethod
     def _normalize(self, subtract, divide, applyResultTo):
+        pass
+
+    @abstractmethod
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
         pass
 
     @abstractmethod
