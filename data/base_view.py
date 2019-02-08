@@ -9,24 +9,11 @@ import copy
 
 from .base import Base
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import readOnlyException
+from .dataHelpers import exceptionDocstringFactory
 from UML.exceptions import ImproperActionException
 
-# prepend a message that view objects will raise an exception to Base docstring
-def exception_docstring(func):
-    name = func.__name__
-    try:
-        baseDoc = getattr(Base, name).__doc__
-        if baseDoc is not None:
-            viewMsg = "The {0} method is object modifying and ".format(name)
-            viewMsg += "will always raise an exception for view objects.\n\n"
-            viewMsg += "For reference, the docstring for this method "
-            viewMsg += "when objects can be modified is below:\n"
-            func.__doc__ = viewMsg + baseDoc
-    except AttributeError:
-        # ignore built-in functions that differ between py2 and py3
-        # (__idiv__ vs __itruediv__, __ifloordiv__)
-        pass
-    return func
+exceptionDocstring = exceptionDocstringFactory(Base)
 
 @inheritDocstringsFactory(Base)
 class BaseView(Base):
@@ -190,16 +177,16 @@ class BaseView(Base):
     # Higher Order Operations #
     ###########################
 
-    @exception_docstring
+    @exceptionDocstring
     def fillUsingAllData(self, match, fill, arguments=None, points=None,
                           features=None, returnModified=False):
         readOnlyException("fillUsingAllData")
 
-    @exception_docstring
+    @exceptionDocstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
         readOnlyException("replaceFeatureWithBinaryFeatures")
 
-    @exception_docstring
+    @exceptionDocstring
     def transformFeatureToIntegers(self, featureToConvert):
         readOnlyException("transformFeatureToIntegers")
 
@@ -223,31 +210,31 @@ class BaseView(Base):
     ##################################################################
     ##################################################################
 
-    @exception_docstring
+    @exceptionDocstring
     def transpose(self):
         readOnlyException("transpose")
 
-    @exception_docstring
+    @exceptionDocstring
     def referenceDataFrom(self, other):
         readOnlyException("referenceDataFrom")
 
-    @exception_docstring
+    @exceptionDocstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         readOnlyException("fillWith")
 
-    @exception_docstring
+    @exceptionDocstring
     def flattenToOnePoint(self):
         readOnlyException("flattenToOnePoint")
 
-    @exception_docstring
+    @exceptionDocstring
     def flattenToOneFeature(self):
         readOnlyException("flattenToOneFeature")
 
-    @exception_docstring
+    @exceptionDocstring
     def unflattenFromOnePoint(self, numPoints):
         readOnlyException("unflattenFromOnePoint")
 
-    @exception_docstring
+    @exceptionDocstring
     def unflattenFromOneFeature(self, numFeatures):
         readOnlyException("unflattenFromOneFeature")
 
@@ -257,45 +244,34 @@ class BaseView(Base):
     ###############################################################
     ###############################################################
 
-    @exception_docstring
+    @exceptionDocstring
     def __imul__(self, other):
         readOnlyException("__imul__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __iadd__(self, other):
         readOnlyException("__iadd__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __isub__(self, other):
         readOnlyException("__isub__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __idiv__(self, other):
         readOnlyException("__idiv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __itruediv__(self, other):
         readOnlyException("__itruediv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __ifloordiv__(self, other):
         readOnlyException("__ifloordiv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __imod__(self, other):
         readOnlyException("__imod__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __ipow__(self, other):
         readOnlyException("__ipow__")
-
-    ####################
-    ####################
-    ###   Helpers    ###
-    ####################
-    ####################
-
-def readOnlyException(name):
-    msg = "The " + name + " method is disallowed for View objects. View "
-    msg += "objects are read only, yet this method modifies the object"
-    raise ImproperActionException(msg)

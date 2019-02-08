@@ -9,7 +9,11 @@ functionality component is located in axis.py.
 from __future__ import absolute_import
 from abc import abstractmethod
 
+import numpy
+import six
+
 import UML
+from UML.exceptions import ArgumentException
 from UML.logger import enableLogging, directCall
 from .dataHelpers import logCaptureFactory
 
@@ -19,8 +23,9 @@ class Features(object):
     """
     Methods that can be called on the a UML data objects feature axis.
     """
-    def __init__(self):
-        pass
+    def __init__(self, source):
+        self._source = source
+        super(Features, self).__init__()
 
     ########################
     # Low Level Operations #
@@ -815,6 +820,134 @@ class Features(object):
 
         self._normalize(subtract, divide, applyResultTo)
 
+    def splitByParsing(self, feature, rule, resultingNames):
+        """
+        Split a feature into multiple features.
+
+        Parse an existing feature and divide it into separate parts.
+        Each value must split into a number of values equal to the
+        length of ``resultingNames``.
+
+        Parameters
+        ----------
+        feature : indentifier
+            The name or index of the feature to parse and split.
+        rule : str, int, list, function
+            * string - split the value at any instance of the character
+              string. This works in the same way as python's built-in
+              split() function; removing this string.
+            * integer - the index position where the split will occur.
+              Unlike a string, no characters will be removed when using
+              integer. All characters before the index will be split
+              from characters at and after the index.
+            * list - may contain integer and/or string values
+            * function - any function accepting a value as input,
+              splitting the  value and returning a list of the split
+              values.
+        resultingNames : list
+            Strings defining the names of the split features.
+
+        Notes
+        -----
+        ``
+        data.splitFeatureByParsing(location, ', ', ['city', 'country'])
+
+              data (before)                      data (after)
+        +-------------------------+      +-----------+--------------+
+        | location                |      | city      | country      |
+        +-------------------------+      +-----------+--------------+
+        | Cape Town, South Africa |      | Cape Town | South Africa |
+        +-------------------------+  ->  +-----------+--------------+
+        | Lima, Peru              |      | Lima      | Peru         |
+        +-------------------------+      +-----------+--------------+
+        | Moscow, Russia          |      | Moscow    | Russia       |
+        +-------------------------+      +-----------+--------------+
+
+        data.splitFeatureByParsing(0, 3, ['category', 'id'])
+
+            data (before)                        data (after)
+        +---------+----------+          +----------+-----+----------+
+        | product | quantity |          | category | id  | quantity |
+        +---------+----------+          +----------+-----+----------+
+        | AGG932  | 44       |          | AGG      | 932 | 44       |
+        +---------+----------+          +----------+-----+----------+
+        | AGG734  | 11       |    ->    | AGG      | 734 | 11       |
+        +---------+----------+          +----------+-----+----------+
+        | HEQ892  | 1        |          | HEQ      | 892 | 1        |
+        +---------+----------+          +----------+-----+----------+
+        | LEQ331  | 2        |          | LEQ      | 331 | 2        |
+        +---------+----------+          +----------+-----+----------+
+        ``
+        This function was inspired by the separate function from the
+        tidyr library created by Hadley Wickham in the R programming
+        language.
+
+        Examples
+        --------
+        TODO
+        """
+        if not (isinstance(rule, (int, numpy.integer, six.string_types))
+                or hasattr(rule, '__iter__')
+                or hasattr(rule, '__call__')):
+            msg = "rule must be an integer, string, iterable of integers "
+            msg += "and/or strings, or a function"
+            raise ArgumentException(msg)
+
+        splitList = []
+        numResultingFts = len(resultingNames)
+        for i, value in enumerate(self._source[:, feature]):
+            if isinstance(rule, six.string_types):
+                splitList.append(value.split(rule))
+            elif isinstance(rule, (int, numpy.number)):
+                splitList.append([value[:rule], value[rule:]])
+            elif hasattr(rule, '__iter__'):
+                split = []
+                startIdx = 0
+                for item in rule:
+                    if isinstance(item, six.string_types):
+                        split.append(value[startIdx:].split(item)[0])
+                        # find index of value from startIdx on, o.w. will only
+                        # ever return first instance. Add len of previous
+                        # values to get actual index and add one to bypass this
+                        # item in next iteration
+                        startIdx = (value[startIdx:].index(item) +
+                                    len(value[:startIdx]) + 1)
+                    elif isinstance(item, (int, numpy.integer)):
+                        split.append(value[startIdx:item])
+                        startIdx = item
+                    else:
+                        msg = "A list of items for rule may only contain "
+                        msg += " integers and strings"
+                        raise ArgumentException(msg)
+                split.append(value[startIdx:])
+                splitList.append(split)
+            else:
+                splitList.append(rule(value))
+            if len(splitList[-1]) != numResultingFts:
+                msg = "The value at index {0} split into ".format(i)
+                msg += "{0} values, ".format(len(splitList[-1]))
+                msg += "but resultingNames contains "
+                msg += "{0} features".format(numResultingFts)
+                raise ArgumentException(msg)
+
+        featureIndex = self._source._getFeatureIndex(feature)
+        numRetFeatures = len(self._source.features) - 1 + numResultingFts
+
+        self._splitByParsing_implementation(featureIndex, splitList,
+                                            numRetFeatures, numResultingFts)
+
+        self._source._featureCount = numRetFeatures
+        fNames = self._source.features.getNames()[:featureIndex]
+        fNames.extend(resultingNames)
+        fNames.extend(self._source.features.getNames()[featureIndex + 1:])
+        self._source.features.setNames(fNames)
+
+        self._source.validate()
+
+    ###################
+    # Query functions #
+    ###################
+
     def nonZeroIterator(self):
         """
         Iterate through each non-zero value following the feature order.
@@ -979,6 +1112,11 @@ class Features(object):
 
     @abstractmethod
     def _normalize(self, subtract, divide, applyResultTo):
+        pass
+
+    @abstractmethod
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
         pass
 
     @abstractmethod

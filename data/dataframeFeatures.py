@@ -5,12 +5,15 @@ DataFrame object.
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy
+
 import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
+from .features_view import FeaturesView
 
 pd = UML.importModule('pandas')
 if pd:
@@ -80,6 +83,26 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._source.data.values[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._source.data.values[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = pd.DataFrame(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -87,8 +110,7 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
-                            Features):
+class DataFrameFeaturesView(DataFrameFeatures, AxisView, FeaturesView):
     """
     Limit functionality of DataFrameFeatures to read-only
     """

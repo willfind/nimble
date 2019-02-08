@@ -11,6 +11,9 @@ from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
+from .points_view import PointsView
+from .dataHelpers import fillArrayWithCollapsedFeatures
+from .dataHelpers import fillArrayWithExpandedFeatures
 
 class MatrixPoints(MatrixAxis, Axis, Points):
     """
@@ -82,6 +85,29 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='C')
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        collapseData = self._source.data[:, collapseIndices]
+        retainData = self._source.data[:, retainIndices]
+
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, collapseData, currNumPoints,
+            currFtNames, numRetPoints, numRetFeatures)
+
+        self._source.data = numpy.matrix(tmpData)
+
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures)
+
+        self._source.data = numpy.matrix(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -89,7 +115,7 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
+class MatrixPointsView(MatrixPoints, AxisView, PointsView):
     """
     Limit functionality of MatrixPoints to read-only
     """

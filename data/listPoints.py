@@ -4,11 +4,16 @@ List object.
 """
 from __future__ import absolute_import
 
+import numpy
+
 from UML.exceptions import ArgumentException
 from .axis import Axis
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .points import Points
+from .points_view import PointsView
+from .dataHelpers import fillArrayWithCollapsedFeatures
+from .dataHelpers import fillArrayWithExpandedFeatures
 
 class ListPoints(ListAxis, Axis, Points):
     """
@@ -90,6 +95,40 @@ class ListPoints(ListAxis, Axis, Points):
     #     self._source.data = result
     #     self._source._numFeatures = numFeatures
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        collapseData = []
+        retainData = []
+        for pt in self._source.data:
+            collapseFeatures = []
+            retainFeatures = []
+            for idx in collapseIndices:
+                collapseFeatures.append(pt[idx])
+            for idx in retainIndices:
+                retainFeatures.append(pt[idx])
+            collapseData.append(collapseFeatures)
+            retainData.append(retainFeatures)
+
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, numpy.array(collapseData),
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+
+        self._source.data = tmpData.tolist()
+        self._source._numFeatures = numRetFeatures
+
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures)
+
+        self._source.data = tmpData.tolist()
+        self._source._numFeatures = numRetFeatures
+
     #########################
     # Query implementations #
     #########################
@@ -97,7 +136,7 @@ class ListPoints(ListAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class ListPointsView(AxisView, ListPoints, ListAxis, Axis, Points):
+class ListPointsView(ListPoints, AxisView, PointsView):
     """
     Limit functionality of ListPoints to read-only
     """

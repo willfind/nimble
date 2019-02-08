@@ -9,6 +9,7 @@ import copy
 import math
 import string
 import inspect
+import numpy
 
 import re
 from functools import wraps
@@ -410,6 +411,34 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
+def readOnlyException(name):
+    """
+    The exception to raise for functions that are disallowed in view
+    objects.
+    """
+    msg = "The " + name + " method is disallowed for View objects. View "
+    msg += "objects are read only, yet this method modifies the object"
+    raise ImproperActionException(msg)
+
+# prepend a message that view objects will raise an exception to Base docstring
+def exceptionDocstringFactory(cls):
+    def exceptionDocstring(func):
+        name = func.__name__
+        try:
+            baseDoc = getattr(cls, name).__doc__
+            if baseDoc is not None:
+                viewMsg = "The {0} method is object modifying and ".format(name)
+                viewMsg += "will always raise an exception for view objects.\n\n"
+                viewMsg += "For reference, the docstring for this method "
+                viewMsg += "when objects can be modified is below:\n"
+                func.__doc__ = viewMsg + baseDoc
+        except AttributeError:
+            # ignore built-in functions that differ between py2 and py3
+            # (__idiv__ vs __itruediv__, __ifloordiv__)
+            pass
+        return func
+    return exceptionDocstring
+
 def nonSparseAxisUniqueArray(obj, axis):
     obj._validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
@@ -474,6 +503,47 @@ def valuesToPythonList(values, argName):
         raise ArgumentException(msg)
 
     return valuesList
+
+def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
+                                   collapseData, currNumPoints, currFtNames,
+                                   numRetPoints, numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    points.splitByCollapsingFeatures. Used in all non-sparse
+    implementations.
+    """
+    fill = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
+    fill[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
+
+    # stack feature names repeatedly to create new feature
+    namesAsFeature = numpy.tile(currFtNames, (1, currNumPoints))
+    fill[:, -2] = namesAsFeature
+    # flatten values by row then reshape into new feature
+    valuesAsFeature = collapseData.flatten()
+    fill[:, -1] = valuesAsFeature
+
+    return fill
+
+def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
+                                  numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    combinePointsByExpandingFeatures. Used in all non-sparse
+    implementations.
+    """
+    fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
+                       dtype=numpy.object_)
+
+    for i, point in enumerate(uniqueDict):
+        fill[i, :namesIdx] = point[:namesIdx]
+        for j, name in enumerate(uniqueNames):
+            if name in uniqueDict[point]:
+                fill[i, namesIdx + j] = uniqueDict[point][name]
+            else:
+                fill[i, namesIdx + j] = numpy.nan
+        fill[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+
+    return fill
 
 def extractFunctionString(function):
     """Extracts function name or lambda function if passed a function,

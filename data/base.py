@@ -17,6 +17,7 @@ import copy
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
+from collections import OrderedDict
 
 import numpy
 import six

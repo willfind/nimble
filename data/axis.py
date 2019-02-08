@@ -45,6 +45,7 @@ class Axis(object):
     def __init__(self, axis, source, **kwds):
         self._axis = axis
         self._source = source
+        kwds['source'] = self._source
         super(Axis, self).__init__(**kwds)
 
     def __iter__(self):
@@ -720,6 +721,10 @@ class Axis(object):
                 self._source /= divide
                 if alsoIsObj:
                     applyResultTo /= divide
+
+    ###################
+    # Query functions #
+    ###################
 
     def _nonZeroIterator(self):
         if self._source._pointCount == 0 or self._source._featureCount == 0:
