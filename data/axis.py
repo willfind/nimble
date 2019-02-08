@@ -1376,13 +1376,15 @@ class Axis(object):
         names has already occurred.
         """
         if axis == 'point':
-            namesCreated = self._source._pointNamesCreated()
+            objNamesCreated = self._source._pointNamesCreated()
+            toAddNamesCreated = toAdd._pointNamesCreated()
             objNames = self._source.points.getNames
             toAddNames = toAdd.points.getNames
             def sorter(obj, names):
                 return obj.points.sort(sortHelper=names)
         else:
-            namesCreated = self._source._featureNamesCreated()
+            objNamesCreated = self._source._featureNamesCreated()
+            toAddNamesCreated = toAdd._featureNamesCreated()
             objNames = self._source.features.getNames
             toAddNames = toAdd.features.getNames
             def sorter(obj, names):
@@ -1391,10 +1393,13 @@ class Axis(object):
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toAdd cases
         # will have already caused an exception
-        if namesCreated:
-            allDefault = all(n.startswith(DEFAULT_PREFIX) for n in objNames())
+        if objNamesCreated and toAddNamesCreated:
+            objAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                for n in objNames())
+            toAddAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                  for n in toAddNames())
             reorder = objNames() != toAddNames()
-            if not allDefault and reorder:
+            if not (objAllDefault or toAddAllDefault) and reorder:
                 # use copy when reordering so toAdd object is not modified
                 toAdd = toAdd.copy()
                 sorter(toAdd, objNames())

@@ -2539,7 +2539,6 @@ class StructureModifying(StructureShared):
             toTest2.transpose()
             toTest1.features.add(toTest2)
 
-
     @raises(ArgumentException)
     def test_points_add_exception_outOfOrder_with_defaults(self):
         """ Test points.add() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
@@ -2942,6 +2941,45 @@ class StructureModifying(StructureShared):
 
     def test_features_add_noReorderWithAllDefaultNames(self):
         self.backend_add_noReorderWithAllDefaultNames('feature')
+
+    def backend_add_noReorderAddedHasDefaultNames(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        pNames = ['1', '4', '7']
+        fNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            assert toTest.features.getNames() != toInsert.features.getNames()
+
+            exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+            exp.features.setNames(fNames)
+            exp.points.setName(0, '1')
+            exp.points.setName(1, '4')
+            exp.points.setName(2, '7')
+            toTest.points.add(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            assert toTest.points.getNames() != toInsert.points.getNames()
+
+            exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+            exp.points.setNames(pNames)
+            exp.features.setName(0, 'a')
+            exp.features.setName(1, 'b')
+            exp.features.setName(2, 'c')
+            toTest.features.add(toInsert)
+
+        assert toTest == exp
+
+    def test_addPoints_noReorderAddedHasDefaultNames(self):
+        self.backend_add_noReorderAddedHasDefaultNames('point')
+
+    def test_addFeatures_noReorderAddedHasDefaultNames(self):
+        self.backend_add_noReorderAddedHasDefaultNames('feature')
 
     def backend_add_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
