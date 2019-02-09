@@ -18,7 +18,7 @@ from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
-from .dataHelpers import inheritDocstringsFactory
+from UML.docHelpers import inheritDocstringsFactory
 
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical

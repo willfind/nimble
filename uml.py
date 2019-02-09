@@ -1397,16 +1397,16 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     Train a model and get the results of its performance.
 
     For each permutation of the merge of 'arguments' and 'kwarguments'
-    (more below), ``trainAndTest`` uses cross validation to generate a
+    (more below), this function uses cross validation to generate a
     performance score for the algorithm, given the particular argument
     permutation. The argument permutation that performed best cross
     validating over the training data is then used as the lone argument
     for training on the whole training data set. Finally, the learned
     model generates predictions for the testing set, an the performance
     of those predictions is calculated and returned. If no additional
-    arguments are supplied via arguments or **kwarguments, then
-    ``trainAndTest`` just returns the performance of the algorithm with
-    default arguments on the testing data.
+    arguments are supplied via arguments or **kwarguments, then the
+    result is the performance of the algorithm with default arguments on
+    the testing data.
 
     Parameters
     ----------
@@ -1472,7 +1472,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     Returns
     -------
     performance
-        The results of the test.
+        The calculated value of the ``performanceFunction`` after the
+        test.
 
     See Also
     --------

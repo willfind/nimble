@@ -230,6 +230,9 @@ class Base(object):
         return self._pointCount, self._featureCount
 
     def _getPoints(self):
+        """
+        Get the object containing point-based methods for this object.
+        """
         return BasePoints(self)
 
     @property
@@ -240,6 +243,9 @@ class Base(object):
         return self._points
 
     def _getFeatures(self):
+        """
+        Get the object containing feature-based methods for this object.
+        """
         return BaseFeatures(self)
 
     @property
@@ -250,6 +256,9 @@ class Base(object):
         return self._features
 
     def _getElements(self):
+        """
+        Get the object containing element-based methods for this object.
+        """
         return BaseElements(self)
 
     @property

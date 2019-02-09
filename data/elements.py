@@ -263,7 +263,7 @@ class Elements(object):
         --------
         TODO
         """
-        if callable(condition):
+        if hasattr(condition, '__call__'):
             ret = self.calculate(function=condition, outputType='Matrix')
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)

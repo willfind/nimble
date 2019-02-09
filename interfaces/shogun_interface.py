@@ -1,5 +1,5 @@
 """
-A UML interface building off of the modular python interface 
+A UML interface building off of the modular python interface
 for Shogun ML.
 
 """
@@ -33,6 +33,7 @@ import UML
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.exceptions import ArgumentException
+from UML.docHelpers import inheritDocstringsFactory
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -44,15 +45,13 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
 # kernel : k, kernel
 # distance : d
 
+@inheritDocstringsFactory(UniversalInterface)
 class Shogun(UniversalInterface):
     """
-
+    This class is an interface to shogun.
     """
 
     def __init__(self):
-        """
-
-        """
         super(Shogun, self).__init__()
 
         self.shogun = importlib.import_module('shogun')
@@ -100,15 +99,15 @@ class Shogun(UniversalInterface):
             return False
         return True
 
-    def _listLearnersBackend(self):
-        """
-        Return a list of all learners callable through this interface.
 
-        """
+    def _listLearnersBackend(self):
         return self._searcher.allLearners()
 
-    def _getMatchineProblemType(self, learnerName):
-        """ SystemError """
+
+    def _getMachineProblemType(self, learnerName):
+        """
+        SystemError
+        """
         learner = self.findCallable(learnerName)
 
         try:
@@ -119,15 +118,10 @@ class Shogun(UniversalInterface):
         ptVal = learner.get_machine_problem_type()
         return ptVal
 
-    def learnerType(self, name):
-        """
-        Returns a string referring to the action the learner takes out of the possibilities:
-        classification, regression, featureSelection, dimensionalityReduction
-        TODO
 
-        """
+    def learnerType(self, name):
         try:
-            ptVal = self._getMatchineProblemType(name)
+            ptVal = self._getMachineProblemType(name)
         except SystemError:
             return 'UNKNOWN'
 
@@ -144,6 +138,7 @@ class Shogun(UniversalInterface):
 
         return 'UNKNOWN'
 
+
     def _getLearnerParameterNamesBackend(self, name):
         base = self._getParameterNamesBackend(name)
 
@@ -158,16 +153,13 @@ class Shogun(UniversalInterface):
 
         return ret
 
+
     def _getLearnerDefaultValuesBackend(self, name):
         allNames = self._getLearnerParameterNamesBackend(name)
         return self._setupDefaultsGivenBaseNames(name, allNames)
 
+
     def _getParameterNamesBackend(self, name):
-        """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
-        """
         query = self._queryParamManifest(name)
         base = query if query is not None else [[]]
 
@@ -186,11 +178,6 @@ class Shogun(UniversalInterface):
         return ret
 
     def _getDefaultValuesBackend(self, name):
-        """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
-        """
         allNames = self._getParameterNamesBackend(name)
         return self._setupDefaultsGivenBaseNames(name, allNames)
 
@@ -222,11 +209,6 @@ class Shogun(UniversalInterface):
         return ret
 
     def _getScores(self, learner, testX, arguments, customDict):
-        """
-        If the learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception.
-
-        """
         predObj = self._applier(learner, testX, arguments, customDict)
         predLabels = predObj.get_labels()
         numLabels = customDict['numLabels']
@@ -248,59 +230,22 @@ class Shogun(UniversalInterface):
         return scoresPerPoint
 
     def _getScoresOrder(self, learner):
-        """
-        If the learner is a classifier, then return a list of the the labels corresponding
-        to each column of the return from getScores
-
-        """
         return learner.get_unique_labels
 
     def isAlias(self, name):
-        """
-        Returns true if the name is an accepted alias for this interface
-
-        """
         if name.lower() in ['shogun']:
             return True
         else:
             return False
 
     def getCanonicalName(self):
-        """
-        Returns the string name that will uniquely identify this interface
-
-        """
         return "shogun"
 
     def _findCallableBackend(self, name):
-        """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
-        """
         return self._searcher.findInPackage(None, name)
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        """
-        Method called before any package level function which transforms all
-        parameters provided by a UML user.
-
-        trainX, etc. are filled with the values of the parameters of the same name
-        to a calls to trainAndApply() or train(), or are empty when being called before other
-        functions. arguments is a dictionary mapping names to values of all other
-        parameters that need to be processed.
-
-        The return value of this function must be a dictionary mirroring the
-        structure of the inputs. Specifically, four keys and values are required:
-        keys trainX, trainY, testX, and arguments. For the first three, the associated
-        values must be the transformed values, and for the last, the value must be a
-        dictionary with the same keys as in the 'arguments' input dictionary, with
-        transformed values as the values. However, other information may be added
-        by the package implementor, for example to be used in _outputTransformation()
-
-        """
-
         # check something that we know won't work, but shogun will not report intelligently
         if trainX is not None or testX is not None:
             if 'pointLen' not in customDict:
@@ -339,11 +284,6 @@ class Shogun(UniversalInterface):
 
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        """
-        Method called before any package level function which transforms the returned
-        value into a format appropriate for a UML user.
-
-        """
         # often, but not always, we have to unpack a Labels object
         if isinstance(outputValue, self.shogun.Classifier.Labels):
             # outputValue is a labels object, have to pull out the raw values with a function call
@@ -376,11 +316,6 @@ class Shogun(UniversalInterface):
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        """
-        build a learner and perform training with the given data
-        TAKES name of learner, transformed arguments
-        RETURNS an in package object to be wrapped by a TrainedLearner object
-        """
         toCall = self.findCallable(learnerName)
 
         # Figure out which, if any, aliases for trainX or trainY were ignored
@@ -459,21 +394,11 @@ class Shogun(UniversalInterface):
 
 
     def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
-        """
-        Given an already trained online learner, extend it's training with the given data
-        TAKES trained learner, transformed arguments,
-        RETURNS the learner after this batch of training
-        """
         # StreamingDotFeatures?
         raise NotImplementedError
 
 
     def _applier(self, learner, testX, arguments, customDict):
-        """
-        use the given learner to do testing/prediction on the given test set
-        TAKES a TrainedLearner object that can be tested on
-        RETURNS UML friendly results
-        """
         try:
             ptVal = learner.get_machine_problem_type()
             if ptVal == self.shogun.Classifier.PT_BINARY:
@@ -495,52 +420,23 @@ class Shogun(UniversalInterface):
 
 
     def _getAttributes(self, learnerBackend):
-        """
-        Returns whatever attributes might be available for the given learner. For
-        example, in the case of linear regression, TODO
-
-        """
         # check for everything start with 'get_'?
         raise NotImplementedError
 
 
     def _optionDefaults(self, option):
-        """
-        Define package default values that will be used for as long as a default
-        value hasn't been registered in the UML configuration file. For example,
-        these values will always be used the first time an interface is instantiated.
-
-        """
         return None
 
 
     def _configurableOptionNames(self):
-        """
-        Returns a list of strings, where each string is the name of a configurable
-        option of this interface whose value will be stored in UML's configuration
-        file.
-
-        """
         return ['location', 'sourceLocation', 'libclangLocation']
 
 
     def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be wrapped
-        in I/O transformation, and exposed as attributes of all TrainedLearner
-        objects returned by this interface's train() function. If None, or an
-        empty list is returned, no functions will be exposed. Each function
-        in this list should be a python function, the inspect module will be
-        used to retrieve argument names, and the value of the function's
-        __name__ attribute will be its name in TrainedLearner.
 
-        """
         return []
 
     def version(self):
-        """
-        Return a string designating the version of the package underlying this interface
-        """
         if self.versionString is None:
             shogunLib = importlib.import_module('shogun.Library')
             self.versionString = shogunLib.Version_get_version_release()
@@ -673,7 +569,7 @@ class Shogun(UniversalInterface):
             inverseMapping = None
             #if labelsObj.getTypeString() != 'Matrix':
             labelsObj = labelsObj.copyAs('Matrix')
-            problemType = self._getMatchineProblemType(learnerName)
+            problemType = self._getMachineProblemType(learnerName)
             if problemType == self.shogun.Classifier.PT_MULTICLASS:
                 inverseMapping = _remapLabelsRange(labelsObj)
                 customDict['remap'] = inverseMapping

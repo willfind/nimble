@@ -21,7 +21,7 @@ from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
-from .dataHelpers import inheritDocstringsFactory
+from UML.docHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 

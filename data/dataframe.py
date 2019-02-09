@@ -16,7 +16,7 @@ from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
-from .dataHelpers import inheritDocstringsFactory
+from UML.docHelpers import inheritDocstringsFactory
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 

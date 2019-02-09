@@ -538,3 +538,51 @@ def notABCAssociated(obj, name, value):
     if name.startswith("_abc"):
         return False
     return True
+
+def removeFromArray(orig, toIgnore):
+    temp = []
+    for entry in orig:
+        if not entry in toIgnore:
+            temp.append(entry)
+    return temp
+
+def removeFromDict(orig, toIgnore):
+    for entry in toIgnore:
+        if entry in orig:
+            del orig[entry]
+    return orig
+
+def removeFromTailMatchedLists(full, matched, toIgnore):
+    """
+    'full' is some list n, 'matched' is a list with length m, where
+    m is less than or equal to n, where the last m values of full
+    are matched against their positions in matched. If one of those
+    is to be removed, it is to be removed in both.
+    """
+    temp = {}
+    if matched is not None:
+        for i in range(len(full)):
+            fullIdx = len(full) - 1 - i
+            if i < len(matched):
+                matchedIdx = len(matched) - 1 - i
+                temp[full[fullIdx]] = matched[matchedIdx]
+            else:
+                temp[full[fullIdx]] = None
+    else:
+        retFull = removeFromArray(full, toIgnore)
+        return (retFull, matched)
+
+    for ignoreKey in toIgnore:
+        if ignoreKey in temp:
+            del temp[ignoreKey]
+
+    retFull = []
+    retMatched = []
+    for i in range(len(full)):
+        name = full[i]
+        if name in temp:
+            retFull.append(name)
+            if (i - (len(full) - len(matched))) >= 0:
+                retMatched.append(temp[name])
+
+    return (retFull, retMatched)

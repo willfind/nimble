@@ -10,32 +10,33 @@ import inspect
 import copy
 import abc
 import functools
-import numpy
 import sys
 import numbers
+import warnings
 
-import UML
-from UML.exceptions import ArgumentException
-from UML.exceptions import prettyListString
-from UML.exceptions import prettyDictString
-from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
-from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
-from UML.interfaces.interface_helpers import ovaNotOvOFormatted
-from UML.interfaces.interface_helpers import checkClassificationStrategy
-from UML.interfaces.interface_helpers import cacheWrapper
-from UML.logger import logCapture, Stopwatch, enableLogging, directCall
-
-from UML.helpers import _mergeArguments, generateAllPairs, countWins, inspectArguments
+import numpy
 import six
 from six.moves import range
-import warnings
+
+import UML
+from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import prettyListString
+from UML.exceptions import prettyDictString
+from UML.interfaces.interface_helpers import (
+    generateBinaryScoresFromHigherSortedLabelScores,
+    calculateSingleLabelScoresFromOneVsOneScores,
+    ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
+from UML.logger import logCapture, Stopwatch, enableLogging, directCall
+from UML.helpers import _mergeArguments
+from UML.helpers import generateAllPairs, countWins, inspectArguments
 
 cloudpickle = UML.importModule('cloudpickle')
 
-def captureOutput(toWrap):
-    """Decorator which will safefly redirect standard error within the
-    wrapped function to the temp file at UML.capturedErr
 
+def captureOutput(toWrap):
+    """
+    Decorator which will safely redirect standard error within the
+    wrapped function to the temp file at UML.capturedErr.
     """
 
     def wrapped(*args, **kwarguments):
@@ -52,100 +53,284 @@ def captureOutput(toWrap):
 
 class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     """
-
+    Metaclass defining methods and abstract methods for specific
+    package or custom interfaces.
     """
-
     _listLearnersCached = None
 
     def __init__(self):
-        """
-
-        """
         ### Validate all the information from abstract functions ###
-        # enforce a check that the underlying package is accessible at instantiation,
-        # aborting the construction of the interface for this session of UML if
-        # it is not.
+        # enforce a check that the underlying package is accessible at
+        # instantiation, aborting the construction of the interface for this
+        # session of UML if it is not.
         if not self.accessible():
-            raise ImportError(
-                "The underlying package for " + self.getCanonicalName() + " was not accessible, aborting instantiation.")
+            msg = "The underlying package for " + self.getCanonicalName()
+            msg += " was not accessible, aborting instantiation."
+            raise ImportError(msg)
 
         # getCanonicalName
         if not isinstance(self.getCanonicalName(), str):
-            raise TypeError("Improper implementation of getCanonicalName(), must return a string")
+            msg = "Improper implementation of getCanonicalName(), must return "
+            msg += "a string"
+            raise TypeError(msg)
 
         # _configurableOptionNames and _optionDefaults
         optionNames = self._configurableOptionNames()
         if not isinstance(optionNames, list):
-            raise TypeError("Improper implementation of _configurableOptionNames(), must return a list of strings")
+            msg = "Improper implementation of _configurableOptionNames(), "
+            msg += "must return a list of strings"
+            raise TypeError(msg)
         for optionName in optionNames:
             if not isinstance(optionName, str):
-                raise TypeError("Improper implementation of _configurableOptionNames(), must return a list of strings")
-            # make a call to _optionDefaults just to make sure it doesn't throw an exception
+                msg = "Improper implementation of _configurableOptionNames(), "
+                msg += "must return a list of strings"
+                raise TypeError(msg)
+            # call _optionDefaults to make sure it doesn't throw an exception
             self._optionDefaults(optionName)
 
         # _exposedFunctions
         exposedFunctions = self._exposedFunctions()
         if exposedFunctions is None or not isinstance(exposedFunctions, list):
-            raise TypeError(
-                "Improper implementation of _exposedFunctions(), must return a list of methods to be bundled with TrainedLearner")
+            msg = "Improper implementation of _exposedFunctions(), must "
+            msg += "return a list of methods to be bundled with TrainedLearner"
+            raise TypeError(msg)
         for exposed in exposedFunctions:
             # is callable
             if not hasattr(exposed, '__call__'):
-                raise TypeError(
-                    "Improper implementation of _exposedFunctions, each member of the return must have __call__ attribute")
+                msg = "Improper implementation of _exposedFunctions, each "
+                msg += "member of the return must have __call__ attribute"
+                raise TypeError(msg)
             # has name attribute
             if not hasattr(exposed, '__name__'):
-                raise TypeError(
-                    "Improper implementation of _exposedFunctions, each member of the return must have __name__ attribute")
+                msg = "Improper implementation of _exposedFunctions, each "
+                msg += "member of the return must have __name__ attribute"
+                raise TypeError(msg)
             # takes self as attribute
             (args, varargs, keywords, defaults) = inspectArguments(exposed)
             if args[0] != 'self':
-                raise TypeError(
-                    "Improper implementation of _exposedFunctions each member's first argument must be 'self', interpreted as a TrainedLearner")
+                msg = "Improper implementation of _exposedFunctions each "
+                msg += "member's first argument must be 'self', interpreted "
+                msg += "as a TrainedLearner"
+                raise TypeError(msg)
+
 
     @property
     def optionNames(self):
+        """
+        TODO
+        """
         return copy.copy(self._configurableOptionNames())
 
-    @captureOutput
-    def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label',
-                      timer=None):
 
+    @captureOutput
+    def trainAndApply(self, learnerName, trainX, trainY=None, testX=None,
+                      arguments=None, output=None, scoreMode='label',
+                      timer=None):
+        """
+        Train a model and apply it to the test data.
+
+        The learner will be trained using the training data, then
+        prediction, transformation, etc. as appropriate to the learner
+        will be applied to the test data and returned.
+
+        Parameters
+        ----------
+        learnerName : str
+            Name of the learner to be called, in the form
+            'package.learner'
+        trainX: UML Base object
+            Data to be used for training.
+        trainY: identifier, UML Base object
+            A name or index of the feature in ``trainX`` containing the
+            labels or another UML Base object containing the labels that
+            correspond to ``trainX``.
+        testX : UML Base object
+            data set on which the trained learner will be applied (i.e.
+            performing prediction, transformation, etc. as appropriate
+            to the learner).
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To make use of multiple permutations, specify different
+            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately. These will
+            be merged with kwarguments for the learner.
+        output : str
+            The kind of UML Base object that the output of this function
+            should be in. Any of the normal string inputs to the
+            createData ``returnType`` parameter are accepted here.
+            Alternatively, the value 'match' will indicate to use the
+            type of the ``trainX`` parameter.
+        scoreMode : str
+            In the case of a classifying learner, this specifies the
+            type of output wanted: 'label' if we class labels are
+            desired, 'bestScore' if both the class label and the score
+            associated with that class are desired, or 'allScores' if a
+            matrix containing the scores for every class label are
+            desired.
+        timer : UML.logger.Stopwatch
+            Used to record the time to train the model. This information
+            will be stored in the log.
+
+        Returns
+        -------
+        results
+            The resulting output of applying learner.
+        """
         learner = self.train(learnerName, trainX, trainY, arguments, timer)
         if timer is not None:
             timer.start('apply')
-        # call TrainedLearner's apply method (which is already wrapped to perform transformation)
+        # call TrainedLearner's apply method
+        # (which is already wrapped to perform transformation)
         ret = learner.apply(testX, {}, output, scoreMode, useLog=False)
         if timer is not None:
             timer.stop('apply')
 
         return ret
 
+
     @captureOutput
-    def trainAndTest(self, learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output='match',
+    def trainAndTest(self, learnerName, trainX, trainY, testX, testY,
+                     performanceFunction, arguments=None, output='match',
                      scoreMode='label', timer=None, **kwarguments):
+        """
+        Train a model and get the results of its performance.
+
+        Uses cross validation to generate a performance score for the
+        algorithm, given the particular argument permutation. The
+        argument permutation that performed best cross validating over
+        the training data is then used as the lone argument for training
+        on the whole training data set. Finally, the learned model
+        generates predictions for the testing set, an the performance
+        of those predictions is calculated and returned. If no
+        additional arguments are supplied via arguments, then
+        the result is the performance of the algorithm with default
+        arguments on the testing data.
+
+        Parameters
+        ----------
+        learnerName : str
+            Name of the learner to be called, in the form
+            'package.learner'
+        trainX: UML Base object
+            Data to be used for training.
+        trainY: identifier, UML Base object
+            A name or index of the feature in ``trainX`` containing the
+            labels or another UML Base object containing the labels that
+            correspond to ``trainX``.
+        testX : UML Base object
+            data set on which the trained learner will be applied (i.e.
+            performing prediction, transformation, etc. as appropriate
+            to the learner).
+        testY : identifier, UML Base object
+            A name or index of the feature in ``testX`` containing the
+            labels or another UML Base object containing the labels that
+            correspond to ``testX``.
+        performanceFunction : function
+            If cross validation is triggered to select from the given
+            argument set, then this function will be used to generate a
+            performance score for the run. Function is of the form:
+            def func(knownValues, predictedValues).
+            Look in UML.calculate for pre-made options. Default is None,
+            since if there is no parameter selection to be done, it is
+            not used.
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To make use of multiple permutations, specify different
+            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately. These will
+            be merged with kwarguments for the learner.
+        output : str
+            The kind of UML Base object that the output of this function
+            should be in. Any of the normal string inputs to the
+            createData ``returnType`` parameter are accepted here.
+            Alternatively, the value 'match' will indicate to use the
+            type of the ``trainX`` parameter.
+        scoreMode : str
+            In the case of a classifying learner, this specifies the
+            type of output wanted: 'label' if we class labels are
+            desired, 'bestScore' if both the class label and the score
+            associated with that class are desired, or 'allScores' if a
+            matrix containing the scores for every class label are
+            desired.
+        timer : UML.logger.Stopwatch
+            Used to record the time to train the model. This information
+            will be stored in the log.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. To make use of multiple permutations, specify
+            different values for parameters as a tuple.
+            eg. arg1=(1,2,3), arg2=(4,5,6) which correspond to
+            permutations/argument states with one element from arg1 and
+            one element from arg2, such that an example generated
+            permutation/argument state would be ``arg1=2, arg2=4``.
+            Will be merged with arguments.
+
+        Returns
+        -------
+        performance
+            The calculated value of the ``performanceFunction`` after
+            the test.
+        """
         learner = self.train(learnerName, trainX, trainY, arguments, timer)
         if timer is not None:
             timer.start('test')
-        # call TrainedLearner's test method (which is already wrapped to perform transformation)
-        ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode, useLog=False)
+        # call TrainedLearner's test method
+        # (which is already wrapped to perform transformation)
+        ret = learner.test(testX, testY, performanceFunction, {}, output,
+                           scoreMode, useLog=False)
         if timer is not None:
             timer.stop('test')
 
         return ret
 
-    @captureOutput
-    def train(self, learnerName, trainX, trainY=None, multiClassStrategy='default', arguments={}, useLog=None, timer=None):
-        """
 
+    @captureOutput
+    def train(self, learnerName, trainX, trainY=None,
+              multiClassStrategy='default', arguments=None, useLog=None,
+              timer=None):
+        """
+        Fit the learner model using training data.
+
+        learnerName : str
+            Name of the learner to be called, in the form
+            'package.learner'
+        trainX: UML Base object
+            Data to be used for training.
+        trainY: identifier, UML Base object
+            A name or index of the feature in ``trainX`` containing the
+            labels or another UML Base object containing the labels that
+            correspond to ``trainX``.
+        multiClassStrategy : str
+            May only be 'default' 'OneVsAll' or 'OneVsOne'
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To make use of multiple permutations, specify different
+            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately.
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If False,
+            do **NOT** send to the logger, regardless of the global
+            option.
+        timer : UML.logger.Stopwatch
+            Used to record the time to train the model. This will be
+            stored in the log.
         """
         if multiClassStrategy != 'default':
             #if we need to do multiclassification by ourselves
-            trialResult = checkClassificationStrategy(self, learnerName, arguments)
-
+            trialResult = checkClassificationStrategy(self, learnerName,
+                                                      arguments)
             #1 VS All
             if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-                #Remove true labels from from training set, if not already separated
+                #Remove true labels from from training set, if not separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
                     trainY = trainX.features.extract(trainY)
@@ -153,14 +338,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # Get set of unique class labels
                 labelVector = trainY.copy()
                 labelVector.transpose()
-                labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelSet = list(set(labelVectorToList))
 
                 if useLog is None:
                     useLog = UML.settings.get("logger", "enabledByDefault")
                     useLog = True if useLog.lower() == 'true' else False
                 deepLog = False
                 if useLog:
-                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                    deepLog = UML.settings.get(
+                        'logger', 'enableMultiClassStrategyDeepLogging')
                     deepLog = True if deepLog.lower() == 'true' else False
                     useLog = deepLog
 
@@ -173,14 +360,15 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 # For each class label in the set of labels:  convert the true
                 # labels in trainY into boolean labels (1 if the point
-                # has 'label', 0 otherwise.)  Train a classifier with the processed
-                # labels and get predictions on the test set.
+                # has 'label', 0 otherwise.)  Train a classifier with the
+                # processed labels and get predictions on the test set.
                 trainedLearners = []
                 for label in labelSet:
                     relabeler.__defaults__ = (label,)
                     trainLabels = trainY.points.calculate(relabeler)
-                    trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
-                                                       timer=timer)
+                    trainedLearner = self._train(
+                        learnerName, trainX, trainLabels, arguments=arguments,
+                        timer=timer)
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
@@ -190,17 +378,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             #1 VS 1
             if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-                # we want the data and the labels together in one object or this method
+                # want data and labels together in one object for this method
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
                     trainX.features.add(trainY)
                     trainY = len(trainX.features) - 1
 
-                # Get set of unique class labels, then generate list of all 2-combinations of
-                # class labels
+                # Get set of unique class labels, then generate list of all
+                # 2-combinations of class labels
                 labelVector = trainX.features.copy([trainY])
                 labelVector.transpose()
-                labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelSet = list(set(labelVectorToList))
                 labelPairs = generateAllPairs(labelSet)
 
                 if useLog is None:
@@ -208,7 +397,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     useLog = True if useLog.lower() == 'true' else False
                 deepLog = False
                 if useLog:
-                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                    deepLog = UML.settings.get(
+                        'logger', 'enableMultiClassStrategyDeepLogging')
                     deepLog = True if deepLog.lower() == 'true' else False
                     useLog = deepLog
 
@@ -219,16 +409,22 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                     timer.start('trainOVO')
 
-                # For each pair of class labels: remove all points with one of those labels,
-                # train a classifier on those points, get predictions based on that model,
-                # and put the points back into the data object
+                # For each pair of class labels: remove all points with one of
+                # those labels, train a classifier on those points, get
+                # predictions based on that model, and put the points back into
+                # the data object
                 trainedLearners = []
                 for pair in labelPairs:
                     #get all points that have one of the labels in pair
-                    pairData = trainX.points.extract(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+                    pairData = trainX.points.extract(
+                        lambda point: point[trainY] in pair)
                     pairTrueLabels = pairData.features.extract(trainY)
-                    trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
-                                                       timer=timer))
+                    trainedLearners.append(
+                        self._train(
+                            learnerName, pairData.copy(),
+                            pairTrueLabels.copy(), arguments=arguments,
+                            timer=timer)
+                        )
                     pairData.features.add(pairTrueLabels)
                     trainX.points.add(pairData)
                 if useLog:
@@ -237,10 +433,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return self._train(learnerName, trainX, trainY, arguments, timer)
 
+
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
-        (trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, trainX, trainY, arguments,
-                                                                             timer)
+    def _train(self, learnerName, trainX, trainY=None, arguments=None,
+               timer=None):
+        packedBackend = self._trainBackend(learnerName, trainX, trainY,
+                                           arguments, timer)
+        trainedBackend, transformedInputs, customDict = packedBackend
 
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
@@ -250,16 +449,20 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             has2dOutput = len(outputData) > 1
 
         # encapsulate into TrainedLearner object
-        return TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self,
-                                   has2dOutput)
+        return TrainedLearner(learnerName, arguments, transformedInputs,
+                              customDict, trainedBackend, self, has2dOutput)
+
 
     def _confirmValidLearner(self, learnerName):
         allLearners = self.listLearners()
         if not learnerName in allLearners:
-            raise ArgumentException("" + learnerName + " is not the name of a learner exposed by this interface")
+            msg = learnerName + " is not the name of a learner exposed by "
+            msg += "this interface"
+            raise ArgumentException(msg)
         learnerCall = self.findCallable(learnerName)
         if learnerCall is None:
-            raise ArgumentException("" + learnerName + " was not found in this package")
+            msg = learnerName + " was not found in this package"
+            raise ArgumentException(msg)
 
 
     def _trainBackend(self, learnerName, trainX, trainY, arguments, timer):
@@ -268,15 +471,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # verify the learner is available
         self._confirmValidLearner(learnerName)
 
-        #validate argument distributions
-        groupedArgsWithDefaults = self._validateArgumentDistribution(learnerName, arguments)
+        # validate argument distributions
+        groupedArgsWithDefaults = self._validateArgumentDistribution(
+            learnerName, arguments)
 
         ### INPUT TRANSFORMATION ###
-        #recursively work through arguments, doing in-package object instantiation
-        instantiatedInputs = self._instantiateArguments(learnerName, groupedArgsWithDefaults)
+        # recursively work through arguments,
+        # doing in-package object instantiation
+        instantiatedInputs = self._instantiateArguments(
+            learnerName, groupedArgsWithDefaults)
 
-        # the scratch space dictionary that the package implementor may use to pass information
-        # between I/O transformation, the trainer and applier
+        # the scratch space dictionary that the package implementor may use to
+        # pass information between I/O transformation, the trainer and applier
         customDict = {}
 
         # separate training data / labels if needed
@@ -285,29 +491,43 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             trainY = trainX.features.extract(toExtract=trainY)
 
         # execute interface implementor's input transformation.
-        transformedInputs = self._inputTransformation(learnerName, trainX, trainY, None, instantiatedInputs, customDict)
-        (transTrainX, transTrainY, transTestX, transArguments) = transformedInputs
+        transformedInputs = self._inputTransformation(
+            learnerName, trainX, trainY, None, instantiatedInputs, customDict)
+        transTrainX, transTrainY, _, transArguments = transformedInputs
 
         ### LEARNER CREATION / TRAINING ###
 
         # train the instantiated learner
         if timer is not None:
             timer.start('train')
-        trainedBackend = self._trainer(learnerName, transTrainX, transTrainY, transArguments, customDict)
+        trainedBackend = self._trainer(learnerName, transTrainX, transTrainY,
+                                       transArguments, customDict)
         if timer is not None:
             timer.stop('train')
 
         return (trainedBackend, transformedInputs, customDict)
 
+
     def setOption(self, option, value):
+        """
+        TODO
+        """
         if option not in self.optionNames:
-            raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
+            msg = str(option)
+            msg += " is not one of the accepted configurable option names"
+            raise ArgumentException(msg)
 
         UML.settings.set(self.getCanonicalName(), option, value)
 
+
     def getOption(self, option):
+        """
+        TODO
+        """
         if option not in self.optionNames:
-            raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
+            msg = str(option)
+            msg += " is not one of the accepted configurable option names"
+            raise ArgumentException(msg)
 
         # empty string is the sentinal value indicating that the configuration
         # file has an option of that name, but the UML user hasn't set a value
@@ -315,7 +535,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ret = ''
         try:
             ret = UML.settings.get(self.getCanonicalName(), option)
-        except:
+        except Exception:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
             pass
@@ -326,22 +546,28 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
     def _validateArgumentDistribution(self, learnerName, arguments):
         """
-        We check that each call has all the needed arguments, that in total we are
-        using each argument only once, and that we use them all.
+        We check that each call has all the needed arguments, that in
+        total we are using each argument only once, and that we use them
+        all.
 
-        return a copy of the arguments that has been arranged for easy instantiation
-
+        Returns
+        -------
+        A copy of the arguments
+            These have been arranged for easy instantiation.
         """
         baseCallName = learnerName
         possibleParamSets = self.getLearnerParameterNames(learnerName)
         possibleDefaults = self.getLearnerDefaultValues(learnerName)
-        bestIndex = self._chooseBestParameterSet(possibleParamSets, possibleDefaults, arguments)
+        bestIndex = self._chooseBestParameterSet(possibleParamSets,
+                                                 possibleDefaults, arguments)
 
-        (neededParams, availableDefaults) = (possibleParamSets[bestIndex], possibleDefaults[bestIndex])
+        neededParams = possibleParamSets[bestIndex]
+        availableDefaults = possibleDefaults[bestIndex]
         available = copy.deepcopy(arguments)
 
-        (ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults,
-                                                                 available, False, arguments)
+        ret, ignore = self._validateArgumentDistributionHelper(
+            baseCallName, neededParams, availableDefaults, available, False,
+            arguments)
         return ret
 
     def _isInstantiable(self, val, hasDefault, defVal):
@@ -361,55 +587,62 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return False
 
-    def _validateArgumentDistributionHelper(self, currCallName, currNeededParams, currDefaults, available, sharedPool,
-                                            original):
+    def _validateArgumentDistributionHelper(
+        self, currCallName, currNeededParams, currDefaults, available,
+        sharedPool, original):
         """
-        Recursive function for actually performing _validateArgumentDistribution. Will recurse
-        when encountering shorthand for making in package calls, where the desired arguments
-        are in another dictionary.
-
+        Recursive function for actually performing
+        _validateArgumentDistribution. Will recurse when encountering
+        shorthand for making in package calls, where the desired
+        arguments are in another dictionary.
         """
         ret = {}
         # key: key value in ret for accessing appropriate subargs set
         # value: list of key value pair to replace in that set
         delayedAllocations = {None: []}
         # dict where the key matches the param name of the thing that will be
-        # instantiated, and the value is a triple, consisting of the the avaiable value,
-        # the values consused from available, and the additions to dellayedAllocations
+        # instantiated, and the value is a triple, consisting of the the
+        # avaiable value, the values consused from available, and the additions
+        # to delayedAllocations
         delayedInstantiations = {}
         #work through this level's needed parameters
         for paramName in currNeededParams:
-            # is the param actually there? Is there a default associated with it?
+            # is param actually there? Is there a default associated with it?
             present = paramName in available
             hasDefault = paramName in currDefaults
 
-            # In each conditional, we have three main tasks: identifying what values will
-            # be used, book keeping for that value (removal, delayed allocation / instantiation),
-            # and adding values to ret
+            # In each conditional, we have three main tasks: identifying what
+            # values will be used, book keeping for that value (removal,
+            # delayed allocation / instantiation), and adding values to ret
             if present and hasDefault:
                 paramValue = available[paramName]
                 paramDefault = currDefaults[paramName]
                 addToDelayedIfNeeded = True
-                if self._isInstantiable(paramValue, True, paramDefault) or self._isInstantiable(paramDefault, True,
-                                                                                                paramDefault):
+                if (self._isInstantiable(paramValue, True, paramDefault)
+                        or self._isInstantiable(
+                            paramDefault, True, paramDefault)):
                     availableBackup = copy.deepcopy(available)
                     allocationsBackup = copy.deepcopy(delayedAllocations)
 
                 if self._isInstantiable(paramDefault, True, paramDefault):
                     # try recursive call using default value
                     try:
-                        self._setupValidationRecursiveCall(paramDefault, available, ret, delayedAllocations, original)
-                    except:
-                    # if fail, try recursive call using actual value and copied available
+                        self._setupValidationRecursiveCall(
+                            paramDefault, available, ret, delayedAllocations,
+                            original)
+                    except Exception:
+                    # try recursive call with actual value and copied available
                         available = availableBackup
-                        self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
+                        self._setupValidationRecursiveCall(
+                            paramValue, available, ret, delayedAllocations,
+                            original)
                         del available[paramName]
                         addToDelayedIfNeeded = False
                 else:
                     ret[paramName] = paramDefault
 
                 if not self._isInstantiable(paramValue, True, paramDefault):
-                    # mark down to use the real value if it isn't allocated elsewhere
+                    # mark to use real value if it isn't allocated elsewhere
                     delayedAllocations[None].append((paramName, paramValue))
                 else:
                     if addToDelayedIfNeeded:
@@ -418,22 +651,30 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                             valueBackup = availableBackup[keyBackup]
                             if keyBackup not in available:
                                 availableChanges[keyBackup] = valueBackup
-                        delayedInstantiations[paramName] = (available[paramName], availableChanges, allocationsBackup)
+                        delayedInstantiations[paramName] = (available[paramName],
+                                                            availableChanges,
+                                                            allocationsBackup)
 
             elif present and not hasDefault:
                 paramValue = available[paramName]
-                # is it something that needs to be instantiated and therefore needs params of its own?
+                # is it something that needs to be instantiated and therefore
+                # needs params of its own?
                 if self._isInstantiable(paramValue, False, None):
-                    self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
+                    self._setupValidationRecursiveCall(paramValue, available,
+                                                       ret, delayedAllocations,
+                                                       original)
                 del available[paramName]
                 ret[paramName] = paramValue
             elif not present and hasDefault:
                 paramValue = currDefaults[paramName]
-                # is it something that needs to be instantiated and therefore needs params of its own?
-                # TODO is findCallable really the most reliable trigger for this? maybe we should check
-                # that you can get params from it too ....
-                #if isInstantiable(paramValue, True, paramValue):
-                #	self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
+                # is it something that needs to be instantiated and therefore
+                # needs params of its own?
+                # TODO is findCallable really most reliable trigger for this?
+                # maybe we should check that you can get params from it too
+                # if isInstantiable(paramValue, True, paramValue):
+                #    self._setupValidationRecursiveCall(
+                #        paramValue, available, ret, delayedAllocations,
+                #        original)
                 ret[paramName] = currDefaults[paramName]
             # not present and no default
             else:
@@ -442,38 +683,40 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 else:
                     subParamGroup = self._getParameterNames(currCallName)
 
-                msg = "MISSING LEARNERING PARAMETER! "
-                msg += "When trying to validate arguments for "
-                msg += currCallName + ", "
-                msg += "we couldn't find a value for the parameter named "
+                msg = "MISSING LEARNING PARAMETER! "
+                msg += "When trying to validate arguments for " + currCallName
+                msg += ", we couldn't find a value for the parameter named "
                 msg += "'" + str(paramName) + "'. "
                 msg += "The allowed parameters were: "
                 msg += prettyListString(currNeededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the inputs"
-                msg += " out of the following (numbered) list of possible parameter sets: "
-                msg += prettyListString(subParamGroup, numberItems=True, itemStr=prettyListString)
+                msg += ". These were choosen as the best guess given the "
+                msg += "inputs out of the following (numbered) list of "
+                msg += "possible parameter sets: "
+                msg += prettyListString(subParamGroup, numberItems=True,
+                                        itemStr=prettyListString)
 
                 if len(currDefaults) == 0:
-                    msg += ". Out of the allowed parameters, all required values "
-                    msg += "specified by the user"
+                    msg += ". Out of the allowed parameters, all required "
+                    msg += "values specified by the user"
                 else:
-                    msg += ". Out of the allowed parameters, the following could be omited, "
-                    msg += "which would result in the associated default value being used: "
+                    msg += ". Out of the allowed parameters, the following "
+                    msg += "could be omited, which would result in the "
+                    msg += "associated default value being used: "
                     msg += prettyDictString(currDefaults, useAnd=True)
 
                 if len(original) == 0:
                     msg += ". However, no arguments were inputed."
                 else:
-                    msg += ". The full mapping of inputs actually provided was: "
-                    msg += prettyDictString(original) + ". "
+                    msg += ". The full mapping of inputs actually provided "
+                    msg += "was: " + prettyDictString(original) + ". "
 
                 raise ArgumentException(msg)
 
-        # if this pool of arguments is not shared, then this is the last subcall,
-        # and we can finalize the allocations
+        # if this pool of arguments is not shared, then this is the last
+        # subcall, and we can finalize the allocations
         if not sharedPool:
-            # work through list of instantiable arguments which were tentatively called using
-            # defaults
+            # work through list of instantiable arguments which were
+            # tentatively called using defaults
             for key in delayedInstantiations.keys():
                 (value, used, allocations) = delayedInstantiations[key]
                 # check to see if it is still in available
@@ -482,7 +725,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     used.update(available)
                     # make recursive call instead with the actual value
                     #try:
-                    self._setupValidationRecursiveCall(value, used, ret, delayedAllocations, original)
+                    self._setupValidationRecursiveCall(value, used, ret,
+                                                       delayedAllocations,
+                                                       original)
                     available = used
                     ret[key] = value
                     del available[key]
@@ -490,7 +735,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # if fail, keep the results of the call with the default
                 #	pass
 
-            # work through a list of possible keys for the delayedAllocations dict,
+            # work through a list of possible keys for delayedAllocations dict,
             # if there are allocations associated with that key, perform them.
             for possibleKey in delayedAllocations.keys():
                 changesList = delayedAllocations[possibleKey]
@@ -502,7 +747,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                             ret[possibleKey][k] = v
                         del available[k]
 
-            # at this point, everything should have been used, and then removed.
+            # at this point, everything should have been used and then removed.
             if len(available) != 0:
                 if currCallName in self.listLearners():
                     subParamGroup = self.getLearnerParameterNames(currCallName)
@@ -511,14 +756,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 msg = "EXTRA LEARNER PARAMETER! "
                 msg += "When trying to validate arguments for "
-                msg += currCallName + ", "
-                msg += "the following list of parameter names were not matched: "
+                msg += currCallName + ", the following list of parameter "
+                msg += "names were not matched: "
                 msg += prettyListString(list(available.keys()), useAnd=True)
                 msg += ". The allowed parameters were: "
                 msg += prettyListString(currNeededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the inputs"
-                msg += " out of the following (numbered) list of possible parameter sets: "
-                msg += prettyListString(subParamGroup, numberItems=True, itemStr=prettyListString)
+                msg += ". These were choosen as the best guess given the "
+                msg += "inputs out of the following (numbered) list of "
+                msg += "possible parameter sets: "
+                msg += prettyListString(subParamGroup, numberItems=True,
+                                        itemStr=prettyListString)
                 msg += ". The full mapping of inputs actually provided was: "
                 msg += prettyDictString(original) + ". "
 
@@ -528,22 +775,24 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return (ret, delayedAllocations)
 
-    def _setupValidationRecursiveCall(self, paramValue, available, callingRet, callingAllocations, original):
+    def _setupValidationRecursiveCall(self, paramValue, available, callingRet,
+                                      callingAllocations, original):
         # are the params for this value in a restricted argument pool?
         if paramValue in available:
             subSource = available[paramValue]
             subShared = False
-            # We can and should do this here because if there is ever another key with paramVale
-            # as the value, then it will be functionally equivalent to save these args for then
-            # as it would be to use them here. So, we do the easy thing, and consume them now.
+            # We can and should do this here because if there is ever another
+            # key with paramVale as the value, then it will be functionally
+            # equivalent to save these args for then as it would be to use them
+            # here. So, we do the easy thing, and consume them now.
             del available[paramValue]
         # else, they're in the main, shared, pool
         else:
             subSource = available
             subShared = True
 
-        # where we get the wanted parameter set from depends on the kind of thing that we
-        # need to instantiate
+        # where we get the wanted parameter set from depends on the kind of
+        # thing that we need to instantiate
         if paramValue in self.listLearners():
             subParamGroup = self.getLearnerParameterNames(paramValue)
             subDefaults = self.getLearnerDefaultValues(paramValue)
@@ -551,11 +800,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             subParamGroup = self._getParameterNames(paramValue)
             subDefaults = self._getDefaultValues(paramValue)
 
-        bestIndex = self._chooseBestParameterSet(subParamGroup, subDefaults, subSource)
-        (subParamGroup, subDefaults) = (subParamGroup[bestIndex], subDefaults[bestIndex])
+        bestIndex = self._chooseBestParameterSet(subParamGroup, subDefaults,
+                                                 subSource)
+        subParamGroup = subParamGroup[bestIndex]
+        subDefaults = subDefaults[bestIndex]
 
-        (ret, allocations) = self._validateArgumentDistributionHelper(paramValue, subParamGroup, subDefaults, subSource,
-                                                                      subShared, original)
+        (ret, allocations) = self._validateArgumentDistributionHelper(
+            paramValue, subParamGroup, subDefaults, subSource, subShared,
+            original)
 
         # integrate the returned values into the state of the calling frame
         callingRet[paramValue] = ret
@@ -568,11 +820,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
     def _instantiateArguments(self, learnerName, arguments):
         """
-        Recursively consumes the contents of the arguments parameter, checking for ones
-        that need to be instantiated using in-package calls, and performing that
-        action if needed. Returns a new dictionary with the same contents as 'arguments',
-        except with the replacement of in-package objects for their string names
-
+        Recursively consumes the contents of the arguments parameter,
+        checking for ones that need to be instantiated using in-package
+        calls, and performing that action if needed. Returns a new
+        dictionary with the same contents as 'arguments', except with
+        the replacement of in-package objects for their string names.
         """
         baseCallName = learnerName
         baseNeededParams = self._getParameterNames(learnerName)
@@ -581,10 +833,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
     def _instantiateArgumentsHelper(self, toProcess):
         """
-        Recursive function for actually performing _instantiateArguments. Will recurse
-        when encountering shorthand for making in package calls, where the desired arguments
-        are in another dictionary.
-
+        Recursive function for actually performing
+        _instantiateArguments. Will recurse when encountering shorthand
+        for making in package calls, where the desired arguments are in
+        another dictionary.
         """
         ignoreKeys = []
         ret = {}
@@ -593,14 +845,15 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             if isinstance(paramValue, six.string_types):
                 ignoreKeys.append(paramValue)
                 toCall = self.findCallable(paramValue)
-                # if we can find an object for it, and we've prepped the arguments,
-                # then we actually instantiate an object
+                # if we can find an object for it, and we've prepped the
+                # arguments, then we actually instantiate an object
                 if toCall is not None and paramValue in toProcess:
                     subInitParams = toProcess[paramValue]
                     if subInitParams is None:
                         ret[paramName] = paramValue
                         continue
-                    instantiatedParams = self._instantiateArgumentsHelper(subInitParams)
+                    instantiatedParams = self._instantiateArgumentsHelper(
+                        subInitParams)
                     paramValue = toCall(**instantiatedParams)
 
             ret[paramName] = paramValue
@@ -611,7 +864,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return ret
 
-    def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults, arguments):
+    def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults,
+                                arguments):
         success = False
         missing = []
         bestParams = []
@@ -638,15 +892,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 bestIndex = i
                 success = True
         if not success:
-            msg = "MISSING LEARNERING PARAMETER(S)! "
+            msg = "MISSING LEARNING PARAMETER(S)! "
             msg += "When trying to validate arguments, "
-            msg += "we must pick the set of required parameters that best match "
-            msg += "the given input. However, from each possible (numbered) parameter"
-            msg += " set, the following parameter names were missing "
-            msg += prettyListString(missing, numberItems=True, itemStr=prettyListString)
-            msg += ". The following lists the required names in each of the possible "
-            msg += "(numbered) parameter sets: "
-            msg += prettyListString(nonDefaults, numberItems=True, itemStr=prettyListString)
+            msg += "we must pick the set of required parameters that best "
+            msg += "match the given input. However, from each possible "
+            msg += "(numbered) parameter set, the following parameter names "
+            msg += "were missing "
+            msg += prettyListString(missing, numberItems=True,
+                                    itemStr=prettyListString)
+            msg += ". The following lists the required names in each of the "
+            msg += "possible (numbered) parameter sets: "
+            msg += prettyListString(nonDefaults, numberItems=True,
+                                    itemStr=prettyListString)
             if len(arguments) == 0:
                 msg += ". However, no arguments were inputed."
             else:
@@ -655,16 +912,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             raise ArgumentException(msg)
 
-            msg = "Missing required params in each possible set: " + str(missing)
+            msg = "Missing required params in each possible set: "
+            msg += str(missing)
             raise ArgumentException(msg)
         return bestIndex
 
-    def _formatScoresToOvA(self, learnerName, learner, testX, applyResults, rawScores, arguments, customDict):
+    def _formatScoresToOvA(self, learnerName, learner, testX, applyResults,
+                           rawScores, arguments, customDict):
         """
-        Helper that takes raw scores in any of the three accepted formats (binary case best score,
-        one vs one pairwise tournament by natural label ordering, or one vs all by natural label
+        Helper that takes raw scores in any of the three accepted
+        formats (binary case best score, one vs one pairwise tournament
+        by natural label ordering, or one vs all by natural label
         ordering) and returns them in a one vs all accepted format.
-
         """
         order = self._getScoresOrder(learner)
         numLabels = len(order)
@@ -674,18 +933,21 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         if applyResults is None:
             applyResults = self._applier(learner, testX, arguments, customDict)
-            applyResults = self._outputTransformation(learnerName, applyResults, arguments, "match", "label",
-                                                      customDict)
+            applyResults = self._outputTransformation(
+                learnerName, applyResults, arguments, "match", "label",
+                customDict)
         if len(rawScores.features) != 3:
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
-            strategy = checkClassificationStrategy(self, learnerName, arguments)
-        # we want the scores to be per label, regardless of the original format, so we
-        # check the strategy, and modify it if necessary
+            strategy = checkClassificationStrategy(self, learnerName,
+                                                   arguments)
+        # want the scores to be per label, regardless of the original format,
+        # so we check the strategy, and modify it if necessary
         if not strategy:
             scores = []
             for i in range(len(rawScores.points)):
-                combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
+                combinedScores = calculateSingleLabelScoresFromOneVsOneScores(
+                    rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
             return UML.createData("Matrix", scores)
@@ -701,7 +963,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     def listLearners(self):
         """
         Return a list of all learners callable through this interface.
-
         """
         isCustom = isinstance(self, UML.interfaces.CustomLearnerInterface)
         if self._listLearnersCached is None:
@@ -716,18 +977,32 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @cacheWrapper
     def findCallable(self, name):
         """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
+        Find reference to the callable with the given name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the callable.
+
+        Returns
+        -------
+        Reference to in-package function or constructor.
         """
         return self._findCallableBackend(name)
 
     @cacheWrapper
     def _getParameterNames(self, name):
         """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
+        Find params for instantiation and function calls.
+
+        Parameters
+        ----------
+        name : str
+            The name of the class or function.
+
+        Returns
+        -------
+        List of list of param names to make the chosen call.
         """
         return self._getParameterNamesBackend(name)
 
@@ -735,18 +1010,32 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @cacheWrapper
     def getLearnerParameterNames(self, learnerName):
         """
-        Find all parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of list of param names
+        Find learner parameter names for a trainAndApply() call.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+
+        Returns
+        -------
+        List of list of param names
         """
         return self._getLearnerParameterNamesBackend(learnerName)
 
     @cacheWrapper
     def _getDefaultValues(self, name):
         """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
+        Find default values.
+
+        Parameters
+        ----------
+        name : str
+            The name of the class or function.
+
+        Returns
+        -------
+        List of dict of param names to default values.
         """
         return self._getDefaultValuesBackend(name)
 
@@ -754,9 +1043,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @cacheWrapper
     def getLearnerDefaultValues(self, learnerName):
         """
-        Find all default values for parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of dict of param names to default values
+        Find learner default parameter values for trainAndApply() call.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+
+        Returns
+        -------
+        List of dict of param names to default values
         """
         return self._getLearnerDefaultValuesBackend(learnerName)
 
@@ -767,72 +1063,47 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def accessible(self):
         """
-        Return true if the package underlying this interface is currently accessible,
-        False otherwise.
+        Determine the accessibility of the underlying interface package.
 
+        Returns
+        -------
+        bool
+            True if the package currently accessible, False otherwise.
         """
         pass
 
     @abc.abstractmethod
     def _listLearnersBackend(self):
-        """
-        Return a list of all learners callable through this interface.
-
-        """
         pass
 
     @abc.abstractmethod
     def _findCallableBackend(self, name):
-        """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
-        """
+
         pass
 
     @abc.abstractmethod
     def _getParameterNamesBackend(self, name):
-        """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
-        """
         pass
 
     @abc.abstractmethod
     def _getLearnerParameterNamesBackend(self, learnerName):
-        """
-        Find all parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of list of param names
-        """
         pass
 
     @abc.abstractmethod
     def _getDefaultValuesBackend(self, name):
-        """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
-        """
         pass
 
     @abc.abstractmethod
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        """
-        Find all default values for parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of dict of param names to default values
-        """
         pass
 
     @abc.abstractmethod
     def learnerType(self, name):
         """
-        Returns a string referring to the action the learner takes out of the possibilities:
-        classifier, regressor, featureSelection, dimensionalityReduction
+        Returns a string referring to the action the learner takes out
+        of the possibilities: classifier, regressor, featureSelection,
+        dimensionalityReduction
         TODO
-
         """
         pass
 
@@ -841,24 +1112,32 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         If the learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception.
-
         """
         pass
 
     @abc.abstractmethod
     def _getScoresOrder(self, learner):
         """
-        If the learner is a classifier, then return a list of the the labels corresponding
-        to each column of the return from getScores
-
+        If the learner is a classifier, then return a list of the the
+        labels corresponding to each column of the return from
+        getScores.
         """
         pass
 
     @abc.abstractmethod
     def isAlias(self, name):
         """
-        Returns true if the name is an accepted alias for this interface
+        Determine if the name is an accepted alias for this interface.
 
+        Parameters
+        ----------
+        name : str
+            An interface name as a string
+
+        Returns
+        -------
+        bool
+            True if the name is a accepted alias, False otherwise.
         """
         pass
 
@@ -866,54 +1145,90 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def getCanonicalName(self):
         """
-        Returns the string name that will uniquely identify this interface
+        The string name that will uniquely identify this interface.
 
+        Returns
+        -------
+        str
+            The canonical name for this interface.
         """
         pass
 
     @abc.abstractmethod
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
         """
-        Method called before any package level function which transforms all
-        parameters provided by a UML user.
+        Method called before any package level function which transforms
+        all parameters provided by a UML user.
 
-        trainX, trainY, and testX are filled with the values of the parameters of the same name
-        to a call to trainAndApply() or train() and are sometimes empty when being called
-        by other functions. For example, a call to apply() will have trainX and trainY be None.
-        The arguments parameter is a dictionary mapping names to values of all other
-        parameters associated with the learner, each of which may need to be processed.
+        trainX, trainY, and testX are filled with the values of the
+        parameters of the same name to a call to trainAndApply() or
+        train() and are sometimes empty when being called by other
+        functions. For example, a call to apply() will have trainX and
+        trainY be None. The arguments parameter is a dictionary mapping
+        names to values of all other parameters associated with the
+        learner, each of which may need to be processed.
 
-        The return value of this function must be a tuple mirroring the structure of
-        the inputs. Specifically, four values are required: the transformed versions of
-        trainX, trainY, testX, and arguments in that specific order.
-
+        The return value of this function must be a tuple mirroring the
+        structure of the inputs. Specifically, four values are required:
+        the transformed versions of trainX, trainY, testX, and arguments
+        in that specific order.
         """
         pass
 
     @abc.abstractmethod
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
         """
-        Method called before any package level function which transforms the returned
-        value into a format appropriate for a UML user.
-
+        Method called before any package level function which transforms
+        the returned value into a format appropriate for a UML user.
         """
         pass
 
     @abc.abstractmethod
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         """
-        build a learner and perform training with the given data
-        TAKES name of learner, transformed arguments
-        RETURNS an in package object to be wrapped by a TrainedLearner object
+        Build a learner and perform training with the given data.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+        trainX : UML.data.Base
+            The training data.
+        trainY : UML.data.Base
+            The training labels.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        An in package object to be wrapped by a TrainedLearner object.
         """
         pass
 
     @abc.abstractmethod
     def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
         """
-        Given an already trained online learner, extend it's training with the given data
-        TAKES trained learner, transformed arguments,
-        RETURNS the learner after this batch of training
+        Extend the training of an an already trained online learner.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner.
+        trainX : UML.data.Base
+            The training data.
+        trainY : UML.data.Base
+            The training labels.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        The learner after this batch of training
         """
         pass
 
@@ -921,9 +1236,21 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def _applier(self, learner, testX, arguments, customDict):
         """
-        use the given learner to do testing/prediction on the given test set
-        TAKES a TrainedLearner object that can be tested on
-        RETURNS UML friendly results
+        Perform testing/prediction on the test set using TrainedLearner.
+
+        Parameters
+        ----------
+        learnerName : str
+            A TrainedLearner object that can be tested on.
+        testX : UML.data.Base
+            The testing data.
+        arguments : dict
+            The transformed arguments.
+        customDict : TODO
+
+        Returns
+        -------
+        UML friendly results.
         """
         pass
 
@@ -931,19 +1258,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def _getAttributes(self, learnerBackend):
         """
-        Returns whatever attributes might be available for the given learner. For
-        example, in the case of linear regression, TODO
-
+        Returns whatever attributes might be available for the given
+        learner. For example, in the case of linear regression, TODO
         """
         pass
 
     @abc.abstractmethod
     def _optionDefaults(self, option):
         """
-        Define package default values that will be used for as long as a default
-        value hasn't been registered in the UML configuration file. For example,
-        these values will always be used the first time an interface is instantiated.
-
+        Define package default values that will be used for as long as a
+        default value hasn't been registered in the UML configuration
+        file. For example, these values will always be used the first
+        time an interface is instantiated.
         """
         pass
 
@@ -951,31 +1277,35 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def _configurableOptionNames(self):
         """
-        Returns a list of strings, where each string is the name of a configurable
-        option of this interface whose value will be stored in UML's configuration
-        file.
-
+        Returns a list of strings, where each string is the name of a
+        configurable option of this interface whose value will be stored
+        in UML's configuration file.
         """
         pass
 
     @abc.abstractmethod
     def _exposedFunctions(self):
         """
-        Returns a list of references to functions which are to be wrapped
-        in I/O transformation, and exposed as attributes of all TrainedLearner
-        objects returned by this interface's train() function. If None, or an
-        empty list is returned, no functions will be exposed. Each function
-        in this list should be a python function, the inspect module will be
-        used to retrieve argument names, and the value of the function's
-        __name__ attribute will be its name in TrainedLearner.
-
+        Returns a list of references to functions which are to be
+        wrapped in I/O transformation, and exposed as attributes of all
+        TrainedLearner objects returned by this interface's train()
+        function. If None, or an empty list is returned, no functions
+        will be exposed. Each function in this list should be a python
+        function, the inspect module will be used to retrieve argument
+        names, and the value of the function's __name__ attribute will
+        be its name in TrainedLearner.
         """
         pass
 
     @abc.abstractmethod
     def version(self):
         """
-        Return a string of the version of this interface.
+        The version of the package accessible to the interface.
+
+        Returns
+        -------
+        str
+            The version of this interface as a string.
         """
         pass
 

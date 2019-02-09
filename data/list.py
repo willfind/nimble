@@ -21,7 +21,7 @@ from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
-from .dataHelpers import inheritDocstringsFactory
+from UML.docHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
 
 scipy = UML.importModule('scipy.io')
