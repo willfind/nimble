@@ -33,20 +33,17 @@ class Axis(object):
 
     Parameters
     ----------
-    axis : str
-        The axis ('point' or 'feature') which the function will be
-        applied to.
     source : UML data object
         The object containing point and feature data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
     """
-    def __init__(self, axis, source, **kwds):
-        self._axis = axis
+    def __init__(self, source, **kwargs):
         self._source = source
-        kwds['source'] = self._source
-        super(Axis, self).__init__(**kwds)
+        kwargs['source'] = source
+        if isinstance(self, Points):
+            self._axis = 'point'
+        else:
+            self._axis = 'feature'
+        super(Axis, self).__init__(**kwargs)
 
     def __iter__(self):
         return AxisIterator(self)
@@ -127,7 +124,7 @@ class Axis(object):
 
     def _hasName(self, name):
         try:
-            self._source.getIndex(name)
+            self.getIndex(name)
             return True
         # keyError if not in dict, TypeError if names is None
         except (KeyError, TypeError):
@@ -1000,12 +997,11 @@ class Axis(object):
                                    randomize=False):
         axis = self._axis
         axisLength = len(self)
-        if axis == 'point':
-            hasNameChecker1 = self._source.hasPointName
-            hasNameChecker2 = self._source.hasFeatureName
+        hasNameChecker1 = self._hasName
+        if isinstance(self, Points):
+            hasNameChecker2 = self._source.features.hasName
         else:
-            hasNameChecker1 = self._source.hasFeatureName
-            hasNameChecker2 = self._source.hasPointName
+            hasNameChecker2 = self._source.points.hasName
 
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
@@ -1017,7 +1013,7 @@ class Axis(object):
                 targetList.append(target)
             # if not a name then assume it's a query string
             else:
-                target = _stringToFunction(target, self._axis, hasNameChecker2)
+                target = _stringToFunction(target, axis, hasNameChecker2)
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):

@@ -504,6 +504,89 @@ def valuesToPythonList(values, argName):
 
     return valuesList
 
+def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
+    """
+    Helper for sort() to define new indexPosition list.
+    """
+    scorer = None
+    comparator = None
+    if axisAttr == 'points':
+        test = obj._source.pointView(0)
+    else:
+        test = obj._source.featureView(0)
+    try:
+        sortHelper(test)
+        scorer = sortHelper
+    except TypeError:
+        pass
+    try:
+        sortHelper(test, test)
+        comparator = sortHelper
+    except TypeError:
+        pass
+
+    if sortHelper is not None and scorer is None and comparator is None:
+        msg = "sortHelper is neither a scorer or a comparator"
+        raise ArgumentException(msg)
+
+    if comparator is not None:
+        # make array of views
+        viewArray = []
+        for v in obj:
+            viewArray.append(v)
+
+        viewArray.sort(key=cmp_to_key(comparator))
+        indexPosition = []
+        for i in range(len(viewArray)):
+            viewAxis = getattr(viewArray[i], axisAttr)
+            index = obj._getIndex(viewAxis.getName(0))
+            indexPosition.append(index)
+        indexPosition = numpy.array(indexPosition)
+    elif hasattr(scorer, 'permuter'):
+        scoreArray = scorer.indices
+        indexPosition = numpy.argsort(scoreArray)
+    else:
+        # make array of views
+        viewArray = []
+        for v in obj:
+            viewArray.append(v)
+
+        scoreArray = viewArray
+        if scorer is not None:
+            # use scoring function to turn views into values
+            for i in range(len(viewArray)):
+                scoreArray[i] = scorer(viewArray[i])
+        else:
+            for i in range(len(viewArray)):
+                scoreArray[i] = viewArray[i][sortBy]
+
+        # use numpy.argsort to make desired index array
+        # this results in an array whose ith entry contains the the
+        # index into the data of the value that should be in the ith
+        # position.
+        indexPosition = numpy.argsort(scoreArray)
+
+    return indexPosition
+
+def cmp_to_key(mycmp):
+    """Convert a cmp= function for python2 into a key= function for python3"""
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
+
 def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
                                    collapseData, currNumPoints, currFtNames,
                                    numRetPoints, numRetFeatures):

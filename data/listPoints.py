@@ -7,7 +7,6 @@ from __future__ import absolute_import
 import numpy
 
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .points import Points
@@ -15,24 +14,15 @@ from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
 
-class ListPoints(ListAxis, Axis, Points):
+class ListPoints(ListAxis, Points):
     """
     List method implementations performed on the points axis.
 
     Parameters
     ----------
     source : UML data object
-        The object containing the points data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(ListPoints, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -136,14 +126,11 @@ class ListPoints(ListAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class ListPointsView(ListPoints, AxisView, PointsView):
+class ListPointsView(PointsView, AxisView, ListPoints):
     """
     Limit functionality of ListPoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
-        super(ListPointsView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

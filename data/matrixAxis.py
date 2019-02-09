@@ -11,7 +11,7 @@ import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
-from .base import cmp_to_key
+from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 class MatrixAxis(Axis):
@@ -23,21 +23,9 @@ class MatrixAxis(Axis):
 
     Parameters
     ----------
-    axis : str
-        The axis ('point' or 'feature') which the function will be
-        applied to.
     source : UML data object
         The object containing point and feature data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
     """
-    def __init__(self, axis, source, **kwds):
-        self._axis = axis
-        self._source = source
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(MatrixAxis, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -77,76 +65,17 @@ class MatrixAxis(Axis):
                                featureNames=featureNames)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if isinstance(self, Points):
-            test = self._source.pointView(0)
-            viewIter = self._source.points
-        else:
-            test = self._source.featureView(0)
-            viewIter = self._source.features
-        names = self._getNames()
-
         if isinstance(sortHelper, list):
             if isinstance(self, Points):
                 self._source.data = self._source.data[sortHelper, :]
             else:
                 self._source.data = self._source.data[:, sortHelper]
+            names = self._getNames()
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
-        scorer = None
-        comparator = None
-        try:
-            sortHelper(test)
-            scorer = sortHelper
-        except TypeError:
-            pass
-        try:
-            sortHelper(test, test)
-            comparator = sortHelper
-        except TypeError:
-            pass
-
-        if sortHelper is not None and scorer is None and comparator is None:
-            msg = "sortHelper is neither a scorer or a comparator"
-            raise ArgumentException(msg)
-
-        if comparator is not None:
-            # make array of views
-            viewArray = []
-            for v in viewIter:
-                viewArray.append(v)
-
-            viewArray.sort(key=cmp_to_key(comparator))
-            indexPosition = []
-            for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = self._getIndex(getattr(viewAxis, 'getName')(0))
-                indexPosition.append(index)
-            indexPosition = numpy.array(indexPosition)
-        elif hasattr(scorer, 'permuter'):
-            scoreArray = scorer.indices
-            indexPosition = numpy.argsort(scoreArray)
-        else:
-            # make array of views
-            viewArray = []
-            for v in viewIter:
-                viewArray.append(v)
-
-            scoreArray = viewArray
-            if scorer is not None:
-                # use scoring function to turn views into values
-                for i in range(len(viewArray)):
-                    scoreArray[i] = scorer(viewArray[i])
-            else:
-                for i in range(len(viewArray)):
-                    scoreArray[i] = viewArray[i][sortBy]
-
-            # use numpy.argsort to make desired index array
-            # this results in an array whose ith entry contains the the
-            # index into the data of the value that should be in the ith
-            # position.
-            indexPosition = numpy.argsort(scoreArray)
-
+        axisAttr = 'points' if isinstance(self, Points) else 'features'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._source.data = self._source.data[indexPosition, :]
