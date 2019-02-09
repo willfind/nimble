@@ -959,7 +959,7 @@ class Base(object):
         """
         Save object to a file.
 
-        Uses the dill library to serialize this object.
+        Uses the cloudpickle library to serialize this object.
 
         Parameters
         ----------

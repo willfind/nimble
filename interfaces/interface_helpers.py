@@ -540,6 +540,9 @@ def notABCAssociated(obj, name, value):
     return True
 
 def removeFromArray(orig, toIgnore):
+    """
+    Remove objects from an array.
+    """
     temp = []
     for entry in orig:
         if not entry in toIgnore:
@@ -547,6 +550,9 @@ def removeFromArray(orig, toIgnore):
     return temp
 
 def removeFromDict(orig, toIgnore):
+    """
+    Remove objects from a dictionary.
+    """
     for entry in toIgnore:
         if entry in orig:
             del orig[entry]

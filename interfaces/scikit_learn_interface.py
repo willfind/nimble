@@ -6,21 +6,17 @@ TODO: multinomialHMM requires special input processing for obs param
 
 from __future__ import absolute_import
 import importlib
-import inspect
 import copy
-import os
 import sys
-import functools
 import warnings
 
 import numpy
 from six.moves import range
 
 import UML
+from UML.interfaces.universal_interface import UniversalInterface
 from UML.exceptions import ArgumentException
-from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
-from UML.interfaces.interface_helpers import removeFromArray
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
 from UML.docHelpers import inheritDocstringsFactory
@@ -32,8 +28,6 @@ sciKitLearnDir = None
 # a dictionary mapping names to learners, or modules
 # containing learners. To be used by findInPackage
 locationCache = {}
-
-from UML.interfaces.universal_interface import UniversalInterface
 
 
 @inheritDocstringsFactory(UniversalInterface)
@@ -51,7 +45,7 @@ class SciKitLearn(UniversalInterface):
 
         # suppress DeprecationWarnings
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
             self.skl = importlib.import_module('sklearn')
 
         version = self.version()
@@ -86,7 +80,8 @@ class SciKitLearn(UniversalInterface):
 
     def _listLearnersBackend(self):
         possibilities = []
-        exclude = ['FeatureAgglomeration', 'LocalOutlierFactor', 'KernelCenterer',]
+        exclude = ['FeatureAgglomeration', 'LocalOutlierFactor',
+                   'KernelCenterer',]
 
         for name in self.allEstimators.keys():
             if name not in exclude:
@@ -104,7 +99,8 @@ class SciKitLearn(UniversalInterface):
             return 'cluster'
         if issubclass(obj, self.skl.base.TransformerMixin):
             return 'transformation'
-        # if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
+        # if (hasattr(obj, 'classes_') or hasattr(obj, 'label_')
+        #         or hasattr(obj, 'labels_')):
         #     return 'classification'
         # if "Classifier" in obj.__name__:
         #     return 'classification'
@@ -124,7 +120,7 @@ class SciKitLearn(UniversalInterface):
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, d) = ret
+        (objArgs, _) = ret
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
@@ -148,7 +144,8 @@ class SciKitLearn(UniversalInterface):
         elif fitTransform is not None:
             ret = init[0] + fitTransform[0]
         else:
-            raise ArgumentException("Cannot get parameter names for learner " + learnerName)
+            msg = "Cannot get parameter names for learner " + learnerName
+            raise ArgumentException(msg)
 
         return [ret]
 
@@ -223,11 +220,13 @@ class SciKitLearn(UniversalInterface):
         return 'sciKitLearn'
 
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
-            if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopyTrainX:
+            if (trainX.getTypeString() == 'Matrix'
+                    and learnerName not in mustCopyTrainX):
                 trainX = trainX.data
             elif trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copy().data
@@ -247,7 +246,8 @@ class SciKitLearn(UniversalInterface):
 
         if testX is not None:
             mustCopyTestX = ['StandardScaler']
-            if testX.getTypeString() == 'Matrix' and learnerName not in mustCopyTestX:
+            if (testX.getTypeString() == 'Matrix'
+                    and learnerName not in mustCopyTestX):
                 testX = testX.data
             elif testX.getTypeString() == 'Sparse':
                 testX = testX.copy().data
@@ -266,12 +266,15 @@ class SciKitLearn(UniversalInterface):
         return (trainX, trainY, testX, copy.deepcopy(arguments))
 
 
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        #In the case of prediction we are given a row vector, yet we want a column vector
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
+        # In the case of prediction we are given a row vector,
+        # yet we want a column vector
         if outputFormat == "label" and len(outputValue.shape) == 1:
             outputValue = outputValue.reshape(len(outputValue), 1)
 
-        #TODO correct
+        # TODO correct
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
@@ -306,9 +309,11 @@ class SciKitLearn(UniversalInterface):
         try:
             learner.fit(**fitParams)
         except ValueError as ve:
-            # these occur when the learner requires different input data (multi-dimensional, non-negative)
+            # these occur when the learner requires different input data
+            # (multi-dimensional, non-negative)
             raise ArgumentException(str(ve))
-        if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
+        if (hasattr(learner, 'decision_function')
+                or hasattr(learner, 'predict_proba')):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
             else:
@@ -323,7 +328,8 @@ class SciKitLearn(UniversalInterface):
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
         # see partial_fit(X, y[, classes, sample_weight])
         pass
 
@@ -340,7 +346,9 @@ class SciKitLearn(UniversalInterface):
         elif hasattr(learner, 'embedding_'):
             return learner.embedding_
         else:
-            raise TypeError("Cannot apply this learner to data, no predict or transform function")
+            msg = "Cannot apply this learner to data, no predict or "
+            msg += "transform function"
+            raise TypeError(msg)
 
 
     def _getAttributes(self, learnerBackend):
@@ -390,60 +398,14 @@ class SciKitLearn(UniversalInterface):
     ### HELPERS ###
     ###############
 
-    def _removeFromArray(self, orig, toIgnore):
-        temp = []
-        for entry in orig:
-            if not entry in toIgnore:
-                temp.append(entry)
-        return temp
-
-    def _removeFromDict(self, orig, toIgnore):
-        for entry in toIgnore:
-            if entry in orig:
-                del orig[entry]
-        return orig
-
-    def _removeFromTailMatchedLists(self, full, matched, toIgnore):
+    def _paramQuery(self, name, parent, ignore=None):
         """
-        full is some list n, matched is a list with length m, where m is less
-        than or equal to n, where the last m values of full are matched against
-        their positions in matched. If one of those is to be removed, it is to
-        be removed in both.
+        Takes the name of some scikit learn object or function, returns
+        a list of parameters used to instantiate that object or run that
+        function, or None if the desired thing cannot be found.
         """
-        temp = {}
-        if matched is not None:
-            for i in range(len(full)):
-                if i < len(matched):
-                    temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
-                else:
-                    temp[full[len(full) - 1 - i]] = None
-        else:
-            retFull = removeFromArray(full, toIgnore)
-            return (retFull, matched)
-
-        for ignoreKey in toIgnore:
-            if ignoreKey in temp:
-                del temp[ignoreKey]
-
-        retFull = []
-        retMatched = []
-        for i in range(len(full)):
-            name = full[i]
-            if name in temp:
-                retFull.append(name)
-                if (i - (len(full) - len(matched))) >= 0:
-                    retMatched.append(temp[name])
-
-        return (retFull, retMatched)
-
-
-    def _paramQuery(self, name, parent, ignore=[]):
-        """
-        Takes the name of some scikit learn object or function, returns a list
-        of parameters used to instantiate that object or run that function, or
-        None if the desired thing cannot be found
-
-        """
+        if ignore is None:
+            ignore = []
         if parent is None:
             namedModule = self.findCallable(name)
         else:
@@ -458,6 +420,6 @@ class SciKitLearn(UniversalInterface):
         elif not hasattr(namedModule, name):
             return None
         else:
-            (args, v, k, d) = inspectArguments(getattr(namedModule, name))
+            (args, _, _, d) = inspectArguments(getattr(namedModule, name))
             (args, d) = removeFromTailMatchedLists(args, d, ignore)
             return (args, d)

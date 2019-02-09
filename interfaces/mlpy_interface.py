@@ -17,7 +17,11 @@ from six.moves import range
 
 import UML
 from UML.exceptions import ArgumentException
-
+from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import removeFromTailMatchedLists
+from UML.helpers import inspectArguments
+from UML.docHelpers import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -25,12 +29,6 @@ mlpyDir = None
 # a dictionary mapping names to learners, or modules
 # containing learners. To be used by findInPackage
 locationCache = {}
-
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.interface_helpers import PythonSearcher
-from UML.interfaces.interface_helpers import removeFromTailMatchedLists
-from UML.helpers import inspectArguments
-from UML.docHelpers import inheritDocstringsFactory
 
 
 @inheritDocstringsFactory(UniversalInterface)
@@ -113,7 +111,7 @@ class Mlpy(UniversalInterface):
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, _) = ret
         if objArgs[0] == 'self':
             objArgs = objArgs[1:]
         return [objArgs]
@@ -143,7 +141,7 @@ class Mlpy(UniversalInterface):
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, d) = ret
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -365,12 +363,14 @@ class Mlpy(UniversalInterface):
     ### HELPERS ###
     ###############
 
-    def _paramQuery(self, name, parent, ignore=[]):
+    def _paramQuery(self, name, parent, ignore=None):
         """
         Takes the name of some mlpy object or function, returns
         a list of parameters used to instantiate that object or run that
         function, or None if the desired thing cannot be found.
         """
+        if ignore is None:
+            ignore = []
         namedModule = self._searcher.findInPackage(parent, name)
 
         # for python 3

@@ -3630,7 +3630,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
     """
     _validData(trainX, trainY, testX, None, [True, False])
     _validArguments(arguments)
@@ -3767,7 +3767,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
     """
     _validData(trainX, trainY, testX, None, [True, False])
     _validArguments(arguments)
@@ -3924,16 +3924,18 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
         Name of the learner to be called, in the form 'package.learner'
     trainX: UML Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
-        A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``trainX``.
+    trainY : identifier, UML Base object
+        * identifier - The name or index of the feature in ``trainX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``trainX``.
     testX: UML Base object
         Data to be used for testing.
     testY : identifier, UML Base object
-        A name or index of the feature in ``testX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``testX``.
+        * identifier - A name or index of the feature in ``testX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``testX``.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -3963,7 +3965,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
     """
     return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX,
                                 trainY=trainY, testX=testX, testY=testY,
@@ -3988,16 +3990,18 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
         Name of the learner to be called, in the form 'package.learner'
     trainX: UML Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
-        A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``trainX``.
+    trainY : identifier, UML Base object
+        * identifier - The name or index of the feature in ``trainX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``trainX``.
     testX: UML Base object
         Data to be used for testing.
     testY : identifier, UML Base object
-        A name or index of the feature in ``testX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``testX``.
+        * identifier - A name or index of the feature in ``testX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``testX``.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -4027,7 +4031,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------

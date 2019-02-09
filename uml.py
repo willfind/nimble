@@ -1188,7 +1188,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1290,7 +1290,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         labels or another UML Base object containing the labels that
         correspond to ``trainX``.
     testX : UML Base object
-        data set on which the trained learner will be applied (i.e.
+        Data set on which the trained learner will be applied (i.e.
         performing prediction, transformation, etc. as appropriate to
         the learner).
     performanceFunction : function
@@ -1336,7 +1336,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1414,16 +1414,18 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         Name of the learner to be called, in the form 'package.learner'
     trainX: UML Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
-        A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``trainX``.
+    trainY : identifier, UML Base object
+        * identifier - The name or index of the feature in ``trainX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``trainX``.
     testX: UML Base object
         Data to be used for testing.
     testY : identifier, UML Base object
-        A name or index of the feature in ``testX`` containing the
-        labels or another UML Base object containing the labels that
-        correspond to ``testX``.
+        * identifier - A name or index of the feature in ``testX``
+          containing the labels.
+        * UML Base object - contains the labels that correspond to
+          ``testX``.
     performanceFunction : function
         If cross validation is triggered to select from the given
         argument set, then this function will be used to generate a
@@ -1467,7 +1469,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1612,7 +1614,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with arguments.
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
