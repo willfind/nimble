@@ -70,7 +70,8 @@ class SparseAxis(Axis):
             source._sorted = None
             return newNameOrder
 
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper)
+        axisAttr = 'points' if isinstance(self, Points) else 'features'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
         reverseIdxPosition = numpy.empty(indexPosition.shape[0])

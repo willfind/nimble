@@ -74,7 +74,8 @@ class MatrixAxis(Axis):
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper)
+        axisAttr = 'points' if isinstance(self, Points) else 'features'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._source.data = self._source.data[indexPosition, :]

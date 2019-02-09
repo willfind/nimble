@@ -24,8 +24,6 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.logger import Stopwatch
 
-from .points import Points
-
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
 DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
@@ -506,18 +504,16 @@ def valuesToPythonList(values, argName):
 
     return valuesList
 
-def sortIndexPosition(obj, sortBy, sortHelper):
+def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
     """
     Helper for sort() to define new indexPosition list.
     """
     scorer = None
     comparator = None
-    if isinstance(obj, Points):
+    if axisAttr == 'points':
         test = obj._source.pointView(0)
-        axisAttr = 'points'
     else:
         test = obj._source.featureView(0)
-        axisAttr = 'features'
     try:
         sortHelper(test)
         scorer = sortHelper

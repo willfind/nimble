@@ -36,13 +36,14 @@ class Axis(object):
     source : UML data object
         The object containing point and feature data.
     """
-    def __init__(self, source):
+    def __init__(self, source, **kwargs):
         self._source = source
+        kwargs['source'] = source
         if isinstance(self, Points):
             self._axis = 'point'
         else:
             self._axis = 'feature'
-        super(Axis, self).__init__()
+        super(Axis, self).__init__(**kwargs)
 
     def __iter__(self):
         return AxisIterator(self)

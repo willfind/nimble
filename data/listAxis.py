@@ -100,7 +100,8 @@ class ListAxis(Axis):
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper)
+        axisAttr = 'points' if isinstance(self, Points) else 'features'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
         # run through target axis and change indices
         if isinstance(self, Points):
             source = copy.copy(self._source.data)
