@@ -16,7 +16,8 @@ trainAndTestSets
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
 points.normalize, features.normalize, points.fill, features.fill,
-fillUsingAllData
+fillUsingAllData, points.splitByCollapsingFeatures,
+points.combineByExpandingFeatures, features.splitByParsing
 """
 
 from __future__ import absolute_import
@@ -40,6 +41,8 @@ from UML import match
 from UML import fill
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.data.tests.baseObject import DataTestObject
+from UML.data.dataHelpers import DEFAULT_PREFIX
+
 from UML.randomness import numpyRandom
 
 preserveName = "PreserveTestName"
@@ -2433,6 +2436,373 @@ class HighLevelModifying(DataTestObject):
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
+
+    ####################################
+    # points.splitByCollapsingFeatures #
+    ####################################
+
+    def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+        ptNames = ["0", "1", "2"]
+        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
+                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
+                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
+        expPnames = ["0_0", "0_1", "0_2", "0_3",
+                     "1_0", "1_1", "1_2", "1_3",
+                     "2_0", "2_1", "2_2", "2_3"]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
+
+        nameFeatureNames = "ftNames"
+        nameFeatureValues = "ftValues"
+        test0 = toTest.copy()
+        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        toCollapse = [2, 3, 4, 5]
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        toCollapse = [2, "coll1", 4, "coll3"]
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test2 == exp
+
+    def test_points_splitByCollapsingFeatures_nonSequentialFeatures(self):
+        data = [[1,0,2,0,3,4], [5,1,6,1,7,8], [-1,2,-2,2,-3,-4]]
+        ptNames = ["0", "1", "2"]
+        ftNames = ["coll0", "ret0", "coll1", "ret1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0,0,"coll3",4], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll0",1],
+                   [1,1,"coll3",8], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll0",5],
+                   [2,2,"coll3",-4], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll0",-1]]
+        expPnames = ["0_0", "0_1", "0_2", "0_3",
+                     "1_0", "1_1", "1_2", "1_3",
+                     "2_0", "2_1", "2_2", "2_3"]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
+
+        nameFeatureNames = "ftNames"
+        nameFeatureValues = "ftValues"
+        test0 = toTest.copy()
+        toCollapse = ["coll3", "coll1", "coll2", "coll0"]
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        toCollapse = [5, 2, 4, 0]
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        toCollapse = [5, "coll1", "coll2", 0]
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test2 == exp
+
+    def test_points_splitByCollapsingFeatures_noPointNames(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, featureNames=ftNames)
+
+        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
+                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
+                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert toTest == exp
+
+    def test_points_splitByCollapsingFeatures_noNames(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+
+        toTest = self.constructor(data)
+        coll0 = DEFAULT_PREFIX + str(2)
+        coll1 = DEFAULT_PREFIX + str(3)
+        coll2 = DEFAULT_PREFIX + str(4)
+        coll3 = DEFAULT_PREFIX + str(5)
+
+        expData = [[0,0,coll0,1], [0,0,coll1,2], [0,0,coll2,3], [0,0,coll3,4],
+                   [1,1,coll0,5], [1,1,coll1,6], [1,1,coll2,7], [1,1,coll3,8],
+                   [2,2,coll0,-1], [2,2,coll1,-2], [2,2,coll2,-3], [2,2,coll3,-4]]
+
+        exp = self.constructor(expData)
+        exp.features.setName(2, "ftNames")
+        exp.features.setName(3, "ftValues")
+
+        toCollapse = [2, 3, 4, 5]
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert toTest == exp
+
+    #####################################
+    # points.combineByExpandingFeatures #
+    #####################################
+
+    def test_points_combineByExpandingFeatures(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        test0 = toTest.copy()
+        test0.points.combineByExpandingFeatures('run', 'time')
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        test1.points.combineByExpandingFeatures(2, 3)
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        test2.points.combineByExpandingFeatures('run', 3)
+        assert test2 == exp
+
+    def test_points_combineByExpandingFeatures_withMissing(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2],
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        pNames = [str(i) for i in range(10)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.8, None],
+                   ["p2", 100, 6.5, 5.9, 6.0],
+                   ["p3", 100, 11, None, 11.2],
+                   ["p1", 200, 18.1, 19.8, 20.1]]
+        expFNames = ['type', 'dist', 'r1', 'r3', 'r2']
+        expPNames = ["0", "2", "5", "7"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', 'time')
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
+        data = [[100, "r1", 'p1', 9.5], [100, "r2", 'p1', 9.9], [100, "r3", 'p1', 9.8],
+                [100, "r1", 'p2', 6.5], [100, "r2", 'p2', 6.0], [100, "r3", 'p2', 5.9],
+                [100, "r1", 'p3', 11], [100, "r2", 'p3', 11.2], [100, "r3", 'p3', 11.0],
+                [200, "r1", 'p1', 18.1], [200, "r2", 'p1', 20.1], [200, "r3", 'p1', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['dist', 'run', 'type', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[100, 9.5, 9.9, 9.8, "p1"],
+                   [100, 6.5, 6.0, 5.9, "p2"],
+                   [100, 11, 11.2, 11.0, "p3"],
+                   [200, 18.1, 20.1, 19.8, "p1"]]
+        expFNames = ['dist', 'r1', 'r2', 'r3', 'type']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', 'time')
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_noPointNames(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', 'time')
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_noNames(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        toTest = self.constructor(data)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        exp = self.constructor(expData)
+        exp.features.setName(2, 'r1')
+        exp.features.setName(3, 'r2')
+        exp.features.setName(4, 'r3')
+
+        toTest.points.combineByExpandingFeatures(2, 3)
+        assert toTest == exp
+
+    @raises(ArgumentException)
+    def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r1', 11.0], # r1 in p3 twice
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.points.combineByExpandingFeatures('run', 'time')
+
+    ###########################
+    # features.splitByParsing #
+    ###########################
+
+    def test_features_splitByParsing_integer(self):
+        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged", "f1"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
+        expFNames = ["f0", "split0", "split1", "f1"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_string(self):
+        data = [["a-1", 0], ["b-2", 1], ["c-3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a", "1", 0], ["b", "2", 1], ["c", "3", 2]]
+        expFNames = ["split0", "split1", "f0"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(0, '-', ["split0", "split1"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_listIntegers(self):
+        data = [[0, "a1z9000AAA"], [1, "b2y8000BBB"], [2, "c3x7000CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "z9", "000", "AAA"], [1, "b2", "y8", "000", "BBB"],
+                   [2, "c3", "x7", "000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2", "split3"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing("merged", [2,4,7], ["split0", "split1", "split2", "split3"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_listStrings(self):
+        data = [[0, "a1/9000-AAA"], [1, "b2/8000-BBB"], [2, "c3/7000-CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "9000", "AAA"], [1, "b2", "8000", "BBB"],
+                   [2, "c3", "7000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, ['/','-'], ["split0", "split1", "split2"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_listMixed(self):
+        data = [[0, "a1/9z000-AAA"], [1, "b2/8y000-BBB"], [2, "c3/7x000-CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "9z", "000", "AAA"], [1, "b2", "8y", "000", "BBB"],
+                   [2, "c3", "7x", "000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2", "split3"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, ['/', 5, '-'], ["split0", "split1", "split2", "split3"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_function(self):
+        data = [["a1z9000AAA"], ["b2y8000BBB"], ["c3x7000CCC"]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a1z9", "AAA"], ["b2y8", "BBB"], ["c3x7", "CCC"]]
+        expFNames = ["split0", "split1"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        def splitter(value):
+            return value.split('000')
+
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_regex(self):
+        data = [["a1z9000AAA", '001'], ["b2y8000BBB", '001'], ["c3x7000CCC", '002']]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a1", "9000AAA", '001'], ["b2", "8000BBB", '001'], ["c3", "7000CCC", '002']]
+        expFNames = ["split0", "split1", "f0"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        def splitter(value):
+            import re
+            return re.split('[xyz]', value)
+
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_noNames(self):
+        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
+        toTest = self.constructor(data)
+
+        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
+        exp = self.constructor(expData)
+        exp.features.setName(1,"split0")
+        exp.features.setName(2,"split1")
+
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
+        assert toTest == exp
+
+    @raises(ArgumentException)
+    def test_features_splitByParsing_shortSplitList(self):
+        data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
+
+    @raises(ArgumentException)
+    def test_features_splitByParsing_longSplitList(self):
+        data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
 
 class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
     pass

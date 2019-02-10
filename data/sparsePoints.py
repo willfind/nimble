@@ -7,33 +7,24 @@ from __future__ import absolute_import
 import numpy
 
 import UML
-from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
+from .points_view import PointsView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
-class SparsePoints(SparseAxis, Axis, Points):
+class SparsePoints(SparseAxis, Points):
     """
     Sparse method implementations performed on the points axis.
 
     Parameters
     ----------
-    source : UML Base object
-        The object containing the points data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(SparsePoints, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -112,14 +103,74 @@ class SparsePoints(SparseAxis, Axis, Points):
     #     self._source.data = coo_matrix((data, (row, col)), newShape)
     #     self._source._sorted = 'point'
 
-class SparsePointsView(AxisView, SparsePoints, SparseAxis, Axis, Points):
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        if self._source._sorted is None:
+            self._source._sortInternal('point')
+        data = self._source.data.data
+        row = self._source.data.row
+        col = self._source.data.col
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        collapseNames = [self._source.features.getName(idx)
+                         for idx in collapseIndices]
+        for ptIdx in range(len(self)):
+            inRetain = [val in retainIndices for val in col]
+            inCollapse = [val in collapseIndices for val in col]
+            retainData = data[(row == ptIdx) & (inRetain)]
+            retainCol = col[(row == ptIdx) & (inRetain)]
+            collapseData = data[(row == ptIdx) & (inCollapse)]
+            sort = numpy.argsort(collapseIndices)
+            collapseData = collapseData[sort]
+            for idx, value in enumerate(collapseData):
+                tmpData.extend(retainData)
+                tmpRow.extend([ptIdx * len(featuresToCollapse) + idx]
+                              * len(retainData))
+                tmpCol.extend([i for i in range(len(retainCol))])
+                tmpData.append(collapseNames[idx])
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 2)
+                tmpData.append(value)
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 1)
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                       shape=(numRetPoints, numRetFeatures))
+        self._source._sorted = None
+
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        for idx, point in enumerate(uniqueDict):
+            tmpPoint = list(point[:namesIdx])
+            for name in uniqueNames:
+                if name in uniqueDict[point]:
+                    tmpPoint.append(uniqueDict[point][name])
+                else:
+                    tmpPoint.append(numpy.nan)
+            tmpPoint.extend(point[namesIdx:])
+            tmpData.extend(tmpPoint)
+            tmpRow.extend([idx for _ in range(len(point) + len(uniqueNames))])
+            tmpCol.extend([i for i in range(numRetFeatures)])
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                       shape=(len(uniqueDict), numRetFeatures))
+        self._source._sorted = None
+
+class SparsePointsView(PointsView, AxisView, SparsePoints):
     """
     Limit functionality of SparsePoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
-        super(SparsePointsView, self).__init__(**kwds)
 
     #########################
     # Query implementations #

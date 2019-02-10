@@ -5,35 +5,28 @@ DataFrame object.
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy
+
 import UML
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
+from .features_view import FeaturesView
 
 pd = UML.importModule('pandas')
 if pd:
     import pandas as pd
 
-class DataFrameFeatures(DataFrameAxis, Axis, Features):
+class DataFrameFeatures(DataFrameAxis, Features):
     """
     DataFrame method implementations performed on the feature axis.
 
     Parameters
     ----------
-    source : UML Base object
-        The object containing features data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(DataFrameFeatures, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -80,6 +73,26 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     #         self._source.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._source.data.values[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._source.data.values[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = pd.DataFrame(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -87,15 +100,11 @@ class DataFrameFeatures(DataFrameAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class DataFrameFeaturesView(AxisView, DataFrameFeatures, DataFrameAxis, Axis,
-                            Features):
+class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):
     """
     Limit functionality of DataFrameFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
-        super(DataFrameFeaturesView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

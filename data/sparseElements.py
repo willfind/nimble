@@ -20,16 +20,9 @@ class SparseElements(Elements):
 
     Parameters
     ----------
-    source : UML Base object
-        The object containing features data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = source
-        super(SparseElements, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -191,10 +184,8 @@ class SparseElements(Elements):
 
             self._source.data.data[index] = currRet
 
-class SparseElementsView(ElementsView, SparseElements, Elements):
+class SparseElementsView(ElementsView, SparseElements):
     """
     Limit functionality of SparseElements to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        super(SparseElementsView, self).__init__(**kwds)
+    pass

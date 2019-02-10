@@ -7,33 +7,24 @@ from __future__ import absolute_import
 import numpy
 
 import UML
-from .axis import Axis
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
+from .features_view import FeaturesView
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
-class SparseFeatures(SparseAxis, Axis, Features):
+class SparseFeatures(SparseAxis, Features):
     """
     Sparse method implementations performed on the feature axis.
 
     Parameters
     ----------
-    source : UML Base object
-        The object containing features data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(SparseFeatures, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -113,14 +104,41 @@ class SparseFeatures(SparseAxis, Axis, Features):
     #     self._source.data = coo_matrix((data, (row, col)), newShape)
     #     self._source._sorted = 'feature'
 
-class SparseFeaturesView(AxisView, SparseFeatures, SparseAxis, Axis, Features):
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        keep = self._source.data.col != featureIndex
+        tmpData = self._source.data.data[keep]
+        tmpRow = self._source.data.row[keep]
+        tmpCol = self._source.data.col[keep]
+
+        shift = tmpCol > featureIndex
+        tmpCol[shift] = tmpCol[shift] + numResultingFts - 1
+
+        for idx in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[idx])
+            tmpData = numpy.concatenate((tmpData, newFeat))
+            newRows = [i for i in range(len(self._source.points))]
+            tmpRow = numpy.concatenate((tmpRow, newRows))
+            newCols = [featureIndex + idx for _
+                       in range(len(self._source.points))]
+            tmpCol = numpy.concatenate((tmpCol, newCols))
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        shape = (len(self._source.points), numRetFeatures)
+        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                       shape=shape)
+        self._source._sorted = None
+
+class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
     """
     Limit functionality of SparseFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
-        super(SparseFeaturesView, self).__init__(**kwds)
 
     #########################
     # Query implementations #

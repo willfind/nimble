@@ -12,7 +12,8 @@ import UML
 from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
-from .base import cmp_to_key
+
+from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 class ListAxis(Axis):
@@ -24,21 +25,9 @@ class ListAxis(Axis):
 
     Parameters
     ----------
-    axis : str
-        The axis ('point' or 'feature') which the function will be
-        applied to.
-    source : UML Base object
+    source : UML data object
         The object containing point and feature data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
     """
-    def __init__(self, axis, source, **kwds):
-        self._axis = axis
-        self._source = source
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(ListAxis, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -100,14 +89,6 @@ class ListAxis(Axis):
                              featureNames=fnames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
-        if isinstance(self, Points):
-            test = self._source.pointView(0)
-            viewIter = self._source.points
-        else:
-            test = self._source.featureView(0)
-            viewIter = self._source.features
-        names = self._getNames()
-
         if isinstance(sortHelper, list):
             sortData = numpy.array(self._source.data, dtype=numpy.object_)
             if isinstance(self, Points):
@@ -115,58 +96,12 @@ class ListAxis(Axis):
             else:
                 sortData = sortData[:, sortHelper]
             self._source.data = sortData.tolist()
+            names = self._getNames()
             newNameOrder = [names[idx] for idx in sortHelper]
             return newNameOrder
 
-        scorer = None
-        comparator = None
-        try:
-            sortHelper(test)
-            scorer = sortHelper
-        except TypeError:
-            pass
-        try:
-            sortHelper(test, test)
-            comparator = sortHelper
-        except TypeError:
-            pass
-
-        if sortHelper is not None and scorer is None and comparator is None:
-            msg = "sortHelper is neither a scorer or a comparator"
-            raise ArgumentException(msg)
-
-        # make array of views
-        viewArray = []
-        for v in viewIter:
-            viewArray.append(v)
-
-        if comparator is not None:
-            # try:
-            #     viewArray.sort(cmp=comparator)#python2
-            # except:
-            viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
-            indexPosition = []
-            for i in range(len(viewArray)):
-                viewAxis = getattr(viewArray[i], self._axis + 's')
-                index = self._getIndex(getattr(viewAxis, 'getName')(0))
-                indexPosition.append(index)
-        else:
-            #scoreArray = viewArray
-            scoreArray = []
-            if scorer is not None:
-                # use scoring function to turn views into values
-                for i in range(len(viewArray)):
-                    scoreArray.append(scorer(viewArray[i]))
-            else:
-                for i in range(len(viewArray)):
-                    scoreArray.append(viewArray[i][sortBy])
-
-            # use numpy.argsort to make desired index array
-            # this results in an array whole ith index contains the the
-            # index into the data of the value that should be in the ith
-            # position
-            indexPosition = numpy.argsort(scoreArray)
-
+        axisAttr = 'points' if isinstance(self, Points) else 'features'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
         # run through target axis and change indices
         if isinstance(self, Points):
             source = copy.copy(self._source.data)

@@ -21,16 +21,9 @@ class DataFrameElements(Elements):
 
     Parameters
     ----------
-    source : UML Base object
-        The object containing features data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+    source : UML data object
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = source
-        super(DataFrameElements, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -105,10 +98,8 @@ class DataFrameElements(Elements):
             self._source.data = pd.DataFrame(
                 np.multiply(self._source.data.values, other.data))
 
-class DataFrameElementsView(ElementsView, DataFrameElements, Elements):
+class DataFrameElementsView(ElementsView, DataFrameElements):
     """
     Limit functionality of DataFrameElements to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        super(DataFrameElementsView, self).__init__(**kwds)
+    pass

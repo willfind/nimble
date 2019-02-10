@@ -17,6 +17,7 @@ import copy
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
+from collections import OrderedDict
 
 import numpy
 import six
@@ -233,7 +234,7 @@ class Base(object):
         """
         Get the object containing point-based methods for this object.
         """
-        return BasePoints(self)
+        return BasePoints(source=self)
 
     @property
     def points(self):
@@ -246,7 +247,7 @@ class Base(object):
         """
         Get the object containing feature-based methods for this object.
         """
-        return BaseFeatures(self)
+        return BaseFeatures(source=self)
 
     @property
     def features(self):
@@ -259,7 +260,7 @@ class Base(object):
         """
         Get the object containing element-based methods for this object.
         """
-        return BaseElements(self)
+        return BaseElements(source=self)
 
     @property
     def elements(self):
@@ -4132,56 +4133,13 @@ class Base(object):
         pass
 
 class BasePoints(Axis, Points):
-    """
-    Access to point axis for Base object.
-    """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(BasePoints, self).__init__(**kwds)
+    pass
 
 class BaseFeatures(Axis, Features):
-    """
-    Access to feature axis for Base object.
-    """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(BaseFeatures, self).__init__(**kwds)
+    pass
 
 class BaseElements(Elements):
-    """
-    Access to elements for Base object.
-    """
-    def __init__(self, source, **kwds):
-        self._source = source
-        kwds['source'] = self._source
-        super(BaseElements, self).__init__(**kwds)
-
-def cmp_to_key(mycmp):
-    """
-    Convert a cmp= function for python2 into a key= function for python3
-    """
-    class K:
-        def __init__(self, obj, *args):
-            self.obj = obj
-        def __lt__(self, other):
-            return mycmp(self.obj, other.obj) < 0
-        def __gt__(self, other):
-            return mycmp(self.obj, other.obj) > 0
-        def __eq__(self, other):
-            return mycmp(self.obj, other.obj) == 0
-        def __le__(self, other):
-            return mycmp(self.obj, other.obj) <= 0
-        def __ge__(self, other):
-            return mycmp(self.obj, other.obj) >= 0
-        def __ne__(self, other):
-            return mycmp(self.obj, other.obj) != 0
-    return K
+    pass
 
 def cmp(x, y):
     if x < y:

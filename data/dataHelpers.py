@@ -391,6 +391,34 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
             removalWidths[removeIndex] = len(colHold)
 
 
+def readOnlyException(name):
+    """
+    The exception to raise for functions that are disallowed in view
+    objects.
+    """
+    msg = "The " + name + " method is disallowed for View objects. View "
+    msg += "objects are read only, yet this method modifies the object"
+    raise ImproperActionException(msg)
+
+# prepend a message that view objects will raise an exception to Base docstring
+def exceptionDocstringFactory(cls):
+    def exceptionDocstring(func):
+        name = func.__name__
+        try:
+            baseDoc = getattr(cls, name).__doc__
+            if baseDoc is not None:
+                viewMsg = "The {0} method is object modifying and ".format(name)
+                viewMsg += "will always raise an exception for view objects.\n\n"
+                viewMsg += "For reference, the docstring for this method "
+                viewMsg += "when objects can be modified is below:\n"
+                func.__doc__ = viewMsg + baseDoc
+        except AttributeError:
+            # ignore built-in functions that differ between py2 and py3
+            # (__idiv__ vs __itruediv__, __ifloordiv__)
+            pass
+        return func
+    return exceptionDocstring
+
 def nonSparseAxisUniqueArray(obj, axis):
     obj._validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
@@ -455,6 +483,130 @@ def valuesToPythonList(values, argName):
         raise ArgumentException(msg)
 
     return valuesList
+
+def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
+    """
+    Helper for sort() to define new indexPosition list.
+    """
+    scorer = None
+    comparator = None
+    if axisAttr == 'points':
+        test = obj._source.pointView(0)
+    else:
+        test = obj._source.featureView(0)
+    try:
+        sortHelper(test)
+        scorer = sortHelper
+    except TypeError:
+        pass
+    try:
+        sortHelper(test, test)
+        comparator = sortHelper
+    except TypeError:
+        pass
+
+    if sortHelper is not None and scorer is None and comparator is None:
+        msg = "sortHelper is neither a scorer or a comparator"
+        raise ArgumentException(msg)
+
+    if comparator is not None:
+        # make array of views
+        viewArray = []
+        for v in obj:
+            viewArray.append(v)
+
+        viewArray.sort(key=cmp_to_key(comparator))
+        indexPosition = []
+        for i in range(len(viewArray)):
+            viewAxis = getattr(viewArray[i], axisAttr)
+            index = obj._getIndex(viewAxis.getName(0))
+            indexPosition.append(index)
+        indexPosition = numpy.array(indexPosition)
+    elif hasattr(scorer, 'permuter'):
+        scoreArray = scorer.indices
+        indexPosition = numpy.argsort(scoreArray)
+    else:
+        # make array of views
+        viewArray = []
+        for v in obj:
+            viewArray.append(v)
+
+        scoreArray = viewArray
+        if scorer is not None:
+            # use scoring function to turn views into values
+            for i in range(len(viewArray)):
+                scoreArray[i] = scorer(viewArray[i])
+        else:
+            for i in range(len(viewArray)):
+                scoreArray[i] = viewArray[i][sortBy]
+
+        # use numpy.argsort to make desired index array
+        # this results in an array whose ith entry contains the the
+        # index into the data of the value that should be in the ith
+        # position.
+        indexPosition = numpy.argsort(scoreArray)
+
+    return indexPosition
+
+def cmp_to_key(mycmp):
+    """Convert a cmp= function for python2 into a key= function for python3"""
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
+
+def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
+                                   collapseData, currNumPoints, currFtNames,
+                                   numRetPoints, numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    points.splitByCollapsingFeatures. Used in all non-sparse
+    implementations.
+    """
+    fill = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
+    fill[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
+
+    # stack feature names repeatedly to create new feature
+    namesAsFeature = numpy.tile(currFtNames, (1, currNumPoints))
+    fill[:, -2] = namesAsFeature
+    # flatten values by row then reshape into new feature
+    valuesAsFeature = collapseData.flatten()
+    fill[:, -1] = valuesAsFeature
+
+    return fill
+
+def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
+                                  numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    combinePointsByExpandingFeatures. Used in all non-sparse
+    implementations.
+    """
+    fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
+                       dtype=numpy.object_)
+
+    for i, point in enumerate(uniqueDict):
+        fill[i, :namesIdx] = point[:namesIdx]
+        for j, name in enumerate(uniqueNames):
+            if name in uniqueDict[point]:
+                fill[i, namesIdx + j] = uniqueDict[point][name]
+            else:
+                fill[i, namesIdx + j] = numpy.nan
+        fill[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+
+    return fill
 
 def extractFunctionString(function):
     """Extracts function name or lambda function if passed a function,
