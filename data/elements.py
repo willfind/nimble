@@ -12,7 +12,7 @@ import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.logger import enableLogging
 from . import dataHelpers
-from .dataHelpers import valuesToPythonList
+from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import logCaptureFactory
 
 logCapture = logCaptureFactory('elements')
@@ -106,9 +106,9 @@ class Elements(object):
                            skipNoneReturnValues, useLog=False)
 
         if points is not None:
-            points = self._source._constructIndicesList('point', points)
+            points = constructIndicesList(self._source, 'point', points)
         if features is not None:
-            features = self._source._constructIndicesList('feature', features)
+            features = constructIndicesList(self._source, 'feature', features)
 
         self._transform_implementation(toTransform, points, features,
                                        preserveZeros, skipNoneReturnValues)
@@ -173,9 +173,9 @@ class Elements(object):
             oneArg = True
 
         if points is not None:
-            points = self._source._constructIndicesList('point', points)
+            points = constructIndicesList(self._source, 'point', points)
         if features is not None:
-            features = self._source._constructIndicesList('feature', features)
+            features = constructIndicesList(self._source, 'feature', features)
 
         if outputType is not None:
             optType = outputType

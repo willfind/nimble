@@ -965,17 +965,17 @@ class Features(object):
                 msg += "{0} features".format(numResultingFts)
                 raise ArgumentException(msg)
 
-        featureIndex = self._source._getFeatureIndex(feature)
-        numRetFeatures = len(self._source.features) - 1 + numResultingFts
+        featureIndex = self.getIndex(feature)
+        numRetFeatures = len(self) - 1 + numResultingFts
 
         self._splitByParsing_implementation(featureIndex, splitList,
                                             numRetFeatures, numResultingFts)
 
         self._source._featureCount = numRetFeatures
-        fNames = self._source.features.getNames()[:featureIndex]
+        fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
-        fNames.extend(self._source.features.getNames()[featureIndex + 1:])
-        self._source.features.setNames(fNames)
+        fNames.extend(self.getNames()[featureIndex + 1:])
+        self.setNames(fNames)
 
         self._source.validate()
 

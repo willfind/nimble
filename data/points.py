@@ -918,16 +918,15 @@ class Points(object):
         --------
         TODO
         """
-        points = self._source.points
         features = self._source.features
         numCollapsed = len(featuresToCollapse)
-        collapseIndices = [self._source._getFeatureIndex(ft)
+        collapseIndices = [self._source.features.getIndex(ft)
                            for ft in featuresToCollapse]
         retainIndices = [idx for idx in range(len(features))
                          if idx not in collapseIndices]
-        currNumPoints = len(points)
+        currNumPoints = len(self)
         currFtNames = [features.getName(idx) for idx in collapseIndices]
-        numRetPoints = len(points) * numCollapsed
+        numRetPoints = len(self) * numCollapsed
         numRetFeatures = len(features) - numCollapsed + 2
 
         self._splitByCollapsingFeatures_implementation(
@@ -941,10 +940,10 @@ class Points(object):
         features.setNames(ftNames)
         if self._source._pointNamesCreated():
             appendedPts = []
-            for name in points.getNames():
+            for name in self.getNames():
                 for i in range(numCollapsed):
                     appendedPts.append("{0}_{1}".format(name, i))
-            points.setNames(appendedPts)
+            self.setNames(appendedPts)
 
         self._source.validate()
 
@@ -1007,20 +1006,20 @@ class Points(object):
         --------
         TODO
         """
-        namesIdx = self._source._getFeatureIndex(featureWithFeatureNames)
-        valuesIdx = self._source._getFeatureIndex(featureWithValues)
+        namesIdx = self._source.features.getIndex(featureWithFeatureNames)
+        valuesIdx = self._source.features.getIndex(featureWithValues)
         uncombinedIdx = [i for i in range(len(self._source.features))
                          if i not in (namesIdx, valuesIdx)]
 
         # using OrderedDict supports point name setting
         unique = OrderedDict()
         pNames = []
-        for idx, row in enumerate(self._source.points):
+        for idx, row in enumerate(iter(self)):
             uncombined = tuple(row[uncombinedIdx])
             if uncombined not in unique:
                 unique[uncombined] = {}
                 if self._source._pointNamesCreated():
-                    pNames.append(self._source.points.getName(idx))
+                    pNames.append(self.getName(idx))
             if row[namesIdx] in unique[uncombined]:
                 msg = "The point at index {0} cannot be combined ".format(idx)
                 msg += "because there is already a value for the feature "
@@ -1048,7 +1047,7 @@ class Points(object):
         self._source.features.setNames(fNames)
 
         if self._source._pointNamesCreated():
-            self._source.points.setNames(pNames)
+            self.setNames(pNames)
 
         self._source.validate()
 
