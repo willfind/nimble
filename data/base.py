@@ -1041,28 +1041,119 @@ class Base(object):
 
     def __getitem__(self, key):
         """
-        The following are allowed:
-        X[1, :]            ->    (2d) that just has that one point
-        X["age", :]    -> same as above
-        X[1:5, :]         -> 4 points (1, 2, 3, 4)
-        X[[3,8], :]       -> 2 points (3, 8) IN THE ORDER GIVEN
-        X[["age","gender"], :]       -> same as above
+        Return a copy of a subset of the data.
 
-        --get based on features only : ALWAYS returns a new copy UML
-        object (2d)
-        X[:,2]         -> just has that 1 feature
-        X[:,"bob"] -> same as above
-        X[:,1:5]    -> 4 features (1,2,3,4)
-        X[:,[3,8]]  -> 2 features (3,8) IN THE ORDER GIVEN
+        Vector-shaped objects can use a single value as the key,
+        otherwise the key must be a tuple (pointsToGet, featuresToGet).
+        All values in the key are INCLUSIVE. When using a slice, the
+        ``stop`` value will be included, unlike the python convention.
 
-        --both features and points : can give a scalar value OR UML
-        object 2d depending on case
-        X[1,2]         -> single scalar number value
-        X["age","bob"] -> single scalar number value
-        X[1:5,4:7]     -> UML object (2d) that has just that rectangle
-        X[[1,2],[3,8]] -> UML object (2d) that has just 2 points
-                          (points 1,2) but only 2 features for each of
-                          them (features 3,8)
+        Parameters
+        ----------
+        key : name, index, list, slice
+            * name - the name of the point or feature to get.
+            * index - the index of the point or feature to get.
+            * list - a list of names or indices to get. Note: the points
+              and/or features will be returned in the order of the list.
+            * slice - a slice of names or indices to get. Note: UML uses
+              inclusive values.
+
+        Examples
+        --------
+        raw = [[4132, 41, 'management', 50000, 'm'],
+               [4434, 26, 'sales', 26000, 'm'],
+               [4331, 26, 'administration', 28000, 'f'],
+               [4211, 45, 'sales', 33000, 'm'],
+               [4344, 45, 'accounting', 43500, 'f']]
+        pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
+        featureNames = ['id', 'age', 'department', 'salary', 'gender']
+        office = UML.createData('Matrix', raw, pointNames=pointNames,
+                                featureNames=featureNames)
+
+        **Get a single value:**
+        >>>office['michael', 'age']
+        41
+        >>>office[0,1]
+        41
+        >>>office['michael', 1]
+        41
+
+        **Get based on points only:**
+        >>>pam = office['pam', :]
+        >>>print(pam)
+               id  age   department   salary gender
+
+        pam   4331  26 administration 28000    f
+
+        >>>sales = office[[3, 1], :]
+        >>>print(sales)
+                id  age department salary gender
+
+        dwight   4211  45   sales    33000    m
+           jim   4434  26   sales    26000    m
+        *Note: retains list order; index 3 placed before index 1*
+
+        >>>nonManagement = office[1:4, :]
+        >>>print(nonManagement)
+                  id  age   department   salary gender
+
+           jim   4434  26     sales      26000    m
+           pam   4331  26 administration 28000    f
+        dwight   4211  45     sales      33000    m
+        angela   4344  45   accounting   43500    f
+        *Note: slices are inclusive; index 4 ('gender') was included*
+
+        **Get based on features only:**
+        >>>departments = office[:, 2]
+        >>>print(departments)
+                    department
+
+        michael     management
+            jim       sales
+            pam   administration
+         dwight       sales
+         angela     accounting
+
+        >>>genderAndAge = office[:, ['gender', 'age']]
+        >>>print(genderAndAge)
+                  gender age
+
+        michael     m     41
+            jim     m     26
+            pam     f     26
+         dwight     m     45
+         angela     f     45
+        *Note: retains list order; 'gender' placed before 'age'*
+
+        >>>deptSalary = office[:, 'department':'salary']
+        >>>print(deptSalary)
+                    department   salary
+
+        michael     management   50000
+            jim       sales      26000
+            pam   administration 28000
+         dwight       sales      33000
+         angela     accounting   43500
+        *Note: slices are inclusive; 'salary' was included*
+
+        **Get based on points and features:**
+        >>>femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
+        >>>print(femaleSalaryAndDept)
+                 salary   department
+
+           pam   28000  administration
+        angela   43500    accounting
+        *Note: list orders retained; 'pam' precedes 'angela' and index 3
+        ('salary') precedes index 2 ('department')*
+
+        >>>first3Ages = office[:2, 'age']
+        >>>print(first3Ages)
+                  age
+
+        michael    41
+            jim    26
+            pam    26
+        *Note: slices are inclusive; index 2 ('pam') was included*
         """
         # Make it a tuple if it isn't one
         if key.__class__ is tuple:
@@ -1092,12 +1183,19 @@ class Base(object):
         if not singleX:
             if x.__class__ is slice:
                 start = x.start if x.start is not None else 0
+                stop = x.stop if x.stop is not None else self._pointCount - 1
+                step = x.step if x.step is not None else 1
+                start = self._getPointIndex(start)
+                stop = self._getPointIndex(stop)
                 if start < 0:
                     start += self._pointCount
-                stop = x.stop if x.stop is not None else self._pointCount
                 if stop < 0:
                     stop += self._pointCount
-                step = x.step if x.step is not None else 1
+                # using builtin range below so need to adjust stop
+                if step > 0:
+                    stop += 1
+                else:
+                    stop -= 1
                 x = [self._processSingleX(xi)[0] for xi
                      in range(start, stop, step)]
             else:
@@ -1106,12 +1204,19 @@ class Base(object):
         if not singleY:
             if y.__class__ is slice:
                 start = y.start if y.start is not None else 0
+                stop = y.stop if y.stop is not None else self._featureCount - 1
+                step = y.step if y.step is not None else 1
+                start = self._getFeatureIndex(start)
+                stop = self._getFeatureIndex(stop)
                 if start < 0:
                     start += self._featureCount
-                stop = y.stop if y.stop is not None else self._featureCount
                 if stop < 0:
                     stop += self._featureCount
-                step = y.step if y.step is not None else 1
+                # using builtin range below so need to adjust stop
+                if step > 0:
+                    stop += 1
+                else:
+                    stop -= 1
                 y = [self._processSingleY(yi)[0] for yi
                      in range(start, stop, step)]
             else:
