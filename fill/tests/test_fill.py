@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 
-import numpy
-from nose.tools import raises
-
 import UML
 from UML import fill
 from UML import match
@@ -126,6 +123,17 @@ def backend_fill(func, data, match, expected=None):
         toTest = UML.createData(t, data)
         assert func(toTest, match) == expected
 
+def backend_fill_exception(func, data, match, exceptionType):
+    "backend for fill functions when testing exception raising"
+    for t in UML.data.available:
+        try:
+            toTest = UML.createData(t, data)
+            func(toTest, match)
+            assert False  # Expected an exception
+        except exceptionType as et:
+#            print et
+            pass  # if we get the right thing, carry on.
+
 def test_mean_noMatches():
     data = [1, 2, 2, 9]
     match = lambda x: False
@@ -138,17 +146,15 @@ def test_mean_ignoreMatch():
     expected = [1, 5, 5, 9]
     backend_fill(fill.mean, data, match, expected)
 
-@raises(ArgumentException)
-def test_mean_allMatches():
+def test_mean_allMatches_exception():
     data = [1, 2, 2, 9]
     match = lambda x: x in [1, 2, 2, 9]
-    backend_fill(fill.mean, data, match)
+    backend_fill_exception(fill.mean, data, match, ArgumentException)
 
-@raises(ArgumentException)
-def test_mean_cannotCalculate():
+def test_mean_cannotCalculate_exception():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
-    backend_fill(fill.mean, data, match)
+    backend_fill_exception(fill.mean, data, match, ArgumentException)
 
 def test_median_noMatches():
     data = [1, 2, 9, 2]
@@ -162,17 +168,15 @@ def test_median_ignoreMatch():
     expected = [1, 5, 9, 5]
     backend_fill(fill.median, data, match, expected)
 
-@raises(ArgumentException)
-def test_median_allMatches():
+def test_median_allMatches_exception():
     data = [1, 2, 9, 2]
     match = lambda x: x in [1, 2, 9]
-    backend_fill(fill.median, data, match)
+    backend_fill_exception(fill.median, data, match, ArgumentException)
 
-@raises(ArgumentException)
-def test_median_cannotCalculate():
+def test_median_cannotCalculate_exception():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
-    backend_fill(fill.median, data, match)
+    backend_fill_exception(fill.median, data, match, ArgumentException)
 
 def test_mode_noMatches():
     data = [1, 2, 2, 9]
@@ -186,11 +190,10 @@ def test_mode_ignoreMatch():
     expected = [1, 9, 9, 9, 9, 9]
     backend_fill(fill.mode, data, match, expected)
 
-@raises(ArgumentException)
-def test_mode_allMatches():
+def test_mode_allMatches_exception():
     data = [1, 2, 2, 9, 9]
     match = lambda x: x in [1, 2, 9]
-    backend_fill(fill.mode, data, match)
+    backend_fill_exception(fill.mode, data, match, ArgumentException)
 
 def test_forwardFill_noMatches():
     data = [1, 2, 3, 4]
@@ -210,11 +213,10 @@ def test_forwardFill_consecutiveMatches():
     expected = [1, 1, 1, 1, 3, 4, 5]
     backend_fill(fill.forwardFill, data, match, expected)
 
-@raises(ArgumentException)
-def test_forwardFill_InitialContainsMatch():
+def test_forwardFill_InitialContainsMatch_exception():
     data = [1, 2, 3, 4]
     match = lambda x: x == 1
-    backend_fill(fill.forwardFill, data, match)
+    backend_fill_exception(fill.forwardFill, data, match, ArgumentException)
 
 def test_backwardFill_noMatches():
     data = [1, 2, 3, 4]
@@ -234,11 +236,10 @@ def test_backwardFill_consecutiveMatches():
     expected = [1, 3, 3, 3, 3, 4, 5]
     backend_fill(fill.backwardFill, data, match, expected)
 
-@raises(ArgumentException)
-def test_backwardFill_InitialContainsMatch():
+def test_backwardFill_FinalContainsMatch_exception():
     data = [1, 2, 3, 4]
     match = lambda x: x == 4
-    backend_fill(fill.backwardFill, data, match)
+    backend_fill_exception(fill.backwardFill, data, match, ArgumentException)
 
 def test_interpolate_noMatches():
     data = [1, 2, 2, 10]
@@ -265,18 +266,19 @@ def test_interpolate_withArguments():
         toTest = UML.createData(t, data)
         assert fill.interpolate(toTest, match, **arguments) == expected
 
-def test_interpolate_xKwargIncluded():
+def test_interpolate_xKwargIncluded_exception():
     data = [1, "na", "na", 5]
     arguments = {}
-    arguments['x'] = [1]
     # linear function y = 2x + 5
     arguments['xp'] = [0, 4, 8]
     arguments['fp'] = [5, 13, 21]
+    arguments['x'] = [1]  # disallowed argument
     match = lambda x: x == "na"
     for t in UML.data.available:
         try:
             toTest = UML.createData(t, data)
             ret = fill.interpolate(toTest, match, **arguments)
+            assert False  # expected ArgumentException
         except ArgumentException:
             pass
 

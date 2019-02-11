@@ -307,7 +307,7 @@ def forwardFill(vector, match):
     """
     match = convertMatchToFunction(match)
     if match(vector[0]):
-        msg = directionError('forward fill', vector)
+        msg = directionError('forward fill', vector, 'first')
         raise ArgumentException(msg)
     ret = []
     for val in vector:
@@ -364,7 +364,7 @@ def backwardFill(vector, match):
     """
     match = convertMatchToFunction(match)
     if match(vector[-1]):
-        msg = directionError('backward fill', vector)
+        msg = directionError('backward fill', vector, 'last')
         raise ArgumentException(msg)
     ret = numpy.empty_like(vector)
     numValues = len(vector)
@@ -663,7 +663,7 @@ def getLocationMsg(name, index):
 
     return location
 
-def errorMsgFormatter(msg, funcString, vector):
+def errorMsgFormatter(msg, vector, **kwargs):
     """
     Generic function to format error messages.
     """
@@ -671,7 +671,7 @@ def errorMsgFormatter(msg, funcString, vector):
     name, index = getNameAndIndex(axis, vector)
     location = getLocationMsg(name, index)
 
-    return msg.format(funcString=funcString, axis=axis, location=location)
+    return msg.format(axis=axis, location=location, **kwargs)
 
 def statsExceptionNoMatches(funcString, vector):
     """
@@ -681,7 +681,7 @@ def statsExceptionNoMatches(funcString, vector):
     msg += "using only unmatched values. All values for the {axis} {location} "
     msg += "returned a match."
 
-    return errorMsgFormatter(msg, funcString, vector)
+    return errorMsgFormatter(msg, vector, **{'funcString':funcString})
 
 def statsExceptionInvalidInput(funcString, vector):
     """
@@ -690,13 +690,13 @@ def statsExceptionInvalidInput(funcString, vector):
     msg = "Cannot calculate {funcString}. The {axis} {location} "
     msg += "contains non-numeric values or is all NaN values"
 
-    return errorMsgFormatter(msg, funcString, vector)
+    return errorMsgFormatter(msg, vector, **{'funcString':funcString})
 
-def directionError(funcString, vector):
+def directionError(funcString, vector, target):
     """
     Generic message for directional fill with a matched inital value.
     """
     msg = "Unable to provide a {funcString} value for the {axis} {location} "
-    msg += "because the first value is a match"
+    msg += "because the {target} value is a match"
 
-    return errorMsgFormatter(msg, funcString, vector)
+    return errorMsgFormatter(msg, vector, **{'funcString':funcString, 'target':target})

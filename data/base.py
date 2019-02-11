@@ -2192,8 +2192,8 @@ class Base(object):
                 wrapped = logCapture(self.fillUsingAllData)
             else:
                 wrapped = directCall(self.fillUsingAllData)
-            return wrapped(match, fill, arguments, points, features,
-                           returnModified, useLog=False)
+            return wrapped(match, fill, points, features, returnModified,
+                           useLog=False, **kwarguments)
 
         if returnModified:
             modified = self.elements.calculate(match, points=points,
