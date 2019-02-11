@@ -8,7 +8,6 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
@@ -104,7 +103,7 @@ class MatrixAxis(Axis):
                                                    uniqueIndices)
         if isinstance(self, Points):
             return UML.createData('Matrix', uniqueData, pointNames=axisNames,
-                          featureNames=offAxisNames, useLog=False)
+                                  featureNames=offAxisNames, useLog=False)
         else:
             return UML.createData('Matrix', uniqueData,
                                   pointNames=offAxisNames,

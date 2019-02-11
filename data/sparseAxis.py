@@ -279,7 +279,7 @@ class SparseAxis(Axis):
     def _unique_implementation(self):
         if self._source._sorted is None:
             self._source._sortInternal("feature")
-        count =len(self)
+        count = len(self)
         hasAxisNames = self._namesCreated()
         getAxisName = self._getName
         getAxisNames = self._getNames
@@ -332,13 +332,13 @@ class SparseAxis(Axis):
         if isinstance(self, Points):
             shape = (axisCount, len(self._source.features))
             uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
-                                    shape=shape)
+                                   shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=axisNames,
                                   featureNames=offAxisNames, useLog=False)
         else:
             shape = (len(self._source.points), axisCount)
             uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
-                                    shape=shape)
+                                   shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
                                   featureNames=axisNames, useLog=False)
 

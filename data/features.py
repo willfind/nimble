@@ -1159,6 +1159,10 @@ class Features(object):
         pass
 
     @abstractmethod
+    def _unique(self):
+        pass
+
+    @abstractmethod
     def _similarities(self, similarityFunction):
         pass
 

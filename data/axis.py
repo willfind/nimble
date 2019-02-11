@@ -22,7 +22,7 @@ from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import validateInputString, logCaptureFactory
+from .dataHelpers import validateInputString
 
 class Axis(object):
     """
@@ -124,9 +124,9 @@ class Axis(object):
 
     def _hasName(self, name):
         try:
-            self.getIndex(name)
+            self._getIndex(name)
             return True
-        # keyError if not in dict, TypeError if names is None
+        # keyError if not in dict, TypeError if name is None
         except (KeyError, TypeError):
             return False
 
@@ -499,7 +499,7 @@ class Axis(object):
 
         if returnModified:
             def bools(values):
-                return [True if toMatch(val) else False for val in values]
+                return [toMatch(val) for val in values]
 
             modified = self._calculate(bools, limitTo)
             if isinstance(self, Points):
@@ -1475,6 +1475,10 @@ class Axis(object):
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):
+        pass
+
+    @abstractmethod
+    def _unique_implementation(self):
         pass
 
     @abstractmethod

@@ -8,7 +8,6 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 

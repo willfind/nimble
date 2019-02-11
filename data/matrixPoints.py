@@ -72,7 +72,8 @@ class MatrixPoints(MatrixAxis, Points):
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numPoints = divideInto
     #     numFeatures = len(self._source.features) // numPoints
-    #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
+    #     self._source.data = self._source.data.reshape((numPoints,
+    #                                                    numFeatures),
     #                                                 order='C')
 
     ################################
