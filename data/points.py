@@ -715,8 +715,8 @@ class Points(object):
 
         self._shuffle()
 
-    def fill(self, match, fill, arguments=None, points=None,
-             returnModified=False, useLog=None):
+    def fill(self, match, fill, points=None, returnModified=False,
+             useLog=None, **kwarguments):
         """
         Replace given values in each point with other values.
 
@@ -757,17 +757,52 @@ class Points(object):
 
         Examples
         --------
-        TODO
+        Fill a value with another value.
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.points.fill('na', -1)
+        >>> data
+        Matrix(
+            [[1.000  1.000 1.000 ]
+             [1.000  1.000 1.000 ]
+             [1.000  1.000 -1.000]
+             [2.000  2.000 2.000 ]
+             [-1.000 2.000 2.000 ]]
+            )
+
+        Fill using UML's match and fill modules.
+        Note: None is converted to numpy.nan in UML.
+        >>> from UML import match
+        >>> from UML import fill
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, None],
+        ...        [2, 2, 2],
+        ...        [None, 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.points.fill(match.missing, fill.mode, points=4)
+        >>> data
+        Matrix(
+            [[  1     1     1  ]
+             [  1     1     1  ]
+             [  1     1     na ]
+             [  2     2     2  ]
+             [2.000 2.000 2.000]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
                 wrapped = logCapture(self.fill)
             else:
                 wrapped = directCall(self.fill)
-            return wrapped(match, fill, arguments, points, returnModified,
-                           useLog=False)
+            return wrapped(match, fill, points, returnModified,
+                           useLog=False, **kwarguments)
 
-        return self._fill(match, fill, arguments, points, returnModified)
+        return self._fill(match, fill, points, returnModified, **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -1160,11 +1195,11 @@ class Points(object):
     #     pass
 
     @abstractmethod
-    def _transform(self, function, points):
+    def _transform(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _calculate(self, function, points):
+    def _calculate(self, function, limitTo):
         pass
 
     @abstractmethod
@@ -1180,7 +1215,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, arguments, limitTo, returnModified):
+    def _fill(self, match, fill, limitTo, returnModified, **kwarguments):
         pass
 
     @abstractmethod

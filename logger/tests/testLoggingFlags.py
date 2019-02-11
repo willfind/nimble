@@ -346,7 +346,7 @@ def test_fillWith():
     backend(wrapped, prepAndCheck)
 
 def test_fillUsingAllData():
-    def simpleFiller(obj, match, args):
+    def simpleFiller(obj, match):
         return UML.createData('Matrix', numpy.zeros((18, 3)))
     def wrapped(obj, useLog):
         obj.fillUsingAllData('a', fill=simpleFiller, useLog=useLog)

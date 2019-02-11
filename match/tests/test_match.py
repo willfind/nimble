@@ -1,9 +1,9 @@
 from __future__ import absolute_import
+
 import numpy
 
 import UML
 from UML import match
-
 
 def backend_match_value(toMatch, true, false):
     """backend for match functions that accept a value"""
