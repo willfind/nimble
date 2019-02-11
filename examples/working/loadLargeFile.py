@@ -31,7 +31,7 @@ try:
     cmp(1, 1)
 except:
     from UML.data.base import cmp#python3
-from UML.data.base import cmp_to_key
+from UML.data.dataHelpers import cmp_to_key
 
 
 def rSquared(knownValues, predictedValues):
@@ -583,6 +583,6 @@ if __name__ == "__main__":
         pylab.show()
 
     """
-	
-				
+
+
 

@@ -1,0 +1,590 @@
+"""
+Group of tests which checks that use controlled local and global
+mechanisms for controlling logging are functioning as expected.
+"""
+
+from __future__ import absolute_import
+import os
+
+from nose.plugins.attrib import attr
+import numpy
+
+import UML
+from UML.helpers import generateClassificationData
+from UML.calculate import fractionIncorrect
+from UML.configuration import configSafetyWrapper
+
+learnerName = 'custom.KNNClassifier'
+
+def logEntryCount(logger):
+    entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
+    return entryCount[0][0]
+
+@configSafetyWrapper
+def test_createData():
+    logger = UML.logger.active
+
+    # count number of starting log entries
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
+    end = logEntryCount(logger)
+    assert start + 1 == end
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
+    end = logEntryCount(logger)
+    assert start + 1 == end
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
+    end = logEntryCount(logger)
+    assert start == end
+
+    UML.settings.set('logger', 'enabledByDefault', 'False')
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
+    end = logEntryCount(logger)
+    assert start + 1 == end
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
+    end = logEntryCount(logger)
+    assert start == end
+
+    start = logEntryCount(logger)
+    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
+    end = logEntryCount(logger)
+    assert start == end
+
+# helper function which checks log status for runs
+def runAndCheck(toCall, useLog):
+    # generate data
+    cData = generateClassificationData(2, 10, 2)
+    ((trainX, trainY), (testX, testY)) = cData
+    logger = UML.logger.active
+    # count number of starting log entries
+    startCount = logEntryCount(logger)
+
+    # call the function we're testing for log control
+    toCall(trainX, trainY, testX, testY, useLog)
+    # make sure it has the expected effect on the count
+    endCount = logEntryCount(logger)
+
+    return (startCount, endCount)
+
+@configSafetyWrapper
+def backend(toCall, validator):
+    # for each combination of local and global, call and check
+
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+
+    (start, end) = validator(toCall, useLog=True)
+    assert start + 1 == end
+
+    (start, end) = validator(toCall, useLog=None)
+    assert start + 1 == end
+
+    (start, end) = validator(toCall, useLog=False)
+    assert start == end
+
+    UML.settings.set('logger', 'enabledByDefault', 'False')
+
+    (start, end) = validator(toCall, useLog=True)
+    assert start + 1 == end
+
+    (start, end) = validator(toCall, useLog=None)
+    assert start == end
+
+    (start, end) = validator(toCall, useLog=False)
+    assert start == end
+
+def test_train():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.train(learnerName, trainX, trainY, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_trainAndApply():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.trainAndApply(learnerName, trainX, trainY, testX, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_trainAndTest():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.trainAndTest(
+            learnerName, trainX, trainY, testX, testY,
+            performanceFunction=fractionIncorrect, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_trainAndTestOnTrainingData_trainError():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.trainAndTestOnTrainingData(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            crossValidationError=False, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_trainAndTestOnTrainingData_CVError():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.trainAndTestOnTrainingData(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            crossValidationError=True, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_normalizeData():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.normalizeData('mlpy.PCA', trainX, testX=testX,
+                                  arguments={'k': 1}, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+#def test_trainAndTestOvO():
+#	def wrapped(trainX, trainY, testX, testY, useLog):
+#		return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+#	backend(wrapped, runAndCheck)
+
+#def test_trainAndTestOvA():
+#	def wrapped(trainX, trainY, testX, testY, useLog):
+#		return UML.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+#	backend(wrapped, runAndCheck)
+
+def test_TrainedLearner_apply():
+    cData = generateClassificationData(2, 10, 2)
+    ((trainX, trainY), (testX, testY)) = cData
+    # get a trained learner
+    tl = UML.train(learnerName, trainX, trainY, useLog=False)
+
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return tl.apply(testX, useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+def test_TrainedLearner_test():
+    cData = generateClassificationData(2, 10, 2)
+    ((trainX, trainY), (testX, testY)) = cData
+    # get a trained learner
+    tl = UML.train(learnerName, trainX, trainY, useLog=False)
+
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return tl.test(testX, testY, performanceFunction=fractionIncorrect,
+                       useLog=useLog)
+
+    backend(wrapped, runAndCheck)
+
+@configSafetyWrapper
+def backendDeep(toCall, validator):
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+
+    # the deep logging flag is continget on global and local
+    # control, so we confirm that in those instances where
+    # logging should be disable, it is still disabled
+    (startT1, endT1) = validator(toCall, useLog=True) # 2 logs added
+    (startT2, endT2) = validator(toCall, useLog=None) # 2 logs added
+    (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
+    assert startT3 == endT3
+
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+
+    (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
+    (startF2, endF2) = validator(toCall, useLog=None) # 1 logs added
+    (startF3, endF3) = validator(toCall, useLog=False) # 0 logs added
+    assert startF3 == endF3
+
+    # next we compare the differences between the calls when
+    # the deep flag is different
+    assert (endT1 - startT1) - 1 == (endF1 - startF1)
+    assert (endT2 - startT2) - 1 == (endF2 - startF2)
+
+    UML.settings.set('logger', 'enabledByDefault', 'False')
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+
+    # the deep logging flag is contingent on global and local
+    # control, so we confirm that logging is called or
+    # not appropriately
+    (startT1, endT1) = validator(toCall, useLog=True) # 2 logs added
+    (startT2, endT2) = validator(toCall, useLog=None) # 0 logs added
+    assert startT2 == endT2
+    (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
+    assert startT3 == endT3
+
+    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+
+    (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
+    (startF2, endF2) = validator(toCall, useLog=None) # 0 logs added
+    assert startF2 == endF2
+    (startF3, endF3) = validator(toCall, useLog=False) # 0 logs added
+    assert startF3 == endF3
+
+    # next we compare the differences between the calls when
+    # the deep flag is different
+    assert (endT1 - startT1) - 1 == (endF1 - startF1)
+
+def test_Deep_crossValidate():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.crossValidate(learnerName, trainX, trainY,
+                                 performanceFunction=fractionIncorrect,
+                                 useLog=useLog)
+
+    backendDeep(wrapped, runAndCheck)
+
+def test_Deep_crossValidateReturnAll():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.crossValidateReturnAll(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            useLog=useLog)
+
+    backendDeep(wrapped, runAndCheck)
+
+def test_Deep_crossValidateReturnBest():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.crossValidateReturnBest(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            useLog=useLog)
+
+    backendDeep(wrapped, runAndCheck)
+
+def test_Deep_train():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        return UML.train(learnerName, trainX, trainY,
+                         performanceFunction=fractionIncorrect, useLog=useLog,
+                         k=k)
+
+    backendDeep(wrapped, runAndCheck)
+
+def test_Deep_trainAndApply():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        return UML.trainAndApply(learnerName, trainX, trainY, testX,
+                                 performanceFunction=fractionIncorrect,
+                                 useLog=useLog, k=k)
+
+    backendDeep(wrapped, runAndCheck)
+
+def test_Deep_trainAndTest():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        return UML.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                                performanceFunction=fractionIncorrect,
+                                useLog=useLog, k=k)
+
+    backendDeep(wrapped, runAndCheck)
+
+def prepAndCheck(toCall, useLog):
+    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
+            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
+            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
+    pNames = ['p' + str(i) for i in range(18)]
+    fNames = ['f0', 'f1', 'f2']
+    # createData not logged
+    dataObj = UML.createData("Matrix", data, pointNames=pNames,
+                             featureNames=fNames, useLog=False)
+
+    logger = UML.logger.active
+    # count number of starting log entries
+    startCount = logEntryCount(logger)
+
+    toCall(dataObj, useLog)
+    # make sure it has the expected effect on the count
+    endCount = logEntryCount(logger)
+
+    return (startCount, endCount)
+
+########
+# Base #
+########
+
+def test_replaceFeatureWithBinaryFeatures():
+    def wrapped(obj, useLog):
+        return obj.replaceFeatureWithBinaryFeatures(0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_transformFeatureToIntegers():
+    def wrapped(obj, useLog):
+        return obj.transformFeatureToIntegers(0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_trainAndTestSets():
+    def wrapped(obj, useLog):
+        return obj.trainAndTestSets(testFraction=0.5, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_groupByFeature():
+    def wrapped(obj, useLog):
+        return obj.groupByFeature(by=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_referenceDataFrom():
+    def wrapped(obj, useLog):
+        obj.referenceDataFrom(obj, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_transpose():
+    def wrapped(obj, useLog):
+        obj.transpose(useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_fillWith():
+    def wrapped(obj, useLog):
+        obj.fillWith(1, 2, 0, 4, 0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_fillUsingAllData():
+    def simpleFiller(obj, match):
+        return UML.createData('Matrix', numpy.zeros((18, 3)))
+    def wrapped(obj, useLog):
+        obj.fillUsingAllData('a', fill=simpleFiller, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_featureReport():
+    def wrapped(obj, useLog):
+        obj[:, 1].featureReport(useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_summaryReport():
+    def wrapped(obj, useLog):
+        obj.summaryReport(useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+@configSafetyWrapper
+def flattenUnflattenBackend(toCall, validator):
+    # for each combination of local and global, call and check
+
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+
+    (start, end) = validator(toCall, useLog=True)
+    assert start + 2 == end
+
+    (start, end) = validator(toCall, useLog=None)
+    assert start + 2 == end
+
+    (start, end) = validator(toCall, useLog=False)
+    assert start == end
+
+    UML.settings.set('logger', 'enabledByDefault', 'False')
+
+    (start, end) = validator(toCall, useLog=True)
+    assert start + 2 == end
+
+    (start, end) = validator(toCall, useLog=None)
+    assert start == end
+
+    (start, end) = validator(toCall, useLog=False)
+    assert start == end
+
+def test_flattenUnflatten_pointAxis():
+    def wrapped_Flatten_UnFlatten(obj, useLog):
+        obj.flattenToOnePoint(useLog=useLog)
+        obj.unflattenFromOnePoint(18, useLog=useLog)
+
+    flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
+
+def test_flattenUnflatten_featureAxis():
+    def wrapped_Flatten_UnFlatten(obj, useLog):
+        obj.flattenToOneFeature(useLog=useLog)
+        obj.unflattenFromOneFeature(3, useLog=useLog)
+
+    flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
+
+############################
+# Points/Features/Elements #
+############################
+
+def simpleMapper(vector):
+    vID = vector[0]
+    intList = []
+    for i in range(1, len(vector)):
+        intList.append(vector[i])
+    ret = []
+    for value in intList:
+        ret.append((vID, value))
+    return ret
+
+def simpleReducer(identifier, valuesList):
+    total = 0
+    for value in valuesList:
+        total += value
+    return (identifier, total)
+
+def test_point_mapReduce():
+    def wrapped(obj, useLog):
+        return obj.points.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_mapReduce():
+    def wrapped(obj, useLog):
+        # transpose data to make use of same mapper and reducer
+        obj.transpose(useLog=False)
+        return obj.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_elements_calculate():
+    def wrapped(obj, useLog):
+        return obj.elements.calculate(lambda x: len(x), features=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_calculate():
+    def wrapped(obj, useLog):
+        return obj.points.calculate(lambda x: len(x), useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_calculate():
+    def wrapped(obj, useLog):
+        return obj.features.calculate(lambda x: len(x), features=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_shuffle():
+    def wrapped(obj, useLog):
+        return obj.points.shuffle(useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_shuffle():
+    def wrapped(obj, useLog):
+        return obj.features.shuffle(useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_normalize():
+    def wrapped(obj, useLog):
+        return obj.points.normalize(subtract=0, divide=1, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_normalize():
+    def wrapped(obj, useLog):
+        return obj.features.normalize(subtract=0, divide=1, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_sort():
+    def wrapped(obj, useLog):
+        return obj.points.sort(sortBy="f0", useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_sort():
+    def wrapped(obj, useLog):
+        return obj.features.sort(sortBy="p0", useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_extract():
+    def wrapped(obj, useLog):
+        return obj.points.extract(toExtract=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_extract():
+    def wrapped(obj, useLog):
+        return obj.features.extract(toExtract=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_delete():
+    def wrapped(obj, useLog):
+        return obj.points.delete(toDelete=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_delete():
+    def wrapped(obj, useLog):
+        return obj.features.delete(toDelete=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_retain():
+    def wrapped(obj, useLog):
+        return obj.points.retain(toRetain=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_retain():
+    def wrapped(obj, useLog):
+        return obj.features.retain(toRetain=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_copy():
+    def wrapped(obj, useLog):
+        return obj.points.copy(toCopy=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_copy():
+    def wrapped(obj, useLog):
+        return obj.features.copy(toCopy=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_fill():
+    def wrapped(obj, useLog):
+        return obj.points.fill(match=1, fill=11, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_fill():
+    def wrapped(obj, useLog):
+        return obj.features.fill(match=1, fill=11, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+
+def test_points_transform():
+    def wrapped(obj, useLog):
+        return obj.points.transform(lambda x: [point for point in x], useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_transform():
+    def wrapped(obj, useLog):
+        return obj.features.transform(lambda x: [point for point in x], features=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_elements_transform():
+    def wrapped(obj, useLog):
+        return obj.elements.transform(lambda x: [point for point in x], features=0, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_add():
+    def wrapped(obj, useLog):
+        appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        toAppend = UML.createData("Matrix", appendData, useLog=False)
+        return obj.points.add(toAppend, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_add():
+    def wrapped(obj, useLog):
+        appendData = numpy.zeros((18,1))
+        toAppend = UML.createData("Matrix", appendData, useLog=False)
+        return obj.features.add(toAppend, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+

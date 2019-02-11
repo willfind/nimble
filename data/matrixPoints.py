@@ -7,29 +7,22 @@ from __future__ import absolute_import
 import numpy
 
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
+from .points_view import PointsView
+from .dataHelpers import fillArrayWithCollapsedFeatures
+from .dataHelpers import fillArrayWithExpandedFeatures
 
-class MatrixPoints(MatrixAxis, Axis, Points):
+class MatrixPoints(MatrixAxis, Points):
     """
     Matrix method implementations performed on the points axis.
 
     Parameters
     ----------
     source : UML data object
-        The object containing the points data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'point'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(MatrixPoints, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -82,6 +75,29 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='C')
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        collapseData = self._source.data[:, collapseIndices]
+        retainData = self._source.data[:, retainIndices]
+
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, collapseData, currNumPoints,
+            currFtNames, numRetPoints, numRetFeatures)
+
+        self._source.data = numpy.matrix(tmpData)
+
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures)
+
+        self._source.data = numpy.matrix(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -89,14 +105,11 @@ class MatrixPoints(MatrixAxis, Axis, Points):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixPointsView(AxisView, MatrixPoints, MatrixAxis, Axis, Points):
+class MatrixPointsView(PointsView, AxisView, MatrixPoints):
     """
     Limit functionality of MatrixPoints to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'point'
-        super(MatrixPointsView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

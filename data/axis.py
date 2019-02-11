@@ -22,7 +22,7 @@ from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import validateInputString
+from .dataHelpers import validateInputString, logCaptureFactory
 
 class Axis(object):
     """
@@ -33,19 +33,17 @@ class Axis(object):
 
     Parameters
     ----------
-    axis : str
-        The axis ('point' or 'feature') which the function will be
-        applied to.
     source : UML data object
         The object containing point and feature data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
     """
-    def __init__(self, axis, source, **kwds):
-        self._axis = axis
+    def __init__(self, source, **kwargs):
         self._source = source
-        super(Axis, self).__init__(**kwds)
+        kwargs['source'] = source
+        if isinstance(self, Points):
+            self._axis = 'point'
+        else:
+            self._axis = 'feature'
+        super(Axis, self).__init__(**kwargs)
 
     def __iter__(self):
         return AxisIterator(self)
@@ -388,8 +386,6 @@ class Axis(object):
         if function is None:
             raise ArgumentException("function must not be None")
 
-        self._source.validate()
-
         ret = self._calculate_implementation(function, limitTo)
 
         if isinstance(self, Points):
@@ -411,6 +407,8 @@ class Axis(object):
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
+
+        self._source.validate()
 
         return ret
 
@@ -477,7 +475,7 @@ class Axis(object):
 
         if targetCount == 0:
             return UML.createData(self._source.getTypeString(),
-                                  numpy.empty(shape=(0, 0)))
+                                  numpy.empty(shape=(0, 0)), useLog=False)
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
@@ -513,17 +511,17 @@ class Axis(object):
             if redRet is not None:
                 (redKey, redValue) = redRet
                 ret.append([redKey, redValue])
-        ret = UML.createData(self._source.getTypeString(), ret)
+        ret = UML.createData(self._source.getTypeString(), ret, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
         return ret
 
-    def _fill(self, toMatch, toFill, arguments=None, limitTo=None,
-              returnModified=False):
+    def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
+              **kwarguments):
         modified = None
-        toTransform = fill.factory(toMatch, toFill, arguments)
+        toTransform = fill.factory(toMatch, toFill, **kwarguments)
 
         if returnModified:
             def bools(values):
@@ -747,11 +745,24 @@ class Axis(object):
                 if alsoIsObj:
                     applyResultTo /= divide
 
+    ###################
+    # Query functions #
+    ###################
+
     def _nonZeroIterator(self):
         if self._source._pointCount == 0 or self._source._featureCount == 0:
             return EmptyIt()
 
         return self._nonZeroIterator_implementation()
+
+    def _unique(self):
+        ret = self._unique_implementation()
+
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
+
+        ret.validate()
+        return ret
 
     ###################
     # Query functions #
@@ -1055,7 +1066,7 @@ class Axis(object):
         axis = self._axis
         axisLength = len(self)
         hasNameChecker1 = self._hasName
-        if axis == 'point':
+        if isinstance(self, Points):
             hasNameChecker2 = self._source.features._hasName
         else:
             hasNameChecker2 = self._source.points._hasName
@@ -1070,7 +1081,7 @@ class Axis(object):
                 targetList.append(target)
             # if not a name then assume it's a query string
             else:
-                target = _stringToFunction(target, self._axis, hasNameChecker2)
+                target = _stringToFunction(target, axis, hasNameChecker2)
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
@@ -1307,10 +1318,11 @@ class Axis(object):
             funcName = 'features.add'
 
         if objOffAxisLen != addOffAxisLen:
-            msg = "The argument 'toAdd' must have the same number of {axis}s "
-            msg += "as the caller object. This object contains {objCount} "
-            msg += "{axis}s and toAdd contains {addCount} {axis}s."
-            msg = msg.format(axis=self._axis, objCount=objOffAxisLen,
+            msg = "The argument 'toAdd' must have the same number of "
+            msg += "{offAxis}s as the caller object. This object contains "
+            msg += "{objCount} {offAxis}s and toAdd contains {addCount} "
+            msg += "{offAxis}s."
+            msg = msg.format(offAxis=offAxis, objCount=objOffAxisLen,
                              addCount=addOffAxisLen)
             raise ArgumentException(msg)
 
@@ -1432,13 +1444,15 @@ class Axis(object):
         names has already occurred.
         """
         if axis == 'point':
-            namesCreated = self._source._pointNamesCreated()
+            objNamesCreated = self._source._pointNamesCreated()
+            toAddNamesCreated = toAdd._pointNamesCreated()
             objNames = self._source.points.getNames
             toAddNames = toAdd.points.getNames
             def sorter(obj, names):
                 return obj.points.sort(sortHelper=names)
         else:
-            namesCreated = self._source._featureNamesCreated()
+            objNamesCreated = self._source._featureNamesCreated()
+            toAddNamesCreated = toAdd._featureNamesCreated()
             objNames = self._source.features.getNames
             toAddNames = toAdd.features.getNames
             def sorter(obj, names):
@@ -1447,10 +1461,13 @@ class Axis(object):
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toAdd cases
         # will have already caused an exception
-        if namesCreated:
-            allDefault = all(n.startswith(DEFAULT_PREFIX) for n in objNames())
+        if objNamesCreated and toAddNamesCreated:
+            objAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                for n in objNames())
+            toAddAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                  for n in toAddNames())
             reorder = objNames() != toAddNames()
-            if not allDefault and reorder:
+            if not (objAllDefault or toAddAllDefault) and reorder:
                 # use copy when reordering so toAdd object is not modified
                 toAdd = toAdd.copy()
                 sorter(toAdd, objNames())
@@ -1658,7 +1675,6 @@ class AxisIterator(object):
             self._position += 1
             return value
         else:
-            self._position = 0
             raise StopIteration
 
     def __next__(self):
