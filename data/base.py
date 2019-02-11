@@ -2164,8 +2164,8 @@ class Base(object):
                                       peIndex, feIndex)
         self.validate()
 
-    def fillUsingAllData(self, match, fill, arguments=None, points=None,
-                         features=None, returnModified=False, useLog=None):
+    def fillUsingAllData(self, match, fill, points=None, features=None,
+                         returnModified=False, useLog=None, **kwarguments):
         """
         Replace matching values calculated using the entire data object.
 
@@ -2186,9 +2186,6 @@ class Base(object):
             data as a UML data object. Certain fill methods can be
             imported from UML's fill module:
             kNeighborsRegressor, kNeighborsClassifier
-        arguments : dict
-            Any additional arguments being passed to the fill
-            function.
         points : identifier or list of identifiers
             Select specific points to apply fill to. If points is None,
             the fill will be applied to all points.
@@ -2198,6 +2195,8 @@ class Base(object):
         returnModified : return an object containing True for the
             modified values in each feature and False for unmodified
             values.
+        kwarguments
+            Any additional arguments being passed to the fill function.
 
         See Also
         --------
@@ -2205,15 +2204,33 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        Fill using the value that occurs most often in each points
+        3 nearest neighbors.
+        from UML.fill import kNeighborsClassifier
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.fillUsingAllData('na', kNeighborsClassifier,
+        ...                       n_neighbors=3)
+        >>> data
+        Matrix(
+            [[  1   1   1  ]
+             [  1   1   1  ]
+             [  1   1 1.000]
+             [  2   2   2  ]
+             [1.000 2   2  ]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
                 wrapped = logCapture(self.fillUsingAllData)
             else:
                 wrapped = directCall(self.fillUsingAllData)
-            return wrapped(match, fill, arguments, points, features,
-                           returnModified, useLog=False)
+            return wrapped(match, fill, points, features, returnModified,
+                           useLog=False, **kwarguments)
 
         if returnModified:
             modified = self.elements.calculate(match, points=points,
@@ -2230,7 +2247,12 @@ class Base(object):
         else:
             modified = None
 
-        tmpData = fill(self.copy(), match, arguments)
+        if not callable(fill):
+            msg = "fill must be callable. If attempting to modify all "
+            msg += "matching values to a constant, use either "
+            msg += "fillUsingPoints or fillUsingFeatures."
+            raise ArgumentException(msg)
+        tmpData = fill(self.copy(), match, **kwarguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData)
         else:

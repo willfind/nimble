@@ -716,8 +716,8 @@ class Features(object):
 
         self._shuffle()
 
-    def fill(self, match, fill, arguments=None, features=None,
-             returnModified=False, useLog=None):
+    def fill(self, match, fill, features=None, returnModified=False,
+             useLog=None, **kwarguments):
         """
         Replace given values in each feature with other values.
 
@@ -759,17 +759,52 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Fill a value with another value.
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.features.fill('na', -1)
+        >>> data
+        Matrix(
+            [[1.000  1.000 1.000 ]
+             [1.000  1.000 1.000 ]
+             [1.000  1.000 -1.000]
+             [2.000  2.000 2.000 ]
+             [-1.000 2.000 2.000 ]]
+            )
+
+        Fill using UML's match and fill modules.
+        Note: None is converted to numpy.nan in UML.
+        >>> from UML import match
+        >>> from UML import fill
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, None],
+        ...        [2, 2, 2],
+        ...        [None, 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.features.fill(match.missing, fill.mean, features=0)
+        >>> data
+        Matrix(
+            [[1.000 1 1 ]
+             [1.000 1 1 ]
+             [1.000 1 na]
+             [2.000 2 2 ]
+             [1.250 2 2 ]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
                 wrapped = logCapture(self.fill)
             else:
                 wrapped = directCall(self.fill)
-            return wrapped(match, fill, arguments, features, returnModified,
-                           useLog=False)
+            return wrapped(match, fill, features, returnModified, useLog=False,
+                           **kwarguments)
 
-        return self._fill(match, fill, arguments, features, returnModified)
+        return self._fill(match, fill, features, returnModified, **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -1087,11 +1122,11 @@ class Features(object):
     #     pass
 
     @abstractmethod
-    def _transform(self, function, features):
+    def _transform(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _calculate(self, function, features):
+    def _calculate(self, function, limitTo):
         pass
 
     @abstractmethod
@@ -1107,7 +1142,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, arguments, limitTo, returnModified):
+    def _fill(self, match, fill, limitTo, returnModified, **kwarguments):
         pass
 
     @abstractmethod

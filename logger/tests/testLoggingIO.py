@@ -260,7 +260,7 @@ def testPrepTypeFunctionsUseLog():
 
     # fillUsingAllData; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    def simpleFiller(obj, match, args):
+    def simpleFiller(obj, match):
         return UML.createData('Matrix', numpy.zeros_like(dataObj.data))
     dataObj.fillUsingAllData('a', fill=simpleFiller)
     checkLogContents('fillUsingAllData')

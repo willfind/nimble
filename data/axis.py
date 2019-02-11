@@ -492,10 +492,10 @@ class Axis(object):
 
         return ret
 
-    def _fill(self, toMatch, toFill, arguments=None, limitTo=None,
-              returnModified=False):
+    def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
+              **kwarguments):
         modified = None
-        toTransform = fill.factory(toMatch, toFill, arguments)
+        toTransform = fill.factory(toMatch, toFill, **kwarguments)
 
         if returnModified:
             def bools(values):
