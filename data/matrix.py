@@ -20,6 +20,9 @@ from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import inheritDocstringsFactory
 
+from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import allDataIdentical
+
 scipy = UML.importModule('scipy.io')
 
 @inheritDocstringsFactory(Base)
@@ -99,11 +102,7 @@ class Matrix(Base):
         if len(self.features) != len(other.features):
             return False
 
-        try:
-            numpy.testing.assert_equal(self.data, other.data)
-        except AssertionError:
-            return False
-        return True
+        return allDataIdentical(self.data, other.data)
 
     def _writeFile_implementation(self, outPath, format, includePointNames,
                                   includeFeatureNames):
@@ -200,13 +199,13 @@ class Matrix(Base):
     def _copyAs_implementation(self, format):
 
         if format is None or format == 'Matrix':
-            return UML.createData('Matrix', self.data)
+            return UML.createData('Matrix', self.data, useLog=False)
         if format == 'Sparse':
-            return UML.createData('Sparse', self.data)
+            return UML.createData('Sparse', self.data, useLog=False)
         if format == 'List':
-            return UML.createData('List', self.data)
+            return UML.createData('List', self.data, useLog=False)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data)
+            return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
@@ -224,7 +223,7 @@ class Matrix(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
 
-        return UML.createData('Matrix', self.data)
+        return UML.createData('Matrix', self.data, useLog=False)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -254,6 +253,161 @@ class Matrix(Base):
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         numPoints = len(self.points) // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
+
+    def _merge_implementation(self, other, point, feature, onFeature,
+                              matchingFtIdx):
+        self.data = numpy.array(self.data, dtype=numpy.object_)
+        otherArr = numpy.array(other.data, dtype=numpy.object_)
+        if onFeature:
+            if feature in ["intersection", "left"]:
+                onFeatureIdx = self.features.getIndex(onFeature)
+                onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)
+                onIdxL = onIdxLoc
+                onIdxR = onIdxLoc
+                right = otherArr[:, matchingFtIdx[1]]
+                # matching indices in right were sorted when slicing above
+                matchingFtIdx[1] = list(range(right.shape[1]))
+                if feature == "intersection":
+                    self.data = self.data[:, matchingFtIdx[0]]
+                    # matching indices in left were sorted when slicing above
+                    matchingFtIdx[0] = list(range(self.data.shape[1]))
+            else:
+                onIdxL = self.features.getIndex(onFeature)
+                onIdxR = other.features.getIndex(onFeature)
+                right = otherArr
+        else:
+            # using pointNames, prepend pointNames to left and right arrays
+            onIdxL = 0
+            onIdxR = 0
+            if not self._anyDefaultPointNames():
+                ptsL = numpy.array(self.points.getNames(), dtype=numpy.object_)
+                ptsL = ptsL.reshape(-1, 1)
+            elif self._pointNamesCreated():
+                # differentiate default names between objects;
+                # note still start with DEFAULT_PREFIX
+                namesL = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
+                          for n in self.points.getNames()]
+                ptsL = numpy.array(namesL, dtype=numpy.object_)
+                ptsL = ptsL.reshape(-1, 1)
+            else:
+                defNames = [DEFAULT_PREFIX + '_l' for _
+                            in range(len(self.points))]
+                ptsL = numpy.array(defNames, dtype=numpy.object_)
+                ptsL = ptsL.reshape(-1, 1)
+            if not other._anyDefaultPointNames():
+                ptsR = numpy.array(other.points.getNames(),
+                                   dtype=numpy.object_)
+                ptsR = ptsR.reshape(-1, 1)
+            elif other._pointNamesCreated():
+                # differentiate default names between objects;
+                # note still start with DEFAULT_PREFIX
+                namesR = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
+                          for n in other.points.getNames()]
+                ptsR = numpy.array(namesR, dtype=numpy.object_)
+                ptsR = ptsR.reshape(-1, 1)
+            else:
+                defNames = [DEFAULT_PREFIX + '_r' for _
+                            in range(len(other.points))]
+                ptsR = numpy.array(defNames, dtype=numpy.object_)
+                ptsR = ptsR.reshape(-1, 1)
+            if feature == "intersection":
+                concatL = (ptsL, self.data[:, matchingFtIdx[0]])
+                self.data = numpy.concatenate(concatL, axis=1)
+                concatR = (ptsR, otherArr[:, matchingFtIdx[1]])
+                right = numpy.concatenate(concatR, axis=1)
+                # matching indices were sorted when slicing above
+                # this also accounts for prepended column
+                matchingFtIdx[0] = list(range(self.data.shape[1]))
+                matchingFtIdx[1] = matchingFtIdx[0]
+            elif feature == "left":
+                self.data = numpy.concatenate((ptsL, self.data), axis=1)
+                concatR = (ptsR, otherArr[:, matchingFtIdx[1]])
+                right = numpy.concatenate(concatR, axis=1)
+                # account for new column in matchingFtIdx
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                # matching indices were sorted when slicing above
+                # this also accounts for prepended column
+                matchingFtIdx[1] = list(range(right.shape[1]))
+            else:
+                self.data = numpy.concatenate((ptsL, self.data), axis=1)
+                right = numpy.concatenate((ptsR, otherArr), axis=1)
+                # account for new column in matchingFtIdx
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+                matchingFtIdx[1].insert(0, 0)
+        left = self.data
+
+        matched = []
+        merged = []
+        unmatchedPtCountR = right.shape[1] - len(matchingFtIdx[1])
+        matchMapper = {}
+        for pt in left:
+            match = right[right[:, onIdxR] == pt[onIdxL]]
+            if len(match) > 0:
+                matchMapper[pt[onIdxL]] = match
+        for ptL in left:
+            target = ptL[onIdxL]
+            if target in matchMapper:
+                matchesR = matchMapper[target]
+                for ptR in matchesR:
+                    # check for conflicts between matching features
+                    matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
+                    nansL = numpy.array([x != x for x
+                                         in ptL[matchingFtIdx[0]]])
+                    nansR = numpy.array([x != x for x
+                                         in ptR[matchingFtIdx[1]]])
+                    acceptableValues = matches + nansL + nansR
+                    if not all(acceptableValues):
+                        msg = "The objects contain different values for the "
+                        msg += "same feature"
+                        raise ArgumentException(msg)
+                    if nansL.any():
+                        # fill any nan values in left with the corresponding
+                        # right value
+                        for i, value in enumerate(ptL[matchingFtIdx[0]]):
+                            if value != value:
+                                fill = ptR[matchingFtIdx[1]][i]
+                                ptL[matchingFtIdx[0]][i] = fill
+                    ptR = numpy.delete(ptR, matchingFtIdx[1])
+                    pt = numpy.concatenate((ptL, ptR)).flatten()
+                    merged.append(pt)
+                matched.append(target)
+            elif point in ['union', 'left']:
+                ptL = ptL.reshape(1, -1)
+                ptR = numpy.ones((1, unmatchedPtCountR)) * numpy.nan
+                pt = numpy.append(ptL, ptR)
+                merged.append(pt)
+
+        if point == 'union':
+            notMatchingR = [i for i in range(right.shape[1])
+                            if i not in matchingFtIdx[1]]
+            for row in right:
+                target = row[onIdxR]
+                if target not in matched:
+                    ones = numpy.ones((left.shape[1] + unmatchedPtCountR,),
+                                      dtype=numpy.object_)
+                    pt = ones * numpy.nan
+                    pt[matchingFtIdx[0]] = row[matchingFtIdx[1]]
+                    pt[left.shape[1]:] = row[notMatchingR]
+                    merged.append(pt)
+
+
+        self._featureCount = left.shape[1] + unmatchedPtCountR
+        self._pointCount = len(merged)
+        if len(merged) == 0 and onFeature is None:
+            merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR - 1))
+            self._featureCount -= 1
+        elif len(merged) == 0:
+            merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR))
+        elif onFeature is None:
+            # remove point names feature
+            merged = [row[1:] for row in merged]
+            self._featureCount -= 1
+
+
+        self.data = numpy.matrix(merged, dtype=numpy.object_)
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]
@@ -288,6 +442,7 @@ class Matrix(Base):
         shape = numpy.shape(self.data)
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
+
 
     def _containsZero_implementation(self):
         """
@@ -333,11 +488,13 @@ class Matrix(Base):
             ret = self.data + other.data
         else:
             ret = self.data + other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -352,11 +509,23 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-        return Matrix(ret, reuseData=True)
+
+        if not self._pointNamesCreated():
+            pNames = None
+        else:
+            pNames = self.points.getNames()
+        if not self._featureNamesCreated():
+            fNames = None
+        else:
+            fNames = self.features.getNames()
+
+        return Matrix(ret, pointNames=pNames, featureNames=fNames,
+                      reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -374,11 +543,13 @@ class Matrix(Base):
                 ret = self.data / other.data
         else:
             ret = self.data / other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _rdiv__implementation(self, other):
         ret = other / self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -399,11 +570,13 @@ class Matrix(Base):
                 ret = self.data.__truediv__(other.data)
         else:
             ret = self.data.__itruediv__(other)
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.__rtruediv__(other)
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -424,12 +597,14 @@ class Matrix(Base):
                 ret = self.data // other.data
         else:
             ret = self.data // other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -450,12 +625,14 @@ class Matrix(Base):
                 ret = self.data % other.data
         else:
             ret = self.data % other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.points.getNames(),
+                      featureNames=self.features.getNames(), reuseData=True)
 
 
     def _imod__implementation(self, other):

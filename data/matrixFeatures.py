@@ -7,29 +7,20 @@ from __future__ import absolute_import
 import numpy
 
 from UML.exceptions import ArgumentException
-from .axis import Axis
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
+from .features_view import FeaturesView
 
-class MatrixFeatures(MatrixAxis, Axis, Features):
+class MatrixFeatures(MatrixAxis, Features):
     """
     Matrix method implementations performed on the feature axis.
 
     Parameters
     ----------
     source : UML data object
-        The object containing features data.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
+        The object containing point and feature data.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
-        self._axis = 'feature'
-        kwds['axis'] = self._axis
-        kwds['source'] = self._source
-        super(MatrixFeatures, self).__init__(**kwds)
 
     ##############################
     # Structural implementations #
@@ -82,6 +73,26 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
     #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
     #                                                 order='F')
 
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._source.data[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._source.data[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._source.data = numpy.matrix(tmpData)
+
     #########################
     # Query implementations #
     #########################
@@ -89,14 +100,11 @@ class MatrixFeatures(MatrixAxis, Axis, Features):
     def _nonZeroIterator_implementation(self):
         return nzIt(self._source)
 
-class MatrixFeaturesView(AxisView, MatrixFeatures, MatrixAxis, Axis, Features):
+class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     """
     Limit functionality of MatrixFeatures to read-only
     """
-    def __init__(self, source, **kwds):
-        kwds['source'] = source
-        kwds['axis'] = 'feature'
-        super(MatrixFeaturesView, self).__init__(**kwds)
+    pass
 
 class nzIt(object):
     """

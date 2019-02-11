@@ -30,7 +30,6 @@ import tempfile
 import UML
 from UML.exceptions import ArgumentException
 import six
-from future.utils import raise_
 
 class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParser):
     """
@@ -416,7 +415,7 @@ class SessionConfiguration(object):
         except ArgumentException:
             einfo = sys.exc_info()
             if not ignore:
-                raise_(einfo[1], None, einfo[2])
+                six.reraise(einfo[0], einfo[1], einfo[2])
 
         if not section in self.changes or isinstance(self.changes[section], ToDelete):
             self.changes[section] = {}

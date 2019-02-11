@@ -10,8 +10,12 @@ import six
 
 import UML
 from UML.exceptions import ArgumentException, ImproperActionException
+from UML.logger import enableLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList
+from .dataHelpers import logCaptureFactory
+
+logCapture = logCaptureFactory('elements')
 
 class Elements(object):
     """
@@ -58,7 +62,8 @@ class Elements(object):
     #########################
 
     def transform(self, toTransform, points=None, features=None,
-                  preserveZeros=False, skipNoneReturnValues=False):
+                  preserveZeros=False, skipNoneReturnValues=False,
+                  useLog=None):
         """
         Modify each element using a function or mapping.
 
@@ -95,6 +100,11 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.transform)
+            return wrapped(toTransform, points, features, preserveZeros,
+                           skipNoneReturnValues, useLog=False)
+
         if points is not None:
             points = self._source._constructIndicesList('point', points)
         if features is not None:
@@ -111,7 +121,7 @@ class Elements(object):
 
     def calculate(self, function, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
-                  outputType=None):
+                  outputType=None, useLog=None):
         """
         Return a new object with a calculation applied to each element.
 
@@ -151,6 +161,11 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.calculate)
+            return wrapped(function, points, features, preserveZeros,
+                           skipNoneReturnValues, useLog=False)
+
         oneArg = False
         try:
             function(0, 0, 0)
@@ -171,7 +186,10 @@ class Elements(object):
         if oneArg:
             if not preserveZeros:
                 # check if the function preserves zero values
-                preserveZeros = function(0) == 0
+                try:
+                    preserveZeros = function(0) == 0
+                except Exception:
+                    preserveZeros = False
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
@@ -211,7 +229,7 @@ class Elements(object):
                     f += 1
                 p += 1
 
-            ret = UML.createData(optType, valueArray)
+            ret = UML.createData(optType, valueArray, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -259,12 +277,9 @@ class Elements(object):
         """
         Count of each unique value in the data.
 
-        Returns a dictionary containing each unique value as a key and
-        the number of times that value occurs as the value.
-
         Parameters
         ----------
-        points
+        points : identifier, list of identifiers
             May be None indicating application to all points, a single
             name or index or an iterable of points and/or indices.
         features : identifier, list of identifiers
@@ -274,6 +289,8 @@ class Elements(object):
         Returns
         -------
         dict
+            Each unique value as keys and the number of times that
+            value occurs as values.
 
         See Also
         --------
@@ -302,7 +319,7 @@ class Elements(object):
     # Numerical Operations #
     ########################
 
-    def multiply(self, other):
+    def multiply(self, other, useLog=None):
         """
         Multiply objects element-wise.
 
@@ -323,6 +340,10 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.multiply)
+            return wrapped(other, useLog=False)
+
         if not isinstance(other, UML.data.Base):
             msg = "'other' must be an instance of a UML data object"
             raise ArgumentException(msg)
@@ -358,7 +379,7 @@ class Elements(object):
         self._source.features.setNames(retFNames)
         self._source.validate()
 
-    def power(self, other):
+    def power(self, other, useLog=None):
         """
         Raise the elements of this object to a power.
 
@@ -379,6 +400,10 @@ class Elements(object):
         --------
         TODO
         """
+        if enableLogging(useLog):
+            wrapped = logCapture(self.power)
+            return wrapped(other, useLog=False)
+
         # other is UML or single numerical value
         singleValue = dataHelpers._looksNumeric(other)
         if not singleValue and not isinstance(other, UML.data.Base):
@@ -442,17 +467,17 @@ class Elements(object):
             values = function(toCalculate)
             # check if values has numeric dtype
             if numpy.issubdtype(values.dtype, numpy.number):
-                return UML.createData(outputType, values)
+                return UML.createData(outputType, values, useLog=False)
 
             return UML.createData(outputType, values,
-                                  elementType=numpy.object_)
+                                  elementType=numpy.object_, useLog=False)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
             values = function(toCalculate)
             return UML.createData(outputType, values,
-                                  elementType=numpy.object_)
+                                  elementType=numpy.object_, useLog=False)
 
     #####################
     # Abstract Methods  #
