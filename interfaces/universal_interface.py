@@ -42,7 +42,7 @@ def captureOutput(toWrap):
     Decorator which will safely redirect standard error within the
     wrapped function to the temp file at UML.capturedErr.
     """
-
+    @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
         backupErr = sys.stderr
         sys.stderr = UML.capturedErr

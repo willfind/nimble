@@ -31,7 +31,7 @@ def test_inheritDocstringsFactory():
             pass
 
     @inheritDocstringsFactory(toInherit)
-    class InheritDocs():
+    class InheritDocs(toInherit):
         """InheritDocs class docstring"""
 
         def __init__(self):
