@@ -1,6 +1,5 @@
 """
 Class extending Base, using a list of lists to store data.
-
 """
 
 from __future__ import division
@@ -16,12 +15,12 @@ from six.moves import zip
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
-from UML.docHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
 
 scipy = UML.importModule('scipy.io')
@@ -390,7 +389,7 @@ class List(Base):
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
         if onFeature:
-            if feature in ["intersection" ,"left"]:
+            if feature in ["intersection", "left"]:
                 onFeatureIdx = self.features.getIndex(onFeature)
                 onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)
                 onIdxL = onIdxLoc
@@ -547,6 +546,9 @@ class List(Base):
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
         class ListView(BaseView, List):
+            """
+            Read only access to a List object.
+            """
             def __init__(self, **kwds):
                 super(ListView, self).__init__(**kwds)
 
@@ -576,7 +578,8 @@ class List(Base):
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
+                    intermediate = UML.createData('Matrix', emptyStandin,
+                                                  useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID
@@ -599,12 +602,18 @@ class List(Base):
                     return listForm
 
         class FeatureViewer(object):
+            """
+            View by feature axis for list.
+            """
             def __init__(self, source, fStart, fEnd):
                 self.source = source
                 self.fStart = fStart
                 self.fRange = fEnd - fStart
 
             def setLimit(self, pIndex):
+                """
+                Limit to a given point in the feature.
+                """
                 self.limit = pIndex
 
             def __getitem__(self, key):
@@ -629,6 +638,9 @@ class List(Base):
                 return not self.__eq__(other)
 
         class ListPassThrough(object):
+            """
+            Pass through to support View.
+            """
             def __init__(self, source, pStart, pEnd, fStart, fEnd):
                 self.source = source
                 self.pStart = pStart
@@ -638,7 +650,8 @@ class List(Base):
                 self.fEnd = fEnd
 
             def __getitem__(self, key):
-                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
+                self.fviewer = FeatureViewer(self.source, self.fStart,
+                                             self.fEnd)
                 if key < 0 or key >= self.pRange:
                     raise IndexError("")
 

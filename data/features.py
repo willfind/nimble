@@ -6,6 +6,7 @@ signatures and docstrings.  The functions here do not contain
 the code which provides the functionality for the function. The
 functionality component is located in axis.py.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
@@ -1000,9 +1001,16 @@ class Features(object):
 
     def unique(self):
         """
-        Return a new object with only unique features. If feature names
-        are present, the feature name of the first instance of the
-        unique feature in this object will be assigned.
+        Only the unique features from this object.
+
+        Any repeated features will be removed from the returned object.
+        If feature names are present, the feature name of the first
+        instance of the unique feature in this object will be assigned.
+
+        Returns
+        -------
+        UML.data.Base
+            The object containing only unique features.
         """
         return self._unique()
 

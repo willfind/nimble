@@ -6,6 +6,7 @@ signatures and docstrings.  The functions here do not contain
 the code which provides the functionality for the function. The
 functionality component is located in axis.py.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
@@ -646,10 +647,6 @@ class Points(object):
             this object, or in other words: appended to the end of the
             current points.
 
-        See Also
-        --------
-        TODO
-
         Examples
         --------
         TODO
@@ -1073,9 +1070,16 @@ class Points(object):
 
     def unique(self):
         """
-        Return a new object with only unique points. If point names are
-        present, the point name of the first instance of the unique
-        point in this object will be assigned.
+        Only the unique points from this object.
+
+        Any repeated points will be removed from the returned object. If
+        point names are present, the point name of the first instance of
+        the unique point in this object will be assigned.
+
+        Returns
+        -------
+        UML.data.Base
+            The object containing only unique points.
         """
         return self._unique()
 

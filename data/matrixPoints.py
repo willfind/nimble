@@ -2,6 +2,7 @@
 Method implementations and helpers acting specifically on points in a
 Matrix object.
 """
+
 from __future__ import absolute_import
 
 import numpy

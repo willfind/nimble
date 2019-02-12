@@ -17,7 +17,6 @@ import copy
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
-from collections import OrderedDict
 
 import numpy
 import six
@@ -825,7 +824,8 @@ class Base(object):
     ########################################
     ########################################
 
-    def featureReport(self, maxFeaturesToCover=50, displayDigits=2, useLog=None):
+    def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
+                      useLog=None):
         """
         Produce a report, in a string formatted as a table, containing
         summary and statistical information about each feature in the
@@ -4260,15 +4260,27 @@ class Base(object):
         pass
 
 class BasePoints(Axis, Points):
+    """
+    Access for point-based methods.
+    """
     pass
 
 class BaseFeatures(Axis, Features):
+    """
+    Access for feature-based methods.
+    """
     pass
 
 class BaseElements(Elements):
+    """
+    Access for element-based methods.
+    """
     pass
 
 def cmp(x, y):
+    """
+    Comparison function.
+    """
     if x < y:
         return -1
     elif x > y:

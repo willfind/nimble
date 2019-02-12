@@ -1,6 +1,5 @@
 """
 Class extending Base, using a numpy dense matrix to store data.
-
 """
 
 from __future__ import division
@@ -13,13 +12,12 @@ from six.moves import range
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
-from UML.docHelpers import inheritDocstringsFactory
-
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 
@@ -415,6 +413,9 @@ class Matrix(Base):
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
         class MatrixView(BaseView, Matrix):
+            """
+            Read only access to a Matrix object.
+            """
             def __init__(self, **kwds):
                 super(MatrixView, self).__init__(**kwds)
 

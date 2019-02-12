@@ -11,12 +11,12 @@ from six.moves import zip
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
-from UML.docHelpers import inheritDocstringsFactory
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 
@@ -331,11 +331,11 @@ class DataFrame(Base):
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
-        """
-
-        """
 
         class DataFrameView(BaseView, DataFrame):
+            """
+            Read only access to a DataFrame object.
+            """
             def __init__(self, **kwds):
                 super(DataFrameView, self).__init__(**kwds)
 
@@ -463,7 +463,8 @@ class DataFrame(Base):
         pNames = self.points.getNames()
         fNames = self.features.getNames()
         return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True, useLog=False)
+                              featureNames=fNames, reuseData=True,
+                              useLog=False)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):

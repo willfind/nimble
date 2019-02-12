@@ -3,6 +3,7 @@ Methods and helpers responsible for determining how each function
 will operate depending on whether it is being called along the points or
 the features axis.
 """
+
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
@@ -499,7 +500,7 @@ class Axis(object):
 
         if returnModified:
             def bools(values):
-                return [toMatch(val) for val in values]
+                return [True if toMatch(val) else False for val in values]
 
             modified = self._calculate(bools, limitTo)
             if isinstance(self, Points):

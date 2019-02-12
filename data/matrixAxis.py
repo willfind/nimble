@@ -2,6 +2,7 @@
 Implementations and helpers specific to performing axis-generic
 operations on a UML Matrix object.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 

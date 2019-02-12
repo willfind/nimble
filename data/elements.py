@@ -2,6 +2,7 @@
 Methods and helpers responsible for determining how each function
 will operate over each element.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
