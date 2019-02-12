@@ -1302,50 +1302,82 @@ class HighLevelModifying(DataTestObject):
 
     def test_transformFeatureToIntegers_handmade(self):
         """ Test transformFeatureToIntegers() against handmade output """
-        data = [[10], [20], [30.5], [20], [10]]
+        data = [['a'], ['b'], ['c'], ['b'], ['a']]
         featureNames = ['col']
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
         assert toTest[0, 0] == toTest[4, 0]
         assert toTest[1, 0] == toTest[3, 0]
         assert toTest[0, 0] != toTest[1, 0]
         assert toTest[0, 0] != toTest[2, 0]
-        assert ret is None
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
+
 
     def test_transformFeatureToIntegers_pointNames(self):
         """ Test transformFeatureToIntegers preserves pointNames """
-        data = [[10], [20], [30.5], [20], [10]]
+        data = [['a'], ['b'], ['c'], ['b'], ['a']]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
         assert toTest.points.getName(0) == '1a'
         assert toTest.points.getName(1) == '2a'
         assert toTest.points.getName(2) == '3'
         assert toTest.points.getName(3) == '2b'
         assert toTest.points.getName(4) == '1b'
-        assert ret is None
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
 
     def test_transformFeatureToIntegers_positioning(self):
         """ Test transformFeatureToIntegers preserves featurename mapping """
-        data = [[10, 0], [20, 1], [30.5, 2], [20, 3], [10, 4]]
+        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col', 'pos']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
-        assert toTest[0, 1] == toTest[4, 1]
-        assert toTest[1, 1] == toTest[3, 1]
-        assert toTest[0, 1] != toTest[1, 1]
-        assert toTest[0, 1] != toTest[2, 1]
+        assert toTest[0, 0] == toTest[4, 0]
+        assert toTest[1, 0] == toTest[3, 0]
+        assert toTest[0, 0] != toTest[1, 0]
+        assert toTest[0, 0] != toTest[2, 0]
 
-        assert toTest[0, 0] == 0
-        assert toTest[1, 0] == 1
-        assert toTest[2, 0] == 2
-        assert toTest[3, 0] == 3
-        assert toTest[4, 0] == 4
+        assert toTest[0, 1] == 0
+        assert toTest[1, 1] == 1
+        assert toTest[2, 1] == 2
+        assert toTest[3, 1] == 3
+        assert toTest[4, 1] == 4
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
 
     def test_transformFeatureToIntegers_NamePath_preservation(self):
         data = [[10], [20], [30.5], [20], [10]]

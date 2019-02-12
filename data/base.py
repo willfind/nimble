@@ -500,40 +500,24 @@ class Base(object):
             msg = "This action is impossible, the object has 0 points"
             raise ImproperActionException(msg)
 
-        index = self.features.getIndex(featureToConvert)
-
-        # extract col.
-        toConvert = self.features.extract([index])
-
-        # MR to get list of values
-        def getValue(point):
-            return [(point[0], 1)]
-
-        def simpleReducer(identifier, valuesList):
-            return (identifier, 0)
-
-        values = toConvert.points.mapReduce(getValue, simpleReducer)
-        values.features.setName(0, 'values')
-        values = values.features.extract([0])
-
-        # Convert to List, so we can have easy access
-        values = values.copyAs(format="List")
+        ftIndex = self.features.getIndex(featureToConvert)
 
         mapping = {}
-        index = 0
-        for point in values.data:
-            if point[0] not in mapping:
-                mapping[point[0]] = index
-                index = index + 1
+        def applyMap(ft):
+            integerValue = 0
+            mapped = []
+            for val in ft:
+                if val not in mapping:
+                    mapping[val] = integerValue
+                    mapped.append(integerValue)
+                    integerValue += 1
+                else:
+                    mapped.append(mapping[val])
+            return mapped
 
-        def lookup(point):
-            return mapping[point[0]]
+        self.features.transform(applyMap, features=ftIndex)
 
-        converted = toConvert.points.calculate(lookup)
-        converted.points.setNames(toConvert.points._getNamesNoGeneration())
-        converted.features.setName(0, toConvert.features.getName(0))
-
-        self.features.add(converted)
+        return {v: k for k, v in mapping.items()}
 
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
