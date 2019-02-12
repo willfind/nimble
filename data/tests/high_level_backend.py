@@ -136,7 +136,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj.points.calculate(emitLower)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -257,7 +257,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj.features.calculate(None)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -349,7 +349,7 @@ class HighLevelDataSafe(DataTestObject):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_calculate_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -359,7 +359,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.elements.calculate(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_calculate_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
