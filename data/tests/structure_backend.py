@@ -8899,13 +8899,10 @@ class StructureModifying(StructureShared):
         for i, exp in enumerate(expected):
             pt = combinations[i][0]
             ft = combinations[i][1]
-            print(pt, ft)
             try:
                 test = left.copy()
                 tRight = right.copy()
                 test.merge(tRight, point=pt, feature=ft, onFeature=on)
-                print(test)
-                print(exp)
                 assert test == exp
             except ArgumentException:
                 assert exp is ArgumentException
@@ -9669,7 +9666,7 @@ class StructureModifying(StructureShared):
                  ["id4", None, None, "z", 7]]
         mFtNames = ["id", "f1", "f2", "f3", "f4"]
         mLargest = self.constructor(mData, featureNames=mFtNames)
-        print(mLargest)
+
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest[:, "id"]
         pUnion_fLeft = mLargest[:, ["id", "f1", "f2"]]
