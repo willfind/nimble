@@ -1253,7 +1253,7 @@ class HighLevelModifying(DataTestObject):
         featureNames = ['col']
         toTest = self.constructor(data, featureNames=featureNames)
         getNames = self.constructor(data, featureNames=featureNames)
-        ret = toTest.replaceFeatureWithBinaryFeatures(0) # RET CHECK
+        ret = toTest.replaceFeatureWithBinaryFeatures(0)
 
         expData = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         expFeatureNames = []
@@ -1263,6 +1263,25 @@ class HighLevelModifying(DataTestObject):
 
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
+
+    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
+        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
+        data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
+        featureNames = ['stay1', 'replace', 'stay2']
+        toTest = self.constructor(data, featureNames=featureNames)
+        getNames = self.constructor(data, featureNames=featureNames)
+        ret = toTest.replaceFeatureWithBinaryFeatures(1)
+
+        expData = [['a', 1, 0, 0, 'a'], ['b', 0, 1, 0, 'b'], ['c', 0, 0, 1, 'c']]
+        expFeatureNames = []
+        for point in getNames.points:
+            expFeatureNames.append('replace=' + str(point[1]))
+        expFeatureNames.insert(0, 'stay1')
+        expFeatureNames.append('stay2')
+        exp = self.constructor(expData, featureNames=expFeatureNames)
+
+        assert toTest.isIdentical(exp)
+        assert ret == expFeatureNames[1: -1]
 
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
