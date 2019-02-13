@@ -202,11 +202,6 @@ def test_settings_HooksException_unHookable():
 @configSafetyWrapper
 def test_settings_HooksException_wrongSig():
     """ Test SessionConfiguration.hook() throws exception on incorrect signature """
-    def oneArg(value):
-        pass
-
-    UML.settings.hook("TestS", "TestOp", oneArg)
-
     def twoArg(value, value2):
         pass
 

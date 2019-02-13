@@ -530,7 +530,7 @@ def constructIndicesList(obj, axis, values, argName=None):
     except InvalidArgumentValue as iav:
         msg = "Invalid value for the argument '{0}'. ".format(argName)
         # add more detail to msg; slicing to exclude quotes
-        msg += str(ae)[1:-1]
+        msg += str(iav)[1:-1]
         raise InvalidArgumentValue(msg)
 
     return indicesList
