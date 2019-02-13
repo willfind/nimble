@@ -8405,13 +8405,13 @@ class StructureModifying(StructureShared):
 #         checkMsg = True
 #         target = (axis + 's', 'flattenToOne')
 #         pempty = self.constructor(numpy.empty((0,2)))
-#         exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(pempty, target, [], ImproperObjectAction, checkMsg)
 #
 #         fempty = self.constructor(numpy.empty((4,0)))
-#         exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(fempty, target, [], ImproperObjectAction, checkMsg)
 #
 #         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(trueEmpty, target, [], ImproperObjectAction, checkMsg)
 #
 #
 #     # flatten single p/f - see name changes
@@ -8529,10 +8529,10 @@ class StructureModifying(StructureShared):
 #         single = (0,2) if axis == 'point' else (2,0)
 #
 #         singleEmpty = self.constructor(numpy.empty(single))
-#         exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(singleEmpty, target, [2], ImproperObjectAction, checkMsg)
 #
 #         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(trueEmpty, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # exceptions: opposite vector, 2d data
@@ -8548,10 +8548,10 @@ class StructureModifying(StructureShared):
 #         vecShape = (4,1) if axis == 'point' else (1,4)
 #
 #         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-#         exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(wrongVector, target, [2], ImproperObjectAction, checkMsg)
 #
 #         rectangle = self.constructor(numpyRandom.rand(4,4))
-#         exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # excpetion: numPoints / numFeatures does not divide length of mega P/F
@@ -8568,10 +8568,10 @@ class StructureModifying(StructureShared):
 #         divisableLength = (1,8) if axis == 'point' else (8,1)
 #
 #         undivisable = self.constructor(numpyRandom.rand(*primeLength))
-#         exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+#         exceptionHelper(undivisable, target, [2], InvalidArgumentValue, checkMsg)
 #
 #         divisable = self.constructor(numpyRandom.rand(*divisableLength))
-#         exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+#         exceptionHelper(divisable, target, [5], InvalidArgumentValue, checkMsg)
 #
 #
 #     # exception: unflattening would destroy an axis name
@@ -8590,13 +8590,13 @@ class StructureModifying(StructureShared):
 #         # non-default name, flattened axis
 #         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # all non-default names, unflattened axis
 #         names = ["a", "b", "c", "d"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # single non-default name, unflattened axis
 #         testObj = self.constructor(data)
@@ -8604,7 +8604,7 @@ class StructureModifying(StructureShared):
 #             testObj.features.setName(1, "non-default")
 #         else:
 #             testObj.points.setName(2, "non-default")
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #     # exception: unflattening would destroy an axis name
 #     def test_points_unflattenFromOne_nameFormatInconsistent(self):
@@ -8627,19 +8627,19 @@ class StructureModifying(StructureShared):
 #             testObj.features.setName(1, None)
 #         else:
 #             testObj.points.setName(1, None)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # unflattened axis, inconsistent along original unflattened axis
 #         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # unflattened axis, inconsistent along original flattened axis
 #         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # unflatten something that was flattened - include name transformation

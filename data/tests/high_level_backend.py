@@ -476,7 +476,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     @raises(ImproperObjectAction)
-    def test_points_mapReduce_argumentExceptionNoFeatures(self):
+    def test_points_mapReduce_ExceptionNoFeatures(self):
         """ Test points.mapReduce() for ImproperObjectAction when there are no features  """
         data = [[], []]
         data = numpy.array(data)
@@ -495,7 +495,7 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.isIdentical(exp)
 
     @raises(InvalidArgumentType)
-    def test_points_mapReduce_argumentExceptionNoneMap(self):
+    def test_points_mapReduce_ExceptionNoneMap(self):
         """ Test points.mapReduce() for InvalidArgumentType when mapper is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -503,7 +503,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.points.mapReduce(None, simpleReducer)
 
     @raises(InvalidArgumentType)
-    def test_points_mapReduce_argumentExceptionNoneReduce(self):
+    def test_points_mapReduce_ExceptionNoneReduce(self):
         """ Test points.mapReduce() for InvalidArgumentType when reducer is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -511,7 +511,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.points.mapReduce(simpleMapper, None)
 
     @raises(InvalidArgumentType)
-    def test_points_mapReduce_argumentExceptionUncallableMap(self):
+    def test_points_mapReduce_ExceptionUncallableMap(self):
         """ Test points.mapReduce() for InvalidArgumentType when mapper is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -519,7 +519,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.points.mapReduce("hello", simpleReducer)
 
     @raises(InvalidArgumentType)
-    def test_points_mapReduce_argumentExceptionUncallableReduce(self):
+    def test_points_mapReduce_ExceptionUncallableReduce(self):
         """ Test points.mapReduce() for InvalidArgumentType when reducer is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -573,7 +573,7 @@ class HighLevelDataSafe(DataTestObject):
     ########################
 
     @raises(ImproperObjectAction)
-    def test_features_mapReduce_argumentExceptionNoPoints(self):
+    def test_features_mapReduce_ExceptionNoPoints(self):
         """ Test features.mapReduce() for ImproperObjectAction when there are no points  """
         data = [[], []]
         data = numpy.array(data).T
@@ -592,7 +592,7 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.isIdentical(exp)
 
     @raises(InvalidArgumentType)
-    def test_features_mapReduce_argumentExceptionNoneMap(self):
+    def test_features_mapReduce_ExceptionNoneMap(self):
         """ Test features.mapReduce() for InvalidArgumentType when mapper is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -600,7 +600,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.features.mapReduce(None, simpleReducer)
 
     @raises(InvalidArgumentType)
-    def test_features_mapReduce_argumentExceptionNoneReduce(self):
+    def test_features_mapReduce_ExceptionNoneReduce(self):
         """ Test features.mapReduce() for InvalidArgumentType when reducer is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -608,7 +608,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.features.mapReduce(simpleMapper, None)
 
     @raises(InvalidArgumentType)
-    def test_features_mapReduce_argumentExceptionUncallableMap(self):
+    def test_features_mapReduce_ExceptionUncallableMap(self):
         """ Test features.mapReduce() for InvalidArgumentType when mapper is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -616,7 +616,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest.features.mapReduce("hello", simpleReducer)
 
     @raises(InvalidArgumentType)
-    def test_features_mapReduce_argumentExceptionUncallableReduce(self):
+    def test_features_mapReduce_ExceptionUncallableReduce(self):
         """ Test features.mapReduce() for InvalidArgumentType when reducer is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2658,7 +2658,7 @@ class HighLevelModifying(DataTestObject):
         toTest.points.combineByExpandingFeatures(2, 3)
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
@@ -2787,7 +2787,7 @@ class HighLevelModifying(DataTestObject):
         toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_splitByParsing_shortSplitList(self):
         data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
         pNames = ["a", "b", "c"]
@@ -2796,7 +2796,7 @@ class HighLevelModifying(DataTestObject):
 
         toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_splitByParsing_longSplitList(self):
         data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
         pNames = ["a", "b", "c"]

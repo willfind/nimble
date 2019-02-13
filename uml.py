@@ -1264,10 +1264,10 @@ def log(logType, logInfo):
     """
     if not isinstance(logType, six.string_types):
         msg = "logType must be a string"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     elif not isinstance(logInfo, (six.string_types, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     UML.logger.active.log(logType, logInfo)
 
 
@@ -1314,19 +1314,19 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
         """
         if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
             msg = "levelOfDetail must be 1, 2, or 3"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
         if startDate is not None and endDate is not None and startDate > endDate:
             startDate = parse(startDate)
             endDate = parse(endDate)
             msg = "The startDate must be before the endDate"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValueCombination(msg)
         if leastRunsAgo is not None:
             if leastRunsAgo < 0:
                 msg = "leastRunsAgo must be greater than zero"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
                 msg = "mostRunsAgo must be greater than or equal to leastRunsAgo"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValueCombination(msg)
         UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
                                   maximumEntries, searchForText, regex, saveToFileName, append)
 

@@ -453,7 +453,7 @@ def testSciKitLearnTransformationLearners():
 
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
-    trainX = UML.createRandomData('Matrix', 10, 10000, 0.98)
+    trainX = UML.createRandomData('Matrix', 10, 5000, 0.98)
     Xtrain = trainX.data
 
     learners = ['GaussianRandomProjection', 'SparseRandomProjection',]

@@ -161,7 +161,7 @@ class Axis(object):
         try:
             self._getIndex(name)
             return True
-        except ArgumentException:
+        except InvalidArgumentValue:
             return False
 
     #########################

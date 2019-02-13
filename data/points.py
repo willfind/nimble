@@ -11,6 +11,7 @@ from abc import abstractmethod
 from collections import OrderedDict
 
 import UML
+from UML.exceptions import ImproperObjectAction
 from UML.logger import enableLogging, directCall
 from .dataHelpers import logCaptureFactory
 
@@ -1023,7 +1024,7 @@ class Points(object):
                 msg += "because there is already a value for the feature "
                 msg += "{0} in another point which this ".format(row[namesIdx])
                 msg += "point would be combined with."
-                raise ArgumentException(msg)
+                raise ImproperObjectAction(msg)
             unique[uncombined][row[namesIdx]] = row[valuesIdx]
 
         uniqueNames = []

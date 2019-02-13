@@ -415,12 +415,6 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier="three", newName="two")
 
-    #@raises(ArgumentException)
-    #def test_features_setName_exceptionManualAddDefault(self):
-    #	""" Test features.setName() for ArgumentException when given a default featureName """
-    #	toTest = self.constructor(featureNames=["hello"])
-    #	toTest.features.setName("hello",DEFAULT_PREFIX + "2")
-
     @raises(ImproperObjectAction)
     def test_features_setName_exceptionNoFeatures(self):
         toTest = self.constructor()

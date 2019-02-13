@@ -2283,7 +2283,7 @@ class Base(object):
             msg = "fill must be callable. If attempting to modify all "
             msg += "matching values to a constant, use either "
             msg += "fillUsingPoints or fillUsingFeatures."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
         tmpData = fill(self.copy(), match, **kwarguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData)

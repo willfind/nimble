@@ -113,9 +113,6 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
         except AssertionError:
             einfo = sys.exc_info()
             six.reraise(*einfo)
-        #		except ArgumentException:
-        #			einfo = sys.exc_info()
-        #			raise einfo[1], None, einfo[2]
         except:
             pass
 
