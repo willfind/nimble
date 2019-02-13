@@ -161,11 +161,11 @@ def back_constant_sizeChecking(toTest):
 
     try:
         toTest("Matrix", 0, 0)
-        assert False  # expected InvalidArgumentValue for 0 by 0 sized object
+        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
     except InvalidArgumentValueCombination:
         pass
     except Exception:
-        assert False  # expected InvalidArgumentValue for 0 by 0 sized object
+        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
 
 
 def back_constant_emptyCreation(toTest):

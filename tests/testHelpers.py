@@ -40,7 +40,7 @@ class FoldIteratorTester(object):
 
     @raises(InvalidArgumentValueCombination)
     def test_makeFoldIterator_exceptionPEmpty(self):
-        """ Test makeFoldIterator() for InvalidArgumentValue when object is point empty """
+        """ Test makeFoldIterator() for InvalidArgumentValueCombination when object is point empty """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)

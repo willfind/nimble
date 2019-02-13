@@ -45,13 +45,13 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
         msg = "knownValues must be derived class of UML.data.Base"
         raise InvalidArgumentType(msg)
     if knownIsEmpty:
-        msg = "Empty 'knownValues' argument in error calculator"
+        msg = "Empty 'knownValues' object in error calculator"
         raise InvalidArgumentValue(msg)
     if predictedValues is None or not isinstance(predictedValues, Base):
         msg = "predictedValues must be derived class of UML.data.Base"
         raise InvalidArgumentType(msg)
     if predIsEmpty:
-        msg = "Empty 'predictedValues' argument in error calculator"
+        msg = "Empty 'predictedValues' object in error calculator"
         raise InvalidArgumentValue(msg)
 
     if len(knownValues.points) != len(predictedValues.points):

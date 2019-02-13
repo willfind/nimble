@@ -1008,7 +1008,6 @@ class Axis(object):
             return
         if not isinstance(assignments, dict):
             msg = "assignments may only be a dict"
-            msg += "with as many entries as this axis is long"
             raise InvalidArgumentType(msg)
         if count == 0:
             if len(assignments) > 0:
@@ -1022,8 +1021,8 @@ class Axis(object):
                 self._source.featureNamesInverse = []
             return
         if len(assignments) != count:
-            msg = "assignments may only be a dict, "
-            msg += "with as many entries as this axis is long"
+            msg = "assignments may only have as many entries as this " \
+                  "axis is long"
             raise InvalidArgumentValue(msg)
 
         # at this point, the input must be a dict

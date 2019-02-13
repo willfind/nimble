@@ -785,7 +785,7 @@ class StructureDataSafe(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_points_copy_exceptionStartInvalidType(self):
-        """ Test points.copy() for InvalidArgumentValue when start is not a valid point index """
+        """ Test points.copy() for InvalidArgumentType when start is not a valid ID type"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1587,7 +1587,7 @@ class StructureDataSafe(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_features_copy_exceptionStartInvalidType(self):
-        """ Test features.copy() for InvalidArgumentValue when start is not a valid feature index """
+        """ Test features.copy() for InvalidArgumentType when start is not a valid ID type"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -3580,7 +3580,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_points_extract_exceptionStartInvalidType(self):
-        """ Test points.extract() for InvalidArgumentValue when start is not a valid point index """
+        """ Test points.extract() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4402,7 +4402,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_features_extract_exceptionStartInvalidType(self):
-        """ Test features.extract() for InvalidArgumentValue when start is not a valid feature index """
+        """ Test features.extract() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4992,7 +4992,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_points_delete_exceptionStartInvalidType(self):
-        """ Test points.delete() for InvalidArgumentValue when start is not a valid point index """
+        """ Test points.delete() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -5662,7 +5662,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_features_delete_exceptionStartInvalidType(self):
-        """ Test features.delete() for InvalidArgumentValue when start is not a valid feature index """
+        """ Test features.delete() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -6208,7 +6208,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_points_retain_exceptionStartInvalidType(self):
-        """ Test points.retain() for InvalidArgumentValue when start is not a valid point index """
+        """ Test points.retain() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -6913,7 +6913,7 @@ class StructureModifying(StructureShared):
 
     @raises(InvalidArgumentType)
     def test_features_retain_exceptionStartInvalidType(self):
-        """ Test features.retain() for InvalidArgumentValue when start is not a valid feature index """
+        """ Test features.retain() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
