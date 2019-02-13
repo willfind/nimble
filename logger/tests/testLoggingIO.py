@@ -159,6 +159,8 @@ def testRunTypeFunctionsUseLog():
                                    performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndTest'" in logInfo
+    # ensure that metrics is storing performanceFunction and result
+    assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
 
     # normalizeData
     # copy to avoid modifying original data
@@ -174,6 +176,8 @@ def testRunTypeFunctionsUseLog():
                                              performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndTestOnTrainingData'" in logInfo
+    # ensure that metrics is storing performanceFunction and result
+    assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
 
     # TrainedLearner.apply
     predictions = tl.apply(testXObj)
@@ -184,6 +188,8 @@ def testRunTypeFunctionsUseLog():
     performance = tl.test(testXObj, testYObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'TrainedLearner.test'" in logInfo
+    # ensure that metrics is storing performanceFunction and result
+    assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
 
     UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 

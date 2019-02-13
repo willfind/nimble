@@ -799,7 +799,6 @@ def _formatRunLine(*args):
     Formats equally spaced values for each column.
     """
     args = list(map(str, args))
-    nextLine = args.copy()
     lineLog = ""
     equalSpace = int(79 / len(args))
     for arg in args:
