@@ -9673,9 +9673,9 @@ class StructureModifying(StructureShared):
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest[:, "id"]
         pUnion_fLeft = mLargest[:, ["id", "f1", "f2"]]
-        pIntersection_fUnion = mLargest[1:3, :]
-        pIntersection_fIntersection = mLargest[1:3, "id"]
-        pIntersection_fLeft = mLargest[1:3, ["id", "f1", "f2"]]
+        pIntersection_fUnion = mLargest[1:2, :]
+        pIntersection_fIntersection = mLargest[1:2, "id"]
+        pIntersection_fLeft = mLargest[1:2, ["id", "f1", "f2"]]
         pLeft_fUnion = mLargest[[0,1,2], :]
         pLeft_fIntersection = mLargest[[0,1,2], "id"]
 
@@ -9823,11 +9823,11 @@ class StructureModifying(StructureShared):
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest[:, "id"]
         pUnion_fLeft = mLargest[:, ["id", "f1", "f2"]]
-        pIntersection_fUnion = mLargest[:4, :]
-        pIntersection_fIntersection = mLargest[:4, "id"]
-        pIntersection_fLeft = mLargest[:4, ["id", "f1", "f2"]]
-        pLeft_fUnion = mLargest[:5, :]
-        pLeft_fIntersection = mLargest[:5, "id"]
+        pIntersection_fUnion = mLargest[:3, :]
+        pIntersection_fIntersection = mLargest[:3, "id"]
+        pIntersection_fLeft = mLargest[:3, ["id", "f1", "f2"]]
+        pLeft_fUnion = mLargest[:4, :]
+        pLeft_fIntersection = mLargest[:4, "id"]
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9859,8 +9859,8 @@ class StructureModifying(StructureShared):
         pIntersection_fUnion = mLargest[[], :]
         pIntersection_fIntersection = mLargest[[], "id"]
         pIntersection_fLeft = mLargest[[], ["id", "f1", "f2"]]
-        pLeft_fUnion = mLargest[:3, :]
-        pLeft_fIntersection = mLargest[:3, "id"]
+        pLeft_fUnion = mLargest[:2, :]
+        pLeft_fIntersection = mLargest[:2, "id"]
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
