@@ -68,13 +68,13 @@ def createRandomData(
     pointNames : 'automatic', list, dict
         Names to be associated with the points in the returned object.
         If 'automatic', default names will be generated. Otherwise, may
-        be specified explictly by some list-like or dict-like object, so
+        be specified explictly by a list-like or dict-like object, so
         long as all points in the data are assigned a name and the names
         for each point are unique.
     featureNames : 'automatic', list, dict
         Names to be associated with the features in the returned object.
         If 'automatic', default names will be generated. Otherwise, may
-        be specified explictly by some list-like or dict-like object, so
+        be specified explictly by a list-like or dict-like object, so
         long as all features in the data are assigned a name and the
         names for each feature are unique.
     name : str
@@ -653,30 +653,32 @@ def createData(
         either as a string path, or a currently open file-like object.
     pointNames : 'automatic', bool, list, dict
         Specifices the source for point names in the returned object.
-        By default, a value of 'automatic' indicates that this function
-        should attempt to detect the presence of pointNames in the data
-        which will only be attempted when loading from a file. In no
-        names are found, or data isn't being loaded from a file, then we
-        use default names. A value of True indicates that point names
-        are embedded in the data within the first column. A value of
-        False indicates that names are not embedded and that default
-        names should be used. Finally, they may be specified explictly
-        by some list-like or dict-like object, so long as all points
-        in the data are assigned a name and the names for each point are
-        unique.
+        * 'automatic' - the default, indicates that this function should
+          attempt to detect the presence of pointNames in the data which
+          will only be attempted when loading from a file. If no names
+          are found, or data isn't being loaded from a file, then
+          default names are assigned.
+        * bool - True indicates that point names are embedded in the
+          data within the first column. A value of False indicates that
+          names are not embedded and that default names should be used.
+        * list, dict - all points in the data must be assigned a name
+          and the names for each point must be unique. As a list, the
+          index of the name will define the point index. As a dict,
+          the value mapped to each name will define the point index.
     featureNames : 'automatic', bool, list, dict
         Specifices the source for feature names in the returned object.
-        By default, a value of 'automatic' indicates that this function
-        should attempt to detect the presence of featureNames in the
-        data which will only be attempted when loading from a file. In
-        no names are found, or data isn't being loaded from a file, then
-        we use default names. A value of True indicates that feature
-        names are embedded in the data within the first column. A value
-        of False indicates that names are not embedded and that default
-        names should be used. Finally, they may be specified explictly
-        by some list-like or dict-like object, so long as all points in
-        the data are assigned a name and the names for each point are
-        unique.
+        * 'automatic' - the default, indicates that this function should
+          attempt to detect the presence of featureNames in the data
+          which will only be attempted when loading from a file. If no
+          names are found, or data isn't being loaded from a file, then
+          default names are assigned.
+        * bool - True indicates that feature names are embedded in the
+          data within the first column. A value of False indicates that
+          names are not embedded and that default names should be used.
+        * list, dict - all features in the data must be assigned a name
+          and the names for each feature must be unique. As a list, the
+          index of the name will define the feature index. As a dict,
+          the value mapped to each name will define the feature index.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -751,7 +753,53 @@ def createData(
 
     Examples
     --------
-    TODO
+    A simple named data object from raw data.
+    >>> data = [[1, 2, 3], [4, 5, 6]]
+    >>> asList = UML.createData('List', data, name='simple')
+    >>> asList
+    List(
+    [[1.000 2.000 3.000]
+     [4.000 5.000 6.000]]
+    name="simple"
+    )
+
+    Loading data from a file.
+    >>> with open('createData.csv', 'w') as cd:
+    ...     cd.write('1,2,3\n4,5,6')
+    >>> fromFile = UML.createData('Matrix', 'createData.csv')
+    >>> fromFile
+    Matrix(
+        [[1.000 2.000 3.000]
+         [4.000 5.000 6.000]]
+        name="createData.csv"
+        path="/Users/Spark_Wave/createData.csv"
+        )
+
+    Adding point and feature names.
+    >>> data = [['a', 'b', 'c'], [0, 0, 1], [1, 0, 0]]
+    >>> asSparse = UML.createData('Sparse', data, pointNames=['1', '2'],
+    ...                           featureNames=True)
+    >>> asSparse
+    Sparse(
+        [[  0   0 1.000]
+         [1.000 0   0  ]]
+        pointNames={'1':0, '2':1}
+        featureNames={'a':0, 'b':1, 'c':2}
+        )
+
+    Replacing missing values.
+    >>> data = [[1, 'Missing', 3], [4, 'Missing', 6]]
+    >>> ftNames = {'a': 0, 'b': 1, 'c': 2}
+    >>> asDataFrame = UML.createData('DataFrame', data,
+    ...                              featureNames = ftNames,
+    ...                              treatAsMissing=["Missing", 3],
+    ...                              replaceMissingWith=-1)
+    >>> asDataFrame
+    DataFrame(
+        [[1.000 -1.000 -1.000]
+         [4.000 -1.000 6.000 ]]
+        featureNames={'a':0, 'b':1, 'c':2}
+        )
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
