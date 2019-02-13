@@ -8,13 +8,21 @@ functionality component is located in axis.py.
 """
 from __future__ import absolute_import
 from abc import abstractmethod
+from collections import OrderedDict
+
+import UML
+from UML.logger import enableLogging, directCall
+from .dataHelpers import logCaptureFactory
+
+logCapture = logCaptureFactory('points')
 
 class Points(object):
     """
     Methods that can be called on the a UML data objects point axis.
     """
-    def __init__(self):
-        pass
+    def __init__(self, source):
+        self._source = source
+        super(Points, self).__init__()
 
     ########################
     # Low Level Operations #
@@ -189,7 +197,7 @@ class Points(object):
     #########################
 
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False):
+             randomize=False, useLog=None):
         """
         Return a copy of certain points of this object.
 
@@ -238,10 +246,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.copy)
+            else:
+                wrapped = directCall(self.copy)
+            return wrapped(toCopy, start, end, number, randomize,
+                           useLog=False)
+
         return self._copy(toCopy, start, end, number, randomize)
 
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False):
+                randomize=False, useLog=None):
         """
         Move certain points of this object into their own object.
 
@@ -291,10 +307,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.extract)
+            else:
+                wrapped = directCall(self.extract)
+            return wrapped(toExtract, start, end, number, randomize,
+                           useLog=False)
+
         return self._extract(toExtract, start, end, number, randomize)
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Remove certain points from this object.
 
@@ -340,10 +364,18 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.delete)
+            else:
+                wrapped = directCall(self.delete)
+            return wrapped(toDelete, start, end, number, randomize,
+                           useLog=False)
+
         self._delete(toDelete, start, end, number, randomize)
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         """
         Keep only certain points of this object.
 
@@ -389,6 +421,14 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.retain)
+            else:
+                wrapped = directCall(self.retain)
+            return wrapped(toRetain, start, end, number, randomize,
+                           useLog=False)
+
         self._retain(toRetain, start, end, number, randomize)
 
     def count(self, condition):
@@ -418,7 +458,7 @@ class Points(object):
         """
         return self._count(condition)
 
-    def sort(self, sortBy=None, sortHelper=None):
+    def sort(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Arrange the points in this object.
 
@@ -439,6 +479,13 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.sort)
+            else:
+                wrapped = directCall(self.sort)
+            return wrapped(sortBy, sortHelper, useLog=False)
+
         self._sort(sortBy, sortHelper)
 
     # def flattenToOne(self):
@@ -495,7 +542,7 @@ class Points(object):
     #     """
     #     self._unflattenFromOne(numPoints)
 
-    def transform(self, function, points=None):
+    def transform(self, function, points=None, useLog=None):
         """
         Modify this object by applying a function to each point.
 
@@ -521,13 +568,20 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transform)
+            else:
+                wrapped = directCall(self.transform)
+            return wrapped(function, points, useLog=False)
+
         self._transform(function, points)
 
     ###########################
     # Higher Order Operations #
     ###########################
 
-    def calculate(self, function, points=None):
+    def calculate(self, function, points=None, useLog=None):
         """
         Return a new object with a calculation applied to each point.
 
@@ -556,9 +610,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.calculate)
+            else:
+                wrapped = directCall(self.calculate)
+            return wrapped(function, points, useLog=False)
+
         return self._calculate(function, points)
 
-    def add(self, toAdd, insertBefore=None):
+    def add(self, toAdd, insertBefore=None, useLog=None):
         """
         Insert more points into this object.
 
@@ -591,9 +652,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.add)
+            else:
+                wrapped = directCall(self.add)
+            return wrapped(toAdd, insertBefore, useLog=False)
+
         self._add(toAdd, insertBefore)
 
-    def mapReduce(self, mapper, reducer):
+    def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
 
@@ -613,9 +681,16 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.mapReduce)
+            else:
+                wrapped = directCall(self.mapReduce)
+            return wrapped(mapper, reducer, useLog=False)
+
         return self._mapReduce(mapper, reducer)
 
-    def shuffle(self):
+    def shuffle(self, useLog=None):
         """
         Permute the indexing of the points to a random order.
 
@@ -629,10 +704,17 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.shuffle)
+            else:
+                wrapped = directCall(self.shuffle)
+            return wrapped(useLog=False)
+
         self._shuffle()
 
-    def fill(self, match, fill, arguments=None, points=None,
-             returnModified=False):
+    def fill(self, match, fill, points=None, returnModified=False,
+             useLog=None, **kwarguments):
         """
         Replace given values in each point with other values.
 
@@ -673,11 +755,55 @@ class Points(object):
 
         Examples
         --------
-        TODO
-        """
-        return self._fill(match, fill, arguments, points, returnModified)
+        Fill a value with another value.
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, 'na'],
+        ...        [2, 2, 2],
+        ...        ['na', 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.points.fill('na', -1)
+        >>> data
+        Matrix(
+            [[1.000  1.000 1.000 ]
+             [1.000  1.000 1.000 ]
+             [1.000  1.000 -1.000]
+             [2.000  2.000 2.000 ]
+             [-1.000 2.000 2.000 ]]
+            )
 
-    def normalize(self, subtract=None, divide=None, applyResultTo=None):
+        Fill using UML's match and fill modules.
+        Note: None is converted to numpy.nan in UML.
+        >>> from UML import match
+        >>> from UML import fill
+        >>> raw = [[1, 1, 1],
+        ...        [1, 1, 1],
+        ...        [1, 1, None],
+        ...        [2, 2, 2],
+        ...        [None, 2, 2]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.points.fill(match.missing, fill.mode, points=4)
+        >>> data
+        Matrix(
+            [[  1     1     1  ]
+             [  1     1     1  ]
+             [  1     1     na ]
+             [  2     2     2  ]
+             [2.000 2.000 2.000]]
+            )
+        """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.fill)
+            else:
+                wrapped = directCall(self.fill)
+            return wrapped(match, fill, points, returnModified,
+                           useLog=False, **kwarguments)
+
+        return self._fill(match, fill, points, returnModified, **kwarguments)
+
+    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+                  useLog=None):
         """
         Modify all points in this object using the given operations.
 
@@ -716,7 +842,216 @@ class Points(object):
         --------
         TODO
         """
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.normalize)
+            else:
+                wrapped = directCall(self.normalize)
+            return wrapped(subtract, divide, applyResultTo, useLog=False)
+
         self._normalize(subtract, divide, applyResultTo)
+
+    def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
+                                  featureForValues):
+        """
+        TODO
+
+        Split each point in this object into k points, one point for
+        each featureName/value pair in featuresToCollapse. For all k
+        points, the uncollapsed features are copied from the original
+        point. The collapsed features are replaced by only two features
+        which are filled with a unique featureName/value pair for each
+        of the k points. An object containing n points, m features and k
+        features-to-collapse will result in this object containing
+        (n * m) points and (m - k + 2) features.
+
+        Parameters
+        ----------
+        featuresToCollapse : list
+            Names and/or indices of the features that will be collapsed.
+            The first of the two resulting features will contain the
+            names of these features. The second resulting feature will
+            contain the values of this feature.
+        featureForNames : str
+            Describe the feature which will contain the collapsed
+            feature names.
+        featureForValues : str
+            Describe the feature which will contain the values from the
+            collapsed features.
+
+        Notes
+        -----
+        ``
+        A visualization:
+        data.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
+                                              'month', 'temp')
+
+              data (before)                     data (after)
+        +------------------------+       +---------------------+
+        | city | jan | feb | mar |       | city | month | temp |
+        +------+-----+-----+-----+       +------+-------+------+
+        | NYC  | 4   | 5   | 10  |       | NYC  | jan   | 4    |
+        +------+-----+-----+-----+  -->  +------+-------+------+
+        | LA   | 20  | 21  | 21  |       | NYC  | feb   | 5    |
+        +------+-----+-----+-----+       +------+-------+------+
+        | CHI  | 0   | 2   | 7   |       | NYC  | mar   | 10   |
+        +------+-----+-----+-----+       +------+-------+------+
+                                         | LA   | jan   | 20   |
+                                         +------+-------+------+
+                                         | LA   | feb   | 21   |
+                                         +------+-------+------+
+                                         | LA   | mar   | 21   |
+                                         +------+-------+------+
+                                         | CHI  | jan   | 0    |
+                                         +------+-------+------+
+                                         | CHI  | feb   | 2    |
+                                         +------+-------+------+
+                                         | CHI  | mar   | 7    |
+                                         +------+-------+------+
+        ``
+        This function was inspired by the gather function from the tidyr
+        library created by Hadley Wickham in the R programming language.
+
+        Examples
+        --------
+        TODO
+        """
+        features = self._source.features
+        numCollapsed = len(featuresToCollapse)
+        collapseIndices = [self._source.features.getIndex(ft)
+                           for ft in featuresToCollapse]
+        retainIndices = [idx for idx in range(len(features))
+                         if idx not in collapseIndices]
+        currNumPoints = len(self)
+        currFtNames = [features.getName(idx) for idx in collapseIndices]
+        numRetPoints = len(self) * numCollapsed
+        numRetFeatures = len(features) - numCollapsed + 2
+
+        self._splitByCollapsingFeatures_implementation(
+            featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+
+        self._source._pointCount = numRetPoints
+        self._source._featureCount = numRetFeatures
+        ftNames = [features.getName(idx) for idx in retainIndices]
+        ftNames.extend([featureForNames, featureForValues])
+        features.setNames(ftNames)
+        if self._source._pointNamesCreated():
+            appendedPts = []
+            for name in self.getNames():
+                for i in range(numCollapsed):
+                    appendedPts.append("{0}_{1}".format(name, i))
+            self.setNames(appendedPts)
+
+        self._source.validate()
+
+    def combineByExpandingFeatures(self, featureWithFeatureNames,
+                                   featureWithValues):
+        """
+        TODO
+
+        Combine any points containing matching values at every feature
+        except featureWithFeatureNames and featureWithValues. Each
+        combined point will expand its features to include a new feature
+        for each unique value invfeatureWithFeatureNames. The
+        corresponding featureName/value pairs invfeatureWithFeatureNames
+        and featureWithValues from each point willvbecome the values for
+        the expanded features for the combined points. If a combined
+        point lacks a featureName/value pair for any given feature,
+        numpy.nan will be assigned as the value at that feature. The
+        combined point name will be assigned the point name of the first
+        instance of that point, if point names are present.
+
+        An object containing n points with k being unique at every
+        feature except featureWithFeatureNames and featureWithValues,
+        m features, and j unique values in featureWithFeatureNames will
+        be modified to include k points and (m - 2 + j) features.
+
+        Parameters
+        ----------
+        featureWithFeatureNames : identifier
+            The name or index of the feature containing the values that
+            will become the names of the features in the combined
+            points.
+        featureWithValues : identifier
+            The name or index of the feature of values that corresponds
+            to the values in featureWithFeatureNames.
+
+        Notes
+        -----
+        ``
+        data.combinePointsByExpandingFeatures('dist', 'time')
+
+               data (before)                       data (after)
+        +-----------+------+-------+      +-----------+------+-------+
+        | athlete   | dist | time  |      | athlete   | 100m | 200m  |
+        +-----------+------+-------+      +-----------+------+-------+
+        | Bolt      | 100m | 9.81  |      | Bolt      | 9.81 | 19.78 |
+        +-----------+------+-------+  ->  +-----------+------+-------+
+        | Bolt      | 200m | 19.78 |      | Gatlin    | 9.89 | nan   |
+        +-----------+------+-------+      +-----------+------+-------+
+        | Gatlin    | 100m | 9.89  |      | de Grasse | 9.91 | 20.02 |
+        +-----------+------+-------+      +-----------+------+-------+
+        | de Grasse | 200m | 20.02 |
+        +-----------+------+-------+
+        | de Grasse | 100m | 9.91  |
+        +-----------+------+-------+
+        ``
+        This function was inspired by the spread function from the tidyr
+        library created by Hadley Wickham in the R programming language.
+
+        Examples
+        --------
+        TODO
+        """
+        namesIdx = self._source.features.getIndex(featureWithFeatureNames)
+        valuesIdx = self._source.features.getIndex(featureWithValues)
+        uncombinedIdx = [i for i in range(len(self._source.features))
+                         if i not in (namesIdx, valuesIdx)]
+
+        # using OrderedDict supports point name setting
+        unique = OrderedDict()
+        pNames = []
+        for idx, row in enumerate(iter(self)):
+            uncombined = tuple(row[uncombinedIdx])
+            if uncombined not in unique:
+                unique[uncombined] = {}
+                if self._source._pointNamesCreated():
+                    pNames.append(self.getName(idx))
+            if row[namesIdx] in unique[uncombined]:
+                msg = "The point at index {0} cannot be combined ".format(idx)
+                msg += "because there is already a value for the feature "
+                msg += "{0} in another point which this ".format(row[namesIdx])
+                msg += "point would be combined with."
+                raise ArgumentException(msg)
+            unique[uncombined][row[namesIdx]] = row[valuesIdx]
+
+        uniqueNames = []
+        for name in self._source[:, featureWithFeatureNames]:
+            if name not in uniqueNames:
+                uniqueNames.append(name)
+        numRetFeatures = len(self._source.features) + len(uniqueNames) - 2
+
+        self._combineByExpandingFeatures_implementation(unique, namesIdx,
+                                                        uniqueNames,
+                                                        numRetFeatures)
+
+        self._source._featureCount = numRetFeatures
+        self._source._pointCount = len(unique)
+
+        fNames = [self._source.features.getName(i) for i in uncombinedIdx]
+        for name in reversed(uniqueNames):
+            fNames.insert(namesIdx, name)
+        self._source.features.setNames(fNames)
+
+        if self._source._pointNamesCreated():
+            self.setNames(pNames)
+
+        self._source.validate()
+
+    ####################
+    # Query functions #
+    ###################
 
     def nonZeroIterator(self):
         """
@@ -732,6 +1067,14 @@ class Points(object):
         TODO
         """
         return self._nonZeroIterator()
+
+    def unique(self):
+        """
+        Return a new object with only unique points. If point names are
+        present, the point name of the first instance of the unique
+        point in this object will be assigned.
+        """
+        return self._unique()
 
     #########################
     # Statistical functions #
@@ -849,11 +1192,11 @@ class Points(object):
     #     pass
 
     @abstractmethod
-    def _transform(self, function, points):
+    def _transform(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _calculate(self, function, points):
+    def _calculate(self, function, limitTo):
         pass
 
     @abstractmethod
@@ -869,7 +1212,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, arguments, limitTo, returnModified):
+    def _fill(self, match, fill, limitTo, returnModified, **kwarguments):
         pass
 
     @abstractmethod
@@ -877,7 +1220,22 @@ class Points(object):
         pass
 
     @abstractmethod
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        pass
+
+    @abstractmethod
+    def _combineByExpandingFeatures_implementation(
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        pass
+
+    @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _unique(self):
         pass
 
     @abstractmethod

@@ -307,3 +307,6 @@ class CustomLearnerInterface(UniversalInterface):
 
         """
         return []
+
+    def version(self):
+        pass

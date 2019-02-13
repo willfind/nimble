@@ -634,3 +634,5 @@ class Keras(UniversalInterface):
 
         return None
 
+    def version(self):
+        return self.keras.__version__

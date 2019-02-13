@@ -20,6 +20,7 @@ from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import inheritDocstringsFactory
+
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 
@@ -199,13 +200,13 @@ class Matrix(Base):
     def _copyAs_implementation(self, format):
 
         if format is None or format == 'Matrix':
-            return UML.createData('Matrix', self.data)
+            return UML.createData('Matrix', self.data, useLog=False)
         if format == 'Sparse':
-            return UML.createData('Sparse', self.data)
+            return UML.createData('Sparse', self.data, useLog=False)
         if format == 'List':
-            return UML.createData('List', self.data)
+            return UML.createData('List', self.data, useLog=False)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data)
+            return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
@@ -223,7 +224,7 @@ class Matrix(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
 
-        return UML.createData('Matrix', self.data)
+        return UML.createData('Matrix', self.data, useLog=False)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):

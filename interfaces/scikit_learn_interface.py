@@ -51,9 +51,8 @@ class SciKitLearn(UniversalInterface):
             warnings.filterwarnings("ignore",category=DeprecationWarning)
             self.skl = importlib.import_module('sklearn')
 
-        version = self.skl.__version__
-        self._version = version
-        self._versionSplit = list(map(int,version.split('.')))
+        version = self.version()
+        self._versionSplit = list(map(int, version.split('.')))
 
         from sklearn.utils.testing import all_estimators
         all_estimators = all_estimators()
@@ -355,9 +354,9 @@ class SciKitLearn(UniversalInterface):
         TAKES name of learner, transformed arguments
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
-        msg = "UML was tested using sklearn 0.19 and above, we cannot be "
-        msg += "sure of success for version {0}".format(self._version)
         if self._versionSplit[1] < 19:
+            msg = "UML was tested using sklearn 0.19 and above, we cannot be "
+            msg += "sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
         # get parameter names
@@ -483,7 +482,6 @@ class SciKitLearn(UniversalInterface):
 
     # fit_transform
 
-
     def _predict(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying predict function of a scikit-learn learner object
@@ -496,6 +494,8 @@ class SciKitLearn(UniversalInterface):
         """
         return learner.transform(testX)
 
+    def version(self):
+        return self.skl.__version__
 
     ###############
     ### HELPERS ###

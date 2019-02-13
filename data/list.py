@@ -289,30 +289,30 @@ class List(Base):
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Sparse', emptyData)
-            return UML.createData('Sparse', self.data)
+                return UML.createData('Sparse', emptyData, useLog=False)
+            return UML.createData('Sparse', self.data, useLog=False)
 
         if format is None or format == 'List':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('List', emptyData)
+                return UML.createData('List', emptyData, useLog=False)
             else:
-                return UML.createData('List', self.data)
+                return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Matrix', emptyData)
+                return UML.createData('Matrix', emptyData, useLog=False)
             else:
-                return UML.createData('Matrix', self.data)
+                return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('DataFrame', emptyData)
+                return UML.createData('DataFrame', emptyData, useLog=False)
             else:
-                return UML.createData('DataFrame', self.data)
+                return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -564,20 +564,11 @@ class List(Base):
                 # we only want to change how List and pythonlist copying is
                 # done we also temporarily convert self.data to a python list
                 # for copyAs
-                if self._pointNamesCreated():
-                    pNames = self.points.getNames()
-                else:
-                    pNames = None
-                if self._featureNamesCreated():
-                    fNames = self.features.getNames()
-                else:
-                    fNames = None
-
                 if ((len(self.points) == 0 or len(self.features) == 0)
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin)
+                    intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID
@@ -594,8 +585,9 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm, pointNames=pNames,
-                                featureNames=fNames)
+                    return List(listForm,
+                                pointNames=self.points._getNamesNoGeneration(),
+                                featureNames=self.features._getNamesNoGeneration())
                 else:
                     return listForm
 
@@ -640,9 +632,9 @@ class List(Base):
                 self.pRange = pEnd - pStart
                 self.fStart = fStart
                 self.fEnd = fEnd
-                self.fviewer = FeatureViewer(self.source, fStart, fEnd)
 
             def __getitem__(self, key):
+                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
                 if key < 0 or key >= self.pRange:
                     msg = "The given index " + str(key) + " is outside of the "
                     msg += "range  of possible indices in the point axis (0 "

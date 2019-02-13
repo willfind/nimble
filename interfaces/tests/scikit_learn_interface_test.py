@@ -4,18 +4,19 @@ Unit tests for scikit_learn_interface.py
 """
 
 from __future__ import absolute_import
-import numpy.testing
-from nose.plugins.attrib import attr
-from nose.tools import raises
 import importlib
 import inspect
 import tempfile
 
-import UML
+import numpy.testing
+from nose.plugins.attrib import attr
+from nose.tools import raises
+from sklearn import __version__ as sklVersion
+from sklearn.metrics import mean_squared_error
 
+import UML
 from UML import loadTrainedLearner
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
-
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
 from UML.exceptions import InvalidArgumentValue
@@ -27,12 +28,13 @@ from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
 from UML.interfaces.universal_interface import UniversalInterface
 
-from sklearn.metrics import mean_squared_error
-
 scipy = UML.importModule('scipy.sparse')
 
 packageName = 'sciKitLearn'
 
+def test_SciKitLearn_version():
+    interface = SciKitLearn()
+    assert interface.version() == sklVersion
 
 def toCall(learner):
     return packageName + '.' + learner

@@ -310,9 +310,9 @@ def genID(dataObj, seed, axis):
         ret = source(intID)
     assert ret is not None
     if axis == 'point':
-        dataObj._getPointIndex(ret)
+        dataObj.points.getIndex(ret)
     else:
-        dataObj._getFeatureIndex(ret)
+        dataObj.features.getIndex(ret)
     return ret
 
 

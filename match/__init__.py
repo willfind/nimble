@@ -1,3 +1,7 @@
+"""
+Collection of functions primarily determining if a data value or entire
+data object satisfy a given condition.
+"""
 from __future__ import absolute_import
 
 from .match import convertMatchToFunction
@@ -29,6 +33,6 @@ __all__ = ['allValues', 'allMissing', 'allNegative', 'allNonNumeric',
            'allNonZero', 'allNumeric', 'allPositive', 'allZero',
            'anyValues', 'anyMissing', 'anyNegative', 'anyNonNumeric',
            'anyNonZero', 'anyNumeric', 'anyPositive', 'anyZero',
-           'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
-           'positive', 'zero',
+           'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
+           'nonZero', 'numeric', 'positive', 'zero',
            ]

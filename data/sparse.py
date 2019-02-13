@@ -243,16 +243,16 @@ class Sparse(Base):
     def _copyAs_implementation(self, format):
 
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data)
+            ret = UML.createData('Sparse', self.data, useLog=False)
             # Due to duplicate removal done in createData, we cannot guarantee
             # that the internal sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data)
+            return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data)
+            return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data)
+            return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -868,7 +868,7 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self.data * other.data
 
-        return UML.createData('Sparse', retData)
+        return UML.createData('Sparse', retData, useLog=False)
 
     def _scalarMultiply_implementation(self, scalar):
         """
@@ -1192,9 +1192,36 @@ class SparseView(BaseView, Sparse):
         return self._source[adjX, adjY]
 
     def _copyAs_implementation(self, format):
+        if format == "Sparse":
+            sourceData = self._source.data.data.copy()
+            sourceRow = self._source.data.row.copy()
+            sourceCol = self._source.data.col.copy()
+
+            keep = ((sourceRow >= self._pStart) &
+                     (sourceRow < self._pEnd) &
+                     (sourceCol >= self._fStart) &
+                     (sourceCol < self._fEnd))
+            keepData = sourceData[keep]
+            keepRow = sourceRow[keep]
+            keepCol = sourceCol[keep]
+            if self._pStart > 0:
+                keepRow = list(map(lambda x: x - self._pStart, keepRow))
+            if self._fStart > 0:
+                keepCol = list(map(lambda x: x - self._fStart, keepCol))
+
+            coo = coo_matrix((keepData, (keepRow, keepCol)),
+                             shape=(len(self.points), len(self.features)))
+            pNames = None
+            fNames = None
+            if self._pointNamesCreated():
+                pNames=self.points.getNames()
+            if self._featureNamesCreated():
+                fNames=self.features.getNames()
+            return Sparse(coo, pointNames=pNames, featureNames=fNames)
+
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
-            intermediate = UML.createData('Matrix', emptyStandin)
+            intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
             return intermediate.copyAs(format)
 
         if format == 'numpyarray':
@@ -1208,7 +1235,7 @@ class SparseView(BaseView, Sparse):
         limited = limited.features.copy(start=self._fStart,
                                         end=self._fEnd - 1)
 
-        if format is None or format == 'Sparse':
+        if format is None:
             return limited
         else:
             return limited._copyAs_implementation(format)
@@ -1268,13 +1295,13 @@ class SparseView(BaseView, Sparse):
             selfConv = self.copyAs("Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
-            ret = UML.createData("Sparse", ret.data)
+            ret = UML.createData("Sparse", ret.data, useLog=False)
             return ret
 
         selfConv = self.copyAs("Sparse")
 
         toCall = getattr(selfConv, implName)
         ret = toCall(other)
-        ret = UML.createData(self.getTypeString(), ret.data)
+        ret = UML.createData(self.getTypeString(), ret.data, useLog=False)
 
         return ret

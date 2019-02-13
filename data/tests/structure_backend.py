@@ -428,17 +428,41 @@ class StructureDataSafe(StructureShared):
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = numpy.array(data).T
 
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
+        for retType in UML.data.available:
 
-        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+            out = orig.copyAs(retType, rowsArePoints=False)
 
-        assert out == desired
+            desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
+
+            assert out == desired
+
+        out = orig.copyAs(format='pythonlist', rowsArePoints=False)
+
+        assert out == dataT.tolist()
+
+        out = orig.copyAs(format='numpyarray', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        out = orig.copyAs(format='numpymatrix', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        if scipy:
+
+            out = orig.copyAs(format='scipycsr', rowsArePoints=False)
+
+            assert numpy.array_equal(out.toarray(), dataT)
+
+            out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+
+            assert numpy.array_equal(out.toarray(), dataT)
 
         out = orig.copyAs(format='list of dict', rowsArePoints=False)
 
@@ -573,7 +597,7 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -1336,7 +1360,7 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -2517,7 +2541,6 @@ class StructureModifying(StructureShared):
             toTest2.transpose()
             toTest1.features.add(toTest2)
 
-
     @raises(ImproperObjectAction)
     def test_points_add_exception_outOfOrder_with_defaults(self):
         """ Test points.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
@@ -2920,6 +2943,45 @@ class StructureModifying(StructureShared):
 
     def test_features_add_noReorderWithAllDefaultNames(self):
         self.backend_add_noReorderWithAllDefaultNames('feature')
+
+    def backend_add_noReorderAddedHasDefaultNames(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        pNames = ['1', '4', '7']
+        fNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            assert toTest.features.getNames() != toInsert.features.getNames()
+
+            exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+            exp.features.setNames(fNames)
+            exp.points.setName(0, '1')
+            exp.points.setName(1, '4')
+            exp.points.setName(2, '7')
+            toTest.points.add(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            assert toTest.points.getNames() != toInsert.points.getNames()
+
+            exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+            exp.points.setNames(pNames)
+            exp.features.setName(0, 'a')
+            exp.features.setName(1, 'b')
+            exp.features.setName(2, 'c')
+            toTest.features.add(toInsert)
+
+        assert toTest == exp
+
+    def test_addPoints_noReorderAddedHasDefaultNames(self):
+        self.backend_add_noReorderAddedHasDefaultNames('point')
+
+    def test_addFeatures_noReorderAddedHasDefaultNames(self):
+        self.backend_add_noReorderAddedHasDefaultNames('feature')
 
     def backend_add_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3325,7 +3387,7 @@ class StructureModifying(StructureShared):
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -4104,7 +4166,7 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -4773,7 +4835,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -5409,7 +5471,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -5953,9 +6015,9 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_retain_calls_constructIndicesList(self, mockFunc):
-        """ Test points.retain calls _constructIndicesList before calling _genericStructuralFrontend"""
+        """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         toTest.points.retain(['a', 'b'])
 
@@ -6634,7 +6696,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_retain_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7327,7 +7389,7 @@ class StructureModifying(StructureShared):
         origObj.points.transform(emitLower)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -7450,7 +7512,7 @@ class StructureModifying(StructureShared):
         origObj.features.transform(None)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7545,7 +7607,7 @@ class StructureModifying(StructureShared):
     ##########################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_transform_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -7555,7 +7617,7 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_transform_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 

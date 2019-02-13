@@ -41,7 +41,7 @@ def mahout(learnerName, trainX, trainY, testX, arguments={}, output=None, timer=
         print('Cannot find mahout, please call setMahoutLocation() with the path of the Mahout root directory')
         return
 
-    raise NotImplementedError("Mahout interface is currently not in a usable state")
+        # raise NotImplementedError("Mahout interface is currently not in a usable state")
 
     #	if redirectOutputTarget == '':
     #		dumpFile = tempfile.NamedTemporaryFile()
@@ -81,7 +81,7 @@ def mahout(learnerName, trainX, trainY, testX, arguments={}, output=None, timer=
         subprocess.call(cmd, shell=True)
 
 
-def mahoutTasteRecommenderEstimation(trainX, testX, output, arguments): #,redirectOutputTarget=None):
+def mahoutTasteRecommenderEstimation(trainX, testX, output, argsDict): #,redirectOutputTarget=None):
     """
     Function to call an extension to Mahout to use Taste (Sequential) Recommenders
     to predict ratings. Extension is achieved by temporarily patching Mahout.

@@ -9,18 +9,10 @@ import copy
 
 from .base import Base
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import readOnlyException
+from .dataHelpers import exceptionDocstringFactory
 
-# prepend a message that view objects will raise an exception to Base docstring
-def exception_docstring(func):
-    name = func.__name__
-    baseDoc = getattr(Base, name).__doc__
-    if baseDoc is not None:
-        viewMsg = "The {0} method is object modifying and ".format(name)
-        viewMsg += "will always raise an exception for view objects.\n\n"
-        viewMsg += "For reference, the docstring for this method "
-        viewMsg += "when objects can be modified is below:\n"
-        func.__doc__ = viewMsg + baseDoc
-    return func
+exceptionDocstring = exceptionDocstringFactory(Base)
 
 @inheritDocstringsFactory(Base)
 class BaseView(Base):
@@ -107,26 +99,10 @@ class BaseView(Base):
     ############################
 
     def _copyNames(self, CopyObj):
-        # CopyObj.pointNamesInverse = self.points.getNames()
-        # CopyObj.pointNames = copy.copy(self._source.pointNames)
-
-        if self._pointNamesCreated():
-            CopyObj.pointNamesInverse = self.points.getNames()
-            CopyObj.pointNames = copy.copy(self._source.pointNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.index = self.points.getNames()
-        else:
-            CopyObj.pointNamesInverse = None
-            CopyObj.pointNames = None
-
-        if self._featureNamesCreated():
-            CopyObj.featureNamesInverse = self.features.getNames()
-            CopyObj.featureNames = copy.copy(self._source.featureNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.columns = self.features.getNames()
-        else:
-            CopyObj.featureNamesInverse = None
-            CopyObj.featureNames = None
+        CopyObj.pointNamesInverse = self.points._getNamesNoGeneration()
+        CopyObj.pointNames = copy.copy(self._source.pointNames)
+        CopyObj.featureNamesInverse = self.features._getNamesNoGeneration()
+        CopyObj.featureNames = copy.copy(self._source.featureNames)
 
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
@@ -157,25 +133,25 @@ class BaseView(Base):
         if pointStart is None:
             psAdj = None if len(self._source.points) == 0 else self._pStart
         else:
-            psIndex = self._source._getIndex(pointStart, 'point')
+            psIndex = self._source.points.getIndex(pointStart)
             psAdj = psIndex + self._pStart
 
         if pointEnd is None:
             peAdj = None if len(self._source.points) == 0 else self._pEnd - 1
         else:
-            peIndex = self._source._getIndex(pointEnd, 'point')
+            peIndex = self._source.points.getIndex(pointEnd)
             peAdj = peIndex + self._pStart
 
         if featureStart is None:
             fsAdj = None if len(self._source.features) == 0 else self._fStart
         else:
-            fsIndex = self._source._getIndex(featureStart, 'feature')
+            fsIndex = self._source.features.getIndex(featureStart)
             fsAdj = fsIndex + self._fStart
 
         if featureEnd is None:
             feAdj = None if len(self._source.features) == 0 else self._fEnd - 1
         else:
-            feIndex = self._source._getIndex(featureEnd, 'feature')
+            feIndex = self._source.features.getIndex(featureEnd)
             feAdj = feIndex + self._fStart
 
         return self._source.view(psAdj, peAdj, fsAdj, feAdj)
@@ -184,16 +160,16 @@ class BaseView(Base):
     # Higher Order Operations #
     ###########################
 
-    @exception_docstring
+    @exceptionDocstring
     def fillUsingAllData(self, match, fill, arguments=None, points=None,
                           features=None, returnModified=False):
         readOnlyException("fillUsingAllData")
 
-    @exception_docstring
+    @exceptionDocstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
         readOnlyException("replaceFeatureWithBinaryFeatures")
 
-    @exception_docstring
+    @exceptionDocstring
     def transformFeatureToIntegers(self, featureToConvert):
         readOnlyException("transformFeatureToIntegers")
 
@@ -217,31 +193,31 @@ class BaseView(Base):
     ##################################################################
     ##################################################################
 
-    @exception_docstring
+    @exceptionDocstring
     def transpose(self):
         readOnlyException("transpose")
 
-    @exception_docstring
+    @exceptionDocstring
     def referenceDataFrom(self, other):
         readOnlyException("referenceDataFrom")
 
-    @exception_docstring
+    @exceptionDocstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         readOnlyException("fillWith")
 
-    @exception_docstring
+    @exceptionDocstring
     def flattenToOnePoint(self):
         readOnlyException("flattenToOnePoint")
 
-    @exception_docstring
+    @exceptionDocstring
     def flattenToOneFeature(self):
         readOnlyException("flattenToOneFeature")
 
-    @exception_docstring
+    @exceptionDocstring
     def unflattenFromOnePoint(self, numPoints):
         readOnlyException("unflattenFromOnePoint")
 
-    @exception_docstring
+    @exceptionDocstring
     def unflattenFromOneFeature(self, numFeatures):
         readOnlyException("unflattenFromOneFeature")
 
@@ -251,45 +227,34 @@ class BaseView(Base):
     ###############################################################
     ###############################################################
 
-    @exception_docstring
+    @exceptionDocstring
     def __imul__(self, other):
         readOnlyException("__imul__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __iadd__(self, other):
         readOnlyException("__iadd__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __isub__(self, other):
         readOnlyException("__isub__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __idiv__(self, other):
         readOnlyException("__idiv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __itruediv__(self, other):
         readOnlyException("__itruediv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __ifloordiv__(self, other):
         readOnlyException("__ifloordiv__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __imod__(self, other):
         readOnlyException("__imod__")
 
-    @exception_docstring
+    @exceptionDocstring
     def __ipow__(self, other):
         readOnlyException("__ipow__")
-
-    ####################
-    ####################
-    ###   Helpers    ###
-    ####################
-    ####################
-
-def readOnlyException(name):
-    msg = "The " + name + " method is disallowed for View objects. View "
-    msg += "objects are read only, yet this method modifies the object"
-    raise TypeError(msg)

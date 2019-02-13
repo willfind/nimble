@@ -24,7 +24,6 @@ import copy
 import sys
 import inspect
 import tempfile
-from future.utils import raise_
 
 import six
 import six.moves.configparser
@@ -415,7 +414,7 @@ class SessionConfiguration(object):
         except InvalidArgumentValue:
             einfo = sys.exc_info()
             if not ignore:
-                raise_(einfo[1], None, einfo[2])
+                six.reraise(einfo[0], einfo[1], einfo[2])
 
         if not section in self.changes or isinstance(self.changes[section], ToDelete):
             self.changes[section] = {}

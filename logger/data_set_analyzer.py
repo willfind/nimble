@@ -61,7 +61,8 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     return resultsTable
 
 
-def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeaturesToCover=50, displayDigits=2):
+def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeaturesToCover=50,
+                             displayDigits=2, useLog=None):
     """
     Produce a string formatted as a table.  The table contains iformation about each feature
     in the data set contained in dataContainer.

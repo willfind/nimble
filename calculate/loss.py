@@ -85,7 +85,7 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
             runningTotal = compressionFunction(runningTotal, n)
         except ZeroDivisionError:
             raise ZeroDivisionError('Tried to divide by zero when calculating performance metric')
-            return
+
     else:
         raise InvalidArgumentValue("Empty argument(s) in error calculator")
 
