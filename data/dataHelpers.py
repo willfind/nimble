@@ -702,8 +702,10 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
     argNames = argNames[1:]
     nameArgMap = {}
     for name, arg in zip(argNames,args):
-        if str(arg).startswith("<") and str(arg).endswith(">"):
+        if callable(arg):
             nameArgMap[name] = extractFunctionString(arg)
+        elif isinstance(arg, UML.data.Base):
+            nameArgMap[name] = arg.name
         else:
             nameArgMap[name] = str(arg)
     startDefaults = len(argNames) - len(defaults)
