@@ -7,6 +7,7 @@ from __future__ import absolute_import
 
 import numpy as np
 from six.moves import range
+from six.moves import zip
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -16,6 +17,8 @@ from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import allDataIdentical
+from .dataHelpers import DEFAULT_PREFIX
 
 pd = UML.importModule('pandas')
 scipy = UML.importModule('scipy.sparse')
@@ -97,13 +100,7 @@ class DataFrame(Base):
         if len(self.features) != len(other.features):
             return False
 
-        try:
-            tmp1 = self.data.values
-            tmp2 = other.data.values
-            np.testing.assert_equal(tmp1, tmp2)
-        except AssertionError:
-            return False
-        return True
+        return allDataIdentical(self.data.values, other.data.values)
 
     def _writeFile_implementation(self, outPath, format, includePointNames,
                                   includeFeatureNames):
@@ -188,13 +185,13 @@ class DataFrame(Base):
         """
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray)
+            return UML.createData('DataFrame', dataArray, useLog=False)
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray)
+            return UML.createData('Sparse', dataArray, useLog=False)
         if format == 'List':
-            return UML.createData('List', dataArray)
+            return UML.createData('List', dataArray, useLog=False)
         if format == 'Matrix':
-            return UML.createData('Matrix', dataArray)
+            return UML.createData('Matrix', dataArray, useLog=False)
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
@@ -212,7 +209,7 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
 
-        return UML.createData('DataFrame', dataArray)
+        return UML.createData('DataFrame', dataArray, useLog=False)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -249,6 +246,83 @@ class DataFrame(Base):
         numPoints = len(self.points) // numFeatures
         self.data = pd.DataFrame(
             self.data.values.reshape((numPoints, numFeatures), order='F'))
+
+    def _merge_implementation(self, other, point, feature, onFeature,
+                              matchingFtIdx):
+
+        if point == 'union':
+            point = 'outer'
+        elif point == 'intersection':
+            point = 'inner'
+        if self._featureNamesCreated():
+            self.data.columns = self.features.getNames()
+        tmpDfR = other.data.copy()
+        if other._featureNamesCreated():
+            tmpDfR.columns = other.features.getNames()
+
+        if feature == 'intersection':
+            self.data = self.data.iloc[:, matchingFtIdx[0]]
+            tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
+            matchingFtIdx[0] = list(range(self.data.shape[1]))
+            matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
+        elif feature == "left":
+            tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
+            matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
+
+        numColsL = len(self.data.columns)
+        if onFeature is None:
+            if self._pointNamesCreated() and other._pointNamesCreated():
+                # differentiate default names between objects
+                self.data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
+                                   else n for n in self.points.getNames()]
+                tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
+                                else n for n in other.points.getNames()]
+            elif self._pointNamesCreated() or other._pointNamesCreated():
+                # there will be no matches, need left points ordered first
+                self.data.index = [i for i in range(len(self.points))]
+                idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
+                tmpDfR.index = [i for i in idxRange]
+            else:
+                # left already has index set to range(len(self.points))
+                idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
+                tmpDfR.index = [i for i in idxRange]
+
+            self.data = self.data.merge(tmpDfR, how=point, left_index=True,
+                                        right_index=True)
+            self.data.reset_index(drop=True, inplace=True)
+            self.data.columns = range(self.data.shape[1])
+        else:
+            onIdxL = self.data.columns.get_loc(onFeature)
+            self.data = self.data.merge(tmpDfR, how=point, on=onFeature)
+            self.data.reset_index()
+            self.data.columns = range(self.data.shape[1])
+
+        toDrop = []
+        for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
+            if onFeature and l == onIdxL:
+                # onFeature column has already been merged
+                continue
+            elif onFeature and l > onIdxL:
+                # one less to account for merged onFeature
+                r = r + numColsL - 1
+            else:
+                r = r + numColsL
+            matches = self.data.iloc[:, l] == self.data.iloc[:, r]
+            nansL = np.array([x != x for x in self.data.iloc[:, l]])
+            nansR = np.array([x != x for x in self.data.iloc[:, r]])
+            acceptableValues = matches + nansL + nansR
+            if not all(acceptableValues):
+                msg = "The objects contain different values for the same "
+                msg += "feature"
+                raise ArgumentException(msg)
+            if nansL.any():
+                self.data.iloc[:, l][nansL] = self.data.iloc[:, r][nansL]
+            toDrop.append(r)
+        self.data.drop(toDrop, axis=1, inplace=True)
+
+        self._featureCount = (numColsL + len(tmpDfR.columns)
+                              - len(matchingFtIdx[1]))
+        self._pointCount = len(self.data.index)
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]
@@ -389,7 +463,7 @@ class DataFrame(Base):
         pNames = self.points.getNames()
         fNames = self.features.getNames()
         return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True)
+                              featureNames=fNames, reuseData=True, useLog=False)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):

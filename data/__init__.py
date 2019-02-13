@@ -19,6 +19,8 @@ from .sparse import Sparse
 from .dataframe import DataFrame
 from .axis import Axis
 from .elements import Elements
+from .points import Points
+from .features import Features
 
 
 # We want this for unit testing
@@ -29,4 +31,5 @@ These may be used in calls to UML.createData or other similiar object creation
 methods.
 """
 
-__all__ = ['available', 'Axis', 'Base', 'BaseView', 'Elements']
+__all__ = ['available', 'Axis', 'Base', 'BaseView', 'Elements', 'Features',
+           'Points']

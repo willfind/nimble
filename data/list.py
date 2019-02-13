@@ -12,6 +12,7 @@ from functools import reduce
 import numpy
 import six
 from six.moves import range
+from six.moves import zip
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -21,6 +22,7 @@ from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import DEFAULT_PREFIX
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -286,30 +288,30 @@ class List(Base):
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Sparse', emptyData)
-            return UML.createData('Sparse', self.data)
+                return UML.createData('Sparse', emptyData, useLog=False)
+            return UML.createData('Sparse', self.data, useLog=False)
 
         if format is None or format == 'List':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('List', emptyData)
+                return UML.createData('List', emptyData, useLog=False)
             else:
-                return UML.createData('List', self.data)
+                return UML.createData('List', self.data, useLog=False)
         if format == 'Matrix':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('Matrix', emptyData)
+                return UML.createData('Matrix', emptyData, useLog=False)
             else:
-                return UML.createData('Matrix', self.data)
+                return UML.createData('Matrix', self.data, useLog=False)
         if format == 'DataFrame':
             if len(self.points) == 0 or len(self.features) == 0:
                 emptyData = numpy.empty(shape=(len(self.points),
                                                len(self.features)))
-                return UML.createData('DataFrame', emptyData)
+                return UML.createData('DataFrame', emptyData, useLog=False)
             else:
-                return UML.createData('DataFrame', self.data)
+                return UML.createData('DataFrame', self.data, useLog=False)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -385,6 +387,160 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
+    def _merge_implementation(self, other, point, feature, onFeature,
+                              matchingFtIdx):
+        if onFeature:
+            if feature in ["intersection" ,"left"]:
+                onFeatureIdx = self.features.getIndex(onFeature)
+                onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)
+                onIdxL = onIdxLoc
+                onIdxR = onIdxLoc
+                right = [[row[i] for i in matchingFtIdx[1]]
+                         for row in other.data]
+                # matching indices in right were sorted when slicing above
+                if len(right) > 0:
+                    matchingFtIdx[1] = list(range(len(right[0])))
+                else:
+                    matchingFtIdx[1] = []
+                if feature == "intersection":
+                    self.data = [[row[i] for i in matchingFtIdx[0]]
+                                 for row in self.data]
+                    # matching indices in left were sorted when slicing above
+                    if len(self.data) > 0:
+                        matchingFtIdx[0] = list(range(len(self.data[0])))
+                    else:
+                        matchingFtIdx[0] = []
+            else:
+                onIdxL = self.features.getIndex(onFeature)
+                onIdxR = other.features.getIndex(onFeature)
+                right = copy.copy(other.data)
+        else:
+            # using pointNames, prepend pointNames to left and right lists
+            onIdxL = 0
+            onIdxR = 0
+            left = []
+            right = []
+
+            def ptNameGetter(obj, idx, suffix):
+                if obj._pointNamesCreated():
+                    name = obj.points.getName(idx)
+                    if not name.startswith(DEFAULT_PREFIX):
+                        return name
+                    else:
+                        # differentiate default names between objects;
+                        # note still start with DEFAULT_PREFIX
+                        return name + suffix
+                else:
+                    return DEFAULT_PREFIX + str(idx) + suffix
+
+            if feature == "intersection":
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    intersect = [val for idx, val in enumerate(pt)
+                                 if idx in matchingFtIdx[0]]
+                    self.data[i] = ptL + intersect
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
+                    ptR.extend([pt[i] for i in matchingFtIdx[1]])
+                    right.append(ptR)
+                # matching indices were sorted above
+                # this also accounts for prepended column
+                if len(self.data) > 0:
+                    matchingFtIdx[0] = list(range(len(self.data[0])))
+                else:
+                    matchingFtIdx[0] = []
+                matchingFtIdx[1] = matchingFtIdx[0]
+            elif feature == "left":
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    self.data[i] = ptL + pt
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
+                    ptR.extend([pt[i] for i in matchingFtIdx[1]])
+                    right.append(ptR)
+                # account for new column in matchingFtIdx
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                # matching indices were sorted when slicing above
+                # this also accounts for prepended column
+                matchingFtIdx[1] = list(range(len(right[0])))
+            else:
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    self.data[i] = ptL + pt
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
+                    ptR.extend(pt)
+                    right.append(ptR)
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+                matchingFtIdx[1].insert(0, 0)
+        left = self.data
+
+        matched = []
+        merged = []
+        unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])
+        matchMapper = {}
+        for pt in left:
+            match = [right[i] for i in range(len(right))
+                     if right[i][onIdxR] == pt[onIdxL]]
+            if len(match) > 0:
+                matchMapper[pt[onIdxL]] = match
+
+        for ptL in left:
+            target = ptL[onIdxL]
+            if target in matchMapper:
+                matchesR = matchMapper[target]
+                for ptR in matchesR:
+                    # check for conflicts between matching features
+                    matches = [ptL[i] == ptR[j] for i, j
+                               in zip(matchingFtIdx[0], matchingFtIdx[1])]
+                    nansL = [ptL[i] != ptL[i] for i in matchingFtIdx[0]]
+                    nansR = [ptR[j] != ptR[j] for j in matchingFtIdx[1]]
+                    acceptableValues = [m + nL + nR for m, nL, nR
+                                        in zip(matches, nansL, nansR)]
+                    if not all(acceptableValues):
+                        msg = "The objects contain different values for the "
+                        msg += "same feature"
+                        raise ArgumentException(msg)
+                    if sum(nansL) > 0:
+                        # fill any nan values in left with the corresponding
+                        # right value
+                        for i, value in enumerate(ptL):
+                            if value != value and i in matchingFtIdx[0]:
+                                lIdx = matchingFtIdx[0].index(i)
+                                ptL[i] = ptR[matchingFtIdx[1][lIdx]]
+                    ptR = [ptR[i] for i in range(len(ptR))
+                           if i not in matchingFtIdx[1]]
+                    pt = ptL + ptR
+                    merged.append(pt)
+                matched.append(target)
+            elif point in ['union', 'left']:
+                ptR = [numpy.nan] * (len(right[0]) - len(matchingFtIdx[1]))
+                pt = ptL + ptR
+                merged.append(pt)
+
+        if point == 'union':
+            for row in right:
+                target = row[onIdxR]
+                if target not in matched:
+                    pt = [numpy.nan] * (len(left[0]) + unmatchedPtCountR)
+                    for i, j in zip(matchingFtIdx[0], matchingFtIdx[1]):
+                        pt[i] = row[j]
+                    pt[len(left[0]):] = [row[i] for i in range(len(right[0]))
+                                         if i not in matchingFtIdx[1]]
+                    merged.append(pt)
+
+        self._featureCount = len(left[0]) + unmatchedPtCountR
+        self._pointCount = len(merged)
+        if onFeature is None:
+            # remove point names feature
+            merged = [row[1:] for row in merged]
+            self._featureCount -= 1
+
+        self.data = merged
+
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
@@ -407,20 +563,11 @@ class List(Base):
                 # we only want to change how List and pythonlist copying is
                 # done we also temporarily convert self.data to a python list
                 # for copyAs
-                if self._pointNamesCreated():
-                    pNames = self.points.getNames()
-                else:
-                    pNames = None
-                if self._featureNamesCreated():
-                    fNames = self.features.getNames()
-                else:
-                    fNames = None
-
                 if ((len(self.points) == 0 or len(self.features) == 0)
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin)
+                    intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID
@@ -428,7 +575,7 @@ class List(Base):
                             for pID in range(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
-                if format != 'List' and format != 'pythonlist':
+                if format not in ['List', 'pythonlist']:
                     origData = self.data
                     self.data = listForm
                     res = super(ListView, self)._copyAs_implementation(
@@ -437,8 +584,9 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm, pointNames=pNames,
-                                featureNames=fNames)
+                    return List(listForm,
+                                pointNames=self.points._getNamesNoGeneration(),
+                                featureNames=self.features._getNamesNoGeneration())
                 else:
                     return listForm
 
@@ -480,9 +628,9 @@ class List(Base):
                 self.pRange = pEnd - pStart
                 self.fStart = fStart
                 self.fEnd = fEnd
-                self.fviewer = FeatureViewer(self.source, fStart, fEnd)
 
             def __getitem__(self, key):
+                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
                 if key < 0 or key >= self.pRange:
                     raise IndexError("")
 

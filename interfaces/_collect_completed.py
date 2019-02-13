@@ -15,7 +15,7 @@ def collectVisiblePythonModules(modulePath):
     for fileName in possibleFiles:
         if '.' not in fileName:
             continue
-        (name, extension) = fileName.split('.')
+        (name, extension) = fileName.rsplit('.', 1)
         if extension == 'py' and not name.startswith('_'):
             pythonModules.append(name)
     return pythonModules

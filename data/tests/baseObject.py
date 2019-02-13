@@ -66,14 +66,15 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if len(orig.points) != 0:
             firstPRaw = [[0] * len(orig.features)]
+            fNamesParam = orig.features.getNames() if orig.features._namesCreated() else 'automatic'
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=orig.features.getNames(),
+                                                    pointNames=['firstPNonView'], featureNames=fNamesParam,
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                     elementType=elementType)
 
             lastPRaw = [[3] * len(orig.features)]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=orig.features.getNames(),
+                                                   pointNames=['lastPNonView'], featureNames=fNamesParam,
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                    elementType=elementType)
 
@@ -92,8 +93,9 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if len(orig.features) != 0:
             lastFRaw = [[1] * len(full.points)]
+            fNames = full.points.getNames() if full.points._namesCreated() else 'automatic'
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=full.points.getNames(), pointNames=['lastFNonView'],
+                                                     featureNames=fNames, pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
 
