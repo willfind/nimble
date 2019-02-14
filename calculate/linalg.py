@@ -65,7 +65,7 @@ def pseudoInverse(A, method='svd'):
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base.")
-    if A.points == 0 and A.features == 0:
+    if len(A.points) == 0 and len(A.features) == 0:
         return A
     if method not in ['least-squares', 'svd']:
         raise InvalidArgumentValue(
