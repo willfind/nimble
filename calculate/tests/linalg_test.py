@@ -172,14 +172,14 @@ def testSolve_succes():
                 b = createData(dataType_b, b_np)
                 sol = solve(A, b)
                 A_inv = inverse(A)
-                if b.features > 1:
+                if len(b.features) > 1:
                     b.transpose()
                 reference = (A_inv * b)
                 reference.transpose()
-                reference.setPointNames(['b'])
+                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
-                assert A.getFeatureNames() == sol.getFeatureNames()
-                assert sol.getPointNames() == ['b']
+                assert A.features.getNames() == sol.features.getNames()
+                assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
 
 
