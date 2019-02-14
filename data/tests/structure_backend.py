@@ -17,16 +17,17 @@ unflattenFromOneFeature
 from __future__ import absolute_import
 from __future__ import print_function
 import tempfile
-import numpy
 import os
 import os.path
-from nose.tools import *
+from copy import deepcopy
 try:
     from unittest import mock #python >=3.3
 except:
     import mock
 
-from copy import deepcopy
+import numpy
+from nose.tools import *
+from six.moves import map
 
 import UML
 from UML import match
@@ -37,12 +38,13 @@ from UML.data import DataFrame
 from UML.data import Sparse
 from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.exceptions import ArgumentException
-from UML.exceptions import ImproperActionException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
+from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
-
 from UML.data.tests.baseObject import DataTestObject
-from six.moves import map
+
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
 
@@ -486,46 +488,46 @@ class StructureDataSafe(StructureShared):
         try:
             orig.copyAs("List", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         try:
             orig.copyAs("Matrix", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         try:
             orig.copyAs("Sparse", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         try:
             orig.copyAs("numpy matrix", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         if scipy:
             try:
                 orig.copyAs("scipy csr", outputAs1D=True)
                 assert False
-            except ArgumentException as ae:
-                print(ae)
+            except InvalidArgumentValueCombination as ivc:
+                print(ivc)
             try:
                 orig.copyAs("scipy csc", outputAs1D=True)
                 assert False
-            except ArgumentException as ae:
-                print(ae)
+            except InvalidArgumentValueCombination as ivc:
+                print(ivc)
         try:
             orig.copyAs("list of dict", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         try:
             orig.copyAs("dict of list", outputAs1D=True)
             assert False
-        except ArgumentException as ae:
-            print(ae)
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_copy_outputAs1DWrongShape(self):
         """ Test copyAs will raise exception when given an unallowed shape """
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -781,25 +783,25 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data, featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
-    @raises(ArgumentException)
-    def test_points_copy_exceptionStartInvalid(self):
-        """ Test points.copy() for ArgumentException when start is not a valid point index """
+    @raises(InvalidArgumentType)
+    def test_points_copy_exceptionStartInvalidType(self):
+        """ Test points.copy() for InvalidArgumentType when start is not a valid ID type"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.copy(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_copy_exceptionEndInvalid(self):
-        """ Test points.copy() for ArgumentException when start is not a valid Point index """
+        """ Test points.copy() for InvalidArgumentValue when end is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.copy(start=1, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_copy_exceptionInversion(self):
-        """ Test points.copy() for ArgumentException when start comes after end """
+        """ Test points.copy() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1111,7 +1113,7 @@ class StructureDataSafe(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_copy_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -1132,19 +1134,19 @@ class StructureDataSafe(StructureShared):
     def test_points_copy_numberAndRandomizeSelectedData(self):
         self.back_copy_numberAndRandomizeSelectedData('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_copy_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('copy', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_copy_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('copy', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_copy_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('copy', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
@@ -1583,49 +1585,49 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert toTest.isIdentical(expEnd)
 
-    @raises(ArgumentException)
-    def test_features_copy_exceptionStartInvalid(self):
-        """ Test features.copy() for ArgumentException when start is not a valid feature index """
+    @raises(InvalidArgumentType)
+    def test_features_copy_exceptionStartInvalidType(self):
+        """ Test features.copy() for InvalidArgumentType when start is not a valid ID type"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_exceptionStartInvalidFeatureName(self):
-        """ Test features.copy() for ArgumentException when start is not a valid feature FeatureName """
+        """ Test features.copy() for InvalidArgumentValue when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start="wrong", end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_exceptionEndInvalid(self):
-        """ Test features.copy() for ArgumentException when start is not a valid feature index """
+        """ Test features.copy() for InvalidArgumentValue when end is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start=0, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_exceptionEndInvalidFeatureName(self):
-        """ Test features.copy() for ArgumentException when start is not a valid featureName """
+        """ Test features.copy() for InvalidArgumentValue when end is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start="two", end="five")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_copy_exceptionInversion(self):
-        """ Test features.copy() for ArgumentException when start comes after end """
+        """ Test features.copy() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start=2, end=0)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_copy_exceptionInversionFeatureName(self):
-        """ Test features.copy() for ArgumentException when start comes after end as FeatureNames"""
+        """ Test features.copy() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1894,7 +1896,7 @@ class StructureDataSafe(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -1915,19 +1917,19 @@ class StructureDataSafe(StructureShared):
     def test_features_copy_numberAndRandomizeSelectedData(self):
         self.back_copy_numberAndRandomizeSelectedData('feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_copy_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('copy', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('copy', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('copy', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
@@ -2222,7 +2224,7 @@ class StructureModifying(StructureShared):
         assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
-    @raises(ArgumentException, TypeError)
+    @raises(TypeError)
     def test_init_noThriceNestedListInputs(self):
         self.constructor([[[1, 2, 3]]])
 
@@ -2428,14 +2430,14 @@ class StructureModifying(StructureShared):
         else:
             toTest.features.add(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_add_exceptionNone(self):
-        """ Test points.add() for ArgumentException when toInsert is None """
+        """ Test points.add() for InvalidArgumentType when toInsert is None """
         self.backend_add_exceptionNone('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_add_exceptionNone(self):
-        """ Test features.add() for ArgumentException when toInsert is None """
+        """ Test features.add() for InvalidArgumentType when toInsert is None """
         self.backend_add_exceptionNone('feature')
 
 
@@ -2450,14 +2452,14 @@ class StructureModifying(StructureShared):
             toInsert.transpose()
             toTest.features.add(toInsert)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_add_exceptionWrongSize(self):
-        """ Test points.add() for ArgumentException when toInsert has too many features """
+        """ Test points.add() for InvalidArgumentValue when toInsert has too many features """
         self.backend_add_exceptionWrongSize('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_add_exceptionWrongSize(self):
-        """ Test features.add() for ArgumentException when toInsert has too many points """
+        """ Test features.add() for InvalidArgumentValue when toInsert has too many points """
         self.backend_add_exceptionWrongSize('feature')
 
 
@@ -2472,14 +2474,14 @@ class StructureModifying(StructureShared):
             toTest2.transpose()
             toTest2.features.add(toTest1)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_add_exceptionSamePointName(self):
-        """ Test points.add() for ArgumentException when toInsert and self have a pointName in common """
+        """ Test points.add() for InvalidArgumentValue when toInsert and self have a pointName in common """
         self.backend_add_exception_extendAxis_SameName('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_add_exceptionSameFeatureName(self):
-        """ Test features.add() for ArgumentException when toInsert and self have a featureName in common """
+        """ Test features.add() for InvalidArgumentValue when toInsert and self have a featureName in common """
         self.backend_add_exception_extendAxis_SameName('feature')
 
 
@@ -2494,14 +2496,14 @@ class StructureModifying(StructureShared):
             toTest2.transpose()
             toTest2.features.add(toTest1)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_add_exception_unsharedFeatureName(self):
-        """ Test points.add() for ArgumentException when toInsert and self have a featureName not in common """
+        """ Test points.add() for InvalidArgumentValue when toInsert and self have a featureName not in common """
         self.backend_add_exception_sharedAxis_unsharedName('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_add_exception_unsharedPointName(self):
-        """ Test features.add() for ArgumentException when toInsert and self have a pointName not in common """
+        """ Test features.add() for InvalidArgumentValue when toInsert and self have a pointName not in common """
         self.backend_add_exception_sharedAxis_unsharedName('feature')
 
 
@@ -2514,11 +2516,11 @@ class StructureModifying(StructureShared):
         else:
             toTest.features.add([[1], [1], [1]])
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_add_exceptionNonUMLDataType(self):
         self.backend_add_exceptionNonUMLDataType('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_add_exceptionNonUMLDataType(self):
         self.backend_add_exceptionNonUMLDataType('feature')
 
@@ -2539,14 +2541,14 @@ class StructureModifying(StructureShared):
             toTest2.transpose()
             toTest1.features.add(toTest2)
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_add_exception_outOfOrder_with_defaults(self):
-        """ Test points.add() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        """ Test points.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('point')
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_features_add_exception_outOfOrder_with_defaults(self):
-        """ Test features.add() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        """ Test features.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('feature')
 
 
@@ -2579,14 +2581,14 @@ class StructureModifying(StructureShared):
         """ Test features.add() to right when the calling object is feature empty """
         self.backend_add_emptyObject('feature')
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_add_fromEmpty_top(self):
-        """ Test points.add() with an appendBefore ID when the calling object is point empty raises exception """
+        """ Test points.add() with an insertBefore ID when the calling object is point empty raises exception """
         self.backend_add_emptyObject('point', 0)
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_features_add_fromEmpty_left(self):
-        """ Test features.add() with an appendBefore ID when the calling object is feature empty raises exception """
+        """ Test features.add() with an insertBefore ID when the calling object is feature empty raises exception """
         self.backend_add_emptyObject('feature', 0)
 
 
@@ -3039,7 +3041,7 @@ class StructureModifying(StructureShared):
     # points.sort() #
     ##############
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentTypeCombination)
     def test_points_sort_exceptionAtLeastOne(self):
         """ Test points.sort() has at least one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
@@ -3047,7 +3049,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.sort()
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentTypeCombination)
     def test_points_sort_exceptionBothNotNone(self):
         """ Test points.sort() has only one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
@@ -3182,25 +3184,25 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_sort_exceptionIndicesPEmpty(self):
-        """ tests points.sort() throws an ArgumentException when given invalid indices """
+        """ tests points.sort() throws an ImproperObjectAction when given invalid indices """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
         toTest.points.sort(sortHelper=[1, 3])
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_sort_exceptionIndicesSmall(self):
-        """ tests points.sort() throws an ArgumentException when given an incorrectly sized indices list """
+        """ tests points.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
         data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
         toTest = self.constructor(data)
 
         toTest.points.sort(sortHelper=[1, 0])
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_sort_exceptionNotUniqueIds(self):
-        """ tests points.sort() throws an ArgumentException when given duplicate indices """
+        """ tests points.sort() throws an InvalidArgumentValue when given duplicate indices """
         data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
         toTest = self.constructor(data)
         toTest.points.sort(sortHelper=[1, 1, 0])
@@ -3209,7 +3211,7 @@ class StructureModifying(StructureShared):
     # features.sort() #
     #################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentTypeCombination)
     def test_features_sort_exceptionAtLeastOne(self):
         """ Test features.sort() has at least one paramater """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
@@ -3217,7 +3219,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.sort()
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentTypeCombination)
     def test_features_sort_exceptionBothNotNone(self):
         """ Test points.sort() has only one parameter """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
@@ -3354,27 +3356,27 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_features_sort_exceptionIndicesFEmpty(self):
-        """ tests features.sort() throws an ArgumentException when given invalid indices """
+        """ tests features.sort() throws an ImproperObjectAction when given invalid indices """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
         toTest.features.sort(sortHelper=[1, 3])
 
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_sort_exceptionIndicesSmall(self):
-        """ tests features.sort() throws an ArgumentException when given an incorrectly sized indices list """
+        """ tests features.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         toTest = self.constructor(data)
 
         toTest.features.sort(sortHelper=[1, 0])
 
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_sort_exceptionNotUniqueIds(self):
-        """ tests features.sort() throws an ArgumentException when given duplicate indices """
+        """ tests features.sort() throws an InvalidArgumentValue when given duplicate indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         data = numpy.array(data)
         toTest = self.constructor(data)
@@ -3576,25 +3578,25 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
 
-    @raises(ArgumentException)
-    def test_points_extract_exceptionStartInvalid(self):
-        """ Test points.extract() for ArgumentException when start is not a valid point index """
+    @raises(InvalidArgumentType)
+    def test_points_extract_exceptionStartInvalidType(self):
+        """ Test points.extract() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.extract(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_extract_exceptionEndInvalid(self):
-        """ Test points.extract() for ArgumentException when start is not a valid Point index """
+        """ Test points.extract() for InvalidArgumentValue when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.extract(start=1, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_extract_exceptionInversion(self):
-        """ Test points.extract() for ArgumentException when start comes after end """
+        """ Test points.extract() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -3902,7 +3904,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_extract_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -3923,19 +3925,19 @@ class StructureModifying(StructureShared):
     def test_points_extract_numberAndRandomizeSelectedData(self):
         self.back_extract_numberAndRandomizeSelectedData('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_extract_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('extract', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_extract_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('extract', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_extract_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('extract', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
@@ -4398,49 +4400,49 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         assert toTest.isIdentical(expEnd)
 
-    @raises(ArgumentException)
-    def test_features_extract_exceptionStartInvalid(self):
-        """ Test features.extract() for ArgumentException when start is not a valid feature index """
+    @raises(InvalidArgumentType)
+    def test_features_extract_exceptionStartInvalidType(self):
+        """ Test features.extract() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_exceptionStartInvalidFeatureName(self):
-        """ Test features.extract() for ArgumentException when start is not a valid feature FeatureName """
+        """ Test features.extract() for InvalidArgumentValue when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start="wrong", end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_exceptionEndInvalid(self):
-        """ Test features.extract() for ArgumentException when start is not a valid feature index """
+        """ Test features.extract() for InvalidArgumentValue when end is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start=0, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_exceptionEndInvalidFeatureName(self):
-        """ Test features.extract() for ArgumentException when start is not a valid featureName """
+        """ Test features.extract() for InvalidArgumentValue when end is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start="two", end="five")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_extract_exceptionInversion(self):
-        """ Test features.extract() for ArgumentException when start comes after end """
+        """ Test features.extract() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start=2, end=0)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_extract_exceptionInversionFeatureName(self):
-        """ Test features.extract() for ArgumentException when start comes after end as FeatureNames"""
+        """ Test features.extract() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4713,7 +4715,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -4734,19 +4736,19 @@ class StructureModifying(StructureShared):
     def test_features_extract_numberAndRandomizeSelectedData(self):
         self.back_extract_numberAndRandomizeSelectedData('feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_extract_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('extract', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('extract', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('extract', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
@@ -4988,25 +4990,25 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
 
-    @raises(ArgumentException)
-    def test_points_delete_exceptionStartInvalid(self):
-        """ Test points.delete() for ArgumentException when start is not a valid point index """
+    @raises(InvalidArgumentType)
+    def test_points_delete_exceptionStartInvalidType(self):
+        """ Test points.delete() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.delete(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_delete_exceptionEndInvalid(self):
-        """ Test points.delete() for ArgumentException when start is not a valid Point index """
+        """ Test points.delete() for InvalidArgumentValue when end is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.delete(start=1, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_delete_exceptionInversion(self):
-        """ Test points.delete() for ArgumentException when start comes after end """
+        """ Test points.delete() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -5250,7 +5252,7 @@ class StructureModifying(StructureShared):
         exp1 = self.constructor([[7, 8, 9]], pointNames=['7'])
         assert toTest.isIdentical(exp1)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_delete_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -5271,19 +5273,19 @@ class StructureModifying(StructureShared):
     def test_points_delete_numberAndRandomizeSelectedData(self):
         self.back_delete_numberAndRandomizeSelectedData('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_delete_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('delete', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_delete_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('delete', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_delete_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('delete', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
 
@@ -5658,49 +5660,49 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
         assert toTest.isIdentical(expEnd)
 
-    @raises(ArgumentException)
-    def test_features_delete_exceptionStartInvalid(self):
-        """ Test features.delete() for ArgumentException when start is not a valid feature index """
+    @raises(InvalidArgumentType)
+    def test_features_delete_exceptionStartInvalidType(self):
+        """ Test features.delete() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_exceptionStartInvalidFeatureName(self):
-        """ Test features.delete() for ArgumentException when start is not a valid feature FeatureName """
+        """ Test features.delete() for InvalidArgumentValue when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start="wrong", end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_exceptionEndInvalid(self):
-        """ Test features.delete() for ArgumentException when start is not a valid feature index """
+        """ Test features.delete() for InvalidArgumentValue when end is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start=0, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_exceptionEndInvalidFeatureName(self):
-        """ Test features.delete() for ArgumentException when end is not a valid featureName """
+        """ Test features.delete() for InvalidArgumentValue when end is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start="two", end="five")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_delete_exceptionInversion(self):
-        """ Test features.delete() for ArgumentException when start comes after end """
+        """ Test features.delete() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start=2, end=0)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_delete_exceptionInversionFeatureName(self):
-        """ Test features.delete() for ArgumentException when start comes after end as FeatureNames"""
+        """ Test features.delete() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -5917,7 +5919,7 @@ class StructureModifying(StructureShared):
         exp1 = self.constructor([[1], [4], [7]], featureNames=["one"])
         assert toTest.isIdentical(exp1)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -5938,19 +5940,19 @@ class StructureModifying(StructureShared):
     def test_features_delete_numberAndRandomizeSelectedData(self):
         self.back_delete_numberAndRandomizeSelectedData('feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_delete_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('delete', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('delete', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('delete', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
@@ -6204,25 +6206,25 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp)
 
 
-    @raises(ArgumentException)
-    def test_points_retain_exceptionStartInvalid(self):
-        """ Test points.retain() for ArgumentException when start is not a valid point index """
+    @raises(InvalidArgumentType)
+    def test_points_retain_exceptionStartInvalidType(self):
+        """ Test points.retain() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.retain(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_retain_exceptionEndInvalid(self):
-        """ Test points.retain() for ArgumentException when start is not a valid Point index """
+        """ Test points.retain() for InvalidArgumentValue when end is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.retain(start=1, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_retain_exceptionInversion(self):
-        """ Test points.retain() for ArgumentException when start comes after end """
+        """ Test points.retain() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -6475,7 +6477,7 @@ class StructureModifying(StructureShared):
 
         assert expectedTest.isIdentical(toTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_retain_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -6496,19 +6498,19 @@ class StructureModifying(StructureShared):
     def test_points_retain_numberAndRandomizeSelectedData(self):
         self.back_retain_numberAndRandomizeSelectedData('point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_points_retain_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('retain', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_retain_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('retain', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_retain_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('retain', 'point')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
 
@@ -6909,49 +6911,49 @@ class StructureModifying(StructureShared):
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
         assert toTest.isIdentical(exp)
 
-    @raises(ArgumentException)
-    def test_features_retain_exceptionStartInvalid(self):
-        """ Test features.retain() for ArgumentException when start is not a valid feature index """
+    @raises(InvalidArgumentType)
+    def test_features_retain_exceptionStartInvalidType(self):
+        """ Test features.retain() for InvalidArgumentType when start is not a valid ID type """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start=1.1, end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_exceptionStartInvalidFeatureName(self):
-        """ Test features.retain() for ArgumentException when start is not a valid feature FeatureName """
+        """ Test features.retain() for InvalidArgumentValue when start is not a valid feature FeatureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start="wrong", end=2)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_exceptionEndInvalid(self):
-        """ Test features.retain() for ArgumentException when start is not a valid feature index """
+        """ Test features.retain() for InvalidArgumentValue when end is not a valid feature index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start=0, end=5)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_exceptionEndInvalidFeatureName(self):
-        """ Test features.retain() for ArgumentException when start is not a valid featureName """
+        """ Test features.retain() for InvalidArgumentValue when end is not a valid featureName """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start="two", end="five")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_retain_exceptionInversion(self):
-        """ Test features.retain() for ArgumentException when start comes after end """
+        """ Test features.retain() for InvalidArgumentValueCombination when start comes after end """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start=2, end=0)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_retain_exceptionInversionFeatureName(self):
-        """ Test features.retain() for ArgumentException when start comes after end as FeatureNames"""
+        """ Test features.retain() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -7174,7 +7176,7 @@ class StructureModifying(StructureShared):
 
         assert expectedTest.isIdentical(toTest)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
@@ -7195,19 +7197,19 @@ class StructureModifying(StructureShared):
     def test_features_retain_numberAndRandomizeSelectedData(self):
         self.back_retain_numberAndRandomizeSelectedData('feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_retain_randomizeNoNumber(self):
         self.back_structural_randomizeNoNumber('retain', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_list_numberGreaterThanTargeted(self):
         self.back_structural_list_numberGreaterThanTargeted('retain', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_function_numberGreaterThanTargeted(self):
         self.back_structural_function_numberGreaterThanTargeted('retain', 'feature')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
 
@@ -7215,7 +7217,7 @@ class StructureModifying(StructureShared):
     # referenceDataFrom #
     #####################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_referenceDataFrom_exceptionWrongType(self):
         """ Test referenceDataFrom() throws exception when other is not the same type """
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
@@ -7357,14 +7359,14 @@ class StructureModifying(StructureShared):
     # points.transform() #
     ######################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.points.transform(None)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_points_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -7375,7 +7377,7 @@ class StructureModifying(StructureShared):
 
         origObj.points.transform(emitLower)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_points_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -7472,7 +7474,7 @@ class StructureModifying(StructureShared):
     # features.transform() #
     ########################
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_features_transform_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -7487,7 +7489,7 @@ class StructureModifying(StructureShared):
 
         origObj.features.transform(emitAllEqual)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_features_transform_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -7502,7 +7504,7 @@ class StructureModifying(StructureShared):
 
         origObj.features.transform(emitAllEqual)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
@@ -7859,19 +7861,19 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(set([1, 3]), 0, 0, 0, 1)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentType
+        except InvalidArgumentType as iat:
+            print(iat)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentType
 
         try:
             toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentType
+        except InvalidArgumentType as iat:
+            print(iat)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentType
 
 
     def test_fillWith_sizeMismatch(self):
@@ -7883,21 +7885,21 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(val, 0, 0, 1, 1)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
-        except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
+        except Exception as e:
+            assert False  # expected InvalidArgumentValueCombination
 
         val.transpose()
 
         try:
             toTest.fillWith(val, 0, 0, 1, 1)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
-        except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
+        except Exception as e:
+            assert False  # expected InvalidArgumentValueCombination
 
 
     def test_fillWith_invalidID(self):
@@ -7908,32 +7910,32 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(val, "hello", 0, 1, 1)
-            assert False  # expected ArgumentException
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValue
+        except InvalidArgumentValue as iav:
+            print(iav)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, "Wrong", 1, 1)
-            assert False  # expected ArgumentException
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValue
+        except InvalidArgumentValue as iav:
+            print(iav)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, 0, 2, 1)
-            assert False  # expected ArgumentException
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValue
+        except InvalidArgumentValue as iav:
+            print(iav)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, 0, 1, -12)
-            assert False  # expected ArgumentException
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValue
+        except InvalidArgumentValue as iav:
+            print(iav)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValue
 
 
     def test_fillWith_start_lessThan_end(self):
@@ -7944,18 +7946,18 @@ class StructureModifying(StructureShared):
 
         try:
             toTest.fillWith(val, 1, 0, 0, 1)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValueCombination
         try:
             toTest.fillWith(val, 0, 1, 1, 0)
-            assert False  # expected ArgumentExcpetion
-        except ArgumentException as ae:
-            print(ae)
+            assert False  # expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination as ivc:
+            print(ivc)
         except Exception:
-            assert False  # expected ArgumentException
+            assert False  # expected InvalidArgumentValueCombination
 
 
     def test_fillWith_fullObjectFill(self):
@@ -8061,13 +8063,13 @@ class StructureModifying(StructureShared):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
 
         pempty = self.constructor(numpy.empty((0,2)))
-        exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+        exceptionHelper(pempty, target, [], ImproperObjectAction, checkMsg)
 
         fempty = self.constructor(numpy.empty((4,0)))
-        exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+        exceptionHelper(fempty, target, [], ImproperObjectAction, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+        exceptionHelper(trueEmpty, target, [], ImproperObjectAction, checkMsg)
 
 
     # flatten single p/f - see name changes
@@ -8184,10 +8186,10 @@ class StructureModifying(StructureShared):
         single = (0,2) if axis == 'point' else (2,0)
 
         singleEmpty = self.constructor(numpy.empty(single))
-        exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(singleEmpty, target, [2], ImproperObjectAction, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(trueEmpty, target, [2], ImproperObjectAction, checkMsg)
 
 
     # exceptions: opposite vector, 2d data
@@ -8203,10 +8205,10 @@ class StructureModifying(StructureShared):
         vecShape = (4,1) if axis == 'point' else (1,4)
 
         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-        exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(wrongVector, target, [2], ImproperObjectAction, checkMsg)
 
         rectangle = self.constructor(numpyRandom.rand(4,4))
-        exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
 
 
     # excpetion: numPoints / numFeatures does not divide length of mega P/F
@@ -8223,10 +8225,10 @@ class StructureModifying(StructureShared):
         divisableLength = (1,8) if axis == 'point' else (8,1)
 
         undivisable = self.constructor(numpyRandom.rand(*primeLength))
-        exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+        exceptionHelper(undivisable, target, [2], InvalidArgumentValue, checkMsg)
 
         divisable = self.constructor(numpyRandom.rand(*divisableLength))
-        exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+        exceptionHelper(divisable, target, [5], InvalidArgumentValue, checkMsg)
 
 
     # exception: unflattening would destroy an axis name
@@ -8245,13 +8247,13 @@ class StructureModifying(StructureShared):
         # non-default name, flattened axis
         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
         # all non-default names, unflattened axis
         names = ["a", "b", "c", "d"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
         # single non-default name, unflattened axis
         testObj = self.constructor(data)
@@ -8259,7 +8261,7 @@ class StructureModifying(StructureShared):
             testObj.features.setName(1, "non-default")
         else:
             testObj.points.setName(2, "non-default")
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
     # exception: unflattening would destroy an axis name
     def test_unflattenFromOnePoint_nameFormatInconsistent(self):
@@ -8282,19 +8284,19 @@ class StructureModifying(StructureShared):
             testObj.features.setName(1, None)
         else:
             testObj.points.setName(1, None)
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
         # unflattened axis, inconsistent along original unflattened axis
         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
         # unflattened axis, inconsistent along original flattened axis
         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
         testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 
 
     # unflatten something that was flattened - include name transformation
@@ -8403,13 +8405,13 @@ class StructureModifying(StructureShared):
 #         checkMsg = True
 #         target = (axis + 's', 'flattenToOne')
 #         pempty = self.constructor(numpy.empty((0,2)))
-#         exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(pempty, target, [], ImproperObjectAction, checkMsg)
 #
 #         fempty = self.constructor(numpy.empty((4,0)))
-#         exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(fempty, target, [], ImproperObjectAction, checkMsg)
 #
 #         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+#         exceptionHelper(trueEmpty, target, [], ImproperObjectAction, checkMsg)
 #
 #
 #     # flatten single p/f - see name changes
@@ -8527,10 +8529,10 @@ class StructureModifying(StructureShared):
 #         single = (0,2) if axis == 'point' else (2,0)
 #
 #         singleEmpty = self.constructor(numpy.empty(single))
-#         exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(singleEmpty, target, [2], ImproperObjectAction, checkMsg)
 #
 #         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(trueEmpty, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # exceptions: opposite vector, 2d data
@@ -8546,10 +8548,10 @@ class StructureModifying(StructureShared):
 #         vecShape = (4,1) if axis == 'point' else (1,4)
 #
 #         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-#         exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(wrongVector, target, [2], ImproperObjectAction, checkMsg)
 #
 #         rectangle = self.constructor(numpyRandom.rand(4,4))
-#         exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # excpetion: numPoints / numFeatures does not divide length of mega P/F
@@ -8566,10 +8568,10 @@ class StructureModifying(StructureShared):
 #         divisableLength = (1,8) if axis == 'point' else (8,1)
 #
 #         undivisable = self.constructor(numpyRandom.rand(*primeLength))
-#         exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+#         exceptionHelper(undivisable, target, [2], InvalidArgumentValue, checkMsg)
 #
 #         divisable = self.constructor(numpyRandom.rand(*divisableLength))
-#         exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+#         exceptionHelper(divisable, target, [5], InvalidArgumentValue, checkMsg)
 #
 #
 #     # exception: unflattening would destroy an axis name
@@ -8588,13 +8590,13 @@ class StructureModifying(StructureShared):
 #         # non-default name, flattened axis
 #         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # all non-default names, unflattened axis
 #         names = ["a", "b", "c", "d"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # single non-default name, unflattened axis
 #         testObj = self.constructor(data)
@@ -8602,7 +8604,7 @@ class StructureModifying(StructureShared):
 #             testObj.features.setName(1, "non-default")
 #         else:
 #             testObj.points.setName(2, "non-default")
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #     # exception: unflattening would destroy an axis name
 #     def test_points_unflattenFromOne_nameFormatInconsistent(self):
@@ -8625,19 +8627,19 @@ class StructureModifying(StructureShared):
 #             testObj.features.setName(1, None)
 #         else:
 #             testObj.points.setName(1, None)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # unflattened axis, inconsistent along original unflattened axis
 #         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #         # unflattened axis, inconsistent along original flattened axis
 #         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
 #         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
 #         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperActionException, checkMsg)
+#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
 #
 #
 #     # unflatten something that was flattened - include name transformation
@@ -8737,7 +8739,7 @@ class StructureModifying(StructureShared):
     # merge() #
     ###########
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_invalidPointString(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8748,7 +8750,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='abc', feature='union')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_invalidFeatureString(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8759,7 +8761,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='abc')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_exception_pointStrictAndFeature(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         pNames = ['a', 'b', 'c']
@@ -8768,7 +8770,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataL, pointNames=pNames, featureNames=fNames)
         leftObj.merge(rightObj, point='strict', feature='strict')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_strictDifferentPointCount(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2], ['d', 99, 99]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8779,7 +8781,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_strictDifferentFeatureCount(self):
         dataL = [['a', 1, 2, 99], ['c', 5, 6, 99], ['c', -1, -2, 99]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8790,7 +8792,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='strict')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_pointStrictNameMismatch(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8802,7 +8804,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_featureStrictNameMismatch(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8814,7 +8816,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='strict')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_pointStrictMissingOnFeature(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8825,7 +8827,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_exception_pointStrictOnFeatureNotUnique(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -8837,7 +8839,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_exception_pointStrictOnFeatureNotMatching(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['d', -3, -4]]
@@ -8849,7 +8851,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_exception_pointIntersectionNoPointNames(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['d', -3, -4]]
@@ -8860,7 +8862,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='intersection', feature='union')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_exception_featureIntersectionNoFeatureNames(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['b', 7, 8], ['d', -3, -4]]
@@ -8871,7 +8873,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='intersection')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_exception_onFeaturebothNonUnique(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
@@ -8883,7 +8885,6 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
 
     def merge_backend(self, left, right, expected, on=None, includeStrict=False):
-
         combinations = [
             ('union', 'union'), ('union', 'intersection'), ('union', 'left'),
             ('intersection', 'union'), ('intersection', 'intersection'), ('intersection', 'left'),
@@ -8904,8 +8905,10 @@ class StructureModifying(StructureShared):
                 tRight = right.copy()
                 test.merge(tRight, point=pt, feature=ft, onFeature=on)
                 assert test == exp
-            except ArgumentException:
-                assert exp is ArgumentException
+            except InvalidArgumentValue:
+                assert exp is InvalidArgumentValue
+            except InvalidArgumentValueCombination:
+                assert exp is InvalidArgumentValueCombination
 
 
         ##################
@@ -8970,8 +8973,8 @@ class StructureModifying(StructureShared):
         pLeft_fIntersection = mLargest[:,[]]
         pStrict_fUnion = mLargest
         pStrict_fIntersection = mLargest[:,[]]
-        pUnion_fStrict = ArgumentException
-        pIntersection_fStrict = ArgumentException
+        pUnion_fStrict = InvalidArgumentValue
+        pIntersection_fStrict = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9006,8 +9009,8 @@ class StructureModifying(StructureShared):
         pIntersection_fLeft = mLargest[[], ["f1", "f2"]]
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
         pLeft_fIntersection = mLargest[["p1", "p2", "p3"],["f1", "f2"]]
-        pStrict_fUnion = ArgumentException
-        pStrict_fIntersection = ArgumentException
+        pStrict_fUnion = InvalidArgumentValue
+        pStrict_fIntersection = InvalidArgumentValue
         pUnion_fStrict = mLargest
         pIntersection_fStrict = mLargest[[], :]
 
@@ -9044,15 +9047,15 @@ class StructureModifying(StructureShared):
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest[:, []]
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
+        pIntersection_fUnion = InvalidArgumentValueCombination
+        pIntersection_fIntersection = InvalidArgumentValueCombination
+        pIntersection_fLeft = InvalidArgumentValueCombination
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
         pLeft_fIntersection = mLargest[["p1", "p2", "p3"],[]]
         pStrict_fUnion = mLargestStrict
         pStrict_fIntersection = mLargestStrict[:, []]
-        pUnion_fStrict = ArgumentException
-        pIntersection_fStrict = ArgumentException
+        pUnion_fStrict = InvalidArgumentValue
+        pIntersection_fStrict = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9084,15 +9087,15 @@ class StructureModifying(StructureShared):
         mLargestStrict = self.constructor(mDataStrict, pointNames=mPointNames, featureNames=["f1", "f2"])
 
         pUnion_fUnion = mLargest
-        pUnion_fIntersection = ArgumentException
+        pUnion_fIntersection = InvalidArgumentValueCombination
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
         pIntersection_fUnion = mLargest[[], :]
-        pIntersection_fIntersection = ArgumentException
+        pIntersection_fIntersection = InvalidArgumentValueCombination
         pIntersection_fLeft = mLargest[[], ["f1", "f2"]]
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
-        pLeft_fIntersection = ArgumentException
-        pStrict_fUnion = ArgumentException
-        pStrict_fIntersection = ArgumentException
+        pLeft_fIntersection = InvalidArgumentValueCombination
+        pStrict_fUnion = InvalidArgumentValue
+        pStrict_fIntersection = InvalidArgumentValue
         pUnion_fStrict = mLargestStrict
         pIntersection_fStrict = mLargestStrict[[], :]
 
@@ -9128,18 +9131,18 @@ class StructureModifying(StructureShared):
         mStrictPts = self.constructor(mDataStrictPts)
 
         pUnion_fUnion = mLargest
-        pUnion_fIntersection = ArgumentException
+        pUnion_fIntersection = InvalidArgumentValueCombination
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
+        pIntersection_fUnion = InvalidArgumentValueCombination
+        pIntersection_fIntersection = InvalidArgumentValueCombination
+        pIntersection_fLeft = InvalidArgumentValueCombination
         # TODO case below?
         pLeft_fUnion = mLargest[[0,1,2], :]
-        pLeft_fIntersection = ArgumentException
+        pLeft_fIntersection = InvalidArgumentValueCombination
         pStrict_fUnion = mStrictPts
-        pStrict_fIntersection = ArgumentException
+        pStrict_fIntersection = InvalidArgumentValue
         pUnion_fStrict = mStrictFts
-        pIntersection_fStrict = ArgumentException
+        pIntersection_fStrict = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9164,17 +9167,17 @@ class StructureModifying(StructureShared):
         mLargest.features.setName(1, "f2")
 
         pUnion_fUnion = mLargest
-        pUnion_fIntersection = ArgumentException
+        pUnion_fIntersection = InvalidArgumentValueCombination
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
         pIntersection_fUnion = mLargest
-        pIntersection_fIntersection = ArgumentException
+        pIntersection_fIntersection = InvalidArgumentValueCombination
         pIntersection_fLeft = mLargest[:, ["f1", "f2"]]
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
-        pLeft_fIntersection = ArgumentException
+        pLeft_fIntersection = InvalidArgumentValueCombination
         pStrict_fUnion = mLargest
-        pStrict_fIntersection = ArgumentException
-        pUnion_fStrict = ArgumentException
-        pIntersection_fStrict = ArgumentException
+        pStrict_fIntersection = InvalidArgumentValueCombination
+        pUnion_fStrict = InvalidArgumentValue
+        pIntersection_fStrict = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9204,15 +9207,15 @@ class StructureModifying(StructureShared):
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
+        pIntersection_fUnion = InvalidArgumentValueCombination
+        pIntersection_fIntersection = InvalidArgumentValueCombination
+        pIntersection_fLeft = InvalidArgumentValueCombination
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
         pLeft_fIntersection = mLargest[["p1", "p2", "p3"], ["f1", "f2"]]
-        pStrict_fUnion = ArgumentException
-        pStrict_fIntersection = ArgumentException
+        pStrict_fUnion = InvalidArgumentValue
+        pStrict_fIntersection = InvalidArgumentValue
         pUnion_fStrict = mLargest
-        pIntersection_fStrict = ArgumentException
+        pIntersection_fStrict = InvalidArgumentValueCombination
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9301,14 +9304,14 @@ class StructureModifying(StructureShared):
         pNamesR = ["p3", "p4", "p5"]
         right = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
 
-        pUnion_fUnion = ArgumentException
-        pUnion_fIntersection = ArgumentException
-        pUnion_fLeft = ArgumentException
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
-        pLeft_fUnion = ArgumentException
-        pLeft_fIntersection = ArgumentException
+        pUnion_fUnion = InvalidArgumentValue
+        pUnion_fIntersection = InvalidArgumentValue
+        pUnion_fLeft = InvalidArgumentValue
+        pIntersection_fUnion = InvalidArgumentValue
+        pIntersection_fIntersection = InvalidArgumentValue
+        pIntersection_fLeft = InvalidArgumentValue
+        pLeft_fUnion = InvalidArgumentValue
+        pLeft_fIntersection = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9360,14 +9363,14 @@ class StructureModifying(StructureShared):
         pNamesR = ["p1", "p2", "p3"]
         right = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
 
-        pUnion_fUnion = ArgumentException
-        pUnion_fIntersection = ArgumentException
-        pUnion_fLeft = ArgumentException
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
-        pLeft_fUnion = ArgumentException
-        pLeft_fIntersection = ArgumentException
+        pUnion_fUnion = InvalidArgumentValue
+        pUnion_fIntersection = InvalidArgumentValue
+        pUnion_fLeft = InvalidArgumentValue
+        pIntersection_fUnion = InvalidArgumentValue
+        pIntersection_fIntersection = InvalidArgumentValue
+        pIntersection_fLeft = InvalidArgumentValue
+        pLeft_fUnion = InvalidArgumentValue
+        pLeft_fIntersection = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9490,13 +9493,13 @@ class StructureModifying(StructureShared):
         mLargest.features.setName(1, "f2")
 
         pUnion_fUnion = mLargest
-        pUnion_fIntersection = ArgumentException
+        pUnion_fIntersection = InvalidArgumentValueCombination
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
         pIntersection_fUnion = mLargest["p3", :]
-        pIntersection_fIntersection = ArgumentException
+        pIntersection_fIntersection = InvalidArgumentValueCombination
         pIntersection_fLeft = mLargest["p3", ["f1", "f2"]]
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
-        pLeft_fIntersection = ArgumentException
+        pLeft_fIntersection = InvalidArgumentValueCombination
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9525,9 +9528,9 @@ class StructureModifying(StructureShared):
         pUnion_fUnion = mLargest
         pUnion_fIntersection = mLargest[:, "f1"]
         pUnion_fLeft = mLargest[:, ["f1", "f2"]]
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
+        pIntersection_fUnion = InvalidArgumentValueCombination
+        pIntersection_fIntersection = InvalidArgumentValueCombination
+        pIntersection_fLeft = InvalidArgumentValueCombination
         pLeft_fUnion = mLargest[["p1", "p2", "p3"], :]
         pLeft_fIntersection = mLargest[["p1", "p2", "p3"], "f1"]
 
@@ -9570,8 +9573,8 @@ class StructureModifying(StructureShared):
         mLargestStrict.points.setNames(["p1", "p2", "p3"])
         pStrict_fUnion = mLargestStrict
         pStrict_fIntersection = mLargestStrict[:, "id"]
-        pUnion_fStrict = ArgumentException
-        pIntersection_fStrict = ArgumentException
+        pUnion_fStrict = InvalidArgumentValue
+        pIntersection_fStrict = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9605,8 +9608,8 @@ class StructureModifying(StructureShared):
         pIntersection_fLeft = mLargest[[], :]
         pLeft_fUnion = mLargest[[0,1,2], :]
         pLeft_fIntersection = mLargest[[0,1,2], :]
-        pStrict_fUnion = ArgumentException
-        pStrict_fIntersection = ArgumentException
+        pStrict_fUnion = InvalidArgumentValueCombination
+        pStrict_fIntersection = InvalidArgumentValueCombination
         pUnion_fStrict = mLargest
         pIntersection_fStrict = mLargest[[], :]
 
@@ -9755,14 +9758,14 @@ class StructureModifying(StructureShared):
         fNamesR = ["id", "f2", "f3"]
         right = self.constructor(dataR, featureNames=fNamesR)
 
-        pUnion_fUnion = ArgumentException
-        pUnion_fIntersection = ArgumentException
-        pUnion_fLeft = ArgumentException
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
-        pLeft_fUnion = ArgumentException
-        pLeft_fIntersection = ArgumentException
+        pUnion_fUnion = InvalidArgumentValue
+        pUnion_fIntersection = InvalidArgumentValue
+        pUnion_fLeft = InvalidArgumentValue
+        pIntersection_fUnion = InvalidArgumentValue
+        pIntersection_fIntersection = InvalidArgumentValue
+        pIntersection_fLeft = InvalidArgumentValue
+        pLeft_fUnion = InvalidArgumentValue
+        pLeft_fIntersection = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9908,14 +9911,14 @@ class StructureModifying(StructureShared):
         fNamesR = ["id", "f1", "f2"]
         right = self.constructor(dataR, featureNames=fNamesR)
 
-        pUnion_fUnion = ArgumentException
-        pUnion_fIntersection = ArgumentException
-        pUnion_fLeft = ArgumentException
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
-        pLeft_fUnion = ArgumentException
-        pLeft_fIntersection = ArgumentException
+        pUnion_fUnion = InvalidArgumentValue
+        pUnion_fIntersection = InvalidArgumentValue
+        pUnion_fLeft = InvalidArgumentValue
+        pIntersection_fUnion = InvalidArgumentValue
+        pIntersection_fIntersection = InvalidArgumentValue
+        pIntersection_fLeft = InvalidArgumentValue
+        pLeft_fUnion = InvalidArgumentValue
+        pLeft_fIntersection = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -9997,14 +10000,14 @@ class StructureModifying(StructureShared):
         fNamesR = ["id", "f2", "f3"]
         right = self.constructor(dataR, featureNames=fNamesR)
 
-        pUnion_fUnion = ArgumentException
-        pUnion_fIntersection = ArgumentException
-        pUnion_fLeft = ArgumentException
-        pIntersection_fUnion = ArgumentException
-        pIntersection_fIntersection = ArgumentException
-        pIntersection_fLeft = ArgumentException
-        pLeft_fUnion = ArgumentException
-        pLeft_fIntersection = ArgumentException
+        pUnion_fUnion = InvalidArgumentValue
+        pUnion_fIntersection = InvalidArgumentValue
+        pUnion_fLeft = InvalidArgumentValue
+        pIntersection_fUnion = InvalidArgumentValue
+        pIntersection_fIntersection = InvalidArgumentValue
+        pIntersection_fLeft = InvalidArgumentValue
+        pLeft_fUnion = InvalidArgumentValue
+        pLeft_fIntersection = InvalidArgumentValue
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -10014,13 +10017,11 @@ class StructureModifying(StructureShared):
 
         self.merge_backend(left, right, expected, on="id")
 
-
-
         ###################
         # ptUnion/ftUnion #
         ###################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_ptUnion_ftUnion_pointNames_ftMismatch(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -10244,7 +10245,7 @@ class StructureModifying(StructureShared):
         # ptUnion/ftIntersection #
         ##########################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_ptUnion_ftIntersection_ptNames_ftMismatch(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
@@ -10300,7 +10301,7 @@ class StructureModifying(StructureShared):
         # ptIntersection/ftUnion #
         ##########################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_ptIntersection_ftUnion_exception_noPointNamesOrOnFeature(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
         dataR = [[3, 4], [7, 8], [-3, -4]]
@@ -10326,7 +10327,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='intersection', feature='union')
         assert leftObj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_ptIntersection_ftUnion_exception_bothNonUnique(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
         dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
@@ -10614,7 +10615,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
         assert leftObj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_pointStrict_featureIntersection_ptNames_ptNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10625,7 +10626,7 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='intersection', onFeature=None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureUnion_onFeature_ptNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10636,7 +10637,7 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureIntersection_onFeature_ptNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10647,7 +10648,7 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureUnion_ptNames_ftNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10658,7 +10659,7 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureIntersection_ptNames_ftNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10708,7 +10709,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
         assert leftObj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_merge_pointStrict_featureIntersection_ptNames_noNames(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10717,7 +10718,7 @@ class StructureModifying(StructureShared):
 
         leftObj.merge(rightObj, point='strict', feature='intersection')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureIntersection_onFeature_noNames(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
@@ -10746,8 +10747,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
         assert leftObj == exp
 
-    #TODO check exception for descriptiveness
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_featureStrict_pointUnion_ptNames_allNames_ftMismatch(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
@@ -10794,7 +10794,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
         assert leftObj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_featureStrict_pointUnion_ptNames_ptNamesOnly_ptMismatch(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
@@ -10817,7 +10817,7 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='intersection', feature='strict', onFeature=None)
         assert leftObj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_merge_featureStrict_pointIntersection_ptNames_ptNamesOnly_ptMismatch(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]

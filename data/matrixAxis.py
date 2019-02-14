@@ -8,7 +8,6 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
@@ -76,6 +75,7 @@ class MatrixAxis(Axis):
 
         axisAttr = 'points' if isinstance(self, Points) else 'features'
         indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
+
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._source.data = self._source.data[indexPosition, :]

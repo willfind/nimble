@@ -19,8 +19,10 @@ import numpy
 import UML
 from UML.helpers import generateClassificationData
 from UML.calculate import rootMeanSquareError as RMSE
-from UML.exceptions import ArgumentException
 from UML.configuration import configSafetyWrapper
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
+from UML.exceptions import InvalidArgumentType
 
 #####################
 # Helpers for tests #
@@ -507,11 +509,11 @@ def testHandmadeLogEntriesInput():
     for value in customDict.values():
         assert str(value) in logInfo
 
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 def testLogUnacceptedlogType():
     UML.log(["unacceptable"], "you can't do this")
 
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 def testLogUnacceptedlogInfo():
     dataObj = UML.createData("Matrix", [[1]], useLog=False)
     UML.log("acceptable", dataObj)
@@ -718,18 +720,18 @@ def testShowLogSearchFilters():
     noDataSize = os.path.getsize(pathToFile)
     assert noDataSize < oneEntrySize
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testLevelofDetailNotInRange():
     UML.showLog(levelOfDetail=6)
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def testStartGreaterThanEndDate():
     UML.showLog(startDate="2018-03-24", endDate="2018-03-22")
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testLeastRunsAgoNegative():
-    UML.showLog(leastRunsAgo= -2)
+    UML.showLog(leastRunsAgo=-2)
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def testMostRunsLessThanLeastRuns():
     UML.showLog(leastRunsAgo=2, mostRunsAgo=1)

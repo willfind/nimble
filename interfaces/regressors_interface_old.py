@@ -12,19 +12,17 @@ from __future__ import print_function
 import os
 import os.path
 import sys
+
 from six.moves import range
-
-
 try:
     import numpy
-
     loaded = True
 except ImportError as ie:
     loaded = False
     message = ie
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType
 
 # Contains path to regressors root directory
 regressorsDir = None
@@ -61,7 +59,7 @@ def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output
         print('testX may not be an in package representation, it must refer to a file')
 
     if isinstance(trainX, UML.data.Sparse):
-        raise ArgumentException("Regressors does not accept sparse input")
+        raise InvalidArgumentType("Regressors does not accept sparse input")
 
     testFile = open(testX, 'r')
     if output is not None:

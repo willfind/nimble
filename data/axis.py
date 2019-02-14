@@ -17,7 +17,10 @@ import numpy
 
 import UML
 from UML import fill
-from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
+from UML.exceptions import ImproperObjectAction
+from UML.exceptions import InvalidArgumentTypeCombination
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.randomness import pythonRandom
 from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
@@ -84,7 +87,7 @@ class Axis(object):
         if len(self) == 0:
             msg = "Cannot set any {0} names; this object has no {0}s"
             msg = msg.format(self._axis)
-            raise ArgumentException(msg)
+            raise ImproperObjectAction(msg)
         if namesDict is None:
             self._setAllDefault()
         self._setName_implementation(oldIdentifier, newName)
@@ -108,26 +111,23 @@ class Axis(object):
             self._setNamesFromList(assignments, count)
 
     def _getIndex(self, identifier):
-        if isinstance(self, Points):
-            num = self._source._pointCount
-        else:
-            num = self._source._featureCount
+        num = len(self)
         accepted = (six.string_types, int, numpy.integer)
 
         toReturn = identifier
         if num == 0:
             msg = "There are no valid " + self._axis + "identifiers; "
             msg += "this object has 0 " + self._axis + "s"
-            raise ArgumentException(msg)
+            raise ImproperObjectAction(msg)
         if identifier is None:
             msg = "An identifier cannot be None."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
         if not isinstance(identifier, accepted):
             msg = "The identifier must be either a string (a valid "
             msg += self._axis + " name) or an integer (python or numpy) index "
             msg += "between 0 and " + str(num - 1) + " inclusive. "
             msg += "Instead we got: " + str(identifier)
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
         if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
@@ -136,14 +136,14 @@ class Axis(object):
                 msg = "The given index " + str(identifier) + " is outside of "
                 msg += "the range of possible indices in the " + self._axis
                 msg += " axis (0 to " + str(num - 1) + ")."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
         if isinstance(identifier, six.string_types):
             try:
                 toReturn = self._getIndexByName(identifier)
             except KeyError:
                 msg = "The " + self._axis + " name '" + identifier
                 msg += "' cannot be found."
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         return toReturn
 
@@ -161,7 +161,7 @@ class Axis(object):
         try:
             self._getIndex(name)
             return True
-        except ArgumentException:
+        except InvalidArgumentValue:
             return False
 
     #########################
@@ -216,11 +216,12 @@ class Axis(object):
 
     def _sort(self, sortBy, sortHelper):
         if sortBy is not None and sortHelper is not None:
-            msg = "Cannot specify a feature to sort by and a helper function"
-            raise ArgumentException(msg)
+            msg = "Cannot specify a feature to sort by and a helper function. "
+            msg += "Either sortBy or sortHelper must be None"
+            raise InvalidArgumentTypeCombination(msg)
         if sortBy is None and sortHelper is None:
             msg = "Either sortBy or sortHelper must not be None"
-            raise ArgumentException(msg)
+            raise InvalidArgumentTypeCombination(msg)
 
         if isinstance(self, Points):
             otherAxis = 'feature'
@@ -241,12 +242,12 @@ class Axis(object):
                 msg = "This object contains {0} {1}s, "
                 msg += "but sortHelper has {2} identifiers"
                 msg = msg.format(axisCount, self._axis, len(indices))
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if len(indices) != len(set(indices)):
                 msg = "This object contains {0} {1}s, "
                 msg += "but sortHelper has {2} unique identifiers"
                 msg = msg.format(axisCount, self._axis, len(set(indices)))
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             sortHelper = indices
 
@@ -331,7 +332,7 @@ class Axis(object):
     #         msg = msg.format(axisCap=self._axis.capitalize(),
     #                          divideInto=divideInto, offAxis=offAxis,
     #                          offAxisCount=offAxisCount, axis=self._axis)
-    #         raise ArgumentException(msg)
+    #         raise InvalidArgumentValue(msg)
     #
     #     if not self._source._pointNamesCreated():
     #         self._source.points._setAllDefault()
@@ -356,12 +357,12 @@ class Axis(object):
     def _transform(self, function, limitTo):
         if self._source._pointCount == 0:
             msg = "We disallow this function when there are 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if self._source._featureCount == 0:
             msg = "We disallow this function when there are 0 features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if function is None:
-            raise ArgumentException("function must not be None")
+            raise InvalidArgumentType("function must not be None")
         if limitTo is not None:
             limitTo = constructIndicesList(self._source, self._axis, limitTo)
 
@@ -379,12 +380,12 @@ class Axis(object):
             limitTo = constructIndicesList(self._source, self._axis, limitTo)
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if len(self._source.features) == 0:
             msg = "We disallow this function when there are 0 features"
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
         if function is None:
-            raise ArgumentException("function must not be None")
+            raise InvalidArgumentType("function must not be None")
 
         ret = self._calculate_implementation(function, limitTo)
 
@@ -427,7 +428,7 @@ class Axis(object):
                 if not hasattr(currOut, '__getitem__'):
                     msg = "function must return random accessible data "
                     msg += "(ie has a __getitem__ attribute)"
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentType(msg)
 
                 toCopyInto = []
                 for value in currOut:
@@ -479,14 +480,14 @@ class Axis(object):
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
-            raise ImproperActionException(msg)
+            raise ImproperObjectAction(msg)
 
         if mapper is None or reducer is None:
-            raise ArgumentException("The arguments must not be none")
+            raise InvalidArgumentType("The arguments must not be None")
         if not hasattr(mapper, '__call__'):
-            raise ArgumentException("The mapper must be callable")
+            raise InvalidArgumentType("The mapper must be callable")
         if not hasattr(reducer, '__call__'):
-            raise ArgumentException("The reducer must be callable")
+            raise InvalidArgumentType("The reducer must be callable")
 
         self._source.validate()
 
@@ -560,12 +561,12 @@ class Axis(object):
             if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
         if divide is not None:
             if not isinstance(divide, allowedTypes):
                 msg = "The argument named divide must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
         # check that if it is a string, it is one of the accepted values
         accepted = [
@@ -603,12 +604,12 @@ class Axis(object):
                 # treat it as a vector
                 if inMainLen == 1:
                     if inOffLen != objMainLen:
-                        raise ArgumentException(vecErr)
+                        raise InvalidArgumentValue(vecErr)
                     return True
                 # treat it as a vector
                 elif inOffLen == 1:
                     if inMainLen != objMainLen:
-                        raise ArgumentException(vecErr)
+                        raise InvalidArgumentValue(vecErr)
                     argval.transpose()
                     return True
                 # treat it as a mis-sized object
@@ -619,7 +620,7 @@ class Axis(object):
                     msg += "but it doesn't match the shape of the calling"
                     msg += "object (" + str(objPC) + " x "
                     msg += str(objFC) + ")"
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
             return False
 
         def checkAlsoShape(also, objIn):
@@ -645,14 +646,14 @@ class Axis(object):
                 msg = "applyResultTo must have the same number of "
                 msg += self._axis + "s (" + str(alsoMainLen) + ") as the "
                 msg += "calling object (" + str(callMainLen) + ")"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if objIn and callOffLen != alsoOffLen:
                 msg = "When a non-vector UML object is given for the subtract "
                 msg += "or divide arguments, then applyResultTo "
                 msg += "must have the same number of " + offAxis
                 msg += "s (" + str(alsoOffLen) + ") as the calling object "
                 msg += "(" + str(callOffLen) + ")"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValueCombination(msg)
 
         # actually check that objects are the correct shape/size
         objArg = False
@@ -888,14 +889,12 @@ class Axis(object):
             self._source.pointNamesInverse = []
             names = self._source.pointNames
             invNames = self._source.pointNamesInverse
-            count = self._source._pointCount
         else:
             self._source.featureNames = {}
             self._source.featureNamesInverse = []
             names = self._source.featureNames
             invNames = self._source.featureNamesInverse
-            count = self._source._featureCount
-        for i in range(count):
+        for i in range(len(self)):
             defaultName = self._nextDefaultName()
             invNames.append(defaultName)
             names[defaultName] = i
@@ -927,13 +926,13 @@ class Axis(object):
         if newName is not None:
             if not isinstance(newName, six.string_types):
                 msg = "The new name must be either None or a string"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
         if newName in names:
             if invNames[index] == newName:
                 return
             msg = "This name '" + newName + "' is already in use"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         if newName is None:
             newName = self._nextDefaultName()
@@ -965,19 +964,19 @@ class Axis(object):
             if len(assignments) > 0:
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             self._setNamesFromDict({}, count)
             return
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
             msg += "many entries (" + str(len(assignments)) + ") as this axis "
             msg += "is long (" + str(count) + ")"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         for name in assignments:
             if name is not None and not isinstance(name, six.string_types):
                 msg = 'assignments must contain only string values'
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if name is not None and name.startswith(DEFAULT_PREFIX):
                 try:
                     num = int(name[DEFAULT_PREFIX_LENGTH:])
@@ -997,7 +996,7 @@ class Axis(object):
                 name = self._nextDefaultName()
             if name in temp:
                 msg = "Cannot input duplicate names: " + str(name)
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             temp[name] = index
         assignments = temp
 
@@ -1009,12 +1008,11 @@ class Axis(object):
             return
         if not isinstance(assignments, dict):
             msg = "assignments may only be a dict"
-            msg += "with as many entries as this axis is long"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
         if count == 0:
             if len(assignments) > 0:
                 msg = "assignments is too large; this axis is empty"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if isinstance(self, Points):
                 self._source.pointNames = {}
                 self._source.pointNamesInverse = []
@@ -1023,17 +1021,17 @@ class Axis(object):
                 self._source.featureNamesInverse = []
             return
         if len(assignments) != count:
-            msg = "assignments may only be a dict, "
-            msg += "with as many entries as this axis is long"
-            raise ArgumentException(msg)
+            msg = "assignments may only have as many entries as this " \
+                  "axis is long"
+            raise InvalidArgumentValue(msg)
 
         # at this point, the input must be a dict
         #check input before performing any action
         for name in assignments.keys():
             if not None and not isinstance(name, six.string_types):
-                raise ArgumentException("Names must be strings")
+                raise InvalidArgumentValue("Names must be strings")
             if not isinstance(assignments[name], int):
-                raise ArgumentException("Indices must be integers")
+                raise InvalidArgumentValue("Indices must be integers")
             if assignments[name] < 0 or assignments[name] >= count:
                 if isinstance(self, Points):
                     countName = 'points'
@@ -1041,7 +1039,7 @@ class Axis(object):
                     countName = 'features'
                 msg = "Indices must be within 0 to "
                 msg += "len(self." + countName + ") - 1"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         reverseMap = [None] * len(assignments)
         for name in assignments.keys():
@@ -1116,7 +1114,7 @@ class Axis(object):
                 msg = "The value for 'number' ({0}) ".format(number)
                 msg += "is greater than the number of {0}s ".format(axis)
                 msg += "to {0} ({1})".format(structure, len(targetList))
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if randomize:
                 targetList = pythonRandom.sample(targetList, number)
             else:
@@ -1289,14 +1287,14 @@ class Axis(object):
         """
         if toAdd is None:
             msg = "The argument 'toAdd' must not have a value of None"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
         if not isinstance(toAdd, UML.data.Base):
             msg = "The argument 'toAdd' must be an instance of the "
             msg += "UML.data.Base  class. The value we recieved was "
             msg += str(toAdd) + ", had the type " + str(type(toAdd))
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(toAdd.__class__))
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(self, Points):
             objOffAxisLen = self._source._featureCount
@@ -1324,7 +1322,7 @@ class Axis(object):
             msg += "{offAxis}s."
             msg = msg.format(offAxis=offAxis, objCount=objOffAxisLen,
                              addCount=addOffAxisLen)
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         # this helper ignores default names - so we can only have an
         # intersection of names when BOTH objects have names created.
@@ -1359,7 +1357,7 @@ class Axis(object):
             if truncated:
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
     def _nameIntersection(self, other):
         """
@@ -1367,10 +1365,10 @@ class Axis(object):
         axis between the two objects.
         """
         if other is None:
-            raise ArgumentException("The other object cannot be None")
+            raise InvalidArgumentType("The other object cannot be None")
         if not isinstance(other, UML.data.Base):
             msg = "The other object must be an instance of base"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         axis = self._axis
         self._source._defaultNamesGeneration_NamesSetOperations(other, axis)
@@ -1412,11 +1410,10 @@ class Axis(object):
             msg += "reordering to occur: either all names must be specified, "
             msg += "or the order must be the same."
 
-
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in lnames):
-                raise ArgumentException(msg)
+                raise ImproperObjectAction(msg)
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
-                raise ArgumentException(msg)
+                raise ImproperObjectAction(msg)
 
             ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
             # names are not the same.
@@ -1424,7 +1421,7 @@ class Axis(object):
                 rdiff = numpy.setdiff1d(rnames, lnames, assume_unique=True)
                 msgBase += "Yet, the following names were unmatched (caller "
                 msgBase += "names on the left, callee names on the right):\n"
-
+                msg = copy.copy(msgBase)
                 table = [['ID', 'name', '', 'ID', 'name']]
                 for lname, rname in zip(ldiff, rdiff):
                     table.append([lGetter(lname), lname, "   ",
@@ -1433,7 +1430,7 @@ class Axis(object):
                 msg += UML.logger.tableString.tableString(table)
                 print(msg, file=sys.stderr)
 
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
     def _alignNames(self, axis, toAdd):
         """
@@ -1561,20 +1558,20 @@ def _validateStructuralArguments(structure, axis, target, start, end,
     if all(param is None for param in [target, start, end, number]):
         msg = "You must provide a value for {0}, ".format(targetName)
         msg += " or start/end, or number."
-        raise ArgumentException(msg)
+        raise InvalidArgumentTypeCombination(msg)
     if number is not None and number < 1:
         msg = "number must be greater than zero"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if number is None and randomize:
         msg = "randomize selects a random subset of "
         msg += "{0}s to {1}. ".format(axis, structure)
         msg += "When randomize=True, the number argument cannot be None"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValueCombination(msg)
     if target is not None:
         if start is not None or end is not None:
             msg = "Range removal is exclusive, to use it, "
             msg += "{0} must be None".format(targetName)
-            raise ArgumentException(msg)
+            raise InvalidArgumentTypeCombination(msg)
 
 def _validateStartEndRange(start, end, axis, axisLength):
     """
@@ -1583,14 +1580,14 @@ def _validateStartEndRange(start, end, axis, axisLength):
     if start < 0 or start > axisLength:
         msg = "start must be a valid index, in the range of possible "
         msg += axis + 's'
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if end < 0 or end > axisLength:
         msg = "end must be a valid index, in the range of possible "
         msg += axis + 's'
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if start > end:
         msg = "The start index cannot be greater than the end index"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValueCombination(msg)
 
 def _stringToFunction(string, axis, nameChecker):
     """
@@ -1613,7 +1610,7 @@ def _stringToFunction(string, axis, nameChecker):
             if len(targetList) != 2:
                 msg = "the target({0}) is a ".format(target)
                 msg += "query string but there is an error"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             nameOfPtOrFt = targetList[0]
             valueOfPtOrFt = targetList[1]
             nameOfPtOrFt = nameOfPtOrFt.strip()
@@ -1628,7 +1625,7 @@ def _stringToFunction(string, axis, nameChecker):
                     offAxis = 'point'
                 msg = "the {0} ".format(offAxis)
                 msg += "'{0}' doesn't exist".format(nameOfPtOrFt)
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             optrOperator = optrDict[optr]
             # convert valueOfPtOrFt from a string, if possible
@@ -1650,7 +1647,7 @@ def _stringToFunction(string, axis, nameChecker):
     else:
         msg = "'{0}' is not a valid {1} ".format(target, axis)
         msg += 'name nor a valid query string'
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     return target
 
