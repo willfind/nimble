@@ -15,9 +15,9 @@ def inverse(A):
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base")
-    if A.points == 0 and A.features == 0:
+    if len(A.points) == 0 and len(A.features) == 0:
         return A.copy()
-    if A.points != A.features:
+    if len(A.points) != len(A.features):
         msg = 'Object has to be square (Number of features and points needs to be equal).'
         raise InvalidArgumentValue(msg)
 
