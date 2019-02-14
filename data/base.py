@@ -2919,6 +2919,48 @@ class Base(object):
                     matches.append(name)
         return matches
 
+
+    ###################################
+    ###################################
+    ###   Linear Algebra functions   ###
+    ###################################
+    ###################################
+
+    def inverse(self, pseudoInverse=False):
+        """
+            Compute the inverse or pseudo-inverse of an object.
+            By default tries to compute the (multiplicative) inverse.
+            pseudoInverse uses singular-value decomposition (SVD).
+        """
+
+        if pseudoInverse:
+            inverse = UML.calculate.pseudoInverse(self)
+        else:
+            inverse = UML.calculate.inverse(self)
+        return inverse
+
+
+    def solveLinearSystem(self, b, method='solve'):
+        """
+           Solves the linear equation A * x = b for unknown x
+            b: One dimension Base object.
+           Methods: 'solve' and 'least squares'
+            'solve' assumes square matrix.
+            'least squares' Computes object x such that 2-norm |b - Ax| is minimized.
+        """
+        if not isinstance(b, UML.data.Base):
+            msg = "b must be an instance of Base."
+            raise InvalidArgumentType(msg)
+        if method == 'solve':
+                return UML.calculate.solve(self, b)
+        elif method == 'least squares':
+                return UML.calculate.leastSquaresSolution(self, b)
+        else:
+            msg = "Valid methods are: 'solve' and 'least squares'."
+            raise InvalidArgumentValue(msg)
+
+
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
