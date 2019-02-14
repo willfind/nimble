@@ -5,7 +5,7 @@ import re
 
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue, InvalidArgumentValueCombination
 
 
 def inverse(A):
@@ -13,18 +13,18 @@ def inverse(A):
        Compute the (multiplicative) inverse of an UML object
     """
     if not isinstance(A, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base")
     if A.points == 0 and A.features == 0:
         return A.copy()
     if A.points != A.features:
         msg = 'Object has to be square (Number of features and points needs to be equal).'
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     def _handleSingularCase(e):
         if re.match('.*singular.*', str(e), re.I):
             msg = 'Object non-invertible (Singular)'
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
         else:
             raise(e)
 
@@ -37,7 +37,7 @@ def inverse(A):
         except ValueError as e:
             if re.match('.*object arrays*', str(e), re.I):
                 msg = 'Elements types in object data are not supported.'
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
     else:
         inv_obj = A.copyAs('Sparse')
         try:
@@ -47,7 +47,7 @@ def inverse(A):
         except TypeError as e:
             if re.match('.*no supported conversion*', str(e), re.I):
                 msg = 'Elements types in object data are not supported.'
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
     inv_obj.transpose()
     inv_obj.data = inv_data
@@ -63,18 +63,18 @@ def pseudoInverse(A, method='svd'):
         Uses singular-value decomposition by default. Least squares solver included as an option.
     """
     if not isinstance(A, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base.")
     if A.points == 0 and A.features == 0:
         return A
     if method not in ['least-squares', 'svd']:
-        raise ArgumentException(
+        raise InvalidArgumentValue(
             "Supported methods are 'least-squares' and 'svd'.")
 
     def _handleNonSupportedTypes(e):
         if re.match('.*object arrays*', str(e), re.I):
             msg = 'Elements types in object data are not supported.'
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
     pinv_obj = A.copyAs('Matrix')
     if method == 'svd':
@@ -97,25 +97,25 @@ def solve(A, b):
         A should be a square a object.
     """
     if not isinstance(A, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
     if not isinstance(b, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
     if A.points != A.features:
         msg = 'Object A has to be square (Number of features and points needs to be equal).'
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if b.points != 1 and b.features != 1:
-        raise ArgumentException("b should be a vector")
+        raise InvalidArgumentValue("b should be a vector")
     elif b.points == 1 and b.features > 1:
         if A.points != b.features:
-            raise ArgumentException('A and b have incompatible dimensions.')
+            raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
         else:
             b = b.copy()
             b.flattenToOneFeature()
     elif b.points > 1 and b.features == 1:
         if A.points != b.points:
-            raise ArgumentException('A and b have incompatible dimensions.')
+            raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
 
     A_original_type = A.getTypeString()
     if A.getTypeString() in ['DataFrame', 'List']:
@@ -141,22 +141,22 @@ def leastSquaresSolution(A, b):
         Compute least-squares solution to equation Ax = b
     """
     if not isinstance(A, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
     if not isinstance(b, UML.data.Base):
-        raise ArgumentException(
+        raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
     if b.points != 1 and b.features != 1:
-        raise ArgumentException("b should be a vector")
+        raise InvalidArgumentValue("b should be a vector")
     elif b.points == 1 and b.features > 1:
         if A.points != b.features:
-            raise ArgumentException('A and b have incompatible dimensions.')
+            raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
         else:
             b = b.copy()
             b.flattenToOneFeature()
     elif b.points > 1 and b.features == 1:
         if A.points != b.points:
-            raise ArgumentException('A and b have incompatible dimensions.')
+            raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
 
     A_original_type = A.getTypeString()
     if A.getTypeString() in ['DataFrame', 'List']:
