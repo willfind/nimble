@@ -92,9 +92,32 @@ def createRandomData(
 
     Examples
     --------
-    TODO
-    """
+    Random integers.
+    >>> ptNames = ['a', 'b', 'c', 'd', 'e']
+    >>> random = UML.createRandomData('Matrix', 5, 5, 0,
+    ...                               pointNames=ptNames,
+    ...                               elementType='int')
+    >>> random
+    Matrix(
+        [[52.000 93.000 15.000 72.000 61.000]
+         [21.000 83.000 87.000 75.000 75.000]
+         [88.000 24.000 3.000  22.000 53.000]
+         [2.000  88.000 30.000 38.000 2.000 ]
+         [64.000 60.000 21.000 33.000 76.000]]
+         pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
+        )
 
+    Random floats, high sparsity.
+    >>> sparse = UML.createRandomData('Sparse', 5, 5, .9)
+    >>> sparse
+    Sparse(
+        [[  0   0   0    0 0]
+         [  0   0 -0.138 0 0]
+         [0.497 0   0    0 0]
+         [  0   0   0    0 0]
+         [  0   0   0    0 0]]
+        )
+    """
     if numPoints < 1:
         msg = "must specify a positive nonzero number of points"
         raise ArgumentException(msg)
@@ -121,7 +144,7 @@ def createRandomData(
         # we consider the possible possitions as numbered in a row-major
         # order on a grid, and sample that without replacement
         gridSize = numPoints * numFeatures
-        nzLocation = numpy.random.choice(gridSize, size=numNonZeroValues,
+        nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
                                          replace=False)
 
         # The point value is determined by counting how many groups of
@@ -211,7 +234,32 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Examples
     --------
-    TODO
+    Ones with default names.
+    >>> ones = UML.ones('List', 5, 5)
+    >>> ones
+    List(
+        [[1.000 1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000 1.000]]
+        )
+
+    Named object of ones with pointNames and featureNames.
+    >>> onesDF = UML.ones('DataFrame', 4, 4,
+    ...                   pointNames=['1', '2', '3', '4'],
+    ...                   featureNames=['a', 'b', 'c', 'd'],
+    ...                   name='ones DataFrame')
+    >>> onesDF
+    DataFrame(
+        [[1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000]
+         [1.000 1.000 1.000 1.000]]
+        pointNames={'1':0, '2':1, '3':2, '4':3}
+        featureNames={'a':0, 'b':1, 'c':2, 'd':3}
+        name="ones DataFrame"
+        )
     """
     return createConstantHelper(numpy.ones, returnType, numPoints, numFeatures,
                                 pointNames, featureNames, name)
@@ -257,7 +305,32 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Examples
     --------
-    TODO
+    Zeros with default names.
+    >>> zeros = UML.zeros('Matrix', 5, 5)
+    >>> zeros
+    Matrix(
+        [[0.000 0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000 0.000]]
+        )
+
+    Named object of zeros with pointNames and featureNames.
+    >>> zerosSparse = UML.zeros('Sparse', 4, 4,
+    ...                         pointNames=['1', '2', '3', '4'],
+    ...                         featureNames=['a', 'b', 'c', 'd'],
+    ...                         name='Sparse all-zeros')
+    >>> zerosSparse
+    Sparse(
+        [[0 0 0 0]
+         [0 0 0 0]
+         [0 0 0 0]
+         [0 0 0 0]]
+        pointNames={'1':0, '2':1, '3':2, '4':3}
+        featureNames={'a':0, 'b':1, 'c':2, 'd':3}
+        name="Sparse all-zeros"
+        )
     """
     return createConstantHelper(numpy.zeros, returnType, numPoints,
                                 numFeatures, pointNames, featureNames, name)
@@ -301,7 +374,31 @@ def identity(returnType, size, pointNames='automatic',
 
     Examples
     --------
-    TODO
+    Identity matrix with default names.
+    >>> identity = UML.identity('Matrix', 5)
+    >>> identity
+    Matrix(
+        [[1.000 0.000 0.000 0.000 0.000]
+         [0.000 1.000 0.000 0.000 0.000]
+         [0.000 0.000 1.000 0.000 0.000]
+         [0.000 0.000 0.000 1.000 0.000]
+         [0.000 0.000 0.000 0.000 1.000]]
+        )
+
+    Named object of zeros with pointNames and featureNames.
+    >>> identityList = UML.identity('List', 3,
+    ...                             pointNames=['1', '2', '3'],
+    ...                             featureNames=['a', 'b', 'c'],
+    ...                             name='identity matrix list')
+    >>> identityList
+    List(
+        [[1.000 0.000 0.000]
+         [0.000 1.000 0.000]
+         [0.000 0.000 1.000]]
+        pointNames={'1':0, '2':1, '3':2}
+        featureNames={'a':0, 'b':1, 'c':2}
+        name="identity matrix list"
+        )
     """
     retAllowed = copy.copy(UML.data.available)
     if returnType not in retAllowed:
@@ -364,7 +461,30 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     Examples
     --------
-    TODO
+    Normalize a single data set.
+    >>> data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
+    >>> trainX = UML.createData("Matrix", data)
+    >>> orig = trainX.copy()
+    >>> UML.normalizeData('scikitlearn.PCA', trainX, n_components=2)
+    >>> trainX
+    Matrix(
+        [[-0.216 0.713 ]
+         [-1.005 -0.461]
+         [1.221  -0.253]]
+        )
+
+    Normalize training and testing data.
+    >>> data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
+    >>> trainX = UML.createData("Matrix", data1)
+    >>> data2 = [[-1, 0, 5]]
+    >>> testX = UML.createData("Matrix", data2)
+    >>> UML.normalizeData('scikitlearn.PCA', trainX, testX=testX,
+                          n_components=2)
+    >>> # trainX is the same as above example.
+    >>> testX
+    Matrix(
+        [[-1.739 2.588]]
+        )
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
@@ -430,10 +550,6 @@ def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
         It will be checked using
         UML.interfaces.CustomLearner.validateSubclass to ensure that all
         details of the provided implementation are acceptable.
-
-    Examples
-    --------
-    TODO
     """
     UML.helpers.registerCustomLearnerBackend(customPackageName,
                                              learnerClassObject, True)
@@ -466,10 +582,6 @@ def registerCustomLearner(customPackageName, learnerClassObject):
         It will be checked using
         UML.interfaces.CustomLearner.validateSubclass to ensure that all
         details of the provided implementation are acceptable.
-
-    Examples
-    --------
-    TODO
     """
     UML.helpers.registerCustomLearnerBackend(customPackageName,
                                              learnerClassObject, False)
@@ -494,10 +606,6 @@ def deregisterCustomLearnerAsDefault(customPackageName, learnerName):
     learnerName : str
         The name of the learner to be removed from the
         interface / custom package with the name 'customPackageName'.
-
-    Examples
-    --------
-    TODO
     """
     UML.helpers.deregisterCustomLearnerBackend(customPackageName,
                                                learnerName, True)
@@ -522,10 +630,6 @@ def deregisterCustomLearner(customPackageName, learnerName):
     learnerName : str
         The name of the learner to be removed from the
         interface / custom package with the name 'customPackageName'.
-
-    Examples
-    --------
-    TODO
     """
     UML.helpers.deregisterCustomLearnerBackend(customPackageName,
                                                learnerName, False)
@@ -550,10 +654,6 @@ def learnerParameters(name):
     Returns
     -------
     list
-
-    Examples
-    --------
-    TODO
     """
     return _learnerQuery(name, 'parameters')
 
@@ -577,10 +677,6 @@ def learnerDefaultValues(name):
     Returns
     -------
     dict
-
-    Examples
-    --------
-    TODO
     """
     return _learnerQuery(name, 'defaults')
 
@@ -605,10 +701,6 @@ def listLearners(package=None):
     Returns
     -------
     list
-
-    Examples
-    --------
-    TODO
     """
     results = []
     if package is None:
@@ -758,10 +850,10 @@ def createData(
     >>> asList = UML.createData('List', data, name='simple')
     >>> asList
     List(
-    [[1.000 2.000 3.000]
-     [4.000 5.000 6.000]]
-    name="simple"
-    )
+        [[1.000 2.000 3.000]
+         [4.000 5.000 6.000]]
+        name="simple"
+        )
 
     Loading data from a file.
     >>> with open('createData.csv', 'w') as cd:
@@ -940,7 +1032,7 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
 
     Calculates the cross validated error for each argument permutation
     that can be generated by the merge of arguments and kwarguments.
-    example **kwarguments: {'a':(1,2,3), 'b':(4,5)}
+    Example kwarguments: {'a':(1,2,3), 'b':(4,5)}
     generates permutations of dict in the format:
     {'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5},
     {'a':2, 'b':5}, {'a':3, 'b':5}
@@ -1128,16 +1220,12 @@ def learnerType(learnerNames):
     Parameters
     ----------
     learnerNames : str, list
-        A string or a list of strings in the format 'package.learner'
+        A string or a list of strings in the format 'package.learner'.
 
     Returns
     -------
-    str - for a single learner
-    list - for multiple learners
-
-    Examples
-    --------
-    TODO
+    str, list
+        string for a single learner or a list for multiple learners.
     """
     #argument checking
     if not isinstance(learnerNames, list):
@@ -1240,7 +1328,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     Returns
     -------
-    UML.interfaces.UniversalInterface.TrainedLearner
+    UML.interfaces.universal_interface.TrainedLearner
 
     See Also
     --------
@@ -1248,7 +1336,39 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     Examples
     --------
-    TODO
+    A single dataset which contains the labels.
+    >>> data = [[1, 0, 0, 1],
+    ...         [0, 1, 0, 2],
+    ...         [0, 0, 1, 3],
+    ...         [1, 0, 0, 1],
+    ...         [0, 1, 0, 2],
+    ...         [0, 0, 1, 3]]
+    >>> ftNames = ['a', 'b' ,'c', 'label']
+    >>> trainData = UML.createData('Matrix', data, featureNames=ftNames)
+    >>> tl = UML.train('Custom.KNNClassifier', trainX=trainData,
+    ...                trainY='label')
+    >>> print(type(tl))
+    <class 'UML.interfaces.universal_interface.TrainedLearner'>
+
+    Passing arguments to the learner. Both the arguments parameter and
+    kwarguments can be utilized, they will be merged. Below, ``C`` and
+    ``kernel`` are parameters for scikit-learn's SVC learner.
+    >>> dataX = [[1, 0, 0],
+    ...          [0, 1, 0],
+    ...          [0, 0, 1],
+    ...          [1, 0, 0],
+    ...          [0, 1, 0],
+    ...          [0, 0, 1]]
+    >>> dataY = [[1], [2], [3], [1], [2], [3]]
+    >>> trainX = UML.createData('Matrix', dataX)
+    >>> trainY = UML.createData('Matrix', dataY)
+    >>> tl = UML.train('sciKitLearn.SVC', trainX=trainX, trainY=trainY,
+    ...                arguments={'C': 0.1}, kernel='linear')
+    >>> tlAttributes = tl.getAttributes()
+    >>> cValue = tlAttributes['C']
+    >>> kernelValue = tlAttributes['kernel']
+    >>> print(cValue, kernelValue)
+    (0.1, 'linear')
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
@@ -1397,7 +1517,49 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     Examples
     --------
-    TODO
+    Train dataset which contains the labels.
+    >>> rawTrain = [[1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3],
+    ...             [1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3]]
+    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> trainData = UML.createData('Matrix', rawTrain)
+    >>> testX = UML.createData('Matrix', rawTestX)
+    >>> predict = UML.trainAndApply('Custom.KNNClassifier',
+    ...                             trainX=trainData, trainY=3,
+    ...                             testX=testX)
+    >>> predict
+    Matrix(
+        [[1.000]
+         [2.000]
+         [3.000]]
+        )
+
+    Passing arguments to the learner. Both the arguments parameter and
+    kwarguments can be utilized, they will be merged. Below, ``C`` and
+    ``kernel`` are parameters for scikit-learn's SVC learner.
+    >>> rawTrainX = [[1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1],
+    ...              [1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1]]
+    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> trainX = UML.createData('Matrix', rawTrainX)
+    >>> trainY = UML.createData('Matrix', rawTrainY)
+    >>> testX = UML.createData('Matrix', rawTestX)
+    >>> pred = UML.trainAndApply('sciKitLearn.SVC', trainX=trainX,
+    ...                          trainY=trainY, testX=testX,
+    ...                          arguments={'C': 0.1}, kernel='linear')
+    >>> pred
+    Matrix(
+        [[1.000]
+         [2.000]
+         [3.000]]
+        )
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
@@ -1452,7 +1614,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     for training on the whole training data set. Finally, the learned
     model generates predictions for the testing set, an the performance
     of those predictions is calculated and returned. If no additional
-    arguments are supplied via arguments or **kwarguments, then the
+    arguments are supplied via arguments or kwarguments, then the
     result is the performance of the algorithm with default arguments on
     the testing data.
 
@@ -1531,7 +1693,48 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     Examples
     --------
-    TODO
+    Train and test datasets which contains the labels.
+    >>> rawTrain = [[1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3],
+    ...             [1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3]]
+    >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    >>> ftNames = ['a', 'b', 'c', 'label']
+    >>> trainData = UML.createData('Matrix', rawTrain,
+    ...                            featureNames=ftNames)
+    >>> testData = UML.createData('Matrix', rawTest,
+    ...                           featureNames=ftNames)
+    >>> perform = UML.trainAndTest(
+    ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
+    ...     testX=testData, testY='label',
+    ...     performanceFunction=UML.calculate.fractionIncorrect)
+    >>> perform
+    0.0
+
+    Passing arguments to the learner. Both the arguments parameter and
+    kwarguments can be utilized, they will be merged. Below, ``C`` and
+    ``kernel`` are parameters for scikit-learn's SVC learner.
+    >>> rawTrainX = [[1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1],
+    ...              [1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1]]
+    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> rawTestY = [[1], [2], [3]]
+    >>> trainX = UML.createData('Matrix', rawTrainX)
+    >>> trainY = UML.createData('Matrix', rawTrainY)
+    >>> testX = UML.createData('Matrix', rawTestX)
+    >>> testY = UML.createData('Matrix', rawTestY)
+    >>> perform = UML.trainAndTest(
+    ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
+    ...     testX=testX, testY=testY,
+    ...     arguments={'C': 0.1}, kernel='linear')
+    >>> perform
+    0.0
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
@@ -1675,7 +1878,40 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
 
     Examples
     --------
-    TODO
+    Train and test datasets which contains the labels.
+    >>> rawTrain = [[1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3],
+    ...             [1, 0, 0, 1],
+    ...             [0, 1, 0, 2],
+    ...             [0, 0, 1, 3]]
+    >>> ftNames = ['a', 'b', 'c', 'label']
+    >>> trainData = UML.createData('Matrix', rawTrain,
+    ...                            featureNames=ftNames)
+    >>> perform = UML.trainAndTestOnTrainingData(
+    ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
+    ...     performanceFunction=UML.calculate.fractionIncorrect)
+    >>> perform
+    0.0
+
+    Passing arguments to the learner. Both the arguments parameter and
+    kwarguments can be utilized, they will be merged. Below, ``C`` and
+    ``kernel`` are parameters for scikit-learn's SVC learner.
+    >>> rawTrainX = [[1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1],
+    ...              [1, 0, 0],
+    ...              [0, 1, 0],
+    ...              [0, 0, 1]]
+    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> trainX = UML.createData('Matrix', rawTrainX)
+    >>> trainY = UML.createData('Matrix', rawTrainY)
+    >>> perform = UML.trainAndTestOnTrainingData(
+    ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
+    ...     performanceFunction=UML.calculate.fractionIncorrect,
+    ...     arguments={'C': 0.1}, kernel='linear')
+    >>> perform
+    0.0
     """
 
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
@@ -1703,10 +1939,6 @@ def log(logType, logInfo):
     See Also
     --------
     showLog
-
-    Examples
-    --------
-    TODO
     """
     if not isinstance(logType, six.string_types):
         msg = "logType must be a string"
@@ -1772,10 +2004,6 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
     See Also
     --------
     log
-
-    Examples
-    --------
-    TODO
     """
     if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
         msg = "levelOfDetail must be 1, 2, or 3"
@@ -1814,11 +2042,7 @@ def loadData(inputPath):
     Returns
     -------
     UML.data.Base
-        Subclass of Base object corresponding with the ``returnType``.
-
-    Examples
-    --------
-    TODO
+        Subclass of Base object.
     """
     if not cloudpickle:
         msg = "To load UML objects, cloudpickle must be installed"
@@ -1848,10 +2072,6 @@ def loadTrainedLearner(inputPath):
     Returns
     -------
     UML.interfaces.UniversalInterface.TrainedLearner
-
-    Examples
-    --------
-    TODO
     """
     if not cloudpickle:
         msg = "To load UML models, cloudpickle must be installed"
