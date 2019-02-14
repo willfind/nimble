@@ -201,14 +201,14 @@ def testLeastSquareSolution_exact():
                 b = createData(dataType_b, b_np)
                 sol = leastSquaresSolution(A, b)
                 A_inv = inverse(A)
-                if b.features > 1:
+                if len(b.features) > 1:
                     b.transpose()
                 reference = (A_inv * b)
                 reference.transpose()
-                reference.setPointNames(['b'])
+                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
-                assert A.getFeatureNames() == sol.getFeatureNames()
-                assert sol.getPointNames() == ['b']
+                assert A.features.getNames() == sol.features.getNames()
+                assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
 
 
@@ -231,20 +231,20 @@ def testLeastSquareSolution_overdetermined():
                 assert b == b_orig
 
                 A_pinv = pseudoInverse(A)
-                if b.features > 1:
+                if len(b.features) > 1:
                     b.transpose()
                 reference = (A_pinv * b)
                 reference.transpose()
-                reference.setPointNames(['b'])
+                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
-                assert A.getFeatureNames() == sol.getFeatureNames()
-                assert sol.getPointNames() == ['b']
+                assert A.features.getNames() == sol.features.getNames()
+                assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
 
 
 def testLeastSquareSolution_underdetermined():
     """
-        Test success for leastSquareSolution underdetermined system.
+        Test success for leastSquareSolution under-determined system.
     """
     a = numpy.array([[1, 2, 3], [4, 5, 6]])
     b_s = [numpy.array([1, 2]), numpy.array([[1], [2]])]
@@ -262,12 +262,12 @@ def testLeastSquareSolution_underdetermined():
                 assert b == b_orig
 
                 A_pinv = pseudoInverse(A)
-                if b.features > 1:
+                if len(b.features) > 1:
                     b.transpose()
                 reference = (A_pinv * b)
                 reference.transpose()
-                reference.setPointNames(['b'])
+                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
-                assert A.getFeatureNames() == sol.getFeatureNames()
-                assert sol.getPointNames() == ['b']
+                assert A.features.getNames() == sol.features.getNames()
+                assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
