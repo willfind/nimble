@@ -1,19 +1,19 @@
 """
 Tests to check the loading, writing, and usage of UML.settings, along
 with the undlying structures being used.
-
 """
 
 from __future__ import absolute_import
 import tempfile
 import copy
 import os
-import six.moves.configparser
 
 from nose.tools import raises
+import six.moves.configparser
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import ImproperObjectAction
 from UML.configuration import configSafetyWrapper
 
 
@@ -179,17 +179,17 @@ def test_settings_GetSet():
     assert UML.settings.changes == origChangeSet
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 @configSafetyWrapper
 def test_settings_HooksException_unCallable():
-    """ Test SeesionConfiguration.hook() throws exception on bad input """
+    """ Test SessionConfiguration.hook() throws exception on bad input """
     UML.settings.hook("TestS", "TestOp", 5)
 
 
-@raises(ArgumentException)
+@raises(ImproperObjectAction)
 @configSafetyWrapper
 def test_settings_HooksException_unHookable():
-    """ Test SeesionConfiguration.hook() throws exception for unhookable combo """
+    """ Test SessionConfiguration.hook() throws exception for unhookable combo """
     UML.settings.hook("TestS", "TestOp", None)
 
     def nothing(value):
@@ -198,12 +198,10 @@ def test_settings_HooksException_unHookable():
     UML.settings.hook("TestS", "TestOp", nothing)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 @configSafetyWrapper
 def test_settings_HooksException_wrongSig():
-    """ Test SeesionConfiguration.hook() throws exception on incorrect signature """
-    UML.settings.hook("TestS", "TestOp", None)
-
+    """ Test SessionConfiguration.hook() throws exception on incorrect signature """
     def twoArg(value, value2):
         pass
 
@@ -401,7 +399,7 @@ def test_settings_syncingChanges():
     assert UML.settings.get('TestOther', 'Temp0') == 'unchanged'
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
 

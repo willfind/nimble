@@ -11,7 +11,7 @@ from UML import trainAndTest
 
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
 
@@ -159,7 +159,7 @@ def test_multioutput_learners_callable_from_all():
     assert ret_TLT_multi == ret_TT_1
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_train_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -174,7 +174,7 @@ def test_train_multiclassStrat_disallowed_multioutput():
     TLmulti = UML.train(testName, trainX=trainX, trainY=trainY, multiClassStrategy='OneVsOne', lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndApply_scoreMode_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -192,7 +192,7 @@ def test_trainAndApply_scoreMode_disallowed_multiOutput():
     UML.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, scoreMode="allScores", lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndApply_multiClassStrat_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -210,7 +210,7 @@ def test_trainAndApply_multiClassStrat_disallowed_multiOutput():
     UML.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, multiClassStrategy="OneVsOne", lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndTest_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -233,7 +233,7 @@ def test_trainAndTest_scoreMode_disallowed_multioutput():
                      scoreMode="allScores", lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -250,7 +250,7 @@ def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
                                    scoreMode="allScores", lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndTest_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -273,7 +273,7 @@ def test_trainAndTest_multiclassStrat_disallowed_multioutput():
                      multiClassStrategy="OneVsOne", lamb=1)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValueCombination)
 def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
@@ -361,12 +361,12 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     try:
         tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=(1, 2))
         assert False
-    except ArgumentException:
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                                testX=trainObj, k=(1, 2))
         assert False
-    except ArgumentException:
+    except InvalidArgumentValueCombination:
         pass

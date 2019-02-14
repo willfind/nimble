@@ -1,5 +1,5 @@
 """
-A group of tests which passes data to train, trainAndApply, and trainAndTest, 
+A group of tests which passes data to train, trainAndApply, and trainAndTest,
 checking that after the call, the input data remains unmodified. It makes
 use of listLearners and learnerType to try this operation with as many learners
 as possible
@@ -11,7 +11,7 @@ from nose.plugins.attrib import attr
 
 import UML
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
@@ -122,9 +122,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
 #                print learner
             # this is meant to safely bypass those learners that have required arguments
-            except ArgumentException as ae:
+            except InvalidArgumentValue as iav:
                 pass
-#                print ae
+#                print iav
             # this is generally how shogun explodes
             except SystemError as se:
                 pass
@@ -140,9 +140,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
 #                print learner
             # this is meant to safely bypass those learners that have required arguments
-            except ArgumentException as ae:
+            except InvalidArgumentValue as iav:
                 pass
-#                print ae
+#                print iav
             except SystemError as se:
                 pass
 #                print se

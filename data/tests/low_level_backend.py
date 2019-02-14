@@ -27,6 +27,9 @@ try:
 except:
     import mock
 
+from six.moves import range
+from nose.tools import *
+
 from UML import createData
 from UML.data import Base
 from UML.data import available
@@ -34,14 +37,9 @@ from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from UML.data.dataHelpers import constructIndicesList
-from nose.tools import *
-from UML.exceptions import ArgumentException
-from UML.exceptions import ImproperActionException
-
-from six.moves import range
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.randomness import pythonRandom
-
-
 
 ###########
 # helpers #
@@ -103,15 +101,15 @@ class LowLevelBackend(object):
     # _pointNameDifference() #
     ##########################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameDifference_exceptionOtherNone(self):
-        """ Test _pointNameDifference() for ArgumentException when the other object is None """
+        """ Test _pointNameDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameDifference(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameDifference_exceptionWrongType(self):
-        """ Test _pointNameDifference() for ArgumentException when the other object is not the right type """
+        """ Test _pointNameDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameDifference("wrong")
 
@@ -129,15 +127,15 @@ class LowLevelBackend(object):
     # _featureNameDifference() #
     #####################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameDifference_exceptionOtherNone(self):
-        """ Test _featureNameDifference() for ArgumentException when the other object is None """
+        """ Test _featureNameDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameDifference(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameDifference_exceptionWrongType(self):
-        """ Test _featureNameDifference() for ArgumentException when the other object is not the right type """
+        """ Test _featureNameDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameDifference("wrong")
 
@@ -156,15 +154,15 @@ class LowLevelBackend(object):
     # points._nameIntersection() #
     ##############################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_nameIntersection_exceptionOtherNone(self):
-        """ Test points._nameIntersection() for ArgumentException when the other object is None """
+        """ Test points._nameIntersection() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
         toTest.points._nameIntersection(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_nameIntersection_exceptionWrongType(self):
-        """ Test points._nameIntersection() for ArgumentException when the other object is not the right type """
+        """ Test points._nameIntersection() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
         toTest.points._nameIntersection("wrong")
 
@@ -182,15 +180,15 @@ class LowLevelBackend(object):
     # features._nameIntersection() #
     ################################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_nameIntersection_exceptionOtherNone(self):
-        """ Test features._nameIntersection() for ArgumentException when the other object is None """
+        """ Test features._nameIntersection() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
         toTest.features._nameIntersection(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_nameIntersection_exceptionWrongType(self):
-        """ Test features._nameIntersection() for ArgumentException when the other object is not the right type """
+        """ Test features._nameIntersection() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
         toTest.features._nameIntersection("wrong")
 
@@ -208,15 +206,15 @@ class LowLevelBackend(object):
     # _pointNameSymmetricDifference() #
     ##############################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameSymmetricDifference_exceptionOtherNone(self):
-        """ Test _pointNameSymmetricDifference() for ArgumentException when the other object is None """
+        """ Test _pointNameSymmetricDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameSymmetricDifference(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameSymmetricDifference_exceptionWrongType(self):
-        """ Test _pointNameSymmetricDifference() for ArgumentException when the other object is not the right type """
+        """ Test _pointNameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameSymmetricDifference("wrong")
 
@@ -234,15 +232,15 @@ class LowLevelBackend(object):
     # _featureNameSymmetricDifference() #
     ##############################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameSymmetricDifference_exceptionOtherNone(self):
-        """ Test _featureNameSymmetricDifference() for ArgumentException when the other object is None """
+        """ Test _featureNameSymmetricDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameSymmetricDifference(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameSymmetricDifference_exceptionWrongType(self):
-        """ Test _featureNameSymmetricDifference() for ArgumentException when the other object is not the right type """
+        """ Test _featureNameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameSymmetricDifference("wrong")
 
@@ -260,15 +258,15 @@ class LowLevelBackend(object):
     # _pointNameUnion() #
     ################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameUnion_exceptionOtherNone(self):
-        """ Test _pointNameUnion() for ArgumentException when the other object is None """
+        """ Test _pointNameUnion() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameUnion(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test__pointNameUnion_exceptionWrongType(self):
-        """ Test _pointNameUnion() for ArgumentException when the other object is not the right type """
+        """ Test _pointNameUnion() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
         toTest._pointNameUnion("wrong")
 
@@ -286,15 +284,15 @@ class LowLevelBackend(object):
     # _featureNameUnion() #
     ################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameUnion_exceptionOtherNone(self):
-        """ Test _featureNameUnion() for ArgumentException when the other object is None """
+        """ Test _featureNameUnion() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameUnion(None)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_featureNameUnion_exceptionWrongType(self):
-        """ Test _featureNameUnion() for ArgumentException when the other object is not the right type """
+        """ Test _featureNameUnion() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
         toTest._featureNameUnion("wrong")
 
@@ -312,42 +310,42 @@ class LowLevelBackend(object):
     # points.setName() #
     ####################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_setName_exceptionPrevWrongType(self):
-        """ Test points.setName() for ArgumentException when given the wrong type for prev"""
+        """ Test points.setName() for InvalidArgumentType when given the wrong type for prev"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setName_exceptionPrevInvalidIndex(self):
-        """ Test points.setName() for ArgumentException when given an invalid prev index"""
+        """ Test points.setName() for InvalidArgumentValue when given an invalid prev index"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=12, newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setName_exceptionPrevNotFound(self):
-        """ Test points.setName() for ArgumentException when the prev pointName is not found"""
+        """ Test points.setName() for InvalidArgumentValue when the prev pointName is not found"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier="Previous!", newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_setName_exceptionNewInvalidType(self):
-        """ Test points.setName() for ArgumentException when the new pointName is not a string"""
+        """ Test points.setName() for InvalidArgumentValue when the new pointName is not a string"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier="three", newName=4)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setName_exceptionNonUnique(self):
-        """ Test points.setName() for ArgumentException when a duplicate pointName is given"""
+        """ Test points.setName() for InvalidArgumentValue when a duplicate pointName is given"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier="three", newName="two")
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_setName_exceptionNoPoints(self):
         toTest = self.constructor()
         toTest.points.setName("hello", "2")
@@ -382,48 +380,42 @@ class LowLevelBackend(object):
     # features.setName() #
     ######################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_setName_exceptionPrevWrongType(self):
-        """ Test features.setName() for ArgumentException when given the wrong type for prev"""
+        """ Test features.setName() for InvalidArgumentType when given the wrong type for prev"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setName_exceptionPrevInvalidIndex(self):
-        """ Test features.setName() for ArgumentException when given an invalid prev index"""
+        """ Test features.setName() for InvalidArgumentValue when given an invalid prev index"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=12, newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setName_exceptionPrevNotFound(self):
-        """ Test features.setName() for ArgumentException when the prev featureName is not found"""
+        """ Test features.setName() for InvalidArgumentValue when the prev featureName is not found"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier="Previous!", newName="New!")
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_setName_exceptionNewInvalidType(self):
-        """ Test features.setName() for ArgumentException when the new featureName is not a string"""
+        """ Test features.setName() for InvalidArgumentValue when the new featureName is not a string"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier="three", newName=4)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setName_exceptionNonUnique(self):
-        """ Test features.setName() for ArgumentException when a duplicate featureName is given"""
+        """ Test features.setName() for InvalidArgumentValue when a duplicate featureName is given"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier="three", newName="two")
 
-    #@raises(ArgumentException)
-    #def test_features_setName_exceptionManualAddDefault(self):
-    #	""" Test features.setName() for ArgumentException when given a default featureName """
-    #	toTest = self.constructor(featureNames=["hello"])
-    #	toTest.features.setName("hello",DEFAULT_PREFIX + "2")
-
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_features_setName_exceptionNoFeatures(self):
         toTest = self.constructor()
         toTest.features.setName("hello", "2")
@@ -457,29 +449,30 @@ class LowLevelBackend(object):
     # points.setNames() #
     #####################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionWrongTypeObject(self):
-        """ Test points.setNames() for ArgumentException when pointNames is an unexpected type """
+        """ Test points.setNames() for InvalidArgumentValue a point in point Names is an unexpected type """
+        # a list is the expected argument type, but the value is the incorrect type
         toTest = self.constructor(pointNames=['one'])
         toTest.points.setNames(12)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNonStringPointNameInList(self):
-        """ Test points.setNames() for ArgumentException when a list element is not a string """
+        """ Test points.setNames() for InvalidArgumentValue when a list element is not a string """
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         nonStringName = ['one', 'two', 3]
         toTest.points.setNames(nonStringName)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNonUniqueStringInList(self):
-        """ Test points.setNames() for ArgumentException when a list element is not unique """
+        """ Test points.setNames() for InvalidArgumentValue when a list element is not unique """
         toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.points.setNames(nonUnique)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNoPointsList(self):
-        """ Test points.setNames() for ArgumentException when there are no points to name """
+        """ Test points.setNames() for ImproperObjectAction when there are no points to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.points.setNames(toAssign)
@@ -519,23 +512,23 @@ class LowLevelBackend(object):
         confirmExpectedNames(toTest, 'point', toAssign)
         assert ret is None
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNonStringPointNameInDict(self):
-        """ Test points.setNames() for ArgumentException when a dict key is not a string """
+        """ Test points.setNames() for InvalidArgumentValue when a dict key is not a string """
         toTest = self.constructor(pointNames=['one'])
         nonStringNames = {1: 1}
         toTest.points.setNames(nonStringNames)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNonIntIndexInDict(self):
-        """ Test points.setNames() for ArgumentException when a dict value is not an int """
+        """ Test points.setNames() for InvalidArgumentValue when a dict value is not an int """
         toTest = self.constructor(pointNames=['one'])
         nonIntIndex = {"one": "one"}
         toTest.points.setNames(nonIntIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_setNames_exceptionNoPointsDict(self):
-        """ Test points.setNames() for ArgumentException when there are no points to name """
+        """ Test points.setNames() for ImproperObjectAction when there are no points to name """
         toTest = self.constructor(pointNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.points.setNames(toAssign)
@@ -584,29 +577,30 @@ class LowLevelBackend(object):
     # features.setNames() #
     #######################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionWrongTypeObject(self):
-        """ Test features.setNames() for ArgumentException when featureNames is an unexpected type """
+        """ Test features.setNames() for InvalidArgumentType when a feature in featureNames is an unexpected type """
+        # a list is the expected argument type, but the value is the incorrect type
         toTest = self.constructor(featureNames=['one'])
         toTest.features.setNames(12)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonStringFeatureNameInDict(self):
-        """ Test features.setNames() for ArgumentException when a dict key is not a string """
+        """ Test features.setNames() for InvalidArgumentValue when a dict key is not a string """
         toTest = self.constructor(featureNames=['one'])
         nonStringFeatureNames = {1: 1}
         toTest.features.setNames(nonStringFeatureNames)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonIntIndexInDict(self):
-        """ Test features.setNames() for ArgumentException when a dict value is not an int """
+        """ Test features.setNames() for InvalidArgumentValue when a dict value is not an int """
         toTest = self.constructor(featureNames=['one'])
         nonIntIndex = {"one": "one"}
         toTest.features.setNames(nonIntIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNoFeaturesDict(self):
-        """ Test features.setNames() for ArgumentException when there are no features to name """
+        """ Test features.setNames() for ImproperObjectAction when there are no features to name """
         toTest = self.constructor(featureNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.features.setNames(toAssign)
@@ -639,23 +633,23 @@ class LowLevelBackend(object):
         confirmExpectedNames(toTest, 'feature', toAssign)
         assert ret is None
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonStringFeatureNameInList(self):
-        """ Test features.setNames() for ArgumentException when a list element is not a string """
+        """ Test features.setNames() for InvalidArgumentValue when a list element is not a string """
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         nonStringFeatureNames = ['one', 'two', 3]
         toTest.features.setNames(nonStringFeatureNames)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonUniqueStringInList(self):
-        """ Test features.setNames() for ArgumentException when a list element is not unique """
+        """ Test features.setNames() for InvalidArgumentValue when a list element is not unique """
         toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.features.setNames(nonUnique)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNoFeaturesList(self):
-        """ Test features.setNames() for ArgumentException when there are no features to name """
+        """ Test features.setNames() for ImproperObjectAction when there are no features to name """
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.features.setNames(toAssign)
@@ -1039,7 +1033,7 @@ class LowLevelBackend(object):
         nOne = self.constructor(psize=11, fsize=1)
         assert len(nOne) == 11
 
-    @raises(ImproperActionException)
+    @raises(TypeError)
     def test_len_exception(self):
         nn = self.constructor(psize=11, fsize=33)
         len(nn)
@@ -1137,7 +1131,7 @@ class LowLevelBackend(object):
         assert constructIndicesList(toTest, 'point', testRange) == expected
         assert constructIndicesList(toTest, 'feature', testRange) == expected
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_singleFloat(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1147,7 +1141,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'point', ptIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_floatIteratable(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1157,7 +1151,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', ftIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_floatInList(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1167,7 +1161,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'point', ptIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def testconstructIndicesList_InvalidIndexInteger(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1177,7 +1171,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', ftIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def testconstructIndicesList_InvalidIndexString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1187,19 +1181,19 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', ftIndex)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_handmadeNotIterable(self):
         self.constructIndicesList_backend(lambda lst: NotIterable(*lst))
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_numpyMatrix(self):
         self.constructIndicesList_backend(lambda lst: numpy.matrix(lst))
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_pandasDataFrame(self):
         self.constructIndicesList_backend(lambda lst: pandas.DataFrame(lst))
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_handmade2DOne(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1209,7 +1203,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', list2D)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_handmade2DTwo(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1219,7 +1213,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', array2D)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def testconstructIndicesList_handmade2DThree(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']

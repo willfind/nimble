@@ -15,7 +15,7 @@ import os
 import os.path
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 
 patchDir = os.path.dirname(__file__) + "/mahout_patches"
@@ -52,11 +52,11 @@ def mahout(learnerName, trainX, trainY, testX, arguments={}, output=None, timer=
         return
 
     if isinstance(trainX, UML.data.Base):
-        raise ArgumentException("Must call mahout with paths to input files, not data objects")
+        raise InvalidArgumentType("Must call mahout with paths to input files, not data objects")
     if isinstance(testX, UML.data.Base):
-        raise ArgumentException("Must call mahout with paths to input files, not data objects")
+        raise InvalidArgumentType("Must call mahout with paths to input files, not data objects")
     if isinstance(trainY, UML.data.Base):
-        raise ArgumentException("trainY must be the name of the dependent var in trainX, a vector is not allowed")
+        raise InvalidArgumentType("trainY must be the name of the dependent var in trainX, a vector is not allowed")
 
     cmds = []
 
@@ -87,8 +87,9 @@ def mahoutTasteRecommenderEstimation(trainX, testX, output, argsDict): #,redirec
     to predict ratings. Extension is achieved by temporarily patching Mahout.
     """
     if "recommender" not in argsDict:
-        raise ArgumentException("When calling the taste based recomenders, must include the " +
-                                "argument 'recommender' specifiying which one to use")
+        msg = "When calling the taste based recomenders, must include the "
+        msg += "argument 'recommender' specifiying which one to use"
+        raise InvalidArgumentValue(msg)
 
     recommenderType = argsDict["recommender"]
     del argsDict["recommender"]

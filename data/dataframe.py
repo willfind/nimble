@@ -10,7 +10,8 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -57,7 +58,7 @@ class DataFrame(Base):
         if not isinstance(data, (pd.DataFrame, np.matrix)):
             msg = "the input data can only be a pandas DataFrame or a numpy "
             msg += "matrix or ListPassThrough."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):
             if reuseData:
@@ -112,11 +113,11 @@ class DataFrame(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -170,7 +171,7 @@ class DataFrame(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, DataFrame):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
 
@@ -314,7 +315,7 @@ class DataFrame(Base):
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
                 msg += "feature"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if nansL.any():
                 self.data.iloc[:, l][nansL] = self.data.iloc[:, r][nansL]
             toDrop.append(r)

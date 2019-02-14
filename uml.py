@@ -17,7 +17,8 @@ from dateutil.parser import parse
 import cloudpickle
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 
 from UML.logger import enableLogging, logCapture, directCall
 
@@ -90,14 +91,16 @@ def createRandomData(
     """
 
     if numPoints < 1:
-        raise ArgumentException("must specify a positive nonzero number of points")
+        msg = "must specify a positive nonzero number of points"
+        raise InvalidArgumentValue(msg)
     if numFeatures < 1:
-        raise ArgumentException("must specify a positive nonzero number of features")
+        msg = "must specify a positive nonzero number of features"
+        raise InvalidArgumentValue(msg)
     if sparsity < 0 or sparsity >= 1:
-        raise ArgumentException("sparsity must be greater than zero and less than one")
+        msg = "sparsity must be greater than zero and less than one"
+        raise InvalidArgumentType(msg)
     if elementType != "int" and elementType != "float":
-        raise ArgumentException("elementType may only be 'int' or 'float'")
-
+        raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType.lower() == 'sparse':
@@ -233,12 +236,15 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
     """
     retAllowed = copy.copy(UML.data.available)
     if returnType not in retAllowed:
-        raise ArgumentException("returnType must be a value in " + str(retAllowed))
+        msg = "returnType must be a value in " + str(retAllowed)
+        if not isinstance(returnType, six.string_types):
+            raise InvalidArgumentType(msg)
+        raise InvalidArgumentValue(msg)
 
     if size <= 0:
         msg = "size must be 0 or greater, yet " + str(size)
         msg += " was given."
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     if returnType == 'Sparse':
         if not scipy:
@@ -558,17 +564,18 @@ def createData(
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
         msg = "pointNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     if featureNames != 'automatic' and not isinstance(featureNames, (bool, list, dict)):
         msg = "featureNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     retAllowed = copy.copy(UML.data.available)
     retAllowed.append(None)
     if returnType not in retAllowed:
-        raise ArgumentException("returnType must be a value in " + str(retAllowed))
+        msg = "returnType must be a value in " + str(retAllowed)
+        raise InvalidArgumentValue(msg)
 
     def looksFileLike(toCheck):
         hasRead = hasattr(toCheck, 'read')
@@ -599,7 +606,8 @@ def createData(
         return ret
     # no other allowed inputs
     else:
-        raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
+        msg = "data must contain either raw data or the path to a file to be loaded"
+        raise InvalidArgumentType(msg)
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None,
@@ -839,13 +847,15 @@ def learnerType(learnerNames):
     secondPassLearnerNames = []
     for name in learnerNames:
         if not isinstance(name, str):
-            raise ArgumentException("learnerNames must be a string or a list of strings.")
+            msg = "learnerNames must be a string or a list of strings."
+            raise InvalidArgumentType(msg)
 
         splitTuple = _unpackLearnerName(name)
         currInterface = findBestInterface(splitTuple[0])
         allValidLearnerNames = currInterface.listLearners()
         if not splitTuple[1] in allValidLearnerNames:
-            raise ArgumentException(name + " is not a valid learner on your machine.")
+            msg = name + " is not a valid learner on your machine."
+            raise InvalidArgumentValue(msg)
         result = currInterface.learnerType(splitTuple[1])
         if result == 'UNKNOWN' or result == 'other' or result is None:
             resultsList.append(None)
@@ -953,7 +963,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += "set, yet no performanceFunction was specified. Either one "
             msg += "must be specified (see UML.calculate for out-of-the-box "
             msg += "options) or there must be no choices in the parameters."
-            raise ArgumentException(msg)
+            raise InvalidArgumentValueCombination(msg)
 
         #modify numFolds if needed
         numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
@@ -1254,10 +1264,10 @@ def log(logType, logInfo):
     """
     if not isinstance(logType, six.string_types):
         msg = "logType must be a string"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     elif not isinstance(logInfo, (six.string_types, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     UML.logger.active.log(logType, logInfo)
 
 
@@ -1304,19 +1314,19 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
         """
         if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
             msg = "levelOfDetail must be 1, 2, or 3"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
         if startDate is not None and endDate is not None and startDate > endDate:
             startDate = parse(startDate)
             endDate = parse(endDate)
             msg = "The startDate must be before the endDate"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValueCombination(msg)
         if leastRunsAgo is not None:
             if leastRunsAgo < 0:
                 msg = "leastRunsAgo must be greater than zero"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
                 msg = "mostRunsAgo must be greater than or equal to leastRunsAgo"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValueCombination(msg)
         UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
                                   maximumEntries, searchForText, regex, saveToFileName, append)
 
@@ -1334,11 +1344,13 @@ def loadData(inputPath):
         msg = "To load UML objects, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.umld'):
-        raise ArgumentException('file extension for a saved UML data object should be .umld')
+        msg = 'file extension for a saved UML data object should be .umld'
+        raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
     if not isinstance(ret, UML.data.Base):
-        raise ArgumentException('File does not contain a UML valid data Object.')
+        msg = 'File does not contain a UML valid data Object.'
+        raise InvalidArgumentType(msg)
     return ret
 
 
@@ -1355,11 +1367,13 @@ def loadTrainedLearner(inputPath):
         msg = "To load UML models, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.umlm'):
-        raise ArgumentException('File extension for a saved UML model should be .umlm')
+        msg = 'File extension for a saved UML model should be .umlm'
+        raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
     if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
-        raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
+        msg = 'File does not contain a UML valid trainedLearner Object.'
+        raise InvalidArgumentType(msg)
     return ret
 
 

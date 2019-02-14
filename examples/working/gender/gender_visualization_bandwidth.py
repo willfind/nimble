@@ -56,7 +56,7 @@ def makePowerOfAdjustedLogLikelihoodSum(exp):
 
         return total
 
-    PowerOfAdjustedLogLikelihoodSum.optimal = 'min' 
+    PowerOfAdjustedLogLikelihoodSum.optimal = 'min'
 
     return PowerOfAdjustedLogLikelihoodSum
 
@@ -88,7 +88,7 @@ LogLikelihoodSumDrop5Percent.optimal = 'min'
 def filterLowest(obj, toDrop=.05):
     obj = obj.copy()
     if len(obj.points) != 1 and len(obj.features) != 1:
-        raise UML.exceptions.ArgumentException("Obj must be vector shaped")
+        raise UML.exceptions.ImproperObjectAction("Obj must be vector shaped")
     if len(obj.points) != 1:
         obj.transpose()
 
@@ -144,12 +144,12 @@ class KDEProbability(UML.customLearners.CustomLearner):
 #   return mbw,fbw
 
 def fixedBandwidth_drop5percent():
-    mbw = {'agreeable':                 0.28,   'emotionally aware':        0.22, 
-            'non eloquent':             0.04,   'non image conscious':      0.24, 
+    mbw = {'agreeable':                 0.28,   'emotionally aware':        0.22,
+            'non eloquent':             0.04,   'non image conscious':      0.24,
             'non manipulative':         0.14,   'altruistic':               0.30,
             'power avoidant':           0.16,   'non resilient to stress':  0.12,
-            'non resilient to illness': 0.16,   'annoyable':                0.22, 
-            'complexity avoidant':      0.1,    'warm':                     0.08, 
+            'non resilient to illness': 0.16,   'annoyable':                0.22,
+            'complexity avoidant':      0.1,    'warm':                     0.08,
             'optimistic':               0.14,   'non sexual':               0.04,
             'risk avoidant':            0.14,   'thin skinned':             0.16,
             'forgiving':                0.16,   'worried':                  0.16,
@@ -211,7 +211,7 @@ def fixedBandwidth_all():
             'forgiving':                0.18,   'worried':                  0.18,
             'talkative':                0.14,   'ordinary':                 0.4,
             'empathetic':               0.1}
-    
+
     fbw = { 'agreeable':                0.30,   'emotionally aware':        0.20,
             'non eloquent':             0.24,   'non image conscious':      0.28,
             'non manipulative':         0.16,   'altruistic':               0.24,
@@ -238,7 +238,7 @@ def fixedBandwidth_handAdjusted():
             'forgiving':                0.19,   'worried':                  0.19,
             'talkative':                0.18,   'ordinary':                 0.22,
             'empathetic':               0.17}
-    
+
     fbw = { 'agreeable':                0.2,    'emotionally aware':        0.18,
             'non eloquent':             0.19,   'non image conscious':      0.19,
             'non manipulative':         0.17,   'altruistic':               0.18,
@@ -309,7 +309,7 @@ def cvUnpackBest(resultsAll, maximumIsBest):
     bestArgumentAndScoreTuple = None
     for curResultTuple in resultsAll:
         curArgument, curScore = curResultTuple
-        #if curArgument is the first or best we've seen: 
+        #if curArgument is the first or best we've seen:
         #store its details in bestArgumentAndScoreTuple
         if bestArgumentAndScoreTuple is None:
             bestArgumentAndScoreTuple = curResultTuple
@@ -455,16 +455,16 @@ def colorTrials(responses, genderValue):
 
     bestIn_M = (235, 60, 100)
     bestIn_F = (320, 60, 100)
-    bestIn_M_highS = (230, 80, 100) 
+    bestIn_M_highS = (230, 80, 100)
     bestIn_F_highS = (330, 80, 100)
-    bestIn_M_lowS = (230, 40, 100) 
+    bestIn_M_lowS = (230, 40, 100)
     bestIn_F_lowS = (330, 40, 100)
 
     bestOut_M = (205, 60, 100)
     bestOut_F = (345, 60, 100)
-    bestOut_M_highS = (230, 80, 100) 
+    bestOut_M_highS = (230, 80, 100)
     bestOut_F_highS = (330, 80, 100)
-    bestOut_M_lowS = (230, 40, 100) 
+    bestOut_M_lowS = (230, 40, 100)
     bestOut_F_lowS = (330, 40, 100)
 
     currL = toRGB(bestOut_M)
@@ -488,7 +488,7 @@ def colorTrials(responses, genderValue):
 
     Ldata = -((15 * scipy.stats.uniform.rvs(size=500)) - 5)
     Rdata = (15 * scipy.stats.uniform.rvs(size=500)) - 5
-    
+
     plotDualWithBlendFill(Ldata, Rdata, color1=currL, color2=currR, fileName=None, show=True, showPoints=False, title="", plotMean=False)
 
 
@@ -557,7 +557,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     mSelected = pythonRandom.sample(numpy.append(m1,m2), numMale)
     genDataM = UML.createData("Matrix", mSelected)
     genDataM.transpose()
-    
+
     muF1, sigmaF1 = 0, 3
     muF2, sigmaF2 = 8, 3
     f1 = numpyRandom.normal(muF1, sigmaF1, numFemale)
@@ -591,7 +591,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
 
     def pdfM(vals):
         return (scipy.stats.norm.pdf(vals, muM1, sigmaM1) / 2.0) + (scipy.stats.norm.pdf(vals, muM2, sigmaM2) / 2.0)
-    
+
     def pdfF(vals):
         return (scipy.stats.norm.pdf(vals, muF1, sigmaF1) / 2.0) + (scipy.stats.norm.pdf(vals, muF2, sigmaF2) / 2.0)
 

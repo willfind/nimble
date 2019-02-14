@@ -11,7 +11,6 @@ from .base import Base
 from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory
-from UML.exceptions import ImproperActionException
 
 exceptionDocstring = exceptionDocstringFactory(Base)
 

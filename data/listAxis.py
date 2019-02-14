@@ -9,7 +9,6 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
 from .axis import Axis
 from .points import Points
 
@@ -102,6 +101,7 @@ class ListAxis(Axis):
 
         axisAttr = 'points' if isinstance(self, Points) else 'features'
         indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
+
         # run through target axis and change indices
         if isinstance(self, Points):
             source = copy.copy(self._source.data)

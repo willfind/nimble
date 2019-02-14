@@ -4,6 +4,7 @@ Tests for the functions defined in UML.calculate.utility
 """
 
 from __future__ import absolute_import
+
 import numpy
 from nose.tools import *
 
@@ -16,8 +17,7 @@ from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import rSquared
 from UML.calculate import varianceFractionRemaining
-
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 
 ####################
 # detectBestResult #
@@ -26,7 +26,7 @@ from UML.exceptions import ArgumentException
 # labels, best, all
 # inconsistent between different mixed runs
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_labels_inconsistentForDifferentKnowns():
     def foo(knowns, predicted):
         rawKnowns = knowns.copyAs("numpyarray")
@@ -58,12 +58,12 @@ def test_detectBestResult_labels_inconsistentForDifferentKnowns():
     detectBestResult(foo)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_labels_allcorrect_equals_allwrong():
     detectBestResult(lambda x, y: 20)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_labels_nonmonotonic_minmizer():
     def foo(knowns, predicted):
         ret = UML.calculate.fractionIncorrect(knowns, predicted)
@@ -76,7 +76,7 @@ def test_detectBestResult_labels_nonmonotonic_minmizer():
     detectBestResult(foo)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_labels_nonmonotonic_maxizer():
     def foo(knowns, predicted):
         if knowns == predicted:
@@ -87,7 +87,7 @@ def test_detectBestResult_labels_nonmonotonic_maxizer():
     detectBestResult(foo)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_wrongSignature_low():
     def tooFew(arg1):
         return 0
@@ -95,7 +95,7 @@ def test_detectBestResult_wrongSignature_low():
     detectBestResult(tooFew)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_detectBestResult_wrongSignature_high():
     def tooMany(arg1, arg2, arg3):
         return 0
@@ -107,13 +107,13 @@ def test_detectBestResult_exceptionsAreReported():
     wanted = "SPECIAL TEXT"
 
     def neverWorks(knowns, predicted):
-        raise ArgumentException(wanted)
+        raise InvalidArgumentValue(wanted)
 
     try:
         detectBestResult(neverWorks)
         assert False  # we expected an exception in this test
-    except ArgumentException as ae:
-        assert wanted in ae.value
+    except InvalidArgumentValue as iav:
+        assert wanted in iav.value
 
 
 def _backend(performanceFunction, optimality):

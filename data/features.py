@@ -13,7 +13,7 @@ import numpy
 import six
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 from UML.logger import enableLogging, directCall
 from .dataHelpers import logCaptureFactory
 
@@ -926,7 +926,7 @@ class Features(object):
                 or hasattr(rule, '__call__')):
             msg = "rule must be an integer, string, iterable of integers "
             msg += "and/or strings, or a function"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         splitList = []
         numResultingFts = len(resultingNames)
@@ -953,7 +953,7 @@ class Features(object):
                     else:
                         msg = "A list of items for rule may only contain "
                         msg += " integers and strings"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentType(msg)
                 split.append(value[startIdx:])
                 splitList.append(split)
             else:
@@ -963,7 +963,7 @@ class Features(object):
                 msg += "{0} values, ".format(len(splitList[-1]))
                 msg += "but resultingNames contains "
                 msg += "{0} features".format(numResultingFts)
-                raise ArgumentException(msg)
+                raise InvalidArgumentValueCombination(msg)
 
         featureIndex = self.getIndex(feature)
         numRetFeatures = len(self) - 1 + numResultingFts

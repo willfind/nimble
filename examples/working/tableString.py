@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 import copy
 import math
+
 import six
 from six.moves import range
+
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 
 class TableError(Exception):
@@ -23,19 +26,26 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
                 maxRowsToShow=None, snipIndex=None, useSpaces=True, includeTrailingNewLine=True):
     """takes a table (rows and columns of strings) and returns a string representing a nice visual representation of that table.
     roundDigits is the number of digits to round floats to"""
-    if not isinstance(table, (list, tuple)): raise TableError("table must be list or tuple")
-    if len(table) == 0: return ""
-    if not isinstance(table[0], (list, tuple)): raise TableError(
-        "table elements be lists or tuples. You gave: " + str(objectClass(table[0])))
+    if not isinstance(table, (list, tuple)):
+        raise TableError("table must be list or tuple")
+    if len(table) == 0:
+        return ""
+    if not isinstance(table[0], (list, tuple)):
+        msg = "table elements be lists or tuples. You gave: "
+        msg += str(objectClass(table[0]))
+        raise TableError(msg)
 
     table = copy.deepcopy(table)    #So that the table doesn't get destroyed in the process!
     colWidths = []
     #rows = len(table)
     cols = 0
     for row in table:
-        if not isinstance(row, list): raise TableError(
-            "table must be a list of lists but found a row that had the value " + str(row))
-        if (len(row) > cols): cols = len(row)
+        if not isinstance(row, list):
+            msg = "table must be a list of lists but found a row that had the "
+            msg += " value " + str(row)
+            raise TableError(msg)
+        if (len(row) > cols):
+            cols = len(row)
 
     for c in range(cols):
         colWidths.append(1)
@@ -43,13 +53,18 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
     #sort the values if sorting is on
     if sortColumn != None:
         if isinstance(sortColumn, (str, six.text_type)): #if we're sorting by the column with a given name
-            if headers == None: raise Exception(
-                "Cannot find the sortColumn '" + str(sortColumn) + "' since headers=" + str(headers))
+            if headers == None:
+                msg = "Cannot find the sortColumn '" + str(sortColumn)
+                msg += "' since headers=" + str(headers)
+                raise InvalidArgumentValue(msg)
             sortColumn = headers.index(sortColumn)
-        if not isinstance(sortColumn, six.integer_types): raise Exception(
-            "sort column must be an integer, but was: " + str(sortColumn))
-        if sortColumn < 0: raise Exception(
-            "sortColumn should have been a non-negative integer but was: " + str(sortColumn))
+        if not isinstance(sortColumn, six.integer_types):
+            msg = "sort column must be an integer, but was: " + str(sortColumn)
+            raise InvalidArgumentType(msg)
+        if sortColumn < 0:
+            msg = "sortColumn should have been a non-negative integer but "
+            msg += "was: " + str(sortColumn)
+            raise InvalidArgumentValue(msg)
         if table[0] == headers:
             tempHeaders = table[0]
             table = table[1:]
@@ -71,9 +86,11 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
             if (len(table[r][c]) > colWidths[c]): colWidths[c] = len(table[r][c])
 
     if headers != None:
-        if len(headers) != cols: raise TableError(
-            "Number of table columns (" + str(cols) + ")  does not match number of header columns (" + str(
-                len(headers)) + ")!")
+        if len(headers) != cols:
+            msg = "Number of table columns (" + str(cols)
+            msg += ")  does not match number of header columns ("
+            msg += str(len(headers)) + ")!"
+            raise TableError(msg)
         for c in range(len(headers)):
             if colWidths[c] < len(headers[c]): colWidths[c] = len(headers[c])
 

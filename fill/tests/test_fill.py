@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import UML
 from UML import fill
 from UML import match
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 
 def test_fillFactory_matchNumeric_fillNumeric():
@@ -149,12 +149,12 @@ def test_mean_ignoreMatch():
 def test_mean_allMatches_exception():
     data = [1, 2, 2, 9]
     match = lambda x: x in [1, 2, 2, 9]
-    backend_fill_exception(fill.mean, data, match, ArgumentException)
+    backend_fill_exception(fill.mean, data, match, InvalidArgumentValue)
 
 def test_mean_cannotCalculate_exception():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
-    backend_fill_exception(fill.mean, data, match, ArgumentException)
+    backend_fill_exception(fill.mean, data, match, InvalidArgumentValue)
 
 def test_median_noMatches():
     data = [1, 2, 9, 2]
@@ -171,12 +171,12 @@ def test_median_ignoreMatch():
 def test_median_allMatches_exception():
     data = [1, 2, 9, 2]
     match = lambda x: x in [1, 2, 9]
-    backend_fill_exception(fill.median, data, match, ArgumentException)
+    backend_fill_exception(fill.median, data, match, InvalidArgumentValue)
 
 def test_median_cannotCalculate_exception():
     data = ['a', 'b', 3, 4]
     match = lambda x: x == 'b'
-    backend_fill_exception(fill.median, data, match, ArgumentException)
+    backend_fill_exception(fill.median, data, match, InvalidArgumentValue)
 
 def test_mode_noMatches():
     data = [1, 2, 2, 9]
@@ -193,7 +193,7 @@ def test_mode_ignoreMatch():
 def test_mode_allMatches_exception():
     data = [1, 2, 2, 9, 9]
     match = lambda x: x in [1, 2, 9]
-    backend_fill_exception(fill.mode, data, match, ArgumentException)
+    backend_fill_exception(fill.mode, data, match, InvalidArgumentValue)
 
 def test_forwardFill_noMatches():
     data = [1, 2, 3, 4]
@@ -216,7 +216,7 @@ def test_forwardFill_consecutiveMatches():
 def test_forwardFill_InitialContainsMatch_exception():
     data = [1, 2, 3, 4]
     match = lambda x: x == 1
-    backend_fill_exception(fill.forwardFill, data, match, ArgumentException)
+    backend_fill_exception(fill.forwardFill, data, match, InvalidArgumentValue)
 
 def test_backwardFill_noMatches():
     data = [1, 2, 3, 4]
@@ -239,7 +239,7 @@ def test_backwardFill_consecutiveMatches():
 def test_backwardFill_FinalContainsMatch_exception():
     data = [1, 2, 3, 4]
     match = lambda x: x == 4
-    backend_fill_exception(fill.backwardFill, data, match, ArgumentException)
+    backend_fill_exception(fill.backwardFill, data, match, InvalidArgumentValue)
 
 def test_interpolate_noMatches():
     data = [1, 2, 2, 10]
@@ -278,8 +278,8 @@ def test_interpolate_xKwargIncluded_exception():
         try:
             toTest = UML.createData(t, data)
             ret = fill.interpolate(toTest, match, **arguments)
-            assert False  # expected ArgumentException
-        except ArgumentException:
+            assert False  # expected TypeError
+        except TypeError:
             pass
 
 def test_kNeighborsRegressor_noMatches():

@@ -8,7 +8,7 @@ from abc import abstractmethod
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
@@ -72,6 +72,7 @@ class SparseAxis(Axis):
 
         axisAttr = 'points' if isinstance(self, Points) else 'features'
         indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
+
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
         reverseIdxPosition = numpy.empty(indexPosition.shape[0])
@@ -111,10 +112,10 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an ArgumentException with a message
+                # currRet might return an InvalidArgumentValue with a message
                 # which needs to be formatted with the axis and current index
                 # before being raised
-                if isinstance(currOut, ArgumentException):
+                if isinstance(currOut, InvalidArgumentValue):
                     currOut.value = currOut.value.format(self._axis, viewID)
                     raise currOut
 
@@ -126,7 +127,7 @@ class SparseAxis(Axis):
             if not hasattr(currOut, '__getitem__'):
                 msg = "function must return random accessible data "
                 msg += "(ie has a __getitem__ attribute)"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
             for i, retVal in enumerate(currOut):
                 if retVal != 0:

@@ -22,7 +22,7 @@ import numpy
 
 import UML
 from UML import importModule
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.logger import Stopwatch
 
 pd = importModule('pandas')
@@ -321,12 +321,12 @@ def validateInputString(string, accepted, paramName):
     msg += "ignored when checking the " + paramName
 
     if not isinstance(string, six.string_types):
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     cleanFuncName = cleanKeywordInput(string)
 
     if cleanFuncName not in acceptedClean:
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     return cleanFuncName
 
@@ -421,7 +421,7 @@ def readOnlyException(name):
     """
     msg = "The " + name + " method is disallowed for View objects. View "
     msg += "objects are read only, yet this method modifies the object"
-    raise ImproperActionException(msg)
+    raise TypeError(msg)
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exceptionDocstringFactory(cls):
@@ -503,7 +503,7 @@ def valuesToPythonList(values, argName):
     except TypeError:
         msg = "The argument '{0}' is not an integer ".format(argName)
         msg += "(python or numpy), string, or an iterable container object."
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     return valuesList
 
@@ -521,17 +521,17 @@ def constructIndicesList(obj, axis, values, argName=None):
         msg = "A pandas DataFrame object is not a valid input "
         msg += "for '{0}'. ".format(argName)
         msg += "Only one-dimensional objects are accepted."
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     valuesList = valuesToPythonList(values, argName)
     try:
         axisObj = obj._getAxis(axis)
         indicesList = [axisObj.getIndex(val) for val in valuesList]
-    except ArgumentException as ae:
+    except InvalidArgumentValue as iav:
         msg = "Invalid value for the argument '{0}'. ".format(argName)
         # add more detail to msg; slicing to exclude quotes
-        msg += str(ae)[1:-1]
-        raise ArgumentException(msg)
+        msg += str(iav)[1:-1]
+        raise InvalidArgumentValue(msg)
 
     return indicesList
 
@@ -558,7 +558,7 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
 
     if sortHelper is not None and scorer is None and comparator is None:
         msg = "sortHelper is neither a scorer or a comparator"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     if comparator is not None:
         # make array of views

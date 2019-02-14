@@ -8,13 +8,13 @@ from __future__ import division
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
-from .points import Points
-from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
+from .points import Points
+from .points_view import PointsView
 
 pd = UML.importModule('pandas')
 if pd:
@@ -50,16 +50,16 @@ class DataFramePoints(DataFrameAxis, Points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
-            # currRet might return an ArgumentException with a message which
+            # currRet might return an InvalidArgumentValue with a message which
             # needs to be formatted with the axis and current index before
             # being raised
-            if isinstance(currRet, ArgumentException):
+            if isinstance(currRet, InvalidArgumentValue):
                 currRet.value = currRet.value.format('point', i)
                 raise currRet
             if len(currRet) != len(self._source.features):
                 msg = "function must return an iterable with as many elements "
                 msg += "as features in this object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             self._source.data.iloc[i, :] = currRet
 
