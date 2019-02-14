@@ -122,14 +122,15 @@ def testPseudoInverseObject():
     def _pseudoInverseTest_implementation(obj, method):
         orig_obj = obj.copy()
         identity = UML.identity(obj.getTypeString(),
-                                min(obj.points, obj.features))
+                                min(len(obj.points), len(obj.features)))
         obj_pinv = pseudoInverse(obj, method=method)
-        if obj.points <= obj.features:
+
+        if len(obj.points) <= len(obj.features):
             identity_from_pinv = obj * obj_pinv
         else:
             identity_from_pinv = obj_pinv * obj
-        assert obj_pinv.getPointNames() == obj.getFeatureNames()
-        assert obj_pinv.getFeatureNames() == obj.getPointNames()
+        assert obj_pinv.points.getNames() == obj.features.getNames()
+        assert obj_pinv.features.getNames() == obj.points.getNames()
         assert identity_from_pinv.isApproximatelyEqual(identity)
         assert orig_obj == obj
 
