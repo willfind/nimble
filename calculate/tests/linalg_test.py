@@ -30,8 +30,8 @@ def testInverseSquareObject():
                          featureNames=fnames)
         obj_inv = inverse(obj)
 
-        assert obj_inv.getPointNames() == obj.getFeatureNames()
-        assert obj_inv.getFeatureNames() == obj.getPointNames()
+        assert obj_inv.points.getNames() == obj.features.getNames()
+        assert obj_inv.features.getNames() == obj.points.getNames()
         assert (obj * obj_inv) == identity_obj
         assert orig_obj == obj
 
