@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 import numpy
 
-from nose.tools import *
+from nose.tools import raises
 import UML
 from UML import createData
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
 
 
@@ -47,7 +47,7 @@ def testInverseEmptyObject():
         obj_inv = inverse(obj)
         assert obj_inv == obj
 
-
+@raises(InvalidArgumentValue)
 def testInverseNonSquareObject():
     """
         Test inverse for non square object.
@@ -56,14 +56,11 @@ def testInverseNonSquareObject():
 
     for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
         obj = createData(dataType, data)
-        try:
-            obj_inv = inverse(obj)
-        except ArgumentException as e:
-            pass
-        else:
-            raise AssertionError
+
+        inverse(obj)
 
 
+@raises(InvalidArgumentValue)
 def testNonInvertibleObject():
     """
         Test inverse for non invertible object.
@@ -72,12 +69,9 @@ def testNonInvertibleObject():
 
     for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
         obj = createData(dataType, data)
-        try:
-            obj_inv = inverse(obj)
-        except ArgumentException as e:
-            pass
-        else:
-            raise AssertionError
+
+        inverse(obj)
+
 
 #################
 # pseudoInverse #
