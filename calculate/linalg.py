@@ -146,16 +146,16 @@ def leastSquaresSolution(A, b):
     if not isinstance(b, UML.data.Base):
         raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
-    if b.points != 1 and b.features != 1:
+    if len(b.points) != 1 and len(b.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
-    elif b.points == 1 and b.features > 1:
-        if A.points != b.features:
+    elif len(b.points) == 1 and len(b.features) > 1:
+        if len(A.points) != len(b.features):
             raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
         else:
             b = b.copy()
             b.flattenToOneFeature()
-    elif b.points > 1 and b.features == 1:
-        if A.points != b.points:
+    elif len(b.points) > 1 and len(b.features) == 1:
+        if len(A.points) != len(b.points):
             raise InvalidArgumentValueCombination('A and b have incompatible dimensions.')
 
     A_original_type = A.getTypeString()
@@ -165,7 +165,7 @@ def leastSquaresSolution(A, b):
         b = b.copyAs('Matrix')
 
     sol = A[0, :].copyAs('Matrix')
-    sol.setPointNames(['b'])
+    sol.points.setNames(['b'])
     if A.getTypeString() == 'Matrix':
         solution = scipy.linalg.lstsq(A.data, b.data)
         sol.data = solution[0].T
