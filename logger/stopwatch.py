@@ -7,10 +7,6 @@ generic task based on task name.
 from __future__ import absolute_import
 import time
 
-from UML.exceptions import MissingEntryException
-from UML.exceptions import ImproperActionException
-
-
 class Stopwatch(object):
     """
     The Stopwatch class is used for timing various tasks (training
@@ -34,7 +30,7 @@ class Stopwatch(object):
         if (taskName in self.isRunningStatus
                 and self.isRunningStatus[taskName]):
             msg = "Task: " + taskName + " has already been started."
-            raise ImproperActionException(msg)
+            raise TypeError(msg)
         else:
             self.startTimes[taskName] = time.clock()
             if taskName not in self.cumulativeTimes:
@@ -49,13 +45,13 @@ class Stopwatch(object):
         TODO: Possibly raise an exception instead of overwriting
         existing stop time, if there is already an entry for taskName.
         """
-        if (taskName not in self.cumulativeTimes
+        if (taskName not in self.startTimes
                 or taskName not in self.isRunningStatus):
-            msg = "Tried to stop task that was not started in Stopwatch.stop()"
-            raise MissingEntryException([taskName], msg)
+            msg = "Tried to stop task '" + taskName
+            msg += "' that was not started in Stopwatch.stop()"
+            raise TypeError(msg)
         elif not self.isRunningStatus[taskName]:
-            msg = "Unable to stop task that has already stopped"
-            raise ImproperActionException(msg)
+            raise TypeError("Unable to stop task that has already stopped")
 
         self.stopTimes[taskName] = time.clock()
         self.isRunningStatus[taskName] = False
@@ -110,10 +106,10 @@ class Stopwatch(object):
                 or taskName not in self.isRunningStatus):
             msg = "Missing entry when trying to calculate total task "
             msg += "run time: " + str(taskName)
-            raise MissingEntryException([taskName], msg)
+            raise TypeError(msg)
         elif self.isRunningStatus[taskName]:
             msg = 'Can\'t calculate total running time for ' + taskName
             msg += ', as it is still running'
-            raise ImproperActionException(msg)
+            raise TypeError(msg)
         else:
             return self.cumulativeTimes[taskName]

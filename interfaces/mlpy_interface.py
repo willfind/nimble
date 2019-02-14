@@ -16,7 +16,7 @@ import numpy
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
@@ -132,7 +132,7 @@ class Mlpy(UniversalInterface):
             ret = init[0] + learn[0] + transform[0]
         else:
             msg = "Cannot get parameter names for leaner " + learnerName
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         return [ret]
 
@@ -225,12 +225,12 @@ class Mlpy(UniversalInterface):
                 msg = "For this learner, in the absence of specifying a "
                 msg += "kernel, the trainX parameter must be square "
                 msg += "(representing the inner product space of the features)"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             if isinstance(arguments['kernel'], self.mlpy.KernelExponential):
                 msg = "This interface disallows the use of KernelExponential; "
                 msg = "it is bugged in some versions of mlpy"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         customDict['useT'] = False
         if learnerName == 'MFastHCluster':

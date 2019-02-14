@@ -4,7 +4,6 @@ various python packages or custom learners. Also contains the objects
 which store trained learner models and provide functionality for
 applying and testing learners.
 """
-
 from __future__ import absolute_import
 import inspect
 import copy
@@ -12,13 +11,20 @@ import abc
 import functools
 import sys
 import numbers
+import warnings
+
+import numpy
+import six
+from six.moves import range
 
 import numpy
 import six
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentValue, ImproperObjectAction
+from UML.exceptions import PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from UML.exceptions import prettyListString
 from UML.exceptions import prettyDictString
 from UML.interfaces.interface_helpers import (
@@ -31,8 +37,6 @@ from UML.helpers import generateAllPairs, countWins, inspectArguments
 from UML.helpers import extractWinningPredictionIndex
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import extractWinningPredictionIndexAndScore
-
-from UML.docHelpers import inheritDocstringsFactory
 
 cloudpickle = UML.importModule('cloudpickle')
 
@@ -460,13 +464,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     def _confirmValidLearner(self, learnerName):
         allLearners = self.listLearners()
         if not learnerName in allLearners:
-            msg = learnerName + " is not the name of a learner exposed by "
-            msg += "this interface"
-            raise ArgumentException(msg)
+            msg = learnerName
+            msg += " is not the name of a learner exposed by this interface"
+            raise InvalidArgumentValue(msg)
         learnerCall = self.findCallable(learnerName)
         if learnerCall is None:
             msg = learnerName + " was not found in this package"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
 
     def _trainBackend(self, learnerName, trainX, trainY, arguments, timer):
@@ -519,7 +523,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         if option not in self.optionNames:
             msg = str(option)
             msg += " is not one of the accepted configurable option names"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         UML.settings.set(self.getCanonicalName(), option, value)
 
@@ -531,7 +535,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         if option not in self.optionNames:
             msg = str(option)
             msg += " is not one of the accepted configurable option names"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         # empty string is the sentinal value indicating that the configuration
         # file has an option of that name, but the UML user hasn't set a value
@@ -714,7 +718,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     msg += ". The full mapping of inputs actually provided "
                     msg += "was: " + prettyDictString(original) + ". "
 
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         # if this pool of arguments is not shared, then this is the last
         # subcall, and we can finalize the allocations
@@ -773,7 +777,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 msg += ". The full mapping of inputs actually provided was: "
                 msg += prettyDictString(original) + ". "
 
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
             delayedAllocations = {}
 
@@ -912,7 +916,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 msg += ". The full mapping of inputs actually provided was: "
                 msg += prettyDictString(arguments) + ". "
 
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         return bestIndex
 
@@ -1916,7 +1920,7 @@ class TrainedLearners(TrainedLearner):
                                       featureNames=colHeaders)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
 
         #1 VS 1
         elif self.method == 'OneVsOne':
@@ -1975,9 +1979,9 @@ class TrainedLearners(TrainedLearner):
                                       featureNames=colHeaders)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
         else:
-            raise ArgumentException('Wrong multiclassification method.')
+            raise ImproperObjectAction('Wrong multiclassification method.')
 
 
 ###########

@@ -7,7 +7,7 @@ import copy
 
 import UML
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.docHelpers import inheritDocstringsFactory
@@ -64,7 +64,7 @@ class CustomLearnerInterface(UniversalInterface):
         if not learnerName in self.registeredLearners:
             msg = "Given learnerName does not refer to a learner accessible "
             msg += "through this interface"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         # TODO remove option names
         toRemove = self.registeredLearners[learnerName].options()
@@ -143,7 +143,7 @@ class CustomLearnerInterface(UniversalInterface):
             return learner.labelList
         else:
             msg = "Can only get scores order for a classifying learner"
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
     def isAlias(self, name):
         return name.lower() == self.getCanonicalName().lower()

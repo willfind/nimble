@@ -2,97 +2,90 @@
 Module defining exceptions to be used in UML.
 
 """
-
-
 from __future__ import absolute_import
 from six.moves import range
-class PackageException(Exception):
-    """
-    Exception to be thrown when a package is not installed, but needed
-    """
 
+class UMLException(Exception):
+    """
+    Override Python's Exception, requiring a value upon instantiation.
+    """
     def __init__(self, value):
         self.value = value
+        self.className = self.__class__.__name__
 
     def __str__(self):
         return repr(self.value)
 
     def __repr__(self):
-        return "PackageException(%s)" % repr(self.value)
+        return "{cls}({val})".format(cls=self.className, val=repr(self.value))
 
-
-class ArgumentException(Exception):
+class InvalidArgumentType(UMLException, TypeError):
     """
-    Exception to be thrown when the value of an argument of some function
-    renders it impossible to complete the operation that function is meant
-    to perform.
+    Raised when an argument type causes a failure.
+
+    This exception occurs when the type of an argument is not accepted.
+    This operation does not accept this type for this argument. This is
+    a subclass of Python's TypeError.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-    def __repr__(self):
-        return "ArgumentException(" + repr(self.value) + ")"
-
-
-class MissingEntryException(Exception):
+class InvalidArgumentValue(UMLException, ValueError):
     """
-    Exception to be thrown when a dictionary or other data structure is missing
-    an entry that is necessary for the proper completion of an operation.
+    Raised when an argument value causes a failure.
+
+    This exception occurs when the value of an argument is not accepted.
+    This operation may only accept a limited set of possible values for
+    this argument, a sentinel value may be preventing this operation, or
+    the value may be disallowed for this operation. This is a subclass
+    of Python's ValueError.
     """
+    pass
 
-    def __init__(self, entryNames, value):
-        self.entryNames = entryNames
-        self.value = value
-
-    def __str__(self):
-        errMessage = "Missing entry names: " + self.entryNames[0]
-        for entryName in self.entryNames[1:]:
-            errMessage += ", " + entryName
-        errMessage += '. \n' + repr(self.value)
-
-
-class ImproperActionException(Exception):
+class InvalidArgumentTypeCombination(UMLException, TypeError):
     """
-    Exception to be thrown if calling a function does not make sense in a
-    certain context (i.e. calling call.turnOn() when the car object is already
-    running) or is otherwise not allowed.
+    Raised when the types of two or more arguments causes a failure.
+
+    This exception occurs when the type of a certain argument is based
+    on another argument. The type may be accepted for this argument in
+    other instances but not in this specific case. This is a subclass of
+    Python's TypeError.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class EmptyFileException(Exception):
+class InvalidArgumentValueCombination(UMLException, ValueError):
     """
-        Exception to be thrown if a file to be read is empty
+    Raised when the values of two or more arguments causes a failure.
+
+    This exception occurs when the value of a certain argument is based
+    on another argument. The value may be accepted for this argument in
+    other instances but not in this specific case. This is a subclass of
+    Python's ValueError.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-class FileFormatException(Exception):
+class ImproperObjectAction(UMLException, TypeError):
     """
-        Exception to be thrown if the formatting of a file is not
-        as expected
+    Raised when the characteristics of the object prevent the operation.
+
+    This exception occurs when an operation cannot be completed due to
+    the object's attribute value or an invalid value in the object's
+    data.
     """
+    pass
 
-    def __init__(self, value):
-        self.value = value
+class PackageException(UMLException, ImportError):
+    """
+    Raised when a package is not installed, but needed.
 
-    def __str__(self):
-        return repr(self.value)
+    This is a subclass of Python's ImportError.
+    """
+    pass
 
+class FileFormatException(UMLException, ValueError):
+    """
+    Raised when the formatting of a file is not as expected.
+    """
+    pass
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """

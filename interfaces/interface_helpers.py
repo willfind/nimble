@@ -11,7 +11,7 @@ import six
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.randomness import pythonRandom
 
 
@@ -236,7 +236,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
     Return True if the scoresPerPoint list of list has scores formatted
     for a one vs all strategy, False if it is for a one vs one strategy.
     None if there are no definitive cases. May throw an
-    ArgumentException if there are conflicting definitive votes for
+    InvalidArgumentValue if there are conflicting definitive votes for
     different strategies.
     """
     if not isinstance(scoresPerPoint, UML.data.Base):
@@ -274,7 +274,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
     if ovoVote > 0 and ovaVote > 0:
         msg = "We found conflicting scoring strategies for multiclass "
         msg += "classification, cannot verify one way or the other"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     # only definitive votes were ova
     elif ovaVote > 0:
         return True
@@ -328,7 +328,7 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
         msg = "The given scoreList does not produce the predicted label with "
         msg += "either of our combination strategies. We therefore cannot "
         msg += "verify the format of the scores"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
 
 def calculateSingleLabelScoresFromOneVsOneScores(oneVOneData, numLabels):

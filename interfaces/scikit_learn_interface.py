@@ -15,7 +15,7 @@ from six.moves import range
 
 import UML
 from UML.interfaces.universal_interface import UniversalInterface
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
@@ -145,7 +145,7 @@ class SciKitLearn(UniversalInterface):
             ret = init[0] + fitTransform[0]
         else:
             msg = "Cannot get parameter names for learner " + learnerName
-            raise ArgumentException(msg)
+            raise InvalidArgumentValue(msg)
 
         return [ret]
 
@@ -311,7 +311,7 @@ class SciKitLearn(UniversalInterface):
         except ValueError as ve:
             # these occur when the learner requires different input data
             # (multi-dimensional, non-negative)
-            raise ArgumentException(str(ve))
+            raise InvalidArgumentValue(str(ve))
         if (hasattr(learner, 'decision_function')
                 or hasattr(learner, 'predict_proba')):
             if trainY is not None:

@@ -56,7 +56,7 @@ class AxisView(Axis):
         if start <= possible < end:
             return possible - start
         else:
-            raise KeyError()
+            raise KeyError(name)
 
     def _namesCreated(self):
         if isinstance(self, Points):

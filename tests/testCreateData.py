@@ -13,7 +13,7 @@ except:
     import mock
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.helpers import _intFloatOrString
@@ -672,7 +672,7 @@ def test_extractNames_MTXCoo():
             assert fromList == fromMTXCoo
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_extractNames_duplicatePointName():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -684,7 +684,7 @@ def test_csv_extractNames_duplicatePointName():
         UML.createData(returnType="List", data=tmpCSV.name, pointNames=True)
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_extractNames_duplicateFeatureName():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1066,7 +1066,7 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_linkError(mock_get):
     for t in returnTypes:
@@ -1736,7 +1736,7 @@ def test_createData_keepPF_spCsc_simple():
     assert fromCSC == wanted
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1751,7 +1751,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
             featureNames=True, keepFeatures=[0, "fours"])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1765,7 +1765,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
             featureNames=['ones', 'twos', 'threes'], keepFeatures=[0, "fours"])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_keepFeatures_indexNotInFile():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
@@ -1779,7 +1779,7 @@ def test_csv_keepFeatures_indexNotInFile():
             featureNames=False, keepPoints=[1, 2], keepFeatures=[1, 42])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_keepPoints_indexNotInFile():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
@@ -1793,7 +1793,7 @@ def test_csv_keepPoints_indexNotInFile():
             featureNames=False, keepPoints=[12, 2, 3], keepFeatures=[1, 2])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownPointName_extracted():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1808,7 +1808,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_extracted():
             featureNames=True, keepPoints=[1, "quads"])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_keepPF_csv_ExceptionUnknownPointName_provided():
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1822,7 +1822,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_provided():
             pointNames=['single', 'dubs', 'trips'], keepPoints=[1, "quads"])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_keepPoints_noNamesButNameSpecified():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
@@ -1836,7 +1836,7 @@ def test_csv_keepPoints_noNamesButNameSpecified():
             featureNames=False, keepPoints=['dubs', 1], keepFeatures=[2])
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_csv_keepFeatures_noNamesButNameSpecified():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
@@ -1863,28 +1863,28 @@ def test_csv_keepFeatures_duplicatesInList():
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 1])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 'twos'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=['threes', 'threes'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'], keepFeatures=[1, 'twos'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
@@ -1892,7 +1892,7 @@ def test_csv_keepFeatures_duplicatesInList():
                 featureNames=['ones', 'twos', 'threes'],
                 keepFeatures=['threes', 'threes'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
 
 
@@ -1909,21 +1909,21 @@ def test_csv_keepPoints_duplicatesInList():
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 1])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 'dubs'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=['trips', 'trips'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
@@ -1931,7 +1931,7 @@ def test_csv_keepPoints_duplicatesInList():
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=[1, 'dubs'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
         try:
             UML.createData(
@@ -1939,7 +1939,7 @@ def test_csv_keepPoints_duplicatesInList():
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=['trips', 'trips'])
             assert False
-        except ArgumentException:
+        except InvalidArgumentValue:
             pass
 
 
@@ -2018,7 +2018,7 @@ def test_createData_csv_inputSeparatorConfusion():
 
         fromCSV = UML.createData("Matrix", data=tmpCSV.name)
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def test_createData_csv_inputSeparatorNot1Character():
     with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
         tmpCSV.write("1,,2,,3\n")

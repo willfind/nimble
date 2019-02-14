@@ -11,7 +11,8 @@ import copy
 from nose.tools import *
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
 
@@ -144,27 +145,27 @@ def test_createRandomizedData_names_passed():
 def back_constant_sizeChecking(toTest):
     try:
         toTest("Matrix", -1, 5)
-        assert False  # expected ArgmentException for negative numPoints
-    except ArgumentException:
+        assert False  # expected InvalidArgumentValue for negative numPoints
+    except InvalidArgumentValue:
         pass
     except Exception:
-        assert False  # expected ArgmentException for negative numPoints
+        assert False  # expected InvalidArgumentValue for negative numPoints
 
     try:
         toTest("Matrix", 4, -3)
-        assert False  # expected ArgmentException for negative numFeatures
-    except ArgumentException:
+        assert False  # expected InvalidArgumentValue for negative numFeatures
+    except InvalidArgumentValue:
         pass
     except Exception:
-        assert False  # expected ArgmentException for negative numFeatures
+        assert False  # expected InvalidArgumentValue for negative numFeatures
 
     try:
         toTest("Matrix", 0, 0)
-        assert False  # expected ArgmentException for 0 by 0 sized object
-    except ArgumentException:
+        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
+    except InvalidArgumentValueCombination:
         pass
     except Exception:
-        assert False  # expected ArgmentException for 0 by 0 sized object
+        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
 
 
 def back_constant_emptyCreation(toTest):
@@ -301,19 +302,19 @@ def test_zeros_conversionEqualityBetweenTypes():
 def test_identity_sizeChecking():
     try:
         UML.identity("Matrix", -1)
-        assert False  # expected ArgmentException for negative size
-    except ArgumentException:
+        assert False  # expected InvalidArgumentValue for negative size
+    except InvalidArgumentValue:
         pass
     except Exception:
-        assert False  # expected ArgmentException for negative size
+        assert False  # expected InvalidArgumentValue for negative size
 
     try:
         UML.identity("Matrix", 0)
-        assert False  # expected ArgmentException for 0 valued size
-    except ArgumentException:
+        assert False  # expected InvalidArgumentValue for 0 valued size
+    except InvalidArgumentValue:
         pass
     except Exception:
-        assert False  # expected ArgmentException for 0 valued size
+        assert False  # expected InvalidArgumentValue for 0 valued size
 
 
 def test_identity_correctSizeAndContents():

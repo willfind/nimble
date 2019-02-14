@@ -32,7 +32,8 @@ import UML
 
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 from UML.docHelpers import inheritDocstringsFactory
 
 # Interesting alias cases:
@@ -251,9 +252,11 @@ class Shogun(UniversalInterface):
             if 'pointLen' not in customDict:
                 customDict['pointLen'] = len(trainX.features) if trainX is not None else len(testX.features)
             if trainX is not None and len(trainX.features) != customDict['pointLen']:
-                raise ArgumentException("Length of points in the training data and testing data must be the same")
+                msg = "Length of points in the training data and testing data must be the same"
+                raise InvalidArgumentValueCombination(msg)
             if testX is not None and len(testX.features) != customDict['pointLen']:
-                raise ArgumentException("Length of points in the training data and testing data must be the same")
+                msg = "Length of points in the training data and testing data must be the same"
+                raise InvalidArgumentValueCombination(msg)
 
         trainXTrans = None
         if trainX is not None:
@@ -574,21 +577,21 @@ class Shogun(UniversalInterface):
                 inverseMapping = _remapLabelsRange(labelsObj)
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
-                    raise ArgumentException("Cannot train a classifier with data containing only one label")
+                    raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.MulticlassLabels(flattened.astype(float))
             elif problemType == self.shogun.Classifier.PT_BINARY:
                 inverseMapping = _remapLabelsSpecific(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
-                    raise ArgumentException("Cannot train a classifier with data containing only one label")
+                    raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.BinaryLabels(flattened.astype(float))
             elif problemType == self.shogun.Classifier.PT_REGRESSION:
                 flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.RegressionLabels(flattened.astype(float))
             else:
-                raise ArgumentException("Learner problem type (" + str(problemType) + ") not supported")
+                raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
         except ImportError:
             from shogun.Features import Labels
 
@@ -801,7 +804,7 @@ def _remapLabelsSpecific(toRemap, space):
     value originally in toRemap that was replaced with the value i. The only valid
     keys in the return will be those also present in the paramater space
 
-    Raises: ArgumentException if there are more than unique values than values in space
+    Raises: InvalidArgumentValue if there are more than unique values than values in space
 
     """
     assert len(toRemap.points) > 0
@@ -820,10 +823,10 @@ def _remapLabelsSpecific(toRemap, space):
             if invIndex > maxLength:
                 if space == [-1, 1]:
                     msg = "Multiclass training data cannot be used by a binary-only classifier"
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
                 else:
                     msg = "toRemap contains more values than can be mapped into the provided space."
-                    raise ArgumentException(msg)
+                    raise InvalidArgumentValue(msg)
 
     def remap(fView):
         ret = []

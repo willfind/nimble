@@ -7,7 +7,7 @@ import copy
 from nose.tools import raises
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.customLearners.ridge_regression import RidgeRegression
 from UML.configuration import configSafetyWrapper
@@ -61,7 +61,7 @@ class UncallableLearner(CustomLearner):
         return ['option']
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 @configSafetyWrapper
 def testCustomPackageNameCollision():
     """ Test registerCustomLearner raises an exception when the given name collides with a real package """
@@ -74,24 +74,24 @@ def testCustomPackageNameCollision():
     if nonCustom is not None:
         UML.registerCustomLearner(nonCustom.getCanonicalName(), LoveAtFirstSightClassifier)
     else:
-        raise ArgumentException("Can't test, just pass")
+        raise InvalidArgumentValue("Can't test, just pass")
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 @configSafetyWrapper
 def testDeregisterBogusPackageName():
     """ Test deregisterCustomLearner raises an exception when passed a bogus customPackageName """
     UML.deregisterCustomLearner("BozoPackage", 'ClownClassifier')
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentType)
 @configSafetyWrapper
 def testDeregisterFromNonCustom():
     """ Test deregisterCustomLearner raises an exception when trying to deregister from a non-custom interface """
     UML.deregisterCustomLearner("Mlpy", 'KNN')
 
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 @configSafetyWrapper
 def testDeregisterBogusLearnerName():
     """ Test deregisterCustomLearner raises an exception when passed a bogus learnerName """
@@ -248,7 +248,7 @@ def test_settings_autoRegister():
     try:
         fooInt = UML.helpers.findBestInterface('Foo')
         assert False
-    except ArgumentException:
+    except InvalidArgumentValue:
         pass
 
     # make changes to UML.settings

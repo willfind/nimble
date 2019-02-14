@@ -14,7 +14,8 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException
 from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
@@ -73,7 +74,7 @@ class List(Base):
                 and 'PassThrough' not in str(type(data))):
             msg = "the input data can only be a list or a numpy matrix "
             msg += "or ListPassThrough."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])
@@ -90,7 +91,7 @@ class List(Base):
                     for i in data:
                         if not isAllowedSingleElement(i):
                             msg = 'invalid input data format.'
-                            raise ArgumentException(msg)
+                            raise InvalidArgumentValue(msg)
                 shape = (1, len(data))
                 data = [data]
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
@@ -102,11 +103,11 @@ class List(Base):
                     for i in data:
                         if len(i) != numFeatures:
                             msg = 'invalid input data format.'
-                            raise ArgumentException(msg)
+                            raise InvalidArgumentValue(msg)
                         for j in i:
                             if not isAllowedSingleElement(j):
                                 msg = '%s is invalid input data format.'%j
-                                raise ArgumentException(msg)
+                                raise InvalidArgumentValue(msg)
                 shape = (len(data), numFeatures)
 
             if reuseData:
@@ -190,11 +191,11 @@ class List(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -276,7 +277,7 @@ class List(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, List):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
         self._numFeatures = other._numFeatures
@@ -502,7 +503,7 @@ class List(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the "
                         msg += "same feature"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentValue(msg)
                     if sum(nansL) > 0:
                         # fill any nan values in left with the corresponding
                         # right value
@@ -610,7 +611,10 @@ class List(Base):
 
             def __getitem__(self, key):
                 if key < 0 or key >= self.fRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the feature axis (0 "
+                    msg += "to " + str(self.fRange - 1) + ")."
+                    raise IndexError(msg)
 
                 return self.source.data[self.limit][key + self.fStart]
 
@@ -645,7 +649,10 @@ class List(Base):
                 self.fviewer = FeatureViewer(self.source, self.fStart,
                                              self.fEnd)
                 if key < 0 or key >= self.pRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the point axis (0 "
+                    msg += "to " + str(self.pRange - 1) + ")."
+                    raise IndexError(msg)
 
                 self.fviewer.setLimit(key + self.pStart)
                 return self.fviewer

@@ -14,7 +14,7 @@ import six
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValueCombination
 from .tableString import tableString
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
@@ -241,13 +241,13 @@ def appendColumns(appendTo, appendFrom):
     They must have the same number of rows, but can have different
     numbers of columns.  I.e. len(appendTo) == len(appendFrom), but
     len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
-    If they do not have the same number of rows, an ArgumentException is
-    raised.
+    If they do not have the same number of rows, an InvalidArgumentValue
+    is raised.
     """
     if len(appendTo) != len(appendFrom):
         msg = "Can't merge two matrices with different numbers of rows: "
         msg += str(len(appendTo)) + " != " + str(len(appendFrom))
-        raise ArgumentException(msg)
+        raise c(msg)
 
     for i in range(len(appendTo)):
         appendFromRow = appendFrom[i]
