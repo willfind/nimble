@@ -115,7 +115,7 @@ def createRandomData(
         # we consider the possible possitions as numbered in a row-major
         # order on a grid, and sample that without replacement
         gridSize = numPoints * numFeatures
-        nzLocation = numpy.random.choice(gridSize, size=numNonZeroValues, replace=False)
+        nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues, replace=False)
 
         # The point value is determined by counting how many groups of numFeatures fit into
         # the position number
