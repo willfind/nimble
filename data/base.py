@@ -27,7 +27,6 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction, PackageException
-from UML.exceptions import InvalidArgumentTypeCombination
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.logger import enableLogging, directCall
 from UML.logger import produceFeaturewiseReport
@@ -38,7 +37,7 @@ from .axis import Axis
 from .elements import Elements
 from . import dataHelpers
 # the prefix for default point and feature names
-from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
@@ -445,7 +444,22 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        TODO - outstanding PR, will need an update.
+        >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
+        >>> featureNames = ['keep1', 'replace', 'keep2']
+        >>> data = UML.createData('Matrix', raw,
+        ...                       featureNames=featureNames)
+        >>> replaced = data.replaceFeatureWithBinaryFeatures('replace')
+        >>> replaced
+        ['replace=a', 'replace=c', 'replace=b']
+        >>> data
+        Matrix(
+            [[1 1 1.000 0.000 0.000]
+             [2 2 0.000 0.000 1.000]
+             [3 3 0.000 1.000 0.000]]
+            featureNames={'keep1':0, 'keep2':1, 'replace=a':2,
+                          'replace=c':3, 'replace=b':4}
+                    )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -588,7 +602,34 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        >>> raw = [['ACC', 'Clemson', 15, 0],
+        ...        ['SEC', 'Alabama', 14, 1],
+        ...        ['Big 10', 'Ohio State', 13, 1],
+        ...        ['Big 12', 'Oklahoma', 12, 2],
+        ...        ['Independent', 'Notre Dame', 12, 1],
+        ...        ['SEC', 'LSU', 10, 3],
+        ...        ['SEC', 'Florida', 10, 3],
+        ...        ['SEC', 'Georgia', 11, 3]]
+        >>> ftNames = ['conference', 'team', 'wins', 'losses']
+        >>> top10 = UML.createData('DataFrame', raw,
+        ...                        featureNames=ftNames)
+        >>> groupByLosses = top10.groupByFeature('losses')
+        >>> groupByLosses.keys()
+        [0, 1, 2, 3]
+        >>> groupByLosses[1]
+        DataFrame(
+            [[    SEC      Alabama   14]
+             [   Big 10   Ohio State 13]
+             [Independent Notre Dame 12]]
+            featureNames={'conference':0, 'team':1, 'wins':2}
+            )
+        >>> groupByLosses[3]
+        DataFrame(
+            [[SEC   LSU   10]
+             [SEC Florida 10]
+             [SEC Georgia 11]]
+            featureNames={'conference':0, 'team':1, 'wins':2}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -643,10 +684,6 @@ class Base(object):
         Returns
         -------
         int
-
-        Examples
-        --------
-        TODO
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
@@ -680,10 +717,6 @@ class Base(object):
         -------
         bool
             True if approximately equal, else False.
-
-        Examples
-        --------
-        TODO
         """
         self.validate()
         #first check to make sure they have the same number of rows and columns
@@ -711,7 +744,25 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        >>> raw = [[1, 3, 5], [2, 4, 6]]
+        >>> ptNames = ['odd', 'even']
+        >>> data = UML.createData('List', raw, pointNames=ptNames,
+        ...                       name="odd&even")
+        >>> data
+        List(
+            [[1.000 3.000 5.000]
+             [2.000 4.000 6.000]]
+            pointNames={'odd':0, 'even':1}
+            name="odd&even"
+            )
+        >>> dataCopy = data.copy()
+        >>> dataCopy
+        List(
+            [[1.000 3.000 5.000]
+             [2.000 4.000 6.000]]
+            pointNames={'odd':0, 'even':1}
+            name="odd&even"
+            )
         """
         return self.copyAs(self.getTypeString())
 
@@ -754,7 +805,71 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        Returning a 2-tuple.
+        >>> raw = [[1, 0, 0],
+        ...        [0, 1, 0],
+        ...        [0, 0, 1],
+        ...        [1, 0, 0],
+        ...        [0, 1, 0],
+        ...        [0, 0, 1]]
+        >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
+        >>> trainData, testData = data.trainAndTestSets(.34)
+        >>> trainData
+        Matrix(
+            [[0.000 0.000 1.000]
+             [0.000 0.000 1.000]
+             [0.000 1.000 0.000]
+             [0.000 1.000 0.000]]
+            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            )
+        >>> testData
+        Matrix(
+            [[1.000 0.000 0.000]
+             [1.000 0.000 0.000]]
+            pointNames={'a':0, 'd':1}
+            )
+
+        Returning a 4-tuple.
+        >>> raw = [[1, 0, 0, 1],
+        ...        [0, 1, 0, 2],
+        ...        [0, 0, 1, 3],
+        ...        [1, 0, 0, 1],
+        ...        [0, 1, 0, 2],
+        ...        [0, 0, 1, 3]]
+        >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
+        >>> fourTuple = data.trainAndTestSets(.34, labels=3)
+        >>> trainX, trainY = fourTuple[0], fourTuple[1]
+        >>> testX, testY = fourTuple[2], fourTuple[3]
+        >>> trainX
+        Matrix(
+            [[0.000 0.000 1.000]
+             [0.000 0.000 1.000]
+             [0.000 1.000 0.000]
+             [0.000 1.000 0.000]]
+            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            )
+        >>> trainY
+        Matrix(
+            [[3.000]
+             [3.000]
+             [2.000]
+             [2.000]]
+            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            )
+        >>> testX
+        Matrix(
+            [[1.000 0.000 0.000]
+             [1.000 0.000 0.000]]
+            pointNames={'a':0, 'd':1}
+            )
+        >>> testY
+        Matrix(
+            [[1.000]
+             [1.000]]
+            pointNames={'a':0, 'd':1}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -878,10 +993,6 @@ class Base(object):
             names into the file. The format of the embedding is
             dependant on the format of the file: csv will embed names
             into the data, mtx will place names in a comment.
-
-        Examples
-        --------
-        TODO
         """
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "We do not allow writing to file when an object has "
@@ -949,10 +1060,6 @@ class Base(object):
             we want to write the output file. If filename extension
             .umld is not included in file name it would be added to the
             output file.
-
-        Examples
-        --------
-        TODO
         """
         if not cloudpickle:
             msg = "To save UML objects, cloudpickle must be installed"
@@ -974,9 +1081,15 @@ class Base(object):
 
     def getTypeString(self):
         """
-        Return a string representing the non-abstract type of this
+        The UML Type of this object.
+
+        A string representing the non-abstract type of this
         object (e.g. Matrix, Sparse, etc.) that can be passed to
         createData() function to create a new object of the same type.
+
+        Returns
+        -------
+        str
         """
         return self._getTypeString_implementation()
 
@@ -1089,7 +1202,7 @@ class Base(object):
         office = UML.createData('Matrix', raw, pointNames=pointNames,
                                 featureNames=featureNames)
 
-        **Get a single value:**
+        Get a single value.
         >>>office['michael', 'age']
         41
         >>>office[0,1]
@@ -1097,7 +1210,7 @@ class Base(object):
         >>>office['michael', 1]
         41
 
-        **Get based on points only:**
+        Get based on points only.
         >>>pam = office['pam', :]
         >>>print(pam)
                id  age   department   salary gender
@@ -1122,7 +1235,7 @@ class Base(object):
         angela   4344  45   accounting   43500    f
         *Note: slices are inclusive; index 4 ('gender') was included*
 
-        **Get based on features only:**
+        Get based on features only.
         >>>departments = office[:, 2]
         >>>print(departments)
                     department
@@ -1155,7 +1268,7 @@ class Base(object):
          angela     accounting   43500
         *Note: slices are inclusive; 'salary' was included*
 
-        **Get based on points and features:**
+        Get based on points and features.
         >>>femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
         >>>print(femaleSalaryAndDept)
                  salary   department
@@ -1246,11 +1359,18 @@ class Base(object):
 
     def pointView(self, ID):
         """
-        Returns a View object into the data of the point with the given
-        ID. See View object comments for its capabilities. This View is
+        A read-only view of a single point.
+
+        A BaseView object into the data of the point with the given ID.
+        See BaseView object comments for its capabilities. This view is
         only valid until the next modification to the shape or ordering
-        of the internal data. After such a modification, there is no
-        guarantee to the validity of the results.
+        of this object's internal data. After such a modification, there
+        is no guarantee to the validity of the results.
+
+        Returns
+        -------
+        UML.data.BaseView
+            The read-only object for this point.
         """
         if self._pointCount == 0:
             msg = "ID is invalid, This object contains no points"
@@ -1261,11 +1381,19 @@ class Base(object):
 
     def featureView(self, ID):
         """
-        Returns a View object into the data of the point with the given
-        ID. See View object comments for its capabilities. This View is
-        only valid until the next modification to the shape or ordering
-        of the internal data. After such a modification, there is no
-        guarantee to the validity of the results.
+        A read-only view of a single feature.
+
+        A BaseView object into the data of the feature with the given
+        ID. See BaseView object comments for its capabilities. This view
+        is only valid until the next modification to the shape or
+        ordering of this object's internal data. After such a
+        modification, there is no guarantee to the validity of the
+        results.
+
+        Returns
+        -------
+        UML.data.BaseView
+            The read-only object for this feature.
         """
         if self._featureCount == 0:
             msg = "ID is invalid, This object contains no features"
@@ -1320,10 +1448,6 @@ class Base(object):
         See Also
         --------
         pointView, featureView
-
-        Examples
-        --------
-        TODO
         """
         # transform defaults to mean take as much data as possible,
         # transform end values to be EXCLUSIVE
@@ -1373,10 +1497,6 @@ class Base(object):
         ----------
         level : int
             The extent to which to validate the data.
-
-        Examples
-        --------
-        TODO
         """
         if self._pointNamesCreated():
             assert self._pointCount == len(self.points.getNames())
@@ -1399,12 +1519,12 @@ class Base(object):
         """
         Evaluate if the object contains one or more zero values.
 
-        Return True if there is a value that is equal to integer 0
+        True if there is a value that is equal to integer 0
         contained in this object, otherwise False.
 
-        Examples
-        --------
-        TODO
+        Returns
+        -------
+        bool
         """
         # trivially False.
         if self._pointCount == 0 or self._featureCount == 0:
@@ -1420,7 +1540,31 @@ class Base(object):
     def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19):
         """
-        TODO
+        A string representation of this object.
+
+        For objects exceeding the ``maxWidth`` and/or ``maxHeight``,
+        the string will truncate the output using various placeholders
+        to indicate that some data was removed. For width and height,
+        the data removed will be from the center printing only the data
+        for the first few and last few columns and rows, respectively.
+
+        Parameters
+        ----------
+        includeNames : bool
+            Whether of not to include point and feature names in the
+            printed output. True, the default, indidcates names will be
+            included. False will not include names in the output.
+        maxWidth : int
+            A bound on the maximum number of characters allowed on each
+            line of the output.
+        maxHeight : int
+            A bound on the maximum number of lines allowed for the
+            output.
+        sigDigits : int
+            The number of significant digits to display in the output.
+        maxColumnWidth : int
+            A bound on the maximum number of characters allowed for the
+            width of single column (feature) in each line.
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return ""
@@ -1581,34 +1725,37 @@ class Base(object):
     def show(self, description, includeObjectName=True, includeAxisNames=True,
              maxWidth=120, maxHeight=30, sigDigits=3, maxColumnWidth=19):
         """
-        Method to simplify printing a representation of this data object,
-        with some context. The backend is the toString() method, and this
-        method includes control over all of the same functionality via
-        arguments. Prior to the names and data, it additionally prints a
-        description provided by the user, (optionally) this object's name
-        attribute, and the number of points and features that are in the
-        data.
+        A printed representation of the data.
 
-        description: Unless None, this is printed as-is before the rest of
-        the output.
+        Method to simplify printing a representation of this data
+        object, with some context. The backend is the ``toString()``
+        method, and this method includes control over all of the same
+        functionality via arguments. Prior to the names and data, it
+        additionally prints a description provided by the user,
+        (optionally) this object's name attribute, and the number of
+        points and features that are in the data.
 
-        includeObjectName: if True, the object's name attribute will be
-        printed.
-
-        includeAxisNames: if True, the point and feature names will be
-        printed.
-
-        maxWidth: a bound on the maximum number of characters printed on
-        each line of the output.
-
-        maxHeight: a bound on the maximum number of lines printed in the
-        outout.
-
-        sigDigits: the number of decimal places to show when printing
-        float valued data.
-
-        nameLength: a bound on the maximum number of characters we allow
-        for each point or feature name.
+        Parameters
+        ----------
+        description : str
+            Printed as-is before the rest of the output, unless None.
+        includeObjectName : bool
+            True will include printing of the object's ``name``
+            attribute, False will not print the object's name.
+        includeAxisNames : bool
+            True will include printing of the object's point and feature
+            names, False will not print the point or feature names.
+        maxWidth : int
+            A bound on the maximum number of characters allowed on each
+            line of the output.
+        maxHeight : int
+            A bound on the maximum number of lines allowed for the
+            output.
+        sigDigits : int
+            The number of significant digits to display in the output.
+        maxColumnWidth : int
+            A bound on the maximum number of characters allowed for the
+            width of single column (feature) in each line.
         """
         if description is not None:
             print(description)
@@ -1684,20 +1831,32 @@ class Base(object):
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
                                 xMax=None):
         """
-        Plot a histogram of the distribution of values in the specified
-        Feature. Along the x axis of the plot will be the values seen in
-        the feature, grouped into bins; along the y axis will be the number
-        of values in each bin. Bin width is calculated using
+        Plot a histogram of the distribution of values in a feature.
+
+        Along the x axis of the plot will be the values seen in
+        the feature, grouped into bins; along the y axis will be the
+        number of values in each bin. Bin width is calculated using
         Freedman-Diaconis' rule. Control over the width of the x axis
         is also given, with the warning that user specified values
         can obscure data that would otherwise be plotted given default
         inputs.
 
-        feature: the identifier (index of name) of the feature to show
+        Parameters
+        ----------
+        feature : identifier
+            The index of name of the feature to plot.
+        outPath : str, None
+            A string of the path to save the plot output. If None, the
+            plot will be displayed.
+        xMin : int, float
+            The least value shown on the x axis of the resultant plot.
+        xMax: int, float
+            The largest value shown on the x axis of teh resultant plot.
 
-        xMin: the least value shown on the x axis of the resultant plot.
-
-        xMax: the largest value shown on the x axis of teh resultant plot
+        Returns
+        -------
+        plot
+            Displayed or written to the ``outPath`` file.
         """
         self._plotFeatureDistribution(feature, outPath, xMin, xMax)
 
@@ -1764,7 +1923,40 @@ class Base(object):
             self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
             yMax=None, sampleSizeForAverage=20):
         """
-        TODO
+        A rolling average of the pairwise combination of feature values.
+
+        Control over the width of the both axes is given, with the
+        warning that user specified values can obscure data that would
+        otherwise be plotted given default inputs.
+
+
+        Parameters
+        ----------
+        x : identifier
+            The index or name of the feature from which we draw x-axis
+            coordinates.
+        y : identifier
+            The index or name of the feature from which we draw y-axis
+            coordinates.
+        outPath : str, None
+            A string of the path to save the plot output. If None, the
+            plot will be displayed.
+        xMin : int, float
+            The least value shown on the x axis of the resultant plot.
+        xMax: int, float
+            The largest value shown on the x axis of teh resultant plot.
+        yMin : int, float
+            The least value shown on the y axis of the resultant plot.
+        yMax: int, float
+            The largest value shown on the y axis of teh resultant plot.
+        sampleSizeForAverage : int
+            The number of samples to use for the caclulation of the
+            rolling average.
+
+        Returns
+        -------
+        plot
+            Displayed or written to the ``outPath`` file.
         """
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
                                         sampleSizeForAverage)
@@ -1772,26 +1964,36 @@ class Base(object):
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
                                   xMax=None, yMin=None, yMax=None):
         """
-        Plot a scatter plot of the two input features using the pairwise
-        combination of their values as coordinates. Control over the width
-        of the both axes is given, with the warning that user specified
-        values can obscure data that would otherwise be plotted given default
-        inputs.
+        A scatter plot of the pairwise combination of feature values.
 
-        x: the identifier (index of name) of the feature from which we
-        draw x-axis coordinates
+        Control over the width of the both axes is given, with the
+        warning that user specified values can obscure data that would
+        otherwise be plotted given default inputs.
 
-        y: the identifier (index of name) of the feature from which we
-        draw y-axis coordinates
+        Parameters
+        ----------
+        x : identifier
+            The index or name of the feature from which we draw x-axis
+            coordinates.
+        y : identifier
+            The index or name of the feature from which we draw y-axis
+            coordinates.
+        outPath : str, None
+            A string of the path to save the plot output. If None, the
+            plot will be displayed.
+        xMin : int, float
+            The least value shown on the x axis of the resultant plot.
+        xMax: int, float
+            The largest value shown on the x axis of teh resultant plot.
+        yMin : int, float
+            The least value shown on the y axis of the resultant plot.
+        yMax: int, float
+            The largest value shown on the y axis of teh resultant plot.
 
-        xMin: the least value shown on the x axis of the resultant plot.
-
-        xMax: the largest value shown on the x axis of the resultant plot
-
-        yMin: the least value shown on the y axis of the resultant plot.
-
-        yMax: the largest value shown on the y axis of the resultant plot
-
+        Returns
+        -------
+        plot
+            Displayed or written to the ``outPath`` file.
         """
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
 
@@ -1912,9 +2114,22 @@ class Base(object):
         feature and point indices. This operations also includes
         inverting the point and feature names.
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> raw = [[1, 2, 3], [4, 5, 6]]
+        >>> data = UML.createData('List', raw)
+        >>> data
+        List(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            )
+        >>> data.transpose()
+        >>> data
+        List(
+            [[1.000 4.000]
+             [2.000 5.000]
+             [3.000 6.000]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -1941,6 +2156,8 @@ class Base(object):
         Modify the internal data of this object to refer to the same
         data as other. In other words, the data wrapped by both the self
         and ``other`` objects resides in the same place in memory.
+        Attributes descrbing this object, not its data, will remain the
+        same. For example the object's ``name`` attribute will remain.
 
         Parameters
         ----------
@@ -1951,7 +2168,28 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        Reference data from an object of all zero values.
+        >>> data = UML.ones('List', 2, 3, name='data')
+        >>> data
+        List(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            name="data"
+            )
+        >>> ptNames = ['1', '4']
+        >>> ftNames = ['a', 'b', 'c']
+        >>> toReference = UML.zeros('List', 2, 3, pointNames=ptNames,
+        ...                         featureNames=ftNames,
+        ...                         name='reference')
+        >>> data.referenceDataFrom(toReference)
+        >>> data
+        List(
+            [[0.000 0.000 0.000]
+             [0.000 0.000 0.000]]
+            pointNames={'1':0, '4':1}
+            featureNames={'a':0, 'b':1, 'c':2}
+            name="data"
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -1989,11 +2227,48 @@ class Base(object):
         ----------
         format : str
             To return a specific kind of UML Base object, one may
-            specify the format parameter to be 'List', 'Matrix', or
-            'Sparse'. To specify a raw return type (which will not
-            include feature names), one may specify 'python list',
-            'numpy array', or 'numpy matrix', 'scipy csr', 'scipy csc',
-            'list of dict' or 'dict of list'.
+            specify the format parameter to be 'List', 'Matrix',
+            'Sparse' or 'DataFrame', To specify a raw return type (which
+            will not include point or feature names), one may specify:
+            'python list', 'numpy array', 'numpy matrix', 'scipy csr',
+            'scipy csc', 'list of dict' or 'dict of list'.
+
+        Returns
+        -------
+        object
+            A copy of this object in the provided format.
+
+        Examples
+        --------
+        >>> ptNames = ['0', '1', '2', '3', '4']
+        >>> ftNames = ['a', 'b', 'c', 'd', 'e']
+        >>> data = UML.identity('Matrix', 5, pointNames=ptNames,
+        ...                     featureNames=ftNames)
+        >>> asDataFrame = data.copyAs('DataFrame')
+        >>> asDataFrame
+        DataFrame(
+            [[1.000 0.000 0.000 0.000 0.000]
+             [0.000 1.000 0.000 0.000 0.000]
+             [0.000 0.000 1.000 0.000 0.000]
+             [0.000 0.000 0.000 1.000 0.000]
+             [0.000 0.000 0.000 0.000 1.000]]
+            pointNames={'0':0, '1':1, '2':2, '3':3, '4':4}
+            featureNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
+            )
+        >>> asNumpyArray = data.copyAs('numpy array')
+        >>> asNumpyArray
+        array([[1., 0., 0., 0., 0.],
+               [0., 1., 0., 0., 0.],
+               [0., 0., 1., 0., 0.],
+               [0., 0., 0., 1., 0.],
+               [0., 0., 0., 0., 1.]])
+        >>> asListOfDict = data.copyAs('list of dict')
+        >>> asListOfDict
+        [{'a': 1.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 0.0},
+         {'a': 0.0, 'b': 1.0, 'c': 0.0, 'd': 0.0, 'e': 0.0},
+         {'a': 0.0, 'b': 0.0, 'c': 1.0, 'd': 0.0, 'e': 0.0},
+         {'a': 0.0, 'b': 0.0, 'c': 0.0, 'd': 1.0, 'e': 0.0},
+         {'a': 0.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 1.0}]
         """
         #make lower case, strip out all white space and periods, except if
         # format is one of the accepted UML data types
@@ -2167,9 +2442,20 @@ class Base(object):
         --------
         fillUsingAllData, points.fill, features.fill
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        An object of ones filled with zeros from (0, 0) to (2, 2).
+        >>> data = UML.ones('Matrix', 5, 5)
+        >>> filler = UML.zeros('Matrix', 3, 3)
+        >>> data.fillWith(filler, 0, 0, 2, 2)
+        >>> data
+        Matrix(
+            [[0.000 0.000 0.000 1.000 1.000]
+             [0.000 0.000 0.000 1.000 1.000]
+             [0.000 0.000 0.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000 1.000]]
+            )
         """
         psIndex = self.points.getIndex(pointStart)
         peIndex = self.points.getIndex(pointEnd)
@@ -2367,7 +2653,22 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> ptNames = ['1', '4', '7']
+        >>> ftNames = ['a', 'b', 'c']
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
+        ...                       featureNames=ftNames)
+        >>> data.flattenToOnePoint()
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000 5.000 6.000 7.000 8.000 9.000]]
+            pointNames={'Flattened':0}
+            featureNames={'a | 1':0, 'b | 1':1, 'c | 1':2,
+                          'a | 4':3, 'b | 4':4, 'c | 4':5,
+                          'a | 7':6, 'b | 7':7, 'c | 7':8}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -2421,7 +2722,30 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> ptNames = ['1', '4', '7']
+        >>> ftNames = ['a', 'b', 'c']
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
+        ...                       featureNames=ftNames)
+        >>> data.flattenToOneFeature()
+        >>> data
+        Matrix(
+            [[1.000]
+             [4.000]
+             [7.000]
+             [2.000]
+             [5.000]
+             [8.000]
+             [3.000]
+             [6.000]
+             [9.000]]
+            pointNames={'1 | a':0, '4 | a':1, '7 | a':2,
+                        '1 | b':3, '4 | b':4, '7 | b':5,
+                        '1 | c':6, '4 | c':7, '7 | c':8}
+            featureNames={'Flattened':0}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -2572,8 +2896,8 @@ class Base(object):
         the original foo. It is not limited to objects that have
         previously had ``flattenToOnePoint`` called on them; any object
         whose structure and names are consistent with a previous call to
-        flattenToOnePoint may call this method. This includes objects
-        with all default names. This is an inplace operation.
+        ``flattenToOnePoint`` may call this method. This includes
+        objects with all default names. This is an inplace operation.
 
         Parameters
         ----------
@@ -2586,7 +2910,34 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        With all default names.
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.unflattenFromOnePoint(3)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [7.000 8.000 9.000]]
+            )
+
+        With names consistent with call to ``flattenToOnePoint``.
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> ptNames = {'Flattened':0}
+        >>> ftNames = {'a | 1':0, 'b | 1':1, 'c | 1':2,
+        ...            'a | 4':3, 'b | 4':4, 'c | 4':5,
+        ...            'a | 7':6, 'b | 7':7, 'c | 7':8}
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
+        ...                       featureNames=ftNames)
+        >>> data.unflattenFromOnePoint(3)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [7.000 8.000 9.000]]
+            pointNames={'1':0, '4':1, '7':2}
+            featureNames={'a':0, 'b':1, 'c':2}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -2634,8 +2985,9 @@ class Base(object):
         the original foo. It is not limited to objects that have
         previously had ``flattenToOneFeature`` called on them; any
         object whose structure and names are consistent with a previous
-        call to flattenToOnePoint may call this method. This includes
-        objects with all default names. This is an inplace operation.
+        call to ``flattenToOneFeature`` may call this method. This
+        includes objects with all default names. This is an inplace
+        operation.
 
         Parameters
         ----------
@@ -2648,7 +3000,34 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        With default names.
+        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> data.unflattenFromOneFeature(3)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [7.000 8.000 9.000]]
+            )
+
+        With names consistent with call to ``flattenToOneFeature``.
+        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
+        >>> ptNames = {'1 | a':0, '4 | a':1, '7 | a':2,
+        ...            '1 | b':3, '4 | b':4, '7 | b':5,
+        ...            '1 | c':6, '4 | c':7, '7 | c':8}
+        >>> ftNames = {'Flattened':0}
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
+        ...                       featureNames=ftNames)
+        >>> data.unflattenFromOneFeature(3)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [7.000 8.000 9.000]]
+            pointNames={'1':0, '4':1, '7':2}
+            featureNames={'a':0, 'b':1, 'c':2}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -2689,33 +3068,50 @@ class Base(object):
 
     def merge(self, other, point='strict', feature='union', onFeature=None):
         """
-        Merge data from another object into this object based on point names or
-        a common feature between the objects. How the data will be merged is
-        based upon the string arguments provided to point and feature.
+        Merge data from another object into this object.
 
-        If onFeature is None, the objects will be merged on the point names.
-        Otherwise, the objects will be merged on the feature provided.
-        onFeature allows for duplicate values to be present in the provided
-        feature, however, one of the objects must contain only unique values
-        for each point when onFeature is provided.
+        Merge data based on point names or a common feature between the
+        objects. How the data will be merged is based upon the string
+        arguments provided to ``point`` and ``feature``. If
+        ``onFeature`` is None, the objects will be merged on the point
+        names. Otherwise, the objects will be merged on the feature
+        provided. ``onFeature`` allows for duplicate values to be
+        present in the provided feature, however, one of the objects
+        must contain only unique values for each point when
+        ``onFeature`` is provided.
 
-        The allowed strings for the point and feature arguments are as follows:
+        Parameters
+        ----------
+        other : UML.data.Base
+            The UML data object containing the data to merge.
+        point, feature : str
+            The allowed strings for the point and feature arguments are
+            as follows:
+            * 'strict' - The points/features in the callee exactly match
+              the points/features in the caller, however, they may be in
+              a different order. If ``onFeature`` is None and no names
+              are provided, it will be assumed the order is the same.
+            * 'union' - Return all points/features from the caller and
+              callee. If ``onFeature`` is None, unnamed points/features
+              will be assumed to be unique. Any missing data from the
+              caller and callee will be filled with numpy.NaN.
+            * 'intersection': Return only points/features shared between
+              the caller  and callee. If ``onFeature`` is None,
+              point / feature names are required.
+            * 'left': Return only the points/features from the caller.
+              Any missing data from the callee will be filled with
+              numpy.NaN.
+        onFeature : identifier, None
+            The name or index of the feature present in both objects to
+            merge on.  If None, the merge will be based on point names.
 
-        'strict': The points/features in the callee exactly match the
-          points/features in the caller, however, they may be in a different
-          order. If onFeature is None and no names are provided, it will be
-          assumed the order is the same.
+        See Also
+        --------
+        UML.data.Points.add, UML.data.Features.add
 
-        'union': Return all points/features from the caller and callee. If
-          onFeature is None, unnamed points/features will be assumed to be
-          unique. Any missing data from the caller and callee will be filled
-          with numpy.NaN
-
-        'intersection': Return only points/features shared between the caller
-          and callee. If onFeature is None, point/feature names are required.
-
-        'left': Return only the points/features from the caller. Any
-          missing data from the callee will be filled with numpy.NaN
+        Examples
+        --------
+        TODO
         """
         point = point.lower()
         feature = feature.lower()
