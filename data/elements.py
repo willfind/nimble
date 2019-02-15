@@ -102,7 +102,73 @@ class Elements(object):
 
         Examples
         --------
-        TODO
+        Simple transformation to all elements.
+        >>> data = UML.ones('Matrix', 5, 5)
+        >>> data.elements.transform(lambda elem: elem + 1)
+        >>> data
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Transform while preserving zero values.
+        >>> data = UML.identity('Sparse', 5)
+        >>> data.elements.transform(lambda elem: elem + 10,
+        ...                         preserveZeros=True)
+        >>> data
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Transforming a subset of points and features.
+        >>> data = UML.ones('List', 4, 4)
+        >>> data.elements.transform(lambda elem: elem + 1,
+        ...                         points=[0, 1], features=[0, 2])
+        >>> data
+        List(
+            [[2.000 1.000 2.000 1.000]
+             [2.000 1.000 2.000 1.000]
+             [1.000 1.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000]]
+            )
+
+        Transforming with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> dontSkip = UML.createData('Matrix', raw)
+        >>> dontSkip.elements.transform(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
+            )
+        >>> skip = UML.createData('Matrix', raw)
+        >>> skip.elements.transform(addTenToEvens,
+        ...                         skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1.000  12.000 3.000 ]
+             [14.000 5.000  16.000]
+             [7.000  18.000 9.000 ]]
+            )
         """
         if enableLogging(useLog):
             wrapped = logCapture(self.transform)
@@ -163,7 +229,73 @@ class Elements(object):
 
         Examples
         --------
-        TODO
+        Simple calculation on all elements.
+        >>> data = UML.ones('Matrix', 5, 5)
+        >>> twos = data.elements.calculate(lambda elem: elem + 1)
+        >>> twos
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Calculate while preserving zero values.
+        >>> data = UML.identity('Sparse', 5)
+        >>> addTenDiagonal = data.elements.calculate(lambda elem: elem + 10,
+                                                 preserveZeros=True)
+        >>> addTenDiagonal
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Calculate on a subset of points and features.
+        >>> data = UML.ones('List', 4, 4)
+        >>> calc = data.elements.calculate(lambda elem: elem + 1,
+        ...                                points=[0, 1],
+        ...                                features=[0, 2])
+        >>> calc
+        List(
+            [[2.000 1.000 2.000 1.000]
+             [2.000 1.000 2.000 1.000]
+             [1.000 1.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000]]
+            )
+
+        Calculating with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> data = UML.createData('Matrix', raw)
+        >>> dontSkip = data.elements.calculate(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
+            )
+        >>> skip = data.elements.calculate(addTenToEvens,
+        ...                                skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1.000  12.000 3.000 ]
+             [14.000 5.000  16.000]
+             [7.000  18.000 9.000 ]]
+            )
         """
         if enableLogging(useLog):
             wrapped = logCapture(self.calculate)
@@ -265,7 +397,18 @@ class Elements(object):
 
         Examples
         --------
-        TODO
+        Using a python function.
+        >>> def greaterThanZero(elem):
+        ...     return elem > 0
+        >>> data = UML.identity('Matrix', 5)
+        >>> numGreaterThanZero = data.elements.count(greaterThanZero)
+        >>> numGreaterThanZero
+        5
+
+        Using a string filter function.
+        >>> numLessThanOne = data.elements.count("<1")
+        >>> numLessThanOne
+        20
         """
         if hasattr(condition, '__call__'):
             ret = self.calculate(function=condition, outputType='Matrix')
@@ -303,7 +446,18 @@ class Elements(object):
 
         Examples
         --------
-        TODO
+        Count for all elements.
+        >>> data = UML.identity('Matrix', 5)
+        >>> unique = data.elements.countUnique()
+        >>> unique
+        {0.0: 20, 1.0: 5}
+
+        Count for a subset of elements.
+        >>> data = UML.identity('Matrix', 5)
+        >>> unique = data.elements.countUnique(points=0,
+        ...                                    features=[0, 1, 2])
+        >>> unique
+        {0.0: 2, 1.0: 1}
         """
         uniqueCount = {}
         if points is None:
@@ -341,9 +495,20 @@ class Elements(object):
             The object containing the elements to multiply with the
             elements in this object.
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> raw1 = [[4, 6],
+        ...         [2, 3]]
+        >>> raw2 = [[3, 2],
+        ...         [6, 4]]
+        >>> data1 = UML.createData('Matrix', raw1)
+        >>> data2 = UML.createData('Matrix', raw2)
+        >>> data1.elements.multiply(data2)
+        >>> data1
+        Matrix(
+            [[12.000 12.000]
+             [12.000 12.000]]
+            )
         """
         if enableLogging(useLog):
             wrapped = logCapture(self.multiply)
@@ -403,7 +568,18 @@ class Elements(object):
 
         Examples
         --------
-        TODO
+        >>> raw1 = [[4, 8],
+        ...         [2, 64]]
+        >>> raw2 = [[3, 2],
+        ...         [6, 1]]
+        >>> data1 = UML.createData('Matrix', raw1)
+        >>> data2 = UML.createData('Matrix', raw2)
+        >>> data1.elements.power(data2)
+        >>> data1
+        Matrix(
+            [[64.000 64.000]
+             [64.000 64.000]]
+            )
         """
         if enableLogging(useLog):
             wrapped = logCapture(self.power)
