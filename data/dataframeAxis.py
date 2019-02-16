@@ -66,20 +66,13 @@ class DataFrameAxis(Axis):
         """
         df = self._source.data
 
+        pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
             ret = df.iloc[targetList, :]
             axis = 0
-            name = 'pointNames'
-            nameList = [self._getName(i) for i in targetList]
-            otherName = 'featureNames'
-            otherNameList = self._source.features.getNames()
         else:
             ret = df.iloc[:, targetList]
             axis = 1
-            name = 'featureNames'
-            nameList = [self._getName(i) for i in targetList]
-            otherName = 'pointNames'
-            otherNameList = self._source.points.getNames()
 
         if structure.lower() != "copy":
             df.drop(targetList, axis=axis, inplace=True)
@@ -89,8 +82,8 @@ class DataFrameAxis(Axis):
         else:
             df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
-        return UML.data.DataFrame(ret, **{name: nameList,
-                                          otherName: otherNameList})
+        return UML.data.DataFrame(ret, pointNames=pointNames,
+                                  featureNames=featureNames)
 
     def _sort_implementation(self, sortBy, sortHelper):
         if isinstance(sortHelper, list):

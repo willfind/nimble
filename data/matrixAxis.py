@@ -40,25 +40,17 @@ class MatrixAxis(Axis):
         process how each function handles the returned value, these are
         managed separately by each frontend function.
         """
-        nameList = []
+        pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
             axisVal = 0
             ret = self._source.data[targetList]
-            pointNames = nameList
-            featureNames = self._source.features.getNames()
         else:
             axisVal = 1
             ret = self._source.data[:, targetList]
-            featureNames = nameList
-            pointNames = self._source.points.getNames()
 
         if structure != 'copy':
             self._source.data = numpy.delete(self._source.data,
                                              targetList, axisVal)
-
-        # construct nameList
-        for index in targetList:
-            nameList.append(self._getName(index))
 
         return UML.data.Matrix(ret, pointNames=pointNames,
                                featureNames=featureNames)

@@ -44,14 +44,15 @@ class SparseAxis(Axis):
         process how each function handles the returned value, these are
         managed separately by each frontend function.
         """
+        pointNames, featureNames = self._getStructuralNames(targetList)
         # SparseView or object dtype
         if (self._source.data.data is None
                 or self._source.data.data.dtype == numpy.object_):
             return self._structuralIterative_implementation(
-                structure, targetList)
+                structure, targetList, pointNames, featureNames)
         # nonview numeric objects
         return self._structuralVectorized_implementation(
-            structure, targetList)
+            structure, targetList, pointNames, featureNames)
 
     def _sort_implementation(self, sortBy, sortHelper):
         source = self._source
@@ -164,13 +165,11 @@ class SparseAxis(Axis):
     # Structural Helpers #
     ######################
 
-    def _structuralVectorized_implementation(self, structure, targetList):
+    def _structuralVectorized_implementation(self, structure, targetList,
+                                             pointNames, featureNames):
         """
         Use scipy csr or csc matrices for indexing targeted values
         """
-        axisNames = []
-        getAxisName = self._getName
-
         if structure != 'copy':
             notTarget = []
             for idx in range(len(self)):
@@ -178,23 +177,15 @@ class SparseAxis(Axis):
                     notTarget.append(idx)
 
         if isinstance(self, Points):
-            getOtherNames = self._source.features.getNames
             data = self._source.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
                 notTargeted = data[notTarget, :]
         else:
-            getOtherNames = self._source.points.getNames
             data = self._source.data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
                 notTargeted = data[:, notTarget]
-
-        self._source._validateAxis(self._axis)
-
-        for index in targetList:
-            axisNames.append(getAxisName(index))
-        otherNames = getOtherNames()
 
         if structure != 'copy':
             self._source.data = notTargeted.tocoo()
@@ -202,16 +193,12 @@ class SparseAxis(Axis):
 
         ret = targeted.tocoo()
 
-        if isinstance(self, Points):
-            return UML.data.Sparse(ret, pointNames=axisNames,
-                                   featureNames=otherNames,
-                                   reuseData=True)
-
-        return UML.data.Sparse(ret, pointNames=otherNames,
-                               featureNames=axisNames,
+        return UML.data.Sparse(ret, pointNames=pointNames,
+                               featureNames=featureNames,
                                reuseData=True)
 
-    def _structuralIterative_implementation(self, structure, targetList):
+    def _structuralIterative_implementation(self, structure, targetList,
+                                            pointNames, featureNames):
         """
         Iterate through each member to index targeted values
         """
@@ -262,20 +249,8 @@ class SparseAxis(Axis):
         ret = coo_matrix((targetData, (targetRows, targetCols)),
                          shape=targetShape)
 
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if isinstance(self, Points):
-            for index in targetList:
-                pnames.append(self._getName(index))
-            fnames = self._source.features.getNames()
-        else:
-            pnames = self._source.points.getNames()
-            for index in targetList:
-                fnames.append(self._getName(index))
-
-        return UML.data.Sparse(ret, pointNames=pnames, featureNames=fnames,
-                               reuseData=True)
+        return UML.data.Sparse(ret, pointNames=pointNames,
+                               featureNames=featureNames, reuseData=True)
 
     def _unique_implementation(self):
         if self._source._sorted is None:

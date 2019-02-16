@@ -42,10 +42,9 @@ class ListAxis(Axis):
         process how each function handles the returned value, these are
         managed separately by each frontend function.
         """
-        pnames = []
-        fnames = []
         data = numpy.matrix(self._source.data, dtype=object)
 
+        pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
             keepList = []
             for idx in range(len(self)):
@@ -55,10 +54,6 @@ class ListAxis(Axis):
             if structure != 'copy':
                 keep = data[keepList, :]
                 self._source.data = keep.tolist()
-
-            for index in targetList:
-                pnames.append(self._getName(index))
-            fnames = self._source.features.getNames()
 
         else:
             if self._source.data == []:
@@ -76,16 +71,12 @@ class ListAxis(Axis):
                 keep = data[:, keepList]
                 self._source.data = keep.tolist()
 
-            for index in targetList:
-                fnames.append(self._getName(index))
-            pnames = self._source.points.getNames()
-
             if structure != 'copy':
                 remainingFts = self._source._numFeatures - len(targetList)
                 self._source._numFeatures = remainingFts
 
-        return UML.data.List(satisfying, pointNames=pnames,
-                             featureNames=fnames, reuseData=True)
+        return UML.data.List(satisfying, pointNames=pointNames,
+                             featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
         if isinstance(sortHelper, list):

@@ -3826,14 +3826,14 @@ class Base(object):
     def _equalPointNames(self, other):
         if other is None or not isinstance(other, Base):
             return False
-        return self._equalNames(self.points.getNames(),
-                                other.points.getNames())
+        return self._equalNames(self.points._getNamesNoGeneration(),
+                                other.points._getNamesNoGeneration())
 
     def _equalFeatureNames(self, other):
         if other is None or not isinstance(other, Base):
             return False
-        return (self._equalNames(self.features.getNames(),
-                                 other.features.getNames()))
+        return (self._equalNames(self.features._getNamesNoGeneration(),
+                                 other.features._getNamesNoGeneration()))
 
     def _equalNames(self, selfNames, otherNames):
         """
@@ -3843,6 +3843,16 @@ class Base(object):
         and uniquely positioned (if a non default name is present in
         both, then it is in the same position in both).
         """
+        if selfNames is None and otherNames is None:
+            return True
+        if (selfNames is None
+                and all(n.startswith(DEFAULT_PREFIX) for n in otherNames)):
+            return True
+        if (otherNames is None
+                and all(n.startswith(DEFAULT_PREFIX) for n in selfNames)):
+            return True
+        if selfNames is None or otherNames is None:
+            return False
         if len(selfNames) != len(otherNames):
             return False
 
