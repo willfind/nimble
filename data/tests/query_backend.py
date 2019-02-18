@@ -2294,6 +2294,70 @@ class QueryBackend(DataTestObject):
         assert pinvObj == resObj
         assert toTest == orig
 
+    #####################
+    # solveLinearSystem #
+    #####################
+
+    def test_solveLinearSystem_solve(self):
+        """ Test solveLinearSystem using solve method. """
+        self.backend_solveLinearSystem(method='solve')
+
+    def test_solveLinearSystem_leastSquares(self):
+        """ Test solveLinearSystem using least squares method. """
+        self.backend_solveLinearSystem(method='least squares')
+
+    def backend_solveLinearSystem(self, method):
+        from scipy import linalg
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        x = numpy.transpose(linalg.solve(A, b))
+
+        pointNames =  ['1', 'one']
+        featureNames = ['one', 'two']
+
+        resObj = self.constructor(x, pointNames=['b'], featureNames=featureNames)
+
+        Aobj = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        origA = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        bobj = self.constructor(b)
+
+        xobj = Aobj.solveLinearSystem(bobj, method=method)
+
+        assert xobj.isApproximatelyEqual(resObj)
+        assert Aobj == origA
+
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_b_InvalidType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        Aobj.solveLinearSystem(b)
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_InvalidParamType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, method=['solve'])
+
+    @raises(InvalidArgumentValue)
+    def test_solveLinearSystem_InvalidParamValue(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, method='foo')
+
+
+
 
 ###########
 # Helpers #
