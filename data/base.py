@@ -2951,12 +2951,16 @@ class Base(object):
         if not isinstance(b, UML.data.Base):
             msg = "b must be an instance of Base."
             raise InvalidArgumentType(msg)
-        if method == 'solve':
+
+        msg = "Valid methods are: 'solve' and 'least squares'."
+
+        if not isinstance(method, str):
+            raise InvalidArgumentType(msg)
+        elif method == 'solve':
                 return UML.calculate.solve(self, b)
         elif method == 'least squares':
                 return UML.calculate.leastSquaresSolution(self, b)
         else:
-            msg = "Valid methods are: 'solve' and 'least squares'."
             raise InvalidArgumentValue(msg)
 
 
