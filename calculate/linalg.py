@@ -10,7 +10,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue, InvalidArg
 
 def inverse(A):
     """
-       Compute the (multiplicative) inverse of an UML object
+       Compute the (multiplicative) inverse of a Base object
     """
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
@@ -129,6 +129,10 @@ def solve(A, b):
     if A.getTypeString() == 'Matrix':
         solution = scipy.linalg.solve(A.data, b.data)
         sol.data = solution.T
+    elif isinstance(A, UML.data.sparse.SparseView):
+        A_copy = A.copy()
+        solution = scipy.sparse.linalg.spsolve(A_copy.data, numpy.asarray(b.data))
+        sol.data = numpy.asmatrix(solution)
     elif A.getTypeString() == 'Sparse':
         solution = scipy.sparse.linalg.spsolve(A.data, numpy.asarray(b.data))
         sol.data = numpy.asmatrix(solution)
@@ -169,6 +173,10 @@ def leastSquaresSolution(A, b):
     if A.getTypeString() == 'Matrix':
         solution = scipy.linalg.lstsq(A.data, b.data)
         sol.data = solution[0].T
+    elif isinstance(A, UML.data.sparse.SparseView):
+        A_copy = A.copy()
+        solution = scipy.sparse.linalg.lsqr(A_copy.data, numpy.asarray(b.data))
+        sol.data = numpy.asmatrix(solution[0])
     elif A.getTypeString() == 'Sparse':
         solution = scipy.sparse.linalg.lsqr(A.data, numpy.asarray(b.data))
         sol.data = numpy.asmatrix(solution[0])
