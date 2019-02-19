@@ -2300,13 +2300,13 @@ class QueryBackend(DataTestObject):
 
     def test_solveLinearSystem_solve(self):
         """ Test solveLinearSystem using solve method. """
-        self.backend_solveLinearSystem(method='solve')
+        self.backend_solveLinearSystem(solveFunction='solve')
 
     def test_solveLinearSystem_leastSquares(self):
         """ Test solveLinearSystem using least squares method. """
-        self.backend_solveLinearSystem(method='least squares')
+        self.backend_solveLinearSystem(solveFunction='least squares')
 
-    def backend_solveLinearSystem(self, method):
+    def backend_solveLinearSystem(self, solveFunction):
         from scipy import linalg
         A = numpy.array([[1, 20], [-30, 4]])
         b = numpy.array([[-30], [4]])
@@ -2322,7 +2322,7 @@ class QueryBackend(DataTestObject):
         origA = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
         bobj = self.constructor(b)
 
-        xobj = Aobj.solveLinearSystem(bobj, method=method)
+        xobj = Aobj.solveLinearSystem(bobj, solveFunction=solveFunction)
 
         assert xobj.isApproximatelyEqual(resObj)
         assert Aobj == origA

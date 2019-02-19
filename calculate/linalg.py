@@ -10,7 +10,8 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue, InvalidArg
 
 def inverse(A):
     """
-       Compute the (multiplicative) inverse of a Base object
+       Compute the (multiplicative) inverse of a UML Base object.
+
     """
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(

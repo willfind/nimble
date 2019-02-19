@@ -2928,9 +2928,15 @@ class Base(object):
 
     def inverse(self, pseudoInverse=False):
         """
-            Compute the inverse or pseudo-inverse of an object.
-            By default tries to compute the (multiplicative) inverse.
-            pseudoInverse uses singular-value decomposition (SVD).
+        Compute the inverse or pseudo-inverse of an object.
+
+        By default tries to compute the (multiplicative) inverse.
+        pseudoInverse uses singular-value decomposition (SVD).
+
+        Parameters
+        ----------
+        pseudoInverse: bool
+            Whether to compute pseudoInverse or multiplicative inverse.
         """
 
         if pseudoInverse:
@@ -2940,13 +2946,17 @@ class Base(object):
         return inverse
 
 
-    def solveLinearSystem(self, b, method='solve'):
+    def solveLinearSystem(self, b, solveFunction='solve'):
         """
-           Solves the linear equation A * x = b for unknown x
-            b: One dimension Base object.
-           Methods: 'solve' and 'least squares'
-            'solve' assumes square matrix.
-            'least squares' Computes object x such that 2-norm |b - Ax| is minimized.
+       Solves the linear equation A * x = b for unknown x.
+
+       Parameters
+       ----------
+       b: UML Base object.
+        Vector shaped object.
+       solveFuction: str
+        'solve' assumes square matrix.
+        'least squares' Computes object x such that 2-norm |b - Ax| is minimized.
         """
         if not isinstance(b, UML.data.Base):
             msg = "b must be an instance of Base."
@@ -2954,11 +2964,11 @@ class Base(object):
 
         msg = "Valid methods are: 'solve' and 'least squares'."
 
-        if not isinstance(method, str):
+        if not isinstance (solveFunction, str):
             raise InvalidArgumentType(msg)
-        elif method == 'solve':
+        elif solveFunction == 'solve':
                 return UML.calculate.solve(self, b)
-        elif method == 'least squares':
+        elif solveFunction == 'least squares':
                 return UML.calculate.leastSquaresSolution(self, b)
         else:
             raise InvalidArgumentValue(msg)
