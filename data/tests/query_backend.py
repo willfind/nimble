@@ -2344,7 +2344,7 @@ class QueryBackend(DataTestObject):
         Aobj = self.constructor(A)
         bobj = self.constructor(b)
 
-        Aobj.solveLinearSystem(bobj, method=['solve'])
+        Aobj.solveLinearSystem(bobj, solveFunction=['solve'])
 
     @raises(InvalidArgumentValue)
     def test_solveLinearSystem_InvalidParamValue(self):
@@ -2354,7 +2354,7 @@ class QueryBackend(DataTestObject):
         Aobj = self.constructor(A)
         bobj = self.constructor(b)
 
-        Aobj.solveLinearSystem(bobj, method='foo')
+        Aobj.solveLinearSystem(bobj, solveFunction='foo')
 
 
 
