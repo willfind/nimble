@@ -1,6 +1,13 @@
 """
-Methods and helpers responsible for determining how each function
-will operate over each element.
+Define methods of the features attribute for Base objects.
+
+Methods and helpers responsible for determining how each function will
+operate over each element. This is the top level of this hierarchy and
+methods in this object should attempt to handle operations related to
+axis names here whenever possible. Additionally, any functionality
+generic to object subtype should be included here with abstract methods
+defined for object subtype specific implementations. Additionally, the
+wrapping of function calls for the logger takes place in here.
 """
 
 from __future__ import absolute_import
@@ -10,11 +17,9 @@ import numpy
 import six
 
 import UML
-
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
 from UML.logger import enableLogging
-
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import logCaptureFactory

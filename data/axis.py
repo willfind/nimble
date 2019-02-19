@@ -1,7 +1,13 @@
 """
-Methods and helpers responsible for determining how each function
-will operate depending on whether it is being called along the points or
-the features axis.
+Axis generic methods for Base points and features attributes.
+
+Backend methods and helpers responsible for determining how each
+function will operate depending on whether it is being called along the
+points or the features axis. This is the top level of this hierarchy and
+methods in this object should attempt to handle operations related to
+axis names here whenever possible. Additionally, any functionality
+generic to axis and object subtype should be included here with abstract
+methods defined for axis and object subtype specific implementations.
 """
 
 from __future__ import absolute_import
