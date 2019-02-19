@@ -1,27 +1,25 @@
 """
 Utility functions that could be useful in multiple interfaces
-
 """
 
-# from __future__ import absolute_import
-import numpy
+from __future__ import absolute_import
 import sys
 import importlib
+
+import numpy
+import six
+from six.moves import range
 
 import UML
 from UML.exceptions import InvalidArgumentValue
 from UML.randomness import pythonRandom
-import six
-from six.moves import range
-import warnings
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):
     """
-    Construct and return a long string containing argument and value pairs,
-    each separated and surrounded by the given strings. If wanted is None,
-    then no args are put in the string
-
+    Construct and return a long string containing argument and value
+    pairs, each separated and surrounded by the given strings. If wanted
+    is None, then no args are put in the string.
     """
     argString = ""
     if wanted is None:
@@ -38,7 +36,25 @@ def makeArgString(wanted, argDict, prefix, infix, postfix):
 
 
 class PythonSearcher(object):
-    def __init__(self, baseModule, baseContents, specialCases, isLearner, allowedDepth):
+    """
+    Explore a python package.
+
+    Parameters
+    ----------
+    baseModule : module
+        The imported package.
+    baseContents : list
+        A list of the exposed attributes. Often the __all__ attribute of
+        the ``baseModule``.
+    specialCases : dict
+        TODO
+    isLearner : function
+        Returns True if an attribute is a learner.
+    allowedDepth : int
+        The maximum depth to search the package's directory tree.
+    """
+    def __init__(self, baseModule, baseContents, specialCases, isLearner,
+                 allowedDepth):
         self._baseModule = baseModule
         self._baseContents = baseContents
         self._specialCases = specialCases
@@ -50,11 +66,12 @@ class PythonSearcher(object):
 
     def allLearners(self):
         """
-        Return a list of names of modules that satisfy the isLearner function found
-        according the search parameters defined in this object
+        Return a list of names of modules that satisfy the isLearner
+        function found according the search parameters defined in this
+        object.
         """
-        # We make an impossible to satisfy search query, as a consequence, we populate
-        # the cache with every possible learner
+        # We make it impossible to satisfy search query, as a consequence, we
+        # populate the cache with every possible learner
         if not self._havePopulated:
             self.findInPackage(None, None)
         self._havePopulated = True
@@ -71,9 +88,9 @@ class PythonSearcher(object):
 
     def findInPackage(self, parent, name):
         """
-        Import the desired python package, and search for the module containing
-        the wanted learner. For use by interfaces to python packages.
-
+        Import the desired python package, and search for the module
+        containing the wanted learner. For use by interfaces to python
+        packages.
         """
         specialKey = parent + '.' + name if parent is not None else name
         if specialKey in self._specialCases:
@@ -87,16 +104,21 @@ class PythonSearcher(object):
             if parent in self._locationCache:
                 searchIn = self._locationCache[parent]
             else:
-                searchIn = self._findInPackageRecursive(searchIn, parent, allowedDepth, contents)
+                searchIn = self._findInPackageRecursive(searchIn, parent,
+                                                        allowedDepth, contents)
             allowedDepth = 0
-            contents = searchIn.__all__ if hasattr(searchIn, '__all__') else dir(searchIn)
+            if hasattr(searchIn, '__all__'):
+                contents = searchIn.__all__
+            else:
+                contents = dir(searchIn)
             if searchIn is None:
                 return None
 
         if name in self._locationCache:
             ret = self._locationCache[name]
         else:
-            ret = self._findInPackageRecursive(searchIn, name, allowedDepth, contents)
+            ret = self._findInPackageRecursive(searchIn, name, allowedDepth,
+                                               contents)
 
         return ret
 
@@ -108,7 +130,8 @@ class PythonSearcher(object):
                 subMod = getattr(parent, name)
             except AttributeError:
                 try:
-                    subMod = importlib.import_module(parent.__name__ + "." + name)
+                    fullName = parent.__name__ + "." + name
+                    subMod = importlib.import_module(fullName)
                 except ImportError:
                     continue
 
@@ -120,10 +143,15 @@ class PythonSearcher(object):
             if name == target:
                 return subMod
 
-            subContents = subMod.__all__ if hasattr(subMod, '__all__') else dir(subMod)
+            if hasattr(subMod, '__all__'):
+                subContents = subMod.__all__
+            else:
+                subContents = dir(subMod)
 
             if allowedDepth > 0:
-                ret = self._findInPackageRecursive(subMod, target, allowedDepth - 1, subContents)
+                ret = self._findInPackageRecursive(subMod, target,
+                                                   allowedDepth - 1,
+                                                   subContents)
                 if ret is not None:
                     return ret
 
@@ -133,13 +161,12 @@ class PythonSearcher(object):
 #TODO what about multiple levels???
 def findModule(learnerName, packageName, packageLocation):
     """
-    Import the desired python package, and search for the module containing
-    the wanted learner. For use by interfaces to python packages.
-
+    Import the desired python package, and search for the module
+    containing the wanted learner. For use by interfaces to python
+    packages.
     """
-
     putOnSearchPath(packageLocation)
-    exec ("import " + packageName)
+    exec("import " + packageName)
 
     contents = eval("dir(" + packageName + ")")
 
@@ -153,8 +180,8 @@ def findModule(learnerName, packageName, packageLocation):
             continue
         cmd = "import " + packageName + "." + moduleName
         try:
-            exec (cmd)
-        except ImportError as e:
+            exec(cmd)
+        except ImportError:
             continue
         subContents = eval("dir(" + packageName + "." + moduleName + ")")
         if ".__all__" in subContents:
@@ -166,6 +193,9 @@ def findModule(learnerName, packageName, packageLocation):
 
 
 def putOnSearchPath(wantedPath):
+    """
+    Add a path to sys.path.
+    """
     if wantedPath is None:
         return
     elif wantedPath in sys.path:
@@ -176,15 +206,15 @@ def putOnSearchPath(wantedPath):
 
 def checkClassificationStrategy(interface, learnerName, algArgs):
     """
-    Helper to determine the classification strategy used for a given learner called
-    using the given interface with the given args. Runs a trial on data with 4 classes
-    so that we can use structural
-
+    Helper to determine the classification strategy used for a given
+    learner called using the given interface with the given args. Runs a
+    trial on data with 4 classes so that we can use structural.
     """
-    dataX = [[-100, 3], [-122, 1], [118, 1], [117, 5], [1, -191], [-2, -118], [-1, 200], [3, 222]]
+    dataX = [[-100, 3], [-122, 1], [118, 1], [117, 5],
+             [1, -191], [-2, -118], [-1, 200], [3, 222]]
     xObj = UML.createData("Matrix", dataX)
-    # we need classes > 2 to test the multiclass strategy, and we should be able
-    # to tell structurally when classes != 3
+    # we need classes > 2 to test the multiclass strategy, and we should be
+    # able to tell structurally when classes != 3
     dataY = [[0], [0], [1], [1], [2], [2], [3], [3]]
     yObj = UML.createData("Matrix", dataY)
     dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
@@ -192,23 +222,29 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
 
     tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
-    (a, b, testTrans, c) = interface._inputTransformation(learnerName, None, None, testObj, algArgs, tlObj.customDict)
-    rawScores = interface._getScores(tlObj.backend, testTrans, algArgs, tlObj.customDict)
+    (_, _, testTrans, _) = interface._inputTransformation(
+        learnerName, None, None, testObj, algArgs, tlObj.customDict)
+    rawScores = interface._getScores(tlObj.backend, testTrans, algArgs,
+                                     tlObj.customDict)
 
     return ovaNotOvOFormatted(rawScores, applyResults, 4)
 
 
-def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True):
+def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
+                       useSize=True):
     """
-    return True if the scoresPerPoint list of list has scores formatted for a
-    one vs all strategy, False if it is for a one vs one strategy. None if there
-    are no definitive cases. May throw an InvalidArgumentValue if there are conflicting
-    definitive votes for different strategies.
+    Return True if the scoresPerPoint list of list has scores formatted
+    for a one vs all strategy, False if it is for a one vs one strategy.
+    None if there are no definitive cases. May throw an
+    InvalidArgumentValue if there are conflicting definitive votes for
+    different strategies.
     """
     if not isinstance(scoresPerPoint, UML.data.Base):
-        scoresPerPoint = UML.createData('Matrix', scoresPerPoint, reuseData=True)
+        scoresPerPoint = UML.createData('Matrix', scoresPerPoint,
+                                        reuseData=True)
     if not isinstance(predictedLabels, UML.data.Base):
-        predictedLabels = UML.createData('Matrix', predictedLabels, reuseData=True)
+        predictedLabels = UML.createData('Matrix', predictedLabels,
+                                         reuseData=True)
     length = len(scoresPerPoint.points)
     scoreLength = len(scoresPerPoint.features)
 
@@ -217,10 +253,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
     # ovo : number scores = (n * (n-1) ) / 2
     # only at n = 3 are they equal
     if useSize and numLabels != 3:
-        if scoreLength == numLabels:
-            return True
-        else:
-            return False
+        return scoreLength == numLabels
 
     # we want to check random points out of all the possible data
     check = 20
@@ -229,16 +262,19 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
     checkList = pythonRandom.sample(range(length), check)
     results = []
     for i in checkList:
-        strategy = verifyOvANotOvOSingleList(scoresPerPoint.pointView(i), predictedLabels[i, 0], numLabels)
+        strategy = verifyOvANotOvOSingleList(scoresPerPoint.pointView(i),
+                                             predictedLabels[i, 0], numLabels)
         results.append(strategy)
 
     ovaVote = results.count(True)
     ovoVote = results.count(False)
 
-    # different points were unambigously in different scoring strategies. Can't make sense of that
+    # different points were unambigously in different scoring strategies.
+    # Can't make sense of that
     if ovoVote > 0 and ovaVote > 0:
-        raise InvalidArgumentValue(
-            "We found conflicting scoring strategies for multiclass classification, cannot verify one way or the other")
+        msg = "We found conflicting scoring strategies for multiclass "
+        msg += "classification, cannot verify one way or the other"
+        raise InvalidArgumentValue(msg)
     # only definitive votes were ova
     elif ovaVote > 0:
         return True
@@ -251,14 +287,15 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
 
 
 def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
-    """ We cannot determine from length
-    whether scores are produced using a one vs all strategy or a one vs one
-    strategy. This checks a particular set of scores by simulating OvA and
-    OvO prediction strategies, and checking the results.
+    """
+    We cannot determine from length whether scores are produced using a
+    one-vs-all strategy or a one-vs-one strategy. This checks a
+    particular set of scores by simulating OvA and OvO prediction
+    strategies, and checking the results.
 
     Returns True if it is OvA consistent and not OvO consistent.
     Returns False if it is not OvA consistent but is OvO consistent.
-    Returns None otherwise
+    Returns None otherwise.
     """
     # simulate OvA prediction strategy
     maxScoreIndex = -1
@@ -271,7 +308,8 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
     ovaConsistent = maxScoreIndex == predictedLabelIndex
 
     # simulate OvO prediction strategy
-    combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoreList, numLabels)
+    combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoreList,
+                                                                  numLabels)
     maxScoreIndex = -1
     maxScore = -sys.maxsize - 1
     for i in range(len(combinedScores)):
@@ -287,15 +325,19 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
     elif ovaConsistent and ovoConsistent:
         return None
     else:
-        raise InvalidArgumentValue(
-            "The given scoreList does not produce the predicted label with either of our combination strategies. We therefore cannot verify the format of the scores")
+        msg = "The given scoreList does not produce the predicted label with "
+        msg += "either of our combination strategies. We therefore cannot "
+        msg += "verify the format of the scores"
+        raise InvalidArgumentValue(msg)
 
 
 def calculateSingleLabelScoresFromOneVsOneScores(oneVOneData, numLabels):
-    """ oneVOneData is the flat list of scores of each least ordered pair of
-    labels, ordered (score label0 vs label1... score label0 vs labeln-1, score label1
-    vs label2 ... score labeln-2 vs labeln-1). We return a length n list where
-    the ith value is the ratio of wins for label i in the label vs label tournament.
+    """
+    oneVOneData is the flat list of scores of each least ordered pair of
+    labels, ordered (score label0 vs label1... score label0 vs labeln-1,
+    score label1 vs label2 ... score labeln-2 vs labeln-1). We return a
+    length n list where the ith value is the ratio of wins for label i
+    in the label vs label tournament.
     """
     ret = []
     for i in range(numLabels):
@@ -310,6 +352,9 @@ def calculateSingleLabelScoresFromOneVsOneScores(oneVOneData, numLabels):
 
 
 def valueFromOneVOneData(oneVOneData, posLabel, negLabel, numLabels):
+    """
+    Get value from one-vs-one data.
+    """
     flagNegative = False
     if posLabel == negLabel:
         return None
@@ -330,19 +375,27 @@ def valueFromOneVOneData(oneVOneData, posLabel, negLabel, numLabels):
 
 def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
     """
-    Helper to set up the correct output data for different scoreModes in the multiclass case.
-    predLabels is a 2d array, where the data is a column vector, and each row contains a
-    single predicted label. scores is a 2d array, where each row corresponds to the confidence
-    scores used to predict the corresponding label in predLabels. scoreMode is the string
-    valued flag determining the output format. labelOrder is a 1d array where the ith
-    entry is the label name corresponding to the ith confidence value in each row of scores.
+    Helper to set up the correct output data for different scoreModes in
+    the multiclass case.
 
+    Parameters
+    ----------
+    predLabels : 2d column vector array
+        Each row contains a single predicted label.
+    scores : 2d array
+        Each row corresponds to the confidence. Used to predict the
+        corresponding label in predLabels.
+    scoreMode : str
+        Valued flag determining the output format.
+    labelOrder : 1d array
+        The ith entry is the label name corresponding to the ith
+        confidence value in each row of scores.
     """
     # if 'labels' we just want the predicted labels
     if scoreMode == 'label':
         outData = predLabels
-    # in this case we want the first column to be the predicted labels, and the second
-    # column to be that label's score
+    # in this case we want the first column to be the predicted labels, and
+    # the second column to be that label's score
     elif scoreMode == 'bestScore':
         labelToIndexMap = {}
         for i in range(len(labelOrder)):
@@ -363,14 +416,14 @@ def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
 
 
 def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
-    """ Given an indexable containing the score for the label with a higher
-    natural ordering corresponding to the ith test point of an n point binary
-    classification problem set, construct and return an array with two columns
-    and n rows, where the ith row corresponds to the ith test point, the first
-    column contains the score for the label with the lower natural sort order,
-    and the second column contains the score for the label with the higher natural
-    sort order.
-
+    """
+    Given an indexable containing the score for the label with a higher
+    natural ordering corresponding to the ith test point of an n point
+    binary classification problem set, construct and return an array
+    with two columns and n rows, where the ith row corresponds to the
+    ith test point, the first column contains the score for the label
+    with the lower natural sort order, and the second column contains
+    the score for the label with the higher natural sort order.
     """
     newScoresPerPoint = []
     for i in range(len(scoresPerPoint.points)):
@@ -384,8 +437,9 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 
 def cacheWrapper(toWrap):
     """
-    Decorator to be used in universal Interface which will record the results of
-    call so that they can be easily returned again if the same call is made later.
+    Decorator to be used in universal Interface which will record the
+    results of call so that they can be easily returned again if the
+    same call is made later.
     """
     cache = {}
 
@@ -401,27 +455,31 @@ def cacheWrapper(toWrap):
 
 
 def collectAttributes(obj, generators, checkers, recursive=True):
-    """Helper to collect, validate, and return all (relevant) attributes
-    associated with a python object (learner, kernel, etc.). The returned
-    value will be a dict, mapping names of attribtues to values of attributes.
-    In the case of collisions (especially in the recursive case) the attribute
-    names will be prefaced with the name of the object from which they originate.
+    """
+    Helper to collect, validate, and return all (relevant) attributes
+    associated with a python object (learner, kernel, etc.). The
+    returned value will be a dict, mapping names of attribtues to values
+    of attributes. In the case of collisions (especially in the
+    recursive case) the attribute names will be prefaced with the name
+    of the object from which they originate.
 
-    obj: the python object we are collection from. will be passed as the first
-    argument to all checker functions
-
-    generators: list of functions which generate possible attributes. Each
-    will be called with a single argument: the obj parameter, and must return
-    a dict. If None is passed, we will automatically use attributes as
-    accessed via dir(obj) as the only possiblities.
-
-    checkers: list of functions which will be called to see if a possible
-    attribute is to be included in the output. Each checker function must
-    take three arguments: the object, the name of the possible attribute,
-    and finally the value of the possible attribute. If the possible
-    attribute is to be included in the output, the function must return
-    True.
-
+    Parameters
+    ----------
+    obj : object
+        The python object (learner, kernel, etc.) to collect from. It
+        will be passed as the first argument to all checker functions.
+    generators : list
+        List of functions which generate possible attributes. Each will
+        be called with a single argument: the obj parameter, and must
+        return a dict. If None is passed, we will automatically use
+        attributes as accessed via dir(obj) as the only possiblities.
+    checkers : list
+        List of functions which will be called to see if a possible
+        attribute is to be included in the output. Each checker function
+        must take three arguments: the object, the name of the possible
+        attribute, and finally the value of the possible attribute. If
+        the possible attribute is to be included in the output, the
+        function must return True.
     """
     if generators is None:
         def wrappedDir(obj):
@@ -433,7 +491,7 @@ def collectAttributes(obj, generators, checkers, recursive=True):
                     ret[k] = val
                 # safety against any sort of error someone may have in their
                 # property code.
-                except:
+                except Exception:
                     pass
             return ret
 
@@ -456,18 +514,81 @@ def collectAttributes(obj, generators, checkers, recursive=True):
 
 
 def noLeading__(obj, name, value):
+    """
+    Determine if a name does NOT begin with two leading underscores.
+    """
     if name.startswith('__'):
         return False
     return True
 
 
 def notCallable(obj, name, value):
+    """
+    Determine if a value is NOT callable.
+    """
     if hasattr(value, '__call__'):
         return False
     return True
 
 
 def notABCAssociated(obj, name, value):
+    """
+    Determine if a name is NOT ABC associated.
+    """
     if name.startswith("_abc"):
         return False
     return True
+
+def removeFromArray(orig, toIgnore):
+    """
+    Remove objects from an array.
+    """
+    temp = []
+    for entry in orig:
+        if not entry in toIgnore:
+            temp.append(entry)
+    return temp
+
+def removeFromDict(orig, toIgnore):
+    """
+    Remove objects from a dictionary.
+    """
+    for entry in toIgnore:
+        if entry in orig:
+            del orig[entry]
+    return orig
+
+def removeFromTailMatchedLists(full, matched, toIgnore):
+    """
+    'full' is some list n, 'matched' is a list with length m, where
+    m is less than or equal to n, where the last m values of full
+    are matched against their positions in matched. If one of those
+    is to be removed, it is to be removed in both.
+    """
+    temp = {}
+    if matched is not None:
+        for i in range(len(full)):
+            fullIdx = len(full) - 1 - i
+            if i < len(matched):
+                matchedIdx = len(matched) - 1 - i
+                temp[full[fullIdx]] = matched[matchedIdx]
+            else:
+                temp[full[fullIdx]] = None
+    else:
+        retFull = removeFromArray(full, toIgnore)
+        return (retFull, matched)
+
+    for ignoreKey in toIgnore:
+        if ignoreKey in temp:
+            del temp[ignoreKey]
+
+    retFull = []
+    retMatched = []
+    for i in range(len(full)):
+        name = full[i]
+        if name in temp:
+            retFull.append(name)
+            if (i - (len(full) - len(matched))) >= 0:
+                retMatched.append(temp[name])
+
+    return (retFull, retMatched)

@@ -385,7 +385,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
 
 
 def back_otherObjectExceptions(callerCon, attr1, attr2=None):
-    """ Test operation raises exception when param is not a UML data object """
+    """ Test operation raises exception when param is not a UML Base object """
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     caller = callerCon(data)
     toCall = getattr(caller, attr1)
@@ -1163,7 +1163,7 @@ class NumericalModifying(DataTestObject):
 
     @raises(InvalidArgumentType)
     def test_elements_power_otherObjectExceptions(self):
-        """ Test elements.power raises exception when param is not a UML data object """
+        """ Test elements.power raises exception when param is not a UML Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
     @raises(InvalidArgumentValue)
@@ -1241,7 +1241,7 @@ class NumericalModifying(DataTestObject):
 
     @raises(InvalidArgumentType)
     def test_elements_multiply_otherObjectExceptions(self):
-        """ Test elements.multiply raises exception when param is not a UML data object """
+        """ Test elements.multiply raises exception when param is not a UML Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
     @raises(InvalidArgumentValue)

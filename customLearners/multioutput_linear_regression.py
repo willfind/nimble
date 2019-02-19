@@ -1,10 +1,13 @@
+"""
+Contains the MultiOutputLinearRegression custom learner class.
+"""
+
 from __future__ import absolute_import
+
 import numpy
 from six.moves import range
-
 try:
     from sklearn.linear_model import LinearRegression
-
     imported = True
 except ImportError:
     imported = False
@@ -15,10 +18,9 @@ from UML.customLearners import CustomLearner
 
 class MultiOutputLinearRegression(CustomLearner):
     """
-    Learner which trains a seperate linear regerssion model on each of
+    Learner which trains a separate linear regerssion model on each of
     the features of the prediction data. The backend learner is provided
     by scikit-learn.
-
     """
 
     learnerType = 'regression'

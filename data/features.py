@@ -1,11 +1,15 @@
 """
-Provide feature-based documentation for calls to .features
+Define methods of the features attribute for Base objects.
 
-All feature-axis functions are contained here to customize the function
-signatures and docstrings.  The functions here do not contain
-the code which provides the functionality for the function. The
-functionality component is located in axis.py.
+All user-facing, feature axis functions are contained here. Functions
+specific to only the feature axis will provide their functionality here.
+However, most functions are applicable to either axis so only the
+signatures and docstrings specific to the features axis are provided
+here. The functionality of axis generic methods are defined in axis.py,
+with a leading underscore added to the method name. Additionally, the
+wrapping of function calls for the logger takes place in here.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
@@ -21,7 +25,7 @@ logCapture = logCaptureFactory('features')
 
 class Features(object):
     """
-    Methods that can be called on the a UML data objects feature axis.
+    Methods that can be called on the a UML Base objects feature axis.
     """
     def __init__(self, source):
         self._source = source
@@ -47,9 +51,12 @@ class Features(object):
         --------
         getNames, setName, setNames
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.getName(1)
+        b
         """
         return self._getName(index)
 
@@ -65,9 +72,12 @@ class Features(object):
         --------
         getName, setName, setNames
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.getNames()
+        ['a', 'b', 'c', 'd']
         """
         return self._getNames()
 
@@ -92,9 +102,13 @@ class Features(object):
         --------
         setNames
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.setName('b', 'new')
+        >>> data.features.getNames()
+        ['a', 'new', 'c', 'd']
         """
         self._setName(oldIdentifier, newName)
 
@@ -119,9 +133,13 @@ class Features(object):
         --------
         setName
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.setNames(['1', '2', '3', '4'])
+        >>> data.features.getNames()
+        ['1', '2', '3', '4']
         """
         self._setNames(assignments)
 
@@ -144,9 +162,12 @@ class Features(object):
         --------
         indices
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.getIndex(2)
+        c
         """
         return self._getIndex(name)
 
@@ -170,9 +191,12 @@ class Features(object):
         --------
         index
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.getIndices(['c', 'a', 'd'])
+        [2, 0, 3]
         """
         return self._getIndices(names)
 
@@ -189,9 +213,14 @@ class Features(object):
         -------
         bool
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> data = UML.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data.features.hasName('a')
+        True
+        >>> data.features.hasName('e')
+        False
         """
         return self._hasName(name)
 
@@ -239,15 +268,91 @@ class Features(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See Also
         --------
-        extract, retain, delete, data.copy, data.copyAs
+        UML.data.Base.copy, UML.data.Base.copyAs
 
         Examples
         --------
-        TODO
+        >>> raw = [[1, 2, 3, 4],
+        ...        [1, 2, 3, 4],
+        ...        [1, 2, 3, 4],
+        ...        [1, 2, 3, 4]]
+        >>> data = UML.createData('Matrix', raw,
+        ...                       pointNames=['a', 'b', 'c', 'd'],
+        ...                       featureNames=['1', '2', '3', '4'])
+        >>> single = data.features.copy('1')
+        >>> single
+        Matrix(
+            [[1.000]
+             [1.000]
+             [1.000]
+             [1.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'1':0}
+            )
+        >>> multiple = data.features.copy(['1', 3])
+        >>> multiple
+        Matrix(
+            [[1.000 4.000]
+             [1.000 4.000]
+             [1.000 4.000]
+             [1.000 4.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'1':0, '4':1}
+            )
+        >>> func = data.features.copy(lambda ft: sum(ft) < 10)
+        >>> func
+        Matrix(
+            [[1.000 2.000]
+             [1.000 2.000]
+             [1.000 2.000]
+             [1.000 2.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'1':0, '2':1}
+            )
+        >>> strFunc = data.features.copy("a>=3")
+        >>> strFunc
+        Matrix(
+            [[3.000 4.000]
+             [3.000 4.000]
+             [3.000 4.000]
+             [3.000 4.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'3':0, '4':1}
+            )
+        >>> startEnd = data.features.copy(start=1, end=2)
+        >>> startEnd
+        Matrix(
+            [[2.000 3.000]
+             [2.000 3.000]
+             [2.000 3.000]
+             [2.000 3.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'2':0, '3':1}
+            )
+        >>> numberNoRandom = data.features.copy(number=2)
+        >>> numberNoRandom
+        Matrix(
+            [[1.000 2.000]
+             [1.000 2.000]
+             [1.000 2.000]
+             [1.000 2.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'1':0, '2':1}
+            )
+        >>> numberRandom = data.features.copy(number=2, randomize=True)
+        >>> numberRandom
+        Matrix(
+            [[3.000 1.000]
+             [3.000 1.000]
+             [3.000 1.000]
+             [3.000 1.000]]
+            pointNames={'a':0, 'b':1, 'c':2, 'd':3}
+            featureNames={'3':0, '1':1}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -300,7 +405,7 @@ class Features(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See Also
         --------
@@ -308,7 +413,135 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Extract a single feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> single = data.features.extract('a')
+        >>> single
+        List(
+            [[1.000]
+             [0.000]
+             [0.000]]
+            featureNames={'a':0}
+            )
+        >>> data
+        List(
+            [[0.000 0.000]
+             [1.000 0.000]
+             [0.000 1.000]]
+            featureNames={'b':0, 'c':1}
+            )
+
+        Extract multiple features.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> multiple = data.features.extract(['a', 2])
+        >>> multiple
+        List(
+            [[1.000 0.000]
+             [0.000 0.000]
+             [0.000 1.000]]
+            featureNames={'a':0, 'c':1}
+            )
+        >>> data
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            featureNames={'b':0}
+            )
+
+        Extract feature when the function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> func = data.features.extract(lambda ft: ft[2] == 1)
+        >>> func
+        List(
+            [[0.000]
+             [0.000]
+             [1.000]]
+            featureNames={'c':0}
+            )
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 1.000]
+             [0.000 0.000]]
+            featureNames={'a':0, 'b':1}
+            )
+
+        Extract feature when the string filter function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> strFunc = data.features.extract("p2 != 0")
+        >>> strFunc
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'b':0}
+            )
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 0.000]
+             [0.000 1.000]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'a':0, 'c':1}
+            )
+
+        Extract features from the inclusive start to the inclusive end.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> startEnd = data.features.extract(start=1, end=2)
+        >>> startEnd
+        List(
+            [[0.000 0.000]
+             [1.000 0.000]
+             [0.000 1.000]]
+            featureNames={'b':0, 'c':1}
+            )
+        >>> data
+        List(
+            [[1.000]
+             [0.000]
+             [0.000]]
+            featureNames={'a':0}
+            )
+
+        Select a set number to extract, starting from the first feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> numberNoRandom = data.features.extract(number=2)
+        >>> numberNoRandom
+        List(
+            [[1.000 0.000]
+             [0.000 1.000]
+             [0.000 0.000]]
+            featureNames={'a':0, 'b':1}
+            )
+        >>> data
+        List(
+            [[0.000]
+             [0.000]
+             [1.000]]
+            featureNames={'c':0}
+            )
+
+        Select a set number to extract, choosing features at random.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> numberRandom = data.features.extract(number=2,
+        ...                                      randomize=True)
+        >>> numberRandom
+        List(
+            [[0.000 1.000]
+             [0.000 0.000]
+             [1.000 0.000]]
+            featureNames={'c':0, 'a':1}
+            )
+        >>> data
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            featureNames={'b':0}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -365,7 +598,85 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Delete a single feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete('a')
+        >>> data
+        List(
+            [[0.000 0.000]
+             [1.000 0.000]
+             [0.000 1.000]]
+            featureNames={'b':0, 'c':1}
+            )
+
+        Delete multiple features.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete(['a', 2])
+        >>> data
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            featureNames={'b':0}
+            )
+
+        Delete feature when the function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete(lambda ft: ft[2] == 1)
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 1.000]
+             [0.000 0.000]]
+            featureNames={'a':0, 'b':1}
+            )
+
+        Delete feature when the string filter function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> data.features.delete("p2 != 0")
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 0.000]
+             [0.000 1.000]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'a':0, 'c':1}
+            )
+
+        Delete features from the inclusive start to the inclusive end.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete(start=1, end=2)
+        >>> data
+        List(
+            [[1.000]
+             [0.000]
+             [0.000]]
+            featureNames={'a':0}
+            )
+
+        Select a set number to delete, starting from the first feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete(number=2)
+        >>> numberNoRandom
+        >>> data
+        List(
+            [[0.000]
+             [0.000]
+             [1.000]]
+            featureNames={'c':0}
+            )
+
+        Select a set number to delete, choosing features at random.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.delete(number=2,  randomize=True)
+        >>> data
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            featureNames={'b':0}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -418,11 +729,88 @@ class Features(object):
 
         See Also
         --------
-        extract, retain
+        extract, delete
 
         Examples
         --------
-        TODO
+        Retain a single feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain('a')
+        >>> data
+        List(
+            [[1.000]
+             [0.000]
+             [0.000]]
+            featureNames={'a':0}
+            )
+
+        Retain multiple features.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain(['a', 2])
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 0.000]
+             [0.000 1.000]]
+            featureNames={'a':0, 'c':1}
+            )
+
+        Retain feature when the function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain(lambda ft: ft[2] == 1)
+        >>> data
+        List(
+            [[0.000]
+             [0.000]
+             [1.000]]
+            featureNames={'c':0}
+            )
+
+        Retain feature when the string filter function returns True.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> data.features.retain("p2 != 0")
+        >>> data
+        List(
+            [[0.000]
+             [1.000]
+             [0.000]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'b':0}
+            )
+
+        Retain features from the inclusive start to the inclusive end.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain(start=1, end=2)
+        >>> data
+        List(
+            [[0.000 0.000]
+             [1.000 0.000]
+             [0.000 1.000]]
+            featureNames={'b':0, 'c':1}
+            )
+
+        Select a set number to retain, starting from the first feature.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain(number=2)
+        >>> data
+        List(
+            [[1.000 0.000]
+             [0.000 1.000]
+             [0.000 0.000]]
+            featureNames={'a':0, 'b':1}
+            )
+
+        Select a set number to retain, choosing features at random.
+        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data.features.retain(number=2, randomize=True)
+        >>> data
+        List(
+            [[0.000 1.000]
+             [0.000 0.000]
+             [1.000 0.000]]
+            featureNames={'c':0, 'a':1}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -441,11 +829,11 @@ class Features(object):
         Parameters
         ----------
         condition : function
-            function - may take two forms:
-            a) a function that when given a feature will return True if
-            it is to be counted
-            b) a filter function, as a string, containing a comparison
-            operator and a value (i.e "<10")
+            May take two forms:
+            * a function that when given a feature will return True if
+              it is to be counted
+            * a filter function, as a string, containing a comparison
+              operator and a value (i.e "pt1<10")
 
         Returns
         -------
@@ -453,11 +841,22 @@ class Features(object):
 
         See Also
         --------
-        elements.count, elements.countEachUniqueValue
+        UML.data.Elements.count, UML.data.Elements.countEachUniqueValue
 
         Examples
         --------
-        TODO
+        Count using a python function.
+        >>> def sumIsOne(ft):
+        ...     return sum(ft) == 1
+        >>> data = UML.identity('Matrix', 3)
+        >>> data.features.count(sumIsOne)
+        3
+
+        Count when the string filter function returns True.
+        >>> data = UML.identity('Matrix', 3,
+        ...                     pointNames=['pt1', 'pt2', 'pt3'])
+        >>> data.features.count("pt1 == 0")
+        2
         """
         return self._count(condition)
 
@@ -480,6 +879,29 @@ class Features(object):
 
         Examples
         --------
+        Sort by a given point using ``sortBy``.
+        TODO
+
+        Sort with a list of identifiers.
+        >>> raw = [['home', 81, 3],
+        ...        ['gard', 98, 10],
+        ...        ['home', 14, 1],
+        ...        ['home', 11, 3]]
+        >>> cols = ['dept', 'ID', 'quantity']
+        >>> orders = UML.createData('DataFrame', raw, featureNames=cols)
+        >>> orders.features.sort(sortHelper=['ID', 'quantity', 'dept'])
+        DataFrame(
+            [[81 3  home]
+             [98 10 gard]
+             [14 1  home]
+             [11 3  home]]
+            featureNames={'ID':0, 'quantity':1, 'dept':2}
+            )
+
+        Sort using a comparator function.
+        TODO
+
+        Sort using a scoring function.
         TODO
         """
         if UML.logger.active.position == 0:
@@ -569,7 +991,41 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Transform all features; apply to all points.
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data.features.transform(lambda ft: ft + 2)
+        >>> data
+        Matrix(
+            [[3.000 3.000 3.000 3.000 3.000]
+             [3.000 3.000 3.000 3.000 3.000]
+             [3.000 3.000 3.000 3.000 3.000]]
+            )
+
+        Transform all features; apply to certain points. Note that the
+        function recieves a read-only view of each feature, so we need
+        to make a copy in order to modify any specific data.
+        >>> def transformMiddlePoint(ft):
+        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList[1] += 4
+        ...     return ftList
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data.features.transform(transformMiddlePoint)
+        >>> data
+        Matrix(
+            [[1.000 1.000 1.000 1.000 1.000]
+             [5.000 5.000 5.000 5.000 5.000]
+             [1.000 1.000 1.000 1.000 1.000]]
+            )
+
+        Transform a subset of features.
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data.features.transform(lambda ft: ft + 6, features=[1, 3])
+        >>> data
+        Matrix(
+            [[1.000 7.000 1.000 7.000 1.000]
+             [1.000 7.000 1.000 7.000 1.000]
+             [1.000 7.000 1.000 7.000 1.000]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -603,7 +1059,7 @@ class Features(object):
 
         Returns
         -------
-        UML data object
+        UML Base object
 
         See also
         --------
@@ -611,7 +1067,42 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Apply calculation to all features; apply to all points.
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> addTwo = data.features.calculate(lambda ft: ft + 2)
+        >>> addTwo
+        Matrix(
+            [[3.000 3.000 3.000 3.000 3.000]
+             [3.000 3.000 3.000 3.000 3.000]
+             [3.000 3.000 3.000 3.000 3.000]]
+            )
+
+        Apply calculation to all features; apply to certain points. Note
+        that the function recieves a read-only view of each feature, so
+        a copy is necessary to modify any specific data.
+        >>> def changeMiddlePoint(ft):
+        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList[1] += 4
+        ...     return ftList
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> middleChange = data.features.calculate(changeMiddlePoint)
+        >>> middleChange
+        Matrix(
+            [[1.000 1.000 1.000 1.000 1.000]
+             [5.000 5.000 5.000 5.000 5.000]
+             [1.000 1.000 1.000 1.000 1.000]]
+            )
+
+        Apply calculation to a subset of features.
+        >>> data = UML.ones('Matrix', 3, 5)
+        >>> calc = data.features.calculate(lambda ft: ft + 6,
+        ...                                features=[1, 3])
+        >>> calc
+        Matrix(
+            [[1.000 7.000 1.000 7.000 1.000]
+             [1.000 7.000 1.000 7.000 1.000]
+             [1.000 7.000 1.000 7.000 1.000]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -635,8 +1126,8 @@ class Features(object):
 
         Parameters
         ----------
-        toAdd : UML data object
-            The UML data object whose contents we will be including
+        toAdd : UML Base object
+            The UML Base object whose contents we will be including
             in this object. Must have the same point names as the
             calling object, but not necessarily in the same order. Must
             not share any feature names with the calling object.
@@ -647,13 +1138,48 @@ class Features(object):
             in this object, or in other words: appended to the end of
             the current features.
 
-        See Also
-        --------
-        TODO
-
         Examples
         --------
-        TODO
+        Append added data; default names.
+        >>> data = UML.zeros('Matrix', 3, 2)
+        >>> toAdd = UML.ones('Matrix', 3, 2)
+        >>> data.features.add(toAdd)
+        >>> data
+        Matrix(
+            [[0.000 0.000 1.000 1.000]
+             [0.000 0.000 1.000 1.000]
+             [0.000 0.000 1.000 1.000]]
+            )
+
+        Reorder names.
+        >>> rawData = [[1, 2], [5, 6]]
+        >>> data = UML.createData('Matrix', rawData,
+        ...                       pointNames=['a', 'b'])
+        >>> rawAdd = [[7, 8], [3, 4]]
+        >>> toAdd = UML.createData('Matrix', rawAdd,
+        ...                        pointNames=['b', 'a'])
+        >>> data.features.add(toAdd)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000]
+             [5.000 6.000 7.000 8.000]]
+            pointNames={'a':0, 'b':1}
+            )
+
+        Insert before another point; mixed object types.
+        >>> rawData = [[1, 4], [5, 8]]
+        >>> data = UML.createData('Matrix', rawData,
+        ...                       featureNames=['1', '4'])
+        >>> rawAdd = [[2, 3], [6, 7]]
+        >>> toAdd = UML.createData('List', rawAdd,
+        ...                        featureNames=['2', '3'])
+        >>> data.features.add(toAdd, insertBefore='4')
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000]
+             [5.000 6.000 7.000 8.000]]
+            featureNames={'1':0, '2':1, '3':2, '4':3}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -682,7 +1208,24 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        mapReduce the counts of data types in the features.
+        >>> def typeMapper(ft):
+        ...     ftType = str(type(ft[0]))
+        ...     return [(ftType, 1)]
+        >>> def typeReducer(ftType, totals):
+        ...     return (ftType, sum(totals))
+        >>> raw = [[61500, 'Open', 'Chicago Bears'],
+        ...        [71228, 'Dome', 'Atlanta Falcons'],
+        ...        [77000, 'Open', 'Kansas City Chiefs'],
+        ...        [72968, 'Dome', 'New Orleans Saints'],
+        ...        [76500, 'Open', 'Miami Dolphins']]
+        >>> ftNames = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
+        >>> data = UML.createData('Matrix', raw, featureNames=ftNames)
+        >>> data.features.mapReduce(typeMapper, typeReducer)
+        Matrix(
+            [[<class 'int'> 1]
+             [<class 'str'> 2]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -703,9 +1246,21 @@ class Features(object):
         sufficiently random for large number of features.
         See random.shuffle()'s documentation.
 
-        Examples
-        --------
-        TODO
+        Example
+        -------
+        >>> raw = [[1, 2, 3, 4],
+        ...        [1, 2, 3, 4],
+        ...        [1, 2, 3, 4],
+        ...        [1, 2, 3, 4]]
+        >>> data = UML.createData('DataFrame', raw)
+        >>> data.features.shuffle()
+        >>> data
+        DataFrame(
+            [[3.000 2.000 4.000 1.000]
+             [3.000 2.000 4.000 1.000]
+             [3.000 2.000 4.000 1.000]
+             [3.000 2.000 4.000 1.000]]
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -776,7 +1331,7 @@ class Features(object):
              [-1.000 2.000 2.000 ]]
             )
 
-        Fill using UML's match and fill modules.
+        Fill using UML's match and fill modules; limit to first feature.
         Note: None is converted to numpy.nan in UML.
         >>> from UML import match
         >>> from UML import fill
@@ -789,11 +1344,11 @@ class Features(object):
         >>> data.features.fill(match.missing, fill.mean, features=0)
         >>> data
         Matrix(
-            [[1.000 1 1 ]
-             [1.000 1 1 ]
-             [1.000 1 na]
-             [2.000 2 2 ]
-             [1.250 2 2 ]]
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]
+             [1.000 1.000  nan ]
+             [2.000 2.000 2.000]
+             [1.250 2.000 2.000]]
             )
         """
         if UML.logger.active.position == 0:
@@ -817,34 +1372,69 @@ class Features(object):
 
         Parameters
         ----------
-        subtract : number, str, UML data object
+        subtract : number, str, UML Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though featureStatistics)
-            * UML data object - If a vector shaped object is given, then
+            * UML Base object - If a vector shaped object is given, then
               the value associated with each feature will be subtracted
               from all values of that feature. Otherwise, the values in
               the object are used for elementwise subtraction
-        divide : number, str, UML data object
+        divide : number, str, UML Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though featureStatistics)
-            * UML data object - If a vector shaped object is given, then
+            * UML Base object - If a vector shaped object is given, then
               the value associated with each feature will be used in
               division of all values for that feature. Otherwise, the
               values in the object are used for elementwise division.
-        applyResultTo : UML data object, statistical method
-            If a UML data object is given, then perform the same
+        applyResultTo : UML Base object, statistical method
+            If a UML Base object is given, then perform the same
             operations to it as are applied to the calling object.
             However, if a statistical method is specified as subtract or
             divide, then concrete values are first calculated only from
             querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a UML data object
+            on applyResultTo using the results; as if a UML Base object
             was given for the subtract or divide arguments.
 
         Examples
         --------
-        TODO
+        Using statistics functions.
+        >>> raw = [[5, 9.8, 92],
+        ...        [3, 6.2, 58],
+        ...        [2, 3.0, 29]]
+        >>> pts = ['movie1', 'movie2', 'movie3']
+        >>> fts = ['review1', 'review2', 'review3']
+        >>> reviews = UML.createData('Matrix', raw, pts, fts)
+        >>> reviews.features.normalize(subtract='min')
+        >>> reviews.features.normalize(divide='max')
+        >>> reviews
+        Matrix(
+            [[1.000 1.000 1.000]
+             [0.333 0.471 0.460]
+             [0.000 0.000 0.000]]
+            pointNames={'movie1':0, 'movie2':1, 'movie3':2}
+            featureNames={'review1':0, 'review2':1, 'review3':2}
+            )
+
+        Using UML objects.
+        >>> raw = [[5, 9.8, 92],
+        ...        [3, 6.2, 58],
+        ...        [2, 3.0, 29]]
+        >>> pts = ['movie1', 'movie2', 'movie3']
+        >>> fts = ['review1', 'review2', 'review3']
+        >>> reviews = UML.createData('Matrix', raw, pts, fts)
+        >>> means = reviews.features.statistics('mean')
+        >>> stdDevs = reviews.features.statistics('standard deviation')
+        >>> reviews.features.normalize(subtract=means, divide=stdDevs)
+        >>> reviews
+        Matrix(
+            [[1.091  1.019  1.025 ]
+             [-0.218 -0.039 -0.053]
+             [-0.873 -0.980 -0.973]]
+            pointNames={'movie1':0, 'movie2':1, 'movie3':2}
+            featureNames={'review1':0, 'review2':1, 'review3':2}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -884,10 +1474,12 @@ class Features(object):
 
         Notes
         -----
+        Visual representations of the Examples
         ``
-        data.splitFeatureByParsing(location, ', ', ['city', 'country'])
+        locations.splitFeatureByParsing('location', ', ',
+                                        ['city', 'country'])
 
-              data (before)                      data (after)
+            locations (before)                locations (after)
         +-------------------------+      +-----------+--------------+
         | location                |      | city      | country      |
         +-------------------------+      +-----------+--------------+
@@ -898,9 +1490,9 @@ class Features(object):
         | Moscow, Russia          |      | Moscow    | Russia       |
         +-------------------------+      +-----------+--------------+
 
-        data.splitFeatureByParsing(0, 3, ['category', 'id'])
+        inventory.splitFeatureByParsing(0, 3, ['category', 'id'])
 
-            data (before)                        data (after)
+          inventory (before)                  inventory (after)
         +---------+----------+          +----------+-----+----------+
         | product | quantity |          | category | id  | quantity |
         +---------+----------+          +----------+-----+----------+
@@ -919,7 +1511,38 @@ class Features(object):
 
         Examples
         --------
-        TODO
+        Split with a string for ``rule``.
+        >>> raw = [['Cape Town, South Africa'],
+        ...        ['Lima, Peru'],
+        ...        ['Moscow', 'Russia']]
+        >>> fts = ['location']
+        >>> locations = UML.createData('Matrix', raw, featureNames=fts)
+        >>> locations.features.splitByParsing(location, ', ',
+        ...                                   ['city', 'country'])
+        >>> locations
+        Matrix(
+            [[Cape Town South Africa]
+             [   Lima       Peru    ]
+             [  Moscow     Russia   ]]
+            featureNames={'city':0, 'country':1}
+            )
+
+        Split with an index for ``rule``.
+        >>> raw = [['AGG932', 44],
+        ...        ['AGG734', 11],
+        ...        ['HEQ892', 1],
+        ...        ['LEQ331', 2]]
+        >>> fts = ['product', 'quantity']
+        >>> inventory = UML.createData('List', raw, featureNames=fts)
+        >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
+        >>> inventory
+        List(
+            [[AGG 932 44]
+             [AGG 734 11]
+             [HEQ 892 1 ]
+             [LEQ 331 2 ]]
+            featureNames={'category':0, 'id':1, 'quantity':2}
+            )
         """
         if not (isinstance(rule, (int, numpy.integer, six.string_types))
                 or hasattr(rule, '__iter__')
@@ -991,18 +1614,39 @@ class Features(object):
         object, where the values in the same feature will be
         contiguous, with the earlier indexed features coming
         before the later indexed features.
-
-        Examples
-        --------
-        TODO
         """
         return self._nonZeroIterator()
 
     def unique(self):
         """
-        Return a new object with only unique features. If feature names
-        are present, the feature name of the first instance of the
-        unique feature in this object will be assigned.
+        Only the unique features from this object.
+
+        Any repeated features will be removed from the returned object.
+        If feature names are present, the feature name of the first
+        instance of the unique feature in this object will be assigned.
+
+        Returns
+        -------
+        UML.data.Base
+            The object containing only unique features.
+
+        Example
+        -------
+        >>> raw = [['a', 1, 3, 'a'],
+        ...        ['a', 5, 6, 'a'],
+        ...        ['b', 7, 1, 'b'],
+        ...        ['c', 2, 9, 'c']]
+        >>> ftNames = ['f1', 'f2', 'f3', 'f1_copy']
+        >>> data = UML.createData('Matrix', raw, featureNames=ftNames)
+        >>> uniqueFeatures = data.features.unique()
+        >>> uniqueFeatures
+        Matrix(
+            [[a 1 3]
+             [a 5 6]
+             [b 7 1]
+             [c 2 9]]
+            featureNames={'f1':0, 'f2':1, 'f3':2}
+            )
         """
         return self._unique()
 
@@ -1026,11 +1670,7 @@ class Features(object):
 
         Returns
         -------
-        UML data object
-
-        Examples
-        --------
-        TODO
+        UML Base object
         """
         return self._similarities(similarityFunction)
 
@@ -1049,11 +1689,7 @@ class Features(object):
 
         Returns
         -------
-        UML data object
-
-        Examples
-        --------
-        TODO
+        UML Base object
         """
         return self._statistics(statisticsFunction, groupByFeature)
 
@@ -1156,6 +1792,10 @@ class Features(object):
 
     @abstractmethod
     def _nonZeroIterator(self):
+        pass
+
+    @abstractmethod
+    def _unique(self):
         pass
 
     @abstractmethod

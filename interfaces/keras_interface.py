@@ -1,24 +1,24 @@
 """
 Relies on being keras 2.0.8
-
 """
 
 from __future__ import absolute_import
-import importlib
-import inspect
 import copy
-import numpy
 import os
 import sys
-import functools
 import logging
 
-import UML
+import numpy
+from six.moves import range
 
+import UML
+from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
+from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
-from six.moves import range
+from UML.docHelpers import inheritDocstringsFactory
+
 
 # Contains path to keras root directory
 #kerasDir = '/usr/local/lib/python2.7/dist-packages'
@@ -28,17 +28,13 @@ kerasDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
-from UML.interfaces.universal_interface import UniversalInterface
 
-
+@inheritDocstringsFactory(UniversalInterface)
 class Keras(UniversalInterface):
     """
     This class is an interface to keras.
     """
     def __init__(self):
-        """
-
-        """
         if kerasDir is not None:
             sys.path.insert(0, kerasDir)
 
@@ -58,7 +54,8 @@ class Keras(UniversalInterface):
         for name in names:
             splitList = name.split('.')
             if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
-                if splitList[0] not in self.keras.__all__ and not splitList[0].startswith('_'):
+                if (splitList[0] not in self.keras.__all__
+                        and not splitList[0].startswith('_')):
                     possibilities.append(splitList[0])
 
         possibilities = numpy.unique(possibilities).tolist()
@@ -68,7 +65,7 @@ class Keras(UniversalInterface):
 
         def isLearner(obj):
             """
-            in Keras, there are 2 learners: Sequential and Model.
+            In Keras, there are 2 learners: Sequential and Model.
             """
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
@@ -78,9 +75,14 @@ class Keras(UniversalInterface):
 
             return True
 
-        self._searcher = PythonSearcher(self.keras, self.keras.__all__, {}, isLearner, 2)
+        self._searcher = PythonSearcher(self.keras, self.keras.__all__, {},
+                                        isLearner, 2)
 
         super(Keras, self).__init__()
+
+    #######################################
+    ### ABSTRACT METHOD IMPLEMENTATIONS ###
+    #######################################
 
     def accessible(self):
         try:
@@ -100,61 +102,35 @@ class Keras(UniversalInterface):
         return ret
 
     def learnerType(self, name):
-        """
-        Returns a string referring to the action the learner takes out of the possibilities:
-        classification, regression.
-
-        """
-
         return 'UNKNOWN'
 
     def _findCallableBackend(self, name):
-        """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
-        """
         return self._searcher.findInPackage(None, name)
 
     def _getParameterNamesBackend(self, name):
-        """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
-        """
         ret = self._paramQuery(name, None, ignore=['self'])
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, _) = ret
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        """
-        Find all parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of list of param names
-        """
         ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
-        compile = self._paramQuery('compile', learnerName, ignore)
+        compile_ = self._paramQuery('compile', learnerName, ignore)
 
-        ret = init[0] + fit[0] + fitGenerator[0] + compile[0] + predict[0]
+        ret = init[0] + fit[0] + fitGenerator[0] + compile_[0] + predict[0]
 
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
-        """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
-        """
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, d) = ret
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -163,19 +139,14 @@ class Keras(UniversalInterface):
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        """
-        Find all default values for parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of dict of param names to default values
-        """
         ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
-        compile = self._paramQuery('compile', learnerName, ignore)
+        compile_ = self._paramQuery('compile', learnerName, ignore)
 
-        toProcess = [init, fit, fitGenerator, compile, predict]
+        toProcess = [init, fit, fitGenerator, compile_, predict]
 
         ret = {}
         for stage in toProcess:
@@ -190,11 +161,6 @@ class Keras(UniversalInterface):
         return [ret]
 
     def _getScores(self, learner, testX, arguments, customDict):
-        """
-        If the learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception.
-
-        """
         if hasattr(learner, 'decision_function'):
             toCall = learner.decision_function
         elif hasattr(learner, 'predict_proba'):
@@ -210,53 +176,24 @@ class Keras(UniversalInterface):
 
 
     def _getScoresOrder(self, learner):
-        """
-        If the learner is a classifier, then return a list of the the labels corresponding
-        to each column of the return from getScores
-
-        """
         return learner.UIgetScoreOrder()
 
 
     def isAlias(self, name):
-        """
-        Returns true if the name is an accepted alias for this interface
-
-        """
         if name.lower() == 'keras':
             return True
         return name.lower() == self.getCanonicalName().lower()
 
 
     def getCanonicalName(self):
-        """
-        Returns the string name that will uniquely identify this interface
-
-        """
         return 'keras'
 
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        """
-        Method called before any package level function which transforms all
-        parameters provided by a UML user.
-
-        trainX, etc. are filled with the values of the parameters of the same name
-        to a calls to trainAndApply() or train(), or are empty when being called before other
-        functions. arguments is a dictionary mapping names to values of all other
-        parameters that need to be processed.
-
-        The return value of this function must be a dictionary mirroring the
-        structure of the inputs. Specifically, four keys and values are required:
-        keys trainX, trainY, testX, and arguments. For the first three, the associated
-        values must be the transformed values, and for the last, the value must be a
-        dictionary with the same keys as in the 'arguments' input dictionary, with
-        transformed values as the values. However, other information may be added
-        by the package implementor, for example to be used in _outputTransformation()
-
-        """
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
         if 'layers' in arguments:
-            if isinstance(arguments['layers'][0], dict):#this is to check if layers has been processed or not
+            #this is to check if layers has been processed or not
+            if isinstance(arguments['layers'][0], dict):
                 if learnerName == 'Sequential':
                     layersObj = []
                     for layer in arguments['layers']:
@@ -267,11 +204,12 @@ class Keras(UniversalInterface):
                     for layer in arguments['layers']:
                         layerType = layer.pop('type')
                         layerName = layer.pop('layerName')
+                        toCall = self.findCallable(layerType)(**layer)
                         if 'inputs' in layer:
                             inputName = layer.pop('inputs')
-                            layersObj[layerName] = self.findCallable(layerType)(**layer)(layersObj[inputName])
+                            layersObj[layerName] = toCall(layersObj[inputName])
                         else:
-                            layersObj[layerName] = self.findCallable(layerType)(**layer)
+                            layersObj[layerName] = toCall
                     arguments['inputs'] = layersObj[arguments['inputs']]
                     arguments['outputs'] = layersObj[arguments['outputs']]
                 arguments['layers'] = layersObj
@@ -306,17 +244,15 @@ class Keras(UniversalInterface):
         return (trainX, trainY, testX, copy.copy(arguments))
 
 
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        """
-        Method called before any package level function which transforms the returned
-        value into a format appropriate for a UML user.
-
-        """
-        #In the case of prediction we are given a row vector, yet we want a column vector
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
+        # In the case of prediction we are given a row vector,
+        # yet we want a column vector
         if outputFormat == "label" and len(outputValue.shape) == 1:
             outputValue = outputValue.reshape(len(outputValue), 1)
 
-        #TODO correct
+        # TODO correct
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
@@ -324,11 +260,6 @@ class Keras(UniversalInterface):
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        """
-        build a learner and perform training with the given data
-        TAKES name of learner, transformed arguments
-        RETURNS an in package object to be wrapped by a TrainedLearner object
-        """
         # get parameter names
         # if learnerName == 'Model':
         #     initNames = ['inputs', 'outputs']
@@ -337,9 +268,10 @@ class Keras(UniversalInterface):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         if isinstance(trainX, UML.data.Sparse):
-            fitNames = self._paramQuery('fit_generator', learnerName, ['self'])[0]
+            param = 'fit_generator'
         else:
-            fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+            param = 'fit'
+        fitNames = self._paramQuery(param, learnerName, ['self'])[0]
 
         # pack parameter sets
         initParams = {}
@@ -366,14 +298,16 @@ class Keras(UniversalInterface):
             def sparseGenerator():
                 while True:
                     for i in range(len(trainX.points)):
-                        tmpData = (trainX.pointView(i).copyAs('numpy matrix'), numpy.matrix(trainY[i]))
+                        tmpData = (trainX.pointView(i).copyAs('numpy matrix'),
+                                   numpy.matrix(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
             learner.fit_generator(**fitParams)
         else:
             learner.fit(**fitParams)
 
-        if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
+        if (hasattr(learner, 'decision_function')
+                or hasattr(learner, 'predict_proba')):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
             else:
@@ -388,13 +322,11 @@ class Keras(UniversalInterface):
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
-        """
-        Given an already trained online learner, extend it's training with the given data
-        TAKES trained learner, transformed arguments,
-        RETURNS the learner after this batch of training
-        """
-        trainOnBatchNames = self._paramQuery('train_on_batch', self.learnerName, ['self'])[0]
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
+        param = 'train_on_batch'
+        learnerName = self.learnerName
+        trainOnBatchNames = self._paramQuery(param, learnerName, ['self'])[0]
         trainOnBatchParams = {}
         for name in trainOnBatchNames:
             value = None
@@ -411,27 +343,14 @@ class Keras(UniversalInterface):
 
 
     def _applier(self, learner, testX, arguments, customDict):
-        """
-        use the given learner to do testing/prediction on the given test set
-        TAKES a TrainedLearner object that can be tested on
-        RETURNS UML friendly results
-        """
         if hasattr(learner, 'predict'):
             return self._predict(learner, testX, arguments, customDict)
         else:
-            raise TypeError("Cannot apply this learner to data, no predict function")
+            msg = "Cannot apply this learner to data, no predict function"
+            raise TypeError(msg)
 
 
     def _getAttributes(self, learnerBackend):
-        """
-        Returns whatever attributes might be available for the given learner,
-        in the form of a dictionary. For example, in the case of linear
-        regression, one might expect to find an intercept and a list of
-        coefficients in the output. Makes use of the
-        UML.interfaces.interface_helpers.collectAttributes function to
-        automatically generate the results.
-
-        """
         obj = learnerBackend
         generators = None
         checkers = []
@@ -443,41 +362,24 @@ class Keras(UniversalInterface):
         return ret
 
     def _optionDefaults(self, option):
-        """
-        Define package default values that will be used for as long as a default
-        value hasn't been registered in the UML configuration file. For example,
-        these values will always be used the first time an interface is instantiated.
-
-        """
         return None
 
     def _configurableOptionNames(self):
-        """
-        Returns a list of strings, where each string is the name of a configurable
-        option of this interface whose value will be stored in UML's configuration
-        file.
-
-        """
         return ['location']
 
 
     def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be wrapped
-        in I/O transformation, and exposed as attributes of all TrainedLearner
-        objects returned by this interface's train() function. If None, or an
-        empty list is returned, no functions will be exposed. Each function
-        in this list should be a python function, the inspect module will be
-        used to retrieve argument names, and the value of the function's
-        __name__ attribute will be its name in TrainedLearner.
-
-        """
         return [self._predict]
+
+
+    def version(self):
+        return self.keras.__version__
 
 
     def _predict(self, learner, testX, arguments, customDict):
         """
-        Wrapper for the underlying predict function of a keras learner object
+        Wrapper for the underlying predict function of a keras learner
+        object.
         """
         if isinstance(testX, UML.data.Sparse):
             fitParams = {}
@@ -498,66 +400,21 @@ class Keras(UniversalInterface):
     ### HELPERS ###
     ###############
 
-    def _removeFromArray(self, orig, toIgnore):
-        temp = []
-        for entry in orig:
-            if not entry in toIgnore:
-                temp.append(entry)
-        return temp
-
-    def _removeFromDict(self, orig, toIgnore):
-        for entry in toIgnore:
-            if entry in orig:
-                del orig[entry]
-        return orig
-
-    def _removeFromTailMatchedLists(self, full, matched, toIgnore):
+    def _paramQuery(self, name, parent, ignore=None):
         """
-        full is some list n, matched is a list with length m, where m is less
-        than or equal to n, where the last m values of full are matched against
-        their positions in matched. If one of those is to be removed, it is to
-        be removed in both.
+        Takes the name of some keras learn object or function, returns
+        a list of parameters used to instantiate that object or run that
+        function, or None if the desired thing cannot be found.
         """
-        temp = {}
-        if matched is not None:
-            for i in range(len(full)):
-                if i < len(matched):
-                    temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
-                else:
-                    temp[full[len(full) - 1 - i]] = None
-        else:
-            retFull = self._removeFromArray(full, toIgnore)
-            return (retFull, matched)
-
-        for ignoreKey in toIgnore:
-            if ignoreKey in temp:
-                del temp[ignoreKey]
-
-        retFull = []
-        retMatched = []
-        for i in range(len(full)):
-            name = full[i]
-            if name in temp:
-                retFull.append(name)
-                if (i - (len(full) - len(matched))) >= 0:
-                    retMatched.append(temp[name])
-
-        return (retFull, retMatched)
-
-
-    def _paramQuery(self, name, parent, ignore=[]):
-        """
-        Takes the name of some keras learn object or function, returns a list
-        of parameters used to instantiate that object or run that function, or
-        None if the desired thing cannot be found
-
-        """
+        if ignore is None:
+            ignore = []
         if name == 'fit_generator':
-            return (['steps_per_epoch', 'epochs', 'verbose', 'callbacks', 'validation_data', \
-                     'validation_steps', \
-                     'class_weight', 'max_queue_size', 'workers', 'use_multiprocessing', \
-                     'initial_epoch'], 'args', 'kwargs', \
-                    [None,1,1,None, None, None, None, 10, 1, False, 0])
+            return (['steps_per_epoch', 'epochs', 'verbose', 'callbacks',
+                     'validation_data', 'validation_steps', 'class_weight',
+                     'max_queue_size', 'workers', 'use_multiprocessing',
+                     'initial_epoch'],
+                    'args', 'kwargs',
+                    [None, 1, 1, None, None, None, None, 10, 1, False, 0])
 
         namedModule = self._searcher.findInPackage(parent, name)
 
@@ -565,14 +422,18 @@ class Keras(UniversalInterface):
             return None
 
         class InheritedEmptyInit(object):
+            """
+            Class with an empty __init__ (no parameters)
+            """
             pass
 
-        if type(namedModule) == type(getattr(InheritedEmptyInit, '__init__')):
+        if isinstance(namedModule,
+                      type(getattr(InheritedEmptyInit, '__init__'))):
             return ([], None, None, None)
 
         try:
             (args, v, k, d) = inspectArguments(namedModule)
-            (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+            (args, d) = removeFromTailMatchedLists(args, d, ignore)
             if 'random_state' in args:
                 index = args.index('random_state')
                 negdex = index - len(args)
@@ -581,7 +442,7 @@ class Keras(UniversalInterface):
         except TypeError:
             try:
                 (args, v, k, d) = inspectArguments(namedModule.__init__)
-                (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+                (args, d) = removeFromTailMatchedLists(args, d, ignore)
                 if 'random_state' in args:
                     index = args.index('random_state')
                     negdex = index - len(args)
@@ -593,27 +454,31 @@ class Keras(UniversalInterface):
 
     def _paramQueryHardCoded(self, name, parent, ignore):
         """
-        Returns a list of parameters for in package entities that we have hard coded,
-        under the assumption that it is difficult or impossible to find that data
-        automatically
-
+        Returns a list of parameters for in package entities that we
+        have hard coded, under the assumption that it is difficult or
+        impossible to find that data automatically.
         """
         #if needed, this function should be rewritten for keras.
         if parent is not None and parent.lower() == 'KernelCenterer'.lower():
             if name == '__init__':
                 ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
+                                                                ignore)
             return (newArgs, ret[1], ret[2], newDefaults)
+
         if parent is not None and parent.lower() == 'LabelEncoder'.lower():
             if name == '__init__':
                 ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
+                                                                ignore)
             return (newArgs, ret[1], ret[2], newDefaults)
+
         if parent is not None and parent.lower() == 'DummyRegressor'.lower():
             if name == '__init__':
-            #				ret = (['strategy', 'constant'], None, None, ['mean', None])
+            #	ret = (['strategy', 'constant'], None, None, ['mean', None])
                 ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
+                                                                ignore)
             return (newArgs, ret[1], ret[2], newDefaults)
         if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
             if name == '__init__':
@@ -629,10 +494,8 @@ class Keras(UniversalInterface):
             else:
                 return None
 
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
+                                                                ignore)
             return (newArgs, ret[1], ret[2], newDefaults)
 
         return None
-
-    def version(self):
-        return self.keras.__version__

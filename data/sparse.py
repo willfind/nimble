@@ -15,13 +15,13 @@ import UML
 import UML.data
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import PackageException, ImproperObjectAction
+from UML.docHelpers import inheritDocstringsFactory
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
-from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 
@@ -86,9 +86,6 @@ class Sparse(Base):
 
     def _getElements(self):
         return SparseElements(self)
-
-    def getdata(self):
-        return self.data
 
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copyAs("Matrix")
@@ -853,8 +850,8 @@ class Sparse(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other
-        UML data object. Both object must contain only numeric data.
+        Matrix multiply this UML Base object against the provided other
+        UML Base object. Both object must contain only numeric data.
         The featureCount of the calling object must equal the pointCount
         of the other object. The types of the two objects may be
         different, and the return is guaranteed to be the same type as
@@ -872,7 +869,7 @@ class Sparse(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided
+        Multiply every element of this UML Base object by the provided
         scalar. This object must contain only numeric data. The 'scalar'
         parameter must be a numeric data type. The returned object will
         be the inplace modification of the calling object.
@@ -1171,6 +1168,9 @@ class SparseVectorView(BaseView, Sparse):
         return SparseElementsView(self)
 
 class SparseView(BaseView, Sparse):
+    """
+    Read only access to a Sparse object.
+    """
     def __init__(self, **kwds):
         super(SparseView, self).__init__(**kwds)
 
@@ -1197,10 +1197,10 @@ class SparseView(BaseView, Sparse):
             sourceRow = self._source.data.row.copy()
             sourceCol = self._source.data.col.copy()
 
-            keep = ((sourceRow >= self._pStart) &
-                     (sourceRow < self._pEnd) &
-                     (sourceCol >= self._fStart) &
-                     (sourceCol < self._fEnd))
+            keep = ((sourceRow >= self._pStart)
+                    & (sourceRow < self._pEnd)
+                    & (sourceCol >= self._fStart)
+                    &(sourceCol < self._fEnd))
             keepData = sourceData[keep]
             keepRow = sourceRow[keep]
             keepCol = sourceCol[keep]
@@ -1214,9 +1214,9 @@ class SparseView(BaseView, Sparse):
             pNames = None
             fNames = None
             if self._pointNamesCreated():
-                pNames=self.points.getNames()
+                pNames = self.points.getNames()
             if self._featureNamesCreated():
-                fNames=self.features.getNames()
+                fNames = self.features.getNames()
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
         if len(self.points) == 0 or len(self.features) == 0:
