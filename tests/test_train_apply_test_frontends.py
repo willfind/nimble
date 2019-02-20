@@ -19,8 +19,7 @@ def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
-             for _pt in range(numPoints)]
-    # data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+             for _ in range(numPoints)]
     trainObj = createData('Matrix', data=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
@@ -48,25 +47,25 @@ def test_trainAndApply_dataInputs():
     # Exception trainY is ID; testX contains labels
     try:
         out = UML.trainAndApply(learner, trainObj, 3, testObj)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
+        assert False # expected ValueError
+    except ValueError:
         pass
     try:
         out = UML.trainAndApply(learner, trainObj, 'label', testObj)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
+        assert False # expected ValueError
+    except ValueError:
         pass
     # Exception trainY is Base; testX contains labels
     try:
         out = UML.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
+        assert False # expected ValueError
+    except ValueError:
         pass
     # Exception trainY is ID; testX bad shape
     try:
         out = UML.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
+        assert False # expected ValueError
+    except ValueError:
         pass
 
 def test_trainAndTest_dataInputs():
@@ -74,7 +73,6 @@ def test_trainAndTest_dataInputs():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
-    # data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     trainObj = createData('Matrix', data=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]

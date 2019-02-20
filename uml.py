@@ -1584,25 +1584,12 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
 
-    ftConflict = False
-    if isinstance(trainY, (six.string_types, int, numpy.integer)):
-        if testX is None:
+    if testX is None:
+        if isinstance(trainY, (six.string_types, int, numpy.integer)):
             testX = trainX.copy()
             testX.features.delete(trainY)
-        elif len(testX.features) != len(trainX.features) - 1:
-            ftConflict = (len(trainX.features) - 1, len(testX.features))
-    else:
-        if testX is None:
+        else:
             testX = trainX
-        elif len(testX.features) != len(trainX.features):
-            ftConflict = (len(trainX.features), len(testX.features))
-
-    if ftConflict:
-        msg = "The training and testing data must contain the same number "
-        msg += "of features. The training data contains {trainFts} features "
-        msg += "and the testing data contains {testFts} features"
-        msg = msg.format(trainFts=ftConflict[0], testFts=ftConflict[1])
-        raise InvalidArgumentValueCombination(msg)
 
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
 
