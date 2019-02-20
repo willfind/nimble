@@ -1574,8 +1574,6 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 
-    if testX is None:
-        testX = trainX
     if storeLog != 'unset':
         useLog = storeLog
 
@@ -1585,6 +1583,27 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                multiClassStrategy=multiClassStrategy,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
+
+    ftConflict = False
+    if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if testX is None:
+            testX = trainX.copy()
+            testX.features.delete(trainY)
+        elif len(testX.features) != len(trainX.features) - 1:
+            ftConflict = (len(trainX.features) - 1, len(testX.features))
+    else:
+        if testX is None:
+            testX = trainX
+        elif len(testX.features) != len(trainX.features):
+            ftConflict = (len(trainX.features), len(testX.features))
+
+    if ftConflict:
+        msg = "The training and testing data must contain the same number "
+        msg += "of features. The training data contains {trainFts} features "
+        msg += "and the testing data contains {testFts} features"
+        msg = msg.format(trainFts=ftConflict[0], testFts=ftConflict[1])
+        raise InvalidArgumentValueCombination(msg)
+
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
 
     merged = _mergeArguments(arguments, kwarguments)
@@ -1748,9 +1767,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
 
-    trainY = copyLabels(trainX, trainY)
-    testY = copyLabels(testX, testY)
-
     if storeLog != 'unset':
         useLog = storeLog
     trainedLearner = UML.train(learnerName, trainX, trainY,
@@ -1759,6 +1775,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                multiClassStrategy=multiClassStrategy,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
+
+    if isinstance(testY, (six.string_types, int, numpy.integer)):
+        testX = testX.copy()
+        testY = testX.features.extract(testY)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
                                        useLog=useLog)
     performance = computeMetrics(testY, None, predictions, performanceFunction)

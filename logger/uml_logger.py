@@ -315,8 +315,8 @@ class UmlLogger(object):
             trainData = trainData.copy()
             trainLabels = trainData.features.extract(trainLabels)
         if isinstance(testLabels, (six.string_types, int, numpy.int64)):
-            testData = trainData.copy()
-            testLabels = trainData.features.extract(testLabels)
+            testData = testData.copy()
+            testLabels = testData.features.extract(testLabels)
         if trainData is not None:
             logInfo["trainData"] = trainData.name
             logInfo["trainDataPoints"] = len(trainData.points)
