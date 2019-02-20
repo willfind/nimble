@@ -5,7 +5,8 @@ pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
-elements.__iter__, points.nonZeroIterator, features.nonZeroIterator
+elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
+inverse, solveLinearSystem
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -2251,6 +2252,112 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == []
+
+    ###########
+    # inverse #
+    ###########
+
+    def test_inverse_multiplicative(self):
+        """ Test computation of multiplicative inverse."""
+        from scipy import linalg
+        data = numpy.array([[1, 1, 0], [1, 0, 1], [1, 1, 1]])
+        pointNames =  ['1', 'one', '2']
+        featureNames = ['one', 'two', 'three']
+
+        data_inv = linalg.inv(data)
+        resObj =  self.constructor(data_inv, pointNames=featureNames, featureNames=pointNames)
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        invObj = toTest.inverse()
+
+        assert invObj == resObj
+        assert toTest == orig
+
+
+    def test_inverse_pseudoInverse(self):
+        """ Test computation of pseudo-inverse using singular-value decomposition. """
+        from scipy import linalg
+        data = numpy.array([[3, 2, 1], [2, 2, 0], [1, 0, 1]])
+        pointNames =  ['1', 'one', '2']
+        featureNames = ['one', 'two', 'three']
+
+        data_pinv = linalg.pinv2(data)
+        resObj = self.constructor(data_pinv, pointNames=featureNames, featureNames=pointNames)
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        pinvObj = toTest.inverse(pseudoInverse=True)
+
+        assert pinvObj == resObj
+        assert toTest == orig
+
+    #####################
+    # solveLinearSystem #
+    #####################
+
+    def test_solveLinearSystem_solve(self):
+        """ Test solveLinearSystem using solve method. """
+        self.backend_solveLinearSystem(solveFunction='solve')
+
+    def test_solveLinearSystem_leastSquares(self):
+        """ Test solveLinearSystem using least squares method. """
+        self.backend_solveLinearSystem(solveFunction='least squares')
+
+    def backend_solveLinearSystem(self, solveFunction):
+        from scipy import linalg
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        x = numpy.transpose(linalg.solve(A, b))
+
+        pointNames =  ['1', 'one']
+        featureNames = ['one', 'two']
+
+        resObj = self.constructor(x, pointNames=['b'], featureNames=featureNames)
+
+        Aobj = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        origA = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        bobj = self.constructor(b)
+
+        xobj = Aobj.solveLinearSystem(bobj, solveFunction=solveFunction)
+
+        assert xobj.isApproximatelyEqual(resObj)
+        assert Aobj == origA
+
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_b_InvalidType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        Aobj.solveLinearSystem(b)
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_InvalidParamType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, solveFunction=['solve'])
+
+    @raises(InvalidArgumentValue)
+    def test_solveLinearSystem_InvalidParamValue(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, solveFunction='foo')
+
+
+
 
 ###########
 # Helpers #

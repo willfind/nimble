@@ -3358,6 +3358,62 @@ class Base(object):
                     matches.append(name)
         return matches
 
+
+    ###################################
+    ###################################
+    ###   Linear Algebra functions   ###
+    ###################################
+    ###################################
+
+    def inverse(self, pseudoInverse=False):
+        """
+        Compute the inverse or pseudo-inverse of an object.
+
+        By default tries to compute the (multiplicative) inverse.
+        pseudoInverse uses singular-value decomposition (SVD).
+
+        Parameters
+        ----------
+        pseudoInverse: bool
+            Whether to compute pseudoInverse or multiplicative inverse.
+        """
+
+        if pseudoInverse:
+            inverse = UML.calculate.pseudoInverse(self)
+        else:
+            inverse = UML.calculate.inverse(self)
+        return inverse
+
+
+    def solveLinearSystem(self, b, solveFunction='solve'):
+        """
+       Solves the linear equation A * x = b for unknown x.
+
+       Parameters
+       ----------
+       b: UML Base object.
+        Vector shaped object.
+       solveFuction: str
+        'solve' assumes square matrix.
+        'least squares' Computes object x such that 2-norm |b - Ax| is minimized.
+        """
+        if not isinstance(b, UML.data.Base):
+            msg = "b must be an instance of Base."
+            raise InvalidArgumentType(msg)
+
+        msg = "Valid methods are: 'solve' and 'least squares'."
+
+        if not isinstance (solveFunction, str):
+            raise InvalidArgumentType(msg)
+        elif solveFunction == 'solve':
+                return UML.calculate.solve(self, b)
+        elif solveFunction == 'least squares':
+                return UML.calculate.leastSquaresSolution(self, b)
+        else:
+            raise InvalidArgumentValue(msg)
+
+
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
