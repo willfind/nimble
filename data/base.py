@@ -473,46 +473,34 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         index = self.features.getIndex(featureToReplace)
-        # extract col.
-        toConvert = self.features.extract([index])
 
-        # MR to get list of values
-        def getValue(point):
-            return [(point[0], 1)]
+        replace = self.features.extract([index])
 
-        def simpleReducer(identifier, valuesList):
-            return (identifier, 0)
+        binaryFts = replace._replaceFeatureWithBinaryFeatures_implementation()
 
-        values = toConvert.points.mapReduce(getValue, simpleReducer)
-        values.features.setName(0, 'values')
-        values = values.features.extract([0])
+        toFill = numpy.zeros((len(replace.points), len(binaryFts)))
+        prefix = replace.features.getName(0) + "="
+        ftNames = []
+        for idx, (name, locations) in enumerate(binaryFts.items()):
+            ftNames.append(prefix + str(name))
+            toFill[locations, idx] = 1
 
-        # Convert to List, so we can have easy access
-        values = values.copyAs(format="List")
+        if self.points._namesCreated():
+            ptNames = self.points.getNames()
+        else:
+            ptNames='automatic'
+        binaryObj = UML.createData(self.getTypeString(), toFill,
+                                   pointNames=ptNames, featureNames=ftNames,
+                                   treatAsMissing=None)
 
-        # for each value run points.calculate to produce a category
-        # point for each value
-        def makeFunc(value):
-            def equalTo(point):
-                if point[0] == value:
-                    return 1
-                return 0
+        # by default, put back in same place
+        insertBefore = index
+        # if extracted last feature, None will append
+        if insertBefore == len(self.features):
+            insertBefore = None
+        self.features.add(binaryObj, insertBefore=insertBefore)
 
-            return equalTo
-
-        varName = toConvert.features.getName(0)
-
-        for point in values.data:
-            value = point[0]
-            ret = toConvert.points.calculate(makeFunc(value))
-            ret.features.setName(0, varName + "=" + str(value).strip())
-            toConvert.features.add(ret)
-
-        # remove the original feature, and combine with self
-        toConvert.features.extract([varName])
-        self.features.add(toConvert)
-
-        return toConvert.features.getNames()
+        return ftNames
 
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """

@@ -541,6 +541,14 @@ class List(Base):
 
         self.data = merged
 
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data):
+            if val[0] not in binaryFts:
+                binaryFts[val[0]] = []
+            binaryFts[val[0]].append(idx)
+        return binaryFts
+
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 

@@ -250,7 +250,6 @@ class DataFrame(Base):
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-
         if point == 'union':
             point = 'outer'
         elif point == 'intersection':
@@ -324,6 +323,14 @@ class DataFrame(Base):
         self._featureCount = (numColsL + len(tmpDfR.columns)
                               - len(matchingFtIdx[1]))
         self._pointCount = len(self.data.index)
+
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data.values):
+            if val[0] not in binaryFts:
+                binaryFts[val[0]] = []
+            binaryFts[val[0]].append(idx)
+        return binaryFts
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]

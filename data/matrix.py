@@ -405,8 +405,15 @@ class Matrix(Base):
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
 
-
         self.data = numpy.matrix(merged, dtype=numpy.object_)
+
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data):
+            if val[0, 0] not in binaryFts:
+                binaryFts[val[0, 0]] = []
+            binaryFts[val[0, 0]].append(idx)
+        return binaryFts
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]

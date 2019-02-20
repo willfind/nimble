@@ -718,6 +718,14 @@ class Sparse(Base):
 
         self._sorted = None
 
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in zip(self.data.row, self.data.data):
+            if val not in binaryFts:
+                binaryFts[val] = []
+            binaryFts[val].append(idx)
+        return binaryFts
+
     def _getitem_implementation(self, x, y):
         """
         currently, we sort the data first and then do binary search
