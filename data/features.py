@@ -51,8 +51,8 @@ class Features(object):
         --------
         getNames, setName, setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getName(1)
@@ -72,8 +72,8 @@ class Features(object):
         --------
         getName, setName, setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getNames()
@@ -102,8 +102,8 @@ class Features(object):
         --------
         setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.setName('b', 'new')
@@ -133,8 +133,8 @@ class Features(object):
         --------
         setName
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.setNames(['1', '2', '3', '4'])
@@ -162,8 +162,8 @@ class Features(object):
         --------
         indices
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndex(2)
@@ -191,8 +191,8 @@ class Features(object):
         --------
         index
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndices(['c', 'a', 'd'])
@@ -213,8 +213,8 @@ class Features(object):
         -------
         bool
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.hasName('a')
@@ -272,7 +272,7 @@ class Features(object):
 
         See Also
         --------
-        UML.data.Base.copy, UML.data.Base.copyAs
+        Base.copy, Base.copyAs
 
         Examples
         --------
@@ -414,6 +414,7 @@ class Features(object):
         Examples
         --------
         Extract a single feature.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> single = data.features.extract('a')
         >>> single
@@ -432,6 +433,7 @@ class Features(object):
             )
 
         Extract multiple features.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> multiple = data.features.extract(['a', 2])
         >>> multiple
@@ -450,6 +452,7 @@ class Features(object):
             )
 
         Extract feature when the function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> func = data.features.extract(lambda ft: ft[2] == 1)
         >>> func
@@ -599,6 +602,7 @@ class Features(object):
         Examples
         --------
         Delete a single feature.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete('a')
         >>> data
@@ -610,6 +614,7 @@ class Features(object):
             )
 
         Delete multiple features.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(['a', 2])
         >>> data
@@ -621,6 +626,7 @@ class Features(object):
             )
 
         Delete feature when the function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(lambda ft: ft[2] == 1)
         >>> data
@@ -632,6 +638,7 @@ class Features(object):
             )
 
         Delete feature when the string filter function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
         ...                     pointNames=['p1', 'p2', 'p3'])
         >>> data.features.delete("p2 != 0")
@@ -645,6 +652,7 @@ class Features(object):
             )
 
         Delete features from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(start=1, end=2)
         >>> data
@@ -656,6 +664,7 @@ class Features(object):
             )
 
         Select a set number to delete, starting from the first feature.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(number=2)
         >>> numberNoRandom
@@ -668,6 +677,7 @@ class Features(object):
             )
 
         Select a set number to delete, choosing features at random.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(number=2,  randomize=True)
         >>> data
@@ -734,6 +744,7 @@ class Features(object):
         Examples
         --------
         Retain a single feature.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain('a')
         >>> data
@@ -745,6 +756,7 @@ class Features(object):
             )
 
         Retain multiple features.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(['a', 2])
         >>> data
@@ -756,6 +768,7 @@ class Features(object):
             )
 
         Retain feature when the function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(lambda ft: ft[2] == 1)
         >>> data
@@ -767,6 +780,7 @@ class Features(object):
             )
 
         Retain feature when the string filter function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
         ...                     pointNames=['p1', 'p2', 'p3'])
         >>> data.features.retain("p2 != 0")
@@ -780,6 +794,7 @@ class Features(object):
             )
 
         Retain features from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(start=1, end=2)
         >>> data
@@ -791,6 +806,7 @@ class Features(object):
             )
 
         Select a set number to retain, starting from the first feature.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(number=2)
         >>> data
@@ -802,6 +818,7 @@ class Features(object):
             )
 
         Select a set number to retain, choosing features at random.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(number=2, randomize=True)
         >>> data
@@ -841,11 +858,12 @@ class Features(object):
 
         See Also
         --------
-        UML.data.Elements.count, UML.data.Elements.countEachUniqueValue
+        Elements.count, Elements.countEachUniqueValue
 
         Examples
         --------
         Count using a python function.
+
         >>> def sumIsOne(ft):
         ...     return sum(ft) == 1
         >>> data = UML.identity('Matrix', 3)
@@ -853,6 +871,7 @@ class Features(object):
         3
 
         Count when the string filter function returns True.
+
         >>> data = UML.identity('Matrix', 3,
         ...                     pointNames=['pt1', 'pt2', 'pt3'])
         >>> data.features.count("pt1 == 0")
@@ -883,6 +902,7 @@ class Features(object):
         TODO
 
         Sort with a list of identifiers.
+
         >>> raw = [['home', 81, 3],
         ...        ['gard', 98, 10],
         ...        ['home', 14, 1],
@@ -992,6 +1012,7 @@ class Features(object):
         Examples
         --------
         Transform all features; apply to all points.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> data.features.transform(lambda ft: ft + 2)
         >>> data
@@ -1004,6 +1025,7 @@ class Features(object):
         Transform all features; apply to certain points. Note that the
         function recieves a read-only view of each feature, so we need
         to make a copy in order to modify any specific data.
+
         >>> def transformMiddlePoint(ft):
         ...     ftList = ft.copyAs('python list', outputAs1D=True)
         ...     ftList[1] += 4
@@ -1018,6 +1040,7 @@ class Features(object):
             )
 
         Transform a subset of features.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> data.features.transform(lambda ft: ft + 6, features=[1, 3])
         >>> data
@@ -1068,6 +1091,7 @@ class Features(object):
         Examples
         --------
         Apply calculation to all features; apply to all points.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> addTwo = data.features.calculate(lambda ft: ft + 2)
         >>> addTwo
@@ -1080,6 +1104,7 @@ class Features(object):
         Apply calculation to all features; apply to certain points. Note
         that the function recieves a read-only view of each feature, so
         a copy is necessary to modify any specific data.
+
         >>> def changeMiddlePoint(ft):
         ...     ftList = ft.copyAs('python list', outputAs1D=True)
         ...     ftList[1] += 4
@@ -1094,6 +1119,7 @@ class Features(object):
             )
 
         Apply calculation to a subset of features.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> calc = data.features.calculate(lambda ft: ft + 6,
         ...                                features=[1, 3])
@@ -1141,6 +1167,7 @@ class Features(object):
         Examples
         --------
         Append added data; default names.
+
         >>> data = UML.zeros('Matrix', 3, 2)
         >>> toAdd = UML.ones('Matrix', 3, 2)
         >>> data.features.add(toAdd)
@@ -1152,6 +1179,7 @@ class Features(object):
             )
 
         Reorder names.
+
         >>> rawData = [[1, 2], [5, 6]]
         >>> data = UML.createData('Matrix', rawData,
         ...                       pointNames=['a', 'b'])
@@ -1167,6 +1195,7 @@ class Features(object):
             )
 
         Insert before another point; mixed object types.
+
         >>> rawData = [[1, 4], [5, 8]]
         >>> data = UML.createData('Matrix', rawData,
         ...                       featureNames=['1', '4'])
@@ -1209,6 +1238,7 @@ class Features(object):
         Examples
         --------
         mapReduce the counts of data types in the features.
+
         >>> def typeMapper(ft):
         ...     ftType = str(type(ft[0]))
         ...     return [(ftType, 1)]
@@ -1246,8 +1276,8 @@ class Features(object):
         sufficiently random for large number of features.
         See random.shuffle()'s documentation.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [[1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
@@ -1315,6 +1345,7 @@ class Features(object):
         Examples
         --------
         Fill a value with another value.
+
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
@@ -1333,6 +1364,7 @@ class Features(object):
 
         Fill using UML's match and fill modules; limit to first feature.
         Note: None is converted to numpy.nan in UML.
+
         >>> from UML import match
         >>> from UML import fill
         >>> raw = [[1, 1, 1],
@@ -1400,6 +1432,7 @@ class Features(object):
         Examples
         --------
         Using statistics functions.
+
         >>> raw = [[5, 9.8, 92],
         ...        [3, 6.2, 58],
         ...        [2, 3.0, 29]]
@@ -1418,6 +1451,7 @@ class Features(object):
             )
 
         Using UML objects.
+
         >>> raw = [[5, 9.8, 92],
         ...        [3, 6.2, 58],
         ...        [2, 3.0, 29]]
@@ -1474,44 +1508,51 @@ class Features(object):
 
         Notes
         -----
-        Visual representations of the Examples
-        ``
-        locations.splitFeatureByParsing('location', ', ',
-                                        ['city', 'country'])
+        Visual representations of the Examples::
 
-            locations (before)                locations (after)
-        +-------------------------+      +-----------+--------------+
-        | location                |      | city      | country      |
-        +-------------------------+      +-----------+--------------+
-        | Cape Town, South Africa |      | Cape Town | South Africa |
-        +-------------------------+  ->  +-----------+--------------+
-        | Lima, Peru              |      | Lima      | Peru         |
-        +-------------------------+      +-----------+--------------+
-        | Moscow, Russia          |      | Moscow    | Russia       |
-        +-------------------------+      +-----------+--------------+
+            locations.splitFeatureByParsing('location', ', ',
+                                            ['city', 'country'])
 
-        inventory.splitFeatureByParsing(0, 3, ['category', 'id'])
+                locations (before)                locations (after)
+            +-------------------------+    +-----------+--------------+
+            | location                |    | city      | country      |
+            +-------------------------+    +-----------+--------------+
+            | Cape Town, South Africa |    | Cape Town | South Africa |
+            +-------------------------+ -> +-----------+--------------+
+            | Lima, Peru              |    | Lima      | Peru         |
+            +-------------------------+    +-----------+--------------+
+            | Moscow, Russia          |    | Moscow    | Russia       |
+            +-------------------------+    +-----------+--------------+
 
-          inventory (before)                  inventory (after)
-        +---------+----------+          +----------+-----+----------+
-        | product | quantity |          | category | id  | quantity |
-        +---------+----------+          +----------+-----+----------+
-        | AGG932  | 44       |          | AGG      | 932 | 44       |
-        +---------+----------+          +----------+-----+----------+
-        | AGG734  | 11       |    ->    | AGG      | 734 | 11       |
-        +---------+----------+          +----------+-----+----------+
-        | HEQ892  | 1        |          | HEQ      | 892 | 1        |
-        +---------+----------+          +----------+-----+----------+
-        | LEQ331  | 2        |          | LEQ      | 331 | 2        |
-        +---------+----------+          +----------+-----+----------+
-        ``
+            inventory.splitFeatureByParsing(0, 3, ['category', 'id'])
+
+              inventory (before)                  inventory (after)
+            +---------+----------+        +----------+-----+----------+
+            | product | quantity |        | category | id  | quantity |
+            +---------+----------+        +----------+-----+----------+
+            | AGG932  | 44       |        | AGG      | 932 | 44       |
+            +---------+----------+        +----------+-----+----------+
+            | AGG734  | 11       |   ->   | AGG      | 734 | 11       |
+            +---------+----------+        +----------+-----+----------+
+            | HEQ892  | 1        |        | HEQ      | 892 | 1        |
+            +---------+----------+        +----------+-----+----------+
+            | LEQ331  | 2        |        | LEQ      | 331 | 2        |
+            +---------+----------+        +----------+-----+----------+
+
         This function was inspired by the separate function from the
-        tidyr library created by Hadley Wickham in the R programming
-        language.
+        tidyr library created by Hadley Wickham [1]_ in the R
+        programming language.
+
+        References
+        ----------
+        .. [1] Wickham, H. (2014). Tidy Data. Journal of Statistical
+           Software, 59(10), 1 - 23.
+           doi:http://dx.doi.org/10.18637/jss.v059.i10
 
         Examples
         --------
         Split with a string for ``rule``.
+
         >>> raw = [['Cape Town, South Africa'],
         ...        ['Lima, Peru'],
         ...        ['Moscow', 'Russia']]
@@ -1528,6 +1569,7 @@ class Features(object):
             )
 
         Split with an index for ``rule``.
+
         >>> raw = [['AGG932', 44],
         ...        ['AGG734', 11],
         ...        ['HEQ892', 1],
@@ -1627,11 +1669,11 @@ class Features(object):
 
         Returns
         -------
-        UML.data.Base
+        UML Base object
             The object containing only unique features.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [['a', 1, 3, 'a'],
         ...        ['a', 5, 6, 'a'],
         ...        ['b', 7, 1, 'b'],

@@ -11,8 +11,8 @@ def importModule(name):
     name : str
         The package name.
 
-    Example
-    -------
+    Examples
+    --------
     mlpy = importModule('mlpy')
     """
     try:

@@ -445,6 +445,7 @@ class Base(object):
         Examples
         --------
         TODO - outstanding PR, will need an update.
+
         >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'replace', 'keep2']
         >>> data = UML.createData('Matrix', raw,
@@ -778,6 +779,7 @@ class Base(object):
         Examples
         --------
         Returning a 2-tuple.
+
         >>> raw = [[1, 0, 0],
         ...        [0, 1, 0],
         ...        [0, 0, 1],
@@ -803,6 +805,7 @@ class Base(object):
             )
 
         Returning a 4-tuple.
+
         >>> raw = [[1, 0, 0, 1],
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3],
@@ -1164,17 +1167,20 @@ class Base(object):
 
         Examples
         --------
-        raw = [[4132, 41, 'management', 50000, 'm'],
-               [4434, 26, 'sales', 26000, 'm'],
-               [4331, 26, 'administration', 28000, 'f'],
-               [4211, 45, 'sales', 33000, 'm'],
-               [4344, 45, 'accounting', 43500, 'f']]
-        pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
-        featureNames = ['id', 'age', 'department', 'salary', 'gender']
-        office = UML.createData('Matrix', raw, pointNames=pointNames,
-                                featureNames=featureNames)
+        >>> raw = [[4132, 41, 'management', 50000, 'm'],
+        ...        [4434, 26, 'sales', 26000, 'm'],
+        ...        [4331, 26, 'administration', 28000, 'f'],
+        ...        [4211, 45, 'sales', 33000, 'm'],
+        ...        [4344, 45, 'accounting', 43500, 'f']]
+        >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
+        >>> featureNames = ['id', 'age', 'department', 'salary',
+        ...                 'gender']
+        >>> office = UML.createData('Matrix', raw,
+        ...                         pointNames=pointNames,
+        ...                         featureNames=featureNames)
 
         Get a single value.
+
         >>>office['michael', 'age']
         41
         >>>office[0,1]
@@ -1183,6 +1189,7 @@ class Base(object):
         41
 
         Get based on points only.
+
         >>>pam = office['pam', :]
         >>>print(pam)
                id  age   department   salary gender
@@ -1195,6 +1202,7 @@ class Base(object):
 
         dwight   4211  45   sales    33000    m
            jim   4434  26   sales    26000    m
+
         *Note: retains list order; index 3 placed before index 1*
 
         >>>nonManagement = office[1:4, :]
@@ -1205,9 +1213,11 @@ class Base(object):
            pam   4331  26 administration 28000    f
         dwight   4211  45     sales      33000    m
         angela   4344  45   accounting   43500    f
+
         *Note: slices are inclusive; index 4 ('gender') was included*
 
         Get based on features only.
+
         >>>departments = office[:, 2]
         >>>print(departments)
                     department
@@ -1227,6 +1237,7 @@ class Base(object):
             pam     f     26
          dwight     m     45
          angela     f     45
+
         *Note: retains list order; 'gender' placed before 'age'*
 
         >>>deptSalary = office[:, 'department':'salary']
@@ -1241,12 +1252,14 @@ class Base(object):
         *Note: slices are inclusive; 'salary' was included*
 
         Get based on points and features.
+
         >>>femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
         >>>print(femaleSalaryAndDept)
                  salary   department
 
            pam   28000  administration
         angela   43500    accounting
+
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
         ('salary') precedes index 2 ('department')*
 
@@ -1257,6 +1270,7 @@ class Base(object):
         michael    41
             jim    26
             pam    26
+
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
         # Make it a tuple if it isn't one
@@ -1341,7 +1355,7 @@ class Base(object):
 
         Returns
         -------
-        UML.data.BaseView
+        BaseView
             The read-only object for this point.
         """
         if self._pointCount == 0:
@@ -1364,7 +1378,7 @@ class Base(object):
 
         Returns
         -------
-        UML.data.BaseView
+        BaseView
             The read-only object for this feature.
         """
         if self._featureCount == 0:
@@ -1384,7 +1398,7 @@ class Base(object):
         in-order points and features whose overlap defines a window into
         the data. The returned View object is part of UML's datatypes
         hiearchy, and will have access to all of the same methods as
-        anything that inherits from UML.data.Base; though only those
+        anything that inherits from Base; though only those
         that do not modify the data can be called without an exception
         being raised. The returned view will also reflect any subsequent
         changes made to the original object. This is the only accepted
@@ -2086,8 +2100,8 @@ class Base(object):
         feature and point indices. This operations also includes
         inverting the point and feature names.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
         >>> data = UML.createData('List', raw)
         >>> data
@@ -2141,11 +2155,12 @@ class Base(object):
         Examples
         --------
         Reference data from an object of all zero values.
+
         >>> data = UML.ones('List', 2, 3, name='data')
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]]
             name="data"
             )
         >>> ptNames = ['1', '4']
@@ -2412,11 +2427,12 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, points.fill, features.fill
+        fillUsingAllData, Points.fill, Features.fill
 
-        Example
-        -------
+        Examples
+        --------
         An object of ones filled with zeros from (0, 0) to (2, 2).
+
         >>> data = UML.ones('Matrix', 5, 5)
         >>> filler = UML.zeros('Matrix', 3, 3)
         >>> data.fillWith(filler, 0, 0, 2, 2)
@@ -2521,13 +2537,14 @@ class Base(object):
 
         See Also
         --------
-        fillWith, points.fill, features.fill
+        fillWith, Points.fill, Features.fill
 
         Examples
         --------
-        Fill using the value that occurs most often in each points
-        3 nearest neighbors.
-        from UML.fill import kNeighborsClassifier
+        Fill using the value that occurs most often in each points 3
+        nearest neighbors.
+
+        >>> from UML.fill import kNeighborsClassifier
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
@@ -2882,7 +2899,9 @@ class Base(object):
 
         Examples
         --------
+
         With all default names.
+
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
         >>> data = UML.createData('Matrix', raw)
         >>> data.unflattenFromOnePoint(3)
@@ -2894,6 +2913,7 @@ class Base(object):
             )
 
         With names consistent with call to ``flattenToOnePoint``.
+
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
         >>> ptNames = {'Flattened':0}
         >>> ftNames = {'a | 1':0, 'b | 1':1, 'c | 1':2,
@@ -2973,6 +2993,7 @@ class Base(object):
         Examples
         --------
         With default names.
+
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
         >>> data = UML.createData('Matrix', raw)
         >>> data.unflattenFromOneFeature(3)
@@ -2984,6 +3005,7 @@ class Base(object):
             )
 
         With names consistent with call to ``flattenToOneFeature``.
+
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
         >>> ptNames = {'1 | a':0, '4 | a':1, '7 | a':2,
         ...            '1 | b':3, '4 | b':4, '7 | b':5,
@@ -3054,7 +3076,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML.data.Base
+        other : Base
             The UML data object containing the data to merge.
         point, feature : str
             The allowed strings for the point and feature arguments are
@@ -3079,7 +3101,7 @@ class Base(object):
 
         See Also
         --------
-        UML.data.Points.add, UML.data.Features.add
+        Points.add, Features.add
 
         Examples
         --------

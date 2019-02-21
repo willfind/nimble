@@ -49,8 +49,8 @@ class Points(object):
         --------
         getNames, setName, setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getName(1)
@@ -64,14 +64,14 @@ class Points(object):
 
         Returns
         -------
-        lst
+        list
 
         See Also
         --------
         getName, setName, setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getNames()
@@ -100,8 +100,8 @@ class Points(object):
         --------
         setNames
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.setName('b', 'new')
@@ -131,8 +131,8 @@ class Points(object):
         --------
         setName
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.setNames(['1', '2', '3', '4'])
@@ -160,8 +160,8 @@ class Points(object):
         --------
         indices
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndex(2)
@@ -189,8 +189,8 @@ class Points(object):
         --------
         index
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndices(['c', 'a', 'd'])
@@ -211,8 +211,8 @@ class Points(object):
         -------
         bool
 
-        Example
-        -------
+        Examples
+        --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.hasName('a')
@@ -270,7 +270,7 @@ class Points(object):
 
         See Also
         --------
-        UML.data.Base.copy, UML.data.Base.copyAs
+        Base.copy, Base.copyAs
 
         Examples
         --------
@@ -397,6 +397,7 @@ class Points(object):
         Examples
         --------
         Extract a single point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> single = data.points.extract('a')
         >>> single
@@ -412,6 +413,7 @@ class Points(object):
             )
 
         Extract multiple points.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> multiple = data.points.extract(['a', 2])
         >>> multiple
@@ -427,6 +429,7 @@ class Points(object):
             )
 
         Extract point when the function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> func = data.points.extract(lambda pt: pt[2] == 1)
         >>> func
@@ -442,6 +445,7 @@ class Points(object):
             )
 
         Extract point when the string filter function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
         >>> strFunc = data.points.extract("2 != 0")
@@ -460,6 +464,7 @@ class Points(object):
             )
 
         Extract points from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> startEnd = data.points.extract(start=1, end=2)
         >>> startEnd
@@ -475,6 +480,7 @@ class Points(object):
             )
 
         Select a set number to extract, starting from the first point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> numberNoRandom = data.points.extract(number=2)
         >>> numberNoRandom
@@ -490,6 +496,7 @@ class Points(object):
             )
 
         Select a set number to extract, choosing points at random.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> numberRandom = data.points.extract(number=2, randomize=True)
         >>> numberRandom
@@ -560,6 +567,7 @@ class Points(object):
         Examples
         --------
         Delete a single point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete('a')
         >>> data
@@ -570,6 +578,7 @@ class Points(object):
             )
 
         Delete multiple points.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(['a', 2])
         >>> data
@@ -579,6 +588,7 @@ class Points(object):
             )
 
         Delete point when the function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(lambda pt: pt[2] == 1)
         >>> data
@@ -589,6 +599,7 @@ class Points(object):
             )
 
         Delete point when the string filter function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
         >>> data.points.delete("2 != 0")
@@ -601,6 +612,7 @@ class Points(object):
             )
 
         Delete points from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(start=1, end=2)
         >>> data
@@ -610,6 +622,7 @@ class Points(object):
             )
 
         Select a set number to delete, starting from the first point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(number=2)
         >>> data
@@ -619,6 +632,7 @@ class Points(object):
             )
 
         Select a set number to delete, choosing points at random.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(number=2, randomize=True)
         >>> data
@@ -683,6 +697,7 @@ class Points(object):
         Examples
         --------
         Retain a single point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain('a')
         >>> data
@@ -691,6 +706,7 @@ class Points(object):
             pointNames={'a':0}
 
         Retain multiple points.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(['a', 2])
         >>> data
@@ -701,6 +717,7 @@ class Points(object):
             )
 
         Retain point when the function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(lambda pt: pt[2] == 1)
         >>> data
@@ -710,6 +727,7 @@ class Points(object):
             )
 
         Retain point when the string filter function returns True.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
         >>> data.points.retain("2 != 0")
@@ -721,6 +739,7 @@ class Points(object):
             )
 
         Retain points from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(start=1, end=2)
         >>> data
@@ -731,6 +750,7 @@ class Points(object):
             )
 
         Select a set number to retain, starting from the first point.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(number=2)
         >>> data
@@ -741,6 +761,7 @@ class Points(object):
             )
 
         Select a set number to retain, choosing points at random.
+
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(number=2, randomize=True)
         >>> data
@@ -779,11 +800,12 @@ class Points(object):
 
         See Also
         --------
-        UML.data.Elements.count, UML.data.Elements.countEachUniqueValue
+        Elements.count, Elements.countEachUniqueValue
 
         Examples
         --------
         Count using a python function.
+
         >>> def sumIsOne(pt):
         ...     return sum(pt) == 1
         >>> data = UML.identity('List', 3)
@@ -791,6 +813,7 @@ class Points(object):
         3
 
         Count when the string filter function returns True.
+
         >>> data = UML.identity('List', 3,
         ...                     featureNames=['ft1', 'ft2', 'ft3'])
         >>> data.points.count("ft1 == 0")
@@ -818,6 +841,7 @@ class Points(object):
         Examples
         --------
         Sort by a given feature using ``sortBy``.
+
         >>> raw = [['home', 81, 3],
         ...        ['gard', 98, 10],
         ...        ['home', 14, 1],
@@ -835,6 +859,7 @@ class Points(object):
             )
 
         Sort with a list of identifiers.
+
         >>> raw = [['home', 81, 3],
         ...        ['gard', 98, 10],
         ...        ['home', 14, 1],
@@ -851,6 +876,7 @@ class Points(object):
             )
 
         Sort using a comparator function.
+
         >>> def compareQuantity(pt1, pt2):
         ...     return pt1['quantity'] - pt2['quantity']
         >>> raw = [['home', 81, 3],
@@ -870,6 +896,7 @@ class Points(object):
             )
 
         Sort using a scoring function.
+
         >>> def scoreQuantity(pt):
         >>>     # multiply by -1 to sort starting with highest quantity.
         ...     return pt['quantity'] * -1
@@ -977,6 +1004,7 @@ class Points(object):
         Examples
         --------
         Transform all points; apply to all features.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> data.points.transform(lambda pt: pt + 2)
         >>> data
@@ -989,6 +1017,7 @@ class Points(object):
         Transform all points; apply to certain features. Note that the
         function recieves a read-only view of each point, so we need to
         make a copy in order to modify any specific data.
+
         >>> def transformMiddleFeature(pt):
         ...     ptList = pt.copyAs('python list', outputAs1D=True)
         ...     ptList[2] += 4
@@ -1003,6 +1032,7 @@ class Points(object):
             )
 
         Transform a subset of points.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> data.points.transform(lambda pt: pt + 6, points=[0, 2])
         >>> data
@@ -1053,6 +1083,7 @@ class Points(object):
         Examples
         --------
         Apply calculation to all points; apply to all features.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> addTwo = data.points.calculate(lambda pt: pt + 2)
         >>> addTwo
@@ -1065,6 +1096,7 @@ class Points(object):
         Transform all points; apply to certain features. Note that the
         function recieves a read-only view of each point, so we need to
         make a copy in order to modify any specific data.
+
         >>> def changeMiddleFeature(pt):
         ...     ptList = pt.copyAs('python list', outputAs1D=True)
         ...     ptList[2] += 4
@@ -1079,6 +1111,7 @@ class Points(object):
             )
 
         Transform a subset of points.
+
         >>> data = UML.ones('Matrix', 3, 5)
         >>> calc = data.points.calculate(lambda pt: pt + 6,
         ...                              points=[0, 2])
@@ -1126,6 +1159,7 @@ class Points(object):
         Examples
         --------
         Append added data; default names.
+
         >>> data = UML.zeros('Matrix', 2, 3)
         >>> toAdd = UML.ones('Matrix', 2, 3)
         >>> data.points.add(toAdd)
@@ -1138,6 +1172,7 @@ class Points(object):
             )
 
         Reorder names.
+
         >>> rawData = [[1, 2, 3], [1, 2, 3]]
         >>> data = UML.createData('Matrix', rawData,
         ...                       featureNames=['a', 'b', 'c'])
@@ -1155,6 +1190,7 @@ class Points(object):
             )
 
         Insert before another point; mixed object types.
+
         >>> rawData = [[1, 1, 1], [4, 4, 4]]
         >>> data = UML.createData('Matrix', rawData,
         ...                       pointNames=['1', '4'])
@@ -1196,9 +1232,10 @@ class Points(object):
             Input the ``mapper`` output and output a two-tuple
             containing the identifier and the reduced value.
 
-        Example
-        -------
+        Examples
+        --------
         mapReduce the counts of roof styles in the points.
+
         >>> def roofMapper(pt):
         ...     style = 'Open'
         ...     if pt['ROOF_TYPE'] == 'Dome':
@@ -1238,8 +1275,8 @@ class Points(object):
         sufficiently random for large number of points.
         See random.shuffle()'s documentation.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [[1, 1, 1, 1],
         ...        [2, 2, 2, 2],
         ...        [3, 3, 3, 3],
@@ -1306,6 +1343,7 @@ class Points(object):
         Examples
         --------
         Fill a value with another value.
+
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
@@ -1324,6 +1362,7 @@ class Points(object):
 
         Fill using UML's match and fill modules; limit to last point.
         Note: None is converted to numpy.nan in UML.
+
         >>> from UML import match
         >>> from UML import fill
         >>> raw = [[1, 1, 1],
@@ -1431,39 +1470,46 @@ class Points(object):
 
         Notes
         -----
-        A visual representation of the Example.
-        ``
-        temp.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
-                                              'month', 'temp')
+        A visual representation of the Example::
 
-              temp (before)                     temp (after)
-        +------------------------+       +---------------------+
-        | city | jan | feb | mar |       | city | month | temp |
-        +------+-----+-----+-----+       +------+-------+------+
-        | NYC  | 4   | 5   | 10  |       | NYC  | jan   | 4    |
-        +------+-----+-----+-----+  -->  +------+-------+------+
-        | LA   | 20  | 21  | 21  |       | NYC  | feb   | 5    |
-        +------+-----+-----+-----+       +------+-------+------+
-        | CHI  | 0   | 2   | 7   |       | NYC  | mar   | 10   |
-        +------+-----+-----+-----+       +------+-------+------+
-                                         | LA   | jan   | 20   |
-                                         +------+-------+------+
-                                         | LA   | feb   | 21   |
-                                         +------+-------+------+
-                                         | LA   | mar   | 21   |
-                                         +------+-------+------+
-                                         | CHI  | jan   | 0    |
-                                         +------+-------+------+
-                                         | CHI  | feb   | 2    |
-                                         +------+-------+------+
-                                         | CHI  | mar   | 7    |
-                                         +------+-------+------+
-        ``
+            temp.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
+                                                  'month', 'temp')
+
+                  temp (before)                     temp (after)
+            +------------------------+       +---------------------+
+            | city | jan | feb | mar |       | city | month | temp |
+            +------+-----+-----+-----+       +------+-------+------+
+            | NYC  | 4   | 5   | 10  |       | NYC  | jan   | 4    |
+            +------+-----+-----+-----+  -->  +------+-------+------+
+            | LA   | 20  | 21  | 21  |       | NYC  | feb   | 5    |
+            +------+-----+-----+-----+       +------+-------+------+
+            | CHI  | 0   | 2   | 7   |       | NYC  | mar   | 10   |
+            +------+-----+-----+-----+       +------+-------+------+
+                                             | LA   | jan   | 20   |
+                                             +------+-------+------+
+                                             | LA   | feb   | 21   |
+                                             +------+-------+------+
+                                             | LA   | mar   | 21   |
+                                             +------+-------+------+
+                                             | CHI  | jan   | 0    |
+                                             +------+-------+------+
+                                             | CHI  | feb   | 2    |
+                                             +------+-------+------+
+                                             | CHI  | mar   | 7    |
+                                             +------+-------+------+
+
         This function was inspired by the gather function from the tidyr
-        library created by Hadley Wickham in the R programming language.
+        library created by Hadley Wickham [1]_ in the R programming
+        language.
 
-        Example
-        -------
+        References
+        ----------
+        .. [1] Wickham, H. (2014). Tidy Data. Journal of Statistical
+           Software, 59(10), 1 - 23.
+           doi:http://dx.doi.org/10.18637/jss.v059.i10
+
+        Examples
+        --------
         >>> raw = [['NYC', 4, 5, 10],
         ...        ['LA', 20, 21, 21],
         ...        ['CHI', 0, 2, 7]]
@@ -1548,30 +1594,37 @@ class Points(object):
 
         Notes
         -----
-        A visual representation of the Example.
-        ``
-        sprinters.points.combineByExpandingFeatures('dist', 'time')
+        A visual representation of the Example::
 
-             sprinters (before)                 sprinters (after)
-        +-----------+------+-------+      +-----------+------+-------+
-        | athlete   | dist | time  |      | athlete   | 100m | 200m  |
-        +-----------+------+-------+      +-----------+------+-------+
-        | Bolt      | 100m | 9.81  |      | Bolt      | 9.81 | 19.78 |
-        +-----------+------+-------+  ->  +-----------+------+-------+
-        | Bolt      | 200m | 19.78 |      | Gatlin    | 9.89 | nan   |
-        +-----------+------+-------+      +-----------+------+-------+
-        | Gatlin    | 100m | 9.89  |      | de Grasse | 9.91 | 20.02 |
-        +-----------+------+-------+      +-----------+------+-------+
-        | de Grasse | 200m | 20.02 |
-        +-----------+------+-------+
-        | de Grasse | 100m | 9.91  |
-        +-----------+------+-------+
-        ``
+            sprinters.points.combineByExpandingFeatures('dist', 'time')
+
+                 sprinters (before)                 sprinters (after)
+            +-----------+------+-------+    +-----------+------+-------+
+            | athlete   | dist | time  |    | athlete   | 100m | 200m  |
+            +-----------+------+-------+    +-----------+------+-------+
+            | Bolt      | 100m | 9.81  |    | Bolt      | 9.81 | 19.78 |
+            +-----------+------+-------+ -> +-----------+------+-------+
+            | Bolt      | 200m | 19.78 |    | Gatlin    | 9.89 | nan   |
+            +-----------+------+-------+    +-----------+------+-------+
+            | Gatlin    | 100m | 9.89  |    | de Grasse | 9.91 | 20.02 |
+            +-----------+------+-------+    +-----------+------+-------+
+            | de Grasse | 200m | 20.02 |
+            +-----------+------+-------+
+            | de Grasse | 100m | 9.91  |
+            +-----------+------+-------+
+
         This function was inspired by the spread function from the tidyr
-        library created by Hadley Wickham in the R programming language.
+        library created by Hadley Wickham [1]_ in the R programming
+        language.
 
-        Example
-        -------
+        References
+        ----------
+        .. [1] Wickham, H. (2014). Tidy Data. Journal of Statistical
+           Software, 59(10), 1 - 23.
+           doi:http://dx.doi.org/10.18637/jss.v059.i10
+
+        Examples
+        --------
         >>> raw = [['Bolt', '100m', 9.81],
         ...        ['Bolt', '200m', 19.78],
         ...        ['Gatlin', '100m', 9.89],
@@ -1658,11 +1711,11 @@ class Points(object):
 
         Returns
         -------
-        UML.data.Base
+        UML Base object
             The object containing only unique points.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [['a', 1, 3],
         ...        ['b', 5, 6],
         ...        ['b', 7, 1],
@@ -1675,7 +1728,7 @@ class Points(object):
             [[a 1 3]
              [b 5 6]
              [b 7 1]]
-            pointNames={'f1':0, 'f2':1, 'f3':2}
+            pointNames={'p1':0, 'p2':1, 'p3':2}
             )
         """
         return self._unique()

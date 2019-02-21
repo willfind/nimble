@@ -47,7 +47,8 @@ def factory(match, fill, **kwarguments):
 
     Examples
     --------
-    Match a value and fill with a different value
+    Match a value and fill with a different value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> transform = factory('na', 0)
@@ -56,6 +57,7 @@ def factory(match, fill, **kwarguments):
 
     Match using a function from UML's match module and fill using
     another function in this module.
+
     >>> from UML import match
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = UML.createData('Matrix', raw)
@@ -109,13 +111,15 @@ def constant(vector, match, constantValue):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> constant(data, 'na', 0)
     [1, 0, 3, 0, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = UML.createData('Matrix', raw)
@@ -155,13 +159,15 @@ def mean(vector, match):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> mean(data, 'na')
     [1, 3, 3, 3, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
@@ -201,13 +207,15 @@ def median(vector, match):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> median(data, 'na')
     [1, 3, 3, 3, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
@@ -245,13 +253,15 @@ def mode(vector, match):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 1, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> mode(data, 'na')
     [1, 1, 1, 1, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 6, 2, 0, 0]
     >>> data = UML.createData('Matrix', raw)
@@ -292,13 +302,15 @@ def forwardFill(vector, match):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> forwardFill(data, 'na')
     [1, 1, 3, 3, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
@@ -349,13 +361,15 @@ def backwardFill(vector, match):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> backwardFill(data, 'na')
     [1, 3, 3, 5, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
@@ -411,13 +425,15 @@ def interpolate(vector, match, **kwarguments):
 
     Examples
     --------
-    Match a value
+    Match a value.
+
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> interpolate(data, 'na')
     [1, 2, 3, 4, 5]
 
-    Match using a function from UML's match module
+    Match using a function from UML's match module.
+
     >>> from UML import match
     >>> raw = [6, 0, 4, 0, 2]
     >>> data = UML.createData('Matrix', raw)
@@ -484,8 +500,8 @@ def kNeighborsRegressor(data, match, **kwarguments):
     --------
     UML.match
 
-    Example
-    -------
+    Examples
+    --------
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, 'na'],
@@ -538,8 +554,8 @@ def kNeighborsClassifier(data, match, **kwarguments):
     --------
     UML.match
 
-    Example
-    -------
+    Examples
+    --------
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, 'na'],
