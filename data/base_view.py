@@ -7,11 +7,10 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
-from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory
-from UML.exceptions import ImproperActionException
 
 exceptionDocstring = exceptionDocstringFactory(Base)
 
@@ -24,7 +23,7 @@ class BaseView(Base):
 
     Parameters
     ----------
-    source : UML data object
+    source : UML Base object
         The UML object that this is a view into.
     pointStart : int
         The inclusive index of the first point this view will have
@@ -64,19 +63,36 @@ class BaseView(Base):
     def _getObjName(self):
         return self._name
 
-    name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
+    @property
+    def name(self):
+        """
+        A name to be displayed when printing or logging this object.
+        """
+        return self._getObjName()
 
     # redefinition from Base, using source object's attributes
     def _getAbsPath(self):
         return self._source._absPath
 
-    absolutePath = property(_getAbsPath, doc="The path to the file this data originated from, in absolute form")
+    @property
+    def absolutePath(self):
+        """
+        The path to the file this data originated from, in absolute
+        form.
+        """
+        return self._getAbsPath()
 
     # redefinition from Base, using source object's attributes
     def _getRelPath(self):
         return self._source._relPath
 
-    relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
+    @property
+    def relativePath(self):
+        """
+        The path to the file this data originated from, in relative
+        form.
+        """
+        return self._getRelPath()
 
     def _pointNamesCreated(self):
         if self._source.pointNamesInverse is None:
@@ -105,31 +121,38 @@ class BaseView(Base):
         CopyObj.featureNamesInverse = self.features._getNamesNoGeneration()
         CopyObj.featureNames = copy.copy(self._source.featureNames)
 
-        CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
-        CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
+        nextDefaultValueFeature = self._source._nextDefaultValueFeature
+        nextDefaultValuePoint = self._source._nextDefaultValuePoint
+        CopyObj._nextDefaultValueFeature = nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = nextDefaultValuePoint
 
-        if len(self.points) != len(self._source.points) and self._source._pointNamesCreated():
+        if (len(self.points) != len(self._source.points)
+                and self._source._pointNamesCreated()):
             if self._pStart != 0:
                 CopyObj.pointNames = {}
                 for idx, name in enumerate(CopyObj.pointNamesInverse):
                     CopyObj.pointNames[name] = idx
             else:
-                for name in self._source.pointNamesInverse[self._pEnd:len(self._source.points) + 1]:
+                names = self._source.pointNamesInverse
+                for name in names[self._pEnd:len(self._source.points) + 1]:
                     del CopyObj.pointNames[name]
 
-        if len(self.features) != len(self._source.features) and self._source._featureNamesCreated():
+        if (len(self.features) != len(self._source.features)
+                and self._source._featureNamesCreated()):
             if self._fStart != 0:
                 CopyObj.featureNames = {}
                 for idx, name in enumerate(CopyObj.featureNamesInverse):
                     CopyObj.featureNames[name] = idx
             else:
-                for name in self._source.featureNamesInverse[self._fEnd:len(self._source.features) + 1]:
+                names = self._source.featureNamesInverse
+                for name in names[self._fEnd:len(self._source.features) + 1]:
                     del CopyObj.featureNames[name]
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 
-        # -1 because _pEnd and _fEnd are exclusive indices, but view takes inclusive
+        # -1 because _pEnd and _fEnd are exclusive indices,
+        # but view takes inclusive
 
         if pointStart is None:
             psAdj = None if len(self._source.points) == 0 else self._pStart
@@ -162,16 +185,16 @@ class BaseView(Base):
     ###########################
 
     @exceptionDocstring
-    def fillUsingAllData(self, match, fill, arguments=None, points=None,
-                          features=None, returnModified=False):
+    def fillUsingAllData(self, match, fill, points=None, features=None,
+                         returnModified=False, useLog=None, **kwarguments):
         readOnlyException("fillUsingAllData")
 
     @exceptionDocstring
-    def replaceFeatureWithBinaryFeatures(self, featureToReplace):
+    def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         readOnlyException("replaceFeatureWithBinaryFeatures")
 
     @exceptionDocstring
-    def transformFeatureToIntegers(self, featureToConvert):
+    def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         readOnlyException("transformFeatureToIntegers")
 
     ########################################
@@ -195,31 +218,32 @@ class BaseView(Base):
     ##################################################################
 
     @exceptionDocstring
-    def transpose(self):
+    def transpose(self, useLog=None):
         readOnlyException("transpose")
 
     @exceptionDocstring
-    def referenceDataFrom(self, other):
+    def referenceDataFrom(self, other, useLog=None):
         readOnlyException("referenceDataFrom")
 
     @exceptionDocstring
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
+    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
+                 useLog=None):
         readOnlyException("fillWith")
 
     @exceptionDocstring
-    def flattenToOnePoint(self):
+    def flattenToOnePoint(self, useLog=None):
         readOnlyException("flattenToOnePoint")
 
     @exceptionDocstring
-    def flattenToOneFeature(self):
+    def flattenToOneFeature(self, useLog=None):
         readOnlyException("flattenToOneFeature")
 
     @exceptionDocstring
-    def unflattenFromOnePoint(self, numPoints):
+    def unflattenFromOnePoint(self, numPoints, useLog=None):
         readOnlyException("unflattenFromOnePoint")
 
     @exceptionDocstring
-    def unflattenFromOneFeature(self, numFeatures):
+    def unflattenFromOneFeature(self, numFeatures, useLog=None):
         readOnlyException("unflattenFromOneFeature")
 
     ###############################################################

@@ -2,13 +2,14 @@
 Implementations and helpers specific to performing axis-generic
 operations on a UML Sparse object.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
@@ -72,6 +73,7 @@ class SparseAxis(Axis):
 
         axisAttr = 'points' if isinstance(self, Points) else 'features'
         indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
+
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
         reverseIdxPosition = numpy.empty(indexPosition.shape[0])
@@ -111,10 +113,10 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an ArgumentException with a message
+                # currRet might return an InvalidArgumentValue with a message
                 # which needs to be formatted with the axis and current index
                 # before being raised
-                if isinstance(currOut, ArgumentException):
+                if isinstance(currOut, InvalidArgumentValue):
                     currOut.value = currOut.value.format(self._axis, viewID)
                     raise currOut
 
@@ -126,7 +128,7 @@ class SparseAxis(Axis):
             if not hasattr(currOut, '__getitem__'):
                 msg = "function must return random accessible data "
                 msg += "(ie has a __getitem__ attribute)"
-                raise ArgumentException(msg)
+                raise InvalidArgumentType(msg)
 
             for i, retVal in enumerate(currOut):
                 if retVal != 0:
@@ -279,7 +281,7 @@ class SparseAxis(Axis):
     def _unique_implementation(self):
         if self._source._sorted is None:
             self._source._sortInternal("feature")
-        count =len(self)
+        count = len(self)
         hasAxisNames = self._namesCreated()
         getAxisName = self._getName
         getAxisNames = self._getNames
@@ -332,13 +334,13 @@ class SparseAxis(Axis):
         if isinstance(self, Points):
             shape = (axisCount, len(self._source.features))
             uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
-                                    shape=shape)
+                                   shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=axisNames,
                                   featureNames=offAxisNames, useLog=False)
         else:
             shape = (len(self._source.points), axisCount)
             uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
-                                    shape=shape)
+                                   shape=shape)
             return UML.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
                                   featureNames=axisNames, useLog=False)
 

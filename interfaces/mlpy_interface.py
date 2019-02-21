@@ -4,23 +4,24 @@ Relies on being scikit-learn 0.9 or above
 OLS and LARS learners are not allowed as learners. KernelExponential is
 not allowed as a Kernel.
 
+TODO: multinomialHMM requires special input processing for obs param
 """
-
-# TODO: multinomialHMM requires special input processing for obs param
-
 
 from __future__ import absolute_import
 import importlib
-import inspect
 import copy
-import numpy
 import sys
-import copy
+
+import numpy
+from six.moves import range
 
 import UML
-
-from UML.exceptions import ArgumentException
-from six.moves import range
+from UML.exceptions import InvalidArgumentValue
+from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import removeFromTailMatchedLists
+from UML.helpers import inspectArguments
+from UML.docHelpers import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -29,14 +30,11 @@ mlpyDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.interface_helpers import PythonSearcher
-from UML.helpers import inspectArguments
 
-
+@inheritDocstringsFactory(UniversalInterface)
 class Mlpy(UniversalInterface):
     """
-
+    This class is an interface to mlpy.
     """
 
     _XDataAliases = ['X', 'x', 'T', 't', 'K', 'Kt']
@@ -44,9 +42,6 @@ class Mlpy(UniversalInterface):
     _DataAliases = _XDataAliases + _YDataAliases
 
     def __init__(self):
-        """
-
-        """
         if mlpyDir is not None:
             sys.path.insert(0, mlpyDir)
 
@@ -61,7 +56,8 @@ class Mlpy(UniversalInterface):
                 return True
             return False
 
-        self._searcher = PythonSearcher(self.mlpy, dir(self.mlpy), {}, isLearner, 1)
+        self._searcher = PythonSearcher(self.mlpy, dir(self.mlpy), {},
+                                        isLearner, 1)
 
         super(Mlpy, self).__init__()
 
@@ -69,13 +65,13 @@ class Mlpy(UniversalInterface):
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
 
-
     def accessible(self):
         try:
             import mlpy
         except ImportError:
             return False
         return True
+
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
@@ -91,13 +87,8 @@ class Mlpy(UniversalInterface):
 
         return ret
 
-    def learnerType(self, name):
-        """
-        Returns a string referring to the action the learner takes out of the possibilities:
-        classification, regression, featureSelection, dimensionalityReduction
-        TODO
 
-        """
+    def learnerType(self, name):
         obj = self.findCallable(name)
         if name.lower() == 'liblinear' or name.lower() == 'libsvm':
             return "UNKNOWN"
@@ -106,12 +97,8 @@ class Mlpy(UniversalInterface):
 
         return 'UNKNOWN'
 
+
     def _findCallableBackend(self, name):
-        """
-        Find reference to the callable with the given name
-        TAKES string name
-        RETURNS reference to in-package function or constructor
-        """
         if name == 'kmeans':
             return _Kmeans
         if name == 'MFastHCluster':
@@ -121,25 +108,16 @@ class Mlpy(UniversalInterface):
 
 
     def _getParameterNamesBackend(self, name):
-        """
-        Find params for instantiation and function calls
-        TAKES string name,
-        RETURNS list of list of param names to make the chosen call
-        """
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, _) = ret
         if objArgs[0] == 'self':
             objArgs = objArgs[1:]
         return [objArgs]
 
+
     def _getLearnerParameterNamesBackend(self, learnerName):
-        """
-        Find all parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of list of param names
-        """
         ignore = self._DataAliases + ['self']
         if learnerName == 'MFastHCluster':
             ignore.remove('t')
@@ -153,20 +131,17 @@ class Mlpy(UniversalInterface):
         elif transform is not None:
             ret = init[0] + learn[0] + transform[0]
         else:
-            raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
+            msg = "Cannot get parameter names for leaner " + learnerName
+            raise InvalidArgumentValue(msg)
 
         return [ret]
 
+
     def _getDefaultValuesBackend(self, name):
-        """
-        Find default values
-        TAKES string name,
-        RETURNS list of dict of param names to default values
-        """
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, _, _, d) = ret
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -174,12 +149,8 @@ class Mlpy(UniversalInterface):
 
         return [ret]
 
+
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        """
-        Find all default values for parameters involved in a trainAndApply() call to the given learner
-        TAKES string name of a learner,
-        RETURNS list of dict of param names to default values
-        """
         ignore = self._DataAliases + ['self']
         init = self._paramQuery('__init__', learnerName, ignore)
         learn = self._paramQuery('learn', learnerName, ignore)
@@ -203,12 +174,8 @@ class Mlpy(UniversalInterface):
 
         return [ret]
 
-    def _getScores(self, learner, testX, arguments, customDict):
-        """
-        If the learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception.
 
-        """
+    def _getScores(self, learner, testX, arguments, customDict):
         if hasattr(learner, 'pred_values'):
             return learner.pred_values(testX)
         else:
@@ -216,49 +183,19 @@ class Mlpy(UniversalInterface):
 
 
     def _getScoresOrder(self, learner):
-        """
-        If the learner is a classifier, then return a list of the the labels corresponding
-        to each column of the return from getScores
-
-        """
         return learner.labels()
 
 
     def isAlias(self, name):
-        """
-        Returns true if the name is an accepted alias for this interface
-
-        """
         return name.lower() == self.getCanonicalName().lower()
 
 
     def getCanonicalName(self):
-        """
-        Returns the string name that will uniquely identify this interface
-
-        """
         return 'mlpy'
 
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        """
-        Method called before any package level function which transforms all
-        parameters provided by a UML user.
-
-        trainX, etc. are filled with the values of the parameters of the same name
-        to a calls to trainAndApply() or train(), or are empty when being called before other
-        functions. arguments is a dictionary mapping names to values of all other
-        parameters that need to be processed.
-
-        The return value of this function must be a dictionary mirroring the
-        structure of the inputs. Specifically, four keys and values are required:
-        keys trainX, trainY, testX, and arguments. For the first three, the associated
-        values must be the transformed values, and for the last, the value must be a
-        dictionary with the same keys as in the 'arguments' input dictionary, with
-        transformed values as the values. However, other information may be added
-        by the package implementor, for example to be used in _outputTransformation()
-
-        """
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
             if trainX.getTypeString() == 'Matrix':
@@ -282,13 +219,18 @@ class Mlpy(UniversalInterface):
             transTestX = None
 
         if 'kernel' in arguments:
-            if arguments['kernel'] is None and trainX is not None and len(trainX.points) != len(trainX.features):
-                raise ArgumentException(
-                    "For this learner, in the absence of specifying a kernel, the trainX parameter must be square (representing the inner product space of the features)")
+            if (arguments['kernel'] is None
+                    and trainX is not None
+                    and len(trainX.points) != len(trainX.features)):
+                msg = "For this learner, in the absence of specifying a "
+                msg += "kernel, the trainX parameter must be square "
+                msg += "(representing the inner product space of the features)"
+                raise InvalidArgumentValue(msg)
 
             if isinstance(arguments['kernel'], self.mlpy.KernelExponential):
-                raise ArgumentException(
-                    "This interface disallows the use of KernelExponential; it is bugged in some versions of mlpy")
+                msg = "This interface disallows the use of KernelExponential; "
+                msg = "it is bugged in some versions of mlpy"
+                raise InvalidArgumentValue(msg)
 
         customDict['useT'] = False
         if learnerName == 'MFastHCluster':
@@ -297,19 +239,17 @@ class Mlpy(UniversalInterface):
         return (transTrainX, transTrainY, transTestX, copy.deepcopy(arguments))
 
 
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        """
-        Method called before any package level function which transforms the returned
-        value into a format appropriate for a UML user.
-
-        """
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
         if outputFormat == "label" and len(outputValue.shape) == 1:
             # we are sometimes given a matrix, this will take care of that
             outputValue = numpy.array(outputValue).flatten()
-            #In the case of prediction we are given a row vector, yet we want a column vector
+            # In the case of prediction we are given a row vector,
+            # yet we want a column vector
             outputValue = outputValue.reshape(len(outputValue), 1)
 
-        #TODO correct
+        # TODO correct
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
@@ -317,11 +257,6 @@ class Mlpy(UniversalInterface):
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        """
-        build a learner and perform training with the given data
-        TAKES name of learner, transformed arguments
-        RETURNS an in package object to be wrapped by a TrainedLearner object
-        """
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         learnNames = self._paramQuery('learn', learnerName, ['self'])[0]
@@ -359,73 +294,46 @@ class Mlpy(UniversalInterface):
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
-        """
-        Given an already trained online learner, extend it's training with the given data
-        TAKES trained learner, transformed arguments,
-        RETURNS the learner after this batch of training
-        """
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
         raise RuntimeError()
 
 
     def _applier(self, learner, testX, arguments, customDict):
-        """
-        use the given learner to do testing/prediction on the given test set
-        TAKES a TrainedLearner object that can be tested on
-        RETURNS UML friendly results
-        """
         if hasattr(learner, 'pred'):
             return self._pred(learner, testX, arguments, customDict)
         elif hasattr(learner, 'transform'):
             return self._transform(learner, testX, arguments, customDict)
         else:
-            raise TypeError("Cannot apply this learner to data, no predict or transform function")
+            msg = "Cannot apply this learner to data, no predict or "
+            msg = "transform function"
+            raise TypeError(msg)
 
 
     def _getAttributes(self, learnerBackend):
-        """
-        Returns whatever attributes might be available for the given learner. For
-        example, in the case of linear regression, TODO
-
-        """
         raise RuntimeError()
 
-    def _optionDefaults(self, option):
-        """
-        Define package default values that will be used for as long as a default
-        value hasn't been registered in the UML configuration file. For example,
-        these values will always be used the first time an interface is instantiated.
 
-        """
+    def _optionDefaults(self, option):
         return None
 
-    def _configurableOptionNames(self):
-        """
-        Returns a list of strings, where each string is the name of a configurable
-        option of this interface whose value will be stored in UML's configuration
-        file.
 
-        """
+    def _configurableOptionNames(self):
         return ['location']
 
 
     def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be wrapped
-        in I/O transformation, and exposed as attributes of all TrainedLearner
-        objects returned by this interface's train() function. If None, or an
-        empty list is returned, no functions will be exposed. Each function
-        in this list should be a python function, the inspect module will be
-        used to retrieve argument names, and the value of the function's
-        __name__ attribute will be its name in TrainedLearner.
-
-        """
         return [self._pred, self._transform]
+
+
+    def version(self):
+        return self.mlpy.__version__
 
 
     def _pred(self, learner, testX, arguments, customDict):
         """
-        Wrapper for the underlying predict function of a scikit-learn learner object
+        Wrapper for the underlying predict function of a mlpy
+        learner object.
         """
         params = customDict['predNames']
         if len(params) > 0:
@@ -438,7 +346,8 @@ class Mlpy(UniversalInterface):
 
     def _transform(self, learner, testX, arguments, customDict):
         """
-        Wrapper for the underlying transform function of a scikit-learn learner object
+        Wrapper for the underlying transform function of a mlpy learner
+        object.
         """
         toPass = {}
         if customDict['transNames'] is not None:
@@ -454,66 +363,23 @@ class Mlpy(UniversalInterface):
     ### HELPERS ###
     ###############
 
-    def _removeFromArray(self, orig, toIgnore):
-        temp = []
-        for entry in orig:
-            if not entry in toIgnore:
-                temp.append(entry)
-        return temp
-
-    def _removeFromDict(self, orig, toIgnore):
-        for entry in toIgnore:
-            if entry in orig:
-                del orig[entry]
-        return orig
-
-    def _removeFromTailMatchedLists(self, full, matched, toIgnore):
+    def _paramQuery(self, name, parent, ignore=None):
         """
-        full is some list n, matched is a list with length m, where m is less
-        than or equal to n, where the last m values of full are matched against
-        their positions in matched. If one of those is to be removed, it is to
-        be removed in both.
+        Takes the name of some mlpy object or function, returns
+        a list of parameters used to instantiate that object or run that
+        function, or None if the desired thing cannot be found.
         """
-        temp = {}
-        if matched is not None:
-            for i in range(len(full)):
-                if i < len(matched):
-                    temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
-                else:
-                    temp[full[len(full) - 1 - i]] = None
-        else:
-            retFull = self._removeFromArray(full, toIgnore)
-            return (retFull, matched)
-
-        for ignoreKey in toIgnore:
-            if ignoreKey in temp:
-                del temp[ignoreKey]
-
-        retFull = []
-        retMatched = []
-        for i in range(len(full)):
-            name = full[i]
-            if name in temp:
-                retFull.append(name)
-                if (i - (len(full) - len(matched))) >= 0:
-                    retMatched.append(temp[name])
-
-        return (retFull, retMatched)
-
-
-    def _paramQuery(self, name, parent, ignore=[]):
-        """
-        Takes the name of some scikit learn object or function, returns a list
-        of parameters used to instantiate that object or run that function, or
-        None if the desired thing cannot be found
-
-        """
+        if ignore is None:
+            ignore = []
         namedModule = self._searcher.findInPackage(parent, name)
 
         # for python 3
-        # in python 3, inspectArguments(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
+        # in python 3, inspectArguments(mlpy.KNN.__init__) works,
+        # but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
-        excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
+        excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc',
+                       'KernelAdatron'.lower(), 'ClassTree'.lower(),
+                       'MFastHCluster'.lower(), 'kmeans']
         if sys.version_info.major > 2 and 'kernel' not in name.lower():
             if parent is None or parent.lower() in excludeList:
                 return self._paramQueryHardCoded(name, parent, ignore)
@@ -521,7 +387,7 @@ class Mlpy(UniversalInterface):
         if not namedModule is None:
             try:
                 (args, v, k, d) = inspectArguments(namedModule)
-                (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+                (args, d) = removeFromTailMatchedLists(args, d, ignore)
                 if 'seed' in args:
                     index = args.index('seed')
                     negdex = index - len(args)
@@ -530,7 +396,7 @@ class Mlpy(UniversalInterface):
             except TypeError:
                 try:
                     (args, v, k, d) = inspectArguments(namedModule.__init__)
-                    (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+                    (args, d) = removeFromTailMatchedLists(args, d, ignore)
                     if 'seed' in args:
                         index = args.index('seed')
                         negdex = index - len(args)
@@ -544,10 +410,9 @@ class Mlpy(UniversalInterface):
 
     def _paramQueryHardCoded(self, name, parent, ignore):
         """
-        Returns a list of parameters for in package entities that we have hard coded,
-        under the assumption that it is difficult or impossible to find that data
-        automatically
-
+        Returns a list of parameters for in package entities that we
+        have hard coded, under the assumption that it is difficult or
+        impossible to find that data automatically.
         """
         pnames = []
         pvarargs = None
@@ -558,12 +423,15 @@ class Mlpy(UniversalInterface):
             return None
 
         # TODO for python 3
-        # in python 3, mlpy's KNN, PCA ... may have different arguments than those in python 2 mlpy.
+        # in python 3, mlpy's KNN, PCA ... may have different arguments
+        # than those in python 2 mlpy.
         if parent.lower() == 'LibSvm'.lower():
             if name == '__init__':
-                pnames = ['svm_type', 'kernel_type', 'degree', 'gamma', 'coef0', 'C', 'nu', 'eps', 'p', 'cache_size',
+                pnames = ['svm_type', 'kernel_type', 'degree', 'gamma',
+                          'coef0', 'C', 'nu', 'eps', 'p', 'cache_size',
                           'shrinking', 'probability', 'weight']
-                pdefaults = ['c_svc', 'linear', 3, 0.001, 0, 1, 0.5, 0.001, 0.1, 100, True, False, {}]
+                pdefaults = ['c_svc', 'linear', 3, 0.001, 0, 1, 0.5, 0.001,
+                             0.1, 100, True, False, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
             elif name == 'pred':
@@ -643,11 +511,10 @@ class Mlpy(UniversalInterface):
             return None
 
         ret = (pnames, pvarargs, pkeywords, pdefaults)
-        (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+        (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
+                                                            ignore)
         return (newArgs, ret[1], ret[2], newDefaults)
 
-    def version(self):
-        return self.mlpy.__version__
 
 class _Kmeans(object):
     def __init__(self, k, plus=False, seed=0):
@@ -664,7 +531,8 @@ class _Kmeans(object):
     def pred(self):
         import mlpy
 
-        (self.clusters, self.means, self.steps) = mlpy.kmeans(self.x, self.k, self.plus, self.seed)
+        (self.clusters, _, _) = mlpy.kmeans(self.x, self.k, self.plus,
+                                            self.seed)
         return self.clusters
 
 

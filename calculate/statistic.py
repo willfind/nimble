@@ -1,10 +1,12 @@
 from __future__ import division
 from __future__ import absolute_import
 import math
+
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination, PackageException
 
 scipy = UML.importModule('scipy')
 
@@ -289,25 +291,25 @@ def _isNumericalPoint(point):
         return False
 
 
-
 def residuals(toPredict, controlVars):
     """
     Calculate the residuals of toPredict, by a linear regression model using the controlVars.
 
-    toPredict: UML data object, where each feature will be used as the independant
+    toPredict: UML Base object, where each feature will be used as the independant
     variable in a separate linear regression model with the controlVars as the
     dependant variables.
 
-    controlVars: UML data object, with the same number of points as toPredict. Each
+    controlVars: UML Base object, with the same number of points as toPredict. Each
     point will be used as the dependant variables to do predictions for the
     corresponding point in toPredict.
 
-    Returns: UML data object of the same size as toPredict, containing the calculated
+    Returns: UML Base object of the same size as toPredict, containing the calculated
     residuals.
 
-    Raises: ArgumentException if toPredict and controlVars are not UML data objects
-    of if they have a different number of points.
-
+    Raises: InvalidArgumentType if toPredict and controlVars are not UML
+    data objects and InvalidArgumentValue if either has nonzero points
+    or features and InvalidArgumentValueCombination if they have a different
+    number of points.
     """
     if scipy is None:
         msg = "scipy must be installed in order to use the residuals function."
@@ -315,10 +317,10 @@ def residuals(toPredict, controlVars):
 
     if not isinstance(toPredict, UML.data.Base):
         msg = "toPredict must be a UML data object"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
     if not isinstance(controlVars, UML.data.Base):
         msg = "controlVars must be a UML data object"
-        raise ArgumentException(msg)
+        raise InvalidArgumentType(msg)
 
     tpP = len(toPredict.points)
     tpF = len(toPredict.features)
@@ -328,15 +330,15 @@ def residuals(toPredict, controlVars):
     if tpP != cvP:
         msg = "toPredict and controlVars must have the same number of points: ("
         msg += str(tpP) + ") vs (" + str(cvP) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValueCombination(msg)
     if tpP == 0 or tpF == 0:
         msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
         msg += "nonzero features (" + str(tpF) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     if cvP == 0 or cvF == 0:
         msg = "controlVars must have nonzero points (" + str(cvP) + ") and "
         msg += "nonzero features (" + str(cvF) + ")"
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()

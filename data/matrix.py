@@ -1,6 +1,5 @@
 """
 Class extending Base, using a numpy dense matrix to store data.
-
 """
 
 from __future__ import division
@@ -12,14 +11,14 @@ import numpy
 from six.moves import range
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
-from .dataHelpers import inheritDocstringsFactory
-
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 
@@ -49,7 +48,7 @@ class Matrix(Base):
             # and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix "
             msg += "or ListPassThrough."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
             if reuseData:
@@ -114,11 +113,11 @@ class Matrix(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -192,7 +191,7 @@ class Matrix(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
 
@@ -362,7 +361,7 @@ class Matrix(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the "
                         msg += "same feature"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentValue(msg)
                     if nansL.any():
                         # fill any nan values in left with the corresponding
                         # right value
@@ -406,8 +405,15 @@ class Matrix(Base):
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
 
-
         self.data = numpy.matrix(merged, dtype=numpy.object_)
+
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data):
+            if val[0, 0] not in binaryFts:
+                binaryFts[val[0, 0]] = []
+            binaryFts[val[0, 0]].append(idx)
+        return binaryFts
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]
@@ -415,6 +421,9 @@ class Matrix(Base):
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
         class MatrixView(BaseView, Matrix):
+            """
+            Read only access to a Matrix object.
+            """
             def __init__(self, **kwds):
                 super(MatrixView, self).__init__(**kwds)
 
@@ -453,8 +462,8 @@ class Matrix(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other
-        UML data object. Both object must contain only numeric data. The
+        Matrix multiply this UML Base object against the provided other
+        UML Base object. Both object must contain only numeric data. The
         featureCount of the calling object must equal the pointCount of
         the other object. The types of the two objects may be different,
         and the return is guaranteed to be the same type as at least one
@@ -468,7 +477,7 @@ class Matrix(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided
+        Multiply every element of this UML Base object by the provided
         scalar. This object must contain only numeric data. The 'scalar'
         parameter must be a numeric data type. The returned object will
         be the inplace modification of the calling object.
@@ -657,7 +666,7 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
         viewMaker = outerObject.pointView
     else:
         if axis != "feature":
-            raise ArgumentException("axis must be 'point' or 'feature'")
+            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
         maxVal = outerObject.data.shape[1]
         viewMaker = outerObject.featureView
     ret = numpy.zeros(maxVal, dtype=numpy.float)
@@ -677,7 +686,7 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
             and hasattr(function, 'valueOfFeatureOrPoint')
             and hasattr(function, 'optr')):
         msg = "some important attribute is missing in the input function"
-        raise ArgumentException(msg)
+        raise AttributeError(msg)
     if axis == "point":
         #convert name of feature to index of feature
         index = function.nameOfFeatureOrPoint
@@ -686,7 +695,7 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
         queryData = outerObject.data[:, indexOfFeature]
     else:
         if axis != "feature":
-            raise ArgumentException("axis must be 'point' or 'feature'")
+            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
         #convert name of point to index of point
         index = function.nameOfFeatureOrPoint
         indexOfPoint = outerObject.points.getIndex(index)

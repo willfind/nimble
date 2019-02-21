@@ -2,6 +2,7 @@
 Method implementations and helpers acting specifically on each element
 List object.
 """
+
 from __future__ import absolute_import
 import itertools
 
@@ -82,8 +83,8 @@ class DataFrameElements(Elements):
 
     def _multiply_implementation(self, other):
         """
-        Perform element wise multiplication of this UML data object
-        against the provided other UML data object. Both objects must
+        Perform element wise multiplication of this UML Base object
+        against the provided other UML Base object. Both objects must
         contain only numeric data. The pointCount and featureCount of
         both objects must be equal. The types of the two objects may be
         different, but the returned object will be the inplace

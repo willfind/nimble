@@ -6,13 +6,14 @@ functions.
 
 from __future__ import absolute_import
 import inspect
-import numpy
 import math
 
-import UML
-from UML.exceptions import ArgumentException
-from UML.randomness import numpyRandom
+import numpy
 from six.moves import range
+
+import UML
+from UML.exceptions import InvalidArgumentValue
+from UML.randomness import numpyRandom
 
 
 def detectBestResult(functionToCheck):
@@ -38,7 +39,7 @@ def detectBestResult(functionToCheck):
     returns: Either 'min' or 'max'; the former if lower values returned from
     functionToCheck are associated with correctness of predictions, the later
     if larger values are associated with correctness. If we are unable to
-    determine which is correct, then an ArgumentException is thrown.
+    determine which is correct, then an InvalidArgumentValue is thrown.
     """
     if hasattr(functionToCheck, 'optimal'):
         if functionToCheck.optimal == 'min':
@@ -95,7 +96,7 @@ def detectBestResult(functionToCheck):
                             msg = "In repeated trials with different known values, "
                             msg += "functionToCheck was inconsistent in attributing "
                             msg += "high versus low values to optimal predictions."
-                            result = ArgumentException(msg)
+                            result = InvalidArgumentValue(msg)
                         # erroneous call on what should be acceptable data;
                         # report the error to the user
                         else:
@@ -123,7 +124,7 @@ def detectBestResult(functionToCheck):
                         msg = "Over trials with different knowns, "
                         msg += "functionToCheck was inconsistent in attributing "
                         msg += "high versus low values to optimal predictions."
-                        result = ArgumentException(msg)
+                        result = InvalidArgumentValue(msg)
 
         # record the result, regardless of whether it was successful, nan,
         # or an exception
@@ -159,7 +160,7 @@ def raiseException(preface, outputs):
     msg += " (best scores) " + str(outputs[1])
     msg += " (all scores) " + str(outputs[2])
 
-    raise ArgumentException(preface + msg)
+    raise InvalidArgumentValue(preface + msg)
 
 
 def _runTrialGivenParameters(toCheck, knowns, predictionType):

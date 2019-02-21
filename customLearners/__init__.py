@@ -15,10 +15,10 @@ UML.deregisterCustomLearnerAsDefault functions.
 
 The out-of-the box learners are all registered during UML
 initialization and are avaiable in the interface named 'custom'.
-
 """
 
 from __future__ import absolute_import
+
 from .custom_learner import CustomLearner
 from .knn_classification import KNNClassifier
 from .mean_constant import MeanConstant

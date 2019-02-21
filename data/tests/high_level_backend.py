@@ -39,7 +39,8 @@ except:
 import UML
 from UML import match
 from UML import fill
-from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import DEFAULT_PREFIX
 
@@ -106,14 +107,14 @@ class HighLevelDataSafe(DataTestObject):
     # .points.calculate() #
     #######################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_calculate_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.points.calculate(None)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_points_calculate_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -124,7 +125,7 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_points_calculate_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -219,7 +220,7 @@ class HighLevelDataSafe(DataTestObject):
     # .features.calculate() #
     #########################
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_features_calculate_exceptionPEmpty(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -234,7 +235,7 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.features.calculate(emitAllEqual)
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_features_calculate_exceptionFEmpty(self):
         data = [[], []]
         data = numpy.array(data)
@@ -249,7 +250,7 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.features.calculate(emitAllEqual)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_calculate_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
@@ -474,9 +475,9 @@ class HighLevelDataSafe(DataTestObject):
     # points.mapReduce() #
     ######################
 
-    @raises(ImproperActionException)
-    def test_points_mapReduce_argumentExceptionNoFeatures(self):
-        """ Test points.mapReduce() for ImproperActionException when there are no features  """
+    @raises(ImproperObjectAction)
+    def test_points_mapReduce_ExceptionNoFeatures(self):
+        """ Test points.mapReduce() for ImproperObjectAction when there are no features  """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
@@ -493,33 +494,33 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor(data)
         assert ret.isIdentical(exp)
 
-    @raises(ArgumentException)
-    def test_points_mapReduce_argumentExceptionNoneMap(self):
-        """ Test points.mapReduce() for ArgumentException when mapper is None """
+    @raises(InvalidArgumentType)
+    def test_points_mapReduce_ExceptionNoneMap(self):
+        """ Test points.mapReduce() for InvalidArgumentType when mapper is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.mapReduce(None, simpleReducer)
 
-    @raises(ArgumentException)
-    def test_points_mapReduce_argumentExceptionNoneReduce(self):
-        """ Test points.mapReduce() for ArgumentException when reducer is None """
+    @raises(InvalidArgumentType)
+    def test_points_mapReduce_ExceptionNoneReduce(self):
+        """ Test points.mapReduce() for InvalidArgumentType when reducer is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.mapReduce(simpleMapper, None)
 
-    @raises(ArgumentException)
-    def test_points_mapReduce_argumentExceptionUncallableMap(self):
-        """ Test points.mapReduce() for ArgumentException when mapper is not callable """
+    @raises(InvalidArgumentType)
+    def test_points_mapReduce_ExceptionUncallableMap(self):
+        """ Test points.mapReduce() for InvalidArgumentType when mapper is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.mapReduce("hello", simpleReducer)
 
-    @raises(ArgumentException)
-    def test_points_mapReduce_argumentExceptionUncallableReduce(self):
-        """ Test points.mapReduce() for ArgumentException when reducer is not callable """
+    @raises(InvalidArgumentType)
+    def test_points_mapReduce_ExceptionUncallableReduce(self):
+        """ Test points.mapReduce() for InvalidArgumentType when reducer is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -571,9 +572,9 @@ class HighLevelDataSafe(DataTestObject):
     # features.mapReduce() #
     ########################
 
-    @raises(ImproperActionException)
-    def test_features_mapReduce_argumentExceptionNoPoints(self):
-        """ Test features.mapReduce() for ImproperActionException when there are no points  """
+    @raises(ImproperObjectAction)
+    def test_features_mapReduce_ExceptionNoPoints(self):
+        """ Test features.mapReduce() for ImproperObjectAction when there are no points  """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
@@ -590,33 +591,33 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor(data)
         assert ret.isIdentical(exp)
 
-    @raises(ArgumentException)
-    def test_features_mapReduce_argumentExceptionNoneMap(self):
-        """ Test features.mapReduce() for ArgumentException when mapper is None """
+    @raises(InvalidArgumentType)
+    def test_features_mapReduce_ExceptionNoneMap(self):
+        """ Test features.mapReduce() for InvalidArgumentType when mapper is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.mapReduce(None, simpleReducer)
 
-    @raises(ArgumentException)
-    def test_features_mapReduce_argumentExceptionNoneReduce(self):
-        """ Test features.mapReduce() for ArgumentException when reducer is None """
+    @raises(InvalidArgumentType)
+    def test_features_mapReduce_ExceptionNoneReduce(self):
+        """ Test features.mapReduce() for InvalidArgumentType when reducer is None """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.mapReduce(simpleMapper, None)
 
-    @raises(ArgumentException)
-    def test_features_mapReduce_argumentExceptionUncallableMap(self):
-        """ Test features.mapReduce() for ArgumentException when mapper is not callable """
+    @raises(InvalidArgumentType)
+    def test_features_mapReduce_ExceptionUncallableMap(self):
+        """ Test features.mapReduce() for InvalidArgumentType when mapper is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.mapReduce("hello", simpleReducer)
 
-    @raises(ArgumentException)
-    def test_features_mapReduce_argumentExceptionUncallableReduce(self):
-        """ Test features.mapReduce() for ArgumentException when reducer is not callable """
+    @raises(InvalidArgumentType)
+    def test_features_mapReduce_ExceptionUncallableReduce(self):
+        """ Test features.mapReduce() for InvalidArgumentType when reducer is not callable """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1230,7 +1231,7 @@ class HighLevelModifying(DataTestObject):
     # replaceFeatureWithBinaryFeatures #
     ####################################
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_replaceFeatureWithBinaryFeatures_PemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a point empty object """
         data = [[], []]
@@ -1238,7 +1239,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a feature empty object """
         data = [[], []]
@@ -1253,7 +1254,7 @@ class HighLevelModifying(DataTestObject):
         featureNames = ['col']
         toTest = self.constructor(data, featureNames=featureNames)
         getNames = self.constructor(data, featureNames=featureNames)
-        ret = toTest.replaceFeatureWithBinaryFeatures(0) # RET CHECK
+        ret = toTest.replaceFeatureWithBinaryFeatures(0)
 
         expData = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         expFeatureNames = []
@@ -1263,6 +1264,25 @@ class HighLevelModifying(DataTestObject):
 
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
+
+    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
+        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
+        data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
+        featureNames = ['stay1', 'replace', 'stay2']
+        toTest = self.constructor(data, featureNames=featureNames)
+        getNames = self.constructor(data, featureNames=featureNames)
+        ret = toTest.replaceFeatureWithBinaryFeatures(1)
+
+        expData = [['a', 1, 0, 0, 'a'], ['b', 0, 1, 0, 'b'], ['c', 0, 0, 1, 'c']]
+        expFeatureNames = []
+        for point in getNames.points:
+            expFeatureNames.append('replace=' + str(point[1]))
+        expFeatureNames.insert(0, 'stay1')
+        expFeatureNames.append('stay2')
+        exp = self.constructor(expData, featureNames=expFeatureNames)
+
+        assert toTest.isIdentical(exp)
+        assert ret == expFeatureNames[1: -1]
 
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
@@ -1284,7 +1304,7 @@ class HighLevelModifying(DataTestObject):
     # transformFeatureToIntegers #
     ##############################
 
-    @raises(ImproperActionException)
+    @raises(ImproperObjectAction)
     def test_transformFeatureToIntegers_PemptyException(self):
         """ Test transformFeatureToIntegers() with an point empty object """
         data = [[], []]
@@ -1292,7 +1312,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_transformFeatureToIntegers_FemptyException(self):
         """ Test transformFeatureToIntegers() with an feature empty object """
         data = [[], []]
@@ -1302,50 +1322,82 @@ class HighLevelModifying(DataTestObject):
 
     def test_transformFeatureToIntegers_handmade(self):
         """ Test transformFeatureToIntegers() against handmade output """
-        data = [[10], [20], [30.5], [20], [10]]
+        data = [['a'], ['b'], ['c'], ['b'], ['a']]
         featureNames = ['col']
         toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
         assert toTest[0, 0] == toTest[4, 0]
         assert toTest[1, 0] == toTest[3, 0]
         assert toTest[0, 0] != toTest[1, 0]
         assert toTest[0, 0] != toTest[2, 0]
-        assert ret is None
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
+
 
     def test_transformFeatureToIntegers_pointNames(self):
         """ Test transformFeatureToIntegers preserves pointNames """
-        data = [[10], [20], [30.5], [20], [10]]
+        data = [['a'], ['b'], ['c'], ['b'], ['a']]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
         assert toTest.points.getName(0) == '1a'
         assert toTest.points.getName(1) == '2a'
         assert toTest.points.getName(2) == '3'
         assert toTest.points.getName(3) == '2b'
         assert toTest.points.getName(4) == '1b'
-        assert ret is None
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
 
     def test_transformFeatureToIntegers_positioning(self):
         """ Test transformFeatureToIntegers preserves featurename mapping """
-        data = [[10, 0], [20, 1], [30.5, 2], [20, 3], [10, 4]]
+        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col', 'pos']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+        ret = toTest.transformFeatureToIntegers(0)
 
-        assert toTest[0, 1] == toTest[4, 1]
-        assert toTest[1, 1] == toTest[3, 1]
-        assert toTest[0, 1] != toTest[1, 1]
-        assert toTest[0, 1] != toTest[2, 1]
+        assert toTest[0, 0] == toTest[4, 0]
+        assert toTest[1, 0] == toTest[3, 0]
+        assert toTest[0, 0] != toTest[1, 0]
+        assert toTest[0, 0] != toTest[2, 0]
 
-        assert toTest[0, 0] == 0
-        assert toTest[1, 0] == 1
-        assert toTest[2, 0] == 2
-        assert toTest[3, 0] == 3
-        assert toTest[4, 0] == 4
+        assert toTest[0, 1] == 0
+        assert toTest[1, 1] == 1
+        assert toTest[2, 1] == 2
+        assert toTest[3, 1] == 3
+        assert toTest[4, 1] == 4
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
 
     def test_transformFeatureToIntegers_NamePath_preservation(self):
         data = [[10], [20], [30.5], [20], [10]]
@@ -1495,14 +1547,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract={})
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentType
+        except InvalidArgumentType:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide=set([1]))
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentType
+        except InvalidArgumentType:
             pass
 
 
@@ -1518,14 +1570,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract="Hello")
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide="enumerate")
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
 
@@ -1543,14 +1595,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract=vectorLong)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide=vectorShort)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
 
@@ -1568,14 +1620,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract=objBig)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide=objSmall)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
     # applyResultTo is wrong shape in the normalized axis
@@ -1592,14 +1644,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract=1, also=alsoShort)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide=2, also=alsoLong)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
             pass
 
     # applyResultTo is wrong shape when given obj subtract and divide
@@ -1618,14 +1670,14 @@ class HighLevelModifying(DataTestObject):
 
         try:
             self.normalizeHelper(obj, axis, subtract=sub_div, also=alsoShort)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination:
             pass
 
         try:
             self.normalizeHelper(obj, axis, divide=sub_div, also=alsoLong)
-            assert False  # Expected ArgumentException
-        except ArgumentException:
+            assert False  # Expected InvalidArgumentValueCombination
+        except InvalidArgumentValueCombination:
             pass
 
     # successful float valued inputs
@@ -1829,7 +1881,7 @@ class HighLevelModifying(DataTestObject):
         assert obj3 == exp3
         assert ret == expRet
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_fill_mean_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
         obj.features.fill(match.missing, fill.mean)
@@ -1850,7 +1902,7 @@ class HighLevelModifying(DataTestObject):
         exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_fill_median_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
         obj.features.fill(match.missing, fill.median)
@@ -1870,7 +1922,7 @@ class HighLevelModifying(DataTestObject):
         exp1.features.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_fill_mode_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
         obj.features.fill(match.missing, fill.mode)
@@ -1897,7 +1949,7 @@ class HighLevelModifying(DataTestObject):
         exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_fill_forwardFill_firstFeatureValueMissing(self):
         obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.features.fill(match.missing, fill.forwardFill)
@@ -1910,7 +1962,7 @@ class HighLevelModifying(DataTestObject):
         exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_fill_backwardFill_lastFeatureValueMissing(self):
         obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, None, 9]], featureNames=['a', 'b', 'c'])
         obj.features.fill(match.missing, fill.backwardFill)
@@ -2089,7 +2141,7 @@ class HighLevelModifying(DataTestObject):
         assert obj3 == exp3
         assert ret == expRet
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_fill_mean_allMatches(self):
         obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
         obj.points.fill(match.missing, fill.mean)
@@ -2109,7 +2161,7 @@ class HighLevelModifying(DataTestObject):
         exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_fill_median_allMatches(self):
         obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
         obj.points.fill(match.missing, fill.median)
@@ -2129,7 +2181,7 @@ class HighLevelModifying(DataTestObject):
         exp1.points.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_fill_mode_allMatches(self):
         obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
         obj.points.fill(match.missing, fill.mode)
@@ -2156,7 +2208,7 @@ class HighLevelModifying(DataTestObject):
         exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_fill_forwardFill_firstFeatureValueMissing(self):
         obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj.points.fill(match.missing, fill.forwardFill)
@@ -2169,7 +2221,7 @@ class HighLevelModifying(DataTestObject):
         exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_fill_backwardFill_lastFeatureValueMissing(self):
         obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj.points.fill(match.missing, fill.backwardFill)
@@ -2657,7 +2709,7 @@ class HighLevelModifying(DataTestObject):
         toTest.points.combineByExpandingFeatures(2, 3)
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(ImproperObjectAction)
     def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
@@ -2786,7 +2838,7 @@ class HighLevelModifying(DataTestObject):
         toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_splitByParsing_shortSplitList(self):
         data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
         pNames = ["a", "b", "c"]
@@ -2795,7 +2847,7 @@ class HighLevelModifying(DataTestObject):
 
         toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValueCombination)
     def test_features_splitByParsing_longSplitList(self):
         data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
         pNames = ["a", "b", "c"]

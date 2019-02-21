@@ -2,18 +2,17 @@
 Implementations and helpers specific to performing axis-generic
 operations on a UML DataFrame object.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
 from .axis import Axis
-from .points import Points
-
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
+from .points import Points
 
 pd = UML.importModule('pandas')
 
@@ -106,6 +105,7 @@ class DataFrameAxis(Axis):
 
         axisAttr = 'points' if isinstance(self, Points) else 'features'
         indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
+
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._source.data = self._source.data.iloc[indexPosition, :]

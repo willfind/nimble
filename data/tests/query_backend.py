@@ -5,20 +5,24 @@ pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
-elements.__iter__, points.nonZeroIterator, features.nonZeroIterator
+elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
+inverse, solveLinearSystem
 """
-
 from __future__ import absolute_import
 from __future__ import print_function
 import math
 import tempfile
-import numpy
 import os
 import os.path
+from functools import reduce
+from copy import deepcopy
+
+import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
-
-from copy import deepcopy
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 import UML
 from UML import loadData
@@ -27,11 +31,8 @@ from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.exceptions import ArgumentException
-from six.moves import map
-from six.moves import range
-from six.moves import zip
-from functools import reduce
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValueCombination
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -338,7 +339,7 @@ class QueryBackend(DataTestObject):
 
         try:
             LoadObj = loadData(tmpFile.name)
-        except ArgumentException as ae:
+        except InvalidArgumentValue:
             assert True
         else:
             assert False
@@ -404,14 +405,14 @@ class QueryBackend(DataTestObject):
 
         assert toTest[1, 'one'] == 4
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_getitem_nonIntConvertableFloatSingleKey(self):
         data = [[0, 1, 2, 3]]
         toTest = self.constructor(data)
 
         assert toTest[0.1] == 0
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_getitem_nonIntConvertableFloatTupleKey(self):
         data = [[0, 1], [2, 3]]
         toTest = self.constructor(data)
@@ -599,30 +600,30 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(pointStart=1.5)
             assert False  # pointStart is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(pointEnd=5)
             assert False  # pointEnd > pointCount didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if textCheck:
-                print(ae)
+                print(iav)
 
         try:
             toTest.view(pointEnd=1.4)
             assert False  # pointEnd is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(pointStart='7', pointEnd='4')
             assert False  # pointStart > pointEnd didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValueCombination as ivc:
             if textCheck:
-                print(ae)
+                print(ivc)
 
     def test_view_featureStart_featureEnd_validation(self):
         pointNames = ['1', '4', '7']
@@ -635,30 +636,30 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(featureStart=1.5)
             assert False  # featureStart is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(featureEnd=4)
             assert False  # featureEnd > featureCount didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if textCheck:
-                print(ae)
+                print(iav)
 
         try:
             toTest.view(featureEnd=1.4)
             assert False  # featureEnd is non-ID didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentType as iat:
             if textCheck:
-                print(ae)
+                print(iat)
 
         try:
             toTest.view(featureStart='three', featureEnd='two')
             assert False  # featureStart > featureEnd didn't raise exception
-        except ArgumentException as ae:
+        except InvalidArgumentValueCombination as ivc:
             if textCheck:
-                print(ae)
+                print(ivc)
 
 
     def test_ViewAccess_AllLimits(self):
@@ -1026,7 +1027,7 @@ class QueryBackend(DataTestObject):
         assert pnames == ['', 'one', '', 'three']
         assert bound == len('three')
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
         randGen = UML.createRandomData("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
@@ -1093,12 +1094,12 @@ class QueryBackend(DataTestObject):
     # points.similarities / features.similarities #
     ###############################################
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_points_similarities_InvalidParamType(self):
         """ Test points.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentType)
     def test_features_similarities_InvalidParamType(self):
         """ Test features.similarities raise exception for unexpected param type """
         self.backend_Sim_InvalidParamType(False)
@@ -1112,12 +1113,12 @@ class QueryBackend(DataTestObject):
         else:
             obj.features.similarities({"hello": 5})
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_points_similarities_UnexpectedString(self):
         """ Test points.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_features_similarities_UnexpectedString(self):
         """ Test features.similarities raise exception for unexpected string value """
         self.backend_Sim_UnexpectedString(False)
@@ -1361,14 +1362,14 @@ class QueryBackend(DataTestObject):
         assert sameAsOrigT == trans
 
     # test input function validation
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def todotest_points_similarities_FuncValidation(self):
-        """ Test points.similarities raises exception for invalid funcitions """
+        """ Test points.similarities raises exception for invalid functions """
         self.backend_Sim_FuncValidation(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def todotest_features_similarities_FuncValidation(self):
-        """ Test features.similarities raises exception for invalid funcitions """
+        """ Test features.similarities raises exception for invalid functions """
         self.backend_Sim_FuncValidation(False)
 
     def backend_Sim_FuncValidation(self, axis):
@@ -1782,12 +1783,12 @@ class QueryBackend(DataTestObject):
         assert sameAsOrig == orig
         assert sameAsOrigT == trans
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_pointStatistics_unexpectedString(self):
         """ Test pointStatistics returns correct std results """
         self.backend_Stat_unexpectedString(True)
 
-    @raises(ArgumentException)
+    @raises(InvalidArgumentValue)
     def test_featureStatistics_unexpectedString(self):
         """ Test featureStatistics returns correct std results """
         self.backend_Stat_unexpectedString(False)
@@ -2251,6 +2252,112 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == []
+
+    ###########
+    # inverse #
+    ###########
+
+    def test_inverse_multiplicative(self):
+        """ Test computation of multiplicative inverse."""
+        from scipy import linalg
+        data = numpy.array([[1, 1, 0], [1, 0, 1], [1, 1, 1]])
+        pointNames =  ['1', 'one', '2']
+        featureNames = ['one', 'two', 'three']
+
+        data_inv = linalg.inv(data)
+        resObj =  self.constructor(data_inv, pointNames=featureNames, featureNames=pointNames)
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        invObj = toTest.inverse()
+
+        assert invObj == resObj
+        assert toTest == orig
+
+
+    def test_inverse_pseudoInverse(self):
+        """ Test computation of pseudo-inverse using singular-value decomposition. """
+        from scipy import linalg
+        data = numpy.array([[3, 2, 1], [2, 2, 0], [1, 0, 1]])
+        pointNames =  ['1', 'one', '2']
+        featureNames = ['one', 'two', 'three']
+
+        data_pinv = linalg.pinv2(data)
+        resObj = self.constructor(data_pinv, pointNames=featureNames, featureNames=pointNames)
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        pinvObj = toTest.inverse(pseudoInverse=True)
+
+        assert pinvObj == resObj
+        assert toTest == orig
+
+    #####################
+    # solveLinearSystem #
+    #####################
+
+    def test_solveLinearSystem_solve(self):
+        """ Test solveLinearSystem using solve method. """
+        self.backend_solveLinearSystem(solveFunction='solve')
+
+    def test_solveLinearSystem_leastSquares(self):
+        """ Test solveLinearSystem using least squares method. """
+        self.backend_solveLinearSystem(solveFunction='least squares')
+
+    def backend_solveLinearSystem(self, solveFunction):
+        from scipy import linalg
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        x = numpy.transpose(linalg.solve(A, b))
+
+        pointNames =  ['1', 'one']
+        featureNames = ['one', 'two']
+
+        resObj = self.constructor(x, pointNames=['b'], featureNames=featureNames)
+
+        Aobj = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        origA = self.constructor(A, pointNames=pointNames, featureNames=featureNames)
+        bobj = self.constructor(b)
+
+        xobj = Aobj.solveLinearSystem(bobj, solveFunction=solveFunction)
+
+        assert xobj.isApproximatelyEqual(resObj)
+        assert Aobj == origA
+
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_b_InvalidType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        Aobj.solveLinearSystem(b)
+
+    @raises(InvalidArgumentType)
+    def test_solveLinearSystem_InvalidParamType(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, solveFunction=['solve'])
+
+    @raises(InvalidArgumentValue)
+    def test_solveLinearSystem_InvalidParamValue(self):
+        A = numpy.array([[1, 20], [-30, 4]])
+        b = numpy.array([[-30], [4]])
+
+        Aobj = self.constructor(A)
+        bobj = self.constructor(b)
+
+        Aobj.solveLinearSystem(bobj, solveFunction='foo')
+
+
+
 
 ###########
 # Helpers #

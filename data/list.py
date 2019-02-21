@@ -1,6 +1,5 @@
 """
 Class extending Base, using a list of lists to store data.
-
 """
 
 from __future__ import division
@@ -15,13 +14,14 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.exceptions import ArgumentException, PackageException
+from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from UML.exceptions import PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
-from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
 
 scipy = UML.importModule('scipy.io')
@@ -74,7 +74,7 @@ class List(Base):
                 and 'PassThrough' not in str(type(data))):
             msg = "the input data can only be a list or a numpy matrix "
             msg += "or ListPassThrough."
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])
@@ -91,7 +91,7 @@ class List(Base):
                     for i in data:
                         if not isAllowedSingleElement(i):
                             msg = 'invalid input data format.'
-                            raise ArgumentException(msg)
+                            raise InvalidArgumentValue(msg)
                 shape = (1, len(data))
                 data = [data]
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
@@ -103,11 +103,11 @@ class List(Base):
                     for i in data:
                         if len(i) != numFeatures:
                             msg = 'invalid input data format.'
-                            raise ArgumentException(msg)
+                            raise InvalidArgumentValue(msg)
                         for j in i:
                             if not isAllowedSingleElement(j):
                                 msg = '%s is invalid input data format.'%j
-                                raise ArgumentException(msg)
+                                raise InvalidArgumentValue(msg)
                 shape = (len(data), numFeatures)
 
             if reuseData:
@@ -191,11 +191,11 @@ class List(Base):
         should start with comment lines designating pointNames and
         featureNames.
         """
-        if format not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
-            raise ArgumentException(msg)
+        # if format not in ['csv', 'mtx']:
+        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
+        #     msg += "'mtx'. They may either be input as the format parameter, "
+        #     msg += "or as the extension in the outPath"
+        #     raise InvalidArgumentValue(msg)
 
         if format == 'csv':
             return self._writeFileCSV_implementation(
@@ -277,7 +277,7 @@ class List(Base):
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, List):
             msg = "Other must be the same type as this object"
-            raise ArgumentException(msg)
+            raise InvalidArgumentType(msg)
 
         self.data = other.data
         self._numFeatures = other._numFeatures
@@ -390,7 +390,7 @@ class List(Base):
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
         if onFeature:
-            if feature in ["intersection" ,"left"]:
+            if feature in ["intersection", "left"]:
                 onFeatureIdx = self.features.getIndex(onFeature)
                 onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)
                 onIdxL = onIdxLoc
@@ -503,7 +503,7 @@ class List(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the "
                         msg += "same feature"
-                        raise ArgumentException(msg)
+                        raise InvalidArgumentValue(msg)
                     if sum(nansL) > 0:
                         # fill any nan values in left with the corresponding
                         # right value
@@ -541,12 +541,23 @@ class List(Base):
 
         self.data = merged
 
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data):
+            if val[0] not in binaryFts:
+                binaryFts[val[0]] = []
+            binaryFts[val[0]].append(idx)
+        return binaryFts
+
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
         class ListView(BaseView, List):
+            """
+            Read only access to a List object.
+            """
             def __init__(self, **kwds):
                 super(ListView, self).__init__(**kwds)
 
@@ -567,7 +578,8 @@ class List(Base):
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
+                    intermediate = UML.createData('Matrix', emptyStandin,
+                                                  useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID
@@ -591,17 +603,26 @@ class List(Base):
                     return listForm
 
         class FeatureViewer(object):
+            """
+            View by feature axis for list.
+            """
             def __init__(self, source, fStart, fEnd):
                 self.source = source
                 self.fStart = fStart
                 self.fRange = fEnd - fStart
 
             def setLimit(self, pIndex):
+                """
+                Limit to a given point in the feature.
+                """
                 self.limit = pIndex
 
             def __getitem__(self, key):
                 if key < 0 or key >= self.fRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the feature axis (0 "
+                    msg += "to " + str(self.fRange - 1) + ")."
+                    raise IndexError(msg)
 
                 return self.source.data[self.limit][key + self.fStart]
 
@@ -621,6 +642,9 @@ class List(Base):
                 return not self.__eq__(other)
 
         class ListPassThrough(object):
+            """
+            Pass through to support View.
+            """
             def __init__(self, source, pStart, pEnd, fStart, fEnd):
                 self.source = source
                 self.pStart = pStart
@@ -630,9 +654,13 @@ class List(Base):
                 self.fEnd = fEnd
 
             def __getitem__(self, key):
-                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
+                self.fviewer = FeatureViewer(self.source, self.fStart,
+                                             self.fEnd)
                 if key < 0 or key >= self.pRange:
-                    raise IndexError("")
+                    msg = "The given index " + str(key) + " is outside of the "
+                    msg += "range  of possible indices in the point axis (0 "
+                    msg += "to " + str(self.pRange - 1) + ")."
+                    raise IndexError(msg)
 
                 self.fviewer.setLimit(key + self.pStart)
                 return self.fviewer
@@ -689,8 +717,8 @@ class List(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other
-        UML data object. Both object must contain only numeric data. The
+        Matrix multiply this UML Base object against the provided other
+        UML Base object. Both object must contain only numeric data. The
         featureCount of the calling object must equal the pointCount of
         the other object. The types of the two objects may be different,
         and the return is guaranteed to be the same type as at least one
@@ -710,7 +738,7 @@ class List(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided
+        Multiply every element of this UML Base object by the provided
         scalar. This object must contain only numeric data. The 'scalar'
         parameter must be a numeric data type. The returned object will
         be the inplace modification of the calling object.

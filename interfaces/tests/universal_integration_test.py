@@ -14,7 +14,7 @@ from nose.plugins.attrib import attr
 
 import UML
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.helpers import generateClusteredPoints
 from UML.helpers import generateClassificationData
@@ -60,7 +60,7 @@ def test__getScoresFormat():
             if UML.learnerType(fullName) == 'classifier':
                 try:
                     tl2 = UML.train(fullName, trainX2, trainY2)
-                except ArgumentException:
+                except InvalidArgumentValue:
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
                     continue
@@ -68,7 +68,7 @@ def test__getScoresFormat():
                                                                                  tl2.customDict)
                 try:
                     scores2 = interface._getScores(tl2.backend, transTestX2, {}, tl2.customDict)
-                except ArgumentException:
+                except InvalidArgumentValue:
                     # this is to catch learners that cannot output scores
                     continue
                 checkFormatRaw(scores2, 2)
@@ -107,13 +107,13 @@ def testGetScoresFormat():
             if UML.learnerType(fullName) == 'classifier':
                 try:
                     tl2 = UML.train(fullName, trainX2, trainY2)
-                except ArgumentException:
+                except InvalidArgumentValue:
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
                     continue
                 try:
                     scores2 = tl2.getScores(testX2)
-                except ArgumentException:
+                except InvalidArgumentValue:
                     # this is to catch learners that cannot output scores
                     continue
                 checkFormat(scores2, 2)

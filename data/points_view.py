@@ -2,14 +2,17 @@
 Defines a subclass of the Axis object, which serves as the primary
 base class for read only axis views of data objects.
 """
+
 from __future__ import absolute_import
 
+from UML.docHelpers import inheritDocstringsFactory
 from .points import Points
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory
 
 exceptionDocstring = exceptionDocstringFactory(Points)
 
+@inheritDocstringsFactory(Points)
 class PointsView(Points):
     """
     Class defining read only view objects, which have the same api as a
@@ -40,33 +43,33 @@ class PointsView(Points):
 
     @exceptionDocstring
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False):
+                randomize=False, useLog=None):
         readOnlyException('extract')
 
     @exceptionDocstring
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         readOnlyException('delete')
 
     @exceptionDocstring
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False):
+               randomize=False, useLog=None):
         readOnlyException('retain')
 
     @exceptionDocstring
-    def add(self, toAdd, insertBefore=None):
+    def add(self, toAdd, insertBefore=None, useLog=None):
         readOnlyException('add')
 
     @exceptionDocstring
-    def shuffle(self):
+    def shuffle(self, useLog=None):
         readOnlyException('shuffle')
 
     @exceptionDocstring
-    def sort(self, sortBy=None, sortHelper=None):
+    def sort(self, sortBy=None, sortHelper=None, useLog=None):
         readOnlyException('sort')
 
     @exceptionDocstring
-    def transform(self, function, points=None):
+    def transform(self, function, points=None, useLog=None):
         readOnlyException('transform')
 
     ######################################
@@ -74,12 +77,13 @@ class PointsView(Points):
     #####################################
 
     @exceptionDocstring
-    def fill(self, match, fill, arguments=None, points=None,
-             returnModified=False):
+    def fill(self, match, fill, points=None, returnModified=False, useLog=None,
+             **kwarguments):
         readOnlyException('fill')
 
     @exceptionDocstring
-    def normalize(self, subtract=None, divide=None, applyResultTo=None):
+    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+                  useLog=None):
         readOnlyException('normalize')
 
     @exceptionDocstring

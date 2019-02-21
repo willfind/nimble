@@ -8,7 +8,7 @@ import numpy
 import UML
 from UML.match import convertMatchToFunction
 from UML.match import anyValues
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 
 def factory(match, fill, **kwarguments):
     """
@@ -308,7 +308,7 @@ def forwardFill(vector, match):
     match = convertMatchToFunction(match)
     if match(vector[0]):
         msg = directionError('forward fill', vector, 'first')
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     ret = []
     for val in vector:
         if match(val):
@@ -365,7 +365,7 @@ def backwardFill(vector, match):
     match = convertMatchToFunction(match)
     if match(vector[-1]):
         msg = directionError('backward fill', vector, 'last')
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     ret = numpy.empty_like(vector)
     numValues = len(vector)
     for i, val in enumerate(reversed(vector)):
@@ -426,9 +426,9 @@ def interpolate(vector, match, **kwarguments):
     """
     match = convertMatchToFunction(match)
     if 'x' in kwarguments:
-        msg = "'x' is not a valid keyword argument because it is "
+        msg = "'x' is a disallowed keyword argument because it is "
         msg += "determined by the data in the vector."
-        raise ArgumentException(msg)
+        raise TypeError(msg)
     matchedLoc = [i for i, val in enumerate(vector) if match(val)]
     kwarguments['x'] = matchedLoc
     if 'xp' not in kwarguments:
@@ -439,6 +439,7 @@ def interpolate(vector, match, **kwarguments):
         kwarguments['fp'] = unmatchedVals
 
     tmpV = numpy.interp(**kwarguments)
+
     ret = []
     j = 0
     for i, val in enumerate(vector):
@@ -584,8 +585,9 @@ def kNeighborsBackend(method, data, match, **kwarguments):
                 # training data includes not matching features and this feature
                 notMatchFts.append(fID)
                 trainingData = data[:, notMatchFts]
-                # training data includes only points that have valid data at each feature
-                # this will also remove the point we are evaluating from the training data
+                # training data includes only points that have valid data at
+                # each feature this will also remove the point we are
+                # evaluating from the training data
                 trainingData.points.delete(anyValues(match))
                 pred = UML.trainAndApply(method, trainingData, -1, predictData,
                                          **kwarguments)
@@ -614,12 +616,12 @@ def statsBackend(vector, match, funcString, statisticsFunction):
         return list(vector)
     if not unmatched:
         msg = statsExceptionNoMatches(funcString, vector)
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
     unmatched = UML.createData('List', unmatched)
     stat = statisticsFunction(unmatched)
     if stat is None:
         msg = statsExceptionInvalidInput(funcString, vector)
-        raise ArgumentException(msg)
+        raise InvalidArgumentValue(msg)
 
     return constant(vector, match, stat)
 
@@ -699,4 +701,5 @@ def directionError(funcString, vector, target):
     msg = "Unable to provide a {funcString} value for the {axis} {location} "
     msg += "because the {target} value is a match"
 
-    return errorMsgFormatter(msg, vector, **{'funcString':funcString, 'target':target})
+    return errorMsgFormatter(msg, vector, **{'funcString':funcString,
+                                             'target':target})

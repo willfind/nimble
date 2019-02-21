@@ -2,11 +2,13 @@
 Method implementations and helpers acting specifically on features in a
 Matrix object.
 """
+
 from __future__ import absolute_import
 
 import numpy
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
+
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
@@ -42,16 +44,16 @@ class MatrixFeatures(MatrixAxis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            # currRet might return an ArgumentException with a message which
+            # currRet might return an InvalidArgumentValue with a message which
             # needs to be formatted with the axis and current index before
             # being raised
-            if isinstance(currRet, ArgumentException):
+            if isinstance(currRet, InvalidArgumentValue):
                 currRet.value = currRet.value.format('feature', j)
                 raise currRet
             if len(currRet) != len(self._source.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
-                raise ArgumentException(msg)
+                raise InvalidArgumentValue(msg)
             try:
                 currRet = numpy.array(currRet, dtype=numpy.float)
             except ValueError:
@@ -70,7 +72,8 @@ class MatrixFeatures(MatrixAxis, Features):
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numFeatures = divideInto
     #     numPoints = len(self._source.points) // numFeatures
-    #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
+    #     self._source.data = self._source.data.reshape((numPoints,
+    #                                                    numFeatures),
     #                                                 order='F')
 
     ################################

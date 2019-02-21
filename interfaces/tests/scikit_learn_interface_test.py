@@ -19,7 +19,7 @@ from UML import loadTrainedLearner
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
 from UML.helpers import generateClusteredPoints
@@ -232,7 +232,7 @@ def testSciKitLearnListLearners():
                     for key in dSet.keys():
                         assert key in pSet
 
-@raises(ArgumentException)
+@raises(InvalidArgumentValue)
 def testSciKitLearnExcludedLearners():
     trainX = UML.createData('Matrix', [1,2,3])
     apply = UML.trainAndApply(toCall('KernelCenterer'), trainX)
@@ -339,7 +339,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         sciKitLearnObj = sklObj()
         sciKitLearnObj.fit(trainX, trainY)
         predictionSciKit = sciKitLearnObj.predict(testX)
-        # convert to UML data object for comparison
+        # convert to UML Base object for comparison
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
         TL = UML.train(toCall(learner), trainXObj, trainYObj)
@@ -453,7 +453,7 @@ def testSciKitLearnTransformationLearners():
 
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
-    trainX = UML.createRandomData('Matrix', 10, 10000, 0.98)
+    trainX = UML.createRandomData('Matrix', 10, 5000, 0.98)
     Xtrain = trainX.data
 
     learners = ['GaussianRandomProjection', 'SparseRandomProjection',]
@@ -638,10 +638,10 @@ def testGetAttributesCallable():
             tl = UML.train(fullName, X, Y)
         # this is meant to safely bypass those learners that have required
         # arguments or require unique data
-        except ArgumentException as ae:
+        except InvalidArgumentValue as iav:
             if printExceptions:
                 print (learner + " : " + lType)
-                print(ae)
+                print(iav)
         tl.getAttributes()
 
 

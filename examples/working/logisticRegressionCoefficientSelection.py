@@ -22,7 +22,7 @@ import UML
 from UML.customLearners import CustomLearner
 from UML.helpers import generateClassificationData
 from UML.calculate import fractionIncorrect
-from UML.exceptions import ArgumentException
+from UML.exceptions import InvalidArgumentValue
 
 class LogisticRegressionSelectByRegularization(CustomLearner):
     learnerType = "classification"
@@ -155,7 +155,7 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 
         if method not in accepted:
             pretty = UML.exceptions.prettyListString(accepted)
-            raise ArgumentException("method must be in: " + pretty)
+            raise InvalidArgumentValue("method must be in: " + pretty)
 
         # do NOT log the sub calls
         kwargs['useLog'] = False

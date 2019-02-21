@@ -2,6 +2,7 @@
 Method implementations and helpers acting specifically on features in a
 Sparse object.
 """
+
 from __future__ import absolute_import
 
 import numpy
