@@ -741,7 +741,7 @@ def createData(
     Creates a UML data object based on the ``returnType``.  Data can be
     loaded in a raw form, from a file or from a web page.  Some
     preprocessing of the data can also be done when creating the object
-    through the passing various arguments.  And also other stuff happens.
+    through the passing various arguments.
 
     Parameters
     ----------
