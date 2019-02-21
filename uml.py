@@ -26,7 +26,6 @@ from UML.helpers import _validArguments
 from UML.helpers import _validData
 from UML.helpers import _2dOutputFlagCheck
 from UML.helpers import LearnerInspector
-from UML.helpers import copyLabels
 from UML.helpers import ArgumentIterator
 from UML.helpers import _mergeArguments
 from UML.helpers import crossValidateBackend
