@@ -444,7 +444,6 @@ class Base(object):
 
         Examples
         --------
-        TODO - outstanding PR, will need an update.
         >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'replace', 'keep2']
         >>> data = UML.createData('Matrix', raw,
@@ -454,12 +453,12 @@ class Base(object):
         ['replace=a', 'replace=c', 'replace=b']
         >>> data
         Matrix(
-            [[1 1 1.000 0.000 0.000]
-             [2 2 0.000 0.000 1.000]
-             [3 3 0.000 1.000 0.000]]
-            featureNames={'keep1':0, 'keep2':1, 'replace=a':2,
-                          'replace=c':3, 'replace=b':4}
-                    )
+            [[1 1.000 0.000 0.000 1]
+             [2 0.000 1.000 0.000 2]
+             [3 0.000 0.000 1.000 3]]
+            featureNames={'keep1':0, 'replace=a':1, 'replace=b':2,
+                          'replace=c':3, 'keep2':4}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -517,7 +516,20 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
+        >>> featureNames = ['keep1', 'transform', 'keep2']
+        >>> data = UML.createData('Matrix', raw,
+        ...                       featureNames=featureNames)
+        >>> mapping = data.transformFeatureToIntegers('transform')
+        >>> mapping
+        {0: 'a', 1: 'b', 2: 'c'}
+        >>> data
+        Matrix(
+            [[1 0.000 1]
+             [2 1.000 2]
+             [3 2.000 3]]
+            featureNames={'keep1':0, 'transform':1, 'keep2':2}
+            )
         """
         if UML.logger.active.position == 0:
             if enableLogging(useLog):
@@ -3083,7 +3095,155 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        A strict case. In this case we will merge using the point names,
+        so ``point='strict'`` requires that the each object has the same
+        point names (or one or both have default names) In this example,
+        there is one shared feature between objects. If
+        ``feature='union'``, all features ("f1"-"f5") will be included,
+        if ``feature='intersection'``, only the shared feature ("f3")
+        will be included, ``feature='left'`` will only use the features
+        from the left object (not shown, in strict cases 'left' will not
+        modify the left object at all).
+        >>> dataL = [["a", 1, 'X'], ["b", 2, 'Y'], ["c", 3, 'Z']]
+        >>> fNamesL = ["f1", "f2", "f3"]
+        >>> pNamesL = ["p1", "p2", "p3"]
+        >>> left = UML.createData('Matrix', dataL, pointNames=pNamesL,
+        ...                       featureNames=fNamesL)
+        >>> dataR = [['Z', "f", 6], ['Y', "e", 5], ['X', "d", 4]]
+        >>> fNamesR = ["f3", "f4", "f5"]
+        >>> pNamesR = ["p3", "p2", "p1"]
+        >>> right = UML.createData('Matrix', dataR, pointNames=pNamesR,
+        ...                        featureNames=fNamesR)
+        >>> left.merge(right, point='strict', feature='union')
+        >>> left
+        Matrix(
+            [[a 1 X d 4]
+             [b 2 Y e 5]
+             [c 3 Z f 6]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'f1':0, 'f2':1, 'f3':2, 'f4':3, 'f5':4}
+            )
+        >>> left = UML.createData('Matrix', dataL, pointNames=pNamesL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='strict', feature='intersection')
+        >>> left
+        Matrix(
+            [[X]
+             [Y]
+             [Z]]
+            pointNames={'p1':0, 'p2':1, 'p3':2}
+            featureNames={'f3':0}
+            )
+
+        Additional merge combinations. In this example, the feature
+        ``"id"`` contains a unique value for each point (just as point
+        names do). In the example above we matched based on point names,
+        here the ``"id"`` feature will be used to match points.
+        >>> dataL = [["a", 1, 'id1'], ["b", 2, 'id2'], ["c", 3, 'id3']]
+        >>> fNamesL = ["f1", "f2", "id"]
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> dataR = [['id3', "x", 7], ['id4', "y", 8], ['id5', "z", 9]]
+        >>> fNamesR = ["id", "f4", "f5"]
+        >>> right = UML.createData("DataFrame", dataR,
+        ...                        featureNames=fNamesR)
+        >>> left.merge(right, point='union', feature='union',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[ a   1  id1 nan nan]
+             [ b   2  id2 nan nan]
+             [ c   3  id3  x   7 ]
+             [nan nan id4  y   8 ]
+             [nan nan id5  z   9 ]]
+            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='union', feature='intersection',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[id1]
+             [id2]
+             [id3]
+             [id4]
+             [id5]]
+            featureNames={'id':0}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='union', feature='left',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[ a   1  id1]
+             [ b   2  id2]
+             [ c   3  id3]
+             [nan nan id4]
+             [nan nan id5]]
+            featureNames={'f1':0, 'f2':1, 'id':2}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='intersection', feature='union',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[c 3 id3 x 7]]
+            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='intersection',
+        ...            feature='intersection', onFeature="id")
+        >>> left
+        DataFrame(
+            [[id3]]
+            featureNames={'id':0}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='intersection', feature='left',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[c 3 id3]]
+            featureNames={'f1':0, 'f2':1, 'id':2}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='left', feature='union',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[a 1 id1 nan nan]
+             [b 2 id2 nan nan]
+             [c 3 id3  x   7 ]]
+            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='left', feature='intersection',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[id1]
+             [id2]
+             [id3]]
+            featureNames={'id':0}
+            )
+        >>> left = UML.createData("DataFrame", dataL,
+        ...                       featureNames=fNamesL)
+        >>> left.merge(right, point='left', feature='left',
+        ...            onFeature="id")
+        >>> left
+        DataFrame(
+            [[a 1 id1]
+             [b 2 id2]
+             [c 3 id3]]
+            featureNames={'f1':0, 'f2':1, 'id':2}
+            )
         """
         point = point.lower()
         feature = feature.lower()
