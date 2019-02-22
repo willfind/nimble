@@ -10,7 +10,7 @@ __init__,  transpose, points.add, features.add, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
 points.transform, features.transform, elements.transform, fillWith,
-flattenToOnePoint, flattenToOneFeature, unflattenFromOnePoint,
+flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
 unflattenFromOneFeature
 """
 
