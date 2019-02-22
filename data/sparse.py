@@ -719,6 +719,8 @@ class Sparse(Base):
         self._sorted = None
 
     def _replaceFeatureWithBinaryFeatures_implementation(self):
+        if self._sorted is None:
+            self._sortInternal('feature')
         binaryFts = {}
         for idx, val in zip(self.data.row, self.data.data):
             if val not in binaryFts:
