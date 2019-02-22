@@ -93,6 +93,7 @@ def createRandomData(
     Examples
     --------
     Random integers.
+
     >>> ptNames = ['a', 'b', 'c', 'd', 'e']
     >>> random = UML.createRandomData('Matrix', 5, 5, 0,
     ...                               pointNames=ptNames,
@@ -108,6 +109,7 @@ def createRandomData(
         )
 
     Random floats, high sparsity.
+
     >>> sparse = UML.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
@@ -234,6 +236,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     Examples
     --------
     Ones with default names.
+
     >>> ones = UML.ones('List', 5, 5)
     >>> ones
     List(
@@ -245,6 +248,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
         )
 
     Named object of ones with pointNames and featureNames.
+
     >>> onesDF = UML.ones('DataFrame', 4, 4,
     ...                   pointNames=['1', '2', '3', '4'],
     ...                   featureNames=['a', 'b', 'c', 'd'],
@@ -305,6 +309,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     Examples
     --------
     Zeros with default names.
+
     >>> zeros = UML.zeros('Matrix', 5, 5)
     >>> zeros
     Matrix(
@@ -316,6 +321,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
         )
 
     Named object of zeros with pointNames and featureNames.
+
     >>> zerosSparse = UML.zeros('Sparse', 4, 4,
     ...                         pointNames=['1', '2', '3', '4'],
     ...                         featureNames=['a', 'b', 'c', 'd'],
@@ -374,6 +380,7 @@ def identity(returnType, size, pointNames='automatic',
     Examples
     --------
     Identity matrix with default names.
+
     >>> identity = UML.identity('Matrix', 5)
     >>> identity
     Matrix(
@@ -385,6 +392,7 @@ def identity(returnType, size, pointNames='automatic',
         )
 
     Named object of zeros with pointNames and featureNames.
+
     >>> identityList = UML.identity('List', 3,
     ...                             pointNames=['1', '2', '3'],
     ...                             featureNames=['a', 'b', 'c'],
@@ -461,6 +469,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Examples
     --------
     Normalize a single data set.
+
     >>> data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
     >>> trainX = UML.createData("Matrix", data)
     >>> orig = trainX.copy()
@@ -473,12 +482,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         )
 
     Normalize training and testing data.
+
     >>> data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
     >>> trainX = UML.createData("Matrix", data1)
     >>> data2 = [[-1, 0, 5]]
     >>> testX = UML.createData("Matrix", data2)
     >>> UML.normalizeData('scikitlearn.PCA', trainX, testX=testX,
-                          n_components=2)
+    ...                   n_components=2)
     >>> # trainX is the same as above example.
     >>> testX
     Matrix(
@@ -727,6 +737,11 @@ def createData(
     """
     Function to instantiate one of the UML data container types.
 
+    Creates a UML data object based on the ``returnType``.  Data can be
+    loaded in a raw form, from a file or from a web page.  Some
+    preprocessing of the data can also be done when creating the object
+    through the passing various arguments.
+
     Parameters
     ----------
     returnType : str, None
@@ -842,9 +857,12 @@ def createData(
     UML.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
+    See Also
+    --------
+    createRandomData, ones, zeros, identity
+
     Examples
     --------
-    A simple named data object from raw data.
     >>> data = [[1, 2, 3], [4, 5, 6]]
     >>> asList = UML.createData('List', data, name='simple')
     >>> asList
@@ -855,8 +873,9 @@ def createData(
         )
 
     Loading data from a file.
+
     >>> with open('createData.csv', 'w') as cd:
-    ...     cd.write('1,2,3\n4,5,6')
+    ...     cd.write('1,2,3\\n4,5,6')
     >>> fromFile = UML.createData('Matrix', 'createData.csv')
     >>> fromFile
     Matrix(
@@ -867,6 +886,7 @@ def createData(
         )
 
     Adding point and feature names.
+
     >>> data = [['a', 'b', 'c'], [0, 0, 1], [1, 0, 0]]
     >>> asSparse = UML.createData('Sparse', data, pointNames=['1', '2'],
     ...                           featureNames=True)
@@ -879,6 +899,7 @@ def createData(
         )
 
     Replacing missing values.
+
     >>> data = [[1, 'Missing', 3], [4, 'Missing', 6]]
     >>> ftNames = {'a': 0, 'b': 1, 'c': 2}
     >>> asDataFrame = UML.createData('DataFrame', data,
@@ -1336,6 +1357,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     Examples
     --------
     A single dataset which contains the labels.
+
     >>> data = [[1, 0, 0, 1],
     ...         [0, 1, 0, 2],
     ...         [0, 0, 1, 3],
@@ -1352,6 +1374,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     Passing arguments to the learner. Both the arguments parameter and
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
+
     >>> dataX = [[1, 0, 0],
     ...          [0, 1, 0],
     ...          [0, 0, 1],
@@ -1517,6 +1540,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     Examples
     --------
     Train dataset which contains the labels.
+
     >>> rawTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
@@ -1539,6 +1563,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     Passing arguments to the learner. Both the arguments parameter and
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
+
     >>> rawTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],
@@ -1699,6 +1724,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     Examples
     --------
     Train and test datasets which contains the labels.
+
     >>> rawTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
@@ -1721,6 +1747,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     Passing arguments to the learner. Both the arguments parameter and
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
+
     >>> rawTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],
@@ -1885,6 +1912,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     Examples
     --------
     Train and test datasets which contains the labels.
+
     >>> rawTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
@@ -1903,6 +1931,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     Passing arguments to the learner. Both the arguments parameter and
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
+
     >>> rawTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],

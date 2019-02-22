@@ -103,11 +103,12 @@ class Elements(object):
 
         See Also
         --------
-        points.transform, features.transform
+        calculate, Points.transform, Features.transform
 
         Examples
         --------
         Simple transformation to all elements.
+
         >>> data = UML.ones('Matrix', 5, 5)
         >>> data.elements.transform(lambda elem: elem + 1)
         >>> data
@@ -120,6 +121,7 @@ class Elements(object):
             )
 
         Transform while preserving zero values.
+
         >>> data = UML.identity('Sparse', 5)
         >>> data.elements.transform(lambda elem: elem + 10,
         ...                         preserveZeros=True)
@@ -133,6 +135,7 @@ class Elements(object):
             )
 
         Transforming a subset of points and features.
+
         >>> data = UML.ones('List', 4, 4)
         >>> data.elements.transform(lambda elem: elem + 1,
         ...                         points=[0, 1], features=[0, 2])
@@ -150,6 +153,7 @@ class Elements(object):
         is False, the odd values will be replaced with None (or nan
         depending on the object type) if set to True the odd values will
         remain as is. Both cases are presented.
+
         >>> def addTenToEvens(elem):
         ...     if elem % 2 == 0:
         ...         return elem + 10
@@ -226,15 +230,16 @@ class Elements(object):
 
         Returns
         -------
-        UML object
+        UML Base object
 
         See also
         --------
-        transform : calculate inplace
+        transform, Points.calculate, Features.calculate
 
         Examples
         --------
         Simple calculation on all elements.
+
         >>> data = UML.ones('Matrix', 5, 5)
         >>> twos = data.elements.calculate(lambda elem: elem + 1)
         >>> twos
@@ -247,9 +252,10 @@ class Elements(object):
             )
 
         Calculate while preserving zero values.
+
         >>> data = UML.identity('Sparse', 5)
         >>> addTenDiagonal = data.elements.calculate(lambda elem: elem + 10,
-                                                 preserveZeros=True)
+        ...                                      preserveZeros=True)
         >>> addTenDiagonal
         Sparse(
             [[11.000   0      0      0      0   ]
@@ -260,6 +266,7 @@ class Elements(object):
             )
 
         Calculate on a subset of points and features.
+
         >>> data = UML.ones('List', 4, 4)
         >>> calc = data.elements.calculate(lambda elem: elem + 1,
         ...                                points=[0, 1],
@@ -278,6 +285,7 @@ class Elements(object):
         is False, the odd values will be replaced with None (or nan
         depending on the object type) if set to True the odd values will
         remain as is. Both cases are presented.
+
         >>> def addTenToEvens(elem):
         ...     if elem % 2 == 0:
         ...         return elem + 10
@@ -398,11 +406,12 @@ class Elements(object):
 
         See Also
         --------
-        points.count, features.count
+        Points.count, Features.count
 
         Examples
         --------
         Using a python function.
+
         >>> def greaterThanZero(elem):
         ...     return elem > 0
         >>> data = UML.identity('Matrix', 5)
@@ -411,6 +420,7 @@ class Elements(object):
         5
 
         Using a string filter function.
+
         >>> numLessThanOne = data.elements.count("<1")
         >>> numLessThanOne
         20
@@ -447,17 +457,19 @@ class Elements(object):
 
         See Also
         --------
-        calculate.uniqueCount
+        UML.calculate.uniqueCount
 
         Examples
         --------
         Count for all elements.
+
         >>> data = UML.identity('Matrix', 5)
         >>> unique = data.elements.countUnique()
         >>> unique
         {0.0: 20, 1.0: 5}
 
         Count for a subset of elements.
+
         >>> data = UML.identity('Matrix', 5)
         >>> unique = data.elements.countUnique(points=0,
         ...                                    features=[0, 1, 2])
@@ -500,8 +512,8 @@ class Elements(object):
             The object containing the elements to multiply with the
             elements in this object.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw1 = [[4, 6],
         ...         [2, 3]]
         >>> raw2 = [[3, 2],

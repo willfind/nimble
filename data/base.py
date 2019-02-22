@@ -444,20 +444,21 @@ class Base(object):
 
         Examples
         --------
+        TODO - outstanding PR, will need an update.
+
         >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'replace', 'keep2']
         >>> data = UML.createData('Matrix', raw,
         ...                       featureNames=featureNames)
         >>> replaced = data.replaceFeatureWithBinaryFeatures('replace')
         >>> replaced
-        ['replace=a', 'replace=c', 'replace=b']
-        >>> data
+        ['replace=a', 'replace=b', 'replace=c']
+        >>> data #doctest: +ELLIPSIS
         Matrix(
             [[1 1.000 0.000 0.000 1]
              [2 0.000 1.000 0.000 2]
              [3 0.000 0.000 1.000 3]]
-            featureNames={'keep1':0, 'replace=a':1, 'replace=b':2,
-                          'replace=c':3, 'keep2':4}
+            featureNames={'keep1':0, 'replace=a':1, ... 'keep2':4}
             )
         """
         if UML.logger.active.position == 0:
@@ -598,7 +599,7 @@ class Base(object):
         >>> top10 = UML.createData('DataFrame', raw,
         ...                        featureNames=ftNames)
         >>> groupByLosses = top10.groupByFeature('losses')
-        >>> groupByLosses.keys()
+        >>> list(groupByLosses.keys())
         [0, 1, 2, 3]
         >>> groupByLosses[1]
         DataFrame(
@@ -790,6 +791,8 @@ class Base(object):
         Examples
         --------
         Returning a 2-tuple.
+
+        >>> UML.randomness.setRandomSeed(42)
         >>> raw = [[1, 0, 0],
         ...        [0, 1, 0],
         ...        [0, 0, 1],
@@ -801,20 +804,22 @@ class Base(object):
         >>> trainData, testData = data.trainAndTestSets(.34)
         >>> trainData
         Matrix(
-            [[0.000 0.000 1.000]
-             [0.000 0.000 1.000]
+            [[1.000 0.000 0.000]
              [0.000 1.000 0.000]
+             [0.000 0.000 1.000]
              [0.000 1.000 0.000]]
-            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
             )
         >>> testData
         Matrix(
             [[1.000 0.000 0.000]
-             [1.000 0.000 0.000]]
-            pointNames={'a':0, 'd':1}
+             [0.000 0.000 1.000]]
+            pointNames={'a':0, 'f':1}
             )
 
         Returning a 4-tuple.
+
+        >>> UML.randomness.setRandomSeed(42)
         >>> raw = [[1, 0, 0, 1],
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3],
@@ -828,31 +833,31 @@ class Base(object):
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
         Matrix(
-            [[0.000 0.000 1.000]
-             [0.000 0.000 1.000]
+            [[1.000 0.000 0.000]
              [0.000 1.000 0.000]
+             [0.000 0.000 1.000]
              [0.000 1.000 0.000]]
-            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
             )
         >>> trainY
         Matrix(
-            [[3.000]
-             [3.000]
+            [[1.000]
              [2.000]
+             [3.000]
              [2.000]]
-            pointNames={'c':0, 'f':1, 'e':2, 'b':3}
+            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
             )
         >>> testX
         Matrix(
             [[1.000 0.000 0.000]
-             [1.000 0.000 0.000]]
-            pointNames={'a':0, 'd':1}
+             [0.000 0.000 1.000]]
+            pointNames={'a':0, 'f':1}
             )
         >>> testY
         Matrix(
             [[1.000]
-             [1.000]]
-            pointNames={'a':0, 'd':1}
+             [3.000]]
+            pointNames={'a':0, 'f':1}
             )
         """
         if UML.logger.active.position == 0:
@@ -1176,52 +1181,59 @@ class Base(object):
 
         Examples
         --------
-        raw = [[4132, 41, 'management', 50000, 'm'],
-               [4434, 26, 'sales', 26000, 'm'],
-               [4331, 26, 'administration', 28000, 'f'],
-               [4211, 45, 'sales', 33000, 'm'],
-               [4344, 45, 'accounting', 43500, 'f']]
-        pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
-        featureNames = ['id', 'age', 'department', 'salary', 'gender']
-        office = UML.createData('Matrix', raw, pointNames=pointNames,
-                                featureNames=featureNames)
+        >>> raw = [[4132, 41, 'management', 50000, 'm'],
+        ...        [4434, 26, 'sales', 26000, 'm'],
+        ...        [4331, 26, 'administration', 28000, 'f'],
+        ...        [4211, 45, 'sales', 33000, 'm'],
+        ...        [4344, 45, 'accounting', 43500, 'f']]
+        >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
+        >>> featureNames = ['id', 'age', 'department', 'salary',
+        ...                 'gender']
+        >>> office = UML.createData('Matrix', raw,
+        ...                         pointNames=pointNames,
+        ...                         featureNames=featureNames)
 
         Get a single value.
-        >>>office['michael', 'age']
+
+        >>> office['michael', 'age']
         41
-        >>>office[0,1]
+        >>> office[0,1]
         41
-        >>>office['michael', 1]
+        >>> office['michael', 1]
         41
 
         Get based on points only.
-        >>>pam = office['pam', :]
-        >>>print(pam)
+
+        >>> pam = office['pam', :]
+        >>> print(pam)
                id  age   department   salary gender
 
         pam   4331  26 administration 28000    f
 
-        >>>sales = office[[3, 1], :]
-        >>>print(sales)
+        >>> sales = office[[3, 1], :]
+        >>> print(sales)
                 id  age department salary gender
 
         dwight   4211  45   sales    33000    m
            jim   4434  26   sales    26000    m
+
         *Note: retains list order; index 3 placed before index 1*
 
-        >>>nonManagement = office[1:4, :]
-        >>>print(nonManagement)
+        >>> nonManagement = office[1:4, :]
+        >>> print(nonManagement)
                   id  age   department   salary gender
 
            jim   4434  26     sales      26000    m
            pam   4331  26 administration 28000    f
         dwight   4211  45     sales      33000    m
         angela   4344  45   accounting   43500    f
+
         *Note: slices are inclusive; index 4 ('gender') was included*
 
         Get based on features only.
-        >>>departments = office[:, 2]
-        >>>print(departments)
+
+        >>> departments = office[:, 2]
+        >>> print(departments)
                     department
 
         michael     management
@@ -1230,8 +1242,8 @@ class Base(object):
          dwight       sales
          angela     accounting
 
-        >>>genderAndAge = office[:, ['gender', 'age']]
-        >>>print(genderAndAge)
+        >>> genderAndAge = office[:, ['gender', 'age']]
+        >>> print(genderAndAge)
                   gender age
 
         michael     m     41
@@ -1239,10 +1251,11 @@ class Base(object):
             pam     f     26
          dwight     m     45
          angela     f     45
+
         *Note: retains list order; 'gender' placed before 'age'*
 
-        >>>deptSalary = office[:, 'department':'salary']
-        >>>print(deptSalary)
+        >>> deptSalary = office[:, 'department':'salary']
+        >>> print(deptSalary)
                     department   salary
 
         michael     management   50000
@@ -1250,25 +1263,29 @@ class Base(object):
             pam   administration 28000
          dwight       sales      33000
          angela     accounting   43500
+
         *Note: slices are inclusive; 'salary' was included*
 
         Get based on points and features.
-        >>>femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
-        >>>print(femaleSalaryAndDept)
+
+        >>> femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
+        >>> print(femaleSalaryAndDept)
                  salary   department
 
            pam   28000  administration
         angela   43500    accounting
-        *Note: list orders retained; 'pam' precedes 'angela' and index 3
-        ('salary') precedes index 2 ('department')*
 
-        >>>first3Ages = office[:2, 'age']
-        >>>print(first3Ages)
+        Note: list orders retained; 'pam' precedes 'angela' and index 3
+        ('salary') precedes index 2 ('department')
+
+        >>> first3Ages = office[:2, 'age']
+        >>> print(first3Ages)
                   age
 
         michael    41
             jim    26
             pam    26
+
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
         # Make it a tuple if it isn't one
@@ -1353,7 +1370,7 @@ class Base(object):
 
         Returns
         -------
-        UML.data.BaseView
+        BaseView
             The read-only object for this point.
         """
         if self._pointCount == 0:
@@ -1376,7 +1393,7 @@ class Base(object):
 
         Returns
         -------
-        UML.data.BaseView
+        BaseView
             The read-only object for this feature.
         """
         if self._featureCount == 0:
@@ -1396,7 +1413,7 @@ class Base(object):
         in-order points and features whose overlap defines a window into
         the data. The returned View object is part of UML's datatypes
         hiearchy, and will have access to all of the same methods as
-        anything that inherits from UML.data.Base; though only those
+        anything that inherits from Base; though only those
         that do not modify the data can be called without an exception
         being raised. The returned view will also reflect any subsequent
         changes made to the original object. This is the only accepted
@@ -2098,8 +2115,8 @@ class Base(object):
         feature and point indices. This operations also includes
         inverting the point and feature names.
 
-        Example
-        -------
+        Examples
+        --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
         >>> data = UML.createData('List', raw)
         >>> data
@@ -2153,11 +2170,12 @@ class Base(object):
         Examples
         --------
         Reference data from an object of all zero values.
+
         >>> data = UML.ones('List', 2, 3, name='data')
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]]
             name="data"
             )
         >>> ptNames = ['1', '4']
@@ -2247,12 +2265,8 @@ class Base(object):
                [0., 0., 0., 1., 0.],
                [0., 0., 0., 0., 1.]])
         >>> asListOfDict = data.copyAs('list of dict')
-        >>> asListOfDict
-        [{'a': 1.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 0.0},
-         {'a': 0.0, 'b': 1.0, 'c': 0.0, 'd': 0.0, 'e': 0.0},
-         {'a': 0.0, 'b': 0.0, 'c': 1.0, 'd': 0.0, 'e': 0.0},
-         {'a': 0.0, 'b': 0.0, 'c': 0.0, 'd': 1.0, 'e': 0.0},
-         {'a': 0.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 1.0}]
+        >>> asListOfDict #doctest: +ELLIPSIS
+        [{'a': 1.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 0.0}, ...]
         """
         #make lower case, strip out all white space and periods, except if
         # format is one of the accepted UML data types
@@ -2424,11 +2438,12 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, points.fill, features.fill
+        fillUsingAllData, Points.fill, Features.fill
 
-        Example
-        -------
+        Examples
+        --------
         An object of ones filled with zeros from (0, 0) to (2, 2).
+
         >>> data = UML.ones('Matrix', 5, 5)
         >>> filler = UML.zeros('Matrix', 3, 3)
         >>> data.fillWith(filler, 0, 0, 2, 2)
@@ -2533,13 +2548,14 @@ class Base(object):
 
         See Also
         --------
-        fillWith, points.fill, features.fill
+        fillWith, Points.fill, Features.fill
 
         Examples
         --------
-        Fill using the value that occurs most often in each points
-        3 nearest neighbors.
-        from UML.fill import kNeighborsClassifier
+        Fill using the value that occurs most often in each points 3
+        nearest neighbors.
+
+        >>> from UML.fill import kNeighborsClassifier
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
@@ -2645,13 +2661,11 @@ class Base(object):
         >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
         ...                       featureNames=ftNames)
         >>> data.flattenToOnePoint()
-        >>> data
+        >>> data #doctest: +ELLIPSIS
         Matrix(
             [[1.000 2.000 3.000 4.000 5.000 6.000 7.000 8.000 9.000]]
             pointNames={'Flattened':0}
-            featureNames={'a | 1':0, 'b | 1':1, 'c | 1':2,
-                          'a | 4':3, 'b | 4':4, 'c | 4':5,
-                          'a | 7':6, 'b | 7':7, 'c | 7':8}
+            featureNames={'a | 1':0, 'b | 1':1, ... 'c | 7':8}
             )
         """
         if UML.logger.active.position == 0:
@@ -2714,7 +2728,7 @@ class Base(object):
         >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
         ...                       featureNames=ftNames)
         >>> data.flattenToOneFeature()
-        >>> data
+        >>> data #doctest: +ELLIPSIS
         Matrix(
             [[1.000]
              [4.000]
@@ -2725,9 +2739,7 @@ class Base(object):
              [3.000]
              [6.000]
              [9.000]]
-            pointNames={'1 | a':0, '4 | a':1, '7 | a':2,
-                        '1 | b':3, '4 | b':4, '7 | b':5,
-                        '1 | c':6, '4 | c':7, '7 | c':8}
+            pointNames={'1 | a':0, '4 | a':1, '7 | a':2, ... '7 | c':8}
             featureNames={'Flattened':0}
             )
         """
@@ -2894,7 +2906,9 @@ class Base(object):
 
         Examples
         --------
+
         With all default names.
+
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
         >>> data = UML.createData('Matrix', raw)
         >>> data.unflattenFromOnePoint(3)
@@ -2906,6 +2920,7 @@ class Base(object):
             )
 
         With names consistent with call to ``flattenToOnePoint``.
+
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
         >>> ptNames = {'Flattened':0}
         >>> ftNames = {'a | 1':0, 'b | 1':1, 'c | 1':2,
@@ -2985,6 +3000,7 @@ class Base(object):
         Examples
         --------
         With default names.
+
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
         >>> data = UML.createData('Matrix', raw)
         >>> data.unflattenFromOneFeature(3)
@@ -2996,6 +3012,7 @@ class Base(object):
             )
 
         With names consistent with call to ``flattenToOneFeature``.
+
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
         >>> ptNames = {'1 | a':0, '4 | a':1, '7 | a':2,
         ...            '1 | b':3, '4 | b':4, '7 | b':5,
@@ -3066,7 +3083,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML.data.Base
+        other : Base
             The UML data object containing the data to merge.
         point, feature : str
             The allowed strings for the point and feature arguments are
@@ -3091,7 +3108,7 @@ class Base(object):
 
         See Also
         --------
-        UML.data.Points.add, UML.data.Features.add
+        Points.add, Features.add
 
         Examples
         --------
