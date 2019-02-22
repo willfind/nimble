@@ -1479,16 +1479,19 @@ class TrainedLearner(object):
                           useLog=False)
         performance = UML.helpers.computeMetrics(testY, None, pred,
                                                  performanceFunction)
+        metrics = {}
+        for key, value in zip([performanceFunction], [performance]):
+            metrics[key.__name__] = value
 
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
         # (umlFunction, trainData, trainLabels, testData, testLabels,
         # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None)
-        UML.logger.active.logRun(
-            "TrainedLearner.test", trainData=None, trainLabels=None,
-            testData=testX, testLabels=testY, learnerFunction=fullName,
-            arguments=mergedArguments, metrics=performance, extraInfo=None,
-            numFolds=None)
+        UML.logger.active.logRun("TrainedLearner.test", trainData=None,
+                                 trainLabels=None, testData=testX,
+                                 testLabels=testY, learnerFunction=fullName,
+                                 arguments=mergedArguments, metrics=metrics,
+                                 extraInfo=None, numFolds=None)
 
         return performance
 
