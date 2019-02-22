@@ -5,8 +5,8 @@ from UML.exceptions import InvalidArgumentType
 
 def elementwiseMultiply(left, right):
     """
-    Perform element wise multiplication of two provided UML data objects
-    with the result being returned in a separate UML data object. Both
+    Perform element wise multiplication of two provided UML Base objects
+    with the result being returned in a separate UML Base object. Both
     objects must contain only numeric data. The pointCount and featureCount
     of both objects must be equal. The types of the two objects may be
     different. None is always returned.

@@ -1,15 +1,20 @@
+"""
+Contains the MultiOutputRidgeRegression custom learner class.
+"""
+
 from __future__ import absolute_import
+
+from six.moves import range
+
 import UML
 from UML.customLearners import CustomLearner
-from six.moves import range
 
 
 class MultiOutputRidgeRegression(CustomLearner):
     """
-    Learner which will train a version of 'Custom.RidgeRegression' on each of
-    the (one or more) features of the prediction data. It then matches that
-    output shape when apply() is called.
-
+    Learner which will train a version of 'Custom.RidgeRegression' on
+    each of the (one or more) features of the prediction data. It then
+    matches that output shape when apply() is called.
     """
 
     learnerType = 'unknown'
@@ -20,7 +25,8 @@ class MultiOutputRidgeRegression(CustomLearner):
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i)
 
-            currTL = UML.train('Custom.RidgeRegression', trainX, currY, lamb=lamb)
+            currTL = UML.train('Custom.RidgeRegression', trainX, currY,
+                               lamb=lamb)
             self._learners.append(currTL)
 
     def apply(self, testX):

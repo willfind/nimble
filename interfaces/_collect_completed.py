@@ -1,3 +1,7 @@
+"""
+Collect the interfaces that will be accessible to the user.
+"""
+
 from __future__ import absolute_import
 from __future__ import print_function
 import os
@@ -9,7 +13,9 @@ displayErrors = False
 
 
 def collectVisiblePythonModules(modulePath):
-    # go through files in this directory, find ones which could be python importable
+    """
+    Find files in this directory which could be python importable.
+    """
     possibleFiles = os.listdir(modulePath)
     pythonModules = []
     for fileName in possibleFiles:
@@ -22,19 +28,24 @@ def collectVisiblePythonModules(modulePath):
 
 
 def collectUnexpectedInterfaces(pythonModules):
-    # go through each possible module, import it, and check for possible interfaces
+    """
+    Import possible modules and check for possible interfaces.
+    """
     possibleInterfaces = []
-    # setup seen with the interfaces we know we don't want to load / try to load
-    seen = set(["UniversalInterface", "UniversalInterfaceLookalike", "CustomLearnerInterface"])
+    # setup seen with the interfaces we know we don't want to load/try to load
+    seen = set(["UniversalInterface", "UniversalInterfaceLookalike",
+                "CustomLearnerInterface"])
     for toImport in pythonModules:
         importedModule = importlib.import_module('.' + toImport, __package__)
         contents = dir(importedModule)
 
-        # for each attribute of the module, we will check to see if it is a subclass of
-        # the UniversalInterface
+        # for each attribute of the module, we will check to see if it is a
+        # subclass of the UniversalInterface
         for valueName in contents:
             value = getattr(importedModule, valueName)
-            if isinstance(value, abc.ABCMeta) and issubclass(value, universal_interface.UniversalInterface):
+            if (isinstance(value, abc.ABCMeta)
+                    and issubclass(value,
+                                   universal_interface.UniversalInterface)):
                 if not valueName in seen:
                     seen.add(valueName)
                     possibleInterfaces.append(value)
@@ -42,10 +53,13 @@ def collectUnexpectedInterfaces(pythonModules):
 
 
 def collect(modulePath):
+    """
+    Collect the interfaces which import properly.
+    """
     pythonModules = collectVisiblePythonModules(modulePath)
     possibleInterfaces = collectUnexpectedInterfaces(pythonModules)
 
-    # We now have a list of possible interfaces, which we will try to instantiate
+    # now have a list of possible interfaces, which we will try to instantiate
     instantiated = []
     for toInstantiate in possibleInterfaces:
         tempObj = None
@@ -69,14 +83,17 @@ def collect(modulePath):
         else:
             nameToInterface[canonicalName] = namedInterface
 
-    # interfaces should not accept as aliases the canonical names of other interfaces
+    # interfaces should not accept as aliases
+    # the canonical names of other interfaces
     for currName in nameToInterface:
         if nameToInterface[currName] is None:
             continue
         for checkName in nameToInterface:
             # we only care about valid interfaces other than currName's
-            if currName != checkName and nameToInterface[checkName] is not None:
-                # if currName's interface accepts another's canonical name, we erase it
+            if (currName != checkName
+                    and nameToInterface[checkName] is not None):
+                # if currName's interface accepts another's canonical name,
+                # we erase it
                 if nameToInterface[currName].isAlias(checkName):
                     # TODO register error with subsystem
                     nameToInterface[currName] = None

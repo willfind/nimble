@@ -585,8 +585,9 @@ def kNeighborsBackend(method, data, match, **kwarguments):
                 # training data includes not matching features and this feature
                 notMatchFts.append(fID)
                 trainingData = data[:, notMatchFts]
-                # training data includes only points that have valid data at each feature
-                # this will also remove the point we are evaluating from the training data
+                # training data includes only points that have valid data at
+                # each feature this will also remove the point we are
+                # evaluating from the training data
                 trainingData.points.delete(anyValues(match))
                 pred = UML.trainAndApply(method, trainingData, -1, predictData,
                                          **kwarguments)
@@ -700,4 +701,5 @@ def directionError(funcString, vector, target):
     msg = "Unable to provide a {funcString} value for the {axis} {location} "
     msg += "because the {target} value is a match"
 
-    return errorMsgFormatter(msg, vector, **{'funcString':funcString, 'target':target})
+    return errorMsgFormatter(msg, vector, **{'funcString':funcString,
+                                             'target':target})

@@ -293,15 +293,14 @@ class UmlLogger(object):
         numFolds : int
             The number of folds if k-fold cross validation utilized.
         """
-
         logType = "run"
         logInfo = {}
         logInfo["function"] = umlFunction
         if isinstance(learnerFunction, (str, six.text_type)):
             functionCall = learnerFunction
         else:
-            #TODO test this
-            #we get the source code of the function as a list of strings and
+            # TODO test this
+            # we get the source code of the function as a list of strings and
             # glue them together
             funcLines = inspect.getsourcelines(learnerFunction)
             funcString = ""
@@ -400,8 +399,8 @@ class UmlLogger(object):
         levelOfDetail:  int
             The value for the level of detail from 1, the least detail,
             to 3 (most detail). Default is 2.
-            * Level 1 - Data loading, data preparation and preprocessing,
-              custom user logs.
+            * Level 1 - Data loading, data preparation and
+              preprocessing, custom user logs.
             * Level 2 - Outputs basic information about each run.
               Includes timestamp, run number, learner name, train and
               test object details, parameter, metric, and timer data if
@@ -431,8 +430,9 @@ class UmlLogger(object):
         searchForText :  str, regex
             Search for in each log entry. Default is None.
         saveToFileName : str
-            The name of a file where the human readable log will be
-            saved. Default is None, showLog will print to standard out.
+            The name of a file to write the human readable log. It will
+            be saved in the same directory as the logger database.
+            Default is None, showLog will print to standard out.
         append : bool
             Append logs to the file in saveToFileName instead of
             overwriting file. Default is False.
@@ -491,7 +491,7 @@ def logCapture(function):
         if function.__name__ == 'crossValidateBackend':
             enableDeep = "enableCrossValidationDeepLogging"
             deepLog = UML.settings.get("logger", enableDeep)
-            deepLog = True if deepLog.lower() == 'true' else False
+            deepLog = deepLog.lower() == 'true'
             if deepLog:
                 logger.log(logger.logType, logger.logInfo)
         elif logger.position == 0:
@@ -528,7 +528,7 @@ def enableLogging(useLog):
     """
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+        useLog = useLog.lower() == 'true'
     return useLog
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
@@ -829,7 +829,7 @@ def initLoggerAndLogConfig():
             location = './logs-UML'
             UML.settings.set("logger", "location", location)
             UML.settings.saveChanges("logger", "location")
-    except:
+    except Exception:
         location = './logs-UML'
         UML.settings.set("logger", "location", location)
         UML.settings.saveChanges("logger", "location")
@@ -842,7 +842,7 @@ def initLoggerAndLogConfig():
 
     try:
         name = UML.settings.get("logger", "name")
-    except:
+    except Exception:
         name = "log-UML"
         UML.settings.set("logger", "name", name)
         UML.settings.saveChanges("logger", "name")
@@ -856,16 +856,16 @@ def initLoggerAndLogConfig():
 
     try:
         loggingEnabled = UML.settings.get("logger", "enabledByDefault")
-    except:
+    except Exception:
         loggingEnabled = 'True'
         UML.settings.set("logger", "enabledByDefault", loggingEnabled)
         UML.settings.saveChanges("logger", "enabledByDefault")
 
     try:
         deepCV = UML.settings.get("logger", 'enableCrossValidationDeepLogging')
-    except:
+    except Exception:
         deepCV = 'False'
         UML.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
         UML.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
-    UML.logger.active = UmlLogger(location, name)
+    return UmlLogger(location, name)

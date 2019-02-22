@@ -7,10 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 import math
-import string
 import inspect
-import numpy
-
 import re
 from functools import wraps
 import sys
@@ -37,6 +34,9 @@ DEFAULT_NAME_PREFIX = "OBJECT_#"
 defaultObjectNumber = 0
 
 def nextDefaultObjectName():
+    """
+    Get the next available default name for an object.
+    """
     global defaultObjectNumber
     ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)
     defaultObjectNumber = defaultObjectNumber + 1
@@ -166,9 +166,11 @@ def reorderToMatchList(dataObject, matchList, axis):
         mappedOrig[matchList[i]] = i
 
     if axis == 'point':
-        indexGetter = lambda x: dataObject.points.getIndex(x.points.getName(0))
+        def indexGetter(x):
+            return dataObject.points.getIndex(x.points.getName(0))
     else:
-        indexGetter = lambda x: dataObject.features.getIndex(x.features.getName(0))
+        def indexGetter(x):
+            return dataObject.features.getIndex(x.features.getName(0))
 
     def scorer(viewObj):
         index = indexGetter(viewObj)
@@ -238,6 +240,9 @@ def indicesSplit(allowed, total):
 
 
 def hasNonDefault(obj, axis):
+    """
+    Determine if an axis has non default names.
+    """
     if axis == 'point':
         possibleIndices = range(len(obj.points))
     else:
@@ -253,6 +258,9 @@ def hasNonDefault(obj, axis):
 
 
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
+    """
+    Helper for __repr__ in Base.
+    """
     if not namesList:
         return ''
     namesString = ""
@@ -313,6 +321,9 @@ def cleanKeywordInput(s):
     return s
 
 def validateInputString(string, accepted, paramName):
+    """
+    Validate that a string belongs to a set of acceptable values.
+    """
     acceptedClean = list(map(cleanKeywordInput, accepted))
 
     msg = paramName + " must be equivalent to one of the following: "
@@ -378,7 +389,7 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
     # remove values so that we reach the target length
     for row in removalVals:
-        for i in range(remNum):
+        for _ in range(remNum):
             row.pop(removeIndex)
 
     # now that we are at the target length, we have to modify
@@ -388,31 +399,13 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
     if removalWidths is not None:
         # remove those widths associated with omitted values
-        for i in range(remNum):
+        for _ in range(remNum):
             removalWidths.pop(removeIndex)
 
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
 
-
-def inheritDocstringsFactory(toInherit):
-    """
-    Factory to make decorator to copy docstrings from toInherit for
-    reimplementations in the wrapped object. Only those functions
-    without docstrings will be given the corresponding docstrings from
-    toInherit.
-    """
-    def inheritDocstring(cls):
-        writable = cls.__dict__
-        for name in writable:
-            if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
-                func = writable[name]
-                if not func.__doc__:
-                    func.__doc__ = getattr(toInherit, name).__doc__
-
-        return cls
-    return inheritDocstring
 
 def readOnlyException(name):
     """
@@ -425,13 +418,21 @@ def readOnlyException(name):
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exceptionDocstringFactory(cls):
+    """
+    Modify docstrings for view objects based on a  base class.
+
+    The docstring will acknowledge that the method is not available
+    for views, but also provide the docstring for the method for
+    future reference.
+    """
     def exceptionDocstring(func):
         name = func.__name__
         try:
             baseDoc = getattr(cls, name).__doc__
             if baseDoc is not None:
-                viewMsg = "The {0} method is object modifying and ".format(name)
-                viewMsg += "will always raise an exception for view objects.\n\n"
+                viewMsg = "The {0} method is object modifying ".format(name)
+                viewMsg += "and will always raise an exception for view "
+                viewMsg += "objects.\n\n"
                 viewMsg += "For reference, the docstring for this method "
                 viewMsg += "when objects can be modified is below:\n"
                 func.__doc__ = viewMsg + baseDoc
@@ -443,6 +444,12 @@ def exceptionDocstringFactory(cls):
     return exceptionDocstring
 
 def nonSparseAxisUniqueArray(obj, axis):
+    """
+    Get an array of unique data from non sparse types.
+
+    List, Matrix and Dataframe all utilize this helper in the
+    _unique_implementation().
+    """
     obj._validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
         # faster than numpy.array(obj.data)
@@ -466,6 +473,9 @@ def nonSparseAxisUniqueArray(obj, axis):
     return uniqueData, uniqueIndices
 
 def uniqueNameGetter(obj, axis, uniqueIndices):
+    """
+    Get the first point or feature names of the object's unique values.
+    """
     obj._validateAxis(axis)
     if axis == 'point':
         hasAxisNames = obj._pointNamesCreated()
@@ -600,8 +610,13 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
     return indexPosition
 
 def cmp_to_key(mycmp):
-    """Convert a cmp= function for python2 into a key= function for python3"""
+    """
+    Convert a cmp=function for python2 into a key= function for python3.
+    """
     class K:
+        """
+        Object for cmp_to_key.
+        """
         def __init__(self, obj, *args):
             self.obj = obj
         def __lt__(self, other):
@@ -660,8 +675,10 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
     return fill
 
 def extractFunctionString(function):
-    """Extracts function name or lambda function if passed a function,
-       Otherwise returns a string"""
+    """
+    Extracts function name or lambda function if passed a function,
+    Otherwise returns a string.
+    """
     try:
         functionName = function.__name__
         if functionName != "<lambda>":
@@ -672,9 +689,11 @@ def extractFunctionString(function):
         return str(function)
 
 def lambdaFunctionString(function):
-    """Returns a string of a lambda function"""
+    """
+    Returns a string of a lambda function.
+    """
     sourceLine = inspect.getsourcelines(function)[0][0]
-    line = re.findall(r'lambda.*',sourceLine)[0]
+    line = re.findall(r'lambda.*', sourceLine)[0]
     lambdaString = ""
     afterColon = False
     openParenthesis = 1
@@ -695,13 +714,14 @@ def lambdaFunctionString(function):
 
 def buildArgDict(argNames, defaults, *args, **kwargs):
     """
-    Creates the dictionary of arguments for the prep logType. Adds all required arguments
-    and any keyword arguments that are not the default values
+    Creates the dictionary of arguments for the prep logType. Adds all
+    required arguments and any keyword arguments that are not the
+    default values.
     """
     # remove self from argNames
     argNames = argNames[1:]
     nameArgMap = {}
-    for name, arg in zip(argNames,args):
+    for name, arg in zip(argNames, args):
         if str(arg).startswith("<") and str(arg).endswith(">"):
             nameArgMap[name] = extractFunctionString(arg)
         else:
@@ -726,10 +746,10 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
     return argDict
 
 def logCaptureFactory(prefix=None):
+    """
+    Creates a wrapper for wrapping functions that will be logged.
+    """
     def logCapture(function):
-        """
-
-        """
         @wraps(function)
         def wrapper(*args, **kwargs):
             logger = UML.logger.active
@@ -739,7 +759,7 @@ def logCaptureFactory(prefix=None):
                 timer.start("timer")
                 ret = function(*args, **kwargs)
                 logger.position -= 1
-            except Exception as e:
+            except Exception:
                 logger.position = 0
                 einfo = sys.exc_info()
                 reraise(*einfo)
@@ -766,8 +786,9 @@ def logCaptureFactory(prefix=None):
 
 def allDataIdentical(arr1, arr2):
     """
-    Checks for equality between all points in the arrays. Arrays containing
-    NaN values in the same positions will also be considered equal
+    Checks for equality between all points in the arrays. Arrays
+    containing NaN values in the same positions will also be considered
+    equal.
     """
     try:
         # check the values that are not equal

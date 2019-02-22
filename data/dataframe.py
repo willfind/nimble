@@ -12,12 +12,12 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import PackageException
+from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
-from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 
@@ -250,7 +250,6 @@ class DataFrame(Base):
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-
         if point == 'union':
             point = 'outer'
         elif point == 'intersection':
@@ -325,6 +324,14 @@ class DataFrame(Base):
                               - len(matchingFtIdx[1]))
         self._pointCount = len(self.data.index)
 
+    def _replaceFeatureWithBinaryFeatures_implementation(self):
+        binaryFts = {}
+        for idx, val in enumerate(self.data.values):
+            if val[0] not in binaryFts:
+                binaryFts[val[0]] = []
+            binaryFts[val[0]].append(idx)
+        return binaryFts
+
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]
         #use self.data.values is much faster
@@ -332,11 +339,11 @@ class DataFrame(Base):
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
-        """
-
-        """
 
         class DataFrameView(BaseView, DataFrame):
+            """
+            Read only access to a DataFrame object.
+            """
             def __init__(self, **kwds):
                 super(DataFrameView, self).__init__(**kwds)
 
@@ -382,8 +389,8 @@ class DataFrame(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML data object against the provided other
-        UML data object. Both object must contain only numeric data.
+        Matrix multiply this UML Base object against the provided other
+        UML Base object. Both object must contain only numeric data.
         The featureCount of the calling object must equal the pointCount
         of the other object. The types of the two objects may be
         different, and the return is guaranteed to be the same type as
@@ -401,7 +408,7 @@ class DataFrame(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML data object by the provided
+        Multiply every element of this UML Base object by the provided
         scalar. This object must contain only numeric data. The 'scalar'
         parameter must be a numeric data type. The returned object will
         be the inplace modification of the calling object.
@@ -464,7 +471,8 @@ class DataFrame(Base):
         pNames = self.points.getNames()
         fNames = self.features.getNames()
         return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True, useLog=False)
+                              featureNames=fNames, reuseData=True,
+                              useLog=False)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):

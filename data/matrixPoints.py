@@ -2,6 +2,7 @@
 Method implementations and helpers acting specifically on points in a
 Matrix object.
 """
+
 from __future__ import absolute_import
 
 import numpy
@@ -73,7 +74,8 @@ class MatrixPoints(MatrixAxis, Points):
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numPoints = divideInto
     #     numFeatures = len(self._source.features) // numPoints
-    #     self._source.data = self._source.data.reshape((numPoints, numFeatures),
+    #     self._source.data = self._source.data.reshape((numPoints,
+    #                                                    numFeatures),
     #                                                 order='C')
 
     ################################

@@ -1,8 +1,15 @@
 """
-Methods and helpers responsible for determining how each function
-will operate depending on whether it is being called along the points or
-the features axis.
+Axis generic methods for Base points and features attributes.
+
+Backend methods and helpers responsible for determining how each
+function will operate depending on whether it is being called along the
+points or the features axis. This is the top level of this hierarchy and
+methods in this object should attempt to handle operations related to
+axis names here whenever possible. Additionally, any functionality
+generic to axis and object subtype should be included here with abstract
+methods defined for axis and object subtype specific implementations.
 """
+
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
@@ -1542,6 +1549,10 @@ class Axis(object):
         pass
 
     @abstractmethod
+    def _unique_implementation(self):
+        pass
+
+    @abstractmethod
     def _nonZeroIterator_implementation(self):
         pass
 
@@ -1652,6 +1663,9 @@ def _stringToFunction(string, axis, nameChecker):
     return target
 
 class AxisIterator(object):
+    """
+    Object providing iteration through each item in the axis.
+    """
     def __init__(self, source):
         self._source = source
         self._position = 0
@@ -1685,6 +1699,9 @@ class EmptyIt(object):
         return self
 
     def next(self):
+        """
+        Raise StopIteration since this object is point or feature empty.
+        """
         raise StopIteration
 
     def __next__(self):

@@ -2,11 +2,14 @@
 Defines a subclass of the Axis object, which serves as the primary
 base class for read only axis views of data objects.
 """
+
 from __future__ import absolute_import
 
+from UML.docHelpers import inheritDocstringsFactory
 from .axis import Axis
 from .points import Points
 
+@inheritDocstringsFactory(Axis)
 class AxisView(Axis):
     """
     Class defining read only view objects, which have the same api as a

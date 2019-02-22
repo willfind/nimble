@@ -2,6 +2,7 @@
 Implementations and helpers specific to performing axis-generic
 operations on a UML Matrix object.
 """
+
 from __future__ import absolute_import
 from abc import abstractmethod
 
@@ -104,7 +105,7 @@ class MatrixAxis(Axis):
                                                    uniqueIndices)
         if isinstance(self, Points):
             return UML.createData('Matrix', uniqueData, pointNames=axisNames,
-                          featureNames=offAxisNames, useLog=False)
+                                  featureNames=offAxisNames, useLog=False)
         else:
             return UML.createData('Matrix', uniqueData,
                                   pointNames=offAxisNames,

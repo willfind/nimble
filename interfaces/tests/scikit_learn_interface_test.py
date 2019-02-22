@@ -339,7 +339,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         sciKitLearnObj = sklObj()
         sciKitLearnObj.fit(trainX, trainY)
         predictionSciKit = sciKitLearnObj.predict(testX)
-        # convert to UML data object for comparison
+        # convert to UML Base object for comparison
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
         TL = UML.train(toCall(learner), trainXObj, trainYObj)
