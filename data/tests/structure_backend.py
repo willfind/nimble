@@ -607,11 +607,19 @@ class StructureDataSafe(StructureShared):
         """ Test points.copy() against handmade output when copying one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.points.copy(0)
+        copy1 = toTest.points.copy(0)
         exp1 = self.constructor([[1, 2, 3]])
-        assert ext1.isIdentical(exp1)
+        assert copy1.isIdentical(exp1)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
+
+        # View objects utilize point and feature names, so we ignore this check
+        if not isinstance(toTest, BaseView):
+            # Check that names have not been generated unnecessarily
+            assert not toTest.points._namesCreated()
+            assert not toTest.features._namesCreated()
+            assert not copy1.points._namesCreated()
+            assert not copy1.features._namesCreated()
 
     def test_points_copy_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -874,7 +882,7 @@ class StructureDataSafe(StructureShared):
 
 
     def test_points_copy_handmadeRangeRand_FM(self):
-        """ Test points.copy() for correct sizes when using randomized range extraction and featureNames """
+        """ Test points.copy() for correct sizes when using randomized range and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1370,12 +1378,20 @@ class StructureDataSafe(StructureShared):
         """ Test features.copy() against handmade output when copying one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ext1 = toTest.features.copy(0)
+        copy1 = toTest.features.copy(0)
         exp1 = self.constructor([[1], [4], [7]])
 
-        assert ext1.isIdentical(exp1)
+        assert copy1.isIdentical(exp1)
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
+
+        # View objects utilize point and feature names, so we ignore this check
+        if not isinstance(toTest, BaseView):
+            # Check that names have not been generated unnecessarily
+            assert not toTest.points._namesCreated()
+            assert not toTest.features._namesCreated()
+            assert not copy1.points._namesCreated()
+            assert not copy1.features._namesCreated()
 
     def test_features_copy_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1454,12 +1470,12 @@ class StructureDataSafe(StructureShared):
 
     def test_features_copy_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
-        toExtract = [6, 5, 3, 9]
-        #		toExtract = [3,5,6,9]
+        toCopy = [6, 5, 3, 9]
+        #		toCopy = [3,5,6,9]
 
         toTest = self.constructor(data)
 
-        ret = toTest.features.copy(toExtract)
+        ret = toTest.features.copy(toCopy)
 
         expRaw = [0, 0, 1, 0]
         expRet = self.constructor(expRaw)
@@ -3403,6 +3419,12 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[4, 5, 6], [7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
+        assert not ext1.points._namesCreated()
+        assert not ext1.features._namesCreated()
+
     def test_points_extract_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -4183,6 +4205,12 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
+        assert not ext1.points._namesCreated()
+        assert not ext1.features._namesCreated()
+
     def test_features_extract_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -4849,6 +4877,10 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[4, 5, 6], [7, 8, 9]])
         assert toTest.isIdentical(expEnd)
 
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
+
     def test_points_delete_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -5486,6 +5518,10 @@ class StructureModifying(StructureShared):
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]])
         assert toTest.isIdentical(expEnd)
 
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
+
     def test_features_delete_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -6028,6 +6064,10 @@ class StructureModifying(StructureShared):
         toTest.points.retain(0)
         exp1 = self.constructor([[1, 2, 3]])
         assert toTest.isIdentical(exp1)
+
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
 
     def test_points_retain_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6710,6 +6750,10 @@ class StructureModifying(StructureShared):
         exp1 = self.constructor([[1], [4], [7]])
 
         assert toTest.isIdentical(exp1)
+
+        # Check that names have not been generated unnecessarily
+        assert not toTest.points._namesCreated()
+        assert not toTest.features._namesCreated()
 
     def test_features_retain_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]

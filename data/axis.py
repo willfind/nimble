@@ -178,10 +178,11 @@ class Axis(object):
     def _copy(self, toCopy, start, end, number, randomize):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
+        source = self._source
         if isinstance(self, Points):
-            ret.features.setNames(self._source.features.getNames())
+            ret.features.setNames(source.features._getNamesNoGeneration())
         else:
-            ret.points.setNames(self._source.points.getNames())
+            ret.points.setNames(source.points._getNamesNoGeneration())
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -1130,6 +1131,15 @@ class Axis(object):
         if structure == 'count':
             return len(targetList)
         return self._structuralBackend_implementation(structure, targetList)
+
+    def _getStructuralNames(self, targetList):
+        nameList = None
+        if self._namesCreated():
+            nameList = [self._getName(i) for i in targetList]
+        if isinstance(self, Points):
+            return nameList, self._source.features._getNamesNoGeneration()
+        else:
+            return self._source.points._getNamesNoGeneration(), nameList
 
     def _adjustCountAndNames(self, other):
         """
