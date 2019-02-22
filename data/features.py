@@ -1644,10 +1644,10 @@ class Features(object):
         self._splitByParsing_implementation(featureIndex, splitList,
                                             numRetFeatures, numResultingFts)
 
-        self._source._featureCount = numRetFeatures
         fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
+        self._source._featureCount = numRetFeatures
         self.setNames(fNames)
 
         self._source.validate()

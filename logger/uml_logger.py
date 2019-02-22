@@ -315,8 +315,8 @@ class UmlLogger(object):
             trainData = trainData.copy()
             trainLabels = trainData.features.extract(trainLabels)
         if isinstance(testLabels, (six.string_types, int, numpy.int64)):
-            testData = trainData.copy()
-            testLabels = trainData.features.extract(testLabels)
+            testData = testData.copy()
+            testLabels = testData.features.extract(testLabels)
         if trainData is not None:
             logInfo["trainData"] = trainData.name
             logInfo["trainDataPoints"] = len(trainData.points)
@@ -800,10 +800,15 @@ def _formatRunLine(*args):
     """
     args = list(map(str, args))
     lineLog = ""
+    equalSpace = int(79 / len(args))
     for arg in args:
-        whitespace = 19 - len(arg)
-        lineLog += arg + " " * whitespace
+        whitespace = equalSpace - len(arg)
+        if len(arg) < equalSpace:
+            lineLog += arg + " " * whitespace
+        else:
+            lineLog += arg[:equalSpace - 4] + "... "
     lineLog += "\n"
+
     return lineLog
 
 def _logHeader(left, right):

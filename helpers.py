@@ -3636,8 +3636,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     merged = _mergeArguments(arguments, kwarguments)
 
     # we want the data and the labels together in one object or this method
+    trainX = trainX.copy()
     if isinstance(trainY, Base):
-        trainX = trainX.copy()
         trainX.features.add(trainY)
         trainY = len(trainX.features) - 1
 

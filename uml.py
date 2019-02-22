@@ -26,7 +26,6 @@ from UML.helpers import _validArguments
 from UML.helpers import _validData
 from UML.helpers import _2dOutputFlagCheck
 from UML.helpers import LearnerInspector
-from UML.helpers import copyLabels
 from UML.helpers import ArgumentIterator
 from UML.helpers import _mergeArguments
 from UML.helpers import crossValidateBackend
@@ -1599,8 +1598,6 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 
-    if testX is None:
-        testX = trainX
     if storeLog != 'unset':
         useLog = storeLog
 
@@ -1610,6 +1607,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                multiClassStrategy=multiClassStrategy,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
+
+    if testX is None:
+        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+            testX = trainX.copy()
+            testX.features.delete(trainY)
+        else:
+            testX = trainX
+
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
 
     merged = _mergeArguments(arguments, kwarguments)
@@ -1775,9 +1780,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
 
-    trainY = copyLabels(trainX, trainY)
-    testY = copyLabels(testX, testY)
-
     if storeLog != 'unset':
         useLog = storeLog
     trainedLearner = UML.train(learnerName, trainX, trainY,
@@ -1786,6 +1788,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                multiClassStrategy=multiClassStrategy,
                                useLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
+
+    if isinstance(testY, (six.string_types, int, numpy.integer)):
+        testX = testX.copy()
+        testY = testX.features.extract(testY)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
                                        useLog=useLog)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
