@@ -114,12 +114,6 @@ class SparseAxis(Axis):
                 currOut = list(view)
             else:
                 currOut = function(view)
-                # currRet might return an InvalidArgumentValue with a message
-                # which needs to be formatted with the axis and current index
-                # before being raised
-                if isinstance(currOut, InvalidArgumentValue):
-                    currOut.value = currOut.value.format(self._axis, viewID)
-                    raise currOut
 
             # easy way to reuse code if we have a singular return
             if not hasattr(currOut, '__iter__'):
