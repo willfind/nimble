@@ -56,7 +56,7 @@ class Features(object):
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getName(1)
-        b
+        'b'
         """
         return self._getName(index)
 
@@ -166,8 +166,8 @@ class Features(object):
         --------
         >>> data = UML.identity('Matrix', 4,
         ...                     featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.getIndex(2)
-        c
+        >>> data.features.getIndex('c')
+        2
         """
         return self._getIndex(name)
 
@@ -343,15 +343,16 @@ class Features(object):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
+        >>> UML.randomness.setRandomSeed(42)
         >>> numberRandom = data.features.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
-            [[3.000 1.000]
-             [3.000 1.000]
-             [3.000 1.000]
-             [3.000 1.000]]
+            [[1.000 4.000]
+             [1.000 4.000]
+             [1.000 4.000]
+             [1.000 4.000]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
-            featureNames={'3':0, '1':1}
+            featureNames={'1':0, '4':1}
             )
         """
         if UML.logger.active.position == 0:
@@ -471,6 +472,7 @@ class Features(object):
             )
 
         Extract feature when the string filter function returns True.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
         ...                     pointNames=['p1', 'p2', 'p3'])
         >>> strFunc = data.features.extract("p2 != 0")
@@ -492,6 +494,7 @@ class Features(object):
             )
 
         Extract features from the inclusive start to the inclusive end.
+
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> startEnd = data.features.extract(start=1, end=2)
         >>> startEnd
@@ -510,6 +513,8 @@ class Features(object):
             )
 
         Select a set number to extract, starting from the first feature.
+
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> numberNoRandom = data.features.extract(number=2)
         >>> numberNoRandom
@@ -667,7 +672,6 @@ class Features(object):
 
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(number=2)
-        >>> numberNoRandom
         >>> data
         List(
             [[0.000]
@@ -678,6 +682,7 @@ class Features(object):
 
         Select a set number to delete, choosing features at random.
 
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.delete(number=2,  randomize=True)
         >>> data
@@ -819,6 +824,7 @@ class Features(object):
 
         Select a set number to retain, choosing features at random.
 
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
         >>> data.features.retain(number=2, randomize=True)
         >>> data
@@ -910,6 +916,7 @@ class Features(object):
         >>> cols = ['dept', 'ID', 'quantity']
         >>> orders = UML.createData('DataFrame', raw, featureNames=cols)
         >>> orders.features.sort(sortHelper=['ID', 'quantity', 'dept'])
+        >>> orders
         DataFrame(
             [[81 3  home]
              [98 10 gard]
@@ -1278,6 +1285,7 @@ class Features(object):
 
         Examples
         --------
+        >>> UML.randomness.setRandomSeed(42)
         >>> raw = [[1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
@@ -1555,10 +1563,10 @@ class Features(object):
 
         >>> raw = [['Cape Town, South Africa'],
         ...        ['Lima, Peru'],
-        ...        ['Moscow', 'Russia']]
+        ...        ['Moscow, Russia']]
         >>> fts = ['location']
         >>> locations = UML.createData('Matrix', raw, featureNames=fts)
-        >>> locations.features.splitByParsing(location, ', ',
+        >>> locations.features.splitByParsing('location', ', ',
         ...                                   ['city', 'country'])
         >>> locations
         Matrix(

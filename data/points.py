@@ -54,7 +54,7 @@ class Points(object):
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getName(1)
-        b
+        'b'
         """
         return self._getName(index)
 
@@ -164,8 +164,8 @@ class Points(object):
         --------
         >>> data = UML.identity('Matrix', 4,
         ...                     pointNames=['a', 'b', 'c', 'd'])
-        >>> data.points.getIndex(2)
-        c
+        >>> data.points.getIndex('c')
+        2
         """
         return self._getIndex(name)
 
@@ -328,12 +328,13 @@ class Points(object):
             pointNames={'1':0, '2':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
+        >>> UML.randomness.setRandomSeed(42)
         >>> numberRandom = data.points.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
-            [[3.000 3.000 3.000 3.000]
-             [1.000 1.000 1.000 1.000]]
-            pointNames={'3':0, '1':1}
+            [[1.000 1.000 1.000 1.000]
+             [4.000 4.000 4.000 4.000]]
+            pointNames={'1':0, '4':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         """
@@ -448,7 +449,7 @@ class Points(object):
 
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
-        >>> strFunc = data.points.extract("2 != 0")
+        >>> strFunc = data.points.extract("f2 != 0")
         >>> strFunc
         Matrix(
             [[0.000 1.000 0.000]]
@@ -497,6 +498,7 @@ class Points(object):
 
         Select a set number to extract, choosing points at random.
 
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> numberRandom = data.points.extract(number=2, randomize=True)
         >>> numberRandom
@@ -507,8 +509,8 @@ class Points(object):
             )
         >>> data
         Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
+            [[0.000 1.000 0.000]]
+            pointNames={'b':0}
             )
         """
         if UML.logger.active.position == 0:
@@ -602,7 +604,7 @@ class Points(object):
 
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
-        >>> data.points.delete("2 != 0")
+        >>> data.points.delete("f2 != 0")
         >>> data
         Matrix(
             [[1.000 0.000 0.000]
@@ -633,12 +635,13 @@ class Points(object):
 
         Select a set number to delete, choosing points at random.
 
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.delete(number=2, randomize=True)
         >>> data
         Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
+            [[0.000 1.000 0.000]]
+            pointNames={'b':0}
             )
         """
         if UML.logger.active.position == 0:
@@ -704,6 +707,7 @@ class Points(object):
         Matrix(
             [[1.000 0.000 0.000]]
             pointNames={'a':0}
+            )
 
         Retain multiple points.
 
@@ -730,7 +734,7 @@ class Points(object):
 
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
         ...                     featureNames=['f1', 'f2', 'f3'])
-        >>> data.points.retain("2 != 0")
+        >>> data.points.retain("f2 != 0")
         >>> data
         Matrix(
             [[0.000 1.000 0.000]]
@@ -762,6 +766,7 @@ class Points(object):
 
         Select a set number to retain, choosing points at random.
 
+        >>> UML.randomness.setRandomSeed(42)
         >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
         >>> data.points.retain(number=2, randomize=True)
         >>> data
@@ -855,7 +860,7 @@ class Points(object):
              [home 14 1 ]
              [home 81 3 ]
              [gard 98 10]]
-            featureNames={'order':0, 'dept':1, 'ID':2, 'quantity':3}
+            featureNames={'dept':0, 'ID':1, 'quantity':2}
             )
 
         Sort with a list of identifiers.
@@ -867,13 +872,15 @@ class Points(object):
         >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
         >>> orders = UML.createData('DataFrame', raw, pointNames=pts)
         >>> orders.points.sort(sortHelper=['o_1', 'o_2', 'o_3', 'o_4'])
+        >>> orders
         DataFrame(
             [[home 11 3 ]
              [home 14 1 ]
              [gard 98 10]
              [home 81 3 ]]
-            pointNames={'ord1':0, 'ord2':1, 'ord3':2, 'ord4':3}
+            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
             )
+
 
         Sort using a comparator function.
 
@@ -898,7 +905,7 @@ class Points(object):
         Sort using a scoring function.
 
         >>> def scoreQuantity(pt):
-        >>>     # multiply by -1 to sort starting with highest quantity.
+        ...     # multiply by -1 to sort starting with highest quantity.
         ...     return pt['quantity'] * -1
         >>> raw = [['home', 81, 3],
         ...        ['gard', 98, 10],
@@ -1249,7 +1256,7 @@ class Points(object):
         ...             [72968, 'Dome', 'New Orleans Saints'],
         ...             [76500, 'Open', 'Miami Dolphins']]
         >>> fts = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> data = UML.createData('Matrix', stadium, featureNames=fts)
+        >>> data = UML.createData('Matrix', stadiums, featureNames=fts)
         >>> data.points.mapReduce(roofMapper, roofReducer)
         Matrix(
             [[Open 3]
@@ -1277,6 +1284,7 @@ class Points(object):
 
         Examples
         --------
+        >>> UML.randomness.setRandomSeed(42)
         >>> raw = [[1, 1, 1, 1],
         ...        [2, 2, 2, 2],
         ...        [3, 3, 3, 3],
@@ -1721,7 +1729,7 @@ class Points(object):
         ...        ['b', 7, 1],
         ...        ['a', 1, 3]]
         >>> ptNames = ['p1', 'p2', 'p3', 'p1_copy']
-        >>> data = UML.createData('Matrix', raw, pointNames=ftNames)
+        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
         >>> uniquePoints = data.points.unique()
         >>> uniquePoints
         Matrix(
