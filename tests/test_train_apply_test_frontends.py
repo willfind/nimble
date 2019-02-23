@@ -15,7 +15,87 @@ from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
 
+def test_trainAndApply_dataInputs():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
 
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjNoLabels = testObj[:, :2]
+
+    learner = 'Custom.KNNClassifier'
+    # Expected outcomes
+    exp = UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjNoLabels)
+    expSelf = UML.trainAndApply(learner, trainObjData, trainObjLabels, trainObjData)
+    # trainY is ID, testX does not contain labels; test int
+    out = UML.trainAndApply(learner, trainObj, 3, testObjNoLabels)
+    assert out == exp
+    # trainY is ID, testX does not contain labels; test string
+    out = UML.trainAndApply(learner, trainObj, 'label', testObjNoLabels)
+    assert out == exp
+    # trainY is Base; testX None
+    out = UML.trainAndApply(learner, trainObjData, trainObjLabels, None)
+    assert out == expSelf
+    # trainY is ID; testX None
+    out = UML.trainAndApply(learner, trainObj, 3, None)
+    assert out == expSelf
+    # Exception trainY is ID; testX contains labels
+    try:
+        out = UML.trainAndApply(learner, trainObj, 3, testObj)
+        assert False # expected ValueError
+    except ValueError:
+        pass
+    try:
+        out = UML.trainAndApply(learner, trainObj, 'label', testObj)
+        assert False # expected ValueError
+    except ValueError:
+        pass
+    # Exception trainY is Base; testX contains labels
+    try:
+        out = UML.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
+        assert False # expected ValueError
+    except ValueError:
+        pass
+    # Exception trainY is ID; testX bad shape
+    try:
+        out = UML.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
+        assert False # expected ValueError
+    except ValueError:
+        pass
+
+def test_trainAndTest_dataInputs():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _pt in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    # Expected outcomes
+    exp = UML.trainAndTest(learner, trainObjData, trainObjLabels, testObjData, testObjLabels, fractionIncorrect)
+    # trainX and testX contain labels
+    out1 = UML.trainAndTest(learner, trainObj, 3, testObj, 3, fractionIncorrect)
+    out2 = UML.trainAndTest(learner, trainObj, 'label', testObj, 'label', fractionIncorrect)
+    assert out1 == exp
+    assert out2 == exp
+    # trainX contains labels
+    out3 = UML.trainAndTest(learner, trainObj, 3, testObjData, testObjLabels, fractionIncorrect)
+    assert out3 == exp
+    # testX contains labels
+    out4 = UML.trainAndTest(learner, trainObjData, trainObjLabels, testObj, 3, fractionIncorrect)
+    assert out4 == exp
 
 #todo set seed and verify that you can regenerate error several times with
 #crossValidateReturnBest, trainAndApply, and your own computeMetrics

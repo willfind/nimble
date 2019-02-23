@@ -24,7 +24,7 @@ import inspect
 confFilePath = os.path.abspath(inspect.getfile(inspect.currentframe()))
 UMLParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePath)))
 #sys.path.insert(0, UMLParentDirPath)
-sys.path.insert(0, "/home/tpburns/gimbel_tech/")
+sys.path.insert(0, "/Users/devin/Dropbox/Devin_S_+_Spark_Wave")
 
 # -- General configuration ------------------------------------------------
 
@@ -35,7 +35,8 @@ sys.path.insert(0, "/home/tpburns/gimbel_tech/")
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc'#,
+    'sphinx.ext.autodoc',
+    'numpydoc'#,
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]

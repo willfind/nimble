@@ -5,10 +5,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import numpy
 
-from .allowImports import boilerplate
 import six
-
-boilerplate()
 
 import os.path
 import UML

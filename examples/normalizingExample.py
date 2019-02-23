@@ -5,17 +5,12 @@ datasets.
 """
 
 from __future__ import absolute_import
-try:
-    from allowImports import boilerplate
-except:
-    from .allowImports import boilerplate
 
-boilerplate()
+from UML import trainAndApply
+from UML import normalizeData
+from UML import createData
 
 if __name__ == "__main__":
-    from UML import trainAndApply
-    from UML import normalizeData
-    from UML import createData
 
     # we separate into classes accoring to whether x1 is positive or negative
     variables = ["y", "x1", "x2", "x3"]

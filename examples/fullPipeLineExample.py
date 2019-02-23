@@ -6,19 +6,13 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 from __future__ import absolute_import
 from __future__ import print_function
-try:
-    from allowImports import boilerplate
-except:
-    from .allowImports import boilerplate
 
-boilerplate()
+from UML import createData
+from UML import trainAndTest
+from UML import trainAndApply
+from UML.calculate import fractionIncorrect
 
 if __name__ == "__main__":
-    from UML import createData
-    from UML import trainAndTest
-    from UML import trainAndApply
-    from UML.calculate import fractionIncorrect
-
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],

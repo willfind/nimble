@@ -6,12 +6,9 @@ data given via a path on the command line.
 
 from __future__ import absolute_import
 from __future__ import print_function
-from .allowImports import boilerplate
 from six.moves import map
 from six.moves import range
 from six.moves import zip
-
-boilerplate()
 
 import sys
 import numpy

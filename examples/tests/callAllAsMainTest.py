@@ -19,8 +19,7 @@ import shutil
 import copy
 
 import UML
-#ensures UML.examples.allowImports is in sys.modules
-import UML.examples.allowImports
+
 import warnings
 
 
@@ -29,6 +28,8 @@ def test_callAllAsMain():
     Calls each script in examples, confirms it completes without an exception.
 
     """
+
+    assert False  # Currently disabled, pending corrections after the repo reorg
 
     # Bind the name allowImports to the appropriate, already loaded, module.
     # Needed because each script we call imports a function from allowImports,
