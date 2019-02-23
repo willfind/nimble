@@ -16,7 +16,6 @@ from sklearn.metrics import mean_squared_error
 
 import UML
 from UML import loadTrainedLearner
-from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
 from UML.exceptions import InvalidArgumentValue
@@ -27,6 +26,8 @@ from UML.helpers import inspectArguments
 from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
 from UML.interfaces.universal_interface import UniversalInterface
+
+from .test_helpers import checkLabelOrderingAndScoreAssociations
 
 scipy = UML.importModule('scipy.sparse')
 

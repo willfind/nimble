@@ -8,21 +8,14 @@ be written as files in that directory
 
 from __future__ import absolute_import
 from __future__ import print_function
-try:
-    from allowImports import boilerplate
-except:
-    from .allowImports import boilerplate
-from six.moves import range
-
-boilerplate()
 
 import numpy
 import os
 import sys
 
+import UML
 
 if __name__ == "__main__":
-    import UML
 
     # if a directory is given, plots will be output to file in that location.
     givenOutDir = None

@@ -12,12 +12,10 @@ import pylab
 import bisect
 from nose.plugins.attrib import attr
 
-from .allowImports import boilerplate
 import six
 from six.moves import range
 from six.moves import zip
 
-boilerplate()
 
 import os.path
 import UML

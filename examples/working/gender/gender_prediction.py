@@ -7,9 +7,7 @@ import sys
 import numpy
 import math
 
-from .allowImports import boilerplate
 from six.moves import range
-boilerplate()
 
 import UML
 from UML.customLearners import CustomLearner

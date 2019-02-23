@@ -8,7 +8,7 @@ from UML.interfaces._collect_completed import collectVisiblePythonModules
 from UML.interfaces._collect_completed import collectUnexpectedInterfaces
 
 testsPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-interfacePath = os.path.dirname(testsPath)
+interfacePath = os.path.join(UML.UMLPath, 'interfaces')
 
 _visible = collectVisiblePythonModules(interfacePath)
 _visibleTests = collectVisiblePythonModules(testsPath)
