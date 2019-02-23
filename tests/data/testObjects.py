@@ -14,20 +14,20 @@ defined in this file.
 from __future__ import absolute_import
 import UML
 
-from UML.data.tests.numerical_backend import AllNumerical
-from UML.data.tests.numerical_backend import NumericalDataSafe
+from .numerical_backend import AllNumerical
+from .numerical_backend import NumericalDataSafe
 
-from UML.data.tests.query_backend import QueryBackend
+from .query_backend import QueryBackend
 
-from UML.data.tests.high_level_backend import HighLevelAll
-from UML.data.tests.high_level_backend import HighLevelDataSafe
+from .high_level_backend import HighLevelAll
+from .high_level_backend import HighLevelDataSafe
 
-from UML.data.tests.low_level_backend import LowLevelBackend
+from .low_level_backend import LowLevelBackend
 
-from UML.data.tests.structure_backend import StructureAll
-from UML.data.tests.structure_backend import StructureDataSafe
+from .structure_backend import StructureAll
+from .structure_backend import StructureDataSafe
 
-from UML.data.tests.view_access_backend import ViewAccess
+from .view_access_backend import ViewAccess
 
 
 class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,

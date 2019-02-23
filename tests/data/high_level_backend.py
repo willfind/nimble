@@ -41,10 +41,11 @@ from UML import match
 from UML import fill
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import DEFAULT_PREFIX
-
 from UML.randomness import numpyRandom
+
+from .baseObject import DataTestObject
+
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")

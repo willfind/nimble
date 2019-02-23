@@ -27,12 +27,14 @@ from six.moves import zip
 import UML
 from UML import loadData
 from UML.data import BaseView
-from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
+
+from .baseObject import DataTestObject
+
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")

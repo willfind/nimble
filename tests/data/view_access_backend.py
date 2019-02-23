@@ -8,12 +8,13 @@ Methods tested in this file:
 
 from __future__ import absolute_import
 import UML
-from UML.data.tests.baseObject import DataTestObject
 from UML.data import Base, BaseView
 from UML.data.points import Points
 from UML.data.points_view import PointsView
 from UML.data.features import Features
 from UML.data.features_view import FeaturesView
+
+from .baseObject import DataTestObject
 
 class ViewAccess(DataTestObject):
 

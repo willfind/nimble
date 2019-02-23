@@ -25,9 +25,10 @@ from six.moves import range
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
-from UML.data.tests.baseObject import DataTestObject
 from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
+
+from .baseObject import DataTestObject
 
 
 preserveName = "PreserveTestName"

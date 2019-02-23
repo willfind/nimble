@@ -43,7 +43,8 @@ from UML.exceptions import InvalidArgumentTypeCombination
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
-from UML.data.tests.baseObject import DataTestObject
+
+from .baseObject import DataTestObject
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
