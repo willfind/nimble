@@ -1,18 +1,21 @@
 from __future__ import absolute_import
-import numpy
-import scipy
 import re
 
+import numpy
 
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue, InvalidArgumentValueCombination
 
+scipy = UML.importModule('scipy')
 
 def inverse(A):
     """
        Compute the (multiplicative) inverse of a UML Base object.
 
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the inverse function."
+        raise PackageException(msg)
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base")
@@ -60,9 +63,12 @@ def inverse(A):
 def pseudoInverse(A, method='svd'):
     """
         Compute the (Moore-Penrose) pseudo-inverse of a UML object.
-        Method: 'svd' or 'least-squares'. 
+        Method: 'svd' or 'least-squares'.
         Uses singular-value decomposition by default. Least squares solver included as an option.
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the pseudoInverse function."
+        raise PackageException(msg)
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base.")
@@ -97,6 +103,9 @@ def solve(A, b):
         Solves the linear equation set A * x = b for the unknown vector x.
         A should be a square a object.
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the solve function."
+        raise PackageException(msg)
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
@@ -145,6 +154,9 @@ def leastSquaresSolution(A, b):
     """
         Compute least-squares solution to equation Ax = b
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the leastSquaresSolution function."
+        raise PackageException(msg)
     if not isinstance(A, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
