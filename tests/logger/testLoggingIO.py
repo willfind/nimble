@@ -711,6 +711,11 @@ def testShowLogSearchFilters():
     assert dateSelectionSize < startLaterSize
     assert dateSelectionSize < endEarlierSize
 
+    # startDate and endDate with time
+    UML.showLog(levelOfDetail=3, mostRunsAgo=5, startDate="2018-03-23 11:00", endDate="2018-03-23 17:00:00", saveToFileName=pathToFile)
+    timeSelectionSize = os.path.getsize(pathToFile)
+    assert timeSelectionSize < dateSelectionSize
+
     #text
     UML.showLog(levelOfDetail=3, mostRunsAgo=1, searchForText=None, saveToFileName=pathToFile)
     oneRunSize = os.path.getsize(pathToFile)
@@ -756,6 +761,50 @@ def testLevelofDetailNotInRange():
 @raises(InvalidArgumentValueCombination)
 def testStartGreaterThanEndDate():
     UML.showLog(startDate="2018-03-24", endDate="2018-03-22")
+
+def testInvalidDateTimeFormats():
+    # year invalid format
+    try:
+        UML.showLog(startDate="18-03-24")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # month invalid format
+    try:
+        UML.showLog(startDate="2018-3-24")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # day invalid format
+    try:
+        UML.showLog(startDate="2018-04-1")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # date format ok but invalid date
+    try:
+        UML.showLog(startDate="2018-02-31")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # hour invalid format
+    try:
+        UML.showLog(startDate="2018-03-24 1:00")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # minute invalid format
+    try:
+        UML.showLog(startDate="2018-03-24 01:19.22")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # second invalid
+    try:
+        UML.showLog(startDate="2018-03-24 01:19:0.2")
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
 
 @raises(InvalidArgumentValue)
 def testLeastRunsAgoNegative():
