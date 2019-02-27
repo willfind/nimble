@@ -284,7 +284,7 @@ class Mlpy(UniversalInterface):
         # use patch if necessary
         patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
         if learnerName in patchedLearners:
-            patchModule = importlib.import_module("interfaces.mlpy_patches")
+            patchModule = importlib.import_module("UML.interfaces.mlpy_patches")
             initLearner = getattr(patchModule, learnerName)
         else:
             initLearner = self.findCallable(learnerName)
