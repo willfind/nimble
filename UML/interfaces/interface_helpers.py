@@ -364,7 +364,7 @@ def valueFromOneVOneData(oneVOneData, posLabel, negLabel, numLabels):
         negLabel = posLabel
         posLabel = tempLabel
 
-    start = (posLabel * numLabels) - ((posLabel * (posLabel + 1)) / 2)
+    start = (posLabel * numLabels) - ((posLabel * (posLabel + 1)) // 2)
     offset = negLabel - (posLabel + 1)
     value = oneVOneData[start + offset]
     if flagNegative:
