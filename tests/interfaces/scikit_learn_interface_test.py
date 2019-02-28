@@ -11,8 +11,6 @@ import tempfile
 import numpy.testing
 from nose.plugins.attrib import attr
 from nose.tools import raises
-from sklearn import __version__ as sklVersion
-from sklearn.metrics import mean_squared_error
 
 import UML
 from UML import loadTrainedLearner
@@ -28,19 +26,24 @@ from UML.interfaces.scikit_learn_interface import SciKitLearn
 from UML.interfaces.universal_interface import UniversalInterface
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
+from .skipTestDecorator import SkipMissing
 
 scipy = UML.importModule('scipy.sparse')
+sklearn = UML.importExternalLibraries.importModule("sklearn")
 
 packageName = 'sciKitLearn'
 
+sklSkipDec = SkipMissing(packageName)
+
+@sklSkipDec
 def test_SciKitLearn_version():
     interface = SciKitLearn()
-    assert interface.version() == sklVersion
+    assert interface.version() == sklearn.__version__
 
 def toCall(learner):
     return packageName + '.' + learner
 
-
+@sklSkipDec
 def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
@@ -58,6 +61,7 @@ def testScikitLearnAliases():
     UML.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 
+@sklSkipDec
 def testSciKitLearnHandmadeRegression():
     """ Test sciKitLearn() by calling on a regression learner with known output """
     variables = ["Y", "x1", "x2"]
@@ -78,6 +82,7 @@ def testSciKitLearnHandmadeRegression():
     numpy.testing.assert_approx_equal(ret[0, 0], 1.)
 
 
+@sklSkipDec
 def testSciKitLearnSparseRegression():
     """ Test sciKitLearn() by calling on a sparse regression learner with an extremely large, but highly sparse, matrix """
     if not scipy:
@@ -100,6 +105,7 @@ def testSciKitLearnSparseRegression():
     assert ret is not None
 
 
+@sklSkipDec
 def testSciKitLearnHandmadeClustering():
     """ Test sciKitLearn() by calling a clustering classifier with known output """
     variables = ["x1", "x2"]
@@ -120,6 +126,7 @@ def testSciKitLearnHandmadeClustering():
     assert ret[2, 0] != ret[3, 0]
 
 
+@sklSkipDec
 def testSciKitLearnHandmadeSparseClustering():
     """ Test sciKitLearn() by calling on a sparse clustering learner with known output """
     if not scipy:
@@ -142,6 +149,7 @@ def testSciKitLearnHandmadeSparseClustering():
     assert ret[0, 0] != ret[2, 0]
 
 
+@sklSkipDec
 def testSciKitLearnScoreMode():
     """ Test sciKitLearn() scoreMode flags"""
     variables = ["Y", "x1", "x2"]
@@ -169,6 +177,7 @@ def testSciKitLearnScoreMode():
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
 
+@sklSkipDec
 def testSciKitLearnScoreModeBinary():
     """ Test sciKitLearn() scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
@@ -196,6 +205,7 @@ def testSciKitLearnScoreModeBinary():
     checkLabelOrderingAndScoreAssociations([1, 2], bestScores, allScores)
 
 
+@sklSkipDec
 def testSciKitLearnCrossDecomp():
     """ Test SKL on learners which take 2d Y data """
     variables = ["x1", "x2"]
@@ -213,6 +223,7 @@ def testSciKitLearnCrossDecomp():
     UML.trainAndApply(toCall("PLSSVD"), trainingObj, testX=testObj, trainY=trainingYObj)
 
 
+@sklSkipDec
 def testSciKitLearnListLearners():
     """ Test scikit learn's listSciKitLearnLearners() by checking the output for those learners we unit test """
 
@@ -233,6 +244,7 @@ def testSciKitLearnListLearners():
                     for key in dSet.keys():
                         assert key in pSet
 
+@sklSkipDec
 @raises(InvalidArgumentValue)
 def testSciKitLearnExcludedLearners():
     trainX = UML.createData('Matrix', [1,2,3])
@@ -249,6 +261,7 @@ def getLearnersByType(lType, ignore=[]):
     return typeMatch
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnClassificationLearners():
     data = generateClassificationData(2, 20, 10)
@@ -284,6 +297,7 @@ def testSciKitLearnClassificationLearners():
 
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnRegressionLearners():
     data = generateRegressionData(2, 20, 10)
@@ -318,6 +332,7 @@ def testSciKitLearnRegressionLearners():
         equalityAssertHelper(predSKL, predUML, predSL)
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnMultiTaskRegressionLearners():
     """ Test that predictions for from UML.trainAndApply match predictions from scikitlearn
@@ -350,6 +365,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         equalityAssertHelper(predictionSciKit, predUML, predSL)
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnClusterLearners():
     data = generateClusteredPoints(3, 60, 8)
@@ -385,6 +401,7 @@ def testSciKitLearnClusterLearners():
         equalityAssertHelper(predSKL, predUML, predSL)
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnOtherPredictLearners():
     data = generateClassificationData(2, 20, 10)
@@ -419,6 +436,7 @@ def testSciKitLearnOtherPredictLearners():
         equalityAssertHelper(predSKL, predUML, predSL)
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnTransformationLearners():
 
@@ -452,6 +470,7 @@ def testSciKitLearnTransformationLearners():
 
         equalityAssertHelper(transSKL, transUML, transSL)
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
     trainX = UML.createRandomData('Matrix', 10, 5000, 0.98)
@@ -478,6 +497,7 @@ def testSciKitLearnRandomProjectionTransformation():
 
         equalityAssertHelper(transSKL, transUML, transSL)
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
@@ -508,6 +528,7 @@ def testSciKitLearnSparsePCATransformation():
         equalityAssertHelper(transSKL, transUML, transSL)
 
 
+@sklSkipDec
 @attr('slow')
 def testSciKitLearnEmbeddingLearners():
     data = generateClassificationData(2, 20, 10)
@@ -536,6 +557,7 @@ def testSciKitLearnEmbeddingLearners():
         equalityAssertHelper(transSKL, transUML, transSL)
 
 
+@sklSkipDec
 def testSciKitLearnTransformationDataInputIssues():
     # must be non-negative matrix
     Xtrain = [[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]]
@@ -562,6 +584,7 @@ def testSciKitLearnTransformationDataInputIssues():
         equalityAssertHelper(transSKL, transUML, transSL)
 
 
+@sklSkipDec
 def testCustomRidgeRegressionCompare():
     """ Sanity check for custom RidgeRegression, compare results to SKL's Ridge """
     data = [[0, 1, 2], [13, 12, 4], [345, 233, 76]]
@@ -580,6 +603,7 @@ def testCustomRidgeRegressionCompare():
     equalityAssertHelper(ret1, ret2, ret3)
 
 
+@sklSkipDec
 def testCustomRidgeRegressionCompareRandomized():
     """ Sanity check for custom RidgeRegression, compare results to SKL's Ridge on random data"""
     trainObj = UML.createRandomData("Matrix", 1000, 60, .1)
@@ -595,6 +619,7 @@ def testCustomRidgeRegressionCompareRandomized():
     equalityAssertHelper(ret1, ret2, ret3)
 
 
+@sklSkipDec
 @attr('slow')
 def testCustomKNNClassficationCompareRandomized():
     """ Sanity check on custom KNNClassifier, compare to SKL's KNeighborsClassifier on random data"""
@@ -613,6 +638,7 @@ def testCustomKNNClassficationCompareRandomized():
     equalityAssertHelper(ret1, ret2, ret3)
 
 
+@sklSkipDec
 @attr('slow')
 def testGetAttributesCallable():
     """ Demonstrate getAttribtues will work for each learner (with default params) """
@@ -646,6 +672,7 @@ def testGetAttributesCallable():
         tl.getAttributes()
 
 
+@sklSkipDec
 def testConvertYTrainDType():
     """ test trainY dtype is converted to float when learner requires Y to be numeric"""
     train = [['a', 1, -1, -3, -3, -1],

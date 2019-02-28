@@ -12,11 +12,17 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 
 import UML
-scipy = UML.importModule('scipy.sparse')
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
+from .skipTestDecorator import SkipMissing
 
+scipy = UML.importModule('scipy.sparse')
+
+shogunSkipDec = SkipMissing('shogun')
+
+
+@shogunSkipDec
 @raises(InvalidArgumentValueCombination)
 def testShogun_shapemismatchException():
     """ Test shogun raises exception when the shape of the train and test data don't match """
@@ -31,6 +37,7 @@ def testShogun_shapemismatchException():
     ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
+@shogunSkipDec
 @raises(InvalidArgumentValue)
 def testShogun_singleClassException():
     """ Test shogun raises exception when the training data only has a single label """
@@ -45,6 +52,7 @@ def testShogun_singleClassException():
     ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
+@shogunSkipDec
 @raises(InvalidArgumentValue)
 def testShogun_multiClassDataToBinaryAlg():
     """ Test shogun() raises InvalidArgumentValue when passing multiclass data to a binary classifier """
@@ -60,6 +68,7 @@ def testShogun_multiClassDataToBinaryAlg():
     ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
+@shogunSkipDec
 def testShogunHandmadeBinaryClassification():
     """ Test shogun by calling a binary linear classifier """
     variables = ["Y", "x1", "x2"]
@@ -78,6 +87,7 @@ def testShogunHandmadeBinaryClassification():
     assert ret.data[0, 0] > 0
 
 
+@shogunSkipDec
 def testShogunHandmadeBinaryClassificationWithKernel():
     """ Test shogun by calling a binary linear classifier with a kernel """
 
@@ -97,6 +107,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
     assert ret.data[0, 0] > 0
 
 
+@shogunSkipDec
 def testShogunKMeans():
     """ Test shogun by calling the Kmeans classifier, a distance based machine """
     variables = ["Y", "x1", "x2"]
@@ -117,6 +128,7 @@ def testShogunKMeans():
     assert ret.data[2, 0] == 2
 
 
+@shogunSkipDec
 def testShogunMulticlassSVM():
     """ Test shogun by calling a multilass classifier with a kernel """
 
@@ -140,6 +152,7 @@ def testShogunMulticlassSVM():
     assert ret.data[2, 0] == 2
 
 
+@shogunSkipDec
 def testShogunSparseRegression():
     """ Test shogun sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
     if not scipy:
@@ -160,6 +173,7 @@ def testShogunSparseRegression():
     assert ret is not None
 
 
+@shogunSkipDec
 def testShogunRossData():
     """ Test shogun by calling classifers using the problematic data from Ross """
 
@@ -197,6 +211,7 @@ def testShogunRossData():
     assert ret is not None
 
 
+@shogunSkipDec
 @attr('slow')
 def testShogunEmbeddedRossData():
     """ Test shogun by MulticlassOCAS with the ross data embedded in random data """
@@ -238,6 +253,7 @@ def testShogunEmbeddedRossData():
         assert value == 2 or value == 3
 
 
+@shogunSkipDec
 def testShogunScoreModeMulti():
     """ Test shogun returns the right dimensions when given different scoreMode flags, multi case"""
     variables = ["Y", "x1", "x2"]
@@ -263,6 +279,7 @@ def testShogunScoreModeMulti():
     assert len(ret.features) == 3
 
 
+@shogunSkipDec
 def testShogunScoreModeBinary():
     """ Test shogun returns the right dimensions when given different scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
@@ -314,6 +331,7 @@ def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
                             multiClassStrategy="OneVsOne")
 
 
+@shogunSkipDec
 @attr('slow')
 def testShogunListLearners():
     """ Test shogun's listShogunLearners() by checking the output for those learners we unit test """
