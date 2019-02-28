@@ -50,8 +50,10 @@ if '--universal' not in sys.argv:
     # Make sure the compiled Cython files in the distribution are up-to-date
     try:
         from Cython.Build import cythonize, build_ext
-        # inspect module does not work with cython
-        # TODO remove one instance of inspect in UML/data/axis.py
+        # TODO
+          # inspect module does not work with cython
+            # reconfigure UML/data to keep logging separate
+            # one instance of inspect in UML/data/axis.py
         to_cythonize = [os.path.join('UML', 'helpers.py'),
                         os.path.join('UML', 'data', '*.py'),]
         exclude = [os.path.join('UML', 'data', '__init__.py'),
@@ -133,8 +135,8 @@ if extensions:
         run_setup()
         print('*' * 79)
         print("WARNING: Failed to compile C extensions. This does NOT affect ")
-        print("the functionality of the build, but this build will not benefit ")
-        print("from the speed increases of the C extensions.")
+        print("the functionality of the build, but this build will not ")
+        print("benefit from the speed increases of the C extensions.")
         print("Plain-Python build of UML succeeded.")
         print('*' * 79)
 else:
@@ -149,7 +151,7 @@ else:
 # TODO
     # determine which packages to exclude in distribution
     # determine correct versions for install_requires
-    # make any changes to setup metadata (author, url, classifiers, etc.)
+    # make any changes to setup metadata (author, description, classifiers, etc.)
     # additional setup metadata (see below)
         # with open("README.md", "r") as fh:
         #     long_description = fh.read()
