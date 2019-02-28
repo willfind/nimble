@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 import math
+import numbers
 import inspect
 import re
 from functools import wraps
@@ -32,6 +33,22 @@ DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 DEFAULT_NAME_PREFIX = "OBJECT_#"
 
 defaultObjectNumber = 0
+
+def isAllowedSingleElement(x):
+    """
+    This function is to determine if an element is an allowed single
+    element.
+    """
+    if isinstance(x, (numbers.Number, six.string_types)):
+        return True
+
+    if hasattr(x, '__len__'):#not a single element
+        return False
+
+    if x is None or x != x:#None and np.NaN are allowed
+        return True
+
+    return
 
 def nextDefaultObjectName():
     """
