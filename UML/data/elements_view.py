@@ -5,6 +5,7 @@ base class for read only elements views of data objects.
 
 from __future__ import absolute_import
 
+import UML
 from UML.docHelpers import inheritDocstringsFactory
 from .elements import Elements
 from .dataHelpers import readOnlyException

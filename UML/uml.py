@@ -105,7 +105,7 @@ def createRandomData(
          [88.000 24.000 3.000  22.000 53.000]
          [2.000  88.000 30.000 38.000 2.000 ]
          [64.000 60.000 21.000 33.000 76.000]]
-         pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
+        pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
         )
 
     Random floats, high sparsity.
@@ -113,11 +113,11 @@ def createRandomData(
     >>> sparse = UML.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
-        [[  0   0   0    0 0]
-         [  0   0 -0.138 0 0]
-         [0.497 0   0    0 0]
-         [  0   0   0    0 0]
-         [  0   0   0    0 0]]
+        [[  0    0 0   0   0]
+         [  0    0 0   0   0]
+         [-0.636 0 0   0   0]
+         [  0    0 0 0.291 0]
+         [  0    0 0   0   0]]
         )
     """
     if numPoints < 1:
@@ -875,14 +875,14 @@ def createData(
     Loading data from a file.
 
     >>> with open('createData.csv', 'w') as cd:
-    ...     cd.write('1,2,3\\n4,5,6')
+    ...     out = cd.write('1,2,3\\n4,5,6')
     >>> fromFile = UML.createData('Matrix', 'createData.csv')
     >>> fromFile
     Matrix(
         [[1.000 2.000 3.000]
          [4.000 5.000 6.000]]
         name="createData.csv"
-        path="/Users/Spark_Wave/createData.csv"
+        path="/UML/createData.csv"
         )
 
     Adding point and feature names.
@@ -1390,7 +1390,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> cValue = tlAttributes['C']
     >>> kernelValue = tlAttributes['kernel']
     >>> print(cValue, kernelValue)
-    (0.1, 'linear')
+    0.1 linear
     """
     if UML.logger.active.position == 0:
         if enableLogging(useLog):
@@ -1764,6 +1764,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> perform = UML.trainAndTest(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     testX=testX, testY=testY,
+    ...     performanceFunction=UML.calculate.fractionIncorrect,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0

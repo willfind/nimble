@@ -273,10 +273,8 @@ class Elements(object):
         ...                                features=[0, 2])
         >>> calc
         List(
-            [[2.000 1.000 2.000 1.000]
-             [2.000 1.000 2.000 1.000]
-             [1.000 1.000 1.000 1.000]
-             [1.000 1.000 1.000 1.000]]
+            [[2.000 2.000]
+             [2.000 2.000]]
             )
 
         Calculating with None return values. With the ``addTenToEvens``
@@ -466,7 +464,7 @@ class Elements(object):
         >>> data = UML.identity('Matrix', 5)
         >>> unique = data.elements.countUnique()
         >>> unique
-        {0.0: 20, 1.0: 5}
+        {1.0: 5, 0.0: 20}
 
         Count for a subset of elements.
 
@@ -474,7 +472,7 @@ class Elements(object):
         >>> unique = data.elements.countUnique(points=0,
         ...                                    features=[0, 1, 2])
         >>> unique
-        {0.0: 2, 1.0: 1}
+        {1.0: 1, 0.0: 2}
         """
         uniqueCount = {}
         if points is None:
