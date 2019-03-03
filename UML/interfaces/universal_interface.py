@@ -563,6 +563,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         A copy of the arguments
             These have been arranged for easy instantiation.
         """
+        if arguments is None:
+            arguments = []
         baseCallName = learnerName
         possibleParamSets = self.getLearnerParameterNames(learnerName)
         possibleDefaults = self.getLearnerDefaultValues(learnerName)
@@ -1769,13 +1771,14 @@ class TrainedLearner(object):
         discovered = self.interface._getAttributes(self.backend)
         inputs = self.arguments
 
-        for key in inputs.keys():
-            value = inputs[key]
-            if key in list(discovered.keys()):
-                if value != discovered[key]:
-                    newKey = self.learnerName + '.' + key
-                    discovered[newKey] = discovered[key]
-                discovered[key] = value
+        if inputs is not None:
+            for key in inputs.keys():
+                value = inputs[key]
+                if key in list(discovered.keys()):
+                    if value != discovered[key]:
+                        newKey = self.learnerName + '.' + key
+                        discovered[newKey] = discovered[key]
+                    discovered[key] = value
 
         return discovered
 

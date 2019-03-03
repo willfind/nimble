@@ -8,17 +8,23 @@ import UML
 
 from nose.tools import *
 import numpy.testing
-from mlpy import __version__ as mlpyVersion
 
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.mlpy_interface import Mlpy
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
+from .skipTestDecorator import SkipMissing
 
+mlpy = UML.importExternalLibraries.importModule("mlpy")
+
+mlpySkipDec = SkipMissing('mlpy')
+
+@mlpySkipDec
 def test_Mlpy_version():
     interface = Mlpy()
-    assert interface.version() == mlpyVersion
+    assert interface.version() == mlpy.__version__
 
+@mlpySkipDec
 def testMlpyHandmadeSVMClassification():
     """ Test mlpy() by calling on SVM classification with handmade output """
 
@@ -38,7 +44,7 @@ def testMlpyHandmadeSVMClassification():
 
     numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
 
-
+@mlpySkipDec
 def testMlpyHandmadeLogisticRegression():
     """ Test mlpy() by calling on logistic regression on handmade output """
 
@@ -59,7 +65,7 @@ def testMlpyHandmadeLogisticRegression():
 
     numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
 
-
+@mlpySkipDec
 def testMlpyHandmadeKNN():
     """ Test mlpy() by calling on knn classification on handmade output """
 
@@ -77,7 +83,7 @@ def testMlpyHandmadeKNN():
     numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
     numpy.testing.assert_approx_equal(ret.data[1, 0], 0.)
 
-
+@mlpySkipDec
 def testMlpyHandmadePCA():
     """ Test mlpy() by calling PCA and checking the output has the correct dimension """
     data = [[1, 1, 1], [2, 2, 2], [4, 4, 4]]
@@ -92,7 +98,7 @@ def testMlpyHandmadePCA():
     # check return has the right dimension
     assert len(ret.data[0]) == 1
 
-
+@mlpySkipDec
 def testMlpyHandmadeKernelPCA():
     """ Test mlpy() by calling PCA with a kernel transformation, checking the output has the correct dimension """
     data = [[1, 1], [2, 2], [3, 3]]
@@ -108,7 +114,7 @@ def testMlpyHandmadeKernelPCA():
     # check return has the right dimension
     assert len(ret.data[0]) == 1
 
-
+@mlpySkipDec
 @raises(InvalidArgumentValue)
 def testMlpyHandmadeInnerProductTrainingPCAException():
     """ Test mlpy by calling a kernel based leaner with no kernel or transformed data """
@@ -122,7 +128,7 @@ def testMlpyHandmadeInnerProductTrainingPCAException():
 
     assert ret is not None
 
-
+@mlpySkipDec
 def testMlpyHandmadeInnerProductTrainingPCA():
     """ Test mlpy by calling PCA with data that has already been run through a kernel """
     import mlpy
@@ -139,7 +145,7 @@ def testMlpyHandmadeInnerProductTrainingPCA():
 
     assert ret is not None
 
-
+@mlpySkipDec
 def testMlpyScoreMode():
     """ Test mlpy() scoreMode flags"""
     variables = ["Y", "x1", "x2"]
@@ -166,7 +172,7 @@ def testMlpyScoreMode():
 
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
-
+@mlpySkipDec
 def testMlpyScoreModeBinary():
     """ Test mlpy() scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
@@ -193,7 +199,7 @@ def testMlpyScoreModeBinary():
 
     checkLabelOrderingAndScoreAssociations([1, -1], bestScores, allScores)
 
-
+@mlpySkipDec
 def testMlpyRegression():
     """ Test mlpy() regressors problematic in previous implementations """
 
@@ -214,7 +220,7 @@ def testMlpyRegression():
                             arguments={'lmb': .1, 'eps': .1})
     assert ret is not None
 
-
+@mlpySkipDec
 @raises(InvalidArgumentValue)
 def testMlpyOLSDisallowed():
     """ Test mlpy's broken OLS Learner is disallowed """
@@ -227,7 +233,7 @@ def testMlpyOLSDisallowed():
 
     UML.trainAndApply("mlpy.OLS", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
-
+@mlpySkipDec
 @raises(InvalidArgumentValue)
 def testMlpyLARSDisallowed():
     """ Test mlpy's broken LARS Learner is disallowed """
@@ -240,7 +246,7 @@ def testMlpyLARSDisallowed():
 
     UML.trainAndApply("mlpy.LARS", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
-
+@mlpySkipDec
 def testMlpyRequiredInitArgs():
     """ Test mlpy() learners with required parameters to their __init__ methods"""
     variables = ["Y", "x1", "x2"]
@@ -261,7 +267,7 @@ def testMlpyRequiredInitArgs():
                             arguments={'lmb': 1, 'eps': 1})
     assert ret is not None
 
-
+@mlpySkipDec
 def testMlpyUnknownCrashes():
     """ Test mlpy on learners failing for undiagnosed reasons in previous implementation """
     variables = ["Y", "x1", "x2"]
@@ -276,7 +282,7 @@ def testMlpyUnknownCrashes():
     ret = UML.trainAndApply("mlpy.Perceptron", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
     assert ret is not None
 
-
+@mlpySkipDec
 def testMlpyKernelLearners():
     """ Test mlpy on a handful of learners that rely on kernels """
     variables = ["Y", "x1", "x2"]
@@ -306,7 +312,7 @@ def testMlpyKernelLearners():
                             arguments={'kernel': 'KernelGaussian'})
     assert ret is not None
 
-
+@mlpySkipDec
 @raises(InvalidArgumentValue)
 def testMlpyKernelExponentialDisallowed():
     """ Test mlpy that trying to use KernelExponential throws an exception """
@@ -322,7 +328,7 @@ def testMlpyKernelExponentialDisallowed():
                             arguments={'kernel': 'KernelExponential'})
     assert ret is not None
 
-
+@mlpySkipDec
 def testMlpyClusteringLearners():
     """ Test mlpy exposes appropriately wrapped clustering learners """
     variables = ["Y", "x1", "x2"]
@@ -332,7 +338,7 @@ def testMlpyClusteringLearners():
     UML.trainAndApply("mlpy.MFastHCluster", trainingObj, output=None, arguments={'t': 1})
     UML.trainAndApply("mlpy.kmeans", trainingObj, output=None, arguments={'k': 2})
 
-
+@mlpySkipDec
 def testMlpyListLearners():
     """ Test mlpy's listMlpyLearners() by checking the output for those learners we unit test """
 
