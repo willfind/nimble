@@ -13,17 +13,17 @@ from UML.exceptions import InvalidArgumentType, \
     InvalidArgumentValueCombination
 
 
-def inverse(A):
+def inverse(aObj):
     """
        Compute the (multiplicative) inverse of a UML Base object.
 
     """
-    if not isinstance(A, UML.data.Base):
+    if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base")
-    if not len(A.points) and not len(A.features):
-        return A.copy()
-    if len(A.points) != len(A.features):
+    if not len(aObj.points) and not len(aObj.features):
+        return aObj.copy()
+    if len(aObj.points) != len(aObj.features):
         msg = 'Object has to be square \
         (Number of features and points needs to be equal).'
         raise InvalidArgumentValue(msg)
@@ -35,8 +35,8 @@ def inverse(A):
         else:
             raise exception
 
-    if A.getTypeString() in ['Matrix', 'DataFrame', 'List']:
-        invObj = A.copyAs('Matrix')
+    if aObj.getTypeString() in ['Matrix', 'DataFrame', 'List']:
+        invObj = aObj.copyAs('Matrix')
         try:
             invData = scipy.linalg.inv(invObj.data)
         except scipy.linalg.LinAlgError as exception:
@@ -46,7 +46,7 @@ def inverse(A):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
     else:
-        invObj = A.copyAs('Sparse')
+        invObj = aObj.copyAs('Sparse')
         try:
             invData = scipy.sparse.linalg.inv(invObj.data.tocsc())
         except RuntimeError as exception:
@@ -58,23 +58,23 @@ def inverse(A):
 
     invObj.transpose()
     invObj.data = invData
-    if A.getTypeString() != invObj.getTypeString:
-        invObj = invObj.copyAs(A.getTypeString())
+    if aObj.getTypeString() != invObj.getTypeString:
+        invObj = invObj.copyAs(aObj.getTypeString())
     return invObj
 
 
-def pseudoInverse(A, method='svd'):
+def pseudoInverse(aObj, method='svd'):
     """
         Compute the (Moore-Penrose) pseudo-inverse of a UML object.
         Method: 'svd' or 'least-squares'.
         Uses singular-value decomposition by default.
         Least squares solver included as an option.
     """
-    if not isinstance(A, UML.data.Base):
+    if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base.")
-    if not len(A.points) and not len(A.features):
-        return A
+    if not len(aObj.points) and not len(aObj.features):
+        return aObj
     if method not in ['least-squares', 'svd']:
         raise InvalidArgumentValue(
             "Supported methods are 'least-squares' and 'svd'.")
@@ -84,7 +84,7 @@ def pseudoInverse(A, method='svd'):
             msg = 'Elements types in object data are not supported.'
             raise InvalidArgumentType(msg)
 
-    pinvObj = A.copyAs('Matrix')
+    pinvObj = aObj.copyAs('Matrix')
     if method == 'svd':
         try:
             pinvData = scipy.linalg.pinv2(pinvObj.data)
@@ -94,105 +94,107 @@ def pseudoInverse(A, method='svd'):
         pinvData = scipy.linalg.pinv(pinvObj.data)
     pinvObj.transpose()
     pinvObj.data = numpy.asmatrix(pinvData)
-    if A.getTypeString() != 'Matrix':
-        pinvObj = pinvObj.copyAs(A.getTypeString())
+    if aObj.getTypeString() != 'Matrix':
+        pinvObj = pinvObj.copyAs(aObj.getTypeString())
     return pinvObj
 
 
-def solve(A, b):
+def solve(aObj, bObj):
     """
         Solves the linear equation set A * x = b for the unknown vector x.
         A should be a square a object.
     """
-    if not isinstance(A, UML.data.Base):
+    if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
-    if not isinstance(b, UML.data.Base):
+    if not isinstance(bObj, UML.data.Base):
         raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
-    if len(A.points) != len(A.features):
+    if len(aObj.points) != len(aObj.features):
         msg = 'Object A has to be square \
         (Number of features and points needs to be equal).'
         raise InvalidArgumentValue(msg)
-    if len(b.points) != 1 and len(b.features) != 1:
+    if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
-    elif len(b.points) == 1 and len(b.features) > 1:
-        if len(A.points) != len(b.features):
+    elif len(bObj.points) == 1 and len(bObj.features) > 1:
+        if len(aObj.points) != len(bObj.features):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
         else:
-            b = b.copy()
-            b.flattenToOneFeature()
-    elif len(b.points) > 1 and len(b.features) == 1:
-        if len(A.points) != len(b.points):
+            bObj = bObj.copy()
+            bObj.flattenToOneFeature()
+    elif len(bObj.points) > 1 and len(bObj.features) == 1:
+        if len(aObj.points) != len(bObj.points):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
 
-    aOriginalType = A.getTypeString()
-    if A.getTypeString() in ['DataFrame', 'List']:
-        A = A.copyAs('Matrix')
-    if b.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        b = b.copyAs('Matrix')
+    aOriginalType = aObj.getTypeString()
+    if aObj.getTypeString() in ['DataFrame', 'List']:
+        aObj = aObj.copyAs('Matrix')
+    if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
+        bObj = bObj.copyAs('Matrix')
 
-    sol = A[0, :].copyAs('Matrix')
+    sol = aObj[0, :].copyAs('Matrix')
     sol.points.setNames(['b'])
 
-    if A.getTypeString() == 'Matrix':
-        solution = scipy.linalg.solve(A.data, b.data)
+    if aObj.getTypeString() == 'Matrix':
+        solution = scipy.linalg.solve(aObj.data, bObj.data)
         sol.data = solution.T
-    elif isinstance(A, UML.data.sparse.SparseView):
-        aCopy = A.copy()
+    elif isinstance(aObj, UML.data.sparse.SparseView):
+        aCopy = aObj.copy()
         solution = scipy.sparse.linalg.spsolve(aCopy.data,
-                                               numpy.asarray(b.data))
+                                               numpy.asarray(bObj.data))
         sol.data = numpy.asmatrix(solution)
-    elif A.getTypeString() == 'Sparse':
-        solution = scipy.sparse.linalg.spsolve(A.data,
-                                               numpy.asarray(b.data))
+    elif aObj.getTypeString() == 'Sparse':
+        solution = scipy.sparse.linalg.spsolve(aObj.data,
+                                               numpy.asarray(bObj.data))
         sol.data = numpy.asmatrix(solution)
 
     return sol.copyAs(aOriginalType)
 
 
-def leastSquaresSolution(A, b):
+def leastSquaresSolution(aObj, bObj):
     """
         Compute least-squares solution to equation Ax = b
     """
-    if not isinstance(A, UML.data.Base):
+    if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
-    if not isinstance(b, UML.data.Base):
+    if not isinstance(bObj, UML.data.Base):
         raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
-    if len(b.points) != 1 and len(b.features) != 1:
+    if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
-    elif len(b.points) == 1 and len(b.features) > 1:
-        if len(A.points) != len(b.features):
+    elif len(bObj.points) == 1 and len(bObj.features) > 1:
+        if len(aObj.points) != len(bObj.features):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
         else:
-            b = b.copy()
-            b.flattenToOneFeature()
-    elif len(b.points) > 1 and len(b.features) == 1:
-        if len(A.points) != len(b.points):
+            bObj = bObj.copy()
+            bObj.flattenToOneFeature()
+    elif len(bObj.points) > 1 and len(bObj.features) == 1:
+        if len(aObj.points) != len(bObj.points):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
 
-    aOriginalType = A.getTypeString()
-    if A.getTypeString() in ['DataFrame', 'List']:
-        A = A.copyAs('Matrix')
-    if b.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        b = b.copyAs('Matrix')
+    aOriginalType = aObj.getTypeString()
+    if aObj.getTypeString() in ['DataFrame', 'List']:
+        aObj = aObj.copyAs('Matrix')
+    if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
+        bObj = bObj.copyAs('Matrix')
 
-    sol = A[0, :].copyAs('Matrix')
+    sol = aObj[0, :].copyAs('Matrix')
     sol.points.setNames(['b'])
-    if A.getTypeString() == 'Matrix':
-        solution = scipy.linalg.lstsq(A.data, b.data)
+    if aObj.getTypeString() == 'Matrix':
+        solution = scipy.linalg.lstsq(aObj.data, bObj.data)
         sol.data = solution[0].T
-    elif isinstance(A, UML.data.sparse.SparseView):
-        aCopy = A.copy()
-        solution = scipy.sparse.linalg.lsqr(aCopy.data, numpy.asarray(b.data))
+    elif isinstance(aObj, UML.data.sparse.SparseView):
+        aCopy = aObj.copy()
+        solution = scipy.sparse.linalg.lsqr(aCopy.data,
+                                            numpy.asarray(bObj.data))
         sol.data = numpy.asmatrix(solution[0])
-    elif A.getTypeString() == 'Sparse':
-        solution = scipy.sparse.linalg.lsqr(A.data, numpy.asarray(b.data))
+    elif aObj.getTypeString() == 'Sparse':
+        solution = scipy.sparse.linalg.lsqr(aObj.data,
+                                            numpy.asarray(bObj.data))
         sol.data = numpy.asmatrix(solution[0])
     return sol.copyAs(aOriginalType)
