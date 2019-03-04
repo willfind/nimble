@@ -19,7 +19,7 @@ import six
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
-from UML.logger import enableLogging
+from UML.logger import enableLogging, directCall
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import logCaptureFactory
@@ -179,8 +179,11 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.transform)
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.transform)
+            else:
+                wrapped = directCall(self.transform)
             return wrapped(toTransform, points, features, preserveZeros,
                            skipNoneReturnValues, useLog=False)
 
@@ -310,10 +313,13 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.calculate)
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.calculate)
+            else:
+                wrapped = directCall(self.calculate)
             return wrapped(function, points, features, preserveZeros,
-                           skipNoneReturnValues, useLog=False)
+                           skipNoneReturnValues, outputType, useLog=False)
 
         oneArg = False
         try:
@@ -426,10 +432,12 @@ class Elements(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculate(function=condition, outputType='Matrix')
+            ret = self.calculate(function=condition, outputType='Matrix',
+                                 useLog=False)
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)
-            ret = self.calculate(function=func, outputType='Matrix')
+            ret = self.calculate(function=func, outputType='Matrix',
+                                 useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -527,8 +535,11 @@ class Elements(object):
              [12.000 12.000]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.multiply)
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.multiply)
+            else:
+                wrapped = directCall(self.multiply)
             return wrapped(other, useLog=False)
 
         if not isinstance(other, UML.data.Base):
@@ -598,8 +609,11 @@ class Elements(object):
              [64.000 64.000]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.power)
+        if UML.logger.active.position == 0:
+            if enableLogging(useLog):
+                wrapped = logCapture(self.power)
+            else:
+                wrapped = directCall(self.power)
             return wrapped(other, useLog=False)
 
         # other is UML or single numerical value

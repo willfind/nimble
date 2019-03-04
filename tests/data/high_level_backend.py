@@ -9,9 +9,9 @@ Methods tested in this file:
 
 In object HighLevelDataSafe:
 points.calculate, features.calculate, elements.calculate, points.count,
-features.count, elements.countUnique, points.unique, features.unique,
-points.mapReduce, features.mapReduce, isApproximatelyEqual,
-trainAndTestSets
+features.count, elements.count, elements.countUnique, points.unique,
+features.unique, points.mapReduce, features.mapReduce,
+isApproximatelyEqual, trainAndTestSets
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,

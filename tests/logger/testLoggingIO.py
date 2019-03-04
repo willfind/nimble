@@ -511,6 +511,11 @@ def testBaseObjectFunctionsWithoutUseLog():
     count = dataObj.features.count(lambda x: type(x) == str)
     assert getLogLength() == 0
 
+    # elements.count; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    count = dataObj.elements.count(lambda x: type(x) == str)
+    assert getLogLength() == 0
+
 @configSafetyWrapper
 def testHandmadeLogEntriesInput():
     # custom string
