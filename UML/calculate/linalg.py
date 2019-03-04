@@ -15,8 +15,43 @@ from UML.exceptions import InvalidArgumentType, \
 
 def inverse(aObj):
     """
-       Compute the (multiplicative) inverse of a UML Base object.
+    Compute the (multiplicative) inverse of a UML Base object.
 
+    Parameters
+    ----------
+    aObj : UML Base object.
+        Square object to be inverted.
+
+    Returns
+    -------
+    aInv : UML Base object.
+        Inverse of the object `aObj`
+
+    Raises
+    ------
+    InvalidArgumentType:
+        If `aObj` is not a UML Base Object.
+        If `aObj` elements types are not supported.
+
+    InvalidArgumentValue:
+        If `aObj` is not square.
+        If `aObj` is not invertible (Singular).
+
+    Examples
+    --------
+    >>> from UML.calculate import inverse
+    >>> raw = [[1, 2], [3, 4]]
+    >>> data = UML.createData('Matrix', raw)
+    >>> data
+    Matrix(
+    [[1.000 2.000]
+     [3.000 4.000]]
+    )
+    >>> inverse(data)
+    Matrix(
+    [[-2.000 1.000 ]
+     [1.500  -0.500]]
+    )
     """
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
