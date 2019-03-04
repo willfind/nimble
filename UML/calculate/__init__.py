@@ -46,5 +46,5 @@ __all__ = ['confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
            'meanFeaturewiseRootMeanSquareError', 'median', 'mode', 'minimum',
            'proportionMissing', 'proportionZero', 'quartiles',
            'residuals', 'rSquared', 'rootMeanSquareError', 'standardDeviation',
-           'uniqueCount', 'varianceFractionRemaining', 'inverse', 'pseudoInverse',
-           'leastSquaresSolution']
+           'uniqueCount', 'varianceFractionRemaining', 'inverse',
+           'pseudoInverse', 'solve', 'leastSquaresSolution']
