@@ -100,10 +100,53 @@ def inverse(aObj):
 
 def pseudoInverse(aObj, method='svd'):
     """
-        Compute the (Moore-Penrose) pseudo-inverse of a UML object.
-        Method: 'svd' or 'least-squares'.
-        Uses singular-value decomposition by default.
-        Least squares solver included as an option.
+    Compute the (Moore-Penrose) pseudo-inverse of a UML Base object.
+
+    Calculate a generalized inverse of a matrix using singular-value
+    decomposition (default) or least squares solver.
+
+    Parameters
+    ----------
+    aObj : UML Base object.
+        Square object to be pseudo-inverted.
+    method : str.
+        - 'svd'. Uses singular-value decomposition by default.
+        - 'least-squares'.  Uses least squares solver included.
+
+    Returns
+    -------
+    aPInv : UML Base object.
+        Pseudo-inverse of the object `aObj`
+
+    Raises
+    ------
+    InvalidArgumentType:
+        If `aObj` is not a UML Base Object.
+        If `aObj` elements types are not supported.
+
+    InvalidArgumentValue:
+        If `method` name is not supported.
+
+    Examples
+    --------
+    >>> from UML.calculate import pseudoInverse
+    >>> data = UML.createRandomData('Matrix',
+    >>>                              numPoints=4,
+    >>>                              numFeatures=3,
+    >>>                              sparsity=0.5)
+    >>> data
+    Matrix(
+        [[0.000  -0.000 -0.000]
+         [0.774  -0.538 -0.000]
+         [-0.000 -0.000 0.000 ]
+         [0.582  0.888  0.894 ]]
+    )
+    >>> pseudoInverse(data)
+    Matrix(
+        [[0.000  0.881  0.000 0.315]
+         [-0.000 -0.592 0.000 0.452]
+         [-0.000 0.014  0.000 0.464]]
+    )
     """
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
