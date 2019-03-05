@@ -280,7 +280,38 @@ def solve(aObj, bObj):
 
 def leastSquaresSolution(aObj, bObj):
     """
-        Compute least-squares solution to equation Ax = b
+    Compute least-squares solution to equation A x = b
+
+    Compute a vector x such that the 2-norm |b - A x| is minimized.
+
+    The matrix A may be square or rectangular (over-determined or
+    under-determined).
+
+    Parameters
+    ----------
+    aObj : (M, N) UML Base object.
+        Left hand side object in A x = b.
+    bObj : (M) UML Base object.
+        Right-hand side UML Base object in A x = b. (1-D)
+
+    Returns
+    -------
+    xObj : (N) UML Base object.
+        Least-squares solution.
+
+    Raises
+    ------
+    InvalidArgumentType:
+        If `aObj` or `bObj` is not a UML Base Object.
+        If `aObj` elements types are not supported.
+
+    InvalidArgumentValue:
+        If `bObj`is not a vector. 1-D.
+
+    InvalidArgumentValueCombination:
+        If `aObj` and `bObj` have incompatible dimensions.
+
+    TODO: Example comaparable with scipy counterpart.
     """
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
