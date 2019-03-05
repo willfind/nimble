@@ -179,8 +179,55 @@ def pseudoInverse(aObj, method='svd'):
 
 def solve(aObj, bObj):
     """
-        Solves the linear equation set A * x = b for the unknown vector x.
-        A should be a square a object.
+    Solves the linear equation set A x = b for the unknown vector x.
+
+    Parameters
+    ----------
+    aObj : (M, M) UML Base object.
+        Square object.
+    bObj : (M) UML Base object.
+        Right-hand side UML Base object in A x = b.
+
+    Returns
+    -------
+    xObj : (M) UML Base object.
+        Solution to the system A x = b. Shape of `xObj` matches `bObj`.
+
+    Raises
+    ------
+    InvalidArgumentType:
+        If `aObj` or `bObj` is not a UML Base Object.
+        If `aObj` elements types are not supported.
+
+    InvalidArgumentValue:
+        If `aObj` is not squared.
+        If `bObj`is not a vector. 1-D.
+
+    InvalidArgumentValueCombination:
+        If `aObj` and `bObj` have incompatible dimensions.
+
+    Examples
+    --------
+    >>> from UML.calculate import solve
+    >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
+    >>> aObj = UML.createData('Matrix', aData)
+    >>> bData = [2,4,-1]
+    >>> bObj = UML.createData('Matrix', bData)
+    >>> aObj
+    Matrix(
+        [[3.000 2.000  0.000]
+         [1.000 -1.000 0.000]
+         [0.000 5.000  1.000]]
+    )
+    >>> bObj
+    Matrix(
+        [[2.000 4.000 -1.000]]
+    )
+    >>> xObj = solve(aObj, bObj)
+    >>> xObj
+    Matrix(
+        [[2.000 -2.000 9.000]]
+    )
     """
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
