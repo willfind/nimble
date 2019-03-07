@@ -31,7 +31,7 @@ from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Base
-from UML.data.list import isAllowedSingleElement
+from UML.data.dataHelpers import isAllowedSingleElement
 from UML.data.sparse import removeDuplicatesNative
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom

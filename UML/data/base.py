@@ -446,19 +446,18 @@ class Base(object):
         --------
         TODO - outstanding PR, will need an update.
 
-        >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
-        >>> featureNames = ['keep1', 'replace', 'keep2']
+        >>> raw = [['a'], ['b'], ['c']]
         >>> data = UML.createData('Matrix', raw,
-        ...                       featureNames=featureNames)
+        ...                       featureNames=['replace'])
         >>> replaced = data.replaceFeatureWithBinaryFeatures('replace')
         >>> replaced
         ['replace=a', 'replace=b', 'replace=c']
-        >>> data #doctest: +ELLIPSIS
+        >>> data
         Matrix(
-            [[1 1.000 0.000 0.000 1]
-             [2 0.000 1.000 0.000 2]
-             [3 0.000 0.000 1.000 3]]
-            featureNames={'keep1':0, 'replace=a':1, ... 'keep2':4}
+            [[1.000 0.000 0.000]
+             [0.000 1.000 0.000]
+             [0.000 0.000 1.000]]
+            featureNames={'replace=a':0, 'replace=b':1, 'replace=c':2}
             )
         """
         if UML.logger.active.position == 0:
@@ -488,7 +487,7 @@ class Base(object):
         if self.points._namesCreated():
             ptNames = self.points.getNames()
         else:
-            ptNames='automatic'
+            ptNames = 'automatic'
         binaryObj = UML.createData(self.getTypeString(), toFill,
                                    pointNames=ptNames, featureNames=ftNames,
                                    treatAsMissing=None)
@@ -911,6 +910,8 @@ class Base(object):
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
                       useLog=None):
         """
+        Report containing a summary and statistics for each feature.
+
         Produce a report, in a string formatted as a table, containing
         summary and statistical information about each feature in the
         data set, up to 50 features.  If there are more than 50
@@ -930,10 +931,12 @@ class Base(object):
 
     def summaryReport(self, displayDigits=2, useLog=None):
         """
-        Produce a report, in a string formatted as a table, containing summary
-        information about the data set contained in this object.  Includes
-        proportion of missing values, proportion of zero values, total # of
-        points, and number of features.
+        Report containing information regarding the data in this object.
+
+        Produce a report, in a string formatted as a table, containing
+        summary information about the data set contained in this object.
+        Includes proportion of missing values, proportion of zero
+        values, total # of points, and number of features.
         """
         logger = UML.logger.active
         logger.position += 1
@@ -1212,7 +1215,7 @@ class Base(object):
 
         >>> sales = office[[3, 1], :]
         >>> print(sales)
-                id  age department salary gender
+                  id  age department salary gender
 
         dwight   4211  45   sales    33000    m
            jim   4434  26   sales    26000    m
@@ -1275,8 +1278,8 @@ class Base(object):
            pam   28000  administration
         angela   43500    accounting
 
-        Note: list orders retained; 'pam' precedes 'angela' and index 3
-        ('salary') precedes index 2 ('department')
+        *Note: list orders retained; 'pam' precedes 'angela' and index 3
+        ('salary') precedes index 2 ('department')*
 
         >>> first3Ages = office[:2, 'age']
         >>> print(first3Ages)
@@ -1685,11 +1688,13 @@ class Base(object):
                          + len(''.join([str(i) for i
                                         in range(self._featureCount)])))
             numCols = int(min(1, maxW / float(strLength)) * self._featureCount)
-        # because of how dataHelers.indicesSplit works, we need this to be plus
-        # one in some cases this means one extra feature name is displayed. But
+        # because of how dataHelpers.indicesSplit works, we need this to be
+        # +1 in some cases this means one extra feature name is displayed. But
         # that's acceptable
         if numCols <= self._featureCount:
             numCols += 1
+        elif numCols > self._featureCount:
+            numCols = self._featureCount
         ret += dataHelpers.makeNamesLines(
             indent, maxW, numCols, self._featureCount,
             self.features.getNames(), 'featureNames')
@@ -2242,31 +2247,25 @@ class Base(object):
 
         Examples
         --------
-        >>> ptNames = ['0', '1', '2', '3', '4']
-        >>> ftNames = ['a', 'b', 'c', 'd', 'e']
-        >>> data = UML.identity('Matrix', 5, pointNames=ptNames,
+        >>> ptNames = ['0', '1']
+        >>> ftNames = ['a', 'b']
+        >>> data = UML.identity('Matrix', 2, pointNames=ptNames,
         ...                     featureNames=ftNames)
         >>> asDataFrame = data.copyAs('DataFrame')
         >>> asDataFrame
         DataFrame(
-            [[1.000 0.000 0.000 0.000 0.000]
-             [0.000 1.000 0.000 0.000 0.000]
-             [0.000 0.000 1.000 0.000 0.000]
-             [0.000 0.000 0.000 1.000 0.000]
-             [0.000 0.000 0.000 0.000 1.000]]
-            pointNames={'0':0, '1':1, '2':2, '3':3, '4':4}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
+            [[1.000 0.000]
+             [0.000 1.000]]
+            pointNames={'0':0, '1':1}
+            featureNames={'a':0, 'b':1}
             )
         >>> asNumpyArray = data.copyAs('numpy array')
         >>> asNumpyArray
-        array([[1., 0., 0., 0., 0.],
-               [0., 1., 0., 0., 0.],
-               [0., 0., 1., 0., 0.],
-               [0., 0., 0., 1., 0.],
-               [0., 0., 0., 0., 1.]])
+        array([[1., 0.],
+               [0., 1.]])
         >>> asListOfDict = data.copyAs('list of dict')
-        >>> asListOfDict #doctest: +ELLIPSIS
-        [{'a': 1.0, 'b': 0.0, 'c': 0.0, 'd': 0.0, 'e': 0.0}, ...]
+        >>> asListOfDict
+        [{'a': 1.0, 'b': 0.0}, {'a': 0.0, 'b': 1.0}]
         """
         #make lower case, strip out all white space and periods, except if
         # format is one of the accepted UML data types
@@ -2653,19 +2652,18 @@ class Base(object):
 
         Examples
         --------
-        >>> raw = [[1, 2, 3],
-        ...        [4, 5, 6],
-        ...        [7, 8, 9]]
-        >>> ptNames = ['1', '4', '7']
-        >>> ftNames = ['a', 'b', 'c']
+        >>> raw = [[1, 2],
+        ...        [3, 4]]
+        >>> ptNames = ['1', '4']
+        >>> ftNames = ['a', 'b']
         >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
         ...                       featureNames=ftNames)
         >>> data.flattenToOnePoint()
-        >>> data #doctest: +ELLIPSIS
+        >>> data
         Matrix(
-            [[1.000 2.000 3.000 4.000 5.000 6.000 7.000 8.000 9.000]]
+            [[1.000 2.000 3.000 4.000]]
             pointNames={'Flattened':0}
-            featureNames={'a | 1':0, 'b | 1':1, ... 'c | 7':8}
+            featureNames={'a | 1':0, 'b | 1':1, 'a | 4':2, 'b | 4':3}
             )
         """
         if UML.logger.active.position == 0:
@@ -2720,26 +2718,20 @@ class Base(object):
 
         Examples
         --------
-        >>> raw = [[1, 2, 3],
-        ...        [4, 5, 6],
-        ...        [7, 8, 9]]
-        >>> ptNames = ['1', '4', '7']
-        >>> ftNames = ['a', 'b', 'c']
+        >>> raw = [[1, 2],
+        ...        [3, 4]]
+        >>> ptNames = ['1', '4']
+        >>> ftNames = ['a', 'b']
         >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
         ...                       featureNames=ftNames)
         >>> data.flattenToOneFeature()
-        >>> data #doctest: +ELLIPSIS
+        >>> data
         Matrix(
             [[1.000]
-             [4.000]
-             [7.000]
-             [2.000]
-             [5.000]
-             [8.000]
              [3.000]
-             [6.000]
-             [9.000]]
-            pointNames={'1 | a':0, '4 | a':1, '7 | a':2, ... '7 | c':8}
+             [2.000]
+             [4.000]]
+            pointNames={'1 | a':0, '4 | a':1, '1 | b':2, '4 | b':3}
             featureNames={'Flattened':0}
             )
         """
@@ -3523,7 +3515,7 @@ class Base(object):
 
         Parameters
         ----------
-        pseudoInverse: bool
+        pseudoInverse : bool
             Whether to compute pseudoInverse or multiplicative inverse.
         """
 
@@ -3540,11 +3532,12 @@ class Base(object):
 
        Parameters
        ----------
-       b: UML Base object.
+       b : UML Base object.
         Vector shaped object.
-       solveFuction: str
-        'solve' assumes square matrix.
-        'least squares' Computes object x such that 2-norm |b - Ax| is minimized.
+       solveFuction : str
+        * 'solve' - assumes square matrix.
+        * 'least squares' - Computes object x such that 2-norm |b - Ax|
+          is minimized.
         """
         if not isinstance(b, UML.data.Base):
             msg = "b must be an instance of Base."
@@ -3552,12 +3545,12 @@ class Base(object):
 
         msg = "Valid methods are: 'solve' and 'least squares'."
 
-        if not isinstance (solveFunction, str):
+        if not isinstance(solveFunction, str):
             raise InvalidArgumentType(msg)
         elif solveFunction == 'solve':
-                return UML.calculate.solve(self, b)
+            return UML.calculate.solve(self, b)
         elif solveFunction == 'least squares':
-                return UML.calculate.leastSquaresSolution(self, b)
+            return UML.calculate.leastSquaresSolution(self, b)
         else:
             raise InvalidArgumentValue(msg)
 

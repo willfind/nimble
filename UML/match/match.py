@@ -6,6 +6,7 @@ from __future__ import absolute_import
 import numpy
 import six
 
+import UML
 from UML.exceptions import InvalidArgumentValue
 
 def missing(value):
@@ -105,7 +106,7 @@ def nonNumeric(value):
     >>> nonNumeric(8)
     False
     >>> nonNumeric(float('nan'))
-    True
+    False
     """
     return not isinstance(value, (int, float, complex, numpy.number))
 
@@ -673,9 +674,9 @@ def anyNonZero(data):
     >>> anyNonZero(data)
     True
 
-    >>> raw = [[1, 2, '0'],
-    ...        [1, 2, '1'],
-    ...        [1, 2, '2']]
+    >>> raw = [[0, 0, 0.0],
+    ...        [0, 0, 0.0],
+    ...        [0, 0, 0.0]]
     >>> data = UML.createData('List', raw)
     >>> anyNonZero(data)
     False

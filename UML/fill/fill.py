@@ -63,7 +63,7 @@ def factory(match, fill, **kwarguments):
     >>> data = UML.createData('Matrix', raw)
     >>> transform = factory(match.zero, backwardFill)
     >>> transform(data)
-    [1, 3, 3, 5, 5]
+    [1.0, 3.0, 3.0, 5.0, 5.0]
     """
     match = convertMatchToFunction(match)
     if not hasattr(fill, '__call__'):
@@ -124,7 +124,7 @@ def constant(vector, match, constantValue):
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = UML.createData('Matrix', raw)
     >>> constant(data, match.zero, 99)
-    [1, 99, 3, 99, 5]
+    [1.0, 99, 3.0, 99, 5.0]
     """
     match = convertMatchToFunction(match)
     return [constantValue if match(val) else val for val in vector]
@@ -164,7 +164,7 @@ def mean(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> mean(data, 'na')
-    [1, 3, 3, 3, 5]
+    [1, 3.0, 3, 3.0, 5]
 
     Match using a function from UML's match module.
 
@@ -172,7 +172,7 @@ def mean(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
     >>> mean(data, match.zero)
-    [6, 4, 2, 4, 4]
+    [6.0, 4.0, 2.0, 4.0, 4.0]
     """
     return statsBackend(vector, match, 'mean', UML.calculate.mean)
 
@@ -212,7 +212,7 @@ def median(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> median(data, 'na')
-    [1, 3, 3, 3, 5]
+    [1, 3.0, 3, 3.0, 5]
 
     Match using a function from UML's match module.
 
@@ -220,7 +220,7 @@ def median(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
     >>> median(data, match.zero)
-    [6, 4, 2, 4, 4]
+    [6.0, 4.0, 2.0, 4.0, 4.0]
     """
     return statsBackend(vector, match, 'median', UML.calculate.median)
 
@@ -258,7 +258,7 @@ def mode(vector, match):
     >>> raw = [1, 'na', 1, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> mode(data, 'na')
-    [1, 1, 1, 1, 5]
+    [1, 1.0, 1, 1.0, 5]
 
     Match using a function from UML's match module.
 
@@ -266,7 +266,7 @@ def mode(vector, match):
     >>> raw = [6, 6, 2, 0, 0]
     >>> data = UML.createData('Matrix', raw)
     >>> mode(data, match.zero)
-    [6, 6, 2, 6, 6]
+    [6.0, 6.0, 2.0, 6.0, 6.0]
     """
     return statsBackend(vector, match, 'mode', UML.calculate.mode)
 
@@ -315,7 +315,7 @@ def forwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
     >>> forwardFill(data, match.zero)
-    [6, 6, 2, 2, 4]
+    [6.0, 6.0, 2.0, 2.0, 4.0]
     """
     match = convertMatchToFunction(match)
     if match(vector[0]):
@@ -374,13 +374,13 @@ def backwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = UML.createData('Matrix', raw)
     >>> backwardFill(data, match.zero)
-    [6, 2, 2, 4, 4]
+    [6.0, 2.0, 2.0, 4.0, 4.0]
     """
     match = convertMatchToFunction(match)
     if match(vector[-1]):
         msg = directionError('backward fill', vector, 'last')
         raise InvalidArgumentValue(msg)
-    ret = numpy.empty_like(vector)
+    ret = numpy.empty_like(vector, dtype=numpy.object_)
     numValues = len(vector)
     for i, val in enumerate(reversed(vector)):
         idx = numValues - i - 1
@@ -430,7 +430,7 @@ def interpolate(vector, match, **kwarguments):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = UML.createData('Matrix', raw)
     >>> interpolate(data, 'na')
-    [1, 2, 3, 4, 5]
+    [1, 2.0, 3, 4.0, 5]
 
     Match using a function from UML's match module.
 
@@ -438,7 +438,7 @@ def interpolate(vector, match, **kwarguments):
     >>> raw = [6, 0, 4, 0, 2]
     >>> data = UML.createData('Matrix', raw)
     >>> interpolate(data, match.zero)
-    [6, 5, 4, 3, 2]
+    [6.0, 5.0, 4.0, 3.0, 2.0]
     """
     match = convertMatchToFunction(match)
     if 'x' in kwarguments:
@@ -508,14 +508,14 @@ def kNeighborsRegressor(data, match, **kwarguments):
     ...        [2, 2, 2],
     ...        ['na', 2, 2]]
     >>> data = UML.createData('Matrix', raw)
-    >>> kNeighborsClassifier(data, 'na', arguments={'n_neighbors': 3})
+    >>> kNeighborsRegressor(data, 'na', arguments={'n_neighbors': 3})
     Matrix(
-    [[  1   1   1  ]
-     [  1   1   1  ]
-     [  1   1 1.333]
-     [  2   2   2  ]
-     [1.333 2   2  ]]
-    )
+        [[  1   1   1  ]
+         [  1   1   1  ]
+         [  1   1 1.333]
+         [  2   2   2  ]
+         [1.333 2   2  ]]
+        )
     """
     return kNeighborsBackend("skl.KNeighborsRegressor", data, match,
                              **kwarguments)

@@ -137,6 +137,32 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
+    @raises(InvalidArgumentValue)
+    def test_points_calculate_functionReturns2D(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def return2D(point):
+            return [[val for val in point]]
+
+        calc = toTest.points.calculate(return2D)
+
+    @raises(InvalidArgumentValue)
+    def test_points_calculate_functionReturnsInvalidObj(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnInvalidObj(point):
+            return int
+
+        calc = toTest.points.calculate(returnInvalidObj)
+
     @raises(CalledFunctionException)
     @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_calculate_calls_constructIndicesList(self, mockFunc):
@@ -159,6 +185,25 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor(expectedOut, pointNames=pointNames)
 
         assert lowerCounts.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsUMLObject(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnUMLObj(point):
+            ret = point * 2
+            assert isinstance(ret, UML.data.Base)
+            return ret
+
+        calc = toTest.points.calculate(returnUMLObj)
+
+        expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
+        exp = self.constructor(expData, pointNames=pointNames)
+
+        assert calc.isIdentical(exp)
 
     def test_points_calculate_NamePathPreservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -193,11 +238,30 @@ class HighLevelDataSafe(DataTestObject):
 
         lowerCounts = origObj.points.calculate(emitLower, points=['three', 2])
 
-        expectedOut = [[0.1], [0.2]]
-        expPnames = ['two', 'three']
+        expectedOut = [[0.2], [0.1]]
+        expPnames = ['three', 'two']
         exp = self.constructor(expectedOut, pointNames=expPnames)
 
         assert lowerCounts.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsUMLObject_limited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnUMLObj(point):
+            ret = point * 2
+            assert isinstance(ret, UML.data.Base)
+            return ret
+
+        calc = toTest.points.calculate(returnUMLObj, points=['two', 'zero'])
+
+        expData = [[2, 0.2, 0.06], [2, 0.2, 0.02]]
+        exp = self.constructor(expData, pointNames=['two', 'zero'])
+
+        assert calc.isIdentical(exp)
 
     def test_points_calculate_nonZeroItAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
@@ -258,6 +322,32 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.features.calculate(None)
 
+    @raises(InvalidArgumentValue)
+    def test_features_calculate_functionReturns2D(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def return2D(feature):
+            return [[val for val in feature]]
+
+        calc = toTest.features.calculate(return2D)
+
+    @raises(InvalidArgumentValue)
+    def test_features_calculate_functionReturnsInvalidObj(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnInvalidObj(feature):
+            return int
+
+        calc = toTest.features.calculate(returnInvalidObj)
+
     @raises(CalledFunctionException)
     @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_calculate_calls_constructIndicesList(self, mockFunc):
@@ -282,6 +372,25 @@ class HighLevelDataSafe(DataTestObject):
         expectedOut = [[1, 0, 0]]
         exp = self.constructor(expectedOut, featureNames=featureNames)
         assert lowerCounts.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsUMLObject(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnUMLObj(feature):
+            ret = feature * 2
+            assert isinstance(ret, UML.data.Base)
+            return ret
+
+        calc = toTest.features.calculate(returnUMLObj)
+
+        expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
+        exp = self.constructor(expData, featureNames=featureNames)
+
+        assert calc.isIdentical(exp)
 
     def test_features_calculate_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -327,6 +436,25 @@ class HighLevelDataSafe(DataTestObject):
         expFNames = ['number', 'centi']
         exp = self.constructor(expectedOut, featureNames=expFNames)
         assert lowerCounts.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsUMLObject_limited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def returnUMLObj(feature):
+            ret = feature * 2
+            assert isinstance(ret, UML.data.Base)
+            return ret
+
+        calc = toTest.features.calculate(returnUMLObj, features=['deci', 'number'])
+
+        expData = [[0.2, 2], [0.2, 2], [0.2, 2], [0.4, 2]]
+        exp = self.constructor(expData, featureNames=['deci', 'number'])
+
+        assert calc.isIdentical(exp)
 
     def test_features_calculate_nonZeroIterAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
