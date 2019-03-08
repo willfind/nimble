@@ -10,12 +10,14 @@ from nose.tools import *
 import UML
 from UML.calculate import confidenceIntervalHelper
 from UML.exceptions import PackageException, ImproperObjectAction
+from ..logger.testLoggingCount import noLogEntryExpected
 
+@noLogEntryExpected
 def getPredictions():
     predRaw = [252.7, 247.7] * 12
     predRaw.append(250.2)
-    pred = UML.createData("Matrix", predRaw)
-    pred.transpose()
+    pred = UML.createData("Matrix", predRaw, useLog=False)
+    pred.transpose(useLog=False)
 
     assert len(pred.points) == 25
     assert len(pred.features) == 1

@@ -23,6 +23,7 @@ from UML.configuration import configSafetyWrapper
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import InvalidArgumentType
+from .testLoggingCount import noLogEntryExpected, oneLogEntryExpected
 
 #####################
 # Helpers for tests #
@@ -547,6 +548,11 @@ def testLogUnacceptedlogInfo():
     dataObj = UML.createData("Matrix", [[1]], useLog=False)
     UML.log("acceptable", dataObj)
 
+@oneLogEntryExpected
+def test_log_logCount():
+    customString = "enter this string into the log"
+    UML.log("customString", customString)
+
 ##############
 ### OUTPUT ###
 ##############
@@ -764,3 +770,7 @@ def testLeastRunsAgoNegative():
 @raises(InvalidArgumentValueCombination)
 def testMostRunsLessThanLeastRuns():
     UML.showLog(leastRunsAgo=2, mostRunsAgo=1)
+
+@noLogEntryExpected
+def test_showLog_logCount():
+    UML.showLog()

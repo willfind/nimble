@@ -13,6 +13,7 @@ import UML.randomness
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 from six.moves import range
+from .logger.testLoggingCount import noLogEntryExpected
 
 
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
@@ -67,3 +68,7 @@ def testSetRandomSeedPropagate():
     assert toTest1 == toTest3
     assert toTest1 != toTest2
 
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@noLogEntryExpected
+def testSetRandomSeed_logCount():
+    UML.setRandomSeed(1333)

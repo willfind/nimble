@@ -11,6 +11,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.customLearners.ridge_regression import RidgeRegression
 from UML.configuration import configSafetyWrapper
+from .logger.testLoggingCount import noLogEntryExpected
 
 
 class LoveAtFirstSightClassifier(CustomLearner):
@@ -273,3 +274,13 @@ def test_settings_autoRegister_safety():
 
     # should throw warning, not exception
     UML.helpers.autoRegisterFromSettings()
+
+@configSafetyWrapper
+@noLogEntryExpected
+def test_logCount():
+    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    lst = UML.listLearners("Foo")
+    params = UML.learnerParameters("Foo.LoveAtFirstSightClassifier")
+    defaults = UML.learnerDefaultValues("Foo.LoveAtFirstSightClassifier")
+    lType = UML.learnerType("Foo.LoveAtFirstSightClassifier")
+    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
