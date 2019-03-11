@@ -229,29 +229,12 @@ def solve(aObj, bObj):
         [[2.000 -2.000 9.000]]
     )
     """
-    if not isinstance(aObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Left hand side object must be derived class of UML.data.Base.")
-    if not isinstance(bObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Right hand side object must be derived class of UML.data.Base.")
+    bObj = _backendsolversValidation(aObj, bObj)
+
     if len(aObj.points) != len(aObj.features):
         msg = 'Object A has to be square \
         (Number of features and points needs to be equal).'
         raise InvalidArgumentValue(msg)
-    if len(bObj.points) != 1 and len(bObj.features) != 1:
-        raise InvalidArgumentValue("b should be a vector")
-    elif len(bObj.points) == 1 and len(bObj.features) > 1:
-        if len(aObj.points) != len(bObj.features):
-            raise InvalidArgumentValueCombination(
-                'A and b have incompatible dimensions.')
-        else:
-            bObj = bObj.copy()
-            bObj.flattenToOneFeature()
-    elif len(bObj.points) > 1 and len(bObj.features) == 1:
-        if len(aObj.points) != len(bObj.points):
-            raise InvalidArgumentValueCombination(
-                'A and b have incompatible dimensions.')
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
@@ -311,14 +294,10 @@ def leastSquaresSolution(aObj, bObj):
     InvalidArgumentValueCombination:
         If `aObj` and `bObj` have incompatible dimensions.
 
-    TODO: Example comaparable with scipy counterpart.
+    TODO: Example comparable with scipy counterpart.
     """
-    if not isinstance(aObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Left hand side object must be derived class of UML.data.Base.")
-    if not isinstance(bObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Right hand side object must be derived class of UML.data.Base.")
+    bObj = _backendsolversValidation(aObj, bObj)
+
     if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
     elif len(bObj.points) == 1 and len(bObj.features) > 1:
@@ -354,3 +333,28 @@ def leastSquaresSolution(aObj, bObj):
                                             numpy.asarray(bObj.data))
         sol.data = numpy.asmatrix(solution[0])
     return sol.copyAs(aOriginalType)
+
+
+
+def _backendsolversValidation(aObj, bObj):
+    if not isinstance(aObj, UML.data.Base):
+        raise InvalidArgumentType(
+            "Left hand side object must be derived class of UML.data.Base.")
+    if not isinstance(bObj, UML.data.Base):
+        raise InvalidArgumentType(
+            "Right hand side object must be derived class of UML.data.Base.")
+
+    if len(bObj.points) != 1 and len(bObj.features) != 1:
+        raise InvalidArgumentValue("b should be a vector")
+    elif len(bObj.points) == 1 and len(bObj.features) > 1:
+        if len(aObj.points) != len(bObj.features):
+            raise InvalidArgumentValueCombination(
+                'A and b have incompatible dimensions.')
+        else:
+            bObj = bObj.copy()
+            bObj.flattenToOneFeature()
+    elif len(bObj.points) > 1 and len(bObj.features) == 1:
+        if len(aObj.points) != len(bObj.points):
+            raise InvalidArgumentValueCombination(
+                'A and b have incompatible dimensions.')
+    return bObj
