@@ -33,6 +33,7 @@ from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString, logCaptureFactory
+from .dataHelpers import isAllowedSingleElement
 
 class Axis(object):
     """
@@ -400,7 +401,7 @@ class Axis(object):
         if isinstance(self, Points):
             if limitTo is not None and self._namesCreated():
                 names = []
-                for index in sorted(limitTo):
+                for index in limitTo:
                     names.append(self._getName(index))
                 ret.points.setNames(names)
             elif self._namesCreated():
@@ -408,7 +409,7 @@ class Axis(object):
         else:
             if limitTo is not None and self._namesCreated():
                 names = []
-                for index in sorted(limitTo):
+                for index in limitTo:
                     names.append(self._getName(index))
                 ret.features.setNames(names)
             elif self._namesCreated():
@@ -423,28 +424,37 @@ class Axis(object):
 
     def _calculate_implementation(self, function, limitTo):
         retData = []
-        for viewID, view in enumerate(self):
-            if limitTo is not None and viewID not in limitTo:
-                continue
-            currOut = function(view)
-            # first we branch on whether the output has multiple values
-            # or is singular.
-            if (hasattr(currOut, '__iter__') and
-                    # in python3, string has __iter__ too.
-                    not isinstance(currOut, six.string_types)):
-                # if there are multiple values, they must be random accessible
-                if not hasattr(currOut, '__getitem__'):
-                    msg = "function must return random accessible data "
-                    msg += "(ie has a __getitem__ attribute)"
-                    raise InvalidArgumentType(msg)
-
-                toCopyInto = []
-                for value in currOut:
-                    toCopyInto.append(value)
-                retData.append(toCopyInto)
-            # singular return
+        if limitTo is None:
+            limitTo = [i for i in range(len(self))]
+        for axisID in limitTo:
+            if isinstance(self, Points):
+                view = self._source.pointView(axisID)
             else:
+                view = self._source.featureView(axisID)
+
+            currOut = function(view)
+            # the output could have multiple values or be singular.
+            if isAllowedSingleElement(currOut):
                 retData.append([currOut])
+            else:
+                try:
+                    toCopyInto = []
+                    for value in currOut:
+                        if isAllowedSingleElement(value):
+                            toCopyInto.append(value)
+                        else:
+                            msg = "The return of 'function' contains an "
+                            msg += "invalid value. Numbers, strings, None, or "
+                            msg += "nan are the only valid values. This value "
+                            msg += "was " + str(type(value))
+                            raise InvalidArgumentValue(msg)
+                    retData.append(toCopyInto)
+                # not iterable
+                except TypeError:
+                    msg = "'function' must return a single valid value "
+                    msg += "(number, string, None, or nan) or an iterable "
+                    msg += "container of valid values"
+                    raise InvalidArgumentValue(msg)
 
         ret = UML.createData(self._source.getTypeString(), retData)
         if self._axis != 'point':

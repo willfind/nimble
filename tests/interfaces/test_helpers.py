@@ -6,11 +6,11 @@ Functions that could be useful accross multple interface test suites
 from __future__ import absolute_import
 import numpy
 
-from UML.data import Base
 from six.moves import range
-#from UML.interfaces.interface_helpers import valueFromOneVOneData
 
-from .interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+
+from UML.data import Base
+from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 
 
 def test_OvOTournament():

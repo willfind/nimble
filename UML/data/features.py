@@ -1014,7 +1014,7 @@ class Features(object):
 
         See Also
         --------
-        calculate : return a new object instead of performing inplace
+        calculate
 
         Examples
         --------
@@ -1093,7 +1093,7 @@ class Features(object):
 
         See also
         --------
-        transform : calculate inplace
+        transform
 
         Examples
         --------
@@ -1127,14 +1127,16 @@ class Features(object):
 
         Apply calculation to a subset of features.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> ftNames = ['f1', 'f2', 'f3']
+        >>> data = UML.identity('Matrix', 3, featureNames=ftNames)
         >>> calc = data.features.calculate(lambda ft: ft + 6,
-        ...                                features=[1, 3])
+        ...                                features=[2, 0])
         >>> calc
         Matrix(
-            [[1.000 7.000 1.000 7.000 1.000]
-             [1.000 7.000 1.000 7.000 1.000]
-             [1.000 7.000 1.000 7.000 1.000]]
+            [[6.000 7.000]
+             [6.000 6.000]
+             [7.000 6.000]]
+            featureNames={'f3':0, 'f1':1}
             )
         """
         if UML.logger.active.position == 0:

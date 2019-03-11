@@ -355,6 +355,9 @@ class AlwaysWarnInterface(UniversalInterface):
     def _exposedFunctions(self):
         return []
 
+    def version(self):
+        return "0.0.0"
+
 
 #def test_warningscapture_init():
 #	AWObject = AlwaysWarnInterface()

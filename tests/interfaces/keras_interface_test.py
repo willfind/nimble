@@ -6,16 +6,23 @@ Unit tests for keras_interface.py
 from __future__ import absolute_import
 
 import numpy as np
-from keras import __version__ as kerasVersion
 
 import UML
 from UML import createData
 from UML.interfaces.keras_interface import Keras
 
+from .skipTestDecorator import SkipMissing
+
+keras = UML.importExternalLibraries.importModule("keras")
+
+keraSkipDec = SkipMissing('Keras')
+
+@keraSkipDec
 def test_Keras_version():
     interface = Keras()
-    assert interface.version() == kerasVersion
+    assert interface.version() == keras.__version__
 
+@keraSkipDec
 def testKerasAPI():
     """
     Test Keras can handle a variety of arguments passed to all major learning functions
@@ -53,6 +60,7 @@ def testKerasAPI():
     #########test CV
     bestArgument, bestScore = UML.crossValidateReturnBest("keras.Sequential", X=x_train, Y=y_train, optimizer='sgd', layers=layers, loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True, performanceFunction=UML.calculate.loss.rootMeanSquareError)
 
+@keraSkipDec
 def testKerasIncremental():
     """
     Test Keras can handle and incrementalTrain call
@@ -77,6 +85,7 @@ def testKerasIncremental():
     x = mym.apply(testX=x_train)
     assert len(x.points) == len(x_train.points)
 
+@keraSkipDec
 def testKeras_Sparse_FitGenerator():
     """
     Test Keras on Sparse data; uses different training method - fit_generator
