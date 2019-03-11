@@ -122,7 +122,7 @@ if extensions:
     try:
         run_setup(extensions)
         print('*' * 79)
-        print("Successfully built with C extensions.")
+        print("Successfully built UML with C extensions.")
         print('*' * 79)
     except BuildFailed:
         run_setup()
