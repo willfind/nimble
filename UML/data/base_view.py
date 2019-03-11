@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 
+import UML
 from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .dataHelpers import readOnlyException

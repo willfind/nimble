@@ -1006,7 +1006,7 @@ class Points(object):
 
         See Also
         --------
-        calculate : return a new object instead of performing inplace
+        calculate
 
         Examples
         --------
@@ -1085,7 +1085,7 @@ class Points(object):
 
         See also
         --------
-        transform : calculate inplace
+        transform
 
         Examples
         --------
@@ -1119,14 +1119,15 @@ class Points(object):
 
         Transform a subset of points.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> ptNames = ['p1', 'p2', 'p3']
+        >>> data = UML.identity('Matrix', 3, pointNames=ptNames)
         >>> calc = data.points.calculate(lambda pt: pt + 6,
-        ...                              points=[0, 2])
+        ...                              points=[2, 0])
         >>> calc
         Matrix(
-            [[7.000 7.000 7.000 7.000 7.000]
-             [1.000 1.000 1.000 1.000 1.000]
-             [7.000 7.000 7.000 7.000 7.000]]
+            [[6.000 6.000 7.000]
+             [7.000 6.000 6.000]]
+            pointNames={'p3':0, 'p1':1}
             )
         """
         if UML.logger.active.position == 0:

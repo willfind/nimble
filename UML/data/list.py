@@ -23,26 +23,10 @@ from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import isAllowedSingleElement
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
-
-allowedItemType = (numbers.Number, six.string_types)
-def isAllowedSingleElement(x):
-    """
-    This function is to determine if an element is an allowed single
-    element
-    """
-    if isinstance(x, allowedItemType):
-        return True
-
-    if hasattr(x, '__len__'):#not a single element
-        return False
-
-    if x is None or x != x:#None and np.NaN are allowed
-        return True
-
-    return
 
 @inheritDocstringsFactory(Base)
 class List(Base):
