@@ -50,18 +50,13 @@ if '--universal' not in sys.argv:
     # Make sure the compiled Cython files in the distribution are up-to-date
     try:
         from Cython.Build import cythonize, build_ext
-        # TODO
-          # inspect module does not work with cython
-            # reconfigure UML/data to keep logging separate
-            # one instance of inspect in UML/data/axis.py
         to_cythonize = [os.path.join('UML', 'helpers.py'),
                         os.path.join('UML', 'data', '*.py'),]
-        exclude = [os.path.join('UML', 'data', '__init__.py'),
-                   os.path.join('UML', 'data', 'dataHelpers.py'), # bug in py2
-                   ]
+        exclude = [os.path.join('UML', 'data', '__init__.py'),]
         cythonize(to_cythonize, exclude=exclude,
                   compiler_directives={'always_allow_keywords': True,
-                                       'language_level': 2},
+                                       'language_level': 3,
+                                       'binding': True},
                   exclude_failures=True,)
         extensions = getExtensions()
     except ImportError:
@@ -108,8 +103,6 @@ def run_setup(extensions=None):
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
     setupKwargs['classifiers'] = (
         'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
