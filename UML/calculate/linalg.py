@@ -242,23 +242,25 @@ def solve(aObj, bObj):
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
         bObj = bObj.copyAs('Matrix')
 
-    sol = aObj[0, :].copyAs('Matrix')
-    sol.points.setNames(['b'])
-
     if aObj.getTypeString() == 'Matrix':
         solution = scipy.linalg.solve(aObj.data, bObj.data)
-        sol.data = solution.T
+        solution = solution.T
+
     elif isinstance(aObj, UML.data.sparse.SparseView):
         aCopy = aObj.copy()
         solution = scipy.sparse.linalg.spsolve(aCopy.data,
                                                numpy.asarray(bObj.data))
-        sol.data = numpy.asmatrix(solution)
+        solution = numpy.asmatrix(solution)
+
     elif aObj.getTypeString() == 'Sparse':
         solution = scipy.sparse.linalg.spsolve(aObj.data,
                                                numpy.asarray(bObj.data))
-        sol.data = numpy.asmatrix(solution)
+        solution = numpy.asmatrix(solution)
 
-    return sol.copyAs(aOriginalType)
+    sol = UML.createData(aOriginalType, solution,
+                             featureNames=aObj.features.getNames())
+
+    return sol
 
 
 def leastSquaresSolution(aObj, bObj):
@@ -298,41 +300,30 @@ def leastSquaresSolution(aObj, bObj):
     """
     bObj = _backendsolversValidation(aObj, bObj)
 
-    if len(bObj.points) != 1 and len(bObj.features) != 1:
-        raise InvalidArgumentValue("b should be a vector")
-    elif len(bObj.points) == 1 and len(bObj.features) > 1:
-        if len(aObj.points) != len(bObj.features):
-            raise InvalidArgumentValueCombination(
-                'A and b have incompatible dimensions.')
-        else:
-            bObj = bObj.copy()
-            bObj.flattenToOneFeature()
-    elif len(bObj.points) > 1 and len(bObj.features) == 1:
-        if len(aObj.points) != len(bObj.points):
-            raise InvalidArgumentValueCombination(
-                'A and b have incompatible dimensions.')
-
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
         aObj = aObj.copyAs('Matrix')
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
         bObj = bObj.copyAs('Matrix')
 
-    sol = aObj[0, :].copyAs('Matrix')
-    sol.points.setNames(['b'])
     if aObj.getTypeString() == 'Matrix':
         solution = scipy.linalg.lstsq(aObj.data, bObj.data)
-        sol.data = solution[0].T
+        solution = solution[0].T
+
     elif isinstance(aObj, UML.data.sparse.SparseView):
         aCopy = aObj.copy()
         solution = scipy.sparse.linalg.lsqr(aCopy.data,
                                             numpy.asarray(bObj.data))
-        sol.data = numpy.asmatrix(solution[0])
+        solution = numpy.asmatrix(solution[0])
+
     elif aObj.getTypeString() == 'Sparse':
         solution = scipy.sparse.linalg.lsqr(aObj.data,
                                             numpy.asarray(bObj.data))
-        sol.data = numpy.asmatrix(solution[0])
-    return sol.copyAs(aOriginalType)
+        solution = numpy.asmatrix(solution[0])
+
+    sol = UML.createData(aOriginalType, solution,
+                         featureNames=aObj.features.getNames())
+    return sol
 
 
 
@@ -358,3 +349,8 @@ def _backendsolversValidation(aObj, bObj):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
     return bObj
+
+
+def _backendsolvers(aObj, bObj):
+    pass
+
