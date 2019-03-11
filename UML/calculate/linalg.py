@@ -91,11 +91,12 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
 
-    invObj.transpose()
-    invObj.data = invData
-    if aObj.getTypeString() != invObj.getTypeString:
-        invObj = invObj.copyAs(aObj.getTypeString())
-    return invObj
+    return UML.createData(aObj.getTypeString(), invData)
+    # invObj.transpose()
+    # invObj.data = invData
+    # if aObj.getTypeString() != invObj.getTypeString:
+    #     invObj = invObj.copyAs(aObj.getTypeString())
+    # return invObj
 
 
 def pseudoInverse(aObj, method='svd'):

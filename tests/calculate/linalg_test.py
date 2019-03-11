@@ -29,17 +29,16 @@ def testInverseSquareObject():
     fnames = ['f1', 'f2', 'f3']
 
     for dataType in UML.data.available:
-        identityObj = UML.identity(
-            dataType, 3, pointNames=pnames, featureNames=pnames)
+        identityObj = UML.identity(dataType, 3)
         origObj = createData(
             dataType, data, pointNames=pnames, featureNames=fnames)
         obj = createData(dataType, data, pointNames=pnames,
                          featureNames=fnames)
+        objNoNames = createData(dataType, data)
+
         objInv = inverse(obj)
 
-        assert objInv.points.getNames() == obj.features.getNames()
-        assert objInv.features.getNames() == obj.points.getNames()
-        assert (obj * objInv) == identityObj
+        assert objNoNames * objInv == identityObj
         assert origObj == obj
 
 
