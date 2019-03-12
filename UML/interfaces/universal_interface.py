@@ -11,11 +11,6 @@ import abc
 import functools
 import sys
 import numbers
-import warnings
-
-import numpy
-import six
-from six.moves import range
 
 import numpy
 import six
@@ -31,7 +26,7 @@ from UML.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
-from UML.logger import logCapture, Stopwatch, enableLogging, directCall
+from UML.logger import logPosition, Stopwatch, handleLogging
 from UML.helpers import _mergeArguments
 from UML.helpers import generateAllPairs, countWins, inspectArguments
 from UML.helpers import extractWinningPredictionIndex
@@ -1383,6 +1378,7 @@ class TrainedLearner(object):
             setattr(self, methodName, wrapped)
 
     @captureOutput
+    @logPosition
     def test(self, testX, testY, performanceFunction, arguments=None,
              output='match', scoreMode='label', useLog=None, **kwarguments):
         """
@@ -1462,14 +1458,6 @@ class TrainedLearner(object):
         --------
         TODO
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(TrainedLearner.test)
-            else:
-                wrapped = directCall(TrainedLearner.test)
-            return wrapped(self, testX, testY, performanceFunction, arguments,
-                           output, scoreMode, useLog, **kwarguments)
-
         #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
         #                               multiClassStrategy)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
@@ -1489,11 +1477,10 @@ class TrainedLearner(object):
         # Signature:
         # (umlFunction, trainData, trainLabels, testData, testLabels,
         # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None)
-        UML.logger.active.logRun("TrainedLearner.test", trainData=None,
-                                 trainLabels=None, testData=testX,
-                                 testLabels=testY, learnerFunction=fullName,
-                                 arguments=mergedArguments, metrics=metrics,
-                                 extraInfo=None, numFolds=None)
+        handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
+                      trainLabels=None, testData=testX, testLabels=testY,
+                      learnerFunction=fullName, arguments=mergedArguments,
+                      metrics=metrics, extraInfo=None, numFolds=None)
 
         return performance
 
@@ -1507,6 +1494,7 @@ class TrainedLearner(object):
         return ret
 
     @captureOutput
+    @logPosition
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
         """
@@ -1583,14 +1571,6 @@ class TrainedLearner(object):
         --------
         TODO
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(TrainedLearner.apply)
-            else:
-                wrapped = directCall(TrainedLearner.apply)
-            return wrapped(self, testX, arguments, output, scoreMode,
-                           useLog=False, **kwarguments)
-
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
 
@@ -1638,11 +1618,10 @@ class TrainedLearner(object):
         # Signature:
         # (self, umlFunction, trainData, trainLabels, testData, testLabels,
         # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None
-        UML.logger.active.logRun(
-            "TrainedLearner.apply", trainData=None, trainLabels=None,
-            testData=testX, testLabels=None, learnerFunction=fullName,
-            arguments=mergedArguments, metrics=None, extraInfo=None,
-            numFolds=None)
+        handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
+                      trainLabels=None, testData=testX, testLabels=None,
+                      learnerFunction=fullName, arguments=mergedArguments,
+                      metrics=None, extraInfo=None, numFolds=None)
 
         return ret
 

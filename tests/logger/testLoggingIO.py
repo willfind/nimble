@@ -339,7 +339,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
     checkLogContents('elements.calculate', "Matrix", [('function', "lambda x: len(x)"),
-                                                      ('features', 0)])
+                                                      ('features', [0])])
 
     # points.calculate; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
@@ -350,7 +350,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.features.calculate(lambda x: len(x), features=0)
     checkLogContents('features.calculate', "Matrix", [('function', "lambda x: len(x)"),
-                                                      ('features', 0)])
+                                                      ('features', [0])])
 
     # points.shuffle; createData not logged
     dataObj = UML.createData("List", data, useLog=False)
@@ -381,6 +381,16 @@ def testPrepTypeFunctionsUseLog():
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.sort(sortBy=dataObj.points.getName(0))
     checkLogContents('features.sort', "Matrix", [('sortBy', dataObj.points.getName(0))])
+
+    # points.copy; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.points.copy(0)
+    checkLogContents('points.copy', "Matrix", [('toCopy', 0)])
+
+    # features.copy; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.features.copy(number=1)
+    checkLogContents('features.copy', "Matrix", [('number', 1)])
 
     # points.extract; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
@@ -428,14 +438,14 @@ def testPrepTypeFunctionsUseLog():
     dataCopy = dataObj.copy()
     calculated = dataCopy.features.transform(lambda x: [val for val in x], features=0)
     checkLogContents('features.transform', "Matrix",
-                     [('function', 'lambda x: [val for val in x]'), ('features', 0)])
+                     [('function', 'lambda x: [val for val in x]'), ('features', [0])])
 
     # elements.transform; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.elements.transform(lambda x: [val for val in x], features=0)
     checkLogContents('elements.transform', "Matrix",
-                     [('toTransform', 'lambda x: [val for val in x]'), ('features', 0)])
+                     [('toTransform', 'lambda x: [val for val in x]'), ('features', [0])])
 
     # points.add; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
@@ -450,6 +460,27 @@ def testPrepTypeFunctionsUseLog():
     toAppend = UML.createData("Matrix", appendData, useLog=False)
     dataObj.features.add(toAppend)
     checkLogContents('features.add', "Matrix", [('toAdd', toAppend.name)])
+
+    # points.fill; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataObj.points.fill(UML.match.nonNumeric, 0)
+    checkLogContents('points.fill', "Matrix", [('toMatch', 'nonNumeric'), ('toFill', 0)])
+
+    # features.fill; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataObj.features.fill(1, UML.fill.mean, features=[1,2])
+    checkLogContents('features.fill', "Matrix", [('toMatch', 1), ('toFill', 'mean')])
+
+    # elements.multiply/power; createData not logged
+    dataObj = UML.ones('Matrix', 5, 5)
+    fives = UML.ones('Matrix', 5, 5) * 5
+    fives.name = 'fives'
+    dataObj.elements.multiply(fives)
+    checkLogContents('elements.multiply', 'Matrix', [('other', 'fives')])
+    zeros = UML.zeros('Matrix', 5, 5, name='zeros')
+    dataObj.elements.power(zeros)
+    checkLogContents('elements.power', 'Matrix', [('other', 'zeros')])
+
 
 @configSafetyWrapper
 def testDataTypeFunctionsUseLog():
@@ -474,8 +505,8 @@ def testDataTypeFunctionsUseLog():
     assert "'reportType': 'summary'" in logInfo
 
 @configSafetyWrapper
-def testBaseObjectFunctionsWithoutUseLog():
-    """test a handful of base objects that make calls to logged functions are not logged"""
+def testFunctionsWithoutUseLog():
+    """test a handful of objects that make calls to logged functions are not logged"""
 
     UML.settings.set('logger', 'enabledByDefault', 'True')
     def getLogLength():
