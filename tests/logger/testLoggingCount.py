@@ -6,9 +6,9 @@ of functions that we have confirmed are tested. If a functions are added
 or removed this tests will fail indicating an update is necessary.
 
 Tests for most functions will usually be located in the same file as
-other tests for that function, and the wrappers created here can be
-imported to test for log count. Otherwise, some tests for basic
-user-facing functions might be included here as well.
+other tests for that function. Otherwise, some tests for basic
+user-facing functions might be included here as well.  All tests for log
+count should make use of the wrappers in tests/logHelpers.py
 """
 
 import UML
@@ -22,6 +22,7 @@ from UML.data import Elements
 from UML.interfaces.universal_interface import TrainedLearner
 from UML.configuration import configSafetyWrapper
 from UML import importModule
+from ..logHelpers import noLogEntryExpected
 
 calculate.__name__ = 'calculate'
 fill.__name__ = 'fill'
@@ -56,13 +57,24 @@ calculate_logged = []
 calculate_notLogged = []
 calculate_tested = calculate_logged + calculate_notLogged
 
-fill_logged = []
-fill_notLogged = []
-fill_tested = fill_logged + fill_notLogged
+# all fill functions should not be logged.
+fill_tested = ['fill.backwardFill', 'fill.constant', 'fill.factory',
+               'fill.forwardFill', 'fill.interpolate',
+               'fill.kNeighborsClassifier', 'fill.kNeighborsRegressor',
+               'fill.mean', 'fill.median', 'fill.mode'
+               ]
 
-match_logged = []
-match_notLogged = []
-match_tested = match_logged + match_notLogged
+# all match functions should not be logged.
+match_tested = ['match.allMissing', 'match.allNegative', 'match.allNonNumeric',
+                'match.allNonZero', 'match.allNumeric', 'match.allPositive',
+                'match.allValues', 'match.allZero', 'match.anyMissing',
+                'match.anyNegative', 'match.anyNonNumeric', 'match.anyNonZero',
+                'match.anyNumeric', 'match.anyPositive', 'match.anyValues',
+                'match.anyZero', 'match.convertMatchToFunction',
+                'match.missing', 'match.negative', 'match.nonNumeric',
+                'match.nonZero', 'match.numeric', 'match.positive',
+                'match.zero'
+                ]
 
 Base_logged = []
 Base_notLogged = ['save']
@@ -81,7 +93,7 @@ Elements_notLogged = []
 Elements_tested = Elements_logged + Elements_notLogged
 
 TrainedLearner_logged = []
-TrainedLearner_notLogged = []
+TrainedLearner_notLogged = ['save']
 TrainedLearner_tested = TrainedLearner_logged + TrainedLearner_notLogged
 
 
@@ -90,32 +102,8 @@ TESTED = (UML_tested + calculate_tested + fill_tested + match_tested
 
 def testAllUserFacingLoggingTested():
     """This is to ensure that new user facing functions are tested for logging"""
+    print([f for f in ALL_USER_FACING if f.startswith('match')])
     assert sorted(TESTED) == sorted(ALL_USER_FACING)
-
-def logCountAssertionFactory(count):
-    """
-    Generate a wrapper to assert the log increased by a certain count.
-    """
-    def logCountAssertion(function):
-        @configSafetyWrapper
-        def wrapped(*args, **kwargs):
-            UML.settings.set('logger', 'enabledByDefault', 'True')
-            UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
-            logger = UML.logger.active
-            countQuery = "SELECT COUNT(entry) FROM logger"
-            startCount = logger.extractFromLog(countQuery)[0][0]
-            ret = function(*args, **kwargs)
-            endCount = logger.extractFromLog(countQuery)[0][0]
-            assert startCount + count == endCount
-            return ret
-        wrapped.__name__ = function.__name__
-        wrapped.__doc__ = function.__doc__
-        return wrapped
-    return logCountAssertion
-
-noLogEntryExpected = logCountAssertionFactory(0)
-oneLogEntryExpected = logCountAssertionFactory(1)
-twoLogEntriesExpected = logCountAssertionFactory(2)
 
 @noLogEntryExpected
 def test_importModule_logCount():

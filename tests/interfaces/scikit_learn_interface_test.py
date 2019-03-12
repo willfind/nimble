@@ -27,7 +27,7 @@ from UML.interfaces.universal_interface import UniversalInterface
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
-from ..logger.testLoggingCount import oneLogEntryExpected
+from ..logHelpers import oneLogEntryExpected
 
 scipy = UML.importModule('scipy.sparse')
 sklearn = UML.importExternalLibraries.importModule("sklearn")

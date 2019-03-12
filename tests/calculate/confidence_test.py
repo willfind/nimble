@@ -10,7 +10,7 @@ from nose.tools import *
 import UML
 from UML.calculate import confidenceIntervalHelper
 from UML.exceptions import PackageException, ImproperObjectAction
-from ..logger.testLoggingCount import noLogEntryExpected
+from ..logHelpers import noLogEntryExpected
 
 @noLogEntryExpected
 def getPredictions():

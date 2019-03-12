@@ -13,7 +13,7 @@ import UML.randomness
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 from six.moves import range
-from .logger.testLoggingCount import noLogEntryExpected
+from .logHelpers import noLogEntryExpected
 
 
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)

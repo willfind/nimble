@@ -28,7 +28,7 @@ from UML.helpers import generateClassificationData
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
 from six.moves import range
-from .logger.testLoggingCount import oneLogEntryExpected
+from .logHelpers import oneLogEntryExpected
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):

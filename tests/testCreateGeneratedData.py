@@ -15,7 +15,7 @@ from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
-from .logger.testLoggingCount import noLogEntryExpected, oneLogEntryExpected
+from .logHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 returnTypes = copy.copy(UML.data.available)

@@ -11,7 +11,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.customLearners.ridge_regression import RidgeRegression
 from UML.configuration import configSafetyWrapper
-from .logger.testLoggingCount import noLogEntryExpected
+from .logHelpers import noLogEntryExpected
 
 
 class LoveAtFirstSightClassifier(CustomLearner):

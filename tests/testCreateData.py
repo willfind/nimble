@@ -18,7 +18,7 @@ from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.helpers import _intFloatOrString
 # from .. import logger
-from .logger.testLoggingCount import oneLogEntryExpected
+from .logHelpers import oneLogEntryExpected
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
