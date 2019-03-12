@@ -34,6 +34,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
+from ..logger.testLoggingCount import oneLogEntryExpected
 
 
 preserveName = "PreserveTestName"
@@ -345,6 +346,18 @@ class QueryBackend(DataTestObject):
             assert True
         else:
             assert False
+
+    @oneLogEntryExpected
+    def test_saveAndLoad_logCount(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        toSave.save(tmpFile.name)
+        LoadObj = loadData(tmpFile.name)
 
 
     ##############

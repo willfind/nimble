@@ -4,12 +4,11 @@ Tests for the top level function UML.normalizeData
 """
 
 from __future__ import absolute_import
+
 import UML
-
 from UML.customLearners import CustomLearner
-
 from UML.configuration import configSafetyWrapper
-
+from .logger.testLoggingCount import oneLogEntryExpected
 
 # successful run no testX
 def test_normalizeData_successTest_noTestX():
@@ -71,4 +70,13 @@ def test_mormalizeData_referenceDataSafety():
     testX = UML.createData("Matrix", data2, name='testX')
 
     UML.normalizeData('custom.ListOutputer', trainX, testX=testX)
+
+@oneLogEntryExpected
+def test_normalizeData_logCount():
+    data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
+    trainX = UML.createData("Matrix", data1, useLog=False)
+    data2 = [[-1, 0, 5]]
+    testX = UML.createData("Matrix", data2, useLog=False)
+
+    UML.normalizeData('scikitlearn.PCA', trainX, testX=testX, n_components=2)
 

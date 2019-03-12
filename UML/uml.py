@@ -1876,7 +1876,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     """
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                performanceFunction, arguments, output,
-                               scoreMode, multiClassStrategy, useLog)
+                               scoreMode, multiClassStrategy, useLog,
+                               **kwarguments)
     return performance
 
 
