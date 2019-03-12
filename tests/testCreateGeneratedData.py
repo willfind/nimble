@@ -15,7 +15,7 @@ from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
-from .logger.testLoggingCount import noLogEntryExpected
+from .logger.testLoggingCount import noLogEntryExpected, oneLogEntryExpected
 
 
 returnTypes = copy.copy(UML.data.available)
@@ -136,7 +136,7 @@ def test_createRandomizedData_names_passed():
 
 def test_createRandomData_logCount():
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def byType(rType):
         toTest = UML.createRandomData(rType, 5, 5, 0)
 
@@ -385,7 +385,7 @@ def test_identity_logCount():
 
     @noLogEntryExpected
     def byType(rType):
-        toTest = UML.createRandomData(rType, 5, 5, 0)
+        toTest = UML.identity(rType, 5)
 
     for t in returnTypes:
         byType(t)

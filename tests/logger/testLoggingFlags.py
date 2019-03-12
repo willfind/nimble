@@ -5,6 +5,7 @@ mechanisms for controlling logging are functioning as expected.
 
 from __future__ import absolute_import
 import os
+import tempfile
 
 from nose.plugins.attrib import attr
 import numpy
@@ -21,43 +22,62 @@ def logEntryCount(logger):
     return entryCount[0][0]
 
 @configSafetyWrapper
-def test_createData():
+def back_load(toCall, *args, **kwargs):
     logger = UML.logger.active
 
     # count number of starting log entries
     UML.settings.set('logger', 'enabledByDefault', 'True')
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, None, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, False, *args)
     assert start == end
 
     UML.settings.set('logger', 'enabledByDefault', 'False')
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, None, *args)
     assert start == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, False, *args)
     assert start == end
+
+def loadAndCheck(toCall, useLog, *args):
+    logger = UML.logger.active
+    # count number of starting log entries
+    startCount = logEntryCount(logger)
+    # call the function we're testing for log control
+    toCall(*args, useLog=useLog)
+    # make sure it has the expected effect on the count
+    endCount = logEntryCount(logger)
+    return (startCount, endCount)
+
+def test_createData():
+    back_load(UML.createData, 'Matrix', [[1, 2, 3], [4, 5, 6]])
+
+def test_createRandomData():
+    back_load(UML.createRandomData, 'Sparse', 5, 5, 0.99)
+
+def test_loadData():
+    obj = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
+    with tempfile.NamedTemporaryFile(suffix='.umld') as tmpFile:
+        obj.save(tmpFile.name)
+        back_load(UML.loadData, tmpFile.name)
+
+def test_loadTrainedLearner():
+    train = UML.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
+    test = UML.createData('Matrix', [[3], [2], [1]], useLog=False)
+    tl = UML.train('custom.KNNClassifier', train, test)
+    with tempfile.NamedTemporaryFile(suffix='.umlm') as tmpFile:
+        tl.save(tmpFile.name)
+        back_load(UML.loadTrainedLearner, tmpFile.name)
+
 
 # helper function which checks log status for runs
 def runAndCheck(toCall, useLog):

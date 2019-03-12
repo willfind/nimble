@@ -9,6 +9,7 @@ import time
 import ast
 import sys
 import sqlite3
+import tempfile
 
 from nose import with_setup
 from nose.tools import raises
@@ -116,18 +117,52 @@ def testLoadTypeFunctionsUseLog():
     trainXObj = UML.createData("Matrix", trainX)
     logInfo = getLastLogData()
     assert trainXObj.getTypeString() in logInfo
+    assert "'numPoints': 12" in logInfo
+    assert "'numFeatures': 3" in logInfo
 
     trainYObj = UML.createData("List", trainY)
     logInfo = getLastLogData()
     assert trainYObj.getTypeString() in logInfo
+    assert "'numPoints': 12" in logInfo
+    assert "'numFeatures': 1" in logInfo
 
     testXObj = UML.createData("Sparse", testX)
     logInfo = getLastLogData()
     assert testXObj.getTypeString() in logInfo
+    assert "'numPoints': 4" in logInfo
+    assert "'numFeatures': 3" in logInfo
 
     testYObj = UML.createData("DataFrame", testY)
     logInfo = getLastLogData()
     assert testYObj.getTypeString() in logInfo
+    assert "'numPoints': 4" in logInfo
+    assert "'numFeatures': 1" in logInfo
+
+    # the sparsity and seed are also stored for random data
+    randomObj = UML.createRandomData("Matrix", 5, 5, 0)
+    logInfo = getLastLogData()
+    assert randomObj.getTypeString() in logInfo
+    assert "'sparsity': 0" in logInfo
+    assert "seed" in logInfo
+
+    # loadTrainedLearner
+    tl = UML.train('custom.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
+    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+        tl.save(tmpFile.name)
+        load = UML.loadTrainedLearner(tmpFile.name)
+    logInfo = getLastLogData()
+    assert "TrainedLearner" in logInfo
+    assert "'learnerName': 'KNNClassifier'" in logInfo
+    assert "'learnerArgs': {'k': 1}" in logInfo
+
+    # loadData
+    with tempfile.NamedTemporaryFile(suffix=".umld") as tmpFile:
+        randomObj.save(tmpFile.name)
+        load = UML.loadData(tmpFile.name)
+    logInfo = getLastLogData()
+    assert load.getTypeString() in logInfo
+    assert "'numPoints': 5" in logInfo
+    assert "'numFeatures': 5" in logInfo
 
 @configSafetyWrapper
 def testRunTypeFunctionsUseLog():

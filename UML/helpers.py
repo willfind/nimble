@@ -268,11 +268,13 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             assert numpyMaker == numpy.zeros
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         return UML.createData(returnType, rawSparse, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
     else:
         raw = numpyMaker((numPoints, numFeatures))
         return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
 
 
 def transposeMatrix(matrixObj):

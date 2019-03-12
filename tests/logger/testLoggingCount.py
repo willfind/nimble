@@ -10,7 +10,6 @@ other tests for that function, and the wrappers created here can be
 imported to test for log count. Otherwise, some tests for basic
 user-facing functions might be included here as well.
 """
-# import inspect
 
 import UML
 import UML.calculate as calculate
@@ -29,33 +28,27 @@ fill.__name__ = 'fill'
 match.__name__ = 'match'
 
 ALL_USER_FACING = []
-# USELOG_FUNCS = []
 for call in [UML, calculate, fill, match, Base, Points, Features, Elements, TrainedLearner]:
     for attribute in dir(call):
         if not attribute.startswith('_') and callable(getattr(call,attribute)):
             ALL_USER_FACING.append(call.__name__ + '.' + attribute)
-            # sig = inspect.signature(getattr(call,attribute))
-            # if 'useLog' in sig.parameters:
-            #     USELOG_FUNCS.append(call.__name__ + '.' + attribute)
 
-# NOTES: should be logged UML.createRandomData, UML.ones, UML.zeros,
-#   UML.identity (these currently are due to createData so not logged tests is
-#                 failing, but useLog should be added to their parameters)
-#   UML.loadTrainedLearner (should be logged)
-# (de)registerCustomLearnerAsDefault functions are completely untested
+# NOTES:
+#  UML.setRandomSeed logged?
+#  (de)registerCustomLearnerAsDefault functions are completely untested
 
-UML_logged = ['UML.createData', 'UML.train', 'UML.trainAndApply',
-              'UML.trainAndTest', 'UML.trainAndTestOnTrainingData',
-              'UML.crossValidate', 'UML.crossValidateReturnAll',
-              'UML.crossValidateReturnBest', 'UML.normalizeData', 'UML.log',
-              'UML.loadData',
+UML_logged = ['UML.createData', 'UML.createRandomData', 'UML.train',
+              'UML.trainAndApply', 'UML.trainAndTest',
+              'UML.trainAndTestOnTrainingData', 'UML.crossValidate',
+              'UML.crossValidateReturnAll', 'UML.crossValidateReturnBest',
+              'UML.normalizeData', 'UML.log', 'UML.loadData',
+              'UML.loadTrainedLearner',
               ]
-UML_notLogged = ['UML.createRandomData', 'UML.ones', 'UML.zeros',
-                 'UML.identity', 'UML.setRandomSeed', 'UML.showLog',
-                 'UML.registerCustomLearner', 'UML.deregisterCustomLearner',
-                 'UML.listLearners', 'UML.learnerParameters',
-                 'UML.learnerDefaultValues', 'UML.learnerType',
-                 'UML.loadTrainedLearner', 'UML.importModule',
+UML_notLogged = ['UML.ones', 'UML.zeros', 'UML.identity', 'UML.setRandomSeed',
+                 'UML.showLog', 'UML.registerCustomLearner',
+                 'UML.deregisterCustomLearner', 'UML.listLearners',
+                 'UML.learnerParameters', 'UML.learnerDefaultValues',
+                 'UML.learnerType', 'UML.importModule',
                  ]
 UML_tested = UML_logged + UML_notLogged
 

@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-import UML
+
 import six
 import numpy
-#import numpy
+
+import UML
 
 def objConstructorMaker(returnType):
     """
@@ -20,7 +21,8 @@ def objConstructorMaker(returnType):
             return UML.createData(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType)
+                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
@@ -28,7 +30,7 @@ def objConstructorMaker(returnType):
             return UML.createData(returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, elementType=elementType, name=name, path=path,
                 keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith)
+                replaceMissingWith=replaceMissingWith, useLog=False)
 
     return constructor
 
@@ -51,7 +53,8 @@ def viewConstructorMaker(concreteType):
             orig = UML.createData(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType)
+                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.

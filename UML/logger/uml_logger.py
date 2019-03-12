@@ -184,10 +184,11 @@ class UmlLogger(object):
     ### LOG ENTRIES ###
     ###################
 
-    def logLoad(self, useLog, returnType, numPoints, numFeatures, name=None,
-                path=None):
+    def logLoad(self, useLog, returnType, numPoints=None, numFeatures=None,
+                name=None, path=None, sparsity=None, seed=None,
+                learnerName=None, learnerArgs=None):
         """
-        Log information about the loading of a data object.
+        Log information about the loading of data or a trained learner.
 
         Loads should only be logged during a user call to the function,
         not internal calls, this is determined by the logger's
@@ -214,6 +215,10 @@ class UmlLogger(object):
             logInfo["numFeatures"] = numFeatures
             logInfo["name"] = name
             logInfo["path"] = path
+            logInfo["sparsity"] = sparsity
+            logInfo["seed"] = seed
+            logInfo["learnerName"] = learnerName
+            logInfo["learnerArgs"] = learnerArgs
 
             self.log(logType, logInfo)
 
@@ -646,14 +651,20 @@ def _buildLoadLogString(timestamp, log):
     """
     dataCol = "{0} Loaded".format(log["returnType"])
     fullLog = _logHeader(dataCol, timestamp)
-    if log['path'] is not None:
-        fullLog += _formatRunLine("path", log["path"])
-        dataCol = ""
-    if log['name'] is not None:
-        fullLog += _formatRunLine("name", log["name"])
-        dataCol = ""
-    fullLog += _formatRunLine("# of points", log["numPoints"])
-    fullLog += _formatRunLine("# of features", log["numFeatures"])
+    if log["returnType"] != "TrainedLearner":
+        fullLog += _formatRunLine("# of points", log["numPoints"])
+        fullLog += _formatRunLine("# of features", log["numFeatures"])
+        for title in ['sparsity', 'name', 'path', 'seed']:
+            if log[title] is not None:
+                fullLog += _formatRunLine(title, log[title])
+    else:
+        fullLog += _formatRunLine("Learner name", log["learnerName"])
+        if log['learnerArgs'] is not None and log['learnerArgs'] != {}:
+            argString = "Arguments: "
+            argString += _dictToKeywordString(log["learnerArgs"])
+            for string in wrap(argString, 79, subsequent_indent=" "*11):
+                fullLog += string
+                fullLog += "\n"
     return fullLog
 
 def _buildPrepLogString(timestamp, log):

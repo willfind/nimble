@@ -34,16 +34,17 @@ from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
 from UML.helpers import createConstantHelper
 from UML.helpers import computeMetrics
-from UML.randomness import numpyRandom
+from UML.randomness import numpyRandom, generateSubsidiarySeed
+from UML.randomness import startAlternateControl, endAlternateControl
 from UML.calculate import detectBestResult
 
 cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
-
+@logPosition
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
-        featureNames='automatic', elementType='float', name=None):
+        featureNames='automatic', elementType='float', name=None, useLog=None):
     """
     Generate a data object with random contents.
 
@@ -133,6 +134,8 @@ def createRandomData(
     if elementType != "int" and elementType != "float":
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
+    seed = generateSubsidiarySeed()
+    startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType.lower() == 'sparse':
         if not scipy:
@@ -191,6 +194,10 @@ def createRandomData(
                 randData = binarySparsityMatrix * filledIntMatrix
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
+    endAlternateControl()
+
+    handleLogging(useLog, 'load', "Random " + returnType, numPoints,
+                  numFeatures, name, sparsity=sparsity, seed=seed)
 
     return createData(returnType, data=randData, pointNames=pointNames,
                       featureNames=featureNames, name=name)
@@ -427,11 +434,13 @@ def identity(returnType, size, pointNames='automatic',
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
         return UML.createData(returnType, rawCoo, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
     else:
         raw = numpy.identity(size)
         return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
 
 @logPosition
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
@@ -1988,8 +1997,8 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
                               startDate, endDate, maximumEntries,
                               searchForText, regex, saveToFileName, append)
 
-
-def loadData(inputPath):
+@logPosition
+def loadData(inputPath, useLog=None):
     """
     Load UML Base object.
 
@@ -2016,10 +2025,13 @@ def loadData(inputPath):
     if not isinstance(ret, UML.data.Base):
         msg = 'File does not contain a UML valid data Object.'
         raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'load', ret.getTypeString(), len(ret.points),
+                  len(ret.features), ret.name, inputPath)
     return ret
 
-
-def loadTrainedLearner(inputPath):
+@logPosition
+def loadTrainedLearner(inputPath, useLog=None):
     """
     Load UML trainedLearner object.
 
@@ -2045,6 +2057,9 @@ def loadTrainedLearner(inputPath):
     if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
         msg = 'File does not contain a UML valid trainedLearner Object.'
         raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'load', "TrainedLearner",
+                  learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
 
 

@@ -27,7 +27,7 @@ from UML.interfaces.universal_interface import UniversalInterface
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
-from ..logger.testLoggingCount import noLogEntryExpected
+from ..logger.testLoggingCount import oneLogEntryExpected
 
 scipy = UML.importModule('scipy.sparse')
 sklearn = UML.importExternalLibraries.importModule("sklearn")
@@ -707,7 +707,7 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
         trainer_ret_l = loadTrainedLearner(tmpFile.name)
         return trainer_ret_l.apply(givenTestX)
 
-@noLogEntryExpected
+@oneLogEntryExpected
 def test_saveLoad_logCount():
     train = [[1, -1, -3, -3, -1],
               [2, 0.4, -0.8, 0.2, -0.3],
