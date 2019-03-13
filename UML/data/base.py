@@ -664,7 +664,7 @@ class Base(object):
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
         valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
-                                           outputType='Matrix')
+                                           outputType='Matrix', useLog=False)
         valueList = valueObj.copyAs(format="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
                / float(self._pointCount * self._featureCount))
@@ -2003,9 +2003,9 @@ class Base(object):
 
         def customGetter(index, axis):
             if axis == 'point':
-                copied = self.points.copy(index)
+                copied = self.points.copy(index, useLog=False)
             else:
-                copied = self.features.copy(index)
+                copied = self.features.copy(index, useLog=False)
             return copied.copyAs('numpyarray', outputAs1D=True)
 
         def pGetter(index):
@@ -2471,7 +2471,7 @@ class Base(object):
 
         elif (dataHelpers._looksNumeric(values)
               or isinstance(values, six.string_types)):
-            pass  # no modificaitons needed
+            pass  # no modifications needed
         else:
             msg = "values may only be a UML Base object, or a single numeric "
             msg += "value, yet we received something of " + str(type(values))
@@ -3025,7 +3025,9 @@ class Base(object):
         handleLogging(useLog, 'prep', "unflattenFromOneFeature",
                       self.getTypeString(), argDict)
 
-    def merge(self, other, point='strict', feature='union', onFeature=None):
+    @logPosition
+    def merge(self, other, point='strict', feature='union', onFeature=None,
+              useLog=None):
         """
         Merge data from another object into this object.
 
@@ -3232,10 +3234,15 @@ class Base(object):
             raise InvalidArgumentValue(msg)
 
         if point == 'strict' or feature == 'strict':
-            return self._genericStrictMerge_implementation(
-                other, point, feature, onFeature)
+            self._genericStrictMerge_implementation(other, point, feature,
+                                                    onFeature)
         else:
-            return self._genericMergeFrontend(other, point, feature, onFeature)
+            self._genericMergeFrontend(other, point, feature, onFeature)
+
+        argDict = buildArgDict(('other', 'point', 'feature', 'onFeature'),
+                               ('strict', 'union', None), other, point,
+                               feature, onFeature)
+        handleLogging(useLog, 'prep', "merge", self.getTypeString(), argDict)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
                                            onFeature):
@@ -3312,8 +3319,7 @@ class Base(object):
                 msg += "matching value in each object"
                 raise InvalidArgumentValueCombination(msg)
 
-        return self._genericMergeFrontend(tmpOther, point, feature, onFeature,
-                                          axis)
+        self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
 
     def _genericMergeFrontend(self, other, point, feature, onFeature,
                               strict=None):
@@ -3592,7 +3598,7 @@ class Base(object):
         """
         ret = self.__mul__(other)
         if ret is not NotImplemented:
-            self.referenceDataFrom(ret)
+            self.referenceDataFrom(ret, useLog=False)
             ret = self
 
         return ret
@@ -3818,7 +3824,7 @@ class Base(object):
         some kind of numeric value.
         """
         ret = self.__pow__(other)
-        self.referenceDataFrom(ret)
+        self.referenceDataFrom(ret, useLog=False)
         return self
 
     def __pos__(self):
@@ -3981,10 +3987,10 @@ class Base(object):
             ret = toCall(other)
             if opName.startswith('__i'):
                 ret = ret.copyAs(startType)
-                self.referenceDataFrom(ret)
+                self.referenceDataFrom(ret, useLog=False)
                 ret = self
             else:
-                ret = UML.createData(startType, ret.data)
+                ret = UML.createData(startType, ret.data, useLog=False)
 
         return ret
 

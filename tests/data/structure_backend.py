@@ -45,6 +45,9 @@ from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
+from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..logHelpers import twoLogEntriesExpected, threeLogEntriesExpected
+from ..logHelpers import fourLogEntriesExpected
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
@@ -176,7 +179,7 @@ class StructureDataSafe(StructureShared):
     #############
     # copyAs #
     #############
-
+    @noLogEntryExpected
     def test_copy_withZeros(self):
         """ Test copyAs() produces an equal object and doesn't just copy the references """
         data1 = [[1, 2, 3, 0], [1, 0, 3, 0], [2, 4, 6, 0], [0, 0, 0, 0]]
@@ -2351,7 +2354,7 @@ class StructureModifying(StructureShared):
         ret2 = self.constructor(exp2)
         assert ret2.isIdentical(toTest)
 
-
+    @threeLogEntriesExpected
     def test_transpose_handmade(self):
         """ Test transpose() function against handmade output """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -7258,94 +7261,6 @@ class StructureModifying(StructureShared):
     def test_features_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
 
-    #####################
-    # referenceDataFrom #
-    #####################
-
-    @raises(InvalidArgumentType)
-    def test_referenceDataFrom_exceptionWrongType(self):
-        """ Test referenceDataFrom() throws exception when other is not the same type """
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        retType0 = UML.data.available[0]
-        retType1 = UML.data.available[1]
-
-        objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
-        objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
-
-        # at least one of these two will be the wrong type
-        orig.referenceDataFrom(objType0)
-        orig.referenceDataFrom(objType1)
-
-
-    def test_referenceDataFrom_data_axisNames(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, -4]]
-        featureNames = ['1', '2', '3', '4']
-        pNames = ['-1']
-        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
-
-        ret = orig.referenceDataFrom(other)  # RET CHECK
-
-        assert orig.data is other.data
-        assert '-1' in orig.points.getNames()
-        assert '1' in orig.features.getNames()
-        assert ret is None
-
-    def test_referenceDataFrom_ObjName_Paths(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, ]]
-        featureNames = ['1', '2', '3']
-        pNames = ['-1']
-        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
-
-        orig._name = "testName"
-        orig._absPath = "testAbsPath"
-        orig._relPath = "testRelPath"
-
-        other._name = "testNameother"
-        other._absPath = "testAbsPathother"
-        other._relPath = "testRelPathother"
-
-        orig.referenceDataFrom(other)
-
-        assert orig.name == "testName"
-        assert orig.absolutePath == "testAbsPathother"
-        assert orig.relativePath == 'testRelPathother'
-
-        assert other.name == "testNameother"
-        assert other.absolutePath == "testAbsPathother"
-        assert other.relativePath == 'testRelPathother'
-
-
-    def test_referenceDataFrom_allMetadataAttributes(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
-        other = self.constructor(data2, )
-
-        orig.referenceDataFrom(other)
-
-        assert orig._pointCount == len(other.points)
-        assert orig._featureCount == len(other.features)
-
-        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
-        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
-
     ### using match module ###
 
     def test_features_retain_match_missing(self):
@@ -7399,6 +7314,95 @@ class StructureModifying(StructureShared):
         expTest = self.constructor([[-3], [-3], [-3], [-3]])
         expTest.features.setNames(['c'])
         assert toTest == expTest
+
+    #####################
+    # referenceDataFrom #
+    #####################
+
+    @raises(InvalidArgumentType)
+    def test_referenceDataFrom_exceptionWrongType(self):
+        """ Test referenceDataFrom() throws exception when other is not the same type """
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        retType0 = UML.data.available[0]
+        retType1 = UML.data.available[1]
+
+        objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
+        objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
+
+        # at least one of these two will be the wrong type
+        orig.referenceDataFrom(objType0)
+        orig.referenceDataFrom(objType1)
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_data_axisNames(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, -4]]
+        featureNames = ['1', '2', '3', '4']
+        pNames = ['-1']
+        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
+
+        ret = orig.referenceDataFrom(other)  # RET CHECK
+
+        assert orig.data is other.data
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
+        assert ret is None
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_ObjName_Paths(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, ]]
+        featureNames = ['1', '2', '3']
+        pNames = ['-1']
+        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
+
+        orig._name = "testName"
+        orig._absPath = "testAbsPath"
+        orig._relPath = "testRelPath"
+
+        other._name = "testNameother"
+        other._absPath = "testAbsPathother"
+        other._relPath = "testRelPathother"
+
+        orig.referenceDataFrom(other)
+
+        assert orig.name == "testName"
+        assert orig.absolutePath == "testAbsPathother"
+        assert orig.relativePath == 'testRelPathother'
+
+        assert other.name == "testNameother"
+        assert other.absolutePath == "testAbsPathother"
+        assert other.relativePath == 'testRelPathother'
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_allMetadataAttributes(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
+        other = self.constructor(data2, )
+
+        orig.referenceDataFrom(other)
+
+        assert orig._pointCount == len(other.points)
+        assert orig._featureCount == len(other.features)
+
+        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
+        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
 
     ######################
     # points.transform() #
@@ -8004,7 +8008,7 @@ class StructureModifying(StructureShared):
         except Exception:
             assert False  # expected InvalidArgumentValueCombination
 
-
+    @oneLogEntryExpected
     def test_fillWith_fullObjectFill(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
@@ -8021,7 +8025,7 @@ class StructureModifying(StructureShared):
         assert toTest == exp
         assert toTest != arg
 
-
+    @twoLogEntriesExpected
     def test_fillWith_vectorFill(self):
         raw = [[1, 2], [3, 4]]
         toTestP = self.constructor(raw)
@@ -8062,7 +8066,7 @@ class StructureModifying(StructureShared):
             assert toTest[p, f + 1] == 0
             assert toTest[p + 1, f + 1] == 0
 
-
+    @fourLogEntriesExpected
     def test_fillWith_constants(self):
         toTest0 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         exp0 = self.constructor([[0, 1, 1], [0, 1, 1], [0, 0, 0]])
@@ -8124,6 +8128,7 @@ class StructureModifying(StructureShared):
     def test_flattenToOneFeature_vector(self):
         self.back_flatten_vector('feature')
 
+    @oneLogEntryExpected
     def back_flatten_vector(self, axis):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         raw = [1, -1, 2, -2, 3, -3, 4, -4]
@@ -8140,8 +8145,8 @@ class StructureModifying(StructureShared):
         expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
 
         if axis != 'point':
-            testObj.transpose()
-            expObj.transpose()
+            testObj.transpose(useLog=False)
+            expObj.transpose(useLog=False)
 
         ret = getattr(testObj, target)()
 
@@ -8178,6 +8183,7 @@ class StructureModifying(StructureShared):
     def test_flattenToOneFeature_rectangleRandom(self):
         self.back_flatten_rectangleRandom('feature')
 
+    @oneLogEntryExpected
     def back_flatten_rectangleRandom(self, axis):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
@@ -8345,6 +8351,7 @@ class StructureModifying(StructureShared):
 
 
     # unflatten something that was flattened - include name transformation
+    @oneLogEntryExpected
     def test_unflattenFromOnePoint_handmadeWithNames(self):
         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
@@ -8358,7 +8365,8 @@ class StructureModifying(StructureShared):
         toTest.unflattenFromOnePoint(2)
         assert toTest == exp
 
-    # unflatten something that was flattend - include name transformation
+    # unflatten something that was flattened - include name transformation
+    @oneLogEntryExpected
     def test_unflattenFromOneFeature_handmadeWithNames(self):
         raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
@@ -8380,6 +8388,7 @@ class StructureModifying(StructureShared):
     def test_unflattenFromOneFeature_handmadeDefaultNames(self):
         self.back_unflatten_handmadeDefaultNames('feature')
 
+    @oneLogEntryExpected
     def back_unflatten_handmadeDefaultNames(self, axis):
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         raw = [[1, 10, 20, 2]]
@@ -8389,7 +8398,7 @@ class StructureModifying(StructureShared):
         if axis == 'point':
             exp = self.constructor(expData)
         else:
-            toTest.transpose()
+            toTest.transpose(useLog=False)
             exp = self.constructor(expData.T)
 
         getattr(toTest, target)(2)
@@ -8412,6 +8421,7 @@ class StructureModifying(StructureShared):
     def test_flatten_to_unflatten_feature_roundTrip(self):
         self.back_flatten_to_unflatten_roundTrip('feature')
 
+    @fourLogEntriesExpected
     def back_flatten_to_unflatten_roundTrip(self, axis):
         targetDown = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         targetUp = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
@@ -8942,13 +8952,17 @@ class StructureModifying(StructureShared):
                 ]
             combinations += comboStrict
 
+        @oneLogEntryExpected
+        def performMerge():
+            test.merge(tRight, point=pt, feature=ft, onFeature=on)
+
         for i, exp in enumerate(expected):
             pt = combinations[i][0]
             ft = combinations[i][1]
             try:
                 test = left.copy()
                 tRight = right.copy()
-                test.merge(tRight, point=pt, feature=ft, onFeature=on)
+                performMerge()
                 assert test == exp
             except InvalidArgumentValue:
                 assert exp is InvalidArgumentValue

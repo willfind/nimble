@@ -34,7 +34,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
-from ..logHelpers import oneLogEntryExpected
+from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 preserveName = "PreserveTestName"
@@ -127,7 +127,7 @@ class QueryBackend(DataTestObject):
     #################
     # isIdentical() #
     #################
-
+    @noLogEntryExpected
     def test_isIdentical_False(self):
         """ Test isIdentical() against some non-equal input """
         toTest = self.constructor([[4, 5]])
@@ -135,6 +135,7 @@ class QueryBackend(DataTestObject):
         assert not toTest.isIdentical(self.constructor([[1, 2, 3]]))
         assert not toTest.isIdentical(self.constructor([[1, 2]]))
 
+    @noLogEntryExpected
     def test_isIdentical_FalseBozoTypes(self):
         """ Test isIdentical() against some non-equal input of crazy types """
         toTest = self.constructor([[4, 5]])
@@ -142,6 +143,7 @@ class QueryBackend(DataTestObject):
         assert not toTest.isIdentical('self.constructor([[1,2,3]])')
         assert not toTest.isIdentical(toTest.isIdentical)
 
+    @noLogEntryExpected
     def test_isIdentical_True(self):
         """ Test isIdentical() against some actually equal input """
         toTest1 = self.constructor([[4, 5]])
@@ -167,7 +169,7 @@ class QueryBackend(DataTestObject):
     ############
     # writeFile #
     ############
-
+    @noLogEntryExpected
     def test_writeFile_CSVhandmade(self):
         """ Test writeFile() for csv extension with both data and featureNames """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -268,7 +270,7 @@ class QueryBackend(DataTestObject):
         excludeAxis('point')
         excludeAxis('feature')
 
-
+    @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
         """ Test writeFile() for mtx extension with both data and featureNames """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
@@ -534,7 +536,7 @@ class QueryBackend(DataTestObject):
     ################
     # pointView #
     ################
-
+    @noLogEntryExpected
     def test_pointView_FEmpty(self):
         """ Test pointView() when accessing a feature empty object """
         data = [[], []]
@@ -545,7 +547,7 @@ class QueryBackend(DataTestObject):
 
         assert len(v.features) == 0
 
-
+    @noLogEntryExpected
     def test_pointView_isinstance(self):
         pointNames = ['1', '4', '7']
         featureNames = ["one", "two", "three"]
@@ -566,7 +568,7 @@ class QueryBackend(DataTestObject):
     ##################
     # featureView #
     ##################
-
+    @noLogEntryExpected
     def test_featureView_FEmpty(self):
         """ Test featureView() when accessing a point empty object """
         data = [[], []]
@@ -577,6 +579,7 @@ class QueryBackend(DataTestObject):
 
         assert len(v.points) == 0
 
+    @noLogEntryExpected
     def test_featureView_isinstance(self):
         """ Test featureView() returns an instance of the BaseView """
         pointNames = ['1', '4', '7']
@@ -676,7 +679,7 @@ class QueryBackend(DataTestObject):
             if textCheck:
                 print(ivc)
 
-
+    @noLogEntryExpected
     def test_ViewAccess_AllLimits(self):
         data = [[11, 12, 13, 14], [0, 0, 0, 0], [21, 22, 23, 24], [0, 0, 0, 0], [31, 32, 33, 34]]
         pnames = ['p1', 'p2', 'p3', 'p4', 'p5']
@@ -726,7 +729,7 @@ class QueryBackend(DataTestObject):
     # containsZero #
     ################
 
-
+    @noLogEntryExpected
     def test_containsZero_simple(self):
         """ Test containsZero works as expected on simple numerical data """
         dataAll = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
@@ -1855,13 +1858,14 @@ class QueryBackend(DataTestObject):
     ########
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -1877,13 +1881,14 @@ class QueryBackend(DataTestObject):
     ###########################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -1900,13 +1905,14 @@ class QueryBackend(DataTestObject):
     #############################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2271,7 +2277,7 @@ class QueryBackend(DataTestObject):
     ###########
     # inverse #
     ###########
-
+    @noLogEntryExpected
     def test_inverse_multiplicative(self):
         """ Test computation of multiplicative inverse."""
         from scipy import linalg
@@ -2290,7 +2296,7 @@ class QueryBackend(DataTestObject):
         assert invObj == resObj
         assert toTest == orig
 
-
+    @noLogEntryExpected
     def test_inverse_pseudoInverse(self):
         """ Test computation of pseudo-inverse using singular-value decomposition. """
         from scipy import linalg
@@ -2321,6 +2327,7 @@ class QueryBackend(DataTestObject):
         """ Test solveLinearSystem using least squares method. """
         self.backend_solveLinearSystem(solveFunction='least squares')
 
+    @noLogEntryExpected
     def backend_solveLinearSystem(self, solveFunction):
         from scipy import linalg
         A = numpy.array([[1, 20], [-30, 4]])

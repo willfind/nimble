@@ -45,6 +45,7 @@ from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
+from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 preserveName = "PreserveTestName"
@@ -836,6 +837,7 @@ class HighLevelDataSafe(DataTestObject):
     ##########################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_isApproximatelyEqual_randomTest(self):
         """ Test isApproximatelyEqual() using randomly generated data """
 
@@ -851,7 +853,7 @@ class HighLevelDataSafe(DataTestObject):
             toTest = self.constructor(data)
 
             for retType in UML.data.available:
-                currObj = UML.createData(retType, data)
+                currObj = UML.createData(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
 
@@ -861,6 +863,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     # simple sucess - no labels
+    @oneLogEntryExpected
     def test_trainAndTestSets_simple_nolabels(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -874,6 +877,7 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teX.features) == 5
 
     # simple sucess - single label
+    @oneLogEntryExpected
     def test_trainAndTestSets_simple_singlelabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -891,6 +895,7 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teY.features) == 1
 
     # simple sucess - multi label
+    @oneLogEntryExpected
     def test_trainAndTestSets_simple_multilabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -1376,7 +1381,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
-
+    @oneLogEntryExpected
     def test_replaceFeatureWithBinaryFeatures_handmade(self):
         """ Test replaceFeatureWithBinaryFeatures() against handmade output """
         data = [[1], [2], [3]]
@@ -1394,6 +1399,7 @@ class HighLevelModifying(DataTestObject):
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
 
+    @oneLogEntryExpected
     def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
         """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
         data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
@@ -1449,6 +1455,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
+    @oneLogEntryExpected
     def test_transformFeatureToIntegers_handmade(self):
         """ Test transformFeatureToIntegers() against handmade output """
         data = [['a'], ['b'], ['c'], ['b'], ['a']]
@@ -1471,7 +1478,6 @@ class HighLevelModifying(DataTestObject):
         assert all(isinstance(key, int) for key in ret.keys())
         for value in ret.values():
             assert value in ['a', 'b', 'c']
-
 
     def test_transformFeatureToIntegers_pointNames(self):
         """ Test transformFeatureToIntegers preserves pointNames """
@@ -2478,7 +2484,7 @@ class HighLevelModifying(DataTestObject):
     #######################
     # fillUsingAllData #
     #######################
-
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_missing(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
@@ -2491,6 +2497,7 @@ class HighLevelModifying(DataTestObject):
         assert toTest == expTest
         assert ret is None
 
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_returnModified_all(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
@@ -2516,6 +2523,7 @@ class HighLevelModifying(DataTestObject):
         toTest.fillUsingAllData(match.nonNumeric, fill.kNeighborsRegressor, **kwarguments)
         assert toTest == expTest
 
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_pointsLimited(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']

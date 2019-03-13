@@ -24,7 +24,6 @@ from UML.configuration import configSafetyWrapper
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import InvalidArgumentType
-from .testLoggingCount import noLogEntryExpected, oneLogEntryExpected
 
 #####################
 # Helpers for tests #
@@ -338,6 +337,20 @@ def testPrepTypeFunctionsUseLog():
     dataObj.unflattenFromOneFeature(3)
     checkLogContents('unflattenFromOneFeature', "Sparse")
 
+    # merge; createData not logged
+    dPtNames = ['p' + str(i) for i in range(18)]
+    dFtNames = ['f0', 'f1', 'f2']
+    dataObj = UML.createData("Matrix", data, pointNames=dPtNames,
+                             featureNames=dFtNames, useLog=False)
+    mData = [[1, 4], [2, 5], [3, 6]]
+    mPtNames = ['p0', 'p6', 'p12']
+    mFtNames = ['f2', 'f3']
+    mergeObj = UML.createData('Matrix', mData, pointNames=mPtNames,
+                              featureNames=mFtNames, useLog=False)
+    dataObj.merge(mergeObj, point='intersection', feature='union')
+    checkLogContents('merge', "Matrix", [("other", mergeObj.name),
+                                         ("point", 'intersection')])
+
     ############################
     # Points/Features/Elements #
     ############################
@@ -619,11 +632,6 @@ def testLogUnacceptedlogInfo():
     dataObj = UML.createData("Matrix", [[1]], useLog=False)
     UML.log("acceptable", dataObj)
 
-@oneLogEntryExpected
-def test_log_logCount():
-    customString = "enter this string into the log"
-    UML.log("customString", customString)
-
 ##############
 ### OUTPUT ###
 ##############
@@ -841,7 +849,3 @@ def testLeastRunsAgoNegative():
 @raises(InvalidArgumentValueCombination)
 def testMostRunsLessThanLeastRuns():
     UML.showLog(leastRunsAgo=2, mostRunsAgo=1)
-
-@noLogEntryExpected
-def test_showLog_logCount():
-    UML.showLog()

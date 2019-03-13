@@ -15,7 +15,7 @@ points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
-points.getIndices, features.getIndices, constructIndicesList
+points.getIndices, features.getIndices, constructIndicesList, copy
 
 """
 

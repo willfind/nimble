@@ -425,6 +425,17 @@ def test_flattenUnflatten_featureAxis():
 
     flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
 
+def test_merge():
+    mData = [[1, 4], [2, 5], [3, 6]]
+    mPtNames = ['p0', 'p6', 'p12']
+    mFtNames = ['f2', 'f3']
+    mergeObj = UML.createData('Matrix', mData, pointNames=mPtNames,
+                              featureNames=mFtNames)
+    def wrapped(obj, useLog):
+        obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
 ############################
 # Points/Features/Elements #
 ############################
@@ -607,4 +618,3 @@ def test_features_add():
         return obj.features.add(toAppend, useLog=useLog)
 
     backend(wrapped, prepAndCheck)
-

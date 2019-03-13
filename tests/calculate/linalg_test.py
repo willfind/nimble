@@ -172,6 +172,7 @@ def testSolve_succes():
                 b = createData(dataType_b, b_np)
                 sol = solve(A, b)
                 A_inv = inverse(A)
+                print(type(A_inv))
                 if len(b.features) > 1:
                     b.transpose()
                 reference = (A_inv * b)

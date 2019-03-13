@@ -1241,9 +1241,9 @@ class SparseView(BaseView, Sparse):
             return numpy.array(limited)
 
         limited = self._source.points.copy(start=self._pStart,
-                                           end=self._pEnd - 1)
+                                           end=self._pEnd - 1, useLog=False)
         limited = limited.features.copy(start=self._fStart,
-                                        end=self._fEnd - 1)
+                                        end=self._fEnd - 1, useLog=False)
 
         if format is None:
             return limited
