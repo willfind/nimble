@@ -45,9 +45,8 @@ from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
+from ..logHelpers import logCountAssertionFactory
 from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..logHelpers import twoLogEntriesExpected, threeLogEntriesExpected
-from ..logHelpers import fourLogEntriesExpected
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
@@ -59,6 +58,8 @@ preservePair = (preserveAPath, preserveRPath)
 
 
 ### Helpers used by tests in the test class ###
+
+twoLogEntriesExpected = logCountAssertionFactory(2)
 
 def passThrough(value):
     return value
@@ -607,6 +608,7 @@ class StructureDataSafe(StructureShared):
 
         ret = toTest.points.copy(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_copy_handmadeSingle(self):
         """ Test points.copy() against handmade output when copying one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -659,7 +661,7 @@ class StructureDataSafe(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-
+    @twoLogEntriesExpected
     def test_points_copy_handmadeListSequence(self):
         """ Test points.copy() against handmade output for multiple copies """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -1378,6 +1380,7 @@ class StructureDataSafe(StructureShared):
 
         ret = toTest.features.copy(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_copy_handmadeSingle(self):
         """ Test features.copy() against handmade output when copying one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1442,7 +1445,7 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-
+    @twoLogEntriesExpected
     def test_features_copy_handmadeListSequence(self):
         """ Test features.copy() against handmade output for several copies by list """
         pointNames = ['1', '4', '7']
@@ -2354,7 +2357,7 @@ class StructureModifying(StructureShared):
         ret2 = self.constructor(exp2)
         assert ret2.isIdentical(toTest)
 
-    @threeLogEntriesExpected
+    @logCountAssertionFactory(3)
     def test_transpose_handmade(self):
         """ Test transpose() function against handmade output """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2571,7 +2574,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('feature')
 
-
+    @oneLogEntryExpected
     def backend_add_emptyObject(self, axis, insertBefore=None):
         empty = [[], []]
 
@@ -2611,7 +2614,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() with an insertBefore ID when the calling object is feature empty raises exception """
         self.backend_add_emptyObject('feature', 0)
 
-
+    @oneLogEntryExpected
     def backend_add_handmadeSingle(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
@@ -2674,7 +2677,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() against handmade output for a single added feature in the middle"""
         self.backend_add_handmadeSingle('feature', 1)
 
-
+    @logCountAssertionFactory(4)
     def backend_add_handmadeSequence(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
@@ -2711,7 +2714,7 @@ class StructureModifying(StructureShared):
                 dataExpected = [[1, 10, 0, 0.01, 0.1, 2, 3], [4, 11, 0, 0.02, 0.2, 5, 6], [7, 12, 0, 0.03, 0.3, 8, 9]]
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toInsert.transpose()
+            toInsert.transpose(useLog=False)
             for nextAdd in toInsert.features:
                 toTest.features.add(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
@@ -2742,7 +2745,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() against handmade output for a sequence of additions in the middle"""
         self.backend_add_handmadeSequence('feature', 1)
 
-
+    @oneLogEntryExpected
     def backend_add_selfInsert(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -3077,6 +3080,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.sort(sortBy=1, sortHelper=[1,2,0])
 
+    @oneLogEntryExpected
     def test_points_sort_naturalByFeature(self):
         """ Test points.sort() when we specify a feature to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
@@ -3108,7 +3112,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-
+    @oneLogEntryExpected
     def test_points_sort_scorer(self):
         """ Test points.sort() when we specify a scoring function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
@@ -3129,6 +3133,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
 
+    @oneLogEntryExpected
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
@@ -3190,6 +3195,7 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_points_sort_mixedList(self):
         """ Test points.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
@@ -3247,6 +3253,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.sort(sortBy=1, sortHelper=[1,2,0])
 
+    @oneLogEntryExpected
     def test_features_sort_naturalByPointWithNames(self):
         """ Test features.sort() when we specify a point to sort by; includes featureNames """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
@@ -3278,7 +3285,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-
+    @oneLogEntryExpected
     def test_features_sort_scorer(self):
         """ Test features.sort() when we specify a scoring function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
@@ -3300,6 +3307,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
 
+    @oneLogEntryExpected
     def test_features_sort_comparator(self):
         """ Test features.sort() when we specify a comparator function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
@@ -3362,6 +3370,7 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_features_sort_mixedList(self):
         """ Test features.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
@@ -3413,6 +3422,7 @@ class StructureModifying(StructureShared):
 
         ret = toTest.points.extract(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_extract_handmadeSingle(self):
         """ Test points.extract() against handmade output when extracting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3463,7 +3473,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_points_extract_handmadeListSequence(self):
         """ Test points.extract() against handmade output for several list extractions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -4198,6 +4208,7 @@ class StructureModifying(StructureShared):
 
         ret = toTest.features.extract(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_extract_handmadeSingle(self):
         """ Test features.extract() against handmade output when extracting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4264,7 +4275,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_features_extract_handmadeListSequence(self):
         """ Test features.extract() against handmade output for several extractions by list """
         pointNames = ['1', '4', '7']
@@ -4873,6 +4884,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.delete(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_delete_handmadeSingle(self):
         """ Test points.delete() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4912,7 +4924,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_points_delete_handmadeListSequence(self):
         """ Test points.delete() against handmade output for several list deletions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -5513,6 +5525,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.delete(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_delete_handmadeSingle(self):
         """ Test features.delete() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5565,7 +5578,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_features_delete_handmadeListSequence(self):
         """ Test features.delete() against handmade output for several deletions by list """
         pointNames = ['1', '4', '7']
@@ -6061,6 +6074,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         toTest.points.retain(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_retain_handmadeSingle(self):
         """ Test points.retain() against handmade output when retaining one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6117,6 +6131,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
+    @twoLogEntriesExpected
     def test_points_retain_handmadeListSequence(self):
         """ Test points.retain() against handmade output for several list retentions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -6746,6 +6761,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.retain(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_retain_handmadeSingle(self):
         """ Test features.retain() against handmade output when retaining one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6812,6 +6828,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
+    @twoLogEntriesExpected
     def test_features_retain_handmadeListSequence(self):
         """ Test features.retain() against handmade output for several retentions by list """
         pointNames = ['1', '4', '7']
@@ -7444,6 +7461,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.transform(noChange, points=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7482,6 +7500,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    @oneLogEntryExpected
     def test_points_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7567,6 +7586,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.transform(noChange, features=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7611,7 +7631,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
+    @oneLogEntryExpected
     def test_features_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7675,6 +7695,7 @@ class StructureModifying(StructureShared):
 
         toTest.elements.transform(noChange, features=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_elements_transform_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -7702,7 +7723,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
@@ -7714,7 +7735,7 @@ class StructureModifying(StructureShared):
         assert [0, 6, 7] in retRaw
         assert [8, 0, 10] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -7726,7 +7747,7 @@ class StructureModifying(StructureShared):
         assert [5, 5, 7] in retRaw
         assert [7, 9, 9] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -7740,7 +7761,7 @@ class StructureModifying(StructureShared):
         assert [4, 5, 7] in retRaw
         assert [7, 8, 9] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_DictionaryAllMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -7754,7 +7775,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
-
+    @oneLogEntryExpected
     def test_elements_transform_DictionaryAllMappedStrings(self):
         data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         names = ['one', 'two', 'three']
@@ -8066,7 +8087,7 @@ class StructureModifying(StructureShared):
             assert toTest[p, f + 1] == 0
             assert toTest[p + 1, f + 1] == 0
 
-    @fourLogEntriesExpected
+    @logCountAssertionFactory(4)
     def test_fillWith_constants(self):
         toTest0 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         exp0 = self.constructor([[0, 1, 1], [0, 1, 1], [0, 0, 0]])
@@ -8421,7 +8442,7 @@ class StructureModifying(StructureShared):
     def test_flatten_to_unflatten_feature_roundTrip(self):
         self.back_flatten_to_unflatten_roundTrip('feature')
 
-    @fourLogEntriesExpected
+    @logCountAssertionFactory(4)
     def back_flatten_to_unflatten_roundTrip(self, axis):
         targetDown = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         targetUp = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"

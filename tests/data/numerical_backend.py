@@ -29,6 +29,7 @@ from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
 
 from .baseObject import DataTestObject
+from ..logHelpers import logCountAssertionFactory
 
 
 preserveName = "PreserveTestName"
@@ -1197,6 +1198,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.power raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
+    @logCountAssertionFactory(len(UML.data.available))
     def test_elements_power_handmade(self):
         """ Test elements.power on handmade data """
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1209,13 +1211,15 @@ class NumericalModifying(DataTestObject):
 
         for retType in UML.data.available:
             caller = self.constructor(data, pointNames=callerpnames)
-            exponentsObj = UML.createData(retType, exponents, pointNames=calleepnames, featureNames=calleefnames)
+            exponentsObj = UML.createData(retType, exponents, pointNames=calleepnames,
+                                          featureNames=calleefnames, useLog=False)
             caller.elements.power(exponentsObj)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
 
             assert exp1Obj.isIdentical(caller)
 
+    @logCountAssertionFactory(len([getattr(UML.data, retType) for retType in UML.data.available]))
     def test_elements_power_handmadeScalar(self):
         """ Test elements.power on handmade data with scalar parameter"""
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1275,6 +1279,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.multiply raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
 
+    @logCountAssertionFactory(2)
     def test_elements_multiply_handmade(self):
         """ Test elements.multiply on handmade data """
         data = [[1, 2], [4, 5], [7, 8]]
@@ -1297,6 +1302,7 @@ class NumericalModifying(DataTestObject):
 
         assert caller.isIdentical(exp2Obj)
 
+    @logCountAssertionFactory(len(UML.data.available) * 2)
     def test_elements_multiply_handmadeDifInputs(self):
         """ Test elements.multiply on handmade data with different input object types"""
         data = [[1, 2], [4, 5], [7, 8]]
@@ -1306,14 +1312,14 @@ class NumericalModifying(DataTestObject):
 
         for retType in UML.data.available:
             caller = self.constructor(data)
-            twosObj = UML.createData(retType, twos)
+            twosObj = UML.createData(retType, twos, useLog=False)
             caller.elements.multiply(twosObj)
 
             exp1Obj = self.constructor(exp1)
 
             assert exp1Obj.isIdentical(caller)
 
-            halvesObj = UML.createData(retType, halves)
+            halvesObj = UML.createData(retType, halves, useLog=False)
             caller.elements.multiply(halvesObj)
 
             exp2Obj = self.constructor(data)

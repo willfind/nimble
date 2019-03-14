@@ -169,11 +169,11 @@ class Base(object):
             self.pointNames = None
         elif isinstance(pointNames, dict):
             self._nextDefaultValuePoint = self._pointCount
-            self.points.setNames(pointNames)
+            self.points.setNames(pointNames, useLog=False)
         else:
             pointNames = valuesToPythonList(pointNames, 'pointNames')
             self._nextDefaultValuePoint = self._pointCount
-            self.points.setNames(pointNames)
+            self.points.setNames(pointNames, useLog=False)
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
@@ -182,11 +182,11 @@ class Base(object):
             self.featureNames = None
         elif isinstance(featureNames, dict):
             self._nextDefaultValueFeature = self._featureCount
-            self.features.setNames(featureNames)
+            self.features.setNames(featureNames, useLog=False)
         else:
             featureNames = valuesToPythonList(featureNames, 'featureNames')
             self._nextDefaultValueFeature = self._featureCount
-            self.features.setNames(featureNames)
+            self.features.setNames(featureNames, useLog=False)
 
         # Set up object name
         if name is None:
@@ -3572,9 +3572,9 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             if self._pointNamesCreated():
-                ret.points.setNames(self.points.getNames())
+                ret.points.setNames(self.points.getNames(), useLog=False)
             if other._featureNamesCreated():
-                ret.features.setNames(other.features.getNames())
+                ret.features.setNames(other.features.getNames(), useLog=False)
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
@@ -3809,8 +3809,8 @@ class Base(object):
             # shift right to put the next digit in the ones place
             curr = curr >> 1
 
-        ret.points.setNames(retPNames)
-        ret.features.setNames(retFNames)
+        ret.points.setNames(retPNames, useLog=False)
+        ret.features.setNames(retFNames, useLog=False)
 
         ret._name = dataHelpers.nextDefaultObjectName()
 
@@ -3852,13 +3852,13 @@ class Base(object):
         """
         ret = self.elements.calculate(abs)
         if self._pointNamesCreated():
-            ret.points.setNames(self.points.getNames())
+            ret.points.setNames(self.points.getNames(), useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
         if self._featureNamesCreated():
-            ret.features.setNames(self.features.getNames())
+            ret.features.setNames(self.features.getNames(), useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
@@ -3960,14 +3960,14 @@ class Base(object):
 
 
         if retPNames is not None:
-            ret.points.setNames(retPNames)
+            ret.points.setNames(retPNames, useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
 
         if retFNames is not None:
-            ret.features.setNames(retFNames)
+            ret.features.setNames(retFNames, useLog=False)
         else:
-            ret.features.setNames(None)
+            ret.features.setNames(None, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'

@@ -15,8 +15,6 @@ def logCountAssertionFactory(count):
             startCount = logger.extractFromLog(countQuery)[0][0]
             ret = function(*args, **kwargs)
             endCount = logger.extractFromLog(countQuery)[0][0]
-            print(startCount, endCount)
-            UML.showLog()
             assert startCount + count == endCount
             return ret
         wrapped.__name__ = function.__name__
@@ -26,6 +24,3 @@ def logCountAssertionFactory(count):
 
 noLogEntryExpected = logCountAssertionFactory(0)
 oneLogEntryExpected = logCountAssertionFactory(1)
-twoLogEntriesExpected = logCountAssertionFactory(2)
-threeLogEntriesExpected = logCountAssertionFactory(3)
-fourLogEntriesExpected = logCountAssertionFactory(4)

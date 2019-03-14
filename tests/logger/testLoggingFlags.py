@@ -618,3 +618,62 @@ def test_features_add():
         return obj.features.add(toAppend, useLog=useLog)
 
     backend(wrapped, prepAndCheck)
+
+def test_features_splitByParsing():
+    def customParser(val):
+        if val == 1:
+            return ['a', 1]
+        elif val == 2:
+            return ['b', 2]
+        else:
+            return ['c', 3]
+    def wrapped(obj, useLog):
+        return obj.features.splitByParsing(1, customParser, ['str', 'int'], useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_splitByCollapsingFeatures():
+    def wrapped(obj, useLog):
+        return obj.points.splitByCollapsingFeatures(['f0', 'f1', 'f2'],
+                                                    'featureNames', 'values',
+                                                    useLog = useLog)
+    backend(wrapped, prepAndCheck)
+
+def test_points_combineByExpandingFeatures():
+    def wrapped(obj, useLog):
+        newData = [['Bolt', '100m', 9.81],
+                   ['Bolt', '200m', 19.78],
+                   ['Gatlin', '100m', 9.89],
+                   ['de Grasse', '200m', 20.02],
+                   ['de Grasse', '100m', 9.91]]
+        fNames = ['athlete', 'dist', 'time']
+        newObj = UML.createData('Matrix', newData, featureNames=fNames, useLog=False)
+        return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_setName():
+    def wrapped(obj, useLog):
+        return obj.points.setName(0, 'newPointName', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_setName():
+    def wrapped(obj, useLog):
+        return obj.features.setName(0, 'newFeatureName', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_setNames():
+    def wrapped(obj, useLog):
+        newNames = ['new_pt' + str(i) for i in range(18)]
+        return obj.points.setNames(newNames, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_setNames():
+    def wrapped(obj, useLog):
+        newNames = ['new_ft' + str(i) for i in range(3)]
+        return obj.features.setNames(newNames, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)

@@ -1660,7 +1660,8 @@ class TrainedLearner(object):
         # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
-    def retrain(self, trainX, trainY=None):
+    @logPosition
+    def retrain(self, trainX, trainY=None, useLog=None):
         """
         Train the model on new data.
 
@@ -1704,8 +1705,12 @@ class TrainedLearner(object):
         self.customDict = customDict
         self.has2dOutput = has2dOutput
 
+        handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
+                      None, None, self.learnerName, self.arguments, None)
+
     @captureOutput
-    def incrementalTrain(self, trainX, trainY=None):
+    @logPosition
+    def incrementalTrain(self, trainX, trainY=None, useLog=None):
         """
         Extend the training of this learner with additional data.
 
@@ -1729,6 +1734,10 @@ class TrainedLearner(object):
         self.backend = self.interface._incrementalTrainer(self.backend, trainX,
                                                           trainY, arguments,
                                                           self.customDict)
+
+        handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
+                      trainY, None, None, self.learnerName, self.arguments,
+                      None)
 
     @captureOutput
     def getAttributes(self):
@@ -1802,7 +1811,7 @@ class TrainedLearner(object):
             label = internalOrder[index]
             return desiredDict[label]
 
-        formatedRawOrder.features.sort(sortHelper=sortScorer)
+        formatedRawOrder.features.sort(sortHelper=sortScorer, useLog=False)
         return formatedRawOrder
 
 

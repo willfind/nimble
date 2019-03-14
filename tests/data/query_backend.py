@@ -1159,6 +1159,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_SampleCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1171,7 +1172,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("covariance ")
         else:
             ret = trans.features.similarities("sample\tcovariance")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         # hand computed results
         expRow0 = [3, 1.5, 1.5]
@@ -1197,6 +1198,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_populationCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1209,7 +1211,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("population COvariance")
         else:
             ret = trans.features.similarities("populationcovariance")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         # hand computed results
         expRow0 = [2, 1, 1]
@@ -1235,6 +1237,7 @@ class QueryBackend(DataTestObject):
         """ Test identity between population covariance and population std of features """
         self.backend_Sim_STDandVarianceIdentity(False)
 
+    @noLogEntryExpected
     def backend_Sim_STDandVarianceIdentity(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1247,7 +1250,7 @@ class QueryBackend(DataTestObject):
         else:
             ret = trans.features.similarities("populationcovariance")
             stdVector = trans.features.statistics("\npopulationstd")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         numpy.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
         numpy.testing.assert_approx_equal(ret[1, 1], stdVector[1] * stdVector[1])
@@ -1263,6 +1266,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_CorrelationResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1275,7 +1279,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("correlation")
         else:
             ret = trans.features.similarities("corre lation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         expRow0 = [1, (1. / 2), (1. / 2)]
         expRow1 = [(1. / 2), 1, (-1. / 2)]
@@ -1358,6 +1362,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_DotProductResult(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1370,7 +1375,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("Dot Product")
         else:
             ret = trans.features.similarities("dotproduct\n")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
         expObj = self.constructor(expData)
@@ -1469,6 +1474,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct max results """
         self.backend_Stat_max(False)
 
+    @noLogEntryExpected
     def backend_Stat_max(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1484,7 +1490,7 @@ class QueryBackend(DataTestObject):
 
         else:
             ret = trans.features.statistics("max ")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1504,6 +1510,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct mean results """
         self.backend_Stat_mean(False)
 
+    @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
         orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
         if isinstance(orig, UML.data.BaseView):
@@ -1515,6 +1522,7 @@ class QueryBackend(DataTestObject):
         assert expObjf == res['f']
         assert expObjm == res['m']
 
+    @noLogEntryExpected
     def backend_Stat_mean(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1529,7 +1537,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("Mean")
         else:
             ret = trans.features.statistics(" MEAN")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1549,6 +1557,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct median results """
         self.backend_Stat_median(False)
 
+    @noLogEntryExpected
     def backend_Stat_median(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1563,7 +1572,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("MeDian")
         else:
             ret = trans.features.statistics("median")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1584,6 +1593,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct min results """
         self.backend_Stat_min(False)
 
+    @noLogEntryExpected
     def backend_Stat_min(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1598,7 +1608,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("mIN")
         else:
             ret = trans.features.statistics("min")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1618,6 +1628,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct uniqueCount results """
         self.backend_Stat_uniqueCount(False)
 
+    @noLogEntryExpected
     def backend_Stat_uniqueCount(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, -1]]
         dataT = numpy.array(data).T.tolist()
@@ -1632,7 +1643,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("unique Count")
         else:
             ret = trans.features.statistics("UniqueCount")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1652,6 +1663,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct proportionMissing results """
         self.backend_Stat_proportionMissing(False)
 
+    @noLogEntryExpected
     def backend_Stat_proportionMissing(self, axis):
         data = [[1, None, 1], [0, 1, float('nan')], [1, float('nan'), None]]
         dataT = numpy.array(data).T.tolist()
@@ -1666,7 +1678,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("Proportion Missing ")
         else:
             ret = trans.features.statistics("proportionmissing")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1686,6 +1698,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct proportionZero results """
         self.backend_Stat_proportionZero(False)
 
+    @noLogEntryExpected
     def backend_Stat_proportionZero(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1702,7 +1715,7 @@ class QueryBackend(DataTestObject):
             ret = trans.features.statistics("proportion Zero")
             assert len(ret.points) == 1
             assert len(ret.features) == 3
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1722,6 +1735,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct sample std results """
         self.backend_Stat_sampleStandardDeviation(False)
 
+    @noLogEntryExpected
     def backend_Stat_sampleStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1736,7 +1750,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("samplestd  ")
         else:
             ret = trans.features.statistics("standard deviation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1766,6 +1780,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct population std results """
         self.backend_Stat_populationStandardDeviation(False)
 
+    @noLogEntryExpected
     def backend_Stat_populationStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1780,7 +1795,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("popu  lationstd")
         else:
             ret = trans.features.statistics("population standarddeviation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1858,7 +1873,6 @@ class QueryBackend(DataTestObject):
     ########
 
     @attr('slow')
-    @noLogEntryExpected
     def test_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
@@ -1881,7 +1895,6 @@ class QueryBackend(DataTestObject):
     ###########################
 
     @attr('slow')
-    @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
@@ -1905,7 +1918,6 @@ class QueryBackend(DataTestObject):
     #############################
 
     @attr('slow')
-    @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='png') as outFile:
             path = outFile.name
@@ -2117,7 +2129,7 @@ class QueryBackend(DataTestObject):
     #####################
     # elements.__iter__ #
     #####################
-
+    @noLogEntryExpected
     def test_elements_iter_noNextPempty(self):
         """ test .elements() has no next value when object is point empty """
         data = [[], []]
@@ -2233,7 +2245,7 @@ class QueryBackend(DataTestObject):
     #####################################################
     # points.nonZeroIterator / features.nonZeroIterator #
     #####################################################
-
+    @noLogEntryExpected
     def test_points_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
@@ -2254,6 +2266,7 @@ class QueryBackend(DataTestObject):
 
         assert ret == []
 
+    @noLogEntryExpected
     def test_features_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)

@@ -430,10 +430,12 @@ class Elements(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculate(function=condition, outputType='Matrix')
+            ret = self.calculate(function=condition, outputType='Matrix',
+                                 useLog=False)
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)
-            ret = self.calculate(function=func, outputType='Matrix')
+            ret = self.calculate(function=func, outputType='Matrix',
+                                 useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -562,8 +564,8 @@ class Elements(object):
         retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self._source.points.setNames(retPNames)
-        self._source.features.setNames(retFNames)
+        self._source.points.setNames(retPNames, useLog=False)
+        self._source.features.setNames(retFNames, useLog=False)
         self._source.validate()
 
         argDict = buildArgDict(('other',), (), other)
@@ -631,7 +633,7 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight)
+            self._source.elements.transform(powFromRight, useLog=False)
         else:
             def powFromRight(val, pnum, fnum):
                 try:
@@ -640,7 +642,7 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight)
+            self._source.elements.transform(powFromRight, useLog=False)
 
         self._source.validate()
 

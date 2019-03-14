@@ -14,7 +14,9 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
+from UML.logger import logPosition, handleLogging
 from UML.exceptions import ImproperObjectAction
+from .dataHelpers import buildArgDict
 
 class Points(object):
     """
@@ -74,7 +76,7 @@ class Points(object):
         """
         return self._getNames()
 
-    def setName(self, oldIdentifier, newName):
+    def setName(self, oldIdentifier, newName, useLog=None):
         """
         Set or change a pointName.
 
@@ -103,9 +105,9 @@ class Points(object):
         >>> data.points.getNames()
         ['a', 'new', 'c', 'd']
         """
-        self._setName(oldIdentifier, newName)
+        self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None):
+    def setNames(self, assignments=None, useLog=None):
         """
         Set or rename all of the point names of this object.
 
@@ -134,7 +136,7 @@ class Points(object):
         >>> data.points.getNames()
         ['1', '2', '3', '4']
         """
-        self._setNames(assignments)
+        self._setNames(assignments, useLog)
 
     def getIndex(self, name):
         """
@@ -1356,8 +1358,9 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
+    @logPosition
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
-                                  featureForValues):
+                                  featureForValues, useLog=None):
         """
         Separate feature/value pairs into unique points.
 
@@ -1476,8 +1479,15 @@ class Points(object):
 
         self._source.validate()
 
+        argDict = buildArgDict(('featuresToCollapse', 'featureForNames',
+                                'featureForValues'), (), featuresToCollapse,
+                               featureForNames, featureForValues)
+        handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
+                      self._source.getTypeString(), argDict)
+
+    @logPosition
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featureWithValues):
+                                   featureWithValues, useLog=None):
         """
         Combine points that are identical except at a given feature.
 
@@ -1602,6 +1612,12 @@ class Points(object):
 
         self._source.validate()
 
+        argDict = buildArgDict(('featureWithFeatureNames',
+                                'featureWithValues'), (),
+                               featureWithFeatureNames, featureWithValues)
+        handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
+                      self._source.getTypeString(), argDict)
+
     ####################
     # Query functions #
     ###################
@@ -1705,11 +1721,11 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName):
+    def _setName(self, oldIdentifier, newName, useLog):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, useLog):
         pass
 
     @abstractmethod

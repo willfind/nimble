@@ -88,7 +88,8 @@ class Axis(object):
 
         return copy.copy(namesList)
 
-    def _setName(self, oldIdentifier, newName):
+    @logPosition
+    def _setName(self, oldIdentifier, newName, useLog=None):
         if isinstance(self, Points):
             namesDict = self._source.pointNames
         else:
@@ -101,7 +102,13 @@ class Axis(object):
             self._setAllDefault()
         self._setName_implementation(oldIdentifier, newName)
 
-    def _setNames(self, assignments=None):
+        argDict = buildArgDict(("oldIdentifier", "newName"), (),
+                               oldIdentifier, newName)
+        handleLogging(useLog, 'prep', '{ax}s.setName'.format(ax=self._axis),
+                      self._source.getTypeString(), argDict)
+
+    @logPosition
+    def _setNames(self, assignments=None, useLog=None):
         if isinstance(self, Points):
             names = 'pointNames'
             namesInverse = 'pointNamesInverse'
@@ -118,6 +125,11 @@ class Axis(object):
         else:
             assignments = valuesToPythonList(assignments, 'assignments')
             self._setNamesFromList(assignments, count)
+
+        argDict = buildArgDict(("assignments",), (None,),
+                               assignments)
+        handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
+                      self._source.getTypeString(), argDict)
 
     def _getIndex(self, identifier):
         num = len(self)
@@ -893,7 +905,7 @@ class Axis(object):
             toCall = dotProd
 
         transposed = self._source.copy()
-        transposed.transpose()
+        transposed.transpose(useLog=False)
 
         if isinstance(self, Points):
             ret = toCall(self._source, transposed)
@@ -912,7 +924,7 @@ class Axis(object):
             return self._statisticsBackend(statisticsFunction)
         else:
             # groupByFeature is only a parameter for .features
-            res = self._source.groupByFeature(groupByFeature)
+            res = self._source.groupByFeature(groupByFeature, useLog=False)
             for k in res:
                 res[k] = res[k].features._statisticsBackend(statisticsFunction)
             return res
@@ -954,13 +966,13 @@ class Axis(object):
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = UML.calculate.standardDeviation
 
-        ret = self._calculate(toCall, limitTo=None)
+        ret = self._calculate(toCall, limitTo=None, useLog=False)
         if isinstance(self, Points):
-            ret.points.setNames(self._getNames())
-            ret.features.setName(0, cleanFuncName)
+            ret.points.setNames(self._getNames(), useLog=False)
+            ret.features.setName(0, cleanFuncName, useLog=False)
         else:
-            ret.points.setName(0, cleanFuncName)
-            ret.features.setNames(self._getNames())
+            ret.points.setName(0, cleanFuncName, useLog=False)
+            ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
 

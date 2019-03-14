@@ -708,7 +708,7 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
         return trainer_ret_l.apply(givenTestX)
 
 @oneLogEntryExpected
-def test_saveLoad_logCount():
+def test_saveLoadTrainedLearner_logCount():
     train = [[1, -1, -3, -3, -1],
               [2, 0.4, -0.8, 0.2, -0.3],
               [3, 2, 1, 2, 4]]

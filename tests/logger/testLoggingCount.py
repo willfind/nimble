@@ -21,9 +21,8 @@ from UML.data import Base
 from UML.data import Points
 from UML.data import Features
 from UML.data import Elements
+from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.universal_interface import TrainedLearner
-from UML.configuration import configSafetyWrapper
-from UML import importModule
 from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
 
 calculate.__name__ = 'calculate'
@@ -31,109 +30,156 @@ fill.__name__ = 'fill'
 match.__name__ = 'match'
 
 ALL_USER_FACING = []
-for call in [UML, calculate, fill, match, Base, Points, Features, Elements, TrainedLearner]:
+modulesAndClasses = [UML, calculate, fill, match, Base, Points, Features,
+                     Elements, UniversalInterface, TrainedLearner]
+for call in modulesAndClasses:
     for attribute in dir(call):
-        if not attribute.startswith('_') and callable(getattr(call,attribute)):
+        if not attribute.startswith('_') and callable(getattr(call, attribute)):
             ALL_USER_FACING.append(call.__name__ + '.' + attribute)
 
+def prefixAdder(prefix):
+    def addPrefix(value):
+        return prefix + '.' + value
+    return addPrefix
+
 # NOTES:
-#  UML.setRandomSeed logged?
+#  setRandomSeed logged?
 #  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
 #  LogCount Testing Below: log, showLog, importModule
 
-UML_logged = ['UML.createData', 'UML.createRandomData', 'UML.train',
-              'UML.trainAndApply', 'UML.trainAndTest',
-              'UML.trainAndTestOnTrainingData', 'UML.crossValidate',
-              'UML.crossValidateReturnAll', 'UML.crossValidateReturnBest',
-              'UML.normalizeData', 'UML.log', 'UML.loadData',
-              'UML.loadTrainedLearner',
-              ]
-UML_notLogged = ['UML.ones', 'UML.zeros', 'UML.identity', 'UML.setRandomSeed',
-                 'UML.showLog', 'UML.registerCustomLearner',
-                 'UML.deregisterCustomLearner', 'UML.listLearners',
-                 'UML.learnerParameters', 'UML.learnerDefaultValues',
-                 'UML.learnerType', 'UML.importModule',
-                 ]
-UML_tested = UML_logged + UML_notLogged
+uml_logged = [
+    'createData', 'createRandomData', 'train', 'trainAndApply', 'trainAndTest',
+    'trainAndTestOnTrainingData', 'crossValidate', 'crossValidateReturnAll',
+    'crossValidateReturnBest', 'normalizeData', 'log', 'loadData',
+    'loadTrainedLearner',
+    ]
+uml_notLogged = [
+    'ones', 'zeros', 'identity', 'setRandomSeed', 'showLog',
+    'registerCustomLearner', 'deregisterCustomLearner', 'listLearners',
+    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'importModule',
+    ]
+uml_funcs = uml_logged + uml_notLogged
+uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
-calculate_logged = []
-calculate_notLogged = []
-calculate_tested = calculate_logged + calculate_notLogged
+calculate_funcs = []
+calculate_tested = list(map(prefixAdder('calculate'), calculate_funcs))
 
 # all fill functions should not be logged.
-fill_tested = ['fill.backwardFill', 'fill.constant', 'fill.factory',
-               'fill.forwardFill', 'fill.interpolate',
-               'fill.kNeighborsClassifier', 'fill.kNeighborsRegressor',
-               'fill.mean', 'fill.median', 'fill.mode'
-               ]
-
+fill_funcs = [
+    'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
+    'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
+    ]
+fill_tested = list(map(prefixAdder('fill'), fill_funcs))
 # all match functions should not be logged.
-match_tested = ['match.allMissing', 'match.allNegative', 'match.allNonNumeric',
-                'match.allNonZero', 'match.allNumeric', 'match.allPositive',
-                'match.allValues', 'match.allZero', 'match.anyMissing',
-                'match.anyNegative', 'match.anyNonNumeric', 'match.anyNonZero',
-                'match.anyNumeric', 'match.anyPositive', 'match.anyValues',
-                'match.anyZero', 'match.convertMatchToFunction',
-                'match.missing', 'match.negative', 'match.nonNumeric',
-                'match.nonZero', 'match.numeric', 'match.positive',
-                'match.zero'
-                ]
-
+match_funcs = [
+    'allMissing', 'allNegative', 'allNonNumeric', 'allNonZero', 'allNumeric',
+    'allPositive', 'allValues', 'allZero', 'anyMissing', 'anyNegative',
+    'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive', 'anyValues',
+    'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
+    'nonZero', 'numeric', 'positive', 'zero',
+    ]
+match_tested = list(map(prefixAdder('match'), match_funcs))
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
 #  expected log count can be found in this script:
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 
-Base_logged = ['Base.copy', 'Base.fillUsingAllData', 'Base.featureReport',
-               'Base.fillWith', 'Base.flattenToOneFeature',
-               'Base.flattenToOnePoint', 'Base.groupByFeature',
-               'Base.merge', 'Base.replaceFeatureWithBinaryFeatures',
-               'Base.summaryReport', 'Base.trainAndTestSets',
-               'Base.transformFeatureToIntegers', 'Base.transpose',
-               'Base.unflattenFromOneFeature', 'Base.unflattenFromOnePoint',
-               ]
-Base_notLogged = ['Base.containsZero', 'Base.copyAs', 'Base.featureView',
-                  'Base.save', 'Base.getTypeString', 'Base.hashCode',
-                  'Base.inverse', 'Base.isApproximatelyEqual',
-                  'Base.isIdentical', 'Base.nameIsDefault', 'Base.plot',
-                  'Base.plotFeatureAgainstFeature',
-                  'Base.plotFeatureAgainstFeatureRollingAverage',
-                  'Base.plotFeatureDistribution', 'Base.pointView',
-                  'Base.referenceDataFrom', 'Base.save', 'Base.show',
-                  'Base.solveLinearSystem', 'Base.toString', 'Base.validate',
-                  'Base.view', 'Base.writeFile'
-                  ]
-Base_tested = Base_logged + Base_notLogged
+base_logged = [
+    'copy', 'fillUsingAllData', 'featureReport', 'fillWith',
+    'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature', 'merge',
+    'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
+    'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
+    'unflattenFromOnePoint',
+    ]
+base_notLogged = [
+    'containsZero', 'copyAs', 'featureView', 'save', 'getTypeString',
+    'hashCode', 'inverse', 'isApproximatelyEqual', 'isIdentical',
+    'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
+    'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
+    'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
+    'toString', 'validate', 'view', 'writeFile',
+    ]
+base_funcs = base_logged + base_notLogged
+base_tested = list(map(prefixAdder('Base'), base_funcs))
 
-Features_logged = []
-Features_notLogged = []
-Features_tested = Features_logged + Features_notLogged
+features_logged = [
+    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
+    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
+    'transform', 'splitByParsing',
+    ]
+features_notLogged = [
+    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
+    'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    ]
+features_funcs = features_logged + features_notLogged
+features_tested = list(map(prefixAdder('Features'), features_funcs))
 
-Points_logged = []
-Points_notLogged = []
-Points_tested = Points_logged + Points_notLogged
+points_logged = [
+    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
+    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
+    'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
+    ]
+points_notLogged = [
+    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
+    'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    ]
+points_funcs = points_logged + points_notLogged
+points_tested = list(map(prefixAdder('Points'), points_funcs))
 
-Elements_logged = []
-Elements_notLogged = []
-Elements_tested = Elements_logged + Elements_notLogged
+elements_logged = [
+    'calculate', 'transform', 'multiply', 'power',
+    ]
+elements_notLogged = [
+    'count', 'countUnique', 'next',
+    ]
+elements_funcs = elements_logged + elements_notLogged
+elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
 
-TrainedLearner_logged = []
-TrainedLearner_notLogged = ['TrainedLearner.save']
-TrainedLearner_tested = TrainedLearner_logged + TrainedLearner_notLogged
+ui_logged = [
 
+    ]
+ui_notLogged = [
+    'accessible', 'findCallable', 'getCanonicalName',
+    'getLearnerDefaultValues', 'getLearnerParameterNames', 'isAlias',
+    'learnerType', 'listLearners', 'version',
+]
+ui_funcs = ui_logged + ui_notLogged
+ui_tested = list(map(prefixAdder('UniversalInterface'), ui_funcs))
 
-TESTED = (UML_tested + calculate_tested + fill_tested + match_tested
-          + Base_tested + Features_tested + Points_tested + Elements_tested)
+tl_logged = [
+    'apply', 'incrementalTrain', 'retrain', 'test',
+    ]
+tl_notLogged = [
+    'save', 'getAttributes', 'getScores',
+    ]
+tl_funcs = tl_logged + tl_notLogged
+tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
+
+TESTED = (uml_tested + calculate_tested + fill_tested + match_tested
+          + base_tested + features_tested + points_tested + elements_tested
+          + ui_tested + tl_tested)
 
 ##############
 # All tested #
 ##############
 
 def testAllUserFacingLoggingTested():
-    """This is to ensure that new user facing functions are tested for logging"""
-
-    assert sorted(TESTED) == sorted(ALL_USER_FACING)
+    """Ensure that all user facing functions are tested for logging"""
+    if not sorted(TESTED) == sorted(ALL_USER_FACING):
+        missing = [f for f in ALL_USER_FACING if f not in TESTED]
+        removed = [f for f in TESTED if f not in ALL_USER_FACING]
+        if missing:
+            msg = 'The log count is not tested for {0} '.format(len(missing))
+            msg += 'functions:'
+            print(msg)
+            print(missing)
+        if removed:
+            msg = 'The following {0} functions are '.format(len(removed))
+            msg += 'no longer user-facing:'
+            print(msg)
+            print(removed)
+        assert False
 
 #######
 # UML #
@@ -220,6 +266,28 @@ def test_validate_logCount():
     for rType in UML.data.available:
         obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
+
+############################
+# Points/Features/Elements #
+############################
+
+def test_points_shuffle_logCount():
+    @oneLogEntryExpected
+    def wrapped(obj):
+        return obj.points.shuffle()
+    for rType in UML.data.available:
+        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+                             useLog=False)
+        grouped = wrapped(obj)
+
+def test_features_shuffle_logCount():
+    @oneLogEntryExpected
+    def wrapped(obj):
+        return obj.features.shuffle()
+    for rType in UML.data.available:
+        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+                             useLog=False)
+        grouped = wrapped(obj)
 
 ###########
 # Helpers #

@@ -16,7 +16,9 @@ from abc import abstractmethod
 import numpy
 import six
 
+from UML.logger import logPosition, handleLogging
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
+from .dataHelpers import buildArgDict
 
 class Features(object):
     """
@@ -76,7 +78,7 @@ class Features(object):
         """
         return self._getNames()
 
-    def setName(self, oldIdentifier, newName):
+    def setName(self, oldIdentifier, newName, useLog=None):
         """
         Set or change a featureName.
 
@@ -105,9 +107,9 @@ class Features(object):
         >>> data.features.getNames()
         ['a', 'new', 'c', 'd']
         """
-        self._setName(oldIdentifier, newName)
+        self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None):
+    def setNames(self, assignments=None, useLog=None):
         """
         Set or rename all of the feature names of this object.
 
@@ -136,7 +138,7 @@ class Features(object):
         >>> data.features.getNames()
         ['1', '2', '3', '4']
         """
-        self._setNames(assignments)
+        self._setNames(assignments, useLog)
 
     def getIndex(self, name):
         """
@@ -1396,7 +1398,8 @@ class Features(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-    def splitByParsing(self, feature, rule, resultingNames):
+    @logPosition
+    def splitByParsing(self, feature, rule, resultingNames, useLog=None):
         """
         Split a feature into multiple features.
 
@@ -1561,6 +1564,11 @@ class Features(object):
 
         self._source.validate()
 
+        argDict = buildArgDict(('feature', 'rule', 'resultingNames'), (),
+                               feature, rule, resultingNames)
+        handleLogging(useLog, 'prep', 'features.splitByParsing',
+                      self._source.getTypeString(), argDict)
+
     ###################
     # Query functions #
     ###################
@@ -1665,11 +1673,11 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName):
+    def _setName(self, oldIdentifier, newName, useLog):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, useLog):
         pass
 
     @abstractmethod
