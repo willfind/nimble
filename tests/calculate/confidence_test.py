@@ -10,6 +10,7 @@ from nose.tools import *
 import UML
 from UML.calculate import confidenceIntervalHelper
 from UML.exceptions import PackageException, ImproperObjectAction
+from ..logHelpers import noLogEntryExpected
 
 def getPredictions():
     predRaw = [252.7, 247.7] * 12
@@ -29,6 +30,7 @@ def getPredictions():
 ######################
 # confidenceInterval #
 ######################
+@noLogEntryExpected
 def testSimpleConfidenceInverval():
     """Test of confidenceInterval using example from wikipedia """
     pred = getPredictions()

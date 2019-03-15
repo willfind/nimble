@@ -61,16 +61,28 @@ uml_notLogged = [
 uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
-calculate_funcs = []
+# NOTES:
+#  untested functions: elementWiseMultiply, elementWisePower, fractionCorrect,
+#                      fractionIncorrect, rSquared, varianceFractionRemaining
+# TODO in lin_alg.py inverse, leastSquaresSolution, pseudoInverse, solve
+# no calculate functions should be logged.
+calculate_funcs = [
+    'confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
+    'covariance', 'detectBestResult', 'maximum', 'mean', 'meanAbsoluteError',
+    'meanFeaturewiseRootMeanSquareError', 'median', 'minimum', 'mode',
+    'proportionMissing', 'proportionZero', 'quartiles', 'residuals',
+    'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
+    ]
 calculate_tested = list(map(prefixAdder('calculate'), calculate_funcs))
 
-# all fill functions should not be logged.
+# no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
     'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
     ]
 fill_tested = list(map(prefixAdder('fill'), fill_funcs))
-# all match functions should not be logged.
+
+# no match functions should not be logged.
 match_funcs = [
     'allMissing', 'allNegative', 'allNonNumeric', 'allNonZero', 'allNumeric',
     'allPositive', 'allValues', 'allZero', 'anyMissing', 'anyNegative',
@@ -288,6 +300,8 @@ def test_features_shuffle_logCount():
         obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
+
+# TODO dunder functions in classes
 
 ###########
 # Helpers #

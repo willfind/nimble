@@ -10,6 +10,7 @@ from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanFeaturewiseRootMeanSquareError
+from ..logHelpers import noLogEntryExpected
 
 #################
 # _computeError #
@@ -103,7 +104,7 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
 
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
-
+@noLogEntryExpected
 def testMeanAbsoluteError():
     """
     Check that the mean absolute error calculator works correctly when
@@ -113,10 +114,11 @@ def testMeanAbsoluteError():
     predictedLabels = numpy.array([0, 0, 0])
     knownLabels = numpy.array([0, 0, 0])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-    knownLabelsMatrix.transpose()
-    predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+    knownLabelsMatrix.transpose(useLog=False)
+    predictedLabelsMatrix.transpose(useLog=False)
 
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
     assert maeRate == 0.0
@@ -124,10 +126,11 @@ def testMeanAbsoluteError():
     predictedLabels = numpy.array([1.0, 2.0, 3.0])
     knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    knownLabelsMatrix.transpose()
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-    predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    knownLabelsMatrix.transpose(useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+    predictedLabelsMatrix.transpose(useLog=False)
 
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
     assert maeRate == 0.0
@@ -135,10 +138,10 @@ def testMeanAbsoluteError():
     predictedLabels = numpy.array([1.0, 2.0, 3.0])
     knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    knownLabelsMatrix.transpose()
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-    predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    knownLabelsMatrix.transpose(useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels, useLog=False)
+    predictedLabelsMatrix.transpose(useLog=False)
 
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
     assert maeRate > 0.49
@@ -177,7 +180,7 @@ def testRmseEmptyPredictedValues():
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
-
+@noLogEntryExpected
 def testRmse():
     """
     Check that the rootMeanSquareError calculator works correctly when
@@ -187,8 +190,9 @@ def testRmse():
     predictedLabels = numpy.array([[0], [0], [0]])
     knownLabels = numpy.array([[0], [0], [0]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
     assert rmseRate == 0.0
@@ -196,8 +200,9 @@ def testRmse():
     predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
     knownLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
     assert rmseRate == 0.0
@@ -205,8 +210,9 @@ def testRmse():
     predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
     knownLabels = numpy.array([[1.5], [2.5], [3.5]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
     assert rmseRate > 0.49
@@ -238,13 +244,13 @@ def testMFRMSE_badshapeFeatures():
 
     meanFeaturewiseRootMeanSquareError(knowns, predicted)
 
-
+@noLogEntryExpected
 def testMFRMSE_simpleSuccess():
     predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
     knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
-    knowns = createData('Matrix', data=knownLabels)
-    predicted = createData('Matrix', data=predictedLabels)
+    knowns = createData('Matrix', data=knownLabels, useLog=False)
+    predicted = createData('Matrix', data=predictedLabels, useLog=False)
 
     mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
     assert mfrmseRate == 1.0

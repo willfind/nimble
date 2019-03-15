@@ -16,6 +16,7 @@ import os
 import os.path
 from functools import reduce
 from copy import deepcopy
+from unittest.mock import patch
 
 import numpy
 from nose.tools import *
@@ -55,6 +56,12 @@ def _pnames(num):
     for i in range(num):
         ret.append('p' + str(i))
     return ret
+
+class CalledFunctionException(Exception):
+    pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
 
 
 class QueryBackend(DataTestObject):
@@ -1112,6 +1119,37 @@ class QueryBackend(DataTestObject):
     # points.similarities / features.similarities #
     ###############################################
 
+    # similarities calls the correlation and covariance in the calculate module
+    # First we will test that similarities calls each calculate module function
+    def test_points_similarities_callsCalculateFunction(self):
+        simFuncs = {'correlation': 'correlation', 'covariance': 'covariance',
+                    'sample covariance': 'covariance',
+                    'population covariance' : 'covariance'}
+        for simFunc in simFuncs:
+            calcFunc = simFuncs[simFunc]
+            self.backend_sim_callsFunctions(simFunc, calcFunc, 'point')
+
+    def test_features_similarities_callsCalculateFunction(self):
+        simFuncs = {'correlation': 'correlation', 'covariance': 'covariance',
+                    'sample covariance': 'covariance',
+                    'population covariance' : 'covariance'}
+        for simFunc in simFuncs:
+            calcFunc = simFuncs[simFunc]
+            self.backend_sim_callsFunctions(simFunc, calcFunc, 'feature')
+
+    @raises(CalledFunctionException)
+    def backend_sim_callsFunctions(self, objFunc, calcFunc, axis):
+        toPatch = 'UML.calculate.' + calcFunc
+        with patch(toPatch, side_effect=calledException):
+            if axis == 'point':
+                data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
+                obj = self.constructor(data)
+                obj.points.similarities(objFunc)
+            else:
+                data = [[3, 0, 3], [0, 0, 0], [3, 3, 0]]
+                obj = self.constructor(data)
+                obj.features.similarities(objFunc)
+
     @raises(InvalidArgumentType)
     def test_points_similarities_InvalidParamType(self):
         """ Test points.similarities raise exception for unexpected param type """
@@ -1465,6 +1503,49 @@ class QueryBackend(DataTestObject):
     ################### ####################
     # pointStatistics # #featureStatistics #
     ################### ####################
+
+    # # statistics calls several functions in the calculate module
+    # # First we will test that statistics calls each calculate module function
+    def test_points_statistics_callsCalculateFunction(self):
+        statFuncs = {'max': 'maximum', 'mean': 'mean', 'median': 'median',
+                     'min': 'minimum', 'population std': 'standardDeviation',
+                     'population standard deviation': 'standardDeviation',
+                     'proportion missing': 'proportionMissing',
+                     'proportion zero': 'proportionZero',
+                     'sample standard deviation': 'standardDeviation',
+                     'sample std': 'standardDeviation',
+                     'standard deviation': 'standardDeviation',
+                     'std': 'standardDeviation', 'unique count': 'uniqueCount'}
+        for statFunc in statFuncs:
+            calcFunc = statFuncs[statFunc]
+            self.backend_stat_callsFunctions(statFunc, calcFunc, 'point')
+
+    def test_features_statistics_callsCalculateFunction(self):
+        statFuncs = {'max': 'maximum', 'mean': 'mean', 'median': 'median',
+                     'min': 'minimum', 'population std': 'standardDeviation',
+                     'population standard deviation': 'standardDeviation',
+                     'proportion missing': 'proportionMissing',
+                     'proportion zero': 'proportionZero',
+                     'sample standard deviation': 'standardDeviation',
+                     'sample std': 'standardDeviation',
+                     'standard deviation': 'standardDeviation',
+                     'std': 'standardDeviation', 'unique count': 'uniqueCount'}
+        for statFunc in statFuncs:
+            calcFunc = statFuncs[statFunc]
+            self.backend_stat_callsFunctions(statFunc, calcFunc, 'feature')
+
+    @raises(CalledFunctionException)
+    def backend_stat_callsFunctions(self, objFunc, calcFunc, axis):
+        toPatch = 'UML.calculate.' + calcFunc
+        with patch(toPatch, side_effect=calledException):
+            if axis == 'point':
+                data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
+                obj = self.constructor(data)
+                obj.points.statistics(objFunc)
+            else:
+                data = [[3, 0, 3], [0, 0, 0], [3, 3, 0]]
+                obj = self.constructor(data)
+                obj.features.statistics(objFunc)
 
     def test_pointStatistics_max(self):
         """ Test pointStatistics returns correct max results """
