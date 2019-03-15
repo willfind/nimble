@@ -372,7 +372,7 @@ class QueryBackend(DataTestObject):
     ##############
     # __getitem__#
     ##############
-
+    @noLogEntryExpected
     def test_getitem_allExamples(self):
         """
 
@@ -2019,7 +2019,7 @@ class QueryBackend(DataTestObject):
     ###################
     # points.__iter__ #
     ###################
-
+    @noLogEntryExpected
     def test_points_iter_FemptyCorrectness(self):
         data = [[], []]
         data = numpy.array(data)
@@ -2049,6 +2049,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
+    @noLogEntryExpected
     def test_points_iter_exactValueViaFor(self):
         """ Test .points() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
@@ -2110,7 +2111,7 @@ class QueryBackend(DataTestObject):
     #####################
     # features.__iter__ #
     #####################
-
+    @noLogEntryExpected
     def test_features_iter_PemptyCorrectness(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -2140,7 +2141,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
-
+    @noLogEntryExpected
     def test_features_iter_exactValueViaFor(self):
         """ Test .features() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
@@ -2235,6 +2236,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
+    @noLogEntryExpected
     def test_elements_iter_exactValueViaFor(self):
         """ Test .elements() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]

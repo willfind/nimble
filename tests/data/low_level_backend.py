@@ -1040,7 +1040,7 @@ class LowLevelBackend(object):
     ###########
     # __len__ #
     ###########
-
+    @noLogEntryExpected
     def test_len_handmade(self):
         zeroZero = self.constructor(psize=0, fsize=0)
         assert len(zeroZero) == 0
@@ -1066,6 +1066,41 @@ class LowLevelBackend(object):
         nn = self.constructor(psize=11, fsize=33)
         len(nn)
 
+    #####################################
+    # points.__len__ / features.__len__ #
+    #####################################
+    @noLogEntryExpected
+    def test_axis_len_handmade(self):
+        zeroZero = self.constructor(psize=0, fsize=0)
+        assert len(zeroZero.points) == 0
+        assert len(zeroZero.features) == 0
+        zeroOne = self.constructor(psize=0, fsize=1)
+        assert len(zeroOne.points) == 0
+        assert len(zeroOne.features) == 1
+        zeroN = self.constructor(psize=0, fsize=12)
+        assert len(zeroN.points) == 0
+        assert len(zeroN.features) == 12
+
+        oneZero = self.constructor(psize=1, fsize=0)
+        assert len(oneZero.points) == 1
+        assert len(oneZero.features) == 0
+        oneOne = self.constructor(psize=1, fsize=1)
+        assert len(oneOne.points) == 1
+        assert len(oneOne.features) == 1
+        oneN = self.constructor(psize=1, fsize=13)
+        assert len(oneN.points) == 1
+        assert len(oneN.features) == 13
+
+        nZero = self.constructor(psize=15, fsize=0)
+        assert len(nZero.points) == 15
+        assert len(nZero.features) == 0
+        nOne = self.constructor(psize=11, fsize=1)
+        assert len(nOne.points) == 11
+        assert len(nOne.features) == 1
+
+        nn = self.constructor(psize=11, fsize=33)
+        assert len(nn.points) == 11
+        assert len(nn.features) == 33
 
     #########################
     # constructIndicesList #

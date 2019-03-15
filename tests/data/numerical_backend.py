@@ -29,7 +29,7 @@ from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
 
 from .baseObject import DataTestObject
-from ..logHelpers import logCountAssertionFactory
+from ..logHelpers import logCountAssertionFactory, noLogEntryExpected
 
 
 preserveName = "PreserveTestName"
@@ -501,8 +501,8 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
 
 
 def makeAllData(constructor, rhsCons, n, sparsity):
-    randomlf = UML.createRandomData('Matrix', n, n, sparsity)
-    randomrf = UML.createRandomData('Matrix', n, n, sparsity)
+    randomlf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
+    randomrf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
     lhsf = randomlf.copyAs("numpymatrix")
     rhsf = randomrf.copyAs("numpymatrix")
     lhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
@@ -711,10 +711,12 @@ class NumericalDataSafe(DataTestObject):
 
         caller * callee
 
+    @noLogEntryExpected
     def test_mul_autoObjs(self):
         """ Test __mul__ against automated data """
         back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
+    @noLogEntryExpected
     def test_mul_autoScalar(self):
         """ Test __mul__ of a scalar against automated data """
         back_autoVsNumpyScalar(self.constructor, numpy.dot, '__mul__', False, 0.2)
@@ -741,7 +743,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rmul__ #
     ############
-
+    @noLogEntryExpected
     def test_rmul_autoScalar(self):
         """ Test __rmul__ of a scalar against automated data """
         back_autoVsNumpyScalar(self.constructor, numpy.multiply, '__rmul__', False, 0.2)
@@ -764,7 +766,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __add__ #
     ############
-
+    @noLogEntryExpected
     def test_add_fullSuite(self):
         """ __add__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend(self.constructor, numpy.add, '__add__', False, 0.2)
@@ -786,7 +788,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __radd__ #
     ############
-
+    @noLogEntryExpected
     def test_radd_fullSuite(self):
         """ __radd__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend_rOp(self.constructor, numpy.add, '__radd__', False, 0.2)
@@ -809,7 +811,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __sub__ #
     ############
-
+    @noLogEntryExpected
     def test_sub_fullSuite(self):
         """ __sub__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend(self.constructor, numpy.subtract, '__sub__', False, 0.2)
@@ -832,7 +834,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rsub__ #
     ############
-
+    @noLogEntryExpected
     def test_rsub_fullSuite(self):
         """ __rsub__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend_rOp(self.constructor, numpy.subtract, '__rsub__', False, 0.2)
@@ -855,7 +857,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __div__ #
     ############
-
+    @noLogEntryExpected
     def test_div_fullSuite(self):
         """ __div__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
@@ -878,7 +880,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rdiv__ #
     ############
-
+    @noLogEntryExpected
     def test_rdiv_fullSuite(self):
         """ __rdiv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
@@ -901,7 +903,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __truediv__ #
     ###############
-
+    @noLogEntryExpected
     def test_truediv_fullSuite(self):
         """ __truediv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.true_divide, '__truediv__', False, 0)
@@ -924,7 +926,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rtruediv__ #
     ################
-
+    @noLogEntryExpected
     def test_rtruediv_fullSuite(self):
         """ __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod_rop(self.constructor, numpy.true_divide, '__rtruediv__', False, 0)
@@ -947,7 +949,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __floordiv__ #
     ###############
-
+    @noLogEntryExpected
     def test_floordiv_fullSuite(self):
         """ __floordiv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.floor_divide, '__floordiv__', False, 0)
@@ -970,7 +972,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rfloordiv__ #
     ################
-
+    @noLogEntryExpected
     def test_rfloordiv_fullSuite(self):
         """ __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod_rop(self.constructor, numpy.floor_divide, '__rfloordiv__', False, 0)
@@ -993,7 +995,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __mod__ #
     ###############
-
+    @noLogEntryExpected
     def test_mod_fullSuite(self):
         """ __mod__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.mod, '__mod__', False, 0)
@@ -1016,7 +1018,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rmod__ #
     ################
-
+    @noLogEntryExpected
     def test_rmod_fullSuite(self):
         """ __rmod__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod_rop(self.constructor, numpy.mod, '__rmod__', False, 0)
@@ -1056,6 +1058,7 @@ class NumericalDataSafe(DataTestObject):
         inputs = (constructor, constructor, UMLOp)
         wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
 
+    @noLogEntryExpected
     def test_pow_autoVsNumpyScalar(self):
         """ Test __pow__ with automated data and a scalar argument, against numpy operations """
         trials = 5
@@ -1088,7 +1091,7 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __pos__ #
     ###########
-
+    @noLogEntryExpected
     def test_pos_DoesntCrash(self):
         """ Test that __pos__ does nothing and doesn't crash """
         data1 = [[1, 2], [4, 5], [7, 8]]
@@ -1111,7 +1114,7 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __neg__ #
     ###########
-
+    @noLogEntryExpected
     def test_neg_simple(self):
         """ Test that __neg__ works as expected on some simple data """
         data1 = [[1, 2], [-4, -5], [7, -8], [0, 0]]
@@ -1136,7 +1139,7 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __abs__ #
     ###########
-
+    @noLogEntryExpected
     def test_abs_simple(self):
         """ Test that __abs__ works as expected on some simple data """
         data1 = [[1, 2], [-4, -5], [7, -8], [0, 0]]
@@ -1450,10 +1453,12 @@ class NumericalModifying(DataTestObject):
 
         caller *= callee
 
+    @noLogEntryExpected
     def test_imul_autoObjs(self):
         """ Test __imul__ against automated data """
         back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__imul__', True, 0.2)
 
+    @noLogEntryExpected
     def test_imul_autoScalar(self):
         """ Test __imul__ of a scalar against automated data """
         back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imul__', True, 0.2)
@@ -1480,7 +1485,7 @@ class NumericalModifying(DataTestObject):
     ############
     # __iadd__ #
     ############
-
+    @noLogEntryExpected
     def test_iadd_fullSuite(self):
         """ __iadd__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend(self.constructor, numpy.add, '__iadd__', True, 0.2)
@@ -1503,7 +1508,7 @@ class NumericalModifying(DataTestObject):
     ############
     # __isub__ #
     ############
-
+    @noLogEntryExpected
     def test_isub_fullSuite(self):
         """ __isub__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backend(self.constructor, numpy.subtract, '__isub__', True, 0.2)
@@ -1526,7 +1531,7 @@ class NumericalModifying(DataTestObject):
     ############
     # __idiv__ #
     ############
-
+    @noLogEntryExpected
     def test_idiv_fullSuite(self):
         """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
@@ -1549,7 +1554,7 @@ class NumericalModifying(DataTestObject):
     ################
     # __itruediv__ #
     ################
-
+    @noLogEntryExpected
     def test_itruediv_fullSuite(self):
         """ __itruediv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.true_divide, '__itruediv__', True, 0)
@@ -1572,7 +1577,7 @@ class NumericalModifying(DataTestObject):
     ################
     # __ifloordiv__ #
     ################
-
+    @noLogEntryExpected
     def test_ifloordiv_fullSuite(self):
         """ __ifloordiv__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.floor_divide, '__ifloordiv__', True, 0)
@@ -1595,7 +1600,7 @@ class NumericalModifying(DataTestObject):
     ################
     # __imod__ #
     ################
-
+    @noLogEntryExpected
     def test_imod_fullSuite(self):
         """ __imod__ Run the full standardized suite of tests for a binary numeric op """
         run_full_backendDivMod(self.constructor, numpy.mod, '__imod__', True, 0)
@@ -1619,7 +1624,7 @@ class NumericalModifying(DataTestObject):
     ###########
     # __ipow__ #
     ###########
-
+    @noLogEntryExpected
     def test_ipow_exceptions(self):
         """ __ipow__ Run the full standardized suite of tests for a binary numeric op """
         constructor = self.constructor

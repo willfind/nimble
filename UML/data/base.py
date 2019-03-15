@@ -3850,7 +3850,7 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.elements.calculate(abs)
+        ret = self.elements.calculate(abs, useLog=False)
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -3868,7 +3868,8 @@ class Base(object):
     def _numericValidation(self, right=False):
         if self._pointCount > 0:
             try:
-                self.elements.calculate(dataHelpers._checkNumeric)
+                self.elements.calculate(dataHelpers._checkNumeric,
+                                        useLog=False)
             except ValueError:
                 msg = "The object on the {0} contains non numeric data, "
                 msg += "cannot do this operation"

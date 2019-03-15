@@ -18,6 +18,7 @@ import UML.calculate as calculate
 import UML.fill as fill
 import UML.match as match
 from UML.data import Base
+from UML.data import Axis
 from UML.data import Points
 from UML.data import Features
 from UML.data import Elements
@@ -25,13 +26,11 @@ from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.universal_interface import TrainedLearner
 from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
 
-calculate.__name__ = 'calculate'
-fill.__name__ = 'fill'
-match.__name__ = 'match'
-
 ALL_USER_FACING = []
-modulesAndClasses = [UML, calculate, fill, match, Base, Points, Features,
-                     Elements, UniversalInterface, TrainedLearner]
+modules = [UML, calculate, fill, match]
+classes = [Base, Axis, Points, Features, Elements, UniversalInterface,
+           TrainedLearner]
+modulesAndClasses = modules + classes
 for call in modulesAndClasses:
     for attribute in dir(call):
         if not attribute.startswith('_') and callable(getattr(call, attribute)):
@@ -62,7 +61,7 @@ uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
 # NOTES:
-#  untested functions: elementWiseMultiply, elementWisePower, fractionCorrect,
+#  Untested functions: elementWiseMultiply, elementWisePower, fractionCorrect,
 #                      fractionIncorrect, rSquared, varianceFractionRemaining
 # TODO in lin_alg.py inverse, leastSquaresSolution, pseudoInverse, solve
 # no calculate functions should be logged.
@@ -73,14 +72,14 @@ calculate_funcs = [
     'proportionMissing', 'proportionZero', 'quartiles', 'residuals',
     'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
     ]
-calculate_tested = list(map(prefixAdder('calculate'), calculate_funcs))
+calculate_tested = list(map(prefixAdder('UML.calculate'), calculate_funcs))
 
 # no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
     'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
     ]
-fill_tested = list(map(prefixAdder('fill'), fill_funcs))
+fill_tested = list(map(prefixAdder('UML.fill'), fill_funcs))
 
 # no match functions should not be logged.
 match_funcs = [
@@ -90,13 +89,13 @@ match_funcs = [
     'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
     'nonZero', 'numeric', 'positive', 'zero',
     ]
-match_tested = list(map(prefixAdder('match'), match_funcs))
+match_tested = list(map(prefixAdder('UML.match'), match_funcs))
+
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
 #  expected log count can be found in this script:
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
-
 base_logged = [
     'copy', 'fillUsingAllData', 'featureReport', 'fillWith',
     'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature', 'merge',
@@ -301,7 +300,43 @@ def test_features_shuffle_logCount():
                              useLog=False)
         grouped = wrapped(obj)
 
-# TODO dunder functions in classes
+###############################
+# dunder functions in classes #
+###############################
+
+ALL_DUNDER = []
+for call in classes:
+    objectDir = dir(object)
+    ignore = ["__weakref__", "__module__", "__dict__", '__abstractmethods__']
+    for attribute in dir(call):
+        if (attribute.startswith('__')
+                and attribute not in objectDir
+                and attribute not in ignore):
+            ALL_DUNDER.append(call.__name__ + '.' + attribute)
+
+baseDunder_tested = [
+    'Base.__abs__', 'Base.__add__', 'Base.__div__', 'Base.__getitem__',
+    'Base.__floordiv__', 'Base.__iadd__', 'Base.__idiv__',
+    'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imul__', 'Base.__ipow__',
+    'Base.__isub__', 'Base.__itruediv__', 'Base.__len__', 'Base.__mod__',
+    'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
+    'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
+    'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
+    'Base.__truediv__',
+    ]
+axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
+pointsDunder_tested = []
+featuresDunder_tested = []
+elementsDunder_tested = ['Elements.__iter__', 'Elements.__next__']
+uiDunder_tested = []
+tlDunder_tested = []
+ALL_DUNDER_TESTED = (baseDunder_tested + axisDunder_tested
+                     + pointsDunder_tested + featuresDunder_tested
+                     + elementsDunder_tested
+                     + uiDunder_tested + tlDunder_tested)
+
+def testAllClassesDunderFunctions():
+    assert sorted(ALL_DUNDER_TESTED) == sorted(ALL_DUNDER)
 
 ###########
 # Helpers #
