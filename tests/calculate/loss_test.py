@@ -10,7 +10,7 @@ from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanFeaturewiseRootMeanSquareError
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 #################
 # _computeError #

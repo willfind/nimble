@@ -27,7 +27,7 @@ from UML.calculate import quartiles
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.helpers import generateRegressionData
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])

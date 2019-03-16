@@ -14,7 +14,7 @@ import UML
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.helpers import generateClassificationData
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 class Initable(object):

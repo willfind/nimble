@@ -7,7 +7,7 @@ from nose.tools import raises
 from UML import createData
 from UML.calculate import cosineSimilarity
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 ####################
 # cosineSimilarity #

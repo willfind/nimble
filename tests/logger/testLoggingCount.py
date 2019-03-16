@@ -8,7 +8,7 @@ or removed this tests will fail indicating an update is necessary.
 Tests for most functions will usually be located in the same file as
 other tests for that function. Otherwise, some tests for basic
 user-facing functions might be included here as well.  All tests for log
-count should make use of the wrappers in tests/logHelpers.py
+count should make use of the wrappers in tests/assertionHelpers.py
 """
 import sys
 import tempfile
@@ -24,7 +24,7 @@ from UML.data import Features
 from UML.data import Elements
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.universal_interface import TrainedLearner
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
 modules = [UML, calculate, fill, match]
@@ -167,9 +167,10 @@ tl_notLogged = [
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
-TESTED = (uml_tested + calculate_tested + fill_tested + match_tested
-          + base_tested + features_tested + points_tested + elements_tested
-          + ui_tested + tl_tested)
+USER_FACING_TESTED = (uml_tested + calculate_tested + fill_tested
+                      + match_tested + base_tested + features_tested
+                      + points_tested + elements_tested + ui_tested
+                      + tl_tested)
 
 ##############
 # All tested #
@@ -177,9 +178,9 @@ TESTED = (uml_tested + calculate_tested + fill_tested + match_tested
 
 def testAllUserFacingLoggingTested():
     """Ensure that all user facing functions are tested for logging"""
-    if not sorted(TESTED) == sorted(ALL_USER_FACING):
-        missing = [f for f in ALL_USER_FACING if f not in TESTED]
-        removed = [f for f in TESTED if f not in ALL_USER_FACING]
+    if not sorted(USER_FACING_TESTED) == sorted(ALL_USER_FACING):
+        missing = [f for f in ALL_USER_FACING if f not in USER_FACING_TESTED]
+        removed = [f for f in USER_FACING_TESTED if f not in ALL_USER_FACING]
         if missing:
             msg = 'The log count is not tested for {0} '.format(len(missing))
             msg += 'functions:'
@@ -240,7 +241,6 @@ def test_groupByFeature_logCount():
         obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
-
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
@@ -330,6 +330,7 @@ featuresDunder_tested = []
 elementsDunder_tested = ['Elements.__iter__', 'Elements.__next__']
 uiDunder_tested = []
 tlDunder_tested = []
+
 ALL_DUNDER_TESTED = (baseDunder_tested + axisDunder_tested
                      + pointsDunder_tested + featuresDunder_tested
                      + elementsDunder_tested

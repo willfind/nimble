@@ -4,7 +4,7 @@ import numpy
 
 import UML
 from UML import match
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected
 def backend_match_value(toMatch, true, false):

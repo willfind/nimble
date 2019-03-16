@@ -10,7 +10,7 @@ from nose.tools import *
 import UML
 from UML.calculate import confidenceIntervalHelper
 from UML.exceptions import PackageException, ImproperObjectAction
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 def getPredictions():
     predRaw = [252.7, 247.7] * 12

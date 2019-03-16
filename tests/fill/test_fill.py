@@ -4,7 +4,7 @@ import UML
 from UML import fill
 from UML import match
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNumeric():

@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import UML
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
-from .logHelpers import oneLogEntryExpected
+from .assertionHelpers import oneLogEntryExpected
 
 # successful run no testX
 def test_normalizeData_successTest_noTestX():

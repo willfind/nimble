@@ -44,8 +44,8 @@ from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.randomness import numpyRandom
 from .baseObject import DataTestObject
-from ..logHelpers import logCountAssertionFactory
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 preserveName = "PreserveTestName"

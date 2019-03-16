@@ -18,7 +18,7 @@ from UML.calculate import rootMeanSquareError
 from UML.calculate import rSquared
 from UML.calculate import varianceFractionRemaining
 from UML.exceptions import InvalidArgumentValue
-from ..logHelpers import noLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected
 
 ####################
 # detectBestResult #

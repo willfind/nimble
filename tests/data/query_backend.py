@@ -35,7 +35,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 preserveName = "PreserveTestName"

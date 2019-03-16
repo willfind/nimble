@@ -45,8 +45,8 @@ from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
-from ..logHelpers import logCountAssertionFactory
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')

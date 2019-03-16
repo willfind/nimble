@@ -40,8 +40,8 @@ from UML.data.dataHelpers import constructIndicesList
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.randomness import pythonRandom
-from ..logHelpers import logCountAssertionFactory
-from ..logHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ###########
 # helpers #

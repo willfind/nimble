@@ -29,7 +29,7 @@ from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
 
 from .baseObject import DataTestObject
-from ..logHelpers import logCountAssertionFactory, noLogEntryExpected
+from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
 
 preserveName = "PreserveTestName"

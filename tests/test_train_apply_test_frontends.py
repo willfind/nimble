@@ -14,7 +14,7 @@ from UML.randomness import pythonRandom
 from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
-from .logHelpers import oneLogEntryExpected, twoLogEntriesExpected
+from .assertionHelpers import oneLogEntryExpected, twoLogEntriesExpected
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
