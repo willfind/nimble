@@ -7,7 +7,7 @@ existing tests which are also testing other functionality.
 
 from UML.data import BaseView
 
-class LazyNameGenerationAssertion(AssertionError):
+class LazyNameGenerationAssertionError(AssertionError):
     pass
 
 def assertNoNamesGenerated(obj):
@@ -15,4 +15,4 @@ def assertNoNamesGenerated(obj):
     if isinstance(obj, BaseView):
         return
     if obj.points._namesCreated() or obj.features._namesCreated():
-        raise LazyNameGenerationAssertion
+        raise LazyNameGenerationAssertionError
