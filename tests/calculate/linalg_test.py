@@ -1,3 +1,10 @@
+"""
+Tests for linear algebra functions part of the calculate module.
+
+Functions tested in this file:
+inverse, pseudoInverse, solve, leastSquaresSolution.
+
+"""
 from __future__ import absolute_import
 import numpy
 
@@ -21,19 +28,18 @@ def testInverseSquareObject():
     pnames = ['p1', 'p2', 'p3']
     fnames = ['f1', 'f2', 'f3']
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-        identity_obj = UML.identity(
-            dataType, 3, pointNames=pnames, featureNames=pnames)
-        orig_obj = createData(
+    for dataType in UML.data.available:
+        identityObj = UML.identity(dataType, 3)
+        origObj = createData(
             dataType, data, pointNames=pnames, featureNames=fnames)
         obj = createData(dataType, data, pointNames=pnames,
                          featureNames=fnames)
-        obj_inv = inverse(obj)
+        objNoNames = createData(dataType, data)
 
-        assert obj_inv.points.getNames() == obj.features.getNames()
-        assert obj_inv.features.getNames() == obj.points.getNames()
-        assert (obj * obj_inv) == identity_obj
-        assert orig_obj == obj
+        objInv = inverse(obj)
+
+        assert objNoNames * objInv == identityObj
+        assert origObj == obj
 
 
 def testInverseEmptyObject():
@@ -42,10 +48,10 @@ def testInverseEmptyObject():
     """
     data = []
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+    for dataType in UML.data.available:
         obj = createData(dataType, data)
-        obj_inv = inverse(obj)
-        assert obj_inv == obj
+        objInv = inverse(obj)
+        assert objInv == obj
 
 @raises(InvalidArgumentValue)
 def testInverseNonSquareObject():
@@ -54,7 +60,7 @@ def testInverseNonSquareObject():
     """
     data = [[1, 2, 3], [4, 5, 6]]
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+    for dataType in UML.data.available:
         obj = createData(dataType, data)
 
         inverse(obj)
@@ -67,7 +73,7 @@ def testNonInvertibleObject():
     """
     data = [[1, 1], [1, 1]]
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+    for dataType in UML.data.available:
         obj = createData(dataType, data)
 
         inverse(obj)
@@ -84,61 +90,61 @@ def testPseudoInverseObject():
         This includes, square objects, non-square objects and
         singular objects.
     """
-    def _testPseudoInverse_createObjects(dataType):
+    def _testPseudoInverseCreateObjects(dataType):
 
-        objs_list = []
+        objsList = []
 
         data = [[1, 1, 0], [1, 0, 1], [1, 1, 1]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2', 'f3']
         obj = createData(dataType, data, pointNames=pnames,
                          featureNames=fnames)
-        objs_list.append(obj)
+        objsList.append(obj)
 
         data = [[1, 2, 3], [3, 4, 5]]
         pnames = ['p1', 'p2']
         fnames = ['f1', 'f2', 'f3']
         obj = createData(dataType, data, pointNames=pnames,
                          featureNames=fnames)
-        objs_list.append(obj)
+        objsList.append(obj)
 
         data = [[1, 2], [3, 4], [5, 6]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2']
         obj = createData(dataType, data, pointNames=pnames,
                          featureNames=fnames)
-        objs_list.append(obj)
+        objsList.append(obj)
 
         data = [[1, 1], [1, 1]]
         obj = createData(dataType, data)
-        objs_list.append(obj)
+        objsList.append(obj)
 
         data = [[1, 2]]
         obj = createData(dataType, data)
-        objs_list.append(obj)
+        objsList.append(obj)
 
-        return objs_list
+        return objsList
 
-    def _pseudoInverseTest_implementation(obj, method):
-        orig_obj = obj.copy()
+    def _pseudoInverseTestImplementation(obj, method):
+        origObj = obj.copy()
         identity = UML.identity(obj.getTypeString(),
                                 min(len(obj.points), len(obj.features)))
-        obj_pinv = pseudoInverse(obj, method=method)
+        objPinv = pseudoInverse(obj, method=method)
 
         if len(obj.points) <= len(obj.features):
-            identity_from_pinv = obj * obj_pinv
+            identityFromPinv = obj * objPinv
         else:
-            identity_from_pinv = obj_pinv * obj
-        assert obj_pinv.points.getNames() == obj.features.getNames()
-        assert obj_pinv.features.getNames() == obj.points.getNames()
-        assert identity_from_pinv.isApproximatelyEqual(identity)
-        assert orig_obj == obj
+            identityFromPinv = objPinv * obj
+        assert objPinv.points.getNames() == obj.features.getNames()
+        assert objPinv.features.getNames() == obj.points.getNames()
+        assert identityFromPinv.isApproximatelyEqual(identity)
+        assert origObj == obj
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+    for dataType in UML.data.available:
         for method in ['least-squares', 'svd']:
-            obj_list = _testPseudoInverse_createObjects(dataType)
-            for obj in obj_list:
-                _pseudoInverseTest_implementation(obj, method)
+            objList = _testPseudoInverseCreateObjects(dataType)
+            for obj in objList:
+                _pseudoInverseTestImplementation(obj, method)
 
 
 def testPseudoInverseEmptyObject():
@@ -147,128 +153,109 @@ def testPseudoInverseEmptyObject():
     """
     data = []
 
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+    for dataType in UML.data.available:
         obj = createData(dataType, data)
-        obj_inv = pseudoInverse(obj)
-        assert obj_inv == obj
+        objInv = pseudoInverse(obj)
+        assert objInv == obj
 
 #########
 # solve #
 #########
 
 
-def testSolve_succes():
+def testSolveSuccess():
     """
         Test success for solve
     """
-
-    a = numpy.array([[1, 20], [-30, 4]])
-    b_s = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
-
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-            for b_np in b_s:
-                A = createData(dataType, a, featureNames=['f1', 'f2'])
-                b = createData(dataType_b, b_np)
-                sol = solve(A, b)
-                A_inv = inverse(A)
-                print(type(A_inv))
-                if len(b.features) > 1:
-                    b.transpose()
-                reference = (A_inv * b)
-                reference.transpose()
-                reference.points.setNames(['b'])
-                assert sol.isApproximatelyEqual(reference)
-                assert A.features.getNames() == sol.features.getNames()
-                assert sol.points.getNames() == ['b']
-                assert sol.getTypeString() == A.getTypeString()
+    _backendSolverSuccess(solve)
 
 
 #######################
 # leastSquareSolution #
 #######################
 
-def testLeastSquareSolution_exact():
+def testLeastSquareSolutionExact():
     """
         Test success for leastSquareSolution exact case.
     """
-    a = numpy.array([[1, 20], [-30, 4]])
-    b_s = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
-
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-            for b_np in b_s:
-                A = createData(dataType, a, featureNames=['f1', 'f2'])
-                b = createData(dataType_b, b_np)
-                sol = leastSquaresSolution(A, b)
-                A_inv = inverse(A)
-                if len(b.features) > 1:
-                    b.transpose()
-                reference = (A_inv * b)
-                reference.transpose()
-                reference.points.setNames(['b'])
-                assert sol.isApproximatelyEqual(reference)
-                assert A.features.getNames() == sol.features.getNames()
-                assert sol.points.getNames() == ['b']
-                assert sol.getTypeString() == A.getTypeString()
+    _backendSolverSuccess(leastSquaresSolution)
 
 
-def testLeastSquareSolution_overdetermined():
+def testLeastSquareSolutionOverdetermined():
     """
         Test success for leastSquareSolution overdetermined system.
     """
-    a = numpy.array([[1, 2], [4, 5], [3, 4]])
-    b_s = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-            for b_np in b_s:
-                A_orig = createData(dataType, a, featureNames=['f1', 'f2'])
-                A = createData(dataType, a, featureNames=['f1', 'f2'])
-                b_orig = createData(dataType_b, b_np)
-                b = createData(dataType_b, b_np)
+    aArray = numpy.array([[1, 2], [4, 5], [3, 4]])
+    bArrays = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
+    for dataType in UML.data.available:
+        for dataTypeB in UML.data.available:
+            for bArray in bArrays:
+                aOrig = createData(dataType, aArray, featureNames=['f1', 'f2'])
+                A = createData(dataType, aArray, featureNames=['f1', 'f2'])
+                bOrig = createData(dataTypeB, bArray)
+                b = createData(dataTypeB, bArray)
                 sol = leastSquaresSolution(A, b)
 
-                assert A == A_orig
-                assert b == b_orig
+                assert A == aOrig
+                assert b == bOrig
 
-                A_pinv = pseudoInverse(A)
+                aPinv = pseudoInverse(A)
                 if len(b.features) > 1:
                     b.transpose()
-                reference = (A_pinv * b)
+                reference = (aPinv * b)
                 reference.transpose()
-                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
                 assert A.features.getNames() == sol.features.getNames()
-                assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
 
 
-def testLeastSquareSolution_underdetermined():
+def testLeastSquareSolutionUnderdetermined():
     """
         Test success for leastSquareSolution under-determined system.
     """
-    a = numpy.array([[1, 2, 3], [4, 5, 6]])
-    b_s = [numpy.array([1, 2]), numpy.array([[1], [2]])]
-    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
-            for b_np in b_s:
-                A_orig = createData(
-                    dataType, a, featureNames=['f1', 'f2', 'f3'])
-                A = createData(dataType, a, featureNames=['f1', 'f2', 'f3'])
-                b_orig = createData(dataType_b, b_np)
-                b = createData(dataType_b, b_np)
+    aArray = numpy.array([[1, 2, 3], [4, 5, 6]])
+    bArrays = [numpy.array([1, 2]), numpy.array([[1], [2]])]
+    for dataType in UML.data.available:
+        for dataTypeB in UML.data.available:
+            for bArray in bArrays:
+                aOrig = createData(
+                    dataType, aArray, featureNames=['f1', 'f2', 'f3'])
+                A = createData(dataType, aArray,
+                               featureNames=['f1', 'f2', 'f3'])
+                bOrig = createData(dataTypeB, bArray)
+                b = createData(dataTypeB, bArray)
                 sol = leastSquaresSolution(A, b)
 
-                assert A == A_orig
-                assert b == b_orig
+                assert A == aOrig
+                assert b == bOrig
 
-                A_pinv = pseudoInverse(A)
+                aPinv = pseudoInverse(A)
                 if len(b.features) > 1:
                     b.transpose()
-                reference = (A_pinv * b)
+                reference = (aPinv * b)
                 reference.transpose()
-                reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
                 assert A.features.getNames() == sol.features.getNames()
-                assert sol.points.getNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
+
+
+def _backendSolverSuccess(solverFunction):
+    aArray = numpy.array([[1, 20], [-30, 4]])
+    bArrays = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
+
+    for dataType in UML.data.available:
+        for dataTypeB in UML.data.available:
+            for bArray in bArrays:
+                A = createData(dataType, aArray, featureNames=['f1', 'f2'])
+                b = createData(dataTypeB, bArray)
+                sol = solverFunction(A, b)
+                aInv = inverse(A)
+                if len(b.features) > 1:
+                    b.transpose()
+                reference = (aInv * b)
+                reference.transpose()
+                # reference.points.setNames(['b'])
+                assert sol.isApproximatelyEqual(reference)
+                assert A.features.getNames() == sol.features.getNames()
+                # assert sol.points.getNames() == ['b']
                 assert sol.getTypeString() == A.getTypeString()
