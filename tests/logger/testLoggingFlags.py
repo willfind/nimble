@@ -78,6 +78,10 @@ def test_loadTrainedLearner():
         tl.save(tmpFile.name)
         back_load(UML.loadTrainedLearner, tmpFile.name)
 
+def test_setRandomSeed():
+    UML.randomness.startAlternateControl()
+    back_load(UML.setRandomSeed, 1337)
+    UML.randomness.endAlternateControl()
 
 # helper function which checks log status for runs
 def runAndCheck(toCall, useLog):

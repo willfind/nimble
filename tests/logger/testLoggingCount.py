@@ -47,15 +47,15 @@ def prefixAdder(prefix):
 #  LogCount Testing Below: log, showLog, importModule
 
 uml_logged = [
-    'createData', 'createRandomData', 'train', 'trainAndApply', 'trainAndTest',
-    'trainAndTestOnTrainingData', 'crossValidate', 'crossValidateReturnAll',
-    'crossValidateReturnBest', 'normalizeData', 'log', 'loadData',
-    'loadTrainedLearner',
+    'createData', 'createRandomData', 'crossValidate',
+    'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
+    'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
+    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 uml_notLogged = [
-    'ones', 'zeros', 'identity', 'setRandomSeed', 'showLog',
-    'registerCustomLearner', 'deregisterCustomLearner', 'listLearners',
-    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'importModule',
+    'deregisterCustomLearner', 'identity', 'importModule', 'listLearners',
+    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'ones',
+    'registerCustomLearner', 'showLog', 'zeros',
     ]
 uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))

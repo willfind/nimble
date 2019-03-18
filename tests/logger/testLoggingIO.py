@@ -164,6 +164,15 @@ def testLoadTypeFunctionsUseLog():
     assert "'numFeatures': 5" in logInfo
 
 @configSafetyWrapper
+def test_setRandomSeed():
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+    UML.randomness.startAlternateControl()
+    UML.setRandomSeed(1337)
+    UML.randomness.endAlternateControl()
+    logInfo = getLastLogData()
+    assert "{'seed': 1337}" in logInfo
+
+@configSafetyWrapper
 def testRunTypeFunctionsUseLog():
     """tests that top level and TrainedLearner functions are being logged"""
     UML.settings.set('logger', 'enabledByDefault', 'True')

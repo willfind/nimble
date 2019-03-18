@@ -532,9 +532,15 @@ def handleLogging(useLog, logType, *args, **kwargs):
                 'run': UML.logger.active.logRun,
                 'data': UML.logger.active.logData,
                 'crossVal': UML.logger.active.logCrossValidation}
-    logFunc = logTypes[logType]
     if enableLogging(useLog):
-        logFunc(useLog, *args, **kwargs)
+        if logType in logTypes:
+            logFunc = logTypes[logType]
+            logFunc(useLog, *args, **kwargs)
+        else:
+            if args:
+                UML.log(logType, args)
+            if kwargs:
+                UML.log(logType, kwargs)
     else:
         UML.logger.active.logType = None
         UML.logger.active.logInfo = None

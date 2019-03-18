@@ -13,7 +13,7 @@ import UML.randomness
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 from six.moves import range
-from .assertionHelpers import noLogEntryExpected
+from .assertionHelpers import logCountAssertionFactory
 
 
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
@@ -47,28 +47,24 @@ def testSetRandomSeedNone():
 
 
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@logCountAssertionFactory(3)
 def testSetRandomSeedPropagate():
     """ Test that UML.setRandomSeed will correctly control how randomized methods in UML perform """
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [17, 18, 19], [2, 2, 2], [3, 3, 3], [4, 4, 4],
             [5, 5, 5]]
     featureNames = ['1', '2', '3']
-    toTest1 = UML.createData("List", data, featureNames=featureNames)
+    toTest1 = UML.createData("List", data, featureNames=featureNames, useLog=False)
     toTest2 = toTest1.copy()
     toTest3 = toTest1.copy()
 
     UML.setRandomSeed(1337)
-    toTest1.points.shuffle()
+    toTest1.points.shuffle(useLog=False)
 
     UML.setRandomSeed(1336)
-    toTest2.points.shuffle()
+    toTest2.points.shuffle(useLog=False)
 
     UML.setRandomSeed(1337)
-    toTest3.points.shuffle()
+    toTest3.points.shuffle(useLog=False)
 
     assert toTest1 == toTest3
     assert toTest1 != toTest2
-
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
-@noLogEntryExpected
-def testSetRandomSeed_logCount():
-    UML.setRandomSeed(1333)
