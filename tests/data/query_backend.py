@@ -369,9 +369,7 @@ class QueryBackend(DataTestObject):
         tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
 
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pointNames = ['1', 'one', '2', '0']
-        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        toSave = self.constructor(data)
 
         toSave.save(tmpFile.name)
 
