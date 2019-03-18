@@ -209,9 +209,9 @@ class List(Base):
             outFile.write(fnamesLine)
 
         for point in self.points:
-            currPname = point.points.getName(0)
             first = True
             if includePointNames:
+                currPname = point.points.getName(0)
                 outFile.write(currPname)
                 first = False
 
@@ -580,9 +580,10 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm,
-                                pointNames=self.points._getNamesNoGeneration(),
-                                featureNames=self.features._getNamesNoGeneration())
+                    ptNames = self.points._getNamesNoGeneration()
+                    ftNames = self.features._getNamesNoGeneration()
+                    return List(listForm, pointNames=ptNames,
+                                featureNames=ftNames, shape=self.shape)
                 else:
                     return listForm
 

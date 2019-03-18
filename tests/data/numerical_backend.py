@@ -602,7 +602,6 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
         resulti = npOp(lhsi, rhsi)
         resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
         resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
-
         expfObj = constructor(resultf)
         expiObj = constructor(resulti)
 

@@ -11,8 +11,5 @@ class LazyNameGenerationAssertionError(AssertionError):
     pass
 
 def assertNoNamesGenerated(obj):
-    # By design, BaseView objects will always have names generated
-    if isinstance(obj, BaseView):
-        return
     if obj.points._namesCreated() or obj.features._namesCreated():
         raise LazyNameGenerationAssertionError

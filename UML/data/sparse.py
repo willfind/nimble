@@ -158,8 +158,8 @@ class Sparse(Base):
         pointer = 0
         pmax = len(self.data.data)
         for i in range(len(self.points)):
-            currPname = self.points.getName(i)
             if includePointNames:
+                currPname = self.points.getName(i)
                 outFile.write(currPname)
                 outFile.write(',')
             for j in range(len(self.features)):
@@ -1002,8 +1002,9 @@ class Sparse(Base):
             retRow = numpy.array(self.data.row)
             retCol = numpy.array(self.data.col)
             ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
-        return Sparse(ret, pointNames=self.points.getNames(),
-                      featureNames=self.features.getNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
+                      featureNames=self.features._getNamesNoGeneration(),
+                      reuseData=True)
 
     def _rmod__implementation(self, other):
         retData = other % self.data.data
@@ -1011,8 +1012,9 @@ class Sparse(Base):
         retCol = numpy.array(self.data.col)
         ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
 
-        return Sparse(ret, pointNames=self.points.getNames(),
-                      featureNames=self.features.getNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
+                      featureNames=self.features._getNamesNoGeneration(),
+                      reuseData=True)
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):

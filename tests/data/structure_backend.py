@@ -239,7 +239,8 @@ class StructureDataSafe(StructureShared):
         assert listOfDict == []
 
         dictOfList = orig.copyAs(format='dict of list')
-        assert dictOfList == {'_DEFAULT_#0': [], '_DEFAULT_#1': []}
+        assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
+        assert all(val == [] for val in dictOfList.values())
 
 
     def test_copy_Fempty(self):

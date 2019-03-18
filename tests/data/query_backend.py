@@ -210,7 +210,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='csv')
+        toWrite.writeFile(tmpFile.name, format='csv', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
 
@@ -320,7 +320,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='mtx')
+        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
 
