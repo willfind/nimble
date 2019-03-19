@@ -6,6 +6,7 @@ from nose.tools import raises
 
 from UML import createData
 from UML.calculate import cosineSimilarity
+from UML.calculate import rSquared
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from ..assertionHelpers import noLogEntryExpected
 

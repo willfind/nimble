@@ -61,16 +61,17 @@ uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
 # NOTES:
-#  Untested functions: elementWiseMultiply, elementWisePower, fractionCorrect,
-#                      fractionIncorrect, rSquared, varianceFractionRemaining
-# TODO in lin_alg.py inverse, leastSquaresSolution, pseudoInverse, solve
+#  Untested functions:
 # no calculate functions should be logged.
 calculate_funcs = [
     'confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
-    'covariance', 'detectBestResult', 'maximum', 'mean', 'meanAbsoluteError',
+    'covariance', 'detectBestResult', 'elementwiseMultiply',
+    'elementwisePower', 'fractionCorrect', 'fractionIncorrect', 'inverse',
+    'leastSquaresSolution', 'maximum', 'mean', 'meanAbsoluteError',
     'meanFeaturewiseRootMeanSquareError', 'median', 'minimum', 'mode',
-    'proportionMissing', 'proportionZero', 'quartiles', 'residuals',
-    'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
+    'proportionMissing', 'proportionZero', 'pseudoInverse', 'quartiles',
+    'residuals', 'rootMeanSquareError', 'rSquared', 'solve',
+    'standardDeviation', 'uniqueCount', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('UML.calculate'), calculate_funcs))
 
@@ -148,7 +149,7 @@ elements_funcs = elements_logged + elements_notLogged
 elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
 
 ui_logged = [
-
+    'train', 'trainAndApply', 'trainAndTest',
     ]
 ui_notLogged = [
     'accessible', 'findCallable', 'getCanonicalName',

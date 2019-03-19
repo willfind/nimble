@@ -10,6 +10,10 @@ from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanFeaturewiseRootMeanSquareError
+from UML.calculate import fractionCorrect
+from UML.calculate import fractionIncorrect
+from UML.calculate import rSquared
+from UML.calculate import varianceFractionRemaining
 from ..assertionHelpers import noLogEntryExpected
 
 #################
@@ -254,3 +258,255 @@ def testMFRMSE_simpleSuccess():
 
     mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
     assert mfrmseRate == 1.0
+
+###################
+# fractionCorrect #
+###################
+
+@raises(InvalidArgumentValue)
+def testFractionCorrectEmptyKnownValues():
+    """
+    fractionCorrect calculator throws exception if knownLabels is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
+
+
+@raises(InvalidArgumentValue)
+def testFractionCorrectEmptyPredictedValues():
+    """
+    fractionCorrect calculator throws exception if predictedLabels is empty
+    """
+
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
+
+@noLogEntryExpected
+def testFractionCorrect():
+    """
+    Check that the fractionCorrect calculator works correctly when
+    all inputs are zero, and when all known values are
+    the same as predicted values.
+    """
+    predictedLabels = numpy.array([[0], [0], [0]])
+    knownLabels = numpy.array([[0], [0], [0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fc == 1.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fc == 1.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [1.0], [2.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fc == 0.5
+
+#####################
+# fractionIncorrect #
+#####################
+
+@raises(InvalidArgumentValue)
+def testFractionIncorrectEmptyKnownValues():
+    """
+    fractionIncorrect calculator throws exception if knownLabels is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
+
+
+@raises(InvalidArgumentValue)
+def testFractionIncorrectEmptyPredictedValues():
+    """
+    fractionIncorrect calculator throws exception if predictedLabels is empty
+    """
+
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
+
+@noLogEntryExpected
+def testFractionIncorrect():
+    """
+    Check that the fractionIncorrect calculator works correctly when
+    all inputs are zero, and when all known values are
+    the same as predicted values.
+    """
+    predictedLabels = numpy.array([[0], [0], [0]])
+    knownLabels = numpy.array([[0], [0], [0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fi == 0.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fi == 0.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [1.0], [2.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
+    assert fi == 0.5
+
+#############################
+# varianceFractionRemaining #
+#############################
+
+@raises(InvalidArgumentValueCombination)
+def testVarianceFractionRemainingEmptyKnownValues():
+    """
+    varianceFractionRemaining calculator throws exception if knownLabels is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
+
+
+@raises(InvalidArgumentValueCombination)
+def testVarianceFractionRemainingEmptyPredictedValues():
+    """
+    varianceFractionRemaining calculator throws exception if predictedLabels is empty
+    """
+
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
+
+@noLogEntryExpected
+def testVarianceFractionRemaining():
+    """
+    Check that the varianceFractionRemaining calculator works correctly.
+    """
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
+    assert vfr == 0.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [4.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
+    assert vfr == 0.4
+
+############
+# rSquared #
+############
+
+@raises(InvalidArgumentValueCombination)
+def testRSquaredEmptyKnownValues():
+    """
+    rSquared calculator throws exception if knownLabels is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
+
+
+@raises(InvalidArgumentValueCombination)
+def testRSquaredEmptyPredictedValues():
+    """
+    rSquared calculator throws exception if predictedLabels is empty
+    """
+
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
+
+@noLogEntryExpected
+def testRSquared():
+    """
+    Check that the rSquared calculator works correctly.
+    """
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
+    assert rsq == 1.0
+
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [4.0], [3.0]])
+
+    knownLabelsMatrix = createData('Matrix', data=knownLabels, useLog=False)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels,
+                                       useLog=False)
+
+    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
+    assert rsq == 0.6

@@ -1404,7 +1404,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     multiClassStrategy, bestArgument, useLog)
+                                     multiClassStrategy, bestArgument)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,

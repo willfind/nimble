@@ -391,6 +391,7 @@ def backend_warningscapture(toCall, prepCall=None):
 
 
 def test_warningscapture_trainAndApply():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.trainAndApply('foo', None)
 
@@ -404,6 +405,7 @@ def test_warningscapture_trainAndTest():
     def metric(x, y):
         return 0
 
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.trainAndTest('foo', trainX, trainY, testX, testY, metric)
 
@@ -411,6 +413,7 @@ def test_warningscapture_trainAndTest():
 
 
 def test_warningscapture_train():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.train('foo', None)
 
