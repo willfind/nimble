@@ -14,7 +14,7 @@ from UML.randomness import pythonRandom
 from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
-from .assertionHelpers import oneLogEntryExpected, twoLogEntriesExpected
+from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -493,25 +493,25 @@ def test_trainAndTestOnTrainingData_logCount_noCV():
         return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
     back_logCount(wrapped)
 
-@twoLogEntriesExpected
+@logCountAssertionFactory(2)
 def test_train_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return UML.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=(1,2))
     back_logCount(wrapped)
 
-@twoLogEntriesExpected
+@logCountAssertionFactory(2)
 def test_trainAndApply_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=(1,2))
     back_logCount(wrapped)
 
-@twoLogEntriesExpected
+@logCountAssertionFactory(2)
 def test_trainAndTest_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=(1,2))
     back_logCount(wrapped)
 
-@twoLogEntriesExpected
+@logCountAssertionFactory(2)
 def test_trainAndTestOnTrainingData_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=(1,2))
