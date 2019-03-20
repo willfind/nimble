@@ -95,12 +95,7 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
 
-    return UML.createData(aObj.getTypeString(), invData, useLog=False)
-    # invObj.transpose()
-    # invObj.data = invData
-    # if aObj.getTypeString() != invObj.getTypeString:
-    #     invObj = invObj.copy(to=aObj.getTypeString())
-    # return invObj
+    return UML.createData(aObj.getTypeString(), invData)
 
 
 def pseudoInverse(aObj, method='svd'):
@@ -233,7 +228,7 @@ def solve(aObj, bObj):
         [[2.000 -2.000 9.000]]
     )
     """
-    bObj = _backendsolversValidation(aObj, bObj)
+    return _backendSolvers(aObj, bObj, solve)
 
     if len(aObj.points) != len(aObj.features):
         msg = 'Object A has to be square \
@@ -242,9 +237,9 @@ def solve(aObj, bObj):
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
-        aObj = aObj.copy(to='Matrix')
+        aObj = aObj.copyAs('Matrix')
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        bObj = bObj.copy(to='Matrix')
+        bObj = bObj.copyAs('Matrix')
 
     if aObj.getTypeString() == 'Matrix':
         solution = scipy.linalg.solve(aObj.data, bObj.data)
@@ -262,7 +257,7 @@ def solve(aObj, bObj):
         solution = numpy.asmatrix(solution)
 
     sol = UML.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames(), useLog=False)
+                             featureNames=aObj.features.getNames())
 
     return sol
 
@@ -302,7 +297,10 @@ def leastSquaresSolution(aObj, bObj):
 
     TODO: Example comparable with scipy counterpart.
     """
-    bObj = _backendsolversValidation(aObj, bObj)
+    return _backendSolvers(aObj, bObj, leastSquaresSolution)
+
+def _backendSolvers(aObj, bObj, solverFunction):
+    bObj = _backendsolversValidation(aObj, bObj, solverFunction)
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
@@ -310,37 +308,50 @@ def leastSquaresSolution(aObj, bObj):
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
         bObj = bObj.copy(to='Matrix')
 
+    # Solve
     if aObj.getTypeString() == 'Matrix':
-        solution = scipy.linalg.lstsq(aObj.data, bObj.data)
-        solution = solution[0].T
-
-    elif isinstance(aObj, UML.data.sparse.SparseView):
-        aCopy = aObj.copy()
-        solution = scipy.sparse.linalg.lsqr(aCopy.data,
-                                            numpy.asarray(bObj.data))
-        solution = numpy.asmatrix(solution[0])
+        if solverFunction.__name__ == 'solve':
+            solution = scipy.linalg.solve(aObj.data, bObj.data)
+            solution = solution.T
+        else:
+            solution = scipy.linalg.lstsq(aObj.data, bObj.data)
+            solution = solution[0].T
 
     elif aObj.getTypeString() == 'Sparse':
-        solution = scipy.sparse.linalg.lsqr(aObj.data,
-                                            numpy.asarray(bObj.data))
-        solution = numpy.asmatrix(solution[0])
+        if solverFunction.__name__ == 'solve':
+            aCopy = aObj.copy()
+            solution = scipy.sparse.linalg.spsolve(aCopy.data,
+                                                   numpy.asarray(bObj.data))
+            solution = numpy.asmatrix(solution)
+        else:
+            if isinstance(aObj, UML.data.sparse.SparseView): #Sparse View
+                aCopy = aObj.copy()
+                solution = scipy.sparse.linalg.lsqr(aCopy.data,
+                                                    numpy.asarray(bObj.data))
+                solution = numpy.asmatrix(solution[0])
+            else: # Sparse
+                solution = scipy.sparse.linalg.lsqr(aObj.data,
+                                                    numpy.asarray(bObj.data))
+                solution = numpy.asmatrix(solution[0])
 
     sol = UML.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames(), useLog=False)
+                         featureNames=aObj.features.getNames())
     return sol
 
 
 
 def _backendsolversValidation(aObj, bObj):
-    if scipy is None:
-        msg = "scipy must be installed in order to use the leastSquaresSolution function."
-        raise PackageException(msg)
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
     if not isinstance(bObj, UML.data.Base):
         raise InvalidArgumentType(
             "Right hand side object must be derived class of UML.data.Base.")
+
+    if solverFunction.__name__ == 'solve' and len(aObj.points) != len(aObj.features):
+        msg = 'Object A has to be square \
+        (Number of features and points needs to be equal).'
+        raise InvalidArgumentValue(msg)
 
     if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
@@ -356,8 +367,3 @@ def _backendsolversValidation(aObj, bObj):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
     return bObj
-
-
-def _backendsolvers(aObj, bObj):
-    pass
-
