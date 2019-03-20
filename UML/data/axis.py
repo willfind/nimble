@@ -33,7 +33,7 @@ from .points import Points
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString, logCaptureFactory
-from .dataHelpers import isAllowedSingleElement
+from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 
 class Axis(object):
     """
@@ -257,15 +257,21 @@ class Axis(object):
                 msg += "but sortHelper has {2} unique identifiers"
                 msg = msg.format(axisCount, self._axis, len(set(indices)))
                 raise InvalidArgumentValue(msg)
-
-            sortHelper = indices
+            indexPosition = indices
+        else:
+            axis = self._axis + 's'
+            indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
 
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
             return
 
-        newNameOrder = self._sort_implementation(sortBy, sortHelper)
-        self._setNames(newNameOrder)
+        self._sort_implementation(indexPosition)
+
+        if self._namesCreated():
+            names = self._getNames()
+            reorderedNames = [names[idx] for idx in indexPosition]
+            self._setNames(reorderedNames)
 
         self._source.validate()
 
@@ -702,7 +708,7 @@ class Axis(object):
         #			divIsVec = True
 
         if isinstance(self, Points):
-            indexGetter = lambda x: self._getIndex(x.points.getName(0))
+            indexGetter = lambda x: x._pStart
             if isinstance(subtract, six.string_types):
                 subtract = self._statistics(subtract)
                 subIsVec = True
@@ -710,7 +716,7 @@ class Axis(object):
                 divide = self._statistics(divide)
                 divIsVec = True
         else:
-            indexGetter = lambda x: self._getIndex(x.features.getName(0))
+            indexGetter = lambda x: x._fStart
             if isinstance(subtract, six.string_types):
                 subtract = self._statistics(subtract)
                 subIsVec = True

@@ -1875,12 +1875,15 @@ class Base(object):
         outFormat = self._setupOutFormatForPlotting(outPath)
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
+        name = None
         if axis == 'point':
             getter = self.pointView
-            name = self.points.getName(index)
+            if self.points._namesCreated():
+                name = self.points.getName(index)
         else:
             getter = self.featureView
-            name = self.features.getName(index)
+            if self.features._namesCreated():
+                name = self.features.getName(index)
 
         toPlot = getter(index)
 
@@ -1904,7 +1907,7 @@ class Base(object):
 
             plt.hist(d, binCount)
 
-            if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 titlemsg = '#' + str(index)
             else:
                 titlemsg = "named: " + name
@@ -2031,19 +2034,25 @@ class Base(object):
         def fGetter(index):
             return customGetter(index, 'feature')
 
+        xName = None
+        yName = None
         if xAxis == 'point':
             xGetter = pGetter
-            xName = self.points.getName(xIndex)
+            if self.points._namesCreated():
+                xName = self.points.getName(xIndex)
         else:
             xGetter = fGetter
-            xName = self.features.getName(xIndex)
+            if self.features._namesCreated():
+                xName = self.features.getName(xIndex)
 
         if yAxis == 'point':
             yGetter = pGetter
-            yName = self.points.getName(yIndex)
+            if self.points._namesCreated():
+                yName = self.points.getName(yIndex)
         else:
             yGetter = fGetter
-            yName = self.features.getName(yIndex)
+            if self.features._namesCreated():
+                yName = self.features.getName(yIndex)
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
@@ -2063,11 +2072,11 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 xlabel = xAxis + ' #' + str(xIndex)
             else:
                 xlabel = xName
-            if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 ylabel = yAxis + ' #' + str(yIndex)
             else:
                 ylabel = yName

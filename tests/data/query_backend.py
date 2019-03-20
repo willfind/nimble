@@ -1893,7 +1893,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -1916,7 +1916,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -1940,7 +1940,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureAgainstFeature_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
