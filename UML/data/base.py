@@ -294,7 +294,7 @@ class Base(object):
 
     @name.setter
     def name(self, value):
-        return self._setObjName(value)
+        self._setObjName(value)
 
     def _getAbsPath(self):
         return self._absPath
@@ -315,7 +315,6 @@ class Base(object):
         The path to the file this data originated from in relative form.
         """
         return self._getRelPath()
-    relativePath = property(_getRelPath, doc="")
 
     def _getPath(self):
         return self.absolutePath

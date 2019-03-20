@@ -11,6 +11,7 @@ from .uml_logger import UmlLogger, initLoggerAndLogConfig
 from .uml_logger import logCapture
 from .uml_logger import enableLogging
 from .uml_logger import directCall
+from .uml_logger import stringToDatetime
 from .stopwatch import Stopwatch
 
 active = None

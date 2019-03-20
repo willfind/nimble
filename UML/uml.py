@@ -6,7 +6,6 @@ uml import.
 from __future__ import absolute_import
 import copy
 import six.moves.configparser
-from dateutil.parser import parse
 
 import numpy
 import six
@@ -17,6 +16,7 @@ import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.logger import enableLogging, logCapture, directCall
+from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
 from UML.helpers import _validScoreMode
@@ -2047,8 +2047,8 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
     if (startDate is not None
             and endDate is not None
             and startDate > endDate):
-        startDate = parse(startDate)
-        endDate = parse(endDate)
+        startDate = stringToDatetime(startDate)
+        endDate = stringToDatetime(endDate)
         msg = "The startDate must be before the endDate"
         raise InvalidArgumentValueCombination(msg)
     if leastRunsAgo is not None:

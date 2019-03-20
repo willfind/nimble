@@ -4,14 +4,15 @@ Linear algebra functions that can be used with UML base objects.
 
 from __future__ import absolute_import
 import re
+
 import numpy
-import scipy
 
 import UML
 from UML.exceptions import InvalidArgumentType, \
     InvalidArgumentValue, \
     InvalidArgumentValueCombination
 
+scipy = UML.importModule('scipy')
 
 def inverse(aObj):
     """
@@ -53,6 +54,9 @@ def inverse(aObj):
      [1.500  -0.500]]
     )
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the inverse function."
+        raise PackageException(msg)
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base")
@@ -149,6 +153,9 @@ def pseudoInverse(aObj, method='svd'):
          [-0.000 0.014  0.000 0.464]]
     )
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the pseudoInverse function."
+        raise PackageException(msg)
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of UML.data.Base.")
@@ -329,6 +336,9 @@ def leastSquaresSolution(aObj, bObj):
 
 
 def _backendsolversValidation(aObj, bObj):
+    if scipy is None:
+        msg = "scipy must be installed in order to use the leastSquaresSolution function."
+        raise PackageException(msg)
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
