@@ -137,8 +137,6 @@ def testPseudoInverseObject():
             identityFromPinv = obj * objPinv
         else:
             identityFromPinv = objPinv * obj
-        assert objPinv.points.getNames() == obj.features.getNames()
-        assert objPinv.features.getNames() == obj.points.getNames()
         assert identityFromPinv.isApproximatelyEqual(identity)
         assert origObj == obj
 

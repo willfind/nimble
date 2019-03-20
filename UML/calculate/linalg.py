@@ -178,11 +178,7 @@ def pseudoInverse(aObj, method='svd'):
             _handleNonSupportedTypes(exception)
     else:
         pinvData = scipy.linalg.pinv(pinvObj.data)
-    pinvObj.transpose(useLog=False)
-    pinvObj.data = numpy.asmatrix(pinvData)
-    if aObj.getTypeString() != 'Matrix':
-        pinvObj = pinvObj.copy(to=aObj.getTypeString())
-    return pinvObj
+    return UML.createData(aObj.getTypeString(), pinvData)
 
 
 def solve(aObj, bObj):
