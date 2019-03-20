@@ -5,10 +5,12 @@ Functions tested in this file:
 inverse, pseudoInverse, solve, leastSquaresSolution.
 
 """
-from __future__ import absolute_import
-import numpy
 
+from __future__ import absolute_import
+
+import numpy
 from nose.tools import raises
+
 import UML
 from UML import createData
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -187,26 +189,9 @@ def testLeastSquareSolutionOverdetermined():
     """
     aArray = numpy.array([[1, 2], [4, 5], [3, 4]])
     bArrays = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
-    for dataType in UML.data.available:
-        for dataTypeB in UML.data.available:
-            for bArray in bArrays:
-                aOrig = createData(dataType, aArray, featureNames=['f1', 'f2'])
-                A = createData(dataType, aArray, featureNames=['f1', 'f2'])
-                bOrig = createData(dataTypeB, bArray)
-                b = createData(dataTypeB, bArray)
-                sol = leastSquaresSolution(A, b)
+    featureNames = ['f1', 'f2']
 
-                assert A == aOrig
-                assert b == bOrig
-
-                aPinv = pseudoInverse(A)
-                if len(b.features) > 1:
-                    b.transpose()
-                reference = (aPinv * b)
-                reference.transpose()
-                assert sol.isApproximatelyEqual(reference)
-                assert A.features.getNames() == sol.features.getNames()
-                assert sol.getTypeString() == A.getTypeString()
+    _backendNonSquareSolverSucces(aArray, bArrays, featureNames)
 
 
 def testLeastSquareSolutionUnderdetermined():
@@ -215,28 +200,9 @@ def testLeastSquareSolutionUnderdetermined():
     """
     aArray = numpy.array([[1, 2, 3], [4, 5, 6]])
     bArrays = [numpy.array([1, 2]), numpy.array([[1], [2]])]
-    for dataType in UML.data.available:
-        for dataTypeB in UML.data.available:
-            for bArray in bArrays:
-                aOrig = createData(
-                    dataType, aArray, featureNames=['f1', 'f2', 'f3'])
-                A = createData(dataType, aArray,
-                               featureNames=['f1', 'f2', 'f3'])
-                bOrig = createData(dataTypeB, bArray)
-                b = createData(dataTypeB, bArray)
-                sol = leastSquaresSolution(A, b)
+    featureNames = ['f1', 'f2', 'f3']
 
-                assert A == aOrig
-                assert b == bOrig
-
-                aPinv = pseudoInverse(A)
-                if len(b.features) > 1:
-                    b.transpose()
-                reference = (aPinv * b)
-                reference.transpose()
-                assert sol.isApproximatelyEqual(reference)
-                assert A.features.getNames() == sol.features.getNames()
-                assert sol.getTypeString() == A.getTypeString()
+    _backendNonSquareSolverSucces(aArray, bArrays, featureNames)
 
 
 def _backendSolverSuccess(solverFunction):
@@ -258,4 +224,28 @@ def _backendSolverSuccess(solverFunction):
                 assert sol.isApproximatelyEqual(reference)
                 assert A.features.getNames() == sol.features.getNames()
                 # assert sol.points.getNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
+
+def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
+    for dataType in UML.data.available:
+        for dataTypeB in UML.data.available:
+            for bArray in bArrays:
+                aOrig = createData(
+                    dataType, aArray, featureNames=featureNames)
+                A = createData(dataType, aArray,
+                               featureNames=featureNames)
+                bOrig = createData(dataTypeB, bArray)
+                b = createData(dataTypeB, bArray)
+                sol = leastSquaresSolution(A, b)
+
+                assert A == aOrig
+                assert b == bOrig
+
+                aPinv = pseudoInverse(A)
+                if len(b.features) > 1:
+                    b.transpose()
+                reference = (aPinv * b)
+                reference.transpose()
+                assert sol.isApproximatelyEqual(reference)
+                assert A.features.getNames() == sol.features.getNames()
                 assert sol.getTypeString() == A.getTypeString()
