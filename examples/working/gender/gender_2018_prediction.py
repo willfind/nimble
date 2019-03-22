@@ -1,35 +1,22 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import numpy
 import os.path
-import functools
-from functools import partial
-import inspect
-
-from allowImports import boilerplate
-from six.moves import map
-from six.moves import range
-boilerplate()
 
 import PIL
 import math
+import scipy
+
 import UML
 
 from UML.calculate import fractionCorrect
 from UML.calculate import residuals
-from UML.examples.working.gender.gender_prediction import LogisticRegressionNoTraining
 
-scipy = UML.importModule("scipy")
+from .gender_prediction import LogisticRegressionNoTraining
 
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.font_manager import FontProperties
-
-
-#ORIG_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/"
-#sys.path.append(ORIG_HELPER_PATH)
 
 
 colorM_raw ='#66a6ff'
@@ -49,7 +36,7 @@ def loadMetaData(inPath):
     meta = UML.createData("List", inPath, featureNames=True)
     categories = {}
     qParity = {}
-    for point in meta.pointIterator():
+    for point in iter(meta.points):
         categories[point["Category"]] = (point["Q1"], point["Q2"])
         qParity[point['Q1']] = point['Q1 parity to category']
         qParity[point['Q2']] = point['Q2 parity to category']
@@ -63,11 +50,11 @@ def loadPredictionData(inPath):
 #    nonQFeatures = ['femaleAs1MaleAs0']
 
     qs_indices = []
-    for i,n in enumerate(allData.getFeatureNames()):
+    for i,n in enumerate(allData.features.getNames()):
         if n in nonQFeatures or (n[:2] == 'q_' and n != 'q_score'):
             qs_indices.append(i)
 
-    responseData = allData.copyFeatures(qs_indices)
+    responseData = allData.features.copy(qs_indices)
 
     return responseData
 
@@ -78,11 +65,11 @@ def checkResponseData(toCheck):
     def inRange(val):
         assert val >= -3 and val <=3
 
-    toCheck.calculateForEachElement(inRange)
+    toCheck.elements.calculate(inRange)
 
 
 def discardToParityGender(toParity):
-    counts = toParity.countEachUniqueValue(features="femaleAs1MaleAs0")
+    counts = toParity.elements.countUnique(features="femaleAs1MaleAs0")
 
     totalMen = counts[0]
     totalWomen = counts[1]
@@ -96,57 +83,57 @@ def discardToParityGender(toParity):
 
     parityCount = min(totalMen, totalWomen)
 
-    numerous = toParity.extractPoints(lambda x: x["femaleAs1MaleAs0"] == extractValue)
-    equalCount = numerous.extractPoints(number=parityCount, randomize=True)
+    numerous = toParity.points.extract(lambda x: x["femaleAs1MaleAs0"] == extractValue)
+    equalCount = numerous.points.extract(number=parityCount, randomize=True)
 
-    assert equalCount.points == toParity.points
-    assert len(equalCount.countEachUniqueValue(features="femaleAs1MaleAs0")) == 1
+    assert len(equalCount.points) == len(toParity.points)
+    assert len(equalCount.elements.countUnique(features="femaleAs1MaleAs0")) == 1
 
-    toParity.addPoints(equalCount)
+    toParity.points.add(equalCount)
 
 
 def addNonLinearFeatures(toExpand):
-    nonQ = toExpand.extractFeatures(lambda x: x.getFeatureName(0)[:2] != 'q_')
+    nonQ = toExpand.features.extract(lambda x: x.getFeatureName(0)[:2] != 'q_')
 
     squares = toExpand.copy()
-    squares.elementwisePower(2)
-    squares.setFeatureNames([name + "^2" for name in toExpand.getFeatureNames()])
+    squares.elements.power(2)
+    squares.features.setName([name + "^2" for name in toExpand.getFeatureNames()])
 
     cubes = toExpand.copy()
-    cubes.elementwisePower(3)
-    cubes.setFeatureNames([name + "^3" for name in toExpand.getFeatureNames()])
+    cubes.elements.power(3)
+    cubes.features.setName([name + "^3" for name in toExpand.getFeatureNames()])
 
 #    print(squares[0,:])
 
-    toExpand.addFeatures(squares)
-    toExpand.addFeatures(cubes)
+    toExpand.features.add(squares)
+    toExpand.features.add(cubes)
 
-#    assert toExpand.points == squares.points
-#    assert toExpand.points == cubes.points
-#    assert toExpand.features == (squares.features * 2) + cubes.features
+#    assert len(toExpand.points) == len(squares.points)
+#    assert len(toExpand.points) == len(cubes.points)
+#    assert len(toExpand.features) == (len(squares.features) * 2) + len(cubes.features)
 
-    offset = squares.features
+    offset = len(squares.features)
     def checkValidity(toCheckP):
-        for i in range(int(toCheckP.features / 2)):
+        for i in range(int(len(toCheckP.features) / 2)):
             assert toCheckP[i] == 0 or toCheckP[i] == (toCheckP[offset+i] / toCheckP[i])
 
-#    toExpand.calculateForEachPoint(checkValidity)
+#    toExpand.points.calculate(checkValidity)
 
-    toExpand.addFeatures(nonQ)
+    toExpand.features.add(nonQ)
 
-#    for n in toExpand.getFeatureNames():
+#    for n in toExpand.features.getNames():
 #        print (n)
 
 
 
 def predict_decisionTree(trainX, trainY, testX, testY, ):
 
-    train_pIDs = trainX.extractFeatures("participant_id")
-    if "participant_id" in testX.getFeatureNames():
-        test_pIDs = testX.extractFeatures("participant_id")
+    train_pIDs = trainX.features.extract("participant_id")
+    if "participant_id" in testX.features.getNames():
+        test_pIDs = testX.features.extract("participant_id")
     else:
         test_pIDs = train_pIDs
-    assert "participant_id" not in testX.getFeatureNames()
+    assert "participant_id" not in testX.features.getNames()
 
     cvargs = {}
 #    cvargs['splitter'] = ("best", 'random')
@@ -169,12 +156,12 @@ def predict_decisionTree(trainX, trainY, testX, testY, ):
 
 def predict_knnClassifier(trainX, trainY, testX, testY, ):
 
-    train_pIDs = trainX.extractFeatures("participant_id")
-    if "participant_id" in testX.getFeatureNames():
-        test_pIDs = testX.extractFeatures("participant_id")
+    train_pIDs = trainX.features.extract("participant_id")
+    if "participant_id" in testX.features.getNames():
+        test_pIDs = testX.features.extract("participant_id")
     else:
         test_pIDs = train_pIDs
-    assert "participant_id" not in testX.getFeatureNames()
+    assert "participant_id" not in testX.features.getNames()
 
     cvargs = {}
     cvargs['n_neighbors'] = (1,2,3,5,7,11,17,26,39,59)
@@ -193,16 +180,16 @@ def predict_knnClassifier(trainX, trainY, testX, testY, ):
 
 
 def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions_path):
-    train_pIDs = trainX.extractFeatures("participant_id")
+    train_pIDs = trainX.features.extract("participant_id")
 
-    if "participant_id" in testX.getFeatureNames():
-        test_pIDs = testX.extractFeatures("participant_id")
+    if "participant_id" in testX.features.getNames():
+        test_pIDs = testX.features.extract("participant_id")
     else:
         test_pIDs = train_pIDs
-    assert "participant_id" not in testX.getFeatureNames()
+    assert "participant_id" not in testX.features.getNames()
 
-#    print(trainX.getPointNames())
-#    for n in trainY.getFeatureNames():
+#    print(trainX.points.getNames())
+#    for n in trainY.features.getNames():
 #        print(n)
 
     C = [3**(i-10) for i in range(0,20)]
@@ -217,44 +204,44 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
     print ("C={}".format(learner.getAttributes()['C']))
 
     predictions = learner.apply(testX)
-    predictions.setFeatureNames(["predicted-femaleAs1MaleAs0"])
-    predictions.setPointNames(testX.getPointNames())
-    test_pIDs.addFeatures(predictions)
-    test_pIDs.addFeatures(testY)
+    predictions.features.setNames(["predicted-femaleAs1MaleAs0"])
+    predictions.points.setNames(testX.points.getNames())
+    test_pIDs.features.add(predictions)
+    test_pIDs.features.add(testY)
 
     raw = testX.copyAs("numpyarray")
     probabilities = learner.backend.predict_proba(raw)
 
     probabilitiesObj = UML.createData("Matrix", probabilities, featureNames=["prob_Male", "prob_Female"])
-    probabilitiesObj.setPointNames(testX.getPointNames())
-    test_pIDs.addFeatures(probabilitiesObj)
-    test_pIDs.sortPoints(sortHelper=(lambda x: int(x.getPointName(0))))
+    probabilitiesObj.points.setNames(testX.points.getNames())
+    test_pIDs.features.add(probabilitiesObj)
+    test_pIDs.points.sort(sortHelper=(lambda x: int(x.getPointName(0))))
 
     test_pIDs.writeFile(predictions_path, 'csv')
 
-#    print(test_pIDs.getFeatureNames())
+#    print(test_pIDs.features.getNames())
 
     confObj = test_pIDs.copy()
 
     def makeConf(p):
         return max(p['prob_Male'], p['prob_Female'])
 
-    confFeat = confObj.calculateForEachPoint(makeConf)
-    confFeat.setFeatureNames(['confidence'])
-    confObj.addFeatures(confFeat)
-    confObj.sortPoints('confidence')
+    confFeat = confObj.points.calculate(makeConf)
+    confFeat.features.setNames(['confidence'])
+    confObj.featurse.add(confFeat)
+    confObj.points.sort('confidence')
 
     def isCorrect(p):
         return p["predicted-femaleAs1MaleAs0"] == p["femaleAs1MaleAs0"]
 
-    isC = confObj.calculateForEachPoint(isCorrect)
-    isC.setFeatureNames(['isCorrect'])
-    confObj.addFeatures(isC)
+    isC = confObj.points.calculate(isCorrect)
+    isC.features.setNames(['isCorrect'])
+    confObj.features.add(isC)
 
     boundary = .05
     lowerIndex = 0
     upperIndex = 0
-    perPointCorrectnessNeighborhood = numpy.empty((confObj.points,1))
+    perPointCorrectnessNeighborhood = numpy.empty((len(confObj.points),1))
 
     for i, val in enumerate(confObj[:, 'confidence']):
         lower = val - boundary
@@ -264,7 +251,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
         while confObj[lowerIndex, "confidence"] < lower:
             lowerIndex += 1
         # go until you're outside the upper range - exclusive index
-        while upperIndex < confObj.points and confObj[upperIndex, "confidence"] < upper:
+        while upperIndex < len(confObj.points) and confObj[upperIndex, "confidence"] < upper:
             upperIndex += 1
 
         # but we want inclusive indices
@@ -277,9 +264,9 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
         perPointCorrectnessNeighborhood[i] = correctRato
 
     cNObj = UML.createData("Matrix", perPointCorrectnessNeighborhood)
-    cNObj.setPointNames(confObj.getPointNames())
-    cNObj.setFeatureNames(['rollingAverageCorrectness'])
-    confObj.addFeatures(cNObj)
+    cNObj.points.setNames(confObj.points.getNames())
+    cNObj.features.setNames(['rollingAverageCorrectness'])
+    confObj.features.add(cNObj)
 
     confObj.plotFeatureAgainstFeature("confidence", 'rollingAverageCorrectness', xMin=.4,xMax=1,yMin=.4,yMax=1)
 
@@ -290,17 +277,17 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
     independentModel = UML.train("custom.LogisticRegressionNoTraining", trainX, trainY, coefs=coefObj, intercept=raw_intercept)
     independentPredictions = independentModel.apply(testX)
-    independentPredictions.setFeatureNames(["predicted-femaleAs1MaleAs0"])
-    independentPredictions.setPointNames(testX.getPointNames())
+    independentPredictions.features.setNames(["predicted-femaleAs1MaleAs0"])
+    independentPredictions.points.setNames(testX.points.getNames())
 
     assert predictions.isIdentical(independentPredictions)
     assert learner.test(testX, testY, fractionCorrect) == independentModel.test(testX, testY, fractionCorrect)
 
-    coefObj.setFeatureNames([n+" coef" for n in testX.getFeatureNames()])
+    coefObj.features.setNames([n+" coef" for n in testX.features.getNames()])
 
     interceptObj = UML.createData("Matrix", [raw_intercept])
-    interceptObj.setFeatureNames(["intercept"])
-    interceptObj.addFeatures(coefObj)
+    interceptObj.features.setNames(["intercept"])
+    interceptObj.features.add(coefObj)
     interceptObj.transpose()
 
     interceptObj.writeFile(pred_coefs_path, 'csv')
@@ -310,11 +297,11 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 def splitDataForTrial(data, numTest, seed):
     # Split gender / response data for testing
     if numTest != 0:
-        testFraction = float(numTest) / data.points
+        testFraction = float(numTest) / len(data.points)
         UML.setRandomSeed(seed)
         responseTrain, genderTrain, responseTest, genderTest = data.trainAndTestSets(testFraction, "femaleAs1MaleAs0", randomOrder=True)
     else:
-        genderTrain = data.extractFeatures("femaleAs1MaleAs0")
+        genderTrain = data.features.extract("femaleAs1MaleAs0")
         responseTrain = data
         genderTest = genderTrain
         responseTest = responseTrain
@@ -347,8 +334,8 @@ def qResponsesToCatResponses(qResponses, categories, qParity):
             ret[i] = (q1p * point[q1]) + (q2p * point[q2])
         return ret
 
-    catResRet = qResponses.calculateForEachPoint(makeCats)
-    catResRet.setFeatureNames(catList)
+    catResRet = qResponses.points.calculate(makeCats)
+    catResRet.features.setNames(catList)
 
     return catResRet
 
@@ -367,8 +354,8 @@ def responsesToScorePercents(responses):
     :param responses: feature vector category scores for a single category
     :return: a list mapping range(-6,7) to percent of responses for that value
     """
-    total = float(responses.points)
-    uDict = responses.countEachUniqueValue(features=0)
+    total = float(len(responses.points))
+    uDict = responses.elements.countUnique(features=0)
     responseValues = [i for i in range(-6,7)]
     for num in responseValues:
         if num not in uDict:
@@ -385,9 +372,9 @@ def plotDataOLD(gender, qData, cats, qParity, outPath):
     """
     catData = qResponsesToCatResponses(qData, cats, qParity)
 
-    for i in range(catData.features):
-        f = catData.copyFeatures(i)
-        cat = f.getFeatureName(0)
+    for i in range(len(catData.features)):
+        f = catData.features.copy(i)
+        cat = f.features.getName(0)
         print(cat)
         currPath = os.path.join(outPath, cat)
 
@@ -436,7 +423,7 @@ def plot_bar_stacked(gender, toPlot):
     responseValues = numpy.array([i for i in range(-6, 7)])
     width = .9
 
-    mData = toPlot.extractPoints(lambda p: gender[p.getPointName(0)] == 0)
+    mData = toPlot.points.extract(lambda p: gender[p.points.getName(0)] == 0)
     fData = toPlot
     mQuant = numpy.array(responsesToQuantity(mData))
     fQuant = numpy.array(responsesToQuantity(fData))
@@ -459,7 +446,7 @@ def plot_bar_sidebyside(gender, toPlot):
     responseValues = numpy.array([i for i in range(-6, 7)])
     width = .45
 
-    mData = toPlot.extractPoints(lambda p: gender[p.getPointName(0)] == 0)
+    mData = toPlot.points.extract(lambda p: gender[p.points.getName(0)] == 0)
     fData = toPlot
     mQuant = responsesToQuantity(mData)
     fQuant = responsesToQuantity(fData)
@@ -494,11 +481,11 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
         fig = plt.figure(facecolor='white', figsize=(W / DPI, H / DPI), tight_layout=True)
 
         # data setup
-        f = catData.copyFeatures(i)
-        cat = f.getFeatureName(0)
+        f = catData.features.copy(i)
+        cat = f.features.getName(0)
         currPath = os.path.join(outPath, cat)
         xVals = numpy.array([i for i in range(-6, 7)])
-        mData = f.extractPoints(lambda p: gender[p.getPointName(0)] == 0)
+        mData = f.points.extract(lambda p: gender[p.points.getName(0)] == 0)
         fData = f
         mQuant = responsesToQuantity(mData)
         fQuant = responsesToQuantity(fData)
@@ -598,9 +585,9 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
             return height
 
         # mean positions
-        meanMX = sum(mData) / float(mData.points)
+        meanMX = sum(mData) / float(len(mData.points))
         meanMY = getMeanHeight(meanMX, makeQMap(mQuant))
-        meanFX = sum(fData) / float(fData.points)
+        meanFX = sum(fData) / float(len(fData.points))
         meanFY = getMeanHeight(meanFX, makeQMap(fQuant))
 
         # possible: 'line', 'full line', 'bubble_legend', 'bubble_inside'
@@ -724,12 +711,12 @@ def plotCompanionCorrelationMatrix(qData, gender, categories, qParity, outFile):
     catData = qResponsesToCatResponses(qData, categories, qParity)
 
     residuals_catData = residuals(catData, gender)
-    corrs = residuals_catData.featureSimilarities('correlation')
+    corrs = residuals_catData.feature.similarities('correlation')
 
-#    corrs = catData.featureSimilarities('correlation')
+#    corrs = catData.feature.similarities('correlation')
 
-    corrs.sortPoints(sortHelper=lambda x: x.getPointName(0))
-    corrs.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
+    corrs.points.sort(sortHelper=lambda x: x.points.getName(0))
+    corrs.points.sort(sortHelper=lambda x: x.features.getName(0))
     corrs.writeFile(outFile)
 
 
@@ -790,13 +777,13 @@ if __name__ == "__main__":
 
     # load response data and gender prediction variable
     predictionData = loadPredictionData(path_responses)
-    assert predictionData.points == INDATA_QUANTITY_ASSERT
+    assert len(predictionData.points) == INDATA_QUANTITY_ASSERT
     categories, qParity = loadMetaData(path_metadata)
 
     if PLOT_RESPONSES:
         safeResponses = predictionData.copy()
-        safeResponses.deleteFeatures("participant_id")
-        safeGender = safeResponses.extractFeatures("femaleAs1MaleAs0")
+        safeResponses.features.delete("participant_id")
+        safeGender = safeResponses.features.extract("femaleAs1MaleAs0")
         if PLOT_MAKE_LABELS:
             safeResponses2 = safeResponses.copy()
             safeGender2 = safeGender.copy()
@@ -806,8 +793,8 @@ if __name__ == "__main__":
 
     if OUTPUT_PLOT_COMPANION_CORRELATION_MATRIX:
         safeResponses = predictionData.copy()
-        safeResponses.deleteFeatures("participant_id")
-        safeGender = safeResponses.extractFeatures("femaleAs1MaleAs0")
+        safeResponses.features.delete("participant_id")
+        safeGender = safeResponses.features.extract("femaleAs1MaleAs0")
         plotCompanionCorrelationMatrix(safeResponses, safeGender, categories, qParity,outpath_plotCompanion_correlation)
 
     if ADD_SQUARED_FEATURES:
@@ -816,26 +803,26 @@ if __name__ == "__main__":
     if ALREADYSPLIT:
         assert USETRAINGDATA  # were we using the full data, the data could not have been already split
         responseTest = loadPredictionData(path_FinalTest_responses)
-        genderTest = responseTest.extractFeatures("femaleAs1MaleAs0")
+        genderTest = responseTest.features.extract("femaleAs1MaleAs0")
         (responseTrain, genderTrain, _, _) = splitDataForTrial(predictionData, 0, SPLIT_SEED)
     else:
         splits = splitDataForTrial(predictionData, TEST_NUMBER, SPLIT_SEED)
         (responseTrain, genderTrain, responseTest, genderTest) = splits
 
-    print ("train: {0} | test: {1}".format(responseTrain.points, responseTest.points))
+    print ("train: {0} | test: {1}".format(len(responseTrain.points), len(responseTest.points)))
 
     if PARITY_GENDER_TRAINING:
         if TEST_NUMBER == 0:
             responseTest = responseTrain.copy()
             genderTest = genderTrain.copy()
-        responseTrain.addFeatures(genderTrain)
+        responseTrain.features.add(genderTrain)
         discardToParityGender(responseTrain)
-        genderAdjusted = responseTrain.extractFeatures("femaleAs1MaleAs0")
+        genderAdjusted = responseTrain.features.extract("femaleAs1MaleAs0")
         genderTrain.referenceDataFrom(genderAdjusted)
-        print("parity size={0}".format(str(genderTrain.points / 2)))
+        print("parity size={0}".format(str(len(genderTrain.points) / 2)))
 
-    print(genderTrain.countEachUniqueValue(features="femaleAs1MaleAs0"))
-    print(genderTest.countEachUniqueValue(features="femaleAs1MaleAs0"))
+    print(genderTrain.elements.countUnique(features="femaleAs1MaleAs0"))
+    print(genderTest.elements.countUnique(features="femaleAs1MaleAs0"))
 
     print("\nlogReg_L2")
     predict_logReg_L2(responseTrain.copy(), genderTrain.copy(), responseTest.copy(), genderTest.copy(), outpath_pred_coefs, outpath_pred_class_and_prob)
@@ -852,4 +839,4 @@ if __name__ == "__main__":
 
 
 
-    pass  # EOF marker
+s    pass  # EOF marker
