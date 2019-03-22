@@ -78,7 +78,8 @@ UML.helpers.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.
-UML.configuration.syncWithInterfaces(UML.settings)
+UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available,
+                                     save=True)
 
 # initialize the logging file
 UML.logger.active = UML.logger.initLoggerAndLogConfig()

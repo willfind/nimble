@@ -264,6 +264,10 @@ class SessionConfiguration(object):
 
                 if not isinstance(self.changes[section], ToDelete):
                     self.changes[section][option] = ToDelete()
+
+                # delete section if all options have been deleted
+                if self.changes[section] == {}:
+                    self.changes[section] = ToDelete()
                 success = True
 
             # deleting an entire section
@@ -299,9 +303,7 @@ class SessionConfiguration(object):
                     else:
                         found = True
                         for kOpt in self.changes[kSec]:
-                            if isinstance(self.changes[kSec][kOpt], ToDelete):
-                                del ret[kOpt]
-                            else:
+                            if not isinstance(self.changes[kSec][kOpt], ToDelete):
                                 ret[kOpt] = self.changes[kSec][kOpt]
             if not found:
                 raise configparser.NoSectionError()
@@ -539,7 +541,7 @@ def loadSettings():
     return ret
 
 
-def syncWithInterfaces(settingsObj):
+def syncWithInterfaces(settingsObj, interfaceList, save):
     """
     Synchronizes the configuration file, settings object in memory, and
     the the available interfaces, so that all three have the same option
@@ -547,44 +549,16 @@ def syncWithInterfaces(settingsObj):
     after available interfaces have been detected, but before a user
     could have to rely on accessing options for that interface.
     """
-    origChanges = copy.copy(settingsObj.changes)
-    newChanges = {}
-    settingsObj.changes == {}
-
-    # iterate through interfaces?
-    for interface in UML.interfaces.available:
+    for interface in interfaceList:
         interfaceName = interface.getCanonicalName()
         optionNames = interface.optionNames
-
-        # check that all present are valid names
-        if settingsObj.cp.has_section(interfaceName):
-            for (opName, _) in settingsObj.cp.items(interfaceName):
-                if opName not in optionNames:
-                    settingsObj.cp.remove_option(interfaceName, opName)
-        else:
-            # We only want to add sections for those interfaces which
-            # actually have options
-            if len(optionNames) > 0:
-                settingsObj.cp.add_section(interfaceName)
-
-        # check that all names are present, add if not
         for opName in optionNames:
             try:
                 settingsObj.get(interfaceName, opName)
-            except configparser.NoOptionError:
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 settingsObj.set(interfaceName, opName, "")
-            if (interfaceName, opName) in origChanges:
-                origValue = origChanges[(interfaceName, opName)]
-                newChanges[(interfaceName, opName)] = origValue
-
-    # save all changes that were made
-    settingsObj.saveChanges()
-
-    # NOTE: this is after the save. If a non-empty change set was in place
-    # during the save operation, those changes would be reflected in
-    # the file, which we don't want. We instead want to preserve the
-    # user changes, and only save them because of user intervention.
-    settingsObj.changes = newChanges
+            if save:
+                settingsObj.saveChanges(interfaceName, opName)
 
 
 def configSafetyWrapper(toWrap):
