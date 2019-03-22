@@ -11,7 +11,7 @@ import UML
 from UML.calculate import fractionCorrect
 from UML.calculate import residuals
 
-from .gender_prediction import LogisticRegressionNoTraining
+from gender_prediction import LogisticRegressionNoTraining
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -215,7 +215,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
     probabilitiesObj = UML.createData("Matrix", probabilities, featureNames=["prob_Male", "prob_Female"])
     probabilitiesObj.points.setNames(testX.points.getNames())
     test_pIDs.features.add(probabilitiesObj)
-    test_pIDs.points.sort(sortHelper=(lambda x: int(x.getPointName(0))))
+    test_pIDs.points.sort(sortHelper=(lambda x: int(x.points.getName(0))))
 
     test_pIDs.writeFile(predictions_path, 'csv')
 
@@ -228,7 +228,7 @@ def predict_logReg_L2(trainX, trainY, testX, testY, pred_coefs_path, predictions
 
     confFeat = confObj.points.calculate(makeConf)
     confFeat.features.setNames(['confidence'])
-    confObj.featurse.add(confFeat)
+    confObj.features.add(confFeat)
     confObj.points.sort('confidence')
 
     def isCorrect(p):
@@ -839,4 +839,4 @@ if __name__ == "__main__":
 
 
 
-s    pass  # EOF marker
+pass  # EOF marker

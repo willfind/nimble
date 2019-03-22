@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 from six.moves import range
 
-import UML
 import sys
 import os.path
 import numpy
@@ -44,7 +43,7 @@ DEMONSTRATE_FILE = "Aesthetic"
 #wanted = [-3]
 #wanted += [.25 * i for i in range(-11,12)]
 wanted = [.5 * i  for i in range(-6,7)]
-print wanted
+print(wanted)
 #wanted += [3]
 
 dummyData = [9] * 13
@@ -81,7 +80,7 @@ for arrowX in wanted:
     textLoc = (loc[0]+xOffset, loc[1]) if loc[0] < 0 else (loc[0]-xOffset, loc[1])
     textAlignment = "left" if loc[0] < 0 else "right"
 
-    plt.plot(loc[0], loc[1], marker='$\uparrow$', color="Black", markersize=20)
+    plt.plot(loc[0], loc[1], marker=r'$\uparrow$', color='Black', markersize=20)
     plt.annotate("Your Score", xy=(loc[0],loc[1]), xytext=(textLoc[0], textLoc[1]), color="Black", horizontalalignment=textAlignment, verticalalignment='top')
 
 #    print (str(plt.xlim()))
