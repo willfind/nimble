@@ -475,22 +475,17 @@ class Base(object):
 
         replace = self.features.extract([index])
 
-        binaryFts = replace._replaceFeatureWithBinaryFeatures_implementation()
+        uniqueVals = list(replace.elements.countUnique().keys())
 
-        toFill = numpy.zeros((len(replace.points), len(binaryFts)))
-        prefix = replace.features.getName(0) + "="
+        binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
+            uniqueVals)
+
+        binaryObj.points.setNames(self.points._getNamesNoGeneration())
         ftNames = []
-        for idx, (name, locations) in enumerate(binaryFts.items()):
-            ftNames.append(prefix + str(name))
-            toFill[locations, idx] = 1
-
-        if self.points._namesCreated():
-            ptNames = self.points.getNames()
-        else:
-            ptNames = 'automatic'
-        binaryObj = UML.createData(self.getTypeString(), toFill,
-                                   pointNames=ptNames, featureNames=ftNames,
-                                   treatAsMissing=None)
+        prefix = replace.features.getName(0) + "="
+        for val in uniqueVals:
+            ftNames.append(prefix + str(val))
+        binaryObj.features.setNames(ftNames)
 
         # by default, put back in same place
         insertBefore = index
@@ -546,15 +541,19 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
+            uniqueVals = ft.elements.countUnique()
             integerValue = 0
+            if 0 in uniqueVals:
+                mapping[0] = 0
+                integerValue = 1
+                del uniqueVals[0]
+            for val in uniqueVals:
+                mapping[val] = integerValue
+                integerValue += 1
+
             mapped = []
             for val in ft:
-                if val not in mapping:
-                    mapping[val] = integerValue
-                    mapped.append(integerValue)
-                    integerValue += 1
-                else:
-                    mapped.append(mapping[val])
+                mapped.append(mapping[val])
             return mapped
 
         self.features.transform(applyMap, features=ftIndex)
