@@ -1,4 +1,23 @@
+"""
+Build a UML distribution or install UML.
+
+Build source distribution with C extensions
+    command line: python setup.py sdist
+Build binary platform-dependent distribution with C extensions
+    command line: python setup.py bdist_wheel
+Build binary universal distribution which does not include C extensions
+    command line: python setup.py bdist_wheel --universal
+
+Install via setup.py:
+    command line: python setup.py install
+
+    If cython is installed, it will install with C extensions. If cython
+    is not present or compiling the files fails, a pure python version
+    will be installed.
+"""
+
 from __future__ import absolute_import
+from __future__ import print_function
 
 import sys
 import os
@@ -14,15 +33,6 @@ from setuptools.command.sdist import sdist
 from distutils.errors import CCompilerError, DistutilsExecError, \
     DistutilsPlatformError
 
-# NOTE this file belongs one level above
-
-# command line: python setup.py sdist
-    # builds source distribution with C extensions
-# command line: python setup.py bdist_wheel
-    # builds binary platform-dependent distribution with C extensions
-# command line: python setup.py bdist_wheel --universal
-    # builds binary universal distribution without C extensions
-
 def getExtensions():
     umlC = glob.glob(os.path.join('UML', 'helpers.c'))
     dataC = glob.glob(os.path.join('UML', 'data', '*.c'))
@@ -33,25 +43,24 @@ def getExtensions():
         extensions.append(Extension(name, [extension]))
     return extensions
 
-cmdclass = {}
 extensions = []
 # universal build does not include extensions
 if '--universal' not in sys.argv:
     extensions = getExtensions()
-# Make sure the compiled Cython files in the distribution are up-to-date
-if 'sdist' in sys.argv:
-    # inspect module does not work with cython
-    # TODO remove one instance of inspect in UML/data/base.py
-    to_cythonize = [os.path.join('UML', 'helpers.py'),
-                    os.path.join('UML', 'data', '*.py'),]
-    exclude = [os.path.join('UML', 'data', '__init__.py'),
-               os.path.join('UML', 'data', 'dataHelpers.py'), # bug in python2
-               ]
-    from Cython.Build import cythonize, build_ext
-    cythonize(to_cythonize, exclude=exclude,
-              compiler_directives={'always_allow_keywords': True},
-              exclude_failures=True,)
-    extensions = getExtensions()
+    # Make sure the compiled Cython files in the distribution are up-to-date
+    try:
+        from Cython.Build import cythonize, build_ext
+        to_cythonize = [os.path.join('UML', 'helpers.py'),
+                        os.path.join('UML', 'data', '*.py'),]
+        exclude = [os.path.join('UML', 'data', '__init__.py'),]
+        cythonize(to_cythonize, exclude=exclude,
+                  compiler_directives={'always_allow_keywords': True,
+                                       'language_level': 3,
+                                       'binding': True},
+                  exclude_failures=True,)
+        extensions = getExtensions()
+    except ImportError:
+        pass
 
 # modified from Bob Ippolito's simplejson project
 if sys.platform == 'win32' and sys.version_info < (2, 7):
@@ -67,7 +76,9 @@ class BuildFailed(Exception):
     pass
 
 class _build_ext(build_ext):
-    # This class allows C extension building to fail.
+    """
+    Allows C extension building to fail but python build to continue.
+    """
 
     def run(self):
         try:
@@ -81,66 +92,62 @@ class _build_ext(build_ext):
         except ext_errors:
             raise BuildFailed()
 
-def run_setup(with_extensions):
-    if with_extensions:
-        ext_modules = extensions
-        cmdclass['build_ext']= _build_ext
-
-    setup(
-        name='UML',
-        version='0.0.0.dev1',
-        packages=find_packages(exclude=['*.tests',
-                                        '*.examples*']),
-        install_requires=['six>=1.5.1',
-                          'numpy>=1.10.4',
-                         ],
-        ext_modules=ext_modules,
-        cmdclass=cmdclass,
+def run_setup(extensions=None):
+    setupKwargs = {}
+    setupKwargs['name'] = 'UML'
+    setupKwargs['version'] = '0.0.0.dev1'
+    setupKwargs['author'] = "Spark Wave"
+    setupKwargs['author_email'] = "willfind@gmail.com"
+    setupKwargs['description'] = "Universal Machine Learning"
+    setupKwargs['url'] = "https://willfind.github.io/UML/"
+    setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
+    setupKwargs['classifiers'] = (
+        'Development Status :: 3 - Alpha',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Operating System :: OS Independent',
         )
+    setupKwargs['include_package_data'] = True
+    setupKwargs['install_requires'] = ['six>=1.5.1', 'numpy>=1.10.4']
+    if extensions is not None:
+        setupKwargs['ext_modules'] = extensions
+        cmdclass = {'build_ext': _build_ext}
+        setupKwargs['cmdclass'] = cmdclass
 
-# TODO warning not showing when C file installs failed. Appears to be captured by setuptools
-try:
-    run_setup(True)
-except BuildFailed:
+    setup(**setupKwargs)
 
-    msg = "WARNING: UML failed to compile C extensions. This does NOT affect "
-    msg += "the functionality of UML, but this install will not benefit from "
-    msg += "the speed increases of the C extensions."
+if extensions:
+    try:
+        run_setup(extensions)
+        print('*' * 79)
+        print("Successfully built UML with C extensions.")
+        print('*' * 79)
+    except BuildFailed:
+        run_setup()
+        print('*' * 79)
+        print("WARNING: Failed to compile C extensions. This does NOT affect ")
+        print("the functionality of the build, but this build will not ")
+        print("benefit from the speed increases of the C extensions.")
+        print("Plain-Python build of UML succeeded.")
+        print('*' * 79)
+else:
+    run_setup()
+    print('*' * 79)
+    print("WARNING: This build does not include the C extensions. ")
+    print("This does NOT affect the functionality of the build, but it will ")
+    print("not benefit from the speed increases of the C extensions.")
+    print("Plain-Python build of UML succeeded.")
+    print('*' * 79)
 
-    print('*' * 75)
-    print(msg)
-    print("Failure information, if any, is above.")
-    print("Retrying the build without the C extensions now.")
-    print('*' * 75)
-
-    run_setup(False)
-
-    print('*' * 75)
-    print(msg)
-    print("Plain-Python install of UML succeeded.")
-    print('*' * 75)
-
-
-## TODO
+# TODO
     # determine which packages to exclude in distribution
     # determine correct versions for install_requires
-    # additional metadata (see below)
+    # make any changes to setup metadata (author, description, classifiers, etc.)
+    # additional setup metadata (see below)
+        # with open("README.md", "r") as fh:
+        #     long_description = fh.read()
 
-# with open("README.md", "r") as fh:
-#     long_description = fh.read()
-
-# author="Example Author",
-# author_email="author@example.com",
-# description="A small example package",
-# long_description=long_description,
-# long_description_content_type="text/markdown",
-# url="https://github.com/pypa/example-project",
-# classifiers=(
-#     'Development Status :: 3 - Alpha',
-#     'Programming Language :: Python :: 2',
-#     'Programming Language :: Python :: 2.7',
-#     'Programming Language :: Python :: 3',
-#     'Programming Language :: Python :: 3.4',
-#     'Programming Language :: Python :: 3.5',
-#     'Programming Language :: Python :: 3.6',
-#     'Operating System :: OS Independent'
+        # long_description=long_description,
+        # long_description_content_type="text/markdown",

@@ -1734,7 +1734,7 @@ def _stringToFunction(string, axis, nameChecker):
             optr = '==' if optr == '=' else optr
             #after splitting at the optr, list must have 2 items
             if len(targetList) != 2:
-                msg = "the target({0}) is a ".format(target)
+                msg = "the target({0}) is a ".format(string)
                 msg += "query string but there is an error"
                 raise InvalidArgumentValue(msg)
             nameOfPtOrFt = targetList[0]
@@ -1771,7 +1771,7 @@ def _stringToFunction(string, axis, nameChecker):
             break
     # the target can't be converted to a function
     else:
-        msg = "'{0}' is not a valid {1} ".format(target, axis)
+        msg = "'{0}' is not a valid {1} ".format(string, axis)
         msg += 'name nor a valid query string'
         raise InvalidArgumentValue(msg)
 
