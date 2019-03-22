@@ -6,23 +6,22 @@ import os.path
 import functools
 from functools import partial
 
-from .allowImports import boilerplate
 from six.moves import map
 from six.moves import range
-boilerplate()
 
 import UML
 from UML.calculate import residuals
-from UML.examples.working.gender.gender_visualization_bandwidth import verifyBandwidthSelectionWorks
-from UML.examples.working.gender.gender_visualization_bandwidth import KDEProbability
-from UML.examples.working.gender.gender_visualization_bandwidth import bandwidthTrials
-from UML.examples.working.gender.gender_visualization_bandwidth import fixedBandwidth_same
-from UML.examples.working.gender.gender_visualization_bandwidth import fixedBandwidth_handAdjusted
-from UML.examples.working.gender.gender_visualization_bandwidth import fixedBandwidth_all
-from UML.examples.working.gender.gender_visualization_bandwidth import fixedBandwidth_drop5percent
-from UML.examples.working.gender.gender_visualization_bandwidth import fixedBandwidth_noisy_all
-from UML.examples.working.gender.gender_visualization_bandwidth import collateBW
-#from UML.examples.working.gender.gender_visualization_bandwidth import *
+
+from .gender_visualization_bandwidth import verifyBandwidthSelectionWorks
+from .gender_visualization_bandwidth import KDEProbability
+from .gender_visualization_bandwidth import bandwidthTrials
+from .gender_visualization_bandwidth import fixedBandwidth_same
+from .gender_visualization_bandwidth import fixedBandwidth_handAdjusted
+from .gender_visualization_bandwidth import fixedBandwidth_all
+from .gender_visualization_bandwidth import fixedBandwidth_drop5percent
+from .gender_visualization_bandwidth import fixedBandwidth_noisy_all
+from .gender_visualization_bandwidth import collateBW
+#from .gender_visualization_bandwidth import *
 
 scipy = UML.importModule("scipy")
 

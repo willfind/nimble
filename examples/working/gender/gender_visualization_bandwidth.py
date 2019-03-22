@@ -14,14 +14,12 @@ import sys
 import os
 import colorsys
 
-from .allowImports import boilerplate
 from six.moves import range
-boilerplate()
 
 import UML
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
-#from UML.examples.gender.gender_categories_and_visualizations import generateSubScale
+#from .gender_categories_and_visualizations import generateSubScale
 
 scipy = UML.importModule("scipy")
 plt = UML.importModule("matplotlib.pyplot")

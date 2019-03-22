@@ -1,8 +1,7 @@
 
 from __future__ import absolute_import
-from allowImports import boilerplate
+
 from six.moves import range
-boilerplate()
 
 import UML
 import sys

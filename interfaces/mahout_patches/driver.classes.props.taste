@@ -1,1 +1,0 @@
-org.apache.mahout.cf.taste.common.TasteRecommenderBatchEstimation = tasteBasedEstimation : batch estimation using the chosen taste based recommender

@@ -6,9 +6,7 @@ temperment responses to do gender classification.
 
 from __future__ import absolute_import
 from __future__ import print_function
-from .allowImports import boilerplate
 from six.moves import range
-boilerplate()
 
 import os
 import sys
@@ -18,8 +16,9 @@ import numpy
 import UML
 from UML.calculate import fractionIncorrect
 from UML.customLearners import CustomLearner
-from UML.examples.working.logisticRegressionCoefficientSelection import LogisticRegressionSelectByRegularization
-from UML.examples.working.logisticRegressionCoefficientSelection import LogisticRegressionSelectByOmission
+
+from ..logisticRegressionCoefficientSelection import LogisticRegressionSelectByRegularization
+from ..logisticRegressionCoefficientSelection import LogisticRegressionSelectByOmission
 
 scipy = UML.importModule('scipy')
 decomposition = UML.importModule('sklearn.decomposition')

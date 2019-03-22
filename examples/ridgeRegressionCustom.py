@@ -6,18 +6,12 @@ out-of-the-box, custom learner.
 
 from __future__ import absolute_import
 from __future__ import print_function
-try:
-    from allowImports import boilerplate
-except:
-    from .allowImports import boilerplate
 
-boilerplate()
+import UML
+from UML.calculate import rootMeanSquareError as RMSE
+from UML.randomness import numpyRandom
 
 if __name__ == "__main__":
-    import UML
-    from UML.calculate import rootMeanSquareError as RMSE
-    from UML.randomness import numpyRandom
-
     # produce some simple linear data
     trainPoints = 10
     testPoints = 5

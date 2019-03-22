@@ -5,19 +5,13 @@ files. Uses a portion of the UCI ML repository census income data set (aka Adult
 """
 
 from __future__ import absolute_import
-try:
-    from allowImports import boilerplate
-except:
-    from .allowImports import boilerplate
-import six
 
-boilerplate()
+import os.path
+import UML
+from UML import createData
+from UML import match
 
 if __name__ == "__main__":
-    import os.path
-    import UML
-    from UML import createData
-    from UML import match
 
     # string manipulation to get and make paths
     pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
