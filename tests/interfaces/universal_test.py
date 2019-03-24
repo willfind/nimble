@@ -91,10 +91,10 @@ class TestInterface(UniversalInterface):
         return outputValue
 
     def _configurableOptionNames(self):
-        return []
+        return ['option']
 
     def _optionDefaults(self, option):
-        return []
+        return None
 
     def _exposedFunctions(self):
         return [self.exposedOne, self.exposedTwo, self.exposedThree]
@@ -223,13 +223,31 @@ def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
     assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
 
 
-###############
-### version ###
-###############
+@noLogEntryExpected
+def test_accessible():
+    assert TestObject.accessible()
 
+@noLogEntryExpected
+def test_getCanonicalName():
+    assert TestObject.getCanonicalName() == 'Test'
+
+@noLogEntryExpected
+def test_learnerType():
+    assert TestObject.learnerType('l0') is None
+
+@noLogEntryExpected
+def test_isAlias():
+    assert TestObject.isAlias('test')
+
+@noLogEntryExpected
 def test_version():
-    ret = TestObject.version()
-    assert ret == "0.0.0"
+    assert TestObject.version() == '0.0.0'
+
+@noLogEntryExpected
+def test_setOptionGetOption():
+    assert TestObject.getOption('option') is None
+    TestObject.setOption('option', 'set')
+    assert TestObject.getOption('option') == 'set'
 
 #########################
 ### exposed functions ###
@@ -292,8 +310,6 @@ class AlwaysWarnInterface(UniversalInterface):
         return self._getDefaultValues(name)
 
     def learnerType(self, name):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
         pass
 
     def _getScores(self, learner, testX, arguments, customDict):
@@ -537,31 +553,6 @@ def test_warningscapture_getLearnerDefaultValues():
         AWObject.getLearnerDefaultValues('foo')
 
     backend_warningscapture(wrapped)
-
-def test_warningscapture_accessible():
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.accessible()
-
-def test_warningscapture_getCanonicalName():
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.getCanonicalName()
-
-def test_warningscapture_learnerType():
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.learnerType()
-
-def test_warningscapture_isAlias():
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.isAlias('ALWAYSWARN')
-
-def test_warningscapture_version():
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.version()
 
 # import each test suite
 

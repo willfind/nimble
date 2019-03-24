@@ -278,9 +278,20 @@ def test_settings_autoRegister_safety():
 @configSafetyWrapper
 @noLogEntryExpected
 def test_logCount():
+    saved = copy.copy(UML.interfaces.available)
+
     UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     lst = UML.listLearners("Foo")
     params = UML.learnerParameters("Foo.LoveAtFirstSightClassifier")
     defaults = UML.learnerDefaultValues("Foo.LoveAtFirstSightClassifier")
     lType = UML.learnerType("Foo.LoveAtFirstSightClassifier")
     UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+
+    UML.registerCustomLearnerAsDefault("Bar", UncallableLearner)
+    lst = UML.listLearners("Bar")
+    params = UML.learnerParameters("Bar.UncallableLearner")
+    defaults = UML.learnerDefaultValues("Bar.UncallableLearner")
+    lType = UML.learnerType("Bar.UncallableLearner")
+    UML.deregisterCustomLearnerAsDefault("Bar", 'UncallableLearner')
+
+    assert saved == UML.interfaces.available

@@ -53,9 +53,10 @@ uml_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 uml_notLogged = [
-    'deregisterCustomLearner', 'identity', 'importModule', 'listLearners',
-    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'ones',
-    'registerCustomLearner', 'showLog', 'zeros',
+    'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault', 'identity',
+    'importModule', 'listLearners', 'learnerParameters',
+    'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
+    'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
@@ -105,12 +106,11 @@ base_logged = [
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copyAs', 'featureView', 'save', 'getTypeString',
-    'hashCode', 'inverse', 'isApproximatelyEqual', 'isIdentical',
-    'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
-    'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
-    'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
-    'toString', 'validate', 'view', 'writeFile',
+    'containsZero', 'copyAs', 'featureView', 'getTypeString', 'hashCode',
+    'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
+    'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
+    'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',
+    'show', 'solveLinearSystem', 'toString', 'validate', 'view', 'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -153,8 +153,8 @@ ui_logged = [
     ]
 ui_notLogged = [
     'accessible', 'findCallable', 'getCanonicalName',
-    'getLearnerDefaultValues', 'getLearnerParameterNames', 'isAlias',
-    'learnerType', 'listLearners', 'version',
+    'getLearnerDefaultValues', 'getLearnerParameterNames', 'getOption',
+    'isAlias', 'learnerType', 'listLearners', 'setOption', 'version',
 ]
 ui_funcs = ui_logged + ui_notLogged
 ui_tested = list(map(prefixAdder('UniversalInterface'), ui_funcs))
@@ -163,7 +163,7 @@ tl_logged = [
     'apply', 'incrementalTrain', 'retrain', 'test',
     ]
 tl_notLogged = [
-    'save', 'getAttributes', 'getScores',
+    'getAttributes', 'getScores', 'save',
     ]
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
