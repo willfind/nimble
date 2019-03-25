@@ -2716,7 +2716,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
 
         if not len(X.points) == len(Y.points):
             #todo support indexing if Y is an index for X instead
-            msg += "X and Y must contain the same number of points"
+            msg = "X and Y must contain the same number of points"
             raise InvalidArgumentValueCombination(msg)
 
     if folds == 0:
@@ -3536,7 +3536,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         raise InvalidArgumentType("testX must be provided")
     if testX is not None:
         if not isinstance(testX, Base):
-            msg += "testX may only be an object derived from Base"
+            msg = "testX may only be an object derived from Base"
             raise InvalidArgumentType(msg)
 
     if testRequired[1] and testY is None:

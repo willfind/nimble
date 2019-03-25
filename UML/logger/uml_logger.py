@@ -27,13 +27,14 @@ import sqlite3
 from ast import literal_eval
 from textwrap import wrap
 from functools import wraps
-from dateutil.parser import parse
+import datetime
 
 import six
 from six import reraise
 import numpy
 
 import UML
+from UML.exceptions import InvalidArgumentValue
 from .stopwatch import Stopwatch
 
 class UmlLogger(object):
@@ -531,6 +532,60 @@ def enableLogging(useLog):
         useLog = useLog.lower() == 'true'
     return useLog
 
+def stringToDatetime(string):
+    """
+    Convert a string into a datetime object.
+
+    The format must be YYYY-MM-DD', 'YYYY-MM-DD HH:MM', or
+    'YYYY-MM-DD HH:MM:SS'. Therefore, only 3 valid string lengths are
+    possible. Any string not that length will fail the first assertion.
+    Otherwise, the string will be parsed storing the locations of valid
+    values as arguments to pass to datetime.datetime. The remaining
+    three assertions will fail if the dividers are invalid. To create
+    the object, integer arguments are required. A ValueError is raised
+    if any value cannot be converted to an integer. Last, an attempt to
+    create the datetime.datetime object is made, if it deems a value to
+    be invalid (i.e a date that doesn't exist) this will also raise a
+    ValueError.
+    """
+    string = string.strip()
+
+    datetimeArgs = []
+    dateDividers = []
+    dateTimeDivider = None
+    timeDividers = []
+
+    if len(string) in [10, 16, 19]:
+        datetimeArgs.append(string[:4])
+        dateDividers.append(string[4])
+        datetimeArgs.append(string[5:7])
+        dateDividers.append(string[7])
+        datetimeArgs.append(string[8:10])
+        if len(string) > 10:
+            dateTimeDivider = string[10]
+            datetimeArgs.append(string[11:13])
+            timeDividers.append(string[13])
+            datetimeArgs.append(string[14:16])
+        if len(string) > 16:
+            timeDividers.append(string[16])
+            datetimeArgs.append(string[17:])
+
+    try:
+        assert len(datetimeArgs)
+        assert all(div == "-" for div in dateDividers)
+        if dateTimeDivider is not None:
+            assert dateTimeDivider == " "
+        if timeDividers:
+            assert all(div == ":" for div in timeDividers)
+        datetimeArgs = list(map(int, datetimeArgs))
+
+        return datetime.datetime(*datetimeArgs)
+
+    except (AssertionError, ValueError):
+        msg = "Invalid datetime format. The accepted formats are: "
+        msg += "'YYYY-MM-DD', 'YYYY-MM-DD HH:MM', or 'YYYY-MM-DD HH:MM:SS'"
+        raise InvalidArgumentValue(msg)
+
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                            endDate, maximumEntries, searchForText, regex):
     """
@@ -555,22 +610,20 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
         includedValues.append(mostRunsAgo)
     if startDate is not None:
         whereQueryList.append("timestamp >= ?")
-        includedValues.append(parse(startDate))
+        includedValues.append(stringToDatetime(startDate))
     if endDate is not None:
         whereQueryList.append("timestamp <= ?")
-        includedValues.append(parse(endDate))
+        includedValues.append(stringToDatetime(endDate))
     if searchForText is not None:
         # convert to regex and get pattern
         if regex:
             searchForText = re.compile(searchForText).pattern
             whereQueryList.append("(logType REGEXP ? or logInfo REGEXP ?)")
-            includedValues.append(searchForText)
-            includedValues.append(searchForText)
         else:
             searchForText = "%" + searchForText + "%"
             whereQueryList.append("(logType LIKE ? or logInfo LIKE ?)")
-            includedValues.append(searchForText)
-            includedValues.append(searchForText)
+        includedValues.append(searchForText)
+        includedValues.append(searchForText)
 
     if whereQueryList != []:
         whereQuery = " and ".join(whereQueryList)
