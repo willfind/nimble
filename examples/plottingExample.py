@@ -21,7 +21,6 @@ if __name__ == "__main__":
     givenOutDir = None
     if len(sys.argv) > 1:
         givenOutDir = sys.argv[1]
-        print(givenOutDir)
 
     rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
     objNorm = UML.createData("Matrix", rawNorm, featureNames=["N(0,1)"])

@@ -4,6 +4,7 @@ files. Uses a portion of the UCI ML repository census income data set (aka Adult
 
 """
 
+import sys
 import os.path
 import UML
 from UML import createData
@@ -13,10 +14,18 @@ if __name__ == "__main__":
 
     # string manipulation to get and make paths
     projectRoot = os.path.dirname(UML.UMLPath)
-    pathOrig = os.path.join(projectRoot, "datasets", "adult_income_classification_tiny.csv")
-    pathSplit = pathOrig.rsplit('.')
-    pathTrain = pathSplit[0] + "TRAIN" + ".csv"
-    pathTest = pathSplit[0] + "TEST" + ".csv"
+    inFileName = "adult_income_classification_tiny.csv"
+    nameSplit = inFileName.rsplit('.')
+
+    # if a directory is given, we will output the split data to that location.
+    if len(sys.argv) > 1:
+        outDir = sys.argv[1]
+    else:
+        outDir = os.path.join(projectRoot, "datasets")
+
+    pathOrig = os.path.join(projectRoot, "datasets", inFileName)
+    pathTrain = os.path.join(outDir, nameSplit[0] + "TRAIN" + ".csv")
+    pathTest = os.path.join(outDir, nameSplit[0] + "TEST" + ".csv")
 
     # we specify that we want a Matrix object returned, and that we want the first row to
     # taken as the featureNames. Given the .csv extension on the path it will infer the

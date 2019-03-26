@@ -6,6 +6,7 @@ scripts contained in the examples folder.
 
 import os
 import subprocess
+import tempfile
 
 def test_callAllAsMain():
     """
@@ -23,7 +24,12 @@ def test_callAllAsMain():
     results = {}
     for script in cleaned:
         scriptLoc = os.path.join(examplesDir, script)
-        cmd = ("python", scriptLoc)
+        # Provide a dummy output directory argument. For the plotting example,
+        # this will write the files into the temp dir instead of generating
+        # plots on the screen.
+        tempOutDir = tempfile.mkdtemp()
+
+        cmd = ("python", scriptLoc, tempOutDir)
         spP = subprocess.PIPE
 
         # We want these scripts to run with the local copy of UML, so we need
@@ -34,8 +40,7 @@ def test_callAllAsMain():
         # PYTHONPATH
         env = os.environ
         env['PYTHONPATH'] = os.getcwd()
-#        cp = subprocess.run(cmd, stdout=spP, stderr=spP, cwd=os.getcwd(), env=env)
-        cp = subprocess.run(cmd, cwd=os.getcwd(), env=env)
+        cp = subprocess.run(cmd, stdout=spP, stderr=spP, cwd=os.getcwd(), env=env)
         results[script] = cp
 
     print("")
