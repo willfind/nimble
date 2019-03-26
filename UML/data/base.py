@@ -546,14 +546,16 @@ class Base(object):
             if 0 in uniqueVals:
                 mapping[0] = 0
                 integerValue = 1
-                del uniqueVals[0]
-            for val in uniqueVals:
-                mapping[val] = integerValue
-                integerValue += 1
 
             mapped = []
             for val in ft:
-                mapped.append(mapping[val])
+                if val in mapping:
+                    mapped.append(mapping[val])
+                else:
+                    mapped.append(integerValue)
+                    mapping[val] = integerValue
+                    integerValue += 1
+
             return mapped
 
         self.features.transform(applyMap, features=ftIndex)
