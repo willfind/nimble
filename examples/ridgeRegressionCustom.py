@@ -4,9 +4,6 @@ out-of-the-box, custom learner.
 
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import UML
 from UML.calculate import rootMeanSquareError as RMSE
 from UML.randomness import numpyRandom
