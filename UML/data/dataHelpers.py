@@ -553,7 +553,11 @@ def constructIndicesList(obj, axis, values, argName=None):
     valuesList = valuesToPythonList(values, argName)
     try:
         axisObj = obj._getAxis(axis)
-        indicesList = [axisObj.getIndex(val) for val in valuesList]
+        axisLen = len(axisObj)
+        # faster to bypass getIndex if value is already a valid index
+        indicesList = [v if (isinstance(v, (int, numpy.integer))
+                             and 0 <= v < axisLen)
+                       else axisObj.getIndex(v) for v in valuesList]
     except InvalidArgumentValue as iav:
         msg = "Invalid value for the argument '{0}'. ".format(argName)
         # add more detail to msg; slicing to exclude quotes

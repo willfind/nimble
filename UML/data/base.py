@@ -866,39 +866,43 @@ class Base(object):
             return wrapped(testFraction, labels, randomOrder,
                            useLog=False)
 
-        toSplit = self.copy()
+        # toSplit = self.copy()
+        # if randomOrder:
+        #     toSplit.points.shuffle()
+        order = [i for i in range(len(self.points))]
         if randomOrder:
-            toSplit.points.shuffle()
+            order = numpy.random.permutation(order)
 
         testXSize = int(round(testFraction * self._pointCount))
         startIndex = self._pointCount - testXSize
 
         #pull out a testing set
-        if testXSize == 0:
-            testX = toSplit.points.extract([])
-        else:
-            testX = toSplit.points.extract(start=startIndex)
+        # if testXSize == 0:
+        #     testX = toSplit.points.extract([])
+        # else:
+        #     testX = toSplit.points.extract(start=startIndex)
+        trainX = self.points.copy(order[:startIndex])
+        testX = self.points.copy(order[startIndex:])
+
+
+        trainX.name = self.name + " trainX"
+        testX.name = self.name + " testX"
 
         if labels is None:
-            toSplit.name = self.name + " trainX"
-            testX.name = self.name + " testX"
-
-            return toSplit, testX
+            return trainX, testX
 
         # safety for empty objects
         toExtract = labels
         if testXSize == 0:
             toExtract = []
 
-        trainY = toSplit.features.extract(toExtract)
+        trainY = trainX.features.extract(toExtract)
         testY = testX.features.extract(toExtract)
 
-        toSplit.name = self.name + " trainX"
         trainY.name = self.name + " trainY"
-        testX.name = self.name + " testX"
         testY.name = self.name + " testY"
 
-        return toSplit, trainY, testX, testY
+        return trainX, trainY, testX, testY
 
     ########################################
     ########################################
@@ -1096,12 +1100,12 @@ class Base(object):
                 msg += str(length - 1) + ")."
                 raise IndexError(msg)
             if x >= 0:
-                return x, True
+                return x
             else:
-                return x + length, True
+                return x + length
 
         if x.__class__ is str or x.__class__ is six.text_type:
-            return self.points.getIndex(x), True
+            return self.points.getIndex(x)
 
         if x.__class__ is float:
             if x % 1: # x!=int(x)
@@ -1117,11 +1121,9 @@ class Base(object):
                     msg += str(length - 1) + ")."
                     raise IndexError(msg)
                 if x >= 0:
-                    return x, True
+                    return x
                 else:
-                    return x + length, True
-
-        return x, False
+                    return x + length
 
     def _processSingleY(self, y):
         """
@@ -1135,12 +1137,12 @@ class Base(object):
                 msg += str(length - 1) + ")."
                 raise IndexError(msg)
             if y >= 0:
-                return y, True
+                return y
             else:
-                return y + length, True
+                return y + length
 
         if y.__class__ is str or y.__class__ is six.text_type:
-            return self.features.getIndex(y), True
+            return self.features.getIndex(y)
 
         if y.__class__ is float:
             if y % 1: # y!=int(y)
@@ -1156,11 +1158,9 @@ class Base(object):
                     msg += str(length - 1) + ")."
                     raise IndexError(msg)
                 if y >= 0:
-                    return y, True
+                    return y
                 else:
-                    return y + length, True
-
-        return y, False
+                    return y + length
 
     def __getitem__(self, key):
         """
@@ -1307,9 +1307,15 @@ class Base(object):
                 raise InvalidArgumentValue(msg)
 
         #process x
-        x, singleX = self._processSingleX(x)
+        singleX = False
+        if isinstance(x, (int, float, str, numpy.integer)):
+            x = self._processSingleX(x)
+            singleX = True
         #process y
-        y, singleY = self._processSingleY(y)
+        singleY = False
+        if isinstance(y, (int, float, str, numpy.integer)):
+            y = self._processSingleY(y)
+            singleY = True
         #if it is the simplest data retrieval such as X[1,2],
         # we'd like to return it back in the fastest way.
         if singleX and singleY:
@@ -1320,42 +1326,37 @@ class Base(object):
                 start = x.start if x.start is not None else 0
                 stop = x.stop if x.stop is not None else self._pointCount - 1
                 step = x.step if x.step is not None else 1
+                # getIndex assures start/stop will be valid positive integers
                 start = self.points.getIndex(start)
                 stop = self.points.getIndex(stop)
-                if start < 0:
-                    start += self._pointCount
-                if stop < 0:
-                    stop += self._pointCount
                 # using builtin range below so need to adjust stop
                 if step > 0:
                     stop += 1
                 else:
                     stop -= 1
-                x = [self._processSingleX(xi)[0] for xi
-                     in range(start, stop, step)]
-            else:
-                x = [self._processSingleX(xi)[0] for xi in x]
+                x = [xi for xi in range(start, stop, step)]
+            # else:
+            #     x = [self._processSingleX(xi) for xi in x]
 
         if not singleY:
             if y.__class__ is slice:
                 start = y.start if y.start is not None else 0
                 stop = y.stop if y.stop is not None else self._featureCount - 1
                 step = y.step if y.step is not None else 1
+                # getIndex assures start/stop will be valid positive integers
                 start = self.features.getIndex(start)
                 stop = self.features.getIndex(stop)
-                if start < 0:
-                    start += self._featureCount
-                if stop < 0:
-                    stop += self._featureCount
                 # using builtin range below so need to adjust stop
                 if step > 0:
                     stop += 1
                 else:
                     stop -= 1
-                y = [self._processSingleY(yi)[0] for yi
-                     in range(start, stop, step)]
-            else:
-                y = [self._processSingleY(yi)[0] for yi in y]
+                y = [yi for yi in range(start, stop, step)]
+            # else:
+            #     y = [self._processSingleY(yi) for yi in y]
+
+        # validation of x and y values will be performed by it's call to
+        # constructIndicesList in our copy functions
         ret = self.points.copy(toCopy=x, useLog=False)
         ret = ret.features.copy(toCopy=y, useLog=False)
         return ret
