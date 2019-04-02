@@ -867,7 +867,7 @@ class Base(object):
             return wrapped(testFraction, labels, randomOrder,
                            useLog=False)
 
-        order = [i for i in range(len(self.points))]
+        order = list(range(len(self.points)))
         if randomOrder:
             numpyRandom.shuffle(order)
 
@@ -1323,7 +1323,7 @@ class Base(object):
 
             start = self._processSingleX(start)
             stop = self._processSingleX(stop)
-            # using builtin range below so need to adjust stop
+            # our stop is inclusive need to adjust for builtin range below
             if step > 0:
                 stop += 1
             else:
@@ -1340,7 +1340,7 @@ class Base(object):
 
             start = self._processSingleY(start)
             stop = self._processSingleY(stop)
-            # using builtin range below so need to adjust stop
+            # our stop is inclusive need to adjust for builtin range below
             if step > 0:
                 stop += 1
             else:
@@ -1349,8 +1349,7 @@ class Base(object):
         else:
             y = [self._processSingleY(yi) for yi in y]
 
-        # validation of x and y values will be performed by it's call to
-        # constructIndicesList in our copy functions
+        # use backend directly since values have already been validated
         ret = self.points._structuralBackend_implementation('copy', x)
         ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
