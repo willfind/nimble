@@ -54,7 +54,7 @@ class MatrixAxis(Axis):
                                              targetList, axisVal)
 
         return UML.data.Matrix(ret, pointNames=pointNames,
-                               featureNames=featureNames)
+                               featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
         if isinstance(sortHelper, list):

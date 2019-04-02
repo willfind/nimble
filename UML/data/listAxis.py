@@ -53,7 +53,7 @@ class ListAxis(Axis):
                 return UML.data.List(satisfying, pointNames=pointNames,
                                      featureNames=featureNames,
                                      shape=((0, self._source.shape[1])),
-                                     checkAll=False)
+                                     checkAll=False, reuseData=True)
 
         else:
             if self._source.data == []:
@@ -73,7 +73,7 @@ class ListAxis(Axis):
 
         return UML.data.List(satisfying, pointNames=pointNames,
                              featureNames=featureNames,
-                             checkAll=False)
+                             checkAll=False, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
         if isinstance(sortHelper, list):

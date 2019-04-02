@@ -83,8 +83,8 @@ class DataFrameAxis(Axis):
         else:
             df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
-        return UML.data.DataFrame(numpy.matrix(ret), pointNames=pointNames,
-                                  featureNames=featureNames)
+        return UML.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
+                                  featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, sortBy, sortHelper):
         if isinstance(sortHelper, list):

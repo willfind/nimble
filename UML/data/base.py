@@ -31,6 +31,7 @@ from UML.exceptions import InvalidArgumentValueCombination
 from UML.logger import enableLogging, directCall
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
+from UML.randomness import numpyRandom
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -866,24 +867,16 @@ class Base(object):
             return wrapped(testFraction, labels, randomOrder,
                            useLog=False)
 
-        # toSplit = self.copy()
-        # if randomOrder:
-        #     toSplit.points.shuffle()
         order = [i for i in range(len(self.points))]
         if randomOrder:
-            order = numpy.random.permutation(order)
+            numpyRandom.shuffle(order)
 
         testXSize = int(round(testFraction * self._pointCount))
-        startIndex = self._pointCount - testXSize
+        splitIndex = self._pointCount - testXSize
 
         #pull out a testing set
-        # if testXSize == 0:
-        #     testX = toSplit.points.extract([])
-        # else:
-        #     testX = toSplit.points.extract(start=startIndex)
-        trainX = self.points.copy(order[:startIndex])
-        testX = self.points.copy(order[startIndex:])
-
+        trainX = self.points.copy(order[:splitIndex], useLog=False)
+        testX = self.points.copy(order[splitIndex:], useLog=False)
 
         trainX.name = self.name + " trainX"
         testX.name = self.name + " testX"
@@ -896,8 +889,8 @@ class Base(object):
         if testXSize == 0:
             toExtract = []
 
-        trainY = trainX.features.extract(toExtract)
-        testY = testX.features.extract(toExtract)
+        trainY = trainX.features.extract(toExtract, useLog=False)
+        testY = testX.features.extract(toExtract, useLog=False)
 
         trainY.name = self.name + " trainY"
         testY.name = self.name + " testY"
