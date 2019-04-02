@@ -125,14 +125,6 @@ class Axis(object):
             msg += "this object has 0 " + self._axis + "s"
             raise ImproperObjectAction(msg)
         elif isinstance(identifier, (int, numpy.integer)):
-        # elif isinstance(identifier, (int, float, numpy.number)):
-            # if not isinstance(identifier, (int, numpy.integer)):
-            #     if identifier % 1:
-            #         msg = "A float valued index is only accepted if index == "
-            #         msg += "int(index) but this index provided was "
-            #         msg += str(identifier)
-            #     else:
-            #         identifier = int(identifier)
             if identifier < 0:
                 identifier = num + identifier
             if identifier < 0 or identifier >= num:
@@ -1101,7 +1093,8 @@ class Axis(object):
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
             argName = 'to' + structure.capitalize()
-            targetList = constructIndicesList(self._source, axis, target, argName)
+            targetList = constructIndicesList(self._source, axis, target,
+                                              argName)
         # boolean function
         elif target is not None:
             # construct list from function

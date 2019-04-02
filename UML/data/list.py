@@ -101,7 +101,7 @@ class List(Base):
                 # list y=[[1,2,3], [1,2,3]]
                 # the difference is that x[0] is x[1], but y[0] is not y[1]
                 # Both list and FeatureViewer have a copy method.
-                data = [i.copy() for i in data]
+                data = [pt.copy() for pt in data]
 
         if isinstance(data, numpy.matrix):
             #case5: data is a numpy matrix. shape is already in np matrix

@@ -1320,45 +1320,46 @@ class Base(object):
         # we'd like to return it back in the fastest way.
         if singleX and singleY:
             return self._getitem_implementation(x, y)
+        # if not convert x and y to lists of indices
+        if singleX:
+            x = [x]
+        elif x.__class__ is slice:
+            start = x.start if x.start is not None else 0
+            stop = x.stop if x.stop is not None else self._pointCount - 1
+            step = x.step if x.step is not None else 1
 
-        if not singleX:
-            if x.__class__ is slice:
-                start = x.start if x.start is not None else 0
-                stop = x.stop if x.stop is not None else self._pointCount - 1
-                step = x.step if x.step is not None else 1
-                # getIndex assures start/stop will be valid positive integers
-                start = self.points.getIndex(start)
-                stop = self.points.getIndex(stop)
-                # using builtin range below so need to adjust stop
-                if step > 0:
-                    stop += 1
-                else:
-                    stop -= 1
-                x = [xi for xi in range(start, stop, step)]
-            # else:
-            #     x = [self._processSingleX(xi) for xi in x]
+            start = self._processSingleX(start)
+            stop = self._processSingleX(stop)
+            # using builtin range below so need to adjust stop
+            if step > 0:
+                stop += 1
+            else:
+                stop -= 1
+            x = [xi for xi in range(start, stop, step)]
+        else:
+            x = [self._processSingleX(xi) for xi in x]
+        if singleY:
+            y = [y]
+        elif y.__class__ is slice:
+            start = y.start if y.start is not None else 0
+            stop = y.stop if y.stop is not None else self._featureCount - 1
+            step = y.step if y.step is not None else 1
 
-        if not singleY:
-            if y.__class__ is slice:
-                start = y.start if y.start is not None else 0
-                stop = y.stop if y.stop is not None else self._featureCount - 1
-                step = y.step if y.step is not None else 1
-                # getIndex assures start/stop will be valid positive integers
-                start = self.features.getIndex(start)
-                stop = self.features.getIndex(stop)
-                # using builtin range below so need to adjust stop
-                if step > 0:
-                    stop += 1
-                else:
-                    stop -= 1
-                y = [yi for yi in range(start, stop, step)]
-            # else:
-            #     y = [self._processSingleY(yi) for yi in y]
+            start = self._processSingleY(start)
+            stop = self._processSingleY(stop)
+            # using builtin range below so need to adjust stop
+            if step > 0:
+                stop += 1
+            else:
+                stop -= 1
+            y = [yi for yi in range(start, stop, step)]
+        else:
+            y = [self._processSingleY(yi) for yi in y]
 
         # validation of x and y values will be performed by it's call to
         # constructIndicesList in our copy functions
-        ret = self.points.copy(toCopy=x, useLog=False)
-        ret = ret.features.copy(toCopy=y, useLog=False)
+        ret = self.points._structuralBackend_implementation('copy', x)
+        ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
 
     def pointView(self, ID):
