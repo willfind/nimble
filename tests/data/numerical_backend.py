@@ -29,6 +29,7 @@ from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
 
 from .baseObject import DataTestObject
+from ..assertionHelpers import assertNoNamesGenerated
 
 
 preserveName = "PreserveTestName"
@@ -540,6 +541,12 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
         else:
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
+        assertNoNamesGenerated(lhsfObj)
+        assertNoNamesGenerated(lhsiObj)
+        assertNoNamesGenerated(rhsfObj)
+        assertNoNamesGenerated(rhsiObj)
+        assertNoNamesGenerated(resfObj)
+        assertNoNamesGenerated(resiObj)
 
 
 def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
@@ -574,6 +581,10 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
         else:
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
+        assertNoNamesGenerated(lhsfObj)
+        assertNoNamesGenerated(lhsiObj)
+        assertNoNamesGenerated(resfObj)
+        assertNoNamesGenerated(resiObj)
 
 
 def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, sparsity):
@@ -591,7 +602,6 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
         resulti = npOp(lhsi, rhsi)
         resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
         resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
-
         expfObj = constructor(resultf)
         expiObj = constructor(resulti)
 
@@ -607,6 +617,12 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
             if type(resiObj) != type(lhsiObj):
                 assert isinstance(resiObj, UML.data.Base)
 
+        assertNoNamesGenerated(lhsfObj)
+        assertNoNamesGenerated(lhsiObj)
+        assertNoNamesGenerated(rhsfObj)
+        assertNoNamesGenerated(rhsiObj)
+        assertNoNamesGenerated(resfObj)
+        assertNoNamesGenerated(resiObj)
 
 def wrapAndCall(toWrap, expected, *args):
     try:
@@ -1216,6 +1232,19 @@ class NumericalModifying(DataTestObject):
 
             assert exp1Obj.isIdentical(caller)
 
+    def test_elements_power_lazyNameGeneration(self):
+        """ Test elements.power on handmade data """
+        data = [[1.0, 2], [4, 5], [7, 4]]
+        exponents = [[0, -1], [-.5, 2], [2, .5]]
+        exp1 = [[1, .5], [.5, 25], [49, 2]]
+
+        for retType in UML.data.available:
+            caller = self.constructor(data)
+            exponentsObj = UML.createData(retType, exponents)
+            caller.elements.power(exponentsObj)
+
+            assertNoNamesGenerated(caller)
+
     def test_elements_power_handmadeScalar(self):
         """ Test elements.power on handmade data with scalar parameter"""
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1289,6 +1318,7 @@ class NumericalModifying(DataTestObject):
         exp1Obj = self.constructor(exp1)
 
         assert exp1Obj.isIdentical(caller)
+        assertNoNamesGenerated(caller)
 
         halvesObj = self.constructor(halves)
         caller.elements.multiply(halvesObj)
@@ -1296,6 +1326,7 @@ class NumericalModifying(DataTestObject):
         exp2Obj = self.constructor(data)
 
         assert caller.isIdentical(exp2Obj)
+        assertNoNamesGenerated(caller)
 
     def test_elements_multiply_handmadeDifInputs(self):
         """ Test elements.multiply on handmade data with different input object types"""
@@ -1312,6 +1343,7 @@ class NumericalModifying(DataTestObject):
             exp1Obj = self.constructor(exp1)
 
             assert exp1Obj.isIdentical(caller)
+            assertNoNamesGenerated(caller)
 
             halvesObj = UML.createData(retType, halves)
             caller.elements.multiply(halvesObj)
@@ -1319,6 +1351,7 @@ class NumericalModifying(DataTestObject):
             exp2Obj = self.constructor(data)
 
             assert caller.isIdentical(exp2Obj)
+            assertNoNamesGenerated(caller)
 
     def test_elementwiseMultipy_auto(self):
         """ Test elements.multiply on generated data against the numpy op """

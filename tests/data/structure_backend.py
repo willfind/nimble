@@ -45,6 +45,7 @@ from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
+from ..assertionHelpers import assertNoNamesGenerated
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
@@ -238,7 +239,8 @@ class StructureDataSafe(StructureShared):
         assert listOfDict == []
 
         dictOfList = orig.copyAs(format='dict of list')
-        assert dictOfList == {'_DEFAULT_#0': [], '_DEFAULT_#1': []}
+        assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
+        assert all(val == [] for val in dictOfList.values())
 
 
     def test_copy_Fempty(self):
@@ -614,13 +616,9 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-        # View objects utilize point and feature names, so we ignore this check
-        if not isinstance(toTest, BaseView):
-            # Check that names have not been generated unnecessarily
-            assert not toTest.points._namesCreated()
-            assert not toTest.features._namesCreated()
-            assert not copy1.points._namesCreated()
-            assert not copy1.features._namesCreated()
+        # Check that names have not been generated unnecessarily
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(copy1)
 
     def test_points_copy_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1386,13 +1384,9 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-        # View objects utilize point and feature names, so we ignore this check
-        if not isinstance(toTest, BaseView):
-            # Check that names have not been generated unnecessarily
-            assert not toTest.points._namesCreated()
-            assert not toTest.features._namesCreated()
-            assert not copy1.points._namesCreated()
-            assert not copy1.features._namesCreated()
+        # Check that names have not been generated unnecessarily
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(copy1)
 
     def test_features_copy_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2368,6 +2362,8 @@ class StructureModifying(StructureShared):
         dataObjT.transpose()
         assert dataObj1.isIdentical(dataObj2)
         assert dataObj2.isIdentical(dataObjT)
+        assertNoNamesGenerated(dataObj1)
+        assertNoNamesGenerated(dataObj2)
 
     def test_transpose_handmadeWithZeros(self):
         """ Test transpose() function against handmade output """
@@ -3000,6 +2996,30 @@ class StructureModifying(StructureShared):
     def test_addFeatures_noReorderAddedHasDefaultNames(self):
         self.backend_add_noReorderAddedHasDefaultNames('feature')
 
+    def backend_add_lazyNameGeneration(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            toTest.points.add(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            toTest.features.add(toInsert)
+
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(toInsert)
+
+    def test_addPoints_lazyNameGeneration(self):
+        self.backend_add_lazyNameGeneration('point')
+
+    def test_addFeatures_lazyNameGeneration(self):
+        self.backend_add_lazyNameGeneration('feature')
+
     def backend_add_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
@@ -3125,6 +3145,7 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
@@ -3148,6 +3169,7 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_dataTypeRetainedFromList(self):
         """ Test points.sort() data not converted when sorting by list"""
@@ -3160,6 +3182,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData)
 
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_indicesList(self):
         """ Test points.sort() when we specify a list of indices """
@@ -3319,7 +3342,7 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
-
+        assertNoNamesGenerated(toTest)
 
     def test_features_sort_dataTypeRetainedFromList(self):
         """ Test features.sort() data not converted when sorting by list"""
@@ -3332,6 +3355,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData)
 
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_features_sort_indicesList(self):
         """ Test features.sort() when we specify a list of indices """
@@ -3421,10 +3445,8 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
-        assert not ext1.points._namesCreated()
-        assert not ext1.features._namesCreated()
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ext1)
 
     def test_points_extract_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4207,10 +4229,8 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
-        assert not ext1.points._namesCreated()
-        assert not ext1.features._namesCreated()
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ext1)
 
     def test_features_extract_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4879,8 +4899,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_points_delete_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5520,8 +5539,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_features_delete_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6067,8 +6085,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp1)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_points_retain_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6753,8 +6770,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp1)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_features_retain_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -7299,6 +7315,18 @@ class StructureModifying(StructureShared):
         assert '1' in orig.features.getNames()
         assert ret is None
 
+    def test_referenceDataFrom_lazyNameGeneration(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        orig = self.constructor(data1)
+
+        data2 = [[-1, -2, -3, -4]]
+        other = self.constructor(data2)
+
+        orig.referenceDataFrom(other)
+
+        assertNoNamesGenerated(orig)
+        assertNoNamesGenerated(other)
+
     def test_referenceDataFrom_ObjName_Paths(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -7458,6 +7486,18 @@ class StructureModifying(StructureShared):
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
 
+    def test_points_transform_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitAllDeci(point):
+            value = point[1]
+            return [value, value, value]
+
+        lowerCounts = origObj.points.transform(emitAllDeci)  # RET CHECK
+
+        assertNoNamesGenerated(origObj)
+
     def test_points_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7583,6 +7623,20 @@ class StructureModifying(StructureShared):
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
 
+    def test_features_transform_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitAllEqual(feature):
+            first = feature[0]
+            for value in feature:
+                if value != first:
+                    return [0, 0, 0, 0]
+            return [1, 1, 1, 1]
+
+        lowerCounts = origObj.features.transform(emitAllEqual)  # RET CHECK
+
+        assertNoNamesGenerated(origObj)
 
     def test_features_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -7682,6 +7736,7 @@ class StructureModifying(StructureShared):
         assert [1, 2, 3] in retRaw
         assert [4, 5, 6] in retRaw
         assert [7, 8, 9] in retRaw
+        assertNoNamesGenerated(toTest)
 
 
     def test_elements_transform_NamePath_preservation(self):
@@ -8020,6 +8075,7 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
         assert toTest != arg
+        assertNoNamesGenerated(toTest)
 
 
     def test_fillWith_vectorFill(self):

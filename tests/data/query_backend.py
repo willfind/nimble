@@ -34,6 +34,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
+from ..assertionHelpers import assertNoNamesGenerated
 
 
 preserveName = "PreserveTestName"
@@ -88,6 +89,8 @@ class QueryBackend(DataTestObject):
 
         assert rPoints == 1
         assert cPoints == 3
+        assertNoNamesGenerated(toTestR)
+        assertNoNamesGenerated(toTestC)
 
 
     #################
@@ -121,6 +124,8 @@ class QueryBackend(DataTestObject):
 
         assert rFeatures == 3
         assert cFeatures == 1
+        assertNoNamesGenerated(toTestR)
+        assertNoNamesGenerated(toTestC)
 
 
     #################
@@ -133,6 +138,7 @@ class QueryBackend(DataTestObject):
         assert not toTest.isIdentical(self.constructor([[1, 1], [2, 2]]))
         assert not toTest.isIdentical(self.constructor([[1, 2, 3]]))
         assert not toTest.isIdentical(self.constructor([[1, 2]]))
+        assertNoNamesGenerated(toTest)
 
     def test_isIdentical_FalseBozoTypes(self):
         """ Test isIdentical() against some non-equal input of crazy types """
@@ -140,6 +146,7 @@ class QueryBackend(DataTestObject):
         assert not toTest.isIdentical(numpy.matrix([[1, 1], [2, 2]]))
         assert not toTest.isIdentical('self.constructor([[1,2,3]])')
         assert not toTest.isIdentical(toTest.isIdentical)
+        assertNoNamesGenerated(toTest)
 
     def test_isIdentical_True(self):
         """ Test isIdentical() against some actually equal input """
@@ -147,6 +154,8 @@ class QueryBackend(DataTestObject):
         toTest2 = self.constructor(deepcopy([[4, 5]]))
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
     def test_isIdentical_FalseWithNaN(self):
         """ Test isIdentical() against some non-equal input with nan"""
@@ -154,6 +163,8 @@ class QueryBackend(DataTestObject):
         toTest2 = self.constructor(deepcopy([[1, numpy.nan, 3]]))
         assert not toTest1.isIdentical(toTest2)
         assert not toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
     def test_isIdentical_TrueWithNaN(self):
         """ Test isIdentical() against some actually equal input with nan """
@@ -161,6 +172,8 @@ class QueryBackend(DataTestObject):
         toTest2 = self.constructor(deepcopy([[1, numpy.nan, 5]]))
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
 
     ############
@@ -188,6 +201,18 @@ class QueryBackend(DataTestObject):
         assert toWrite.isIdentical(readObj)
 
         assert toWrite == orig
+
+    def test_writeFile_CSVhandmade_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
+
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, format='csv', includeNames=False)
+
+        assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSVauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
@@ -287,6 +312,18 @@ class QueryBackend(DataTestObject):
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
 
+    def test_writeFile_MTXhandmade_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
+
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=False)
+
+        assertNoNamesGenerated(toWrite)
+
     def test_writeFile_MTXauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its MTX output """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
@@ -327,6 +364,16 @@ class QueryBackend(DataTestObject):
         LoadObj = loadData(tmpFile.name)
         assert toSave.isIdentical(LoadObj)
         assert LoadObj.isIdentical(toSave)
+
+    def test_save_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toSave = self.constructor(data)
+
+        toSave.save(tmpFile.name)
+
+        assertNoNamesGenerated(toSave)
 
     def test_save_extensionHandling(self):
         tmpFile = tempfile.NamedTemporaryFile()
@@ -727,6 +774,9 @@ class QueryBackend(DataTestObject):
         assert dAll.containsZero() is True
         assert dSome.containsZero() is True
         assert dNone.containsZero() is False
+        assertNoNamesGenerated(dAll)
+        assertNoNamesGenerated(dSome)
+        assertNoNamesGenerated(dNone)
 
     ##########
     # __eq__ #
@@ -1843,7 +1893,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -1858,6 +1908,7 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     ###########################
     # plotFeatureDistribution #
@@ -1865,7 +1916,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -1880,6 +1931,7 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
 
     #############################
@@ -1888,7 +1940,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureAgainstFeature_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
@@ -1903,6 +1955,7 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     ###################
     # points.__iter__ #
@@ -2224,6 +2277,7 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
+        assertNoNamesGenerated(obj)
 
     def test_points_nonZeroIterator_empty(self):
         data = []
@@ -2244,6 +2298,7 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
+        assertNoNamesGenerated(obj)
 
     def test_features_nonZeroIterator_empty(self):
         data = []

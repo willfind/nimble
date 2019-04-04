@@ -466,12 +466,11 @@ class DataFrame(Base):
         return DataFrame(leftData, reuseData=True)
 
     def _rsub__implementation(self, other):
-        ret = other - self.data.values
-        pNames = self.points.getNames()
-        fNames = self.features.getNames()
-        return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True,
-                              useLog=False)
+        ret = pd.DataFrame(other - self.data.values)
+        pNames = self.points._getNamesNoGeneration()
+        fNames = self.features._getNamesNoGeneration()
+        return DataFrame(ret, pointNames=pNames, featureNames=fNames,
+                         reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
