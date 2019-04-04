@@ -919,7 +919,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     # simple sucess - no labels
-    @oneLogEntryExpected
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_nolabels(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -941,7 +941,7 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(teX)
 
     # simple sucess - single label
-    @oneLogEntryExpected
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_singlelabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -969,7 +969,7 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(teY)
 
     # simple sucess - multi label
-    @oneLogEntryExpected
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_multilabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
