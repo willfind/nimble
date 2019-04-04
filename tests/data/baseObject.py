@@ -64,7 +64,8 @@ def viewConstructorMaker(concreteType):
                 featureNames=featureNames, name=name, path=path, elementType=elementType,
                 keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith)
-
+        origHasPts = orig.points._namesCreated()
+        origHasFts = orig.features._namesCreated()
         # generate points of data to be present before and after the viewable
         # data in the concrete object
         if len(orig.points) != 0:
@@ -110,6 +111,11 @@ def viewConstructorMaker(concreteType):
         else:
             fStart = None
             fEnd = None
+
+        if not origHasPts:
+            full.points.setNames(None)
+        if not origHasFts:
+            full.features.setNames(None)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
         ret._name = orig.name

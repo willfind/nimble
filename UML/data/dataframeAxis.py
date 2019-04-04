@@ -86,32 +86,12 @@ class DataFrameAxis(Axis):
         return UML.data.DataFrame(ret, pointNames=pointNames,
                                   featureNames=featureNames)
 
-    def _sort_implementation(self, sortBy, sortHelper):
-        if isinstance(sortHelper, list):
-            if isinstance(self, Points):
-                self._source.data = self._source.data.iloc[sortHelper, :]
-            else:
-                self._source.data = self._source.data.iloc[:, sortHelper]
-            names = self._getNames()
-            newNameOrder = [names[idx] for idx in sortHelper]
-            return newNameOrder
-
-        axisAttr = 'points' if isinstance(self, Points) else 'features'
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
-
+    def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._source.data = self._source.data.iloc[indexPosition, :]
         else:
             self._source.data = self._source.data.iloc[:, indexPosition]
-
-        # convert indices of their previous location into their feature names
-        newNameOrder = []
-        for i in range(len(indexPosition)):
-            oldIndex = indexPosition[i]
-            newName = self._getName(oldIndex)
-            newNameOrder.append(newName)
-        return newNameOrder
 
     ##############################
     # High Level implementations #

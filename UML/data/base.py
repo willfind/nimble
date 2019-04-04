@@ -465,22 +465,17 @@ class Base(object):
 
         replace = self.features.extract([index])
 
-        binaryFts = replace._replaceFeatureWithBinaryFeatures_implementation()
+        uniqueVals = list(replace.elements.countUnique().keys())
 
-        toFill = numpy.zeros((len(replace.points), len(binaryFts)))
-        prefix = replace.features.getName(0) + "="
+        binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
+            uniqueVals)
+
+        binaryObj.points.setNames(self.points._getNamesNoGeneration())
         ftNames = []
-        for idx, (name, locations) in enumerate(binaryFts.items()):
-            ftNames.append(prefix + str(name))
-            toFill[locations, idx] = 1
-
-        if self.points._namesCreated():
-            ptNames = self.points.getNames()
-        else:
-            ptNames = 'automatic'
-        binaryObj = UML.createData(self.getTypeString(), toFill,
-                                   pointNames=ptNames, featureNames=ftNames,
-                                   treatAsMissing=None)
+        prefix = replace.features.getName(0) + "="
+        for val in uniqueVals:
+            ftNames.append(prefix + str(val))
+        binaryObj.features.setNames(ftNames)
 
         # by default, put back in same place
         insertBefore = index
@@ -534,15 +529,21 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
+            uniqueVals = ft.elements.countUnique()
             integerValue = 0
+            if 0 in uniqueVals:
+                mapping[0] = 0
+                integerValue = 1
+
             mapped = []
             for val in ft:
-                if val not in mapping:
-                    mapping[val] = integerValue
-                    mapped.append(integerValue)
-                    integerValue += 1
-                else:
+                if val in mapping:
                     mapped.append(mapping[val])
+                else:
+                    mapped.append(integerValue)
+                    mapping[val] = integerValue
+                    integerValue += 1
+
             return mapped
 
         self.features.transform(applyMap, features=ftIndex)
@@ -1857,12 +1858,15 @@ class Base(object):
         outFormat = self._setupOutFormatForPlotting(outPath)
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
+        name = None
         if axis == 'point':
             getter = self.pointView
-            name = self.points.getName(index)
+            if self.points._namesCreated():
+                name = self.points.getName(index)
         else:
             getter = self.featureView
-            name = self.features.getName(index)
+            if self.features._namesCreated():
+                name = self.features.getName(index)
 
         toPlot = getter(index)
 
@@ -1886,7 +1890,7 @@ class Base(object):
 
             plt.hist(d, binCount)
 
-            if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 titlemsg = '#' + str(index)
             else:
                 titlemsg = "named: " + name
@@ -2013,19 +2017,25 @@ class Base(object):
         def fGetter(index):
             return customGetter(index, 'feature')
 
+        xName = None
+        yName = None
         if xAxis == 'point':
             xGetter = pGetter
-            xName = self.points.getName(xIndex)
+            if self.points._namesCreated():
+                xName = self.points.getName(xIndex)
         else:
             xGetter = fGetter
-            xName = self.features.getName(xIndex)
+            if self.features._namesCreated():
+                xName = self.features.getName(xIndex)
 
         if yAxis == 'point':
             yGetter = pGetter
-            yName = self.points.getName(yIndex)
+            if self.points._namesCreated():
+                yName = self.points.getName(yIndex)
         else:
             yGetter = fGetter
-            yName = self.features.getName(yIndex)
+            if self.features._namesCreated():
+                yName = self.features.getName(yIndex)
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
@@ -2045,11 +2055,11 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 xlabel = xAxis + ' #' + str(xIndex)
             else:
                 xlabel = xName
-            if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 ylabel = yAxis + ' #' + str(yIndex)
             else:
                 ylabel = yName

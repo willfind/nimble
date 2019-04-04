@@ -633,7 +633,7 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight, useLog=False)
+            self.transform(powFromRight, useLog=False)
         else:
             def powFromRight(val, pnum, fnum):
                 try:
@@ -642,7 +642,7 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight, useLog=False)
+            self.transform(powFromRight, useLog=False)
 
         self._source.validate()
 

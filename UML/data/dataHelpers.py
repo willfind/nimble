@@ -588,14 +588,9 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
         viewArray = []
         for v in obj:
             viewArray.append(v)
-
-        viewArray.sort(key=cmp_to_key(comparator))
-        indexPosition = []
-        for i in range(len(viewArray)):
-            viewAxis = getattr(viewArray[i], axisAttr)
-            index = obj._getIndex(viewAxis.getName(0))
-            indexPosition.append(index)
-        indexPosition = numpy.array(indexPosition)
+        sortIndices = sorted(enumerate(viewArray),
+                             key=lambda x:cmp_to_key(comparator)(x[1]))
+        indexPosition = [i[0] for i in sortIndices]
     elif hasattr(scorer, 'permuter'):
         scoreArray = scorer.indices
         indexPosition = numpy.argsort(scoreArray)

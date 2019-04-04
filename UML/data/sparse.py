@@ -158,8 +158,8 @@ class Sparse(Base):
         pointer = 0
         pmax = len(self.data.data)
         for i in range(len(self.points)):
-            currPname = self.points.getName(i)
             if includePointNames:
+                currPname = self.points.getName(i)
                 outFile.write(currPname)
                 outFile.write(',')
             for j in range(len(self.features)):
@@ -718,15 +718,20 @@ class Sparse(Base):
 
         self._sorted = None
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self):
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
         if self._sorted is None:
             self._sortInternal('feature')
-        binaryFts = {}
-        for idx, val in zip(self.data.row, self.data.data):
-            if val not in binaryFts:
-                binaryFts[val] = []
-            binaryFts[val].append(idx)
-        return binaryFts
+        binaryRow = []
+        binaryCol = []
+        binaryData = []
+        for ptIdx, val in zip(self.data.row, self.data.data):
+            ftIdx = uniqueVals.index(val)
+            binaryRow.append(ptIdx)
+            binaryCol.append(ftIdx)
+            binaryData.append(1)
+        binaryCoo = coo_matrix((binaryData, (binaryRow, binaryCol)),
+                               shape=(len(self.points), len(uniqueVals)))
+        return Sparse(binaryCoo)
 
     def _getitem_implementation(self, x, y):
         """
@@ -1002,8 +1007,9 @@ class Sparse(Base):
             retRow = numpy.array(self.data.row)
             retCol = numpy.array(self.data.col)
             ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
-        return Sparse(ret, pointNames=self.points.getNames(),
-                      featureNames=self.features.getNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
+                      featureNames=self.features._getNamesNoGeneration(),
+                      reuseData=True)
 
     def _rmod__implementation(self, other):
         retData = other % self.data.data
@@ -1011,8 +1017,9 @@ class Sparse(Base):
         retCol = numpy.array(self.data.col)
         ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
 
-        return Sparse(ret, pointNames=self.points.getNames(),
-                      featureNames=self.features.getNames(), reuseData=True)
+        return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
+                      featureNames=self.features._getNamesNoGeneration(),
+                      reuseData=True)
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
