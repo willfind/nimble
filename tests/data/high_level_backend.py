@@ -1528,6 +1528,19 @@ class HighLevelModifying(DataTestObject):
         for value in ret.values():
             assert value in ['a', 'b', 'c']
 
+    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
+        data = [['a'], [52], [0], [0], [0], [52], ['a']]
+
+        toTest = self.constructor(data, featureNames=False)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert ret[0] == 0
+        assert toTest[0, 0] == toTest[6, 0]
+        assert toTest[1, 0] == toTest[5, 0]
+        assert toTest[2, 0] == 0
+        assert toTest[3, 0] == 0
+        assert toTest[4, 0] == 0
+
     def test_transformFeatureToIntegers_NamePath_preservation(self):
         data = [[10], [20], [30.5], [20], [10]]
         featureNames = ['col']

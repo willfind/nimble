@@ -718,15 +718,20 @@ class Sparse(Base):
 
         self._sorted = None
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self):
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
         if self._sorted is None:
             self._sortInternal('feature')
-        binaryFts = {}
-        for idx, val in zip(self.data.row, self.data.data):
-            if val not in binaryFts:
-                binaryFts[val] = []
-            binaryFts[val].append(idx)
-        return binaryFts
+        binaryRow = []
+        binaryCol = []
+        binaryData = []
+        for ptIdx, val in zip(self.data.row, self.data.data):
+            ftIdx = uniqueVals.index(val)
+            binaryRow.append(ptIdx)
+            binaryCol.append(ftIdx)
+            binaryData.append(1)
+        binaryCoo = coo_matrix((binaryData, (binaryRow, binaryCol)),
+                               shape=(len(self.points), len(uniqueVals)))
+        return Sparse(binaryCoo)
 
     def _getitem_implementation(self, x, y):
         """
