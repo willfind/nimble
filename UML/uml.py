@@ -922,18 +922,6 @@ def createData(
                        name, path, keepPoints, keepFeatures,
                        ignoreNonNumericalFeatures, reuseData, inputSeparator,
                        treatAsMissing, replaceMissingWith, useLog=False)
-    # validation of pointNames and featureNames
-    accepted = (bool, list, dict)
-    if pointNames != 'automatic' and not isinstance(pointNames, accepted):
-        msg = "pointNames may only be the values True, False, 'automatic' or "
-        msg += "a list or dict specifying a mapping between names and indices."
-        raise InvalidArgumentType(msg)
-
-    if featureNames != 'automatic' and not isinstance(featureNames, accepted):
-        msg = "featureNames may only be the values True, False, 'automatic' "
-        msg += "or a list or dict specifying a mapping between names and "
-        msg += "indices."
-        raise InvalidArgumentType(msg)
 
     retAllowed = copy.copy(UML.data.available)
     retAllowed.append(None)

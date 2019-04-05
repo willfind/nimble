@@ -24,6 +24,7 @@ from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
+from .dataHelpers import createDataNoValidation
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -267,46 +268,33 @@ class List(Base):
         self._numFeatures = other._numFeatures
 
     def _copyAs_implementation(self, format):
-
-        if format == 'Sparse':
-            if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points),
-                                               len(self.features)))
-                return UML.createData('Sparse', emptyData, useLog=False)
-            return UML.createData('Sparse', self.data, useLog=False)
-
-        if format is None or format == 'List':
-            if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points),
-                                               len(self.features)))
-                return UML.createData('List', emptyData, useLog=False)
+        isEmpty = False
+        if len(self.points) == 0 or len(self.features) == 0:
+            isEmpty = True
+            emptyData = numpy.empty(shape=(len(self.points),
+                                           len(self.features)))
+        if format in UML.data.available:
+            ptNames = self.points._getNamesNoGeneration()
+            ftNames = self.features._getNamesNoGeneration()
+            reuseData = True
+            if isEmpty:
+                data = numpy.matrix(emptyData)
+            elif format == 'List':
+                data = [pt.copy() for pt in self.data]
             else:
-                return UML.createData('List', self.data, useLog=False)
-        if format == 'Matrix':
-            if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points),
-                                               len(self.features)))
-                return UML.createData('Matrix', emptyData, useLog=False)
-            else:
-                return UML.createData('Matrix', self.data, useLog=False)
-        if format == 'DataFrame':
-            if len(self.points) == 0 or len(self.features) == 0:
-                emptyData = numpy.empty(shape=(len(self.points),
-                                               len(self.features)))
-                return UML.createData('DataFrame', emptyData, useLog=False)
-            else:
-                return UML.createData('DataFrame', self.data, useLog=False)
+                data = numpy.matrix(self.data)
+            # reuseData=True since we already made copies here
+            return createDataNoValidation(format, data, ptNames, ftNames,
+                                          reuseData=True)
         if format == 'pythonlist':
-            return copy.deepcopy(self.data)
+            return [pt.copy() for pt in self.data]
         if format == 'numpyarray':
-            if len(self.points) == 0 or len(self.features) == 0:
-                return numpy.empty(shape=(len(self.points),
-                                          len(self.features)))
+            if isEmpty:
+                return emptyData
             return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
-            if len(self.points) == 0 or len(self.features) == 0:
-                return numpy.matrix(numpy.empty(shape=(len(self.points),
-                                                       len(self.features))))
+            if isEmpty:
+                return numpy.matrix(emptyData)
             return numpy.matrix(self.data)
         if format == 'scipycsc':
             if not scipy:

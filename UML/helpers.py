@@ -295,27 +295,25 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
     row in rawData
     4. Convert data to np matrix
     """
-    if (not isinstance(pointNames, str)
-            and not isinstance(featureNames, str)
-            and not isinstance(pointNames, bool)
-            and not isinstance(featureNames, bool)
-            and pointNames is not None
-            and featureNames is not None):
+    acceptedNameTypes = (str, bool, type(None), list, dict)
+    if not isinstance(pointNames, acceptedNameTypes):
         try:
-            if callable(getattr(pointNames, '__len__')) \
-                    and callable(getattr(pointNames, '__getitem__')) \
-                    and callable(getattr(featureNames, '__len__')) \
-                    and callable(getattr(featureNames, '__getitem__')):
-                pass
-        except AttributeError:
-            msg = ("if pointNames and featureNames are not 'bool' or a 'str'"
-                   "they should be other 'iterable' object")
-            raise AttributeError(msg)
-
+            pointNames = [val for val in pointNames]
+        except TypeError:
+            msg = "if pointNames are not 'bool' or a 'str', "
+            msg += "they should be other 'iterable' object"
+            raise InvalidArgumentType(msg)
+    if not isinstance(featureNames, acceptedNameTypes):
+        try:
+            featureNames = [val for val in featureNames]
+        except TypeError:
+            msg = "if featureNames are not 'bool' or a 'str', "
+            msg += "they should be other 'iterable' object"
+            raise InvalidArgumentType(msg)
     # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
     # featureNames must be those keys
     # pointNames must be False or automatic
-    elif isinstance(rawData, dict):
+    if isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
             rawData = numpy.matrix(list(rawData.values()), dtype=elementType)

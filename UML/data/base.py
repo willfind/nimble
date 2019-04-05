@@ -43,6 +43,7 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import logCaptureFactory
+from .dataHelpers import createListOfDict, createDictOfList
 
 cython = UML.importModule('cython')
 
@@ -2305,6 +2306,11 @@ class Base(object):
                 msg = "To output as 1D there may either be only one point or "
                 msg += " one feature"
                 raise ImproperObjectAction(msg)
+            return self._copyAs_outputAs1D(format)
+        elif format == 'pythonlist':
+            return self._copyAs_pythonList(rowsArePoints)
+        elif format in ['listofdict', 'dictoflist']:
+            return self._copyAs_nestedPythonTypes(format, rowsArePoints)
 
         # certain shapes and formats are incompatible
         if format.startswith('scipy'):
@@ -2312,108 +2318,56 @@ class Base(object):
                 msg = "scipy formats cannot output point or feature empty "
                 msg += "objects"
                 raise InvalidArgumentValue(msg)
-
-        ret = self._copyAs_implementation_base(format, rowsArePoints,
-                                               outputAs1D)
-
+        # UML, numpy and scipy types
+        ret = self._copyAs_implementation(format)
         if isinstance(ret, UML.data.Base):
+            if not rowsArePoints:
+                ret.transpose()
             ret._name = self.name
             ret._relPath = self.relativePath
             ret._absPath = self.absolutePath
+        elif not rowsArePoints:
+            ret = ret.transpose()
 
         return ret
 
-    def _copyAs_implementation_base(self, format, rowsArePoints, outputAs1D):
-        # in copyAs, we've already limited outputAs1D to the 'numpyarray'
-        # and 'python list' formats
-        if outputAs1D:
-            if self._pointCount == 0 or self._featureCount == 0:
-                if format == 'numpyarray':
-                    return numpy.array([])
-                if format == 'pythonlist':
-                    return []
-            raw = self._copyAs_implementation('numpyarray').flatten()
-            if format != 'numpyarray':
-                raw = raw.tolist()
-            return raw
-
-        # we enforce very specific shapes in the case of emptiness along one
-        # or both axes
-        if format == 'pythonlist':
-            if self._pointCount == 0:
+    def _copyAs_outputAs1D(self, format):
+        if self._pointCount == 0 or self._featureCount == 0:
+            if format == 'numpyarray':
+                return numpy.array([])
+            if format == 'pythonlist':
                 return []
-            if self._featureCount == 0:
-                ret = []
-                for _ in range(self._pointCount):
-                    ret.append([])
-                return ret
+        raw = self._copyAs_implementation('numpyarray').flatten()
+        if format != 'numpyarray':
+            raw = raw.tolist()
+        return raw
 
-        if format in ['listofdict', 'dictoflist']:
-            ret = self._copyAs_implementation('numpyarray')
-        else:
-            ret = self._copyAs_implementation(format)
-            if isinstance(ret, UML.data.Base):
-                self._copyNames(ret)
-
-        def _createListOfDict(data, featureNames):
-            # creates a list of dictionaries mapping feature names to the
-            # point's values dictionaries are in point order
-            listofdict = []
-            for point in data:
-                feature_dict = {}
-                for i, value in enumerate(point):
-                    feature = featureNames[i]
-                    feature_dict[feature] = value
-                listofdict.append(feature_dict)
-            return listofdict
-
-        def _createDictOfList(data, featureNames, nFeatures):
-            # creates a python dict maps feature names to python lists
-            # containing all of that feature's values
-            dictoflist = {}
-            for i in range(nFeatures):
-                feature = featureNames[i]
-                values_list = data[:, i].tolist()
-                dictoflist[feature] = values_list
-            return dictoflist
-
+    def _copyAs_pythonList(self, rowsArePoints):
+        if self._pointCount == 0:
+            return []
+        if self._featureCount == 0:
+            ret = []
+            for _ in range(self._pointCount):
+                ret.append([])
+            return ret
+        ret = self._copyAs_implementation('pythonlist')
         if not rowsArePoints:
-            if format in ['List', 'Matrix', 'Sparse', 'DataFrame']:
-                ret.transpose()
-            elif format == 'listofdict':
-                ret = ret.transpose()
-                ret = _createListOfDict(data=ret,
-                                        featureNames=self.points.getNames())
-                return ret
-            elif format == 'dictoflist':
-                ret = ret.transpose()
-                ret = _createDictOfList(data=ret,
-                                        featureNames=self.points.getNames(),
-                                        nFeatures=self._pointCount)
-                return ret
-            elif format != 'pythonlist':
-                ret = ret.transpose()
-            else:
-                ret = numpy.transpose(ret).tolist()
-
-        if format == 'listofdict':
-            ret = _createListOfDict(data=ret,
-                                    featureNames=self.features.getNames())
-        if format == 'dictoflist':
-            ret = _createDictOfList(data=ret,
-                                    featureNames=self.features.getNames(),
-                                    nFeatures=self._featureCount)
-
+            ret = numpy.transpose(ret).tolist()
         return ret
 
-    def _copyNames(self, CopyObj):
-        CopyObj.pointNamesInverse = self.points._getNamesNoGeneration()
-        CopyObj.pointNames = copy.copy(self.pointNames)
-        CopyObj.featureNamesInverse = self.features._getNamesNoGeneration()
-        CopyObj.featureNames = copy.copy(self.featureNames)
-
-        CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
-        CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
+    def _copyAs_nestedPythonTypes(self, format, rowsArePoints):
+        data = self._copyAs_implementation('numpyarray')
+        if rowsArePoints:
+            featureNames = self.features.getNames()
+            if format == 'listofdict':
+                return createListOfDict(data, featureNames)
+            return createDictOfList(data, featureNames, self._featureCount)
+        else:
+            data = data.transpose()
+            featureNames = self.points.getNames()
+            if format == 'listofdict':
+                return createListOfDict(data, featureNames)
+            return createDictOfList(data, featureNames, self._pointCount)
 
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
                  useLog=None):

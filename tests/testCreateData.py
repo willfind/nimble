@@ -13,7 +13,7 @@ except:
     import mock
 
 import UML
-from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.helpers import _intFloatOrString
@@ -22,6 +22,35 @@ pd = UML.importModule('pandas')
 
 returnTypes = copy.copy(UML.data.available)
 returnTypes.append(None)
+
+class NoIter(object):
+    def __init__(self, vals):
+        self.vals = vals
+
+    def __len__(self):
+        return len(self.vals)
+
+class IterNext(object):
+    def __init__(self, vals):
+        self.vals = vals
+        self.pos = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.pos < len(self.vals):
+            self.pos += 1
+            return self.vals[self.pos - 1]
+        else:
+            raise StopIteration()
+
+class GetItemOnly(object):
+    def __init__(self, vals):
+        self.vals = vals
+
+    def __getitem__(self, key):
+        return self.vals[key]
 
 ###########################
 # Data values correctness #
@@ -48,6 +77,38 @@ def test_createData_raw_noStringConversion():
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_invalidPointOrFeatureNames():
+    for t in returnTypes:
+        try:
+            pNames = NoIter(['1', '4'])
+            toTest = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames)
+            assert False # expected InvalidArgumentType
+        except InvalidArgumentType:
+            pass
+
+        try:
+            fNames = NoIter(['a', 'b', 'c'])
+            toTest = UML.createData(t, [[1,2,3], [4,5,6]], featureNames=fNames)
+            assert False # expected InvalidArgumentType
+        except InvalidArgumentType:
+            pass
+
+def test_createData_raw_pointAndFeatureIterators():
+    for t in returnTypes:
+        pNames = IterNext(['1', '4'])
+        fNames = IterNext(['a', 'b', 'c'])
+        toTest1 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                featureNames=fNames)
+        assert toTest1.points.getNames() == ['1', '4']
+        assert toTest1.features.getNames() == ['a', 'b', 'c']
+
+        pNames = GetItemOnly(['1', '4'])
+        fNames = GetItemOnly(['a', 'b', 'c'])
+        toTest2 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                featureNames=fNames)
+        assert toTest2.points.getNames() == ['1', '4']
+        assert toTest2.features.getNames() == ['a', 'b', 'c']
 
 
 def test_createData_CSV_data():
