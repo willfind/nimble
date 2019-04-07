@@ -40,7 +40,6 @@ from . import dataHelpers
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
-from .dataHelpers import makeConsistentFNamesAndData
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import logCaptureFactory
 
@@ -1541,7 +1540,7 @@ class Base(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
+    def toString(self, includeNames=True, maxWidth=79, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19):
         """
         A string representation of this object.
@@ -1608,25 +1607,17 @@ class Base(object):
             pnames, pnamesWidth = self._arrangePointNames(
                 maxDataRows, maxColumnWidth, rowHold, nameHolder)
             # The available space for the data is reduced by the width of the
-            # pnames, a column separator, the pnames seperator, and another
-            # column seperator
+            # pnames, a column separator, the pnames separator, and another
+            # column separator
             maxDataWidth = (maxWidth
                             - (pnamesWidth + 2 * len(colSep) + len(pnameSep)))
 
-        # Set up data values to fit in the available space
-        dataTable, colWidths = self._arrangeDataWithLimits(
-            maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
-            colHold, rowHold, nameHolder)
 
-        # set up feature names list, record widths
-        fnames = None
-        if includeFNames:
-            fnames = self._arrangeFeatureNames(maxWidth, maxColumnWidth,
-                                               colSep, colHold, nameHolder)
-
-            # adjust data or fnames according to the more restrictive set
-            # of col widths
-            makeConsistentFNamesAndData(fnames, dataTable, colWidths, colHold)
+        # Set up data values to fit in the available space including
+        # featureNames if includeFNames=True
+        dataTable, colWidths, fnames = self._arrangeDataWithLimits(
+            maxDataWidth, maxDataRows, includeFNames, sigDigits,
+            maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
         # combine names into finalized table
         finalTable, finalWidths = self._arrangeFinalTable(
@@ -1652,14 +1643,16 @@ class Base(object):
 
     def __repr__(self):
         indent = '    '
-        maxW = 120
-        maxH = 40
+        maxW = 79
+        maxH = 30
 
         # setup type call
         ret = self.getTypeString() + "(\n"
 
         # setup data
-        dataStr = self.toString(includeNames=False, maxWidth=maxW,
+        # decrease max width for indentation (4) and nested list padding (4)
+        stringWidth = maxW - 8
+        dataStr = self.toString(includeNames=False, maxWidth=stringWidth,
                                 maxHeight=maxH)
         byLine = dataStr.split('\n')
         # toString ends with a \n, so we get rid of the empty line produced by
@@ -1669,7 +1662,7 @@ class Base(object):
         newLines = (']\n' + indent + ' [').join(byLine)
         ret += (indent + '[[%s]]\n') % newLines
 
-        numRows = min(self._pointCount, maxW)
+        numRows = min(self._pointCount, maxH)
         # if non default point names, print all (truncated) point names
         ret += dataHelpers.makeNamesLines(
             indent, maxW, numRows, self._pointCount, self.points.getNames(),
@@ -1679,7 +1672,7 @@ class Base(object):
         if byLine:
             splited = byLine[0].split(' ')
             for val in splited:
-                if val != '' and val != '...':
+                if val not in ['', '...', '--']:
                     numCols += 1
         elif self._featureCount > 0:
             # if the container is empty, then roughly compute length of
@@ -1729,7 +1722,7 @@ class Base(object):
         return self.toString()
 
     def show(self, description, includeObjectName=True, includeAxisNames=True,
-             maxWidth=120, maxHeight=30, sigDigits=3, maxColumnWidth=19):
+             maxWidth=79, maxHeight=30, sigDigits=3, maxColumnWidth=19):
         """
         A printed representation of the data.
 
@@ -4073,80 +4066,6 @@ class Base(object):
 
         return dataTable, dataWidths
 
-    def _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold,
-                             nameHold):
-        """
-        Prepare feature names for string output. Grab only those names
-        that fit according to the given width limitation, process them
-        for length, omit them if they are default. Returns a list of
-        prepared names, and a list of the length of each name in the
-        return.
-        """
-        colHoldWidth = len(colHold)
-        colHoldTotal = len(colSep) + colHoldWidth
-        nameCutIndex = nameLength - len(nameHold)
-
-        lNames, rNames = [], []
-
-        # total width will always include the column placeholder column,
-        # until it is shown that it isn't needed
-        totalWidth = colHoldTotal
-
-        # going to add indices from the beginning and end of the data until
-        # we've used up our available space, or we've gone through all of
-        # the columns. currIndex makes use of negative indices, which is
-        # why the end condition makes use of an exact stop value, which
-        # varies between positive and negative depending on the number of
-        # features
-        endIndex = self._featureCount // 2
-        if self._featureCount % 2 == 1:
-            endIndex *= -1
-            endIndex -= 1
-        currIndex = 0
-        numAdded = 0
-        while totalWidth < maxWidth and currIndex != endIndex:
-            nameIndex = currIndex
-            if currIndex < 0:
-                nameIndex = self._featureCount + currIndex
-
-            currName = self.features.getName(nameIndex)
-
-            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                currName = ""
-            if len(currName) > nameLength:
-                currName = currName[:nameCutIndex] + nameHold
-            currWidth = len(currName)
-
-            currNames = lNames if currIndex >= 0 else rNames
-
-            totalWidth += currWidth + len(colSep)
-            # test: total width is under max without column holder
-            rawStillUnder = totalWidth - (colHoldTotal) < maxWidth
-            # test: the column we are trying to add is the last one possible
-            allCols = rawStillUnder and (numAdded == (self._featureCount - 1))
-            # only add this column if it won't put us over the limit,
-            # OR if it is the last one (and under the limit without the col
-            # holder)
-            if totalWidth < maxWidth or allCols:
-                numAdded += 1
-                currNames.append(currName)
-
-                # the width value goes in different lists depending on index
-                if currIndex < 0:
-                    currIndex = abs(currIndex)
-                else:
-                    currIndex = (-1 * currIndex) - 1
-
-        # combine the tables. Have to reverse rTable because entries were
-        # appended in a right to left order
-        rNames.reverse()
-        if numAdded == self._featureCount:
-            lNames += rNames
-        else:
-            lNames += [colHold] + rNames
-
-        return lNames
-
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """
         Prepare point names for string output. Grab only those names
@@ -4188,9 +4107,9 @@ class Base(object):
 
         return names, pnamesWidth
 
-    def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
-                               maxStrLength=19, colSep=' ', colHold='--',
-                               rowHold='|', strHold='...'):
+    def _arrangeDataWithLimits(self, maxWidth, maxHeight, includeFNames=False,
+                               sigDigits=3, maxStrLength=19, colSep=' ',
+                               colHold='--', rowHold='|', strHold='...'):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -4204,7 +4123,10 @@ class Base(object):
         equal to maxWidth - ((n-1) * len(colSep)).
         """
         if self._pointCount == 0 or self._featureCount == 0:
-            return [[]], []
+            fNames = None
+            if includeFNames:
+                fNames = []
+            return [[]], [], fNames
 
         if maxHeight < 2 and maxHeight != self._pointCount:
             msg = "If the number of points in this object is two or greater, "
@@ -4235,7 +4157,7 @@ class Base(object):
 
         lTable, rTable = [], []
         lColWidths, rColWidths = [], []
-
+        lFNames, rFNames = [], []
         # total width will always include the column placeholder column,
         # until it is shown that it isn't needed
         totalWidth = cHoldTotal
@@ -4253,9 +4175,16 @@ class Base(object):
         currIndex = 0
         numAdded = 0
         while totalWidth < maxWidth and currIndex != endIndex:
-            currWidth = 0
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
+            currWidth = 0
+            if includeFNames:
+                currFName = self.features.getName(currIndex)
+                fNameLen = len(currFName)
+                if fNameLen > maxStrLength:
+                    currFName = currFName[:nameCutIndex] + strHold
+                    fNameLen = maxStrLength
+                currWidth = fNameLen
 
             # check all values in this column (in the accepted rows)
             for i in range(len(combinedRowIDs)):
@@ -4278,33 +4207,42 @@ class Base(object):
 
             totalWidth += currWidth + len(colSep)
             # test: total width is under max without column holder
-            allCols = totalWidth - (cHoldTotal) < maxWidth
+            allCols = totalWidth - (cHoldTotal) <= maxWidth
             # test: the column we are trying to add is the last one possible
             allCols = allCols and (numAdded == (self._featureCount - 1))
             # only add this column if it won't put us over the limit
-            if totalWidth < maxWidth or allCols:
+            if totalWidth - len(colSep) <= maxWidth or allCols:
                 numAdded += 1
                 for i in range(len(currCol)):
                     if len(currTable) != len(currCol):
                         currTable.append([currCol[i]])
                     else:
                         currTable[i].append(currCol[i])
-
                 # the width value goes in different lists depending on index
                 if currIndex < 0:
+                    if includeFNames:
+                        rFNames.append(currFName)
                     currIndex = abs(currIndex)
                     rColWidths.append(currWidth)
                 else:
+                    if includeFNames:
+                        lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
                     lColWidths.append(currWidth)
 
         # combine the tables. Have to reverse rTable because entries were
         # appended in a right to left order
         rColWidths.reverse()
+        rFNames.reverse()
+        fNames = lFNames + rFNames
         if numAdded == self._featureCount:
             lColWidths += rColWidths
         else:
             lColWidths += [cHoldWidth] + rColWidths
+            if includeFNames:
+                fNames = lFNames + [colHold] + rFNames
+        # return None if fNames is [] (includeFNames=False)
+        fNames = fNames if fNames else None
         for rowIndex in range(len(lTable)):
             if len(rTable) > 0:
                 rTable[rowIndex].reverse()
@@ -4317,7 +4255,7 @@ class Base(object):
             else:
                 lTable[rowIndex] += [colHold] + toAdd
 
-        return lTable, lColWidths
+        return lTable, lColWidths, fNames
 
     def _defaultNamesGeneration_NamesSetOperations(self, other, axis):
         """
