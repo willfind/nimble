@@ -551,6 +551,7 @@ class HighLevelDataSafe(DataTestObject):
         assert [4, 5, 6] in retRaw
         assert [7, 8, 9] in retRaw
         assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_elements_calculate_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
@@ -561,6 +562,8 @@ class HighLevelDataSafe(DataTestObject):
         assert [2, 0, 4] in retRaw
         assert [0, 6, 7] in retRaw
         assert [8, 0, 10] in retRaw
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_elements_calculate_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -705,6 +708,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.points.mapReduce(simpleMapper, simpleReducer)
 
         assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_points_mapReduce_NamePath_preservation(self):
         featureNames = ["one", "two", "three"]
@@ -809,6 +813,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
 
         assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_features_mapReduce_NamePath_preservation(self):
         featureNames = ["one", "two", "three"]
