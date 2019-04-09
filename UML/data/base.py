@@ -13,7 +13,6 @@ import sys
 import math
 import numbers
 import itertools
-import copy
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
@@ -2307,9 +2306,9 @@ class Base(object):
                 msg += " one feature"
                 raise ImproperObjectAction(msg)
             return self._copyAs_outputAs1D(format)
-        elif format == 'pythonlist':
+        if format == 'pythonlist':
             return self._copyAs_pythonList(rowsArePoints)
-        elif format in ['listofdict', 'dictoflist']:
+        if format in ['listofdict', 'dictoflist']:
             return self._copyAs_nestedPythonTypes(format, rowsArePoints)
 
         # certain shapes and formats are incompatible
