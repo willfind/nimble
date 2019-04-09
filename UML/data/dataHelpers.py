@@ -10,18 +10,14 @@ import math
 import numbers
 import inspect
 import re
-from functools import wraps
-import sys
 
 import six
 from six.moves import range
-from six import reraise
 import numpy
 
 import UML
 from UML import importModule
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.logger import Stopwatch
 
 pd = importModule('pandas')
 
@@ -729,9 +725,16 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
     Creates the dictionary of arguments for the prep logType. Adds all
     required arguments and any keyword arguments that are not the
     default values.
+
+    Parameters
+    ----------
+    argNames : tuple
+        The names of all arguments in the function.
+    defaults : tuple
+        The default values of the arguments.
     """
-    # remove self from argNames
-    argNames = argNames[1:]
+    if not isinstance(argNames, tuple) or not isinstance(defaults, tuple):
+        raise InvalidArgumentType("argNames and defaults must be tuples")
     nameArgMap = {}
     for name, arg in zip(argNames, args):
         if callable(arg):
@@ -740,12 +743,12 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
             nameArgMap[name] = arg.name
         else:
             nameArgMap[name] = str(arg)
+
     startDefaults = len(argNames) - len(defaults)
     defaultArgs = argNames[startDefaults:]
     defaultDict = {}
     for name, value in zip(defaultArgs, defaults):
-        if name != "useLog":
-            defaultDict[name] = str(value)
+        defaultDict[name] = str(value)
 
     argDict = {}
     for name in nameArgMap:
@@ -758,45 +761,6 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
             argDict[name] = kwargs[name]
 
     return argDict
-
-def logCaptureFactory(prefix=None):
-    """
-    Creates a wrapper for wrapping functions that will be logged.
-    """
-    def logCapture(function):
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-            logger = UML.logger.active
-            try:
-                logger.position += 1
-                timer = Stopwatch()
-                timer.start("timer")
-                ret = function(*args, **kwargs)
-                logger.position -= 1
-            except Exception:
-                logger.position = 0
-                einfo = sys.exc_info()
-                reraise(*einfo)
-            finally:
-                timer.stop("timer")
-            if logger.position == 0:
-                funcName = function.__name__
-                self = function.__self__
-                names, _, _, defaults = UML.helpers.inspectArguments(function)
-                if prefix is None:
-                    # Base
-                    funcName = function.__name__
-                    cls = self.getTypeString()
-                else:
-                    # Points, Features, Elements
-                    funcName = prefix + '.' + function.__name__
-                    cls = self._source.getTypeString()
-                argDict = buildArgDict(names, defaults, *args, **kwargs)
-                logger.logPrep(funcName, cls, argDict)
-                logger.log(logger.logType, logger.logInfo)
-            return ret
-        return wrapper
-    return logCapture
 
 def allDataIdentical(arr1, arr2):
     """

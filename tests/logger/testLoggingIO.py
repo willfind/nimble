@@ -9,6 +9,7 @@ import time
 import ast
 import sys
 import sqlite3
+import tempfile
 
 from nose import with_setup
 from nose.tools import raises
@@ -115,18 +116,61 @@ def testLoadTypeFunctionsUseLog():
     trainXObj = UML.createData("Matrix", trainX)
     logInfo = getLastLogData()
     assert trainXObj.getTypeString() in logInfo
+    assert "'numPoints': 12" in logInfo
+    assert "'numFeatures': 3" in logInfo
 
     trainYObj = UML.createData("List", trainY)
     logInfo = getLastLogData()
     assert trainYObj.getTypeString() in logInfo
+    assert "'numPoints': 12" in logInfo
+    assert "'numFeatures': 1" in logInfo
 
     testXObj = UML.createData("Sparse", testX)
     logInfo = getLastLogData()
     assert testXObj.getTypeString() in logInfo
+    assert "'numPoints': 4" in logInfo
+    assert "'numFeatures': 3" in logInfo
 
     testYObj = UML.createData("DataFrame", testY)
     logInfo = getLastLogData()
     assert testYObj.getTypeString() in logInfo
+    assert "'numPoints': 4" in logInfo
+    assert "'numFeatures': 1" in logInfo
+
+    # the sparsity and seed are also stored for random data
+    randomObj = UML.createRandomData("Matrix", 5, 5, 0)
+    logInfo = getLastLogData()
+    assert randomObj.getTypeString() in logInfo
+    assert "'sparsity': 0" in logInfo
+    assert "seed" in logInfo
+
+    # loadTrainedLearner
+    tl = UML.train('custom.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
+    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+        tl.save(tmpFile.name)
+        load = UML.loadTrainedLearner(tmpFile.name)
+    logInfo = getLastLogData()
+    assert "TrainedLearner" in logInfo
+    assert "'learnerName': 'KNNClassifier'" in logInfo
+    assert "'learnerArgs': {'k': 1}" in logInfo
+
+    # loadData
+    with tempfile.NamedTemporaryFile(suffix=".umld") as tmpFile:
+        randomObj.save(tmpFile.name)
+        load = UML.loadData(tmpFile.name)
+    logInfo = getLastLogData()
+    assert load.getTypeString() in logInfo
+    assert "'numPoints': 5" in logInfo
+    assert "'numFeatures': 5" in logInfo
+
+@configSafetyWrapper
+def test_setRandomSeed():
+    UML.settings.set('logger', 'enabledByDefault', 'True')
+    UML.randomness.startAlternateControl()
+    UML.setRandomSeed(1337)
+    UML.randomness.endAlternateControl()
+    logInfo = getLastLogData()
+    assert "{'seed': 1337}" in logInfo
 
 @configSafetyWrapper
 def testRunTypeFunctionsUseLog():
@@ -233,58 +277,60 @@ def testPrepTypeFunctionsUseLog():
         if arguments:
             assert 'arguments' in lastLog
             for argName, argVal in arguments:
-                expArgs = "'{0}': '{1}'".format(argName, argVal)
-                assert expArgs in lastLog
+                expArgs1 = "'{0}': '{1}'".format(argName, argVal)
+                # double quotations may wrap the second arg if it contains quotations
+                expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
+                assert expArgs1 in lastLog or expArgs2 in lastLog
 
     ########
     # Base #
     ########
 
-    # replaceFeatureWithBinaryFeatures; createData not logged
+    # replaceFeatureWithBinaryFeatures
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.replaceFeatureWithBinaryFeatures(0)
     checkLogContents('replaceFeatureWithBinaryFeatures', 'Matrix', [('featureToReplace', 0)])
 
-    # transformFeatureToIntegers; createData not logged
+    # transformFeatureToIntegers
     dataObj = UML.createData("List", data, useLog=False)
     dataObj.transformFeatureToIntegers(0)
     checkLogContents('transformFeatureToIntegers', 'List', [('featureToConvert', 0)])
 
-    # trainAndTestSets; createData not logged
+    # trainAndTestSets
     dataObj = UML.createData("DataFrame", data, useLog=False)
     train, test = dataObj.trainAndTestSets(testFraction=0.5)
     checkLogContents('trainAndTestSets', 'DataFrame', [('testFraction', 0.5)])
 
-    # groupByFeature; createData not logged
+    # groupByFeature
     dataObj = UML.createData("Sparse", data, useLog=False)
     calculated = dataObj.groupByFeature(by=0)
     checkLogContents('groupByFeature', 'Sparse', [('by', 0)])
 
-    # referenceDataFrom; createData not logged
+    # referenceDataFrom
     dataObj = UML.createData("Matrix", data, useLog=False, name='refData')
     dataObj.referenceDataFrom(dataObj)
     checkLogContents('referenceDataFrom', 'Matrix', [('other', 'refData')])
 
-    # transpose; createData not logged
+    # transpose
     dataObj = UML.createData("List", data, useLog=False)
     dataObj.transpose()
     checkLogContents('transpose', 'List')
 
-    # fillWith; createData not logged
+    # fillWith
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.fillWith(1, 2, 0, 4, 0)
     checkLogContents('fillWith', "Matrix",
         [('values', 1), ('pointStart', 2), ('pointEnd', 4), ('featureStart', 0),
          ('featureEnd', 0)])
 
-    # fillUsingAllData; createData not logged
+    # fillUsingAllData
     dataObj = UML.createData("Matrix", data, useLog=False)
     def simpleFiller(obj, match):
         return UML.createData('Matrix', numpy.zeros_like(dataObj.data))
     dataObj.fillUsingAllData('a', fill=simpleFiller)
     checkLogContents('fillUsingAllData', 'Matrix', [('fill', 'simpleFiller')])
 
-    # flattenToOnePoint; createData not logged
+    # flattenToOnePoint
     dataObj = UML.createData("DataFrame", data, useLog=False)
     dataObj.flattenToOnePoint()
 
@@ -293,7 +339,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj.unflattenFromOnePoint(18)
     checkLogContents('unflattenFromOnePoint', "DataFrame")
 
-    # flattenToOneFeature; createData not logged
+    # flattenToOneFeature
     dataObj = UML.createData("Sparse", data, useLog=False)
     dataObj.flattenToOneFeature()
     checkLogContents('flattenToOneFeature', "Sparse")
@@ -301,6 +347,20 @@ def testPrepTypeFunctionsUseLog():
     # unflattenFromOnePoint; using same dataObj from flattenToOneFeature
     dataObj.unflattenFromOneFeature(3)
     checkLogContents('unflattenFromOneFeature', "Sparse")
+
+    # merge
+    dPtNames = ['p' + str(i) for i in range(18)]
+    dFtNames = ['f0', 'f1', 'f2']
+    dataObj = UML.createData("Matrix", data, pointNames=dPtNames,
+                             featureNames=dFtNames, useLog=False)
+    mData = [[1, 4], [2, 5], [3, 6]]
+    mPtNames = ['p0', 'p6', 'p12']
+    mFtNames = ['f2', 'f3']
+    mergeObj = UML.createData('Matrix', mData, pointNames=mPtNames,
+                              featureNames=mFtNames, useLog=False)
+    dataObj.merge(mergeObj, point='intersection', feature='union')
+    checkLogContents('merge', "Matrix", [("other", mergeObj.name),
+                                         ("point", 'intersection')])
 
     ############################
     # Points/Features/Elements #
@@ -322,83 +382,93 @@ def testPrepTypeFunctionsUseLog():
             total += value
         return (identifier, total)
 
-    # points.mapReduce; createData not logged
+    # points.mapReduce
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.points.mapReduce(simpleMapper,simpleReducer)
     checkLogContents('points.mapReduce', "Matrix", [("mapper", "simpleMapper"),
                                                     ("reducer", "simpleReducer")])
 
-    # features.mapReduce; createData not logged
+    # features.mapReduce
     dataObj = UML.createData("Matrix", numpy.array(data, dtype=object).T,
                              featureNames=False, useLog=False)
     calculated = dataObj.features.mapReduce(simpleMapper,simpleReducer)
     checkLogContents('features.mapReduce', "Matrix", [("mapper", "simpleMapper"),
                                                     ("reducer", "simpleReducer")])
 
-    # elements.calculate; createData not logged
+    # elements.calculate
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
     checkLogContents('elements.calculate', "Matrix", [('function', "lambda x: len(x)"),
-                                                      ('features', 0)])
+                                                      ('features', [0])])
 
-    # points.calculate; createData not logged
+    # points.calculate
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.points.calculate(lambda x: len(x))
     checkLogContents('points.calculate', "Matrix", [('function', "lambda x: len(x)")])
 
-    # features.calculate; createData not logged
+    # features.calculate
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.features.calculate(lambda x: len(x), features=0)
     checkLogContents('features.calculate', "Matrix", [('function', "lambda x: len(x)"),
-                                                      ('features', 0)])
+                                                      ('features', [0])])
 
-    # points.shuffle; createData not logged
+    # points.shuffle
     dataObj = UML.createData("List", data, useLog=False)
     dataObj.points.shuffle()
     checkLogContents('points.shuffle', "List")
 
-    # features.shuffle; createData not logged
+    # features.shuffle
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.shuffle()
     checkLogContents('features.shuffle', "Matrix")
 
-    # points.normalize; createData not logged
+    # points.normalize
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.points.normalize(subtract=0, divide=1)
     checkLogContents('points.normalize', "Matrix", [('subtract', 0), ('divide', 1)])
 
-    # features.normalize; createData not logged
+    # features.normalize
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.normalize(subtract=0, divide=1)
     checkLogContents('features.normalize', "Matrix", [('subtract', 0), ('divide', 1)])
 
-    # points.sort; createData not logged
+    # points.sort
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.points.sort(sortBy=dataObj.features.getName(0))
     checkLogContents('points.sort', "Matrix", [('sortBy', dataObj.features.getName(0))])
 
-    # features.sort; createData not logged
+    # features.sort
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.sort(sortBy=dataObj.points.getName(0))
     checkLogContents('features.sort', "Matrix", [('sortBy', dataObj.points.getName(0))])
 
-    # points.extract; createData not logged
+    # points.copy
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.points.copy(0)
+    checkLogContents('points.copy', "Matrix", [('toCopy', 0)])
+
+    # features.copy
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.features.copy(number=1)
+    checkLogContents('features.copy', "Matrix", [('number', 1)])
+
+    # points.extract
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.points.extract(toExtract=0)
     checkLogContents('points.extract', "Matrix", [('toExtract', 0)])
 
-    # features.extract; createData not logged
+    # features.extract
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.features.extract(number=1)
     checkLogContents('features.extract', "Matrix", [('number', 1)])
 
-    # points.delete; createData not logged
+    # points.delete
     dataObj = UML.createData("Matrix", data, useLog=False,
                              pointNames=['p' + str(i) for i in range(18)])
     extracted = dataObj.points.delete(start='p0', end='p3')
     checkLogContents('points.delete', "Matrix", [('start', 'p0'), ('end', 'p3')])
 
-    # features.delete; createData not logged
+    # features.delete
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.features.delete(number=2, randomize=True)
     checkLogContents('features.delete', "Matrix", [('number', 2), ('randomize', 'True')])
@@ -406,50 +476,125 @@ def testPrepTypeFunctionsUseLog():
     def retainer(vector):
         return True
 
-    # points.retain; createData not logged
+    # points.retain
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.points.retain(toRetain=retainer)
     checkLogContents('points.retain', "Matrix", [('toRetain', 'retainer')])
 
-    # features.retain; createData not logged
+    # features.retain
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.features.retain(toRetain=lambda ft: True)
     checkLogContents('features.retain', "Matrix", [('toRetain', 'lambda ft: True')])
 
-    # points.transform; createData not logged
+    # points.transform
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.points.transform(lambda x: [val for val in x])
     checkLogContents('points.transform', "Matrix",
                      [('function', 'lambda x: [val for val in x]')])
 
-    # features.transform; createData not logged
+    # features.transform
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.features.transform(lambda x: [val for val in x], features=0)
     checkLogContents('features.transform', "Matrix",
-                     [('function', 'lambda x: [val for val in x]'), ('features', 0)])
+                     [('function', 'lambda x: [val for val in x]'), ('features', [0])])
 
-    # elements.transform; createData not logged
+    # elements.transform
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.elements.transform(lambda x: [val for val in x], features=0)
     checkLogContents('elements.transform', "Matrix",
-                     [('toTransform', 'lambda x: [val for val in x]'), ('features', 0)])
+                     [('toTransform', 'lambda x: [val for val in x]'), ('features', [0])])
 
-    # points.add; createData not logged
+    # points.add
     dataObj = UML.createData("Matrix", data, useLog=False)
     appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
     toAppend = UML.createData("Matrix", appendData, useLog=False)
     dataObj.points.add(toAppend)
     checkLogContents('points.add', "Matrix", [('toAdd', toAppend.name)])
 
-    # features.add; createData not logged
+    # features.add
     dataObj = UML.createData("Matrix", data, useLog=False)
     appendData = numpy.zeros((18,1))
     toAppend = UML.createData("Matrix", appendData, useLog=False)
     dataObj.features.add(toAppend)
     checkLogContents('features.add', "Matrix", [('toAdd', toAppend.name)])
+
+    # points.fill
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataObj.points.fill(UML.match.nonNumeric, 0)
+    checkLogContents('points.fill', "Matrix", [('toMatch', 'nonNumeric'), ('toFill', 0)])
+
+    # features.fill
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataObj.features.fill(1, UML.fill.mean, features=[1,2])
+    checkLogContents('features.fill', "Matrix", [('toMatch', 1), ('toFill', 'mean')])
+
+    # elements.multiply/power
+    dataObj = UML.ones('Matrix', 5, 5)
+    fives = UML.ones('Matrix', 5, 5) * 5
+    fives.name = 'fives'
+    dataObj.elements.multiply(fives)
+    checkLogContents('elements.multiply', 'Matrix', [('other', 'fives')])
+    zeros = UML.zeros('Matrix', 5, 5, name='zeros')
+    dataObj.elements.power(zeros)
+    checkLogContents('elements.power', 'Matrix', [('other', 'zeros')])
+
+    # features.splitByParsing
+    toSplit = [[1, 'a0', 2], [1, 'a1', 2], [3, 'b0', 4], [5, 'c0', 6]]
+    fNames = ['keep1', 'split', 'keep2']
+    dataObj = UML.createData('List', toSplit, featureNames=fNames, useLog=False)
+    dataObj.features.splitByParsing('split', 1, ['str', 'int'])
+    checkLogContents('features.splitByParsing', 'List',
+                     [('feature', 'split'), ('rule', 1), ('resultingNames', ['str', 'int'])])
+
+    # points.splitByCollapsingFeatures
+    toSplit = [['NYC', 4, 5, 10], ['LA', 20, 21, 21], ['CHI', 0, 2, 7]]
+    fNames = ['city', 'jan', 'feb', 'mar']
+    dataObj = UML.createData('DataFrame', toSplit, featureNames=fNames, useLog=False)
+    dataObj.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
+                                              'month', 'temp')
+    checkLogContents('points.splitByCollapsingFeatures', 'DataFrame',
+                     [('featuresToCollapse', ['jan', 'feb', 'mar']),
+                      ('featureForNames', 'month'), ('featureForValues', 'temp')])
+
+    # points.combineByExpandingFeatures
+    toCombine = [['Bolt', '100m', 9.81],
+                 ['Bolt', '200m', 19.78],
+                 ['Gatlin', '100m', 9.89],
+                 ['de Grasse', '200m', 20.02],
+                 ['de Grasse', '100m', 9.91]]
+    fNames = ['athlete', 'dist', 'time']
+    dataObj = UML.createData('Matrix', toCombine, featureNames=fNames, useLog=False)
+    dataObj.points.combineByExpandingFeatures('dist', 'time')
+    checkLogContents('points.combineByExpandingFeatures', 'Matrix',
+                     [('featureWithFeatureNames', 'dist'), ('featureWithValues', 'time')])
+
+    # points.setName
+    dataObj = UML.createData('Matrix', data, useLog=False)
+    dataObj.points.setName(0, 'newPtName')
+    checkLogContents('points.setName', 'Matrix', [('oldIdentifier', 0),
+                                                  ('newName', 'newPtName')])
+
+    # features.setName
+    dataObj = UML.createData('Matrix', data, useLog=False)
+    dataObj.features.setName(0, 'newFtName')
+    checkLogContents('features.setName', 'Matrix', [('oldIdentifier', 0),
+                                                  ('newName', 'newFtName')])
+
+    # points.setNames
+    dataObj = UML.createData('Matrix', data, useLog=False)
+    newPtNames = ['point' + str(i) for i in range(18)]
+    dataObj.points.setNames(newPtNames)
+    checkLogContents('points.setNames', 'Matrix', [('assignments', newPtNames)])
+
+    # features.setNames
+    dataObj = UML.createData('Matrix', data, useLog=False)
+    newFtNames = ['feature' + str(i) for i in range(3)]
+    dataObj.features.setNames(newFtNames)
+    checkLogContents('features.setNames', 'Matrix', [('assignments', newFtNames)])
+
 
 @configSafetyWrapper
 def testDataTypeFunctionsUseLog():
@@ -459,57 +604,20 @@ def testDataTypeFunctionsUseLog():
             ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2],
             ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
 
-    # featureReport; createData not logged
+    # featureReport
     dataObj = UML.createData("Matrix", data, useLog=False)
     fReport = dataObj[:,1].featureReport()
 
     logInfo = getLastLogData()
     assert "'reportType': 'feature'" in logInfo
 
-    # summaryReport; createData not logged
+    # summaryReport
     dataObj = UML.createData("Matrix", data, useLog=False)
     sReport = dataObj.summaryReport()
 
     logInfo = getLastLogData()
     assert "'reportType': 'summary'" in logInfo
 
-@configSafetyWrapper
-def testBaseObjectFunctionsWithoutUseLog():
-    """test a handful of base objects that make calls to logged functions are not logged"""
-
-    UML.settings.set('logger', 'enabledByDefault', 'True')
-    def getLogLength():
-        lengthQuery = "SELECT COUNT(entry) FROM logger"
-        lengthLog = UML.logger.active.extractFromLog(lengthQuery)
-        lengthValue = lengthLog[0][0] # returns list of tuples i.e. [(0,)]
-        return lengthValue
-    # ensure starting table has no values
-    removeLogFile()
-    assert getLogLength() == 0
-
-    data = [["a", 1], ["a", 1], ["a", 1], ["a", 1], ["a", 1], ["a", 1],
-            ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2],
-            ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
-
-    # points.copy; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    dataCopy = dataObj.copy()
-    assert getLogLength() == 0
-
-    # copyAs; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    dataCopy = dataObj.copyAs("pythonlist")
-    assert getLogLength() == 0
-
-    # points.count; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    count = dataObj.points.count(lambda x: x[1]>0)
-    assert getLogLength() == 0
-
-    # features.count; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    count = dataObj.features.count(lambda x: type(x) == str)
-    assert getLogLength() == 0
 
 @configSafetyWrapper
 def testHandmadeLogEntriesInput():

@@ -17,6 +17,9 @@ from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.helpers import _intFloatOrString
+# from .. import logger
+from .assertionHelpers import oneLogEntryExpected
+
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
 
@@ -2212,6 +2215,20 @@ def test_createData_csv_nonremoval_efficiency():
                 assert fromList == fromCSV
             finally:
                 UML.helpers._removalCleanupAndSelectionOrdering = backup
+
+
+#################
+# Logging count #
+#################
+def test_createData_logCount():
+    """Test createData adds one entry to the log for each return type"""
+
+    @oneLogEntryExpected
+    def byType(rType):
+        toTest = UML.createData(rType, [[1,2,3], [4,5,6], [7,8,9]])
+
+    for t in returnTypes:
+        byType(t)
 
 
 # tests for combination of one name set being specified and one set being
