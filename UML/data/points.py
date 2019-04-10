@@ -16,7 +16,6 @@ from collections import OrderedDict
 
 from UML.logger import handleLogging
 from UML.exceptions import ImproperObjectAction
-from .dataHelpers import buildArgDict
 
 class Points(object):
     """
@@ -1479,11 +1478,10 @@ class Points(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Points.splitByCollapsingFeatures,
-                               featuresToCollapse, featureForNames,
-                               featureForValues)
         handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(),
+                      Points.splitByCollapsingFeatures, featuresToCollapse,
+                      featureForNames, featureForValues)
 
 
     def combineByExpandingFeatures(self, featureWithFeatureNames,
@@ -1612,10 +1610,10 @@ class Points(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Points.combineByExpandingFeatures,
-                               featureWithFeatureNames, featureWithValues)
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(),
+                      Points.combineByExpandingFeatures,
+                      featureWithFeatureNames, featureWithValues)
 
     ####################
     # Query functions #

@@ -42,7 +42,6 @@ from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import buildArgDict
 
 cython = UML.importModule('cython')
 
@@ -485,10 +484,9 @@ class Base(object):
             insertBefore = None
         self.features.add(binaryObj, insertBefore=insertBefore, useLog=False)
 
-        argDict = buildArgDict(Base.replaceFeatureWithBinaryFeatures,
-                               featureToReplace)
         handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(),
+                      Base.replaceFeatureWithBinaryFeatures, featureToReplace)
 
         return ftNames
 
@@ -550,10 +548,9 @@ class Base(object):
 
         self.features.transform(applyMap, features=ftIndex, useLog=False)
 
-        argDict = buildArgDict(Base.transformFeatureToIntegers,
-                               featureToConvert)
         handleLogging(useLog, 'prep', "transformFeatureToIntegers",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.transformFeatureToIntegers,
+                      featureToConvert)
 
         return {v: k for k, v in mapping.items()}
 
@@ -645,9 +642,9 @@ class Base(object):
                 tmp.features.delete(by, useLog=False)
                 res[k] = tmp
 
-        argDict = buildArgDict(Base.groupByFeature, by, countUniqueValueOnly)
         handleLogging(useLog, 'prep', "groupByFeature",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.groupByFeature, by,
+                      countUniqueValueOnly)
 
         return res
 
@@ -889,10 +886,8 @@ class Base(object):
 
             ret = toSplit, trainY, testX, testY
 
-        argDict = buildArgDict(Base.trainAndTestSets, testFraction, labels,
-                               randomOrder)
         handleLogging(useLog, 'prep', "trainAndTestSets", self.getTypeString(),
-                      argDict)
+                      Base.trainAndTestSets, testFraction, labels, randomOrder)
 
         return ret
 
@@ -2140,7 +2135,8 @@ class Base(object):
         self.points.setNames(ptNames, useLog=False)
         self.features.setNames(ftNames, useLog=False)
 
-        handleLogging(useLog, 'prep', "transpose", self.getTypeString(), {})
+        handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
+                      Base.transpose)
 
         self.validate()
 
@@ -2204,9 +2200,8 @@ class Base(object):
         self._nextDefaultValuePoint = other._nextDefaultValuePoint
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
-        argDict = buildArgDict(Base.referenceDataFrom, other)
         handleLogging(useLog, 'prep', "referenceDataFrom",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.referenceDataFrom, other)
 
         self.validate()
 
@@ -2490,10 +2485,9 @@ class Base(object):
         self._fillWith_implementation(values, psIndex, fsIndex,
                                       peIndex, feIndex)
 
-        argDict = buildArgDict(Base.fillWith, values, pointStart, featureStart,
-                               pointEnd, featureEnd)
         handleLogging(useLog, 'prep', "fillWith",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.fillWith, values, pointStart,
+                      featureStart, pointEnd, featureEnd)
         self.validate()
 
 
@@ -2585,10 +2579,10 @@ class Base(object):
             def transform(value, i, j):
                 return tmpData[i, j]
             self.elements.transform(transform, points, features, useLog=False)
-        argDict = buildArgDict(Base.fillUsingAllData, match, fill, points,
-                               features, returnModified, **kwarguments)
+
         handleLogging(useLog, 'prep', "fillUsingAllData",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.fillUsingAllData, match, fill,
+                      points, features, returnModified, **kwarguments)
 
         return modified
 
@@ -2673,7 +2667,7 @@ class Base(object):
         self.points.setNames(['Flattened'], useLog=False)
 
         handleLogging(useLog, 'prep', "flattenToOnePoint",
-                      self.getTypeString(), {})
+                      self.getTypeString(), Base.flattenToOnePoint)
 
 
     def flattenToOneFeature(self, useLog=None):
@@ -2739,7 +2733,7 @@ class Base(object):
         self.features.setNames(['Flattened'], useLog=False)
 
         handleLogging(useLog, 'prep', "flattenToOneFeature",
-                      self.getTypeString(), {})
+                      self.getTypeString(), Base.flattenToOneFeature)
 
     def _unflattenNames(self, addedAxis, addedAxisLength):
         """
@@ -2936,9 +2930,9 @@ class Base(object):
         self.points.setNames(ret[0], useLog=False)
         self.features.setNames(ret[1], useLog=False)
 
-        argDict = buildArgDict(Base.unflattenFromOnePoint, numPoints)
         handleLogging(useLog, 'prep', "unflattenFromOnePoint",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.unflattenFromOnePoint,
+                      numPoints)
 
 
     def unflattenFromOneFeature(self, numFeatures, useLog=None):
@@ -3027,9 +3021,9 @@ class Base(object):
         self.points.setNames(ret[1], useLog=False)
         self.features.setNames(ret[0], useLog=False)
 
-        argDict = buildArgDict(Base.unflattenFromOneFeature, numFeatures)
         handleLogging(useLog, 'prep', "unflattenFromOneFeature",
-                      self.getTypeString(), argDict)
+                      self.getTypeString(), Base.unflattenFromOneFeature,
+                      numFeatures)
 
 
     def merge(self, other, point='strict', feature='union', onFeature=None,
@@ -3245,9 +3239,8 @@ class Base(object):
         else:
             self._genericMergeFrontend(other, point, feature, onFeature)
 
-        argDict = buildArgDict(Base.merge, other, point,
-                               feature, onFeature)
-        handleLogging(useLog, 'prep', "merge", self.getTypeString(), argDict)
+        handleLogging(useLog, 'prep', "merge", self.getTypeString(),
+                      Base.merge, other, point, feature, onFeature)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
                                            onFeature):

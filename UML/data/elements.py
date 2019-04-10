@@ -22,7 +22,6 @@ from UML.exceptions import ImproperObjectAction
 from UML.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import buildArgDict
 
 
 class Elements(object):
@@ -188,10 +187,10 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Elements.transform, toTransform, points,
-                               features, preserveZeros, skipNoneReturnValues)
         handleLogging(useLog, 'prep', 'elements.transform',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.transform,
+                      toTransform, points, features, preserveZeros,
+                      skipNoneReturnValues)
 
     ###########################
     # Higher Order Operations #
@@ -377,10 +376,10 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Elements.calculate, function, points, features,
-                               preserveZeros, skipNoneReturnValues, outputType)
         handleLogging(useLog, 'prep', 'elements.calculate',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.calculate,
+                      function, points, features, preserveZeros,
+                      skipNoneReturnValues, outputType)
 
         return ret
 
@@ -561,9 +560,8 @@ class Elements(object):
         self._source.features.setNames(retFNames, useLog=False)
         self._source.validate()
 
-        argDict = buildArgDict(Elements.multiply, other)
         handleLogging(useLog, 'prep', 'elements.multiply',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.multiply, other)
 
 
     def power(self, other, useLog=None):
@@ -639,9 +637,8 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Elements.power, other)
         handleLogging(useLog, 'prep', 'elements.power',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.power, other)
 
     ########################
     # Higher Order Helpers #

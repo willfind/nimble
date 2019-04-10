@@ -60,6 +60,9 @@ class UmlLogger(object):
         self.cursor = None
         self.isAvailable = False
         self.position = 0
+        self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
+                         'run': self.logRun, 'data': self.logData,
+                         'crossVal': self.logCrossValidation}
 
 
     def setup(self, newFileName=None):
@@ -244,7 +247,7 @@ class UmlLogger(object):
 
             self.log(logType, logInfo)
 
-    def logPrep(self, useLog, umlFunction, dataObject, arguments):
+    def logPrep(self, useLog, umlFunction, dataObject, func, *args, **kwargs):
         """
         Log information about a data preparation step performed.
 
@@ -267,6 +270,7 @@ class UmlLogger(object):
             logInfo = {}
             logInfo["function"] = umlFunction
             logInfo["object"] = dataObject
+            arguments = _buildArgDict(func, *args, **kwargs)
             logInfo["arguments"] = arguments
 
             self.log(logType, logInfo)
@@ -506,23 +510,15 @@ def handleLogging(useLog, logType, *args, **kwargs):
     """
     Store information to be logged in the logger.
     """
-    logTypes = {'load': UML.logger.active.logLoad,
-                'prep': UML.logger.active.logPrep,
-                'run': UML.logger.active.logRun,
-                'data': UML.logger.active.logData,
-                'crossVal': UML.logger.active.logCrossValidation}
     if enableLogging(useLog):
-        if logType in logTypes:
-            logFunc = logTypes[logType]
+        if logType in UML.logger.active.logTypes:
+            logFunc = UML.logger.active.logTypes[logType]
             logFunc(useLog, *args, **kwargs)
         else:
             if args:
                 UML.log(logType, args)
             if kwargs:
                 UML.log(logType, kwargs)
-    else:
-        UML.logger.active.logType = None
-        UML.logger.active.logInfo = None
 
 def stringToDatetime(string):
     """
@@ -869,6 +865,108 @@ def _logHeader(left, right):
     lineLog = "\n"
     lineLog += "{0:60}{1:>19}\n".format(left, right)
     return lineLog
+
+def _buildArgDict(func, *args, **kwargs):
+    """
+    Creates the dictionary of arguments for the prep logType. Adds all
+    required arguments and any keyword arguments that are not the
+    default values.
+
+    Parameters
+    ----------
+    argNames : tuple
+        The names of all arguments in the function.
+    defaults : tuple
+        The default values of the arguments.
+    """
+    argNames, _, _, defaults = UML.helpers.inspectArguments(func)
+    argNames = argNames[1:] # ignore self arg
+    nameArgMap = {}
+    for name, arg in zip(argNames, args):
+        if callable(arg):
+            nameArgMap[name] = _extractFunctionString(arg)
+        elif isinstance(arg, UML.data.Base):
+            nameArgMap[name] = arg.name
+        else:
+            nameArgMap[name] = arg
+
+    defaultDict = {}
+    if defaults:
+        startDefaults = len(argNames) - len(defaults)
+        defaultArgs = argNames[startDefaults:]
+        for name, value in zip(defaultArgs, defaults):
+            if name != 'useLog':
+                defaultDict[name] = value
+
+    argDict = {}
+    for name in nameArgMap:
+        if name not in defaultDict:
+            argDict[name] = nameArgMap[name]
+        elif not _argMatch(defaultDict[name], nameArgMap[name]):
+            argDict[name] = nameArgMap[name]
+    for name in kwargs:
+        if name in defaultDict and not _argMatch(defaultDict[name],
+                                                kwargs[name]):
+            argDict[name] = kwargs[name]
+
+    return argDict
+
+def _extractFunctionString(function):
+    """
+    Extracts function name or lambda function if passed a function,
+    Otherwise returns a string.
+    """
+    try:
+        functionName = function.__name__
+        if functionName != "<lambda>":
+            return functionName
+        else:
+            return _lambdaFunctionString(function)
+    except AttributeError:
+        return str(function)
+
+def _lambdaFunctionString(function):
+    """
+    Returns a string of a lambda function.
+    """
+    sourceLine = inspect.getsourcelines(function)[0][0]
+    line = re.findall(r'lambda.*', sourceLine)[0]
+    lambdaString = ""
+    afterColon = False
+    openParenthesis = 1
+    for letter in line:
+        if letter == "(":
+            openParenthesis += 1
+        elif letter == ")":
+            openParenthesis -= 1
+        elif letter == ":":
+            afterColon = True
+        elif letter == "," and afterColon:
+            return lambdaString
+        if openParenthesis == 0:
+            return lambdaString
+        else:
+            lambdaString += letter
+    return lambdaString
+
+def _argMatch(arg1, arg2):
+    """
+    Determine if two arguments are equal.
+
+    For some objects (like numpy arrays), == can be ambiguous, so in that
+    case attempt iterate through and check for value equality.
+    """
+    try:
+        if arg1 == arg2:
+            return True
+        # two nan values should be considered equal
+        if arg1 != arg1 and arg2 != arg2:
+            return True
+        return False
+    except ValueError:
+        # iterator where equality is ambiguous
+        return all(val1 == val2 or (val1 != val1 and val2 != val2)
+                   for val1, val2 in zip(arg1, arg2))
 
 #######################
 ### Initialization  ###

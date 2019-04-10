@@ -18,7 +18,6 @@ import six
 
 from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
-from .dataHelpers import buildArgDict
 
 class Features(object):
     """
@@ -1564,10 +1563,9 @@ class Features(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(Features.splitByParsing, feature, rule,
-                               resultingNames)
         handleLogging(useLog, 'prep', 'features.splitByParsing',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Features.splitByParsing,
+                      feature, rule, resultingNames)
 
     ###################
     # Query functions #

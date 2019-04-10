@@ -34,7 +34,7 @@ from .points import Points
 from .features import Features
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import validateInputString, buildArgDict
+from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 
 class Axis(object):
@@ -103,10 +103,9 @@ class Axis(object):
             self._setAllDefault()
         self._setName_implementation(oldIdentifier, newName)
 
-        argDict = buildArgDict(self._getAxisFunc('setName'), oldIdentifier,
-                               newName)
         handleLogging(useLog, 'prep', '{ax}s.setName'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('setName'),
+                      oldIdentifier, newName)
 
 
     def _setNames(self, assignments=None, useLog=None):
@@ -127,9 +126,9 @@ class Axis(object):
             assignments = valuesToPythonList(assignments, 'assignments')
             self._setNamesFromList(assignments, count)
 
-        argDict = buildArgDict(self._getAxisFunc('setNames'), assignments)
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('setNames'),
+                      assignments)
 
     def _getIndex(self, identifier):
         num = len(self)
@@ -202,10 +201,9 @@ class Axis(object):
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
-        argDict = buildArgDict(self._getAxisFunc('copy'), toCopy, start, end,
-                               number, randomize)
         handleLogging(useLog, 'prep', '{ax}s.copy'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('copy'),
+                      toCopy, start, end, number, randomize)
 
         return ret
 
@@ -221,10 +219,9 @@ class Axis(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('extract'), toExtract, start,
-                               end, number, randomize)
         handleLogging(useLog, 'prep', '{ax}s.extract'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('extract'),
+                      toExtract, start, end, number, randomize)
 
         return ret
 
@@ -235,10 +232,9 @@ class Axis(object):
         self._adjustCountAndNames(ret)
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('delete'), toDelete, start,
-                               end, number, randomize)
         handleLogging(useLog, 'prep', '{ax}s.delete'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('delete'),
+                      toDelete, start, end, number, randomize)
 
 
     def _retain(self, toRetain, start, end, number, randomize, useLog=None):
@@ -252,10 +248,9 @@ class Axis(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('retain'), toRetain, start,
-                               end, number, randomize)
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('retain'),
+                      toRetain, start,  end, number, randomize)
 
 
     def _count(self, condition):
@@ -285,9 +280,7 @@ class Axis(object):
             axisObj = self._source._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
 
-        convertSortHelperForLog = False
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            convertSortHelperForLog = True
             indices = constructIndicesList(self._source, self._axis,
                                            sortHelper)
             if len(indices) != axisCount:
@@ -318,13 +311,9 @@ class Axis(object):
 
         self._source.validate()
 
-        if convertSortHelperForLog:
-            # other iterator types can disrupt logger
-            sortHelper = valuesToPythonList(sortHelper, 'sortHelper')
-        argDict = buildArgDict(self._getAxisFunc('sort'), sortByArg,
-                               sortHelper)
         handleLogging(useLog, 'prep', '{ax}s.sort'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('sort'),
+                      sortByArg, sortHelper)
 
     # def _flattenToOne(self):
     #     if self._source._pointCount == 0 or self._source._featureCount == 0:
@@ -422,7 +411,7 @@ class Axis(object):
         self._sort(sortBy=None, sortHelper=indices, useLog=False)
 
         handleLogging(useLog, 'prep', '{ax}s.shuffle'.format(ax=self._axis),
-                      self._source.getTypeString(), {})
+                      self._source.getTypeString(), self._sigFunc('shuffle'))
 
 
     def _transform(self, function, limitTo, useLog=None):
@@ -439,10 +428,9 @@ class Axis(object):
 
         self._transform_implementation(function, limitTo)
 
-        argDict = buildArgDict(self._getAxisFunc('transform'), function,
-                               limitTo)
         handleLogging(useLog, 'prep', '{ax}s.transform'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('transform'),
+                      function, limitTo)
 
         self._source.validate()
 
@@ -488,10 +476,9 @@ class Axis(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('calculate'), function,
-                               limitTo)
         handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('calculate'),
+                      function, limitTo)
 
         return ret
 
@@ -555,10 +542,10 @@ class Axis(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('add'), toAdd, insertBefore)
         handleLogging(useLog, 'prep',
                       '{ax}s.add'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('add'),
+                      toAdd, insertBefore)
 
 
     def _mapReduce(self, mapper, reducer, useLog=None):
@@ -618,9 +605,9 @@ class Axis(object):
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
-        argDict = buildArgDict(self._getAxisFunc('mapReduce'), mapper, reducer)
         handleLogging(useLog, 'prep', '{ax}s.mapReduce'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('mapReduce'),
+                      mapper, reducer)
 
         return ret
 
@@ -648,10 +635,9 @@ class Axis(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(self._getAxisFunc('fill'), toMatch, toFill,
-                               limitTo, returnModified, **kwarguments)
         handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('fill'),
+                      toMatch, toFill, limitTo, returnModified, **kwarguments)
 
         return modified
 
@@ -858,10 +844,9 @@ class Axis(object):
                 if alsoIsObj:
                     applyResultTo /= divide
 
-        argDict = buildArgDict(self._getAxisFunc('normalize'), subtract,
-                               divide, applyResultTo)
         handleLogging(useLog, 'prep', '{ax}s.normalize'.format(ax=self._axis),
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), self._sigFunc('normalize'),
+                      subtract, divide, applyResultTo)
 
     ###################
     # Query functions #
@@ -1640,7 +1625,10 @@ class Axis(object):
         newNames = startNames + adjustedNames + endNames
         setObjNames(newNames, useLog=False)
 
-    def _getAxisFunc(self, funcName):
+    def _sigFunc(self, funcName):
+        """
+        Get the top level function containing the correct signature.
+        """
         if isinstance(self, Points):
             return getattr(Points, funcName)
         return getattr(Features, funcName)
