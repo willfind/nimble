@@ -26,7 +26,7 @@ from UML.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
-from UML.logger import logPosition, Stopwatch, handleLogging
+from UML.logger import Stopwatch, handleLogging
 from UML.helpers import _mergeArguments
 from UML.helpers import generateAllPairs, countWins, inspectArguments
 from UML.helpers import extractWinningPredictionIndex
@@ -1345,7 +1345,6 @@ class TrainedLearner(object):
             setattr(self, methodName, wrapped)
 
     @captureOutput
-    @logPosition
     def test(self, testX, testY, performanceFunction, arguments=None,
              output='match', scoreMode='label', useLog=None, **kwarguments):
         """
@@ -1461,7 +1460,6 @@ class TrainedLearner(object):
         return ret
 
     @captureOutput
-    @logPosition
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
         """
@@ -1627,7 +1625,6 @@ class TrainedLearner(object):
         # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
-    @logPosition
     def retrain(self, trainX, trainY=None, useLog=None):
         """
         Train the model on new data.
@@ -1676,7 +1673,6 @@ class TrainedLearner(object):
                       None, None, self.learnerName, self.arguments, None)
 
     @captureOutput
-    @logPosition
     def incrementalTrain(self, trainX, trainY=None, useLog=None):
         """
         Extend the training of this learner with additional data.

@@ -32,7 +32,7 @@ class KNNClassifier(CustomLearner):
             def scoreHelperDecending(point):
                 return 0 - point[1]
 
-            results.points.sort(sortHelper=scoreHelperDecending)
+            results.points.sort(sortHelper=scoreHelperDecending, useLog=False)
             # only one label received votes
             if len(results.points) == 1:
                 prediction = results[0, 0]
@@ -45,7 +45,7 @@ class KNNClassifier(CustomLearner):
 
             return prediction
 
-        return testX.points.calculate(foo)
+        return testX.points.calculate(foo, useLog=False)
 
 
     def getScores(self, testX):
@@ -59,15 +59,15 @@ class KNNClassifier(CustomLearner):
             nearestPoints = self._generatePointsSortedByDistance(p)
             results = self._voteNearest(nearestPoints)
             # sort ascending according to label ID
-            results.points.sort(0)
+            results.points.sort(0, useLog=False)
 
-            scores = results.features.extract(1)
-            scores.transpose()
+            scores = results.features.extract(1, useLog=False)
+            scores.transpose(useLog=False)
 
             if ret is None:
                 ret = scores
             else:
-                ret.points.add(scores)
+                ret.points.add(scores, useLog=False)
 
         return ret
 
@@ -84,8 +84,8 @@ class KNNClassifier(CustomLearner):
             index = self._trainX.points.getIndex(point.points.getName(0))
             return [index, scipy.spatial.distance.euclidean(test, point)]
 
-        distances = self._trainX.points.calculate(distanceFrom)
-        distances.points.sort(1)
+        distances = self._trainX.points.calculate(distanceFrom, useLog=False)
+        distances.points.sort(1, useLog=False)
         return distances
 
 
@@ -96,7 +96,7 @@ class KNNClassifier(CustomLearner):
         to find labels in self.trainY, letting those be the votes. In
         case of a tie, we revert to k=1.
         """
-        topK = votes.points.copy(end=self.k - 1)
+        topK = votes.points.copy(end=self.k - 1, useLog=False)
 
         def mapper(point):
             labelIndex = self._trainY[int(point[0]), 0]
@@ -105,5 +105,5 @@ class KNNClassifier(CustomLearner):
         def reducer(key, valList):
             return (key, len(valList))
 
-        results = topK.points.mapReduce(mapper, reducer)
+        results = topK.points.mapReduce(mapper, reducer, useLog=False)
         return results

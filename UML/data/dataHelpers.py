@@ -720,7 +720,7 @@ def lambdaFunctionString(function):
             lambdaString += letter
     return lambdaString
 
-def buildArgDict(argNames, defaults, *args, **kwargs):
+def buildArgDict(func, *args, **kwargs):
     """
     Creates the dictionary of arguments for the prep logType. Adds all
     required arguments and any keyword arguments that are not the
@@ -733,8 +733,8 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
     defaults : tuple
         The default values of the arguments.
     """
-    if not isinstance(argNames, tuple) or not isinstance(defaults, tuple):
-        raise InvalidArgumentType("argNames and defaults must be tuples")
+    argNames, _, _, defaults = UML.helpers.inspectArguments(func)
+    argNames = argNames[1:] # ignore self arg
     nameArgMap = {}
     for name, arg in zip(argNames, args):
         if callable(arg):
@@ -742,13 +742,15 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
         elif isinstance(arg, UML.data.Base):
             nameArgMap[name] = arg.name
         else:
-            nameArgMap[name] = str(arg)
+            nameArgMap[name] = arg
 
-    startDefaults = len(argNames) - len(defaults)
-    defaultArgs = argNames[startDefaults:]
     defaultDict = {}
-    for name, value in zip(defaultArgs, defaults):
-        defaultDict[name] = str(value)
+    if defaults:
+        startDefaults = len(argNames) - len(defaults)
+        defaultArgs = argNames[startDefaults:]
+        for name, value in zip(defaultArgs, defaults):
+            if name != 'useLog':
+                defaultDict[name] = value
 
     argDict = {}
     for name in nameArgMap:

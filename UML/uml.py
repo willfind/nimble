@@ -15,7 +15,7 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.logger import logPosition, handleLogging
+from UML.logger import handleLogging
 from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
@@ -41,7 +41,7 @@ from UML.calculate import detectBestResult
 cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
-@logPosition
+
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
         featureNames='automatic', elementType='float', name=None, useLog=None):
@@ -200,7 +200,7 @@ def createRandomData(
                   numFeatures, name, sparsity=sparsity, seed=seed)
 
     return createData(returnType, data=randData, pointNames=pointNames,
-                      featureNames=featureNames, name=name)
+                      featureNames=featureNames, name=name, useLog=False)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
@@ -442,7 +442,7 @@ def identity(returnType, size, pointNames='automatic',
                               featureNames=featureNames, name=name,
                               useLog=False)
 
-@logPosition
+
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
                   useLog=None, **kwarguments):
     """
@@ -522,11 +522,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
     # modify references and names for trainX and testX
-    trainX.referenceDataFrom(normalizedTrain)
+    trainX.referenceDataFrom(normalizedTrain, useLog=False)
     trainX.name = trainX.name + " " + trueLearnerName
 
     if testX is not None:
-        testX.referenceDataFrom(normalizedTest)
+        testX.referenceDataFrom(normalizedTest, useLog=False)
         testX.name = testX.name + " " + trueLearnerName
 
     merged = _mergeArguments(arguments, kwarguments)
@@ -728,7 +728,7 @@ def listLearners(package=None):
 
     return results
 
-@logPosition
+
 def createData(
         returnType, data, pointNames='automatic', featureNames='automatic',
         elementType=None, name=None, path=None, keepPoints='all',
@@ -1254,7 +1254,7 @@ def learnerType(learnerNames):
 
     return resultsList
 
-@logPosition
+
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
           doneValidData=False, doneValidArguments1=False,
@@ -1372,8 +1372,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
 
     merged = _mergeArguments(arguments, kwarguments)
-    if storeLog != 'unset':
-        useLog = storeLog
 
     # perform CV (if needed)
     argCheck = ArgumentIterator(merged)
@@ -1391,11 +1389,13 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
+        if storeLog == 'unset':
+            storeLog = useLog
         results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
                                               performanceFunction, merged,
                                               numFolds=numFolds,
                                               scoreMode=scoreMode,
-                                              useLog=useLog)
+                                              useLog=storeLog)
         bestArgument, _ = results
 
     else:
@@ -1412,11 +1412,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     return trainedLearner
 
-@logPosition
+
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default', useLog=None,
-                  storeLog='unset', **kwarguments):
+                  **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1544,24 +1544,21 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 
-    if storeLog != 'unset':
-        useLog = storeLog
-
     trainedLearner = UML.train(learnerName, trainX, trainY,
                                performanceFunction, arguments,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
+                               useLog=False, storeLog=useLog, doneValidData=True,
                                done2dOutputFlagCheck=True, **kwarguments)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
             testX = trainX.copy()
-            testX.features.delete(trainY)
+            testX.features.delete(trainY, useLog=False)
         else:
             testX = trainX
 
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
@@ -1573,7 +1570,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     return results
 
-@logPosition
+
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default', useLog=None,
@@ -1716,20 +1713,19 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     """
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
 
-    if storeLog != 'unset':
-        useLog = storeLog
     trainedLearner = UML.train(learnerName, trainX, trainY,
                                performanceFunction, arguments,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               useLog=False, storeLog=useLog,
+                               doneValidData=True, done2dOutputFlagCheck=True,
+                               **kwarguments)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
-        testY = testX.features.extract(testY)
+        testY = testX.features.extract(testY, useLog=False)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
-                                       useLog=useLog)
+                                       useLog=False)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
 
     metrics = {}
@@ -1997,7 +1993,7 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
                               startDate, endDate, maximumEntries,
                               searchForText, regex, saveToFileName, append)
 
-@logPosition
+
 def loadData(inputPath, useLog=None):
     """
     Load UML Base object.
@@ -2030,7 +2026,7 @@ def loadData(inputPath, useLog=None):
                   len(ret.features), ret.name, inputPath)
     return ret
 
-@logPosition
+
 def loadTrainedLearner(inputPath, useLog=None):
     """
     Load UML trainedLearner object.

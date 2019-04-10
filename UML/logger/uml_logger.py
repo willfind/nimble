@@ -208,7 +208,7 @@ class UmlLogger(object):
         path : str
             The path to the data in the loaded object.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "load"
             logInfo = {}
             logInfo["returnType"] = returnType
@@ -236,7 +236,7 @@ class UmlLogger(object):
             The information generated during the call to the report
             function.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "data"
             logInfo = {}
             logInfo["reportType"] = reportType
@@ -262,7 +262,7 @@ class UmlLogger(object):
         arguments : dict
             A mapping of the argument name to the argument's value.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "prep"
             logInfo = {}
             logInfo["function"] = umlFunction
@@ -308,7 +308,7 @@ class UmlLogger(object):
         numFolds : int
             The number of folds if k-fold cross validation utilized.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "run"
             logInfo = {}
             logInfo["function"] = umlFunction
@@ -484,28 +484,6 @@ class UmlLogger(object):
 ###################
 ### LOG HELPERS ###
 ###################
-
-def logPosition(function):
-    """
-    Wrapper to signal a function has been called by the user.
-
-    UML function wrapper used to ensure that internal calls to
-    logged functions are not logged. This can be used as a decorator
-    for functions which are not logged, or wrap logged functions when
-    the logging is deactivated.
-    """
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        UML.logger.active.position += 1
-        try:
-            ret = function(*args, **kwargs)
-        except Exception:
-            einfo = sys.exc_info()
-            reraise(*einfo)
-        finally:
-            UML.logger.active.position -= 1
-        return ret
-    return wrapper
 
 def enableLogging(useLog):
     """

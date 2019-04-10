@@ -14,7 +14,7 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
-from UML.logger import logPosition, handleLogging
+from UML.logger import handleLogging
 from UML.exceptions import ImproperObjectAction
 from .dataHelpers import buildArgDict
 
@@ -1358,7 +1358,7 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-    @logPosition
+
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         """
@@ -1469,23 +1469,23 @@ class Points(object):
         self._source._featureCount = numRetFeatures
         ftNames = [features.getName(idx) for idx in retainIndices]
         ftNames.extend([featureForNames, featureForValues])
-        features.setNames(ftNames)
+        features.setNames(ftNames, useLog=False)
         if self._source._pointNamesCreated():
             appendedPts = []
             for name in self.getNames():
                 for i in range(numCollapsed):
                     appendedPts.append("{0}_{1}".format(name, i))
-            self.setNames(appendedPts)
+            self.setNames(appendedPts, useLog=False)
 
         self._source.validate()
 
-        argDict = buildArgDict(('featuresToCollapse', 'featureForNames',
-                                'featureForValues'), (), featuresToCollapse,
-                               featureForNames, featureForValues)
+        argDict = buildArgDict(Points.splitByCollapsingFeatures,
+                               featuresToCollapse, featureForNames,
+                               featureForValues)
         handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
                       self._source.getTypeString(), argDict)
 
-    @logPosition
+
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featureWithValues, useLog=None):
         """
@@ -1605,15 +1605,14 @@ class Points(object):
         fNames = [self._source.features.getName(i) for i in uncombinedIdx]
         for name in reversed(uniqueNames):
             fNames.insert(namesIdx, name)
-        self._source.features.setNames(fNames)
+        self._source.features.setNames(fNames, useLog=False)
 
         if self._source._pointNamesCreated():
-            self.setNames(pNames)
+            self.setNames(pNames, useLog=False)
 
         self._source.validate()
 
-        argDict = buildArgDict(('featureWithFeatureNames',
-                                'featureWithValues'), (),
+        argDict = buildArgDict(Points.combineByExpandingFeatures,
                                featureWithFeatureNames, featureWithValues)
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
                       self._source.getTypeString(), argDict)

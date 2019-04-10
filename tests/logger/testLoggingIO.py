@@ -270,17 +270,19 @@ def testPrepTypeFunctionsUseLog():
         lastLog = getLastLogData()
         expFunc = "'function': '{0}'".format(funcName)
         expID = "'object': '{0}'".format(objectID)
-
         assert expFunc in lastLog
         assert expID in lastLog
 
         if arguments:
             assert 'arguments' in lastLog
             for argName, argVal in arguments:
-                expArgs1 = "'{0}': '{1}'".format(argName, argVal)
-                # double quotations may wrap the second arg if it contains quotations
-                expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
-                assert expArgs1 in lastLog or expArgs2 in lastLog
+                if not isinstance(argVal, str):
+                    assert "'{0}': {1}".format(argName, argVal) in lastLog
+                else:
+                    expArgs1 = "'{0}': '{1}'".format(argName, argVal)
+                    # double quotations may wrap the second arg if it contains quotations
+                    expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
+                    assert expArgs1 in lastLog or expArgs2 in lastLog
 
     ########
     # Base #
@@ -471,7 +473,7 @@ def testPrepTypeFunctionsUseLog():
     # features.delete
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.features.delete(number=2, randomize=True)
-    checkLogContents('features.delete', "Matrix", [('number', 2), ('randomize', 'True')])
+    checkLogContents('features.delete', "Matrix", [('number', 2), ('randomize', True)])
 
     def retainer(vector):
         return True
@@ -524,12 +526,12 @@ def testPrepTypeFunctionsUseLog():
     # points.fill
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.points.fill(UML.match.nonNumeric, 0)
-    checkLogContents('points.fill', "Matrix", [('toMatch', 'nonNumeric'), ('toFill', 0)])
+    checkLogContents('points.fill', "Matrix", [('match', 'nonNumeric'), ('fill', 0)])
 
     # features.fill
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.fill(1, UML.fill.mean, features=[1,2])
-    checkLogContents('features.fill', "Matrix", [('toMatch', 1), ('toFill', 'mean')])
+    checkLogContents('features.fill', "Matrix", [('match', 1), ('fill', 'mean')])
 
     # elements.multiply/power
     dataObj = UML.ones('Matrix', 5, 5)
@@ -742,9 +744,9 @@ def testShowLogSearchFilters():
         trainYObj = trainObj.features.extract(3)
         testYObj = testObj.features.extract(3)
         # run and crossVal
-        results = UML.trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=trainYObj,
-                                testX=testObj, testY=testYObj, performanceFunction=RMSE,
-                                arguments={"C":(1,0.1)})
+        results = UML.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
+                                   trainY=trainYObj, testX=testObj, testY=testYObj,
+                                   performanceFunction=RMSE, arguments={"k": (3, 5)})
     # edit log runNumbers and timestamps
     location = UML.settings.get("logger", "location")
     name = UML.settings.get("logger", "name")

@@ -16,7 +16,7 @@ from abc import abstractmethod
 import numpy
 import six
 
-from UML.logger import logPosition, handleLogging
+from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 from .dataHelpers import buildArgDict
 
@@ -1398,7 +1398,7 @@ class Features(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-    @logPosition
+
     def splitByParsing(self, feature, rule, resultingNames, useLog=None):
         """
         Split a feature into multiple features.
@@ -1560,12 +1560,12 @@ class Features(object):
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
         self._source._featureCount = numRetFeatures
-        self.setNames(fNames)
+        self.setNames(fNames, useLog=False)
 
         self._source.validate()
 
-        argDict = buildArgDict(('feature', 'rule', 'resultingNames'), (),
-                               feature, rule, resultingNames)
+        argDict = buildArgDict(Features.splitByParsing, feature, rule,
+                               resultingNames)
         handleLogging(useLog, 'prep', 'features.splitByParsing',
                       self._source.getTypeString(), argDict)
 
