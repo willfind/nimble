@@ -276,13 +276,10 @@ def testPrepTypeFunctionsUseLog():
         if arguments:
             assert 'arguments' in lastLog
             for argName, argVal in arguments:
-                if not isinstance(argVal, str):
-                    assert "'{0}': {1}".format(argName, argVal) in lastLog
-                else:
-                    expArgs1 = "'{0}': '{1}'".format(argName, argVal)
-                    # double quotations may wrap the second arg if it contains quotations
-                    expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
-                    assert expArgs1 in lastLog or expArgs2 in lastLog
+                expArgs1 = "'{0}': '{1}'".format(argName, argVal)
+                # double quotations may wrap the second arg if it contains quotations
+                expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
+                assert expArgs1 in lastLog or expArgs2 in lastLog
 
     ########
     # Base #
@@ -327,10 +324,11 @@ def testPrepTypeFunctionsUseLog():
 
     # fillUsingAllData
     dataObj = UML.createData("Matrix", data, useLog=False)
-    def simpleFiller(obj, match):
+    def simpleFiller(obj, match, **kwargs):
         return UML.createData('Matrix', numpy.zeros_like(dataObj.data))
-    dataObj.fillUsingAllData('a', fill=simpleFiller)
-    checkLogContents('fillUsingAllData', 'Matrix', [('fill', 'simpleFiller')])
+    dataObj.fillUsingAllData('a', fill=simpleFiller, a=1, b=3)
+    checkLogContents('fillUsingAllData', 'Matrix', [('match', 'a'), ('fill', 'simpleFiller'),
+                                                    ('a', 1), ('b', 3)])
 
     # flattenToOnePoint
     dataObj = UML.createData("DataFrame", data, useLog=False)
@@ -441,8 +439,8 @@ def testPrepTypeFunctionsUseLog():
 
     # features.sort
     dataObj = UML.createData("Matrix", data, useLog=False)
-    dataObj.features.sort(sortBy=dataObj.points.getName(0))
-    checkLogContents('features.sort', "Matrix", [('sortBy', dataObj.points.getName(0))])
+    dataObj.features.sort(sortBy=[2, 1, 0])
+    checkLogContents('features.sort', "Matrix", [('sortBy', [2, 1, 0])])
 
     # points.copy
     dataObj = UML.createData("Matrix", data, useLog=False)

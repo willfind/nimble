@@ -888,7 +888,7 @@ def _buildArgDict(func, *args, **kwargs):
         elif isinstance(arg, UML.data.Base):
             nameArgMap[name] = arg.name
         else:
-            nameArgMap[name] = arg
+            nameArgMap[name] = str(arg)
 
     defaultDict = {}
     if defaults:
@@ -896,18 +896,20 @@ def _buildArgDict(func, *args, **kwargs):
         defaultArgs = argNames[startDefaults:]
         for name, value in zip(defaultArgs, defaults):
             if name != 'useLog':
-                defaultDict[name] = value
+                defaultDict[name] = str(value)
 
     argDict = {}
     for name in nameArgMap:
         if name not in defaultDict:
             argDict[name] = nameArgMap[name]
-        elif not _argMatch(defaultDict[name], nameArgMap[name]):
+        elif nameArgMap[name] != defaultDict[name]:
             argDict[name] = nameArgMap[name]
-    for name in kwargs:
-        if name in defaultDict and not _argMatch(defaultDict[name],
-                                                kwargs[name]):
-            argDict[name] = kwargs[name]
+    for name, value in kwargs.items():
+        value = str(value)
+        if name in defaultDict and value != defaultDict[name]:
+            argDict[name] = value
+        else:
+            argDict[name] = value
 
     return argDict
 
@@ -948,25 +950,6 @@ def _lambdaFunctionString(function):
         else:
             lambdaString += letter
     return lambdaString
-
-def _argMatch(arg1, arg2):
-    """
-    Determine if two arguments are equal.
-
-    For some objects (like numpy arrays), == can be ambiguous, so in that
-    case attempt iterate through and check for value equality.
-    """
-    try:
-        if arg1 == arg2:
-            return True
-        # two nan values should be considered equal
-        if arg1 != arg1 and arg2 != arg2:
-            return True
-        return False
-    except ValueError:
-        # iterator where equality is ambiguous
-        return all(val1 == val2 or (val1 != val1 and val2 != val2)
-                   for val1, val2 in zip(arg1, arg2))
 
 #######################
 ### Initialization  ###
