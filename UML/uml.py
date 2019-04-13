@@ -1257,7 +1257,7 @@ def learnerType(learnerNames):
 @logPosition
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          doneValidData=False, doneValidArguments1=False,
+          numFolds=None, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
           done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
           **kwarguments):
@@ -1298,6 +1298,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``, ``trainY``. Default None
+        will set ``numFolds`` to the the minimum between the 10 and the
+        number of points in ``trainX`` if cross-validation is triggered.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1385,9 +1390,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += "out-of-the-box options) or there must be no choices in "
             msg += "the parameters."
             raise InvalidArgumentValueCombination(msg)
-
-        #modify numFolds if needed
-        numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
+        if numFolds is None:
+            numFolds = min(10, len(trainX.points))
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
@@ -1415,8 +1419,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 @logPosition
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
-                  scoreMode='label', multiClassStrategy='default', useLog=None,
-                  storeLog='unset', **kwarguments):
+                  scoreMode='label', multiClassStrategy='default',
+                  numFolds=None, useLog=None, storeLog='unset', **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1468,6 +1472,11 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int, None
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``, ``trainY``. Default None
+        will set ``numFolds`` to the the minimum between the 10 and the
+        number of points in ``trainX`` if cross-validation is triggered.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1551,8 +1560,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                performanceFunction, arguments,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               numFolds=numFolds, useLog=useLog,
+                               doneValidData=True, done2dOutputFlagCheck=True,
+                               **kwarguments)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
@@ -1576,8 +1586,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 @logPosition
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
-                 scoreMode='label', multiClassStrategy='default', useLog=None,
-                 storeLog='unset', **kwarguments):
+                 scoreMode='label', multiClassStrategy='default',
+                 numFolds=None, useLog=None, storeLog='unset', **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -1641,6 +1651,11 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int, None
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``, ``trainY``. Default None
+        will set ``numFolds`` to the the minimum between the 10 and the
+        number of points in ``trainX`` if cross-validation is triggered.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1722,8 +1737,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                performanceFunction, arguments,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               numFolds=numFolds, useLog=useLog,
+                               doneValidData=True, done2dOutputFlagCheck=True,
+                               **kwarguments)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
@@ -1751,7 +1767,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
-                               numFolds=10, arguments=None, output=None,
+                               numFolds=None, arguments=None, output=None,
                                scoreMode='label', multiClassStrategy='default',
                                useLog=None, **kwarguments):
     """
@@ -1795,9 +1811,11 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         act as the return value. In the False case, we train on the
         training data, and then use the same data as the withheld
         testing data. By default, this flag is set to False.
-    numFolds : int
+    numFolds : int, None
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default is 10.
+        the number of points in ``trainX``, ``trainY``. Default None
+        will set ``numFolds`` to the the minimum between the 10 and the
+        number of points in ``trainX`` if cross-validation is triggered.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -1883,10 +1901,19 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     >>> perform
     0.0
     """
-    performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
-                               performanceFunction, arguments, output,
-                               scoreMode, multiClassStrategy, useLog,
-                               **kwarguments)
+    if crossValidationError:
+        if numFolds is None:
+            numFolds = min(10, len(trainX.points))
+        results = crossValidateReturnBest(learnerName, trainX, trainY,
+                                          performanceFunction, arguments,
+                                          numFolds, scoreMode, useLog,
+                                           **kwarguments)
+        performance = results[1]
+    else:
+        performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
+                                   performanceFunction, arguments, output,
+                                   scoreMode, multiClassStrategy, numFolds,
+                                   useLog, **kwarguments)
     return performance
 
 

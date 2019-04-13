@@ -193,6 +193,17 @@ def test_multioutput_learners_callable_from_all():
     ret_TTTD_1 = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
                                                 lamb=1)
 
+    # Control randomness for each cross-validation so folds are consistent
+    UML.randomness.startAlternateControl(seed=0)
+    ret_TTTD_multi_cv = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+                                                       lamb=1, crossValidationError=True)
+    UML.randomness.setRandomSeed(0)
+    ret_TTTD_0_cv = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
+                                                   lamb=1, crossValidationError=True)
+    UML.randomness.setRandomSeed(0)
+    ret_TTTD_1_cv = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
+                                                   lamb=1, crossValidationError=True)
+    UML.randomness.endAlternateControl()
 
     # tl.test()
     ret_TLT_multi = TLmulti.test(testX, testY, metric)
@@ -218,6 +229,9 @@ def test_multioutput_learners_callable_from_all():
 
     assert ret_TTTD_multi == ret_TTTD_0
     assert ret_TTTD_multi == ret_TTTD_1
+
+    assert ret_TTTD_multi_cv == ret_TTTD_0_cv
+    assert ret_TTTD_multi_cv == ret_TTTD_1_cv
 
     assert ret_TLT_multi == ret_TLT_0
     assert ret_TLT_multi == ret_TLT_1
@@ -410,7 +424,7 @@ def test_frontend_CV_triggering():
             pass
     except Exception:
         einfo = sys.exc_info()
-        six.reraise(einfo[1], None, einfo[2])
+        six.reraise(*einfo)
     finally:
         UML.helpers.crossValidateBackend = temp
 
