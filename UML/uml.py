@@ -1729,7 +1729,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> perform
     0.0
     """
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
+    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 
     if storeLog != 'unset':
         useLog = storeLog
@@ -1909,6 +1909,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                           numFolds, scoreMode, useLog,
                                            **kwarguments)
         performance = results[1]
+        # TODO need to add logging entry to show this function was called
+        # right now only the cross validation is being logged.
     else:
         performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                    performanceFunction, arguments, output,

@@ -153,14 +153,6 @@ def test_trainAndTestOnTrainingData_trainError():
 
     backend(wrapped, runAndCheck)
 
-def test_trainAndTestOnTrainingData_CVError():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndTestOnTrainingData(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            crossValidationError=True, useLog=useLog)
-
-    backend(wrapped, runAndCheck)
-
 def test_normalizeData():
     def wrapped(trainX, trainY, testX, testY, useLog):
         return UML.normalizeData('mlpy.PCA', trainX, testX=testX,
@@ -205,22 +197,38 @@ def test_TrainedLearner_test():
 
 @configSafetyWrapper
 def backendDeep(toCall, validator):
+    if toCall.__name__.startswith("crossValidate"):
+        expectedLogChangeTrue = 1
+        expectedLogChangeFalse = 0
+    elif toCall.__name__.startswith("train"):
+        expectedLogChangeTrue = 2 # cross val entry and train entry
+        expectedLogChangeFalse = 1 # only train entry
+    else:
+        msg = "The function name for this test is not recognized. "
+        msg += "Functions using this backend must have the wrapped 'toCall' "
+        msg += "function renamed to the tested function so it can be "
+        msg += "determined how many log entries should be added"
+        raise TypeError(msg)
     UML.settings.set('logger', 'enabledByDefault', 'True')
     UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
     # the deep logging flag is continget on global and local
     # control, so we confirm that in those instances where
     # logging should be disable, it is still disabled
-    (startT1, endT1) = validator(toCall, useLog=True) # 2 logs added
-    (startT2, endT2) = validator(toCall, useLog=None) # 2 logs added
+    (startT1, endT1) = validator(toCall, useLog=True)
+    (startT2, endT2) = validator(toCall, useLog=None)
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
+    assert startT1 + expectedLogChangeTrue == endT1
+    assert startT2 + expectedLogChangeTrue == endT2
     assert startT3 == endT3
 
     UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
-    (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
-    (startF2, endF2) = validator(toCall, useLog=None) # 1 logs added
+    (startF1, endF1) = validator(toCall, useLog=True)
+    (startF2, endF2) = validator(toCall, useLog=None)
     (startF3, endF3) = validator(toCall, useLog=False) # 0 logs added
+    assert startF1 + expectedLogChangeFalse == endF1
+    assert startF2 + expectedLogChangeFalse == endF2
     assert startF3 == endF3
 
     # next we compare the differences between the calls when
@@ -257,7 +265,7 @@ def test_Deep_crossValidate():
         return UML.crossValidate(learnerName, trainX, trainY,
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog)
-
+    wrapped.__name__ = 'crossValidate'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_crossValidateReturnAll():
@@ -265,7 +273,7 @@ def test_Deep_crossValidateReturnAll():
         return UML.crossValidateReturnAll(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
-
+    wrapped.__name__ = 'crossValidateReturnAll'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_crossValidateReturnBest():
@@ -273,7 +281,7 @@ def test_Deep_crossValidateReturnBest():
         return UML.crossValidateReturnBest(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
-
+    wrapped.__name__ = 'crossValidateReturnBest'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_train():
@@ -282,7 +290,7 @@ def test_Deep_train():
         return UML.train(learnerName, trainX, trainY,
                          performanceFunction=fractionIncorrect, useLog=useLog,
                          k=k)
-
+    wrapped.__name__ = 'train'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndApply():
@@ -291,7 +299,7 @@ def test_Deep_trainAndApply():
         return UML.trainAndApply(learnerName, trainX, trainY, testX,
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog, k=k)
-
+    wrapped.__name__ = 'trainAndApply'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndTest():
@@ -300,7 +308,15 @@ def test_Deep_trainAndTest():
         return UML.trainAndTest(learnerName, trainX, trainY, testX, testY,
                                 performanceFunction=fractionIncorrect,
                                 useLog=useLog, k=k)
+    wrapped.__name__ = 'trainAndTest'
+    backendDeep(wrapped, runAndCheck)
 
+def test_Deep_trainAndTestOnTrainingData_CVError():
+    def wrapped(trainX, trainY, testX, testY, useLog):
+        return UML.trainAndTestOnTrainingData(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            crossValidationError=True, useLog=useLog)
+    wrapped.__name__ = 'trainAndTestOnTrainingData'
     backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, useLog):
