@@ -548,17 +548,17 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
     if isinstance(rawData, (list, tuple)):
         # use raw data (converting to numpy array for lists) to apply
         # vectorized function
-        handleMissing = numpy.array(rawData, dtype=object)
+        handleMissing = numpy.array(rawData, dtype=numpy.object_)
         handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = rawData.astype(object)
+        handleMissing = rawData.astype(numpy.object_)
         handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
         rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
-        handleMissing = rawData.data.astype(object)
+        handleMissing = rawData.data.astype(numpy.object_)
         handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
         handleMissing = elementTypeConvert(handleMissing, elementType)
         # elementTypeConvert returns matrix, need a 1D array
@@ -577,7 +577,8 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path, keepPoints,
         keepFeatures, elementType=None, reuseData=False,
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
+                        'NULL', 'NA'),
         replaceMissingWith=numpy.nan):
     """
     1. Set up autoType
