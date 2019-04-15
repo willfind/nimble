@@ -530,36 +530,41 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    # check if nan values are included in treatAsMissing
     nanIsMissing = False
     for missing in treatAsMissing:
         if isinstance(missing, float) and numpy.isnan(missing):
             nanIsMissing = True
             break
-    # boolean function for whether value should be treated as missing
-    def missingCheck(x):
-        if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
-            return True
-        else:
-            return x in treatAsMissing
-    # vectorize missingCheck function
-    missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
+    # replace nan if nan in treatAsMissing and replaceMissing data is not nan
+    replaceNan = nanIsMissing and replaceMissingData == replaceMissingData
+
+    def replacer(data):
+        """
+        Replace values in a numpy array.
+        """
+        try:
+            # Try to avoid converting dtype if possible for efficiency.
+            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
+            if replaceNan:
+                data[data != data] = replaceMissingWith
+        except ValueError:
+            data = data.astype(numpy.object_)
+            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
+            if replaceNan:
+                data[data != data] = replaceMissingWith
+        return data
 
     if isinstance(rawData, (list, tuple)):
-        # use raw data (converting to numpy array for lists) to apply
-        # vectorized function
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = replacer(handleMissing)
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = rawData.astype(numpy.object_)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = replacer(rawData)
         rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
-        handleMissing = rawData.data.astype(numpy.object_)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = replacer(rawData.data)
         handleMissing = elementTypeConvert(handleMissing, elementType)
         # elementTypeConvert returns matrix, need a 1D array
         handleMissing = handleMissing.A1
