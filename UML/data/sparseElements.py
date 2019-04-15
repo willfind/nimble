@@ -153,8 +153,8 @@ class SparseElements(Elements):
         ret = self.calculate(wrapper, None, None, preserveZeros=False,
                              skipNoneReturnValues=True)
 
-        pnames = self._source.points.getNames()
-        fnames = self._source.features.getNames()
+        pnames = self._source.points._getNamesNoGeneration()
+        fnames = self._source.features._getNamesNoGeneration()
         self._source.referenceDataFrom(ret)
         self._source.points.setNames(pnames)
         self._source.features.setNames(fnames)

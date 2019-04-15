@@ -8,9 +8,8 @@ from __future__ import absolute_import
 from .data_set_analyzer import produceFeaturewiseReport
 from .data_set_analyzer import produceAggregateReport
 from .uml_logger import UmlLogger, initLoggerAndLogConfig
-from .uml_logger import logCapture
-from .uml_logger import enableLogging
-from .uml_logger import directCall
+from .uml_logger import logPosition
+from .uml_logger import handleLogging
 from .uml_logger import stringToDatetime
 from .stopwatch import Stopwatch
 

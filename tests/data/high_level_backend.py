@@ -9,9 +9,9 @@ Methods tested in this file:
 
 In object HighLevelDataSafe:
 points.calculate, features.calculate, elements.calculate, points.count,
-features.count, elements.countUnique, points.unique, features.unique,
-points.mapReduce, features.mapReduce, isApproximatelyEqual,
-trainAndTestSets
+features.count, elements.count, elements.countUnique, points.unique,
+features.unique, points.mapReduce, features.mapReduce,
+isApproximatelyEqual, trainAndTestSets
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
@@ -43,8 +43,10 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.randomness import numpyRandom
-
 from .baseObject import DataTestObject
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import assertNoNamesGenerated
 
 
 preserveName = "PreserveTestName"
@@ -170,6 +172,7 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.points.calculate(noChange, points=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_calculate_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -186,6 +189,20 @@ class HighLevelDataSafe(DataTestObject):
 
         assert lowerCounts.isIdentical(exp)
 
+    @oneLogEntryExpected
+    def test_points_calculate_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitLower(point):
+            return point[1]
+
+        lowerCounts = origObj.points.calculate(emitLower)
+
+        assertNoNamesGenerated(origObj)
+        assertNoNamesGenerated(lowerCounts)
+
+    @oneLogEntryExpected
     def test_points_calculate_functionReturnsUMLObject(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -355,6 +372,7 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.features.calculate(noChange, features=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_calculate_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -373,6 +391,24 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor(expectedOut, featureNames=featureNames)
         assert lowerCounts.isIdentical(exp)
 
+    @oneLogEntryExpected
+    def test_features_calculate_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitAllEqual(feature):
+            first = feature[0]
+            for value in feature:
+                if value != first:
+                    return 0
+            return 1
+
+        lowerCounts = origObj.features.calculate(emitAllEqual)
+
+        assertNoNamesGenerated(origObj)
+        assertNoNamesGenerated(lowerCounts)
+
+    @oneLogEntryExpected
     def test_features_calculate_functionReturnsUMLObject(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -512,6 +548,7 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
+    @oneLogEntryExpected
     def test_elements_calculate_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -521,6 +558,8 @@ class HighLevelDataSafe(DataTestObject):
         assert [1, 2, 3] in retRaw
         assert [4, 5, 6] in retRaw
         assert [7, 8, 9] in retRaw
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_elements_calculate_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
@@ -531,6 +570,8 @@ class HighLevelDataSafe(DataTestObject):
         assert [2, 0, 4] in retRaw
         assert [0, 6, 7] in retRaw
         assert [8, 0, 10] in retRaw
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_elements_calculate_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -655,7 +696,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.mapReduce(simpleMapper, 5)
 
-
+    @oneLogEntryExpected
     def test_points_mapReduce_handmade(self):
         """ Test points.mapReduce() against handmade output """
         featureNames = ["one", "two", "three"]
@@ -667,6 +708,15 @@ class HighLevelDataSafe(DataTestObject):
 
         assert (ret.isIdentical(exp))
         assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+    def test_points_mapReduce_handmade_lazyNameGeneration(self):
+        """ Test points.mapReduce() against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret = toTest.points.mapReduce(simpleMapper, simpleReducer)
+
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_points_mapReduce_NamePath_preservation(self):
         featureNames = ["one", "two", "three"]
@@ -752,6 +802,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.mapReduce(simpleMapper, 5)
 
+    @oneLogEntryExpected
     def test_features_mapReduce_handmade(self):
         """ Test features.mapReduce() against handmade output """
         featureNames = ["one", "two", "three"]
@@ -763,6 +814,15 @@ class HighLevelDataSafe(DataTestObject):
 
         assert (ret.isIdentical(exp))
         assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+    def test_features_mapReduce_handmade_lazyNameGeneration(self):
+        """ Test features.mapReduce() against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
+
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ret)
 
     def test_features_mapReduce_NamePath_preservation(self):
         featureNames = ["one", "two", "three"]
@@ -795,7 +855,7 @@ class HighLevelDataSafe(DataTestObject):
     ####################
     # elements.count() #
     ####################
-
+    @noLogEntryExpected
     def test_elements_count(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -808,7 +868,7 @@ class HighLevelDataSafe(DataTestObject):
     ##################
     # points.count() #
     ##################
-
+    @noLogEntryExpected
     def test_points_count(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
@@ -821,7 +881,7 @@ class HighLevelDataSafe(DataTestObject):
     ####################
     # features.count() #
     ####################
-
+    @noLogEntryExpected
     def test_features_count(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
@@ -836,6 +896,7 @@ class HighLevelDataSafe(DataTestObject):
     ##########################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_isApproximatelyEqual_randomTest(self):
         """ Test isApproximatelyEqual() using randomly generated data """
 
@@ -851,9 +912,11 @@ class HighLevelDataSafe(DataTestObject):
             toTest = self.constructor(data)
 
             for retType in UML.data.available:
-                currObj = UML.createData(retType, data)
+                currObj = UML.createData(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
+                assertNoNamesGenerated(toTest)
+                assertNoNamesGenerated(currObj)
 
 
     ######################
@@ -861,6 +924,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     # simple sucess - no labels
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_nolabels(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -873,7 +937,16 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teX.points) == 2
         assert len(teX.features) == 5
 
+        # try the same test with a default named object
+        toTest = self.constructor(data)
+
+        trX, teX = toTest.trainAndTestSets(.5)
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(trX)
+        assertNoNamesGenerated(teX)
+
     # simple sucess - single label
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_singlelabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -890,7 +963,18 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teY.points) == 2
         assert len(teY.features) == 1
 
+        # try the same test with a default named object
+        toTest = self.constructor(data)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(trX)
+        assertNoNamesGenerated(trY)
+        assertNoNamesGenerated(teX)
+        assertNoNamesGenerated(teY)
+
     # simple sucess - multi label
+    @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_multilabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -906,6 +990,16 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teX.features) == 3
         assert len(teY.points) == 2
         assert len(teY.features) == 2
+
+        # try the same test with a default named object
+        toTest = self.constructor(data)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=[0, 2])
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(trX)
+        assertNoNamesGenerated(trY)
+        assertNoNamesGenerated(teX)
+        assertNoNamesGenerated(teY)
 
     # edge cases 0/1 test portions
     def test_trainAndTestSets_0or1_testFraction(self):
@@ -1082,6 +1176,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret == exp
 
+    @noLogEntryExpected
     def test_points_unique_allNames_mixed(self):
         data = [['George', 0], ['George', 0],
                 ['John', 1], ['John', 1], ['John', 1],
@@ -1114,7 +1209,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret == exp
 
-    def test_points_unique_noNames(self):
+    def test_points_unique_allDefaultNames(self):
         data = [['George', 'Washington'], ['George', 'Washington'],
                 ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
                 ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
@@ -1127,6 +1222,8 @@ class HighLevelDataSafe(DataTestObject):
         ret = test.points.unique()
 
         assert ret == exp
+        assertNoNamesGenerated(test)
+        assertNoNamesGenerated(ret)
 
     def test_points_unique_subsetFeature0(self):
         data = [['George', 'Washington'], ['John', 'Adams'],
@@ -1198,6 +1295,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret == exp
 
+    @noLogEntryExpected
     def test_features_unique_allNames_mixed(self):
         data = [['George', 0, 'George', 0, 'George', 0],
                 ['John', 1, 'James', 3, 'John', 3],
@@ -1229,7 +1327,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret == exp
 
-    def test_features_unique_noNames(self):
+    def test_features_unique_allDefaultNames(self):
         data = [['George', 0, 'George', 0, 'George', 0],
                 ['John', 1, 'James', 3, 'John', 3],
                 ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
@@ -1243,6 +1341,8 @@ class HighLevelDataSafe(DataTestObject):
         ret = test.features.unique()
 
         assert ret == exp
+        assertNoNamesGenerated(test)
+        assertNoNamesGenerated(ret)
 
     def test_features_unique_subsetPoint0(self):
         data = [['George', 0, 'George', 0, 'George', 0],
@@ -1277,7 +1377,7 @@ class HighLevelDataSafe(DataTestObject):
     ########################
     # elements.countUnique #
     ########################
-
+    @noLogEntryExpected
     def test_elements_countUnique_allPtsAndFtrs(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         toTest = self.constructor(data)
@@ -1290,6 +1390,7 @@ class HighLevelDataSafe(DataTestObject):
         assert unique['a'] == 1
         assert unique['b'] == 1
         assert unique['c'] == 1
+        assertNoNamesGenerated(toTest)
 
     def test_elements_countUnique_limitPoints(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
@@ -1342,6 +1443,7 @@ class HighLevelDataSafe(DataTestObject):
         assert unique['a'] == 1
         assert unique['c'] == 1
 
+    @noLogEntryExpected
     def test_elements_countUnique_limitPointsAndFeatures_cornercase(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         fNames = ['f1', 'f2', 'f3']
@@ -1376,7 +1478,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
-
+    @oneLogEntryExpected
     def test_replaceFeatureWithBinaryFeatures_handmade(self):
         """ Test replaceFeatureWithBinaryFeatures() against handmade output """
         data = [[1], [2], [3]]
@@ -1394,6 +1496,7 @@ class HighLevelModifying(DataTestObject):
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
 
+    @oneLogEntryExpected
     def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
         """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
         data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
@@ -1449,6 +1552,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
+    @oneLogEntryExpected
     def test_transformFeatureToIntegers_handmade(self):
         """ Test transformFeatureToIntegers() against handmade output """
         data = [['a'], ['b'], ['c'], ['b'], ['a']]
@@ -1472,6 +1576,13 @@ class HighLevelModifying(DataTestObject):
         for value in ret.values():
             assert value in ['a', 'b', 'c']
 
+    def test_transformFeatureToIntegers_handmade_lazyNameGeneration(self):
+        """ Test transformFeatureToIntegers() against handmade output """
+        data = [['a'], ['b'], ['c'], ['b'], ['a']]
+        toTest = self.constructor(data)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assertNoNamesGenerated(toTest)
 
     def test_transformFeatureToIntegers_pointNames(self):
         """ Test transformFeatureToIntegers preserves pointNames """
@@ -1528,6 +1639,19 @@ class HighLevelModifying(DataTestObject):
         for value in ret.values():
             assert value in ['a', 'b', 'c']
 
+    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
+        data = [['a'], [52], [0], [0], [0], [52], ['a']]
+
+        toTest = self.constructor(data, featureNames=False)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert ret[0] == 0
+        assert toTest[0, 0] == toTest[6, 0]
+        assert toTest[1, 0] == toTest[5, 0]
+        assert toTest[2, 0] == 0
+        assert toTest[3, 0] == 0
+        assert toTest[4, 0] == 0
+
     def test_transformFeatureToIntegers_NamePath_preservation(self):
         data = [[10], [20], [30.5], [20], [10]]
         featureNames = ['col']
@@ -1565,8 +1689,8 @@ class HighLevelModifying(DataTestObject):
 
         assert not toTest.isApproximatelyEqual(toCompare)
 
-        for ret in returns:
-            assert ret is None
+        assert all(ret is None for ret in returns)
+        assertNoNamesGenerated(toTest)
 
 
     def testpoints_shuffle_NamePath_preservation(self):
@@ -1612,8 +1736,8 @@ class HighLevelModifying(DataTestObject):
 
         assert not toTest.isApproximatelyEqual(toCompare)
 
-        for ret in returns:
-            assert ret is None
+        assert all(ret is None for ret in returns)
+        assertNoNamesGenerated(toTest)
 
 
     def test_features_shuffle_NamePath_preservation(self):
@@ -1639,7 +1763,7 @@ class HighLevelModifying(DataTestObject):
     ###########################################
     # points.normalize / features.normalize() #
     ###########################################
-
+    @oneLogEntryExpected
     def normalizeHelper(self, caller, axis, subtract=None, divide=None, also=None):
         if axis == 'point':
             func = caller.points.normalize
@@ -1655,13 +1779,13 @@ class HighLevelModifying(DataTestObject):
         if axis == 'point':
             return caller.points.normalize(subtract=subtract, divide=divide, applyResultTo=also)
         else:
-            caller.transpose()
+            caller.transpose(useLog=False)
             if also is not None:
-                also.transpose()
+                also.transpose(useLog=False)
             ret = caller.features.normalize(subtract=subtract, divide=divide, applyResultTo=also)
-            caller.transpose()
+            caller.transpose(useLog=False)
             if also is not None:
-                also.transpose()
+                also.transpose(useLog=False)
             return ret
 
     #exception different type from expected inputs
@@ -1824,6 +1948,7 @@ class HighLevelModifying(DataTestObject):
 
         assert ret is None
         assert expObj == obj
+        assertNoNamesGenerated(obj)
 
         # vector versions
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
@@ -1837,6 +1962,7 @@ class HighLevelModifying(DataTestObject):
 
             assert ret is None
             assert expObj == currObj
+            assertNoNamesGenerated(currObj)
 
 
     # successful float valued inputs
@@ -1960,13 +2086,13 @@ class HighLevelModifying(DataTestObject):
     #################
     # features.fill #
     #################
-
+    @logCountAssertionFactory(4)
     def test_features_fill_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
         ret = obj1.features.fill(match.missing, fill.mean) #RET CHECK
         exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp1.features.setNames(['a', 'b', 'c'])
+        exp1.features.setNames(['a', 'b', 'c'], useLog=False)
         assert obj1 == exp1
         assert ret is None
 
@@ -1974,15 +2100,15 @@ class HighLevelModifying(DataTestObject):
         obj2.features.fill([3, 7], None)
         obj2.features.fill(match.missing, fill.mean)
         exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
-        exp2.features.setNames(['a', 'b', 'c'])
+        exp2.features.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.features.fill(match.missing, fill.mean, returnModified=True)
         exp3 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp3.features.setNames(['a', 'b', 'c'])
+        exp3.features.setNames(['a', 'b', 'c'], useLog=False)
         expRet = self.constructor([[False, False, False], [True, False, True], [False, False, True], [False, False, False]])
-        expRet.features.setNames(['a_modified', 'b_modified', 'c_modified'])
+        expRet.features.setNames(['a_modified', 'b_modified', 'c_modified'], useLog=False)
         assert obj3 == exp3
         assert ret == expRet
 
@@ -2158,6 +2284,7 @@ class HighLevelModifying(DataTestObject):
 
         toTest.features.fill(negative, firstValue)
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_features_fill_fillValuesWithNaN_constant(self):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
@@ -2220,13 +2347,13 @@ class HighLevelModifying(DataTestObject):
     ###################
     # points.fill #
     ###################
-
+    @logCountAssertionFactory(4)
     def test_points_fill_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
         ret = obj1.points.fill(match.missing, fill.mean) # RET CHECK
         exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp1.points.setNames(['a', 'b', 'c'])
+        exp1.points.setNames(['a', 'b', 'c'], useLog=False)
         assert obj1 == exp1
         assert ret is None
 
@@ -2234,15 +2361,15 @@ class HighLevelModifying(DataTestObject):
         obj2.points.fill([4, 8], None)
         obj2.points.fill(match.missing, fill.mean)
         exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
-        exp2.points.setNames(['a', 'b', 'c'])
+        exp2.points.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
         obj3 = obj0.copy()
         ret = obj3.points.fill(match.missing, fill.mean, returnModified=True)
         exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
         expRet = self.constructor([[False, False, False, False], [True, False, True, False], [False, False, False, True]])
-        exp3.points.setNames(['a', 'b', 'c'])
-        expRet.points.setNames(['a_modified', 'b_modified', 'c_modified'])
+        exp3.points.setNames(['a', 'b', 'c'], useLog=False)
+        expRet.points.setNames(['a_modified', 'b_modified', 'c_modified'], useLog=False)
         assert obj3 == exp3
         assert ret == expRet
 
@@ -2374,6 +2501,7 @@ class HighLevelModifying(DataTestObject):
 
         toTest.points.fill(negative, 0)
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_points_fill_custom_fill(self):
         data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
@@ -2478,7 +2606,7 @@ class HighLevelModifying(DataTestObject):
     #######################
     # fillUsingAllData #
     #######################
-
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_missing(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
@@ -2491,6 +2619,7 @@ class HighLevelModifying(DataTestObject):
         assert toTest == expTest
         assert ret is None
 
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_returnModified_all(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
@@ -2501,7 +2630,7 @@ class HighLevelModifying(DataTestObject):
         expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
         ret = toTest.fillUsingAllData(match.missing, fill.kNeighborsRegressor, returnModified=True, **kwarguments)
         expRet = self.constructor([[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]])
-        expRet.features.setNames([name + "_modified" for name in expRet.features.getNames()])
+        expRet.features.setNames([name + "_modified" for name in expRet.features.getNames()], useLog=False)
         assert toTest == expTest
         assert ret == expRet
 
@@ -2516,6 +2645,7 @@ class HighLevelModifying(DataTestObject):
         toTest.fillUsingAllData(match.nonNumeric, fill.kNeighborsRegressor, **kwarguments)
         assert toTest == expTest
 
+    @oneLogEntryExpected
     def test_fillUsingAllData_kNeighborsRegressor_pointsLimited(self):
         fNames = ['a', 'b', 'c']
         pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
@@ -2604,6 +2734,16 @@ class HighLevelModifying(DataTestObject):
         toTest.fillUsingAllData(match.missing, fill.kNeighborsClassifier, points=0, features=2, **kwarguments)
         assert toTest == expTest
 
+    def test_fillUsingAllData_kNeighborsClassifier_lazyNameGeneration(self):
+        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData)
+        toTest.fillUsingAllData(match.nonNumeric, fill.kNeighborsClassifier, **kwarguments)
+        assert toTest == expTest
+        assertNoNamesGenerated(toTest)
+
     def test_fillUsingAllData_NamePath_preservation(self):
         data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
         toTest = self.constructor(data)
@@ -2621,7 +2761,7 @@ class HighLevelModifying(DataTestObject):
     ####################################
     # points.splitByCollapsingFeatures #
     ####################################
-
+    @logCountAssertionFactory(3)
     def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
         ptNames = ["0", "1", "2"]
@@ -2656,6 +2796,7 @@ class HighLevelModifying(DataTestObject):
         test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
         assert test2 == exp
 
+    @logCountAssertionFactory(3)
     def test_points_splitByCollapsingFeatures_nonSequentialFeatures(self):
         data = [[1,0,2,0,3,4], [5,1,6,1,7,8], [-1,2,-2,2,-3,-4]]
         ptNames = ["0", "1", "2"]
@@ -2731,7 +2872,7 @@ class HighLevelModifying(DataTestObject):
     #####################################
     # points.combineByExpandingFeatures #
     #####################################
-
+    @logCountAssertionFactory(3)
     def test_points_combineByExpandingFeatures(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
@@ -2853,7 +2994,7 @@ class HighLevelModifying(DataTestObject):
     ###########################
     # features.splitByParsing #
     ###########################
-
+    @oneLogEntryExpected
     def test_features_splitByParsing_integer(self):
         data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
         pNames = ["0", "1", "2"]
@@ -2867,6 +3008,7 @@ class HighLevelModifying(DataTestObject):
         toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_features_splitByParsing_string(self):
         data = [["a-1", 0], ["b-2", 1], ["c-3", 2]]
         pNames = ["a", "b", "c"]
@@ -2908,6 +3050,7 @@ class HighLevelModifying(DataTestObject):
         toTest.features.splitByParsing(1, ['/','-'], ["split0", "split1", "split2"])
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_features_splitByParsing_listMixed(self):
         data = [[0, "a1/9z000-AAA"], [1, "b2/8y000-BBB"], [2, "c3/7x000-CCC"]]
         pNames = ["0", "1", "2"]

@@ -18,7 +18,7 @@ def elementwiseMultiply(left, right):
         raise InvalidArgumentType(msg)
 
     left = left.copy()
-    left.elementwiseMultiply(right)
+    left.elements.multiply(right, useLog=False)
     return left
 
 
@@ -35,5 +35,5 @@ def elementwisePower(left, right):
         raise InvalidArgumentType(msg)
 
     left = left.copy()
-    left.elementwisePower(right)
+    left.elements.power(right, useLog=False)
     return left

@@ -28,7 +28,7 @@ import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction, PackageException
 from UML.exceptions import InvalidArgumentValueCombination
-from UML.logger import enableLogging, directCall
+from UML.logger import logPosition, handleLogging
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from .points import Points
@@ -42,7 +42,7 @@ from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import makeConsistentFNamesAndData
 from .dataHelpers import valuesToPythonList
-from .dataHelpers import logCaptureFactory
+from .dataHelpers import buildArgDict
 
 cython = UML.importModule('cython')
 
@@ -66,8 +66,6 @@ try:
         matplotlib.use('Agg')
 except ImportError as e:
     mplError = e
-
-logCapture = logCaptureFactory()
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
@@ -171,11 +169,11 @@ class Base(object):
             self.pointNames = None
         elif isinstance(pointNames, dict):
             self._nextDefaultValuePoint = self._pointCount
-            self.points.setNames(pointNames)
+            self.points.setNames(pointNames, useLog=False)
         else:
             pointNames = valuesToPythonList(pointNames, 'pointNames')
             self._nextDefaultValuePoint = self._pointCount
-            self.points.setNames(pointNames)
+            self.points.setNames(pointNames, useLog=False)
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
@@ -184,11 +182,11 @@ class Base(object):
             self.featureNames = None
         elif isinstance(featureNames, dict):
             self._nextDefaultValueFeature = self._featureCount
-            self.features.setNames(featureNames)
+            self.features.setNames(featureNames, useLog=False)
         else:
             featureNames = valuesToPythonList(featureNames, 'featureNames')
             self._nextDefaultValueFeature = self._featureCount
-            self.features.setNames(featureNames)
+            self.features.setNames(featureNames, useLog=False)
 
         # Set up object name
         if name is None:
@@ -422,7 +420,7 @@ class Base(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @logPosition
     def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         """
         Create binary features for each unique value in a feature.
@@ -459,13 +457,6 @@ class Base(object):
             featureNames={'replace=a':0, 'replace=b':1, 'replace=c':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.replaceFeatureWithBinaryFeatures)
-            else:
-                wrapped = directCall(self.replaceFeatureWithBinaryFeatures)
-            return wrapped(featureToReplace, useLog=False)
-
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
             raise ImproperObjectAction(msg)
@@ -474,22 +465,17 @@ class Base(object):
 
         replace = self.features.extract([index])
 
-        binaryFts = replace._replaceFeatureWithBinaryFeatures_implementation()
+        uniqueVals = list(replace.elements.countUnique().keys())
 
-        toFill = numpy.zeros((len(replace.points), len(binaryFts)))
-        prefix = replace.features.getName(0) + "="
+        binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
+            uniqueVals)
+
+        binaryObj.points.setNames(self.points._getNamesNoGeneration())
         ftNames = []
-        for idx, (name, locations) in enumerate(binaryFts.items()):
-            ftNames.append(prefix + str(name))
-            toFill[locations, idx] = 1
-
-        if self.points._namesCreated():
-            ptNames = self.points.getNames()
-        else:
-            ptNames = 'automatic'
-        binaryObj = UML.createData(self.getTypeString(), toFill,
-                                   pointNames=ptNames, featureNames=ftNames,
-                                   treatAsMissing=None)
+        prefix = replace.features.getName(0) + "="
+        for val in uniqueVals:
+            ftNames.append(prefix + str(val))
+        binaryObj.features.setNames(ftNames)
 
         # by default, put back in same place
         insertBefore = index
@@ -498,8 +484,13 @@ class Base(object):
             insertBefore = None
         self.features.add(binaryObj, insertBefore=insertBefore)
 
+        argDict = buildArgDict(('featureToReplace',), (), featureToReplace)
+        handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
+                      self.getTypeString(), argDict)
+
         return ftNames
 
+    @logPosition
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """
         Represent each unique value in a feature with a unique integer.
@@ -530,13 +521,6 @@ class Base(object):
             featureNames={'keep1':0, 'transform':1, 'keep2':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.transformFeatureToIntegers)
-            else:
-                wrapped = directCall(self.transformFeatureToIntegers)
-            return wrapped(featureToConvert, useLog=False)
-
         if self._pointCount == 0:
             msg = "This action is impossible, the object has 0 points"
             raise ImproperObjectAction(msg)
@@ -545,21 +529,32 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
+            uniqueVals = ft.elements.countUnique()
             integerValue = 0
+            if 0 in uniqueVals:
+                mapping[0] = 0
+                integerValue = 1
+
             mapped = []
             for val in ft:
-                if val not in mapping:
-                    mapping[val] = integerValue
-                    mapped.append(integerValue)
-                    integerValue += 1
-                else:
+                if val in mapping:
                     mapped.append(mapping[val])
+                else:
+                    mapped.append(integerValue)
+                    mapping[val] = integerValue
+                    integerValue += 1
+
             return mapped
 
         self.features.transform(applyMap, features=ftIndex)
 
+        argDict = buildArgDict(('featureToConvert',), (), featureToConvert)
+        handleLogging(useLog, 'prep', "transformFeatureToIntegers",
+                      self.getTypeString(), argDict)
+
         return {v: k for k, v in mapping.items()}
 
+    @logPosition
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
         Group data object by one or more features.
@@ -614,13 +609,6 @@ class Base(object):
             featureNames={'conference':0, 'team':1, 'wins':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.groupByFeature)
-            else:
-                wrapped = directCall(self.groupByFeature)
-            return wrapped(by, countUniqueValueOnly, useLog=False)
-
         def findKey1(point, by):#if by is a string or int
             return point[by]
 
@@ -654,6 +642,11 @@ class Base(object):
                 tmp.features.delete(by)
                 res[k] = tmp
 
+        argDict = buildArgDict(('by', 'countUniqueValueOnly',), (False,),
+                               by, countUniqueValueOnly)
+        handleLogging(useLog, 'prep', "groupByFeature",
+                      self.getTypeString(), argDict)
+
         return res
 
     def hashCode(self):
@@ -671,7 +664,7 @@ class Base(object):
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
         valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
-                                           outputType='Matrix')
+                                           outputType='Matrix', useLog=False)
         valueList = valueObj.copyAs(format="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
                / float(self._pointCount * self._featureCount))
@@ -749,6 +742,7 @@ class Base(object):
         """
         return self.copyAs(self.getTypeString())
 
+    @logPosition
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
         """
@@ -858,14 +852,6 @@ class Base(object):
             pointNames={'a':0, 'f':1}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.trainAndTestSets)
-            else:
-                wrapped = directCall(self.trainAndTestSets)
-            return wrapped(testFraction, labels, randomOrder,
-                           useLog=False)
-
         toSplit = self.copy()
         if randomOrder:
             toSplit.points.shuffle()
@@ -883,29 +869,37 @@ class Base(object):
             toSplit.name = self.name + " trainX"
             testX.name = self.name + " testX"
 
-            return toSplit, testX
+            ret = toSplit, testX
 
-        # safety for empty objects
-        toExtract = labels
-        if testXSize == 0:
-            toExtract = []
+        else:
+            # safety for empty objects
+            toExtract = labels
+            if testXSize == 0:
+                toExtract = []
 
-        trainY = toSplit.features.extract(toExtract)
-        testY = testX.features.extract(toExtract)
+            trainY = toSplit.features.extract(toExtract)
+            testY = testX.features.extract(toExtract)
 
-        toSplit.name = self.name + " trainX"
-        trainY.name = self.name + " trainY"
-        testX.name = self.name + " testX"
-        testY.name = self.name + " testY"
+            toSplit.name = self.name + " trainX"
+            trainY.name = self.name + " trainY"
+            testX.name = self.name + " testX"
+            testY.name = self.name + " testY"
 
-        return toSplit, trainY, testX, testY
+            ret = toSplit, trainY, testX, testY
+
+        argDict = buildArgDict(('testFraction', 'labels', 'randomOrder',),
+                               (None, True), testFraction, labels, randomOrder)
+        handleLogging(useLog, 'prep', "trainAndTestSets", self.getTypeString(),
+                      argDict)
+
+        return ret
 
     ########################################
     ########################################
     ###   Functions related to logging   ###
     ########################################
     ########################################
-
+    @logPosition
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
                       useLog=None):
         """
@@ -917,17 +911,13 @@ class Base(object):
         features, only information about 50 of those features will be
         reported.
         """
-        logger = UML.logger.active
-        logger.position += 1
         ret = produceFeaturewiseReport(
             self, maxFeaturesToCover=maxFeaturesToCover,
             displayDigits=displayDigits)
-        logger.position -= 1
-        if enableLogging(useLog):
-            logger.logData("feature", ret)
-            logger.log(logger.logType, logger.logInfo)
+        handleLogging(useLog, 'data', "feature", ret)
         return ret
 
+    @logPosition
     def summaryReport(self, displayDigits=2, useLog=None):
         """
         Report containing information regarding the data in this object.
@@ -937,13 +927,8 @@ class Base(object):
         Includes proportion of missing values, proportion of zero
         values, total # of points, and number of features.
         """
-        logger = UML.logger.active
-        logger.position += 1
         ret = produceAggregateReport(self, displayDigits=displayDigits)
-        logger.position -= 1
-        if enableLogging(useLog):
-            logger.logData("summary", ret)
-            logger.log(logger.logType, logger.logInfo)
+        handleLogging(useLog, 'data', "summary", ret)
         return ret
 
     ###############################################################
@@ -1775,7 +1760,6 @@ class Base(object):
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
 
-
     def plot(self, outPath=None, includeColorbar=False):
         self._plot(outPath, includeColorbar)
 
@@ -1874,12 +1858,15 @@ class Base(object):
         outFormat = self._setupOutFormatForPlotting(outPath)
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
+        name = None
         if axis == 'point':
             getter = self.pointView
-            name = self.points.getName(index)
+            if self.points._namesCreated():
+                name = self.points.getName(index)
         else:
             getter = self.featureView
-            name = self.features.getName(index)
+            if self.features._namesCreated():
+                name = self.features.getName(index)
 
         toPlot = getter(index)
 
@@ -1903,7 +1890,7 @@ class Base(object):
 
             plt.hist(d, binCount)
 
-            if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 titlemsg = '#' + str(index)
             else:
                 titlemsg = "named: " + name
@@ -2019,9 +2006,9 @@ class Base(object):
 
         def customGetter(index, axis):
             if axis == 'point':
-                copied = self.points.copy(index)
+                copied = self.points.copy(index, useLog=False)
             else:
-                copied = self.features.copy(index)
+                copied = self.features.copy(index, useLog=False)
             return copied.copyAs('numpyarray', outputAs1D=True)
 
         def pGetter(index):
@@ -2030,19 +2017,25 @@ class Base(object):
         def fGetter(index):
             return customGetter(index, 'feature')
 
+        xName = None
+        yName = None
         if xAxis == 'point':
             xGetter = pGetter
-            xName = self.points.getName(xIndex)
+            if self.points._namesCreated():
+                xName = self.points.getName(xIndex)
         else:
             xGetter = fGetter
-            xName = self.features.getName(xIndex)
+            if self.features._namesCreated():
+                xName = self.features.getName(xIndex)
 
         if yAxis == 'point':
             yGetter = pGetter
-            yName = self.points.getName(yIndex)
+            if self.points._namesCreated():
+                yName = self.points.getName(yIndex)
         else:
             yGetter = fGetter
-            yName = self.features.getName(yIndex)
+            if self.features._namesCreated():
+                yName = self.features.getName(yIndex)
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
@@ -2062,11 +2055,11 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 xlabel = xAxis + ' #' + str(xIndex)
             else:
                 xlabel = xName
-            if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 ylabel = yAxis + ' #' + str(yIndex)
             else:
                 ylabel = yName
@@ -2111,6 +2104,7 @@ class Base(object):
     ##################################################################
     ##################################################################
 
+    @logPosition
     def transpose(self, useLog=None):
         """
         Invert the feature and point indices of the data.
@@ -2136,13 +2130,6 @@ class Base(object):
              [3.000 6.000]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.transpose)
-            else:
-                wrapped = directCall(self.transpose)
-            return wrapped(useLog=False)
-
         self._transpose_implementation()
 
         self._pointCount, self._featureCount = (self._featureCount,
@@ -2152,8 +2139,11 @@ class Base(object):
         self.points.setNames(ptNames)
         self.features.setNames(ftNames)
 
+        handleLogging(useLog, 'prep', "transpose", self.getTypeString(), {})
+
         self.validate()
 
+    @logPosition
     def referenceDataFrom(self, other, useLog=None):
         """
         Redefine the object data using the data from another object.
@@ -2197,13 +2187,6 @@ class Base(object):
             name="data"
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.referenceDataFrom)
-            else:
-                wrapped = directCall(self.referenceDataFrom)
-            return wrapped(other, useLog=False)
-
         # this is called first because it checks the data type
         self._referenceDataFrom_implementation(other)
         self.pointNames = other.pointNames
@@ -2219,6 +2202,10 @@ class Base(object):
 
         self._nextDefaultValuePoint = other._nextDefaultValuePoint
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
+
+        argDict = buildArgDict(('other',), (), other)
+        handleLogging(useLog, 'prep', "referenceDataFrom",
+                      self.getTypeString(), argDict)
 
         self.validate()
 
@@ -2405,6 +2392,7 @@ class Base(object):
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
+    @logPosition
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
                  useLog=None):
         """
@@ -2459,14 +2447,6 @@ class Base(object):
         fsIndex = self.features.getIndex(featureStart)
         feIndex = self.features.getIndex(featureEnd)
 
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.fillWith)
-            else:
-                wrapped = directCall(self.fillWith)
-            return wrapped(values, pointStart, featureStart, pointEnd,
-                           featureEnd, useLog=False)
-
         if psIndex > peIndex:
             msg = "pointStart (" + str(pointStart) + ") must be less than or "
             msg += "equal to pointEnd (" + str(pointEnd) + ")."
@@ -2500,7 +2480,7 @@ class Base(object):
 
         elif (dataHelpers._looksNumeric(values)
               or isinstance(values, six.string_types)):
-            pass  # no modificaitons needed
+            pass  # no modifications needed
         else:
             msg = "values may only be a UML Base object, or a single numeric "
             msg += "value, yet we received something of " + str(type(values))
@@ -2508,8 +2488,15 @@ class Base(object):
 
         self._fillWith_implementation(values, psIndex, fsIndex,
                                       peIndex, feIndex)
+
+        argDict = buildArgDict(('values', 'pointStart', 'featureStart',
+                                'pointEnd', 'featureEnd'), (), values,
+                               pointStart, featureStart, pointEnd, featureEnd)
+        handleLogging(useLog, 'prep', "fillWith",
+                      self.getTypeString(), argDict)
         self.validate()
 
+    @logPosition
     def fillUsingAllData(self, match, fill, points=None, features=None,
                          returnModified=False, useLog=None, **kwarguments):
         """
@@ -2571,14 +2558,6 @@ class Base(object):
              [1.000 2   2  ]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.fillUsingAllData)
-            else:
-                wrapped = directCall(self.fillUsingAllData)
-            return wrapped(match, fill, points, features, returnModified,
-                           useLog=False, **kwarguments)
-
         if returnModified:
             modified = self.elements.calculate(match, points=points,
                                                features=features)
@@ -2607,6 +2586,13 @@ class Base(object):
                 return tmpData[i, j]
             self.elements.transform(transform, points, features)
 
+        argDict = buildArgDict(('match', 'fill', 'points', 'features',
+                                'returnModified'), (None, None, False),
+                               match, fill, points, features, returnModified,
+                               **kwarguments)
+        handleLogging(useLog, 'prep', "fillUsingAllData",
+                      self.getTypeString(), argDict)
+
         return modified
 
     def _flattenNames(self, discardAxis):
@@ -2629,6 +2615,7 @@ class Base(object):
 
         return ret
 
+    @logPosition
     def flattenToOnePoint(self, useLog=None):
         """
         Modify this object so that its values are in a single point.
@@ -2665,13 +2652,6 @@ class Base(object):
             featureNames={'a | 1':0, 'b | 1':1, 'a | 4':2, 'b | 4':3}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.flattenToOnePoint)
-            else:
-                wrapped = directCall(self.flattenToOnePoint)
-            return wrapped(useLog=False)
-
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
@@ -2695,6 +2675,10 @@ class Base(object):
         self.features.setNames(self._flattenNames('point'))
         self.points.setNames(['Flattened'])
 
+        handleLogging(useLog, 'prep', "flattenToOnePoint",
+                      self.getTypeString(), {})
+
+    @logPosition
     def flattenToOneFeature(self, useLog=None):
         """
         Modify this object so that its values are in a single feature.
@@ -2734,13 +2718,6 @@ class Base(object):
             featureNames={'Flattened':0}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.flattenToOneFeature)
-            else:
-                wrapped = directCall(self.flattenToOneFeature)
-            return wrapped(useLog=False)
-
         if self._pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more "
             msg += "points. This object has 0 points."
@@ -2763,6 +2740,9 @@ class Base(object):
         self._featureCount = 1
         self.points.setNames(self._flattenNames('feature'))
         self.features.setNames(['Flattened'])
+
+        handleLogging(useLog, 'prep', "flattenToOneFeature",
+                      self.getTypeString(), {})
 
     def _unflattenNames(self, addedAxis, addedAxisLength):
         """
@@ -2873,6 +2853,7 @@ class Base(object):
 
         return allDefaultStatus
 
+    @logPosition
     def unflattenFromOnePoint(self, numPoints, useLog=None):
         """
         Adjust a flattened point vector to contain multiple points.
@@ -2929,13 +2910,6 @@ class Base(object):
             featureNames={'a':0, 'b':1, 'c':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.unflattenFromOnePoint)
-            else:
-                wrapped = directCall(self.unflattenFromOnePoint)
-            return wrapped(numPoints, useLog=False)
-
         if self._featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more "
             msg += "features.  This object has 0 features."
@@ -2965,6 +2939,11 @@ class Base(object):
         self.points.setNames(ret[0])
         self.features.setNames(ret[1])
 
+        argDict = buildArgDict(('numPoints',), (), numPoints)
+        handleLogging(useLog, 'prep', "unflattenFromOnePoint",
+                      self.getTypeString(), argDict)
+
+    @logPosition
     def unflattenFromOneFeature(self, numFeatures, useLog=None):
         """
         Adjust a flattened feature vector to contain multiple features.
@@ -3021,13 +3000,6 @@ class Base(object):
             featureNames={'a':0, 'b':1, 'c':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.unflattenFromOneFeature)
-            else:
-                wrapped = directCall(self.unflattenFromOneFeature)
-            return wrapped(numFeatures, useLog=False)
-
         if self._pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more "
             msg += "points. This object has 0 points."
@@ -3058,7 +3030,13 @@ class Base(object):
         self.points.setNames(ret[1])
         self.features.setNames(ret[0])
 
-    def merge(self, other, point='strict', feature='union', onFeature=None):
+        argDict = buildArgDict(('numFeatures',), (), numFeatures)
+        handleLogging(useLog, 'prep', "unflattenFromOneFeature",
+                      self.getTypeString(), argDict)
+
+    @logPosition
+    def merge(self, other, point='strict', feature='union', onFeature=None,
+              useLog=None):
         """
         Merge data from another object into this object.
 
@@ -3265,10 +3243,15 @@ class Base(object):
             raise InvalidArgumentValue(msg)
 
         if point == 'strict' or feature == 'strict':
-            return self._genericStrictMerge_implementation(
-                other, point, feature, onFeature)
+            self._genericStrictMerge_implementation(other, point, feature,
+                                                    onFeature)
         else:
-            return self._genericMergeFrontend(other, point, feature, onFeature)
+            self._genericMergeFrontend(other, point, feature, onFeature)
+
+        argDict = buildArgDict(('other', 'point', 'feature', 'onFeature'),
+                               ('strict', 'union', None), other, point,
+                               feature, onFeature)
+        handleLogging(useLog, 'prep', "merge", self.getTypeString(), argDict)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
                                            onFeature):
@@ -3345,8 +3328,7 @@ class Base(object):
                 msg += "matching value in each object"
                 raise InvalidArgumentValueCombination(msg)
 
-        return self._genericMergeFrontend(tmpOther, point, feature, onFeature,
-                                          axis)
+        self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
 
     def _genericMergeFrontend(self, other, point, feature, onFeature,
                               strict=None):
@@ -3599,9 +3581,9 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             if self._pointNamesCreated():
-                ret.points.setNames(self.points.getNames())
+                ret.points.setNames(self.points.getNames(), useLog=False)
             if other._featureNamesCreated():
-                ret.features.setNames(other.features.getNames())
+                ret.features.setNames(other.features.getNames(), useLog=False)
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
@@ -3625,7 +3607,7 @@ class Base(object):
         """
         ret = self.__mul__(other)
         if ret is not NotImplemented:
-            self.referenceDataFrom(ret)
+            self.referenceDataFrom(ret, useLog=False)
             ret = self
 
         return ret
@@ -3836,8 +3818,8 @@ class Base(object):
             # shift right to put the next digit in the ones place
             curr = curr >> 1
 
-        ret.points.setNames(retPNames)
-        ret.features.setNames(retFNames)
+        ret.points.setNames(retPNames, useLog=False)
+        ret.features.setNames(retFNames, useLog=False)
 
         ret._name = dataHelpers.nextDefaultObjectName()
 
@@ -3851,7 +3833,7 @@ class Base(object):
         some kind of numeric value.
         """
         ret = self.__pow__(other)
-        self.referenceDataFrom(ret)
+        self.referenceDataFrom(ret, useLog=False)
         return self
 
     def __pos__(self):
@@ -3877,15 +3859,15 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.elements.calculate(abs)
+        ret = self.elements.calculate(abs, useLog=False)
         if self._pointNamesCreated():
-            ret.points.setNames(self.points.getNames())
+            ret.points.setNames(self.points.getNames(), useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
         if self._featureNamesCreated():
-            ret.features.setNames(self.features.getNames())
+            ret.features.setNames(self.features.getNames(), useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
@@ -3895,7 +3877,8 @@ class Base(object):
     def _numericValidation(self, right=False):
         if self._pointCount > 0:
             try:
-                self.elements.calculate(dataHelpers._checkNumeric)
+                self.elements.calculate(dataHelpers._checkNumeric,
+                                        useLog=False)
             except ValueError:
                 msg = "The object on the {0} contains non numeric data, "
                 msg += "cannot do this operation"
@@ -3987,14 +3970,14 @@ class Base(object):
 
 
         if retPNames is not None:
-            ret.points.setNames(retPNames)
+            ret.points.setNames(retPNames, useLog=False)
         else:
-            ret.points.setNames(None)
+            ret.points.setNames(None, useLog=False)
 
         if retFNames is not None:
-            ret.features.setNames(retFNames)
+            ret.features.setNames(retFNames, useLog=False)
         else:
-            ret.features.setNames(None)
+            ret.features.setNames(None, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
@@ -4014,10 +3997,10 @@ class Base(object):
             ret = toCall(other)
             if opName.startswith('__i'):
                 ret = ret.copyAs(startType)
-                self.referenceDataFrom(ret)
+                self.referenceDataFrom(ret, useLog=False)
                 ret = self
             else:
-                ret = UML.createData(startType, ret.data)
+                ret = UML.createData(startType, ret.data, useLog=False)
 
         return ret
 

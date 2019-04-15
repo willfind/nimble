@@ -324,13 +324,12 @@ class DataFrame(Base):
                               - len(matchingFtIdx[1]))
         self._pointCount = len(self.data.index)
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self):
-        binaryFts = {}
-        for idx, val in enumerate(self.data.values):
-            if val[0] not in binaryFts:
-                binaryFts[val[0]] = []
-            binaryFts[val[0]].append(idx)
-        return binaryFts
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
+        toFill = np.zeros((len(self.points), len(uniqueVals)))
+        for ptIdx, val in enumerate(self.data.values):
+            ftIdx = uniqueVals.index(val)
+            toFill[ptIdx, ftIdx] = 1
+        return DataFrame(pd.DataFrame(toFill))
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]
@@ -467,12 +466,11 @@ class DataFrame(Base):
         return DataFrame(leftData, reuseData=True)
 
     def _rsub__implementation(self, other):
-        ret = other - self.data.values
-        pNames = self.points.getNames()
-        fNames = self.features.getNames()
-        return UML.createData('DataFrame', ret, pointNames=pNames,
-                              featureNames=fNames, reuseData=True,
-                              useLog=False)
+        ret = pd.DataFrame(other - self.data.values)
+        pNames = self.points._getNamesNoGeneration()
+        fNames = self.features._getNamesNoGeneration()
+        return DataFrame(ret, pointNames=pNames, featureNames=fNames,
+                         reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):

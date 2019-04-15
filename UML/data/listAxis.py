@@ -79,21 +79,7 @@ class ListAxis(Axis):
         return UML.data.List(satisfying, pointNames=pointNames,
                              featureNames=featureNames, reuseData=True)
 
-    def _sort_implementation(self, sortBy, sortHelper):
-        if isinstance(sortHelper, list):
-            sortData = numpy.array(self._source.data, dtype=numpy.object_)
-            if isinstance(self, Points):
-                sortData = sortData[sortHelper, :]
-            else:
-                sortData = sortData[:, sortHelper]
-            self._source.data = sortData.tolist()
-            names = self._getNames()
-            newNameOrder = [names[idx] for idx in sortHelper]
-            return newNameOrder
-
-        axisAttr = 'points' if isinstance(self, Points) else 'features'
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
-
+    def _sort_implementation(self, indexPosition):
         # run through target axis and change indices
         if isinstance(self, Points):
             source = copy.copy(self._source.data)
@@ -105,14 +91,6 @@ class ListAxis(Axis):
                 temp = copy.copy(currPoint)
                 for j in range(len(indexPosition)):
                     currPoint[j] = temp[indexPosition[j]]
-
-        # convert indices of their previous location into their feature names
-        newNameOrder = []
-        for i in range(len(indexPosition)):
-            oldIndex = indexPosition[i]
-            newName = self._getName(oldIndex)
-            newNameOrder.append(newName)
-        return newNameOrder
 
     ##############################
     # High Level implementations #

@@ -15,6 +15,7 @@ from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
 from six.moves import range
+from .assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 returnTypes = copy.copy(UML.data.available)
@@ -133,6 +134,15 @@ def test_createRandomizedData_names_passed():
                 assert ret.points.getNames() == pnames
                 assert ret.features.getNames() == fnames
 
+def test_createRandomData_logCount():
+
+    @oneLogEntryExpected
+    def byType(rType):
+        toTest = UML.createRandomData(rType, 5, 5, 0)
+
+    for t in returnTypes:
+        byType(t)
+
 #todo check that sizes of returned objects are what you request via npoints and nfeatures
 
 
@@ -225,6 +235,16 @@ def back_constant_conversionEqualityBetweenTypes(toTest):
             assert convertedRet == toMatch
 
 
+def back_constant_logCount(toTest):
+
+    @noLogEntryExpected
+    def byType(rType):
+        out = toTest(rType, 5, 5)
+
+    for t in returnTypes:
+        byType(t)
+
+
 ############
 ### ones ###
 ############
@@ -256,6 +276,9 @@ def test_ones_conversionEqualityBetweenTypes():
     back_constant_conversionEqualityBetweenTypes(UML.ones)
 
 
+def test_ones_logCount():
+    back_constant_logCount(UML.ones)
+
 #############
 ### zeros ###
 #############
@@ -285,6 +308,9 @@ def test_zeros_correctNames():
 
 def test_zeros_conversionEqualityBetweenTypes():
     back_constant_conversionEqualityBetweenTypes(UML.zeros)
+
+def test_zeros_logCount():
+    back_constant_logCount(UML.zeros)
 
 
 ################
@@ -355,5 +381,13 @@ def test_identity_conversionEqualityBetweenTypes():
 
             assert convertedRet == toMatch
 
+def test_identity_logCount():
+
+    @noLogEntryExpected
+    def byType(rType):
+        toTest = UML.identity(rType, 5)
+
+    for t in returnTypes:
+        byType(t)
 
 # EOF Marker

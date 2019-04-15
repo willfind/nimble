@@ -14,12 +14,9 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
-import UML
+from UML.logger import logPosition, handleLogging
 from UML.exceptions import ImproperObjectAction
-from UML.logger import enableLogging, directCall
-from .dataHelpers import logCaptureFactory
-
-logCapture = logCaptureFactory('points')
+from .dataHelpers import buildArgDict
 
 class Points(object):
     """
@@ -79,7 +76,7 @@ class Points(object):
         """
         return self._getNames()
 
-    def setName(self, oldIdentifier, newName):
+    def setName(self, oldIdentifier, newName, useLog=None):
         """
         Set or change a pointName.
 
@@ -108,9 +105,9 @@ class Points(object):
         >>> data.points.getNames()
         ['a', 'new', 'c', 'd']
         """
-        self._setName(oldIdentifier, newName)
+        self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None):
+    def setNames(self, assignments=None, useLog=None):
         """
         Set or rename all of the point names of this object.
 
@@ -139,7 +136,7 @@ class Points(object):
         >>> data.points.getNames()
         ['1', '2', '3', '4']
         """
-        self._setNames(assignments)
+        self._setNames(assignments, useLog)
 
     def getIndex(self, name):
         """
@@ -338,15 +335,7 @@ class Points(object):
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.copy)
-            else:
-                wrapped = directCall(self.copy)
-            return wrapped(toCopy, start, end, number, randomize,
-                           useLog=False)
-
-        return self._copy(toCopy, start, end, number, randomize)
+        return self._copy(toCopy, start, end, number, randomize, useLog)
 
     def extract(self, toExtract=None, start=None, end=None, number=None,
                 randomize=False, useLog=None):
@@ -513,15 +502,7 @@ class Points(object):
             pointNames={'b':0}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.extract)
-            else:
-                wrapped = directCall(self.extract)
-            return wrapped(toExtract, start, end, number, randomize,
-                           useLog=False)
-
-        return self._extract(toExtract, start, end, number, randomize)
+        return self._extract(toExtract, start, end, number, randomize, useLog)
 
     def delete(self, toDelete=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
@@ -644,15 +625,7 @@ class Points(object):
             pointNames={'b':0}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.delete)
-            else:
-                wrapped = directCall(self.delete)
-            return wrapped(toDelete, start, end, number, randomize,
-                           useLog=False)
-
-        self._delete(toDelete, start, end, number, randomize)
+        self._delete(toDelete, start, end, number, randomize, useLog)
 
     def retain(self, toRetain=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
@@ -776,15 +749,7 @@ class Points(object):
             pointNames={'c':0, 'a':1}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.retain)
-            else:
-                wrapped = directCall(self.retain)
-            return wrapped(toRetain, start, end, number, randomize,
-                           useLog=False)
-
-        self._retain(toRetain, start, end, number, randomize)
+        self._retain(toRetain, start, end, number, randomize, useLog)
 
     def count(self, condition):
         """
@@ -923,14 +888,7 @@ class Points(object):
             featureNames={'dept':0, 'ID':1, 'quantity':2}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.sort)
-            else:
-                wrapped = directCall(self.sort)
-            return wrapped(sortBy, sortHelper, useLog=False)
-
-        self._sort(sortBy, sortHelper)
+        self._sort(sortBy, sortHelper, useLog)
 
     # def flattenToOne(self):
     #     """
@@ -1049,14 +1007,7 @@ class Points(object):
              [7.000 7.000 7.000 7.000 7.000]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.transform)
-            else:
-                wrapped = directCall(self.transform)
-            return wrapped(function, points, useLog=False)
-
-        self._transform(function, points)
+        self._transform(function, points, useLog)
 
     ###########################
     # Higher Order Operations #
@@ -1130,14 +1081,7 @@ class Points(object):
             pointNames={'p3':0, 'p1':1}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.calculate)
-            else:
-                wrapped = directCall(self.calculate)
-            return wrapped(function, points, useLog=False)
-
-        return self._calculate(function, points)
+        return self._calculate(function, points, useLog)
 
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
@@ -1215,14 +1159,7 @@ class Points(object):
             pointNames={'1':0, '2':1, '3':2, '4':3}
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.add)
-            else:
-                wrapped = directCall(self.add)
-            return wrapped(toAdd, insertBefore, useLog=False)
-
-        self._add(toAdd, insertBefore)
+        self._add(toAdd, insertBefore, useLog)
 
     def mapReduce(self, mapper, reducer, useLog=None):
         """
@@ -1264,14 +1201,7 @@ class Points(object):
              [Dome 2]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.mapReduce)
-            else:
-                wrapped = directCall(self.mapReduce)
-            return wrapped(mapper, reducer, useLog=False)
-
-        return self._mapReduce(mapper, reducer)
+        return self._mapReduce(mapper, reducer, useLog)
 
     def shuffle(self, useLog=None):
         """
@@ -1300,14 +1230,7 @@ class Points(object):
              [1.000 1.000 1.000 1.000]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.shuffle)
-            else:
-                wrapped = directCall(self.shuffle)
-            return wrapped(useLog=False)
-
-        self._shuffle()
+        self._shuffle(useLog)
 
     def fill(self, match, fill, points=None, returnModified=False,
              useLog=None, **kwarguments):
@@ -1390,15 +1313,8 @@ class Points(object):
              [2.000 2.000 2.000]]
             )
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.fill)
-            else:
-                wrapped = directCall(self.fill)
-            return wrapped(match, fill, points, returnModified,
-                           useLog=False, **kwarguments)
-
-        return self._fill(match, fill, points, returnModified, **kwarguments)
+        return self._fill(match, fill, points, returnModified, useLog,
+                          **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -1440,17 +1356,11 @@ class Points(object):
         --------
         TODO
         """
-        if UML.logger.active.position == 0:
-            if enableLogging(useLog):
-                wrapped = logCapture(self.normalize)
-            else:
-                wrapped = directCall(self.normalize)
-            return wrapped(subtract, divide, applyResultTo, useLog=False)
+        self._normalize(subtract, divide, applyResultTo, useLog)
 
-        self._normalize(subtract, divide, applyResultTo)
-
+    @logPosition
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
-                                  featureForValues):
+                                  featureForValues, useLog=None):
         """
         Separate feature/value pairs into unique points.
 
@@ -1569,8 +1479,15 @@ class Points(object):
 
         self._source.validate()
 
+        argDict = buildArgDict(('featuresToCollapse', 'featureForNames',
+                                'featureForValues'), (), featuresToCollapse,
+                               featureForNames, featureForValues)
+        handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
+                      self._source.getTypeString(), argDict)
+
+    @logPosition
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featureWithValues):
+                                   featureWithValues, useLog=None):
         """
         Combine points that are identical except at a given feature.
 
@@ -1695,6 +1612,12 @@ class Points(object):
 
         self._source.validate()
 
+        argDict = buildArgDict(('featureWithFeatureNames',
+                                'featureWithValues'), (),
+                               featureWithFeatureNames, featureWithValues)
+        handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
+                      self._source.getTypeString(), argDict)
+
     ####################
     # Query functions #
     ###################
@@ -1798,11 +1721,11 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName):
+    def _setName(self, oldIdentifier, newName, useLog):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, useLog):
         pass
 
     @abstractmethod
@@ -1818,19 +1741,19 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _copy(self, toCopy, start, end, number, randomize):
+    def _copy(self, toCopy, start, end, number, randomize, useLog=None):
         pass
 
     @abstractmethod
-    def _extract(self, toExtract, start, end, number, randomize):
+    def _extract(self, toExtract, start, end, number, randomize, useLog=None):
         pass
 
     @abstractmethod
-    def _delete(self, toDelete, start, end, number, randomize):
+    def _delete(self, toDelete, start, end, number, randomize, useLog=None):
         pass
 
     @abstractmethod
-    def _retain(self, toRetain, start, end, number, randomize):
+    def _retain(self, toRetain, start, end, number, randomize, useLog=None):
         pass
 
     @abstractmethod
@@ -1838,7 +1761,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _sort(self, sortBy, sortHelper):
+    def _sort(self, sortBy, sortHelper, useLog=None):
         pass
 
     # @abstractmethod
@@ -1850,31 +1773,32 @@ class Points(object):
     #     pass
 
     @abstractmethod
-    def _transform(self, function, limitTo):
+    def _transform(self, function, limitTo, useLog=None):
         pass
 
     @abstractmethod
-    def _calculate(self, function, limitTo):
+    def _calculate(self, function, limitTo, useLog=None):
         pass
 
     @abstractmethod
-    def _add(self, toAdd, insertBefore):
+    def _add(self, toAdd, insertBefore, useLog=None):
         pass
 
     @abstractmethod
-    def _mapReduce(self, mapper, reducer):
+    def _mapReduce(self, mapper, reducer, useLog=None):
         pass
 
     @abstractmethod
-    def _shuffle(self):
+    def _shuffle(self, useLog=None):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, limitTo, returnModified, **kwarguments):
+    def _fill(self, match, fill, limitTo, returnModified, useLog=None,
+              **kwarguments):
         pass
 
     @abstractmethod
-    def _normalize(self, subtract, divide, applyResultTo):
+    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
         pass
 
     @abstractmethod

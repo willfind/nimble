@@ -4,9 +4,7 @@ is purely numerical. Uses a portion of the UCI ML repository census income data
 set (aka Adult).
 
 """
-
-from __future__ import absolute_import
-
+import sys
 import os.path
 import UML
 
@@ -15,8 +13,17 @@ from UML import match
 
 if __name__ == "__main__":
     # string manipulation to get and make paths
-    pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
-    pathOut = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
+    projectRoot = os.path.dirname(UML.UMLPath)
+    projectData = os.path.join(projectRoot, "datasets")
+
+    # if a directory is given, we will output the numerical data to that location.
+    if len(sys.argv) > 1:
+        outDir = sys.argv[1]
+    else:
+        outDir = os.path.join(projectRoot, "datasets")
+
+    pathOrig = os.path.join(projectData, "adult_income_classification_tiny.csv")
+    pathOut = os.path.join(outDir, "adult_income_classification_tiny_numerical.csv")
 
     # we specify that we want a List object returned, and that we want the first row to
     # taken as the featureNames. Given the .csv extension on the path it will infer the

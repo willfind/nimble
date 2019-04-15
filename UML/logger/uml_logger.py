@@ -60,8 +60,6 @@ class UmlLogger(object):
         self.cursor = None
         self.isAvailable = False
         self.position = 0
-        self.logType = None
-        self.logInfo = {}
 
 
     def setup(self, newFileName=None):
@@ -147,13 +145,16 @@ class UmlLogger(object):
         """
         if not self.isAvailable:
             self.setup(self.logFileName)
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-        runNum = self.runNumber
-        logInfo = str(logInfo)
-        statement = "INSERT INTO logger (timestamp,runNumber,logType,logInfo) "
-        statement += "VALUES (?,?,?,?);"
-        self.cursor.execute(statement, (timestamp, runNum, logType, logInfo))
-        self.connection.commit()
+        if logType or logInfo:
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+            runNum = self.runNumber
+            logInfo = str(logInfo)
+            statement = "INSERT INTO logger "
+            statement += "(timestamp,runNumber,logType,logInfo) "
+            statement += "VALUES (?,?,?,?);"
+            self.cursor.execute(statement, (timestamp, runNum, logType,
+                                            logInfo))
+            self.connection.commit()
 
 
     def extractFromLog(self, query, values=None):
@@ -184,10 +185,15 @@ class UmlLogger(object):
     ### LOG ENTRIES ###
     ###################
 
-    def logLoad(self, returnType, numPoints, numFeatures, name=None,
-                path=None):
+    def logLoad(self, useLog, returnType, numPoints=None, numFeatures=None,
+                name=None, path=None, sparsity=None, seed=None,
+                learnerName=None, learnerArgs=None):
         """
-        Log information about the loading of a data object.
+        Log information about the loading of data or a trained learner.
+
+        Loads should only be logged during a user call to the function,
+        not internal calls, this is determined by the logger's
+        ``position`` attribute.
 
         Parameters
         ----------
@@ -202,18 +208,22 @@ class UmlLogger(object):
         path : str
             The path to the data in the loaded object.
         """
-        logType = "load"
-        logInfo = {}
-        logInfo["returnType"] = returnType
-        logInfo["numPoints"] = numPoints
-        logInfo["numFeatures"] = numFeatures
-        logInfo["name"] = name
-        logInfo["path"] = path
+        if enableLogging(useLog) and self.position == 1:
+            logType = "load"
+            logInfo = {}
+            logInfo["returnType"] = returnType
+            logInfo["numPoints"] = numPoints
+            logInfo["numFeatures"] = numFeatures
+            logInfo["name"] = name
+            logInfo["path"] = path
+            logInfo["sparsity"] = sparsity
+            logInfo["seed"] = seed
+            logInfo["learnerName"] = learnerName
+            logInfo["learnerArgs"] = learnerArgs
 
-        self.logType = logType
-        self.logInfo = logInfo
+            self.log(logType, logInfo)
 
-    def logData(self, reportType, reportInfo):
+    def logData(self, useLog, reportType, reportInfo):
         """
         Log an object's information reports.
 
@@ -226,20 +236,22 @@ class UmlLogger(object):
             The information generated during the call to the report
             function.
         """
-        logType = "data"
-        logInfo = {}
-        logInfo["reportType"] = reportType
-        logInfo["reportInfo"] = reportInfo
+        if enableLogging(useLog) and self.position == 1:
+            logType = "data"
+            logInfo = {}
+            logInfo["reportType"] = reportType
+            logInfo["reportInfo"] = reportInfo
 
-        self.logType = logType
-        self.logInfo = logInfo
+            self.log(logType, logInfo)
 
-    def logPrep(self, umlFunction, dataObject, arguments):
+    def logPrep(self, useLog, umlFunction, dataObject, arguments):
         """
         Log information about a data preparation step performed.
 
         Add information regarding the data preprocessing functions
-        called on an object.
+        called on an object. Prep should only be logged during a user
+        call to the function, not internal calls, this is determined by
+        the logger's ``position`` attribute.
 
         Parameters
         ----------
@@ -250,23 +262,25 @@ class UmlLogger(object):
         arguments : dict
             A mapping of the argument name to the argument's value.
         """
-        logType = "prep"
-        logInfo = {}
-        logInfo["function"] = umlFunction
-        logInfo["object"] = dataObject
-        logInfo["arguments"] = arguments
+        if enableLogging(useLog) and self.position == 1:
+            logType = "prep"
+            logInfo = {}
+            logInfo["function"] = umlFunction
+            logInfo["object"] = dataObject
+            logInfo["arguments"] = arguments
 
-        self.logType = logType
-        self.logInfo = logInfo
+            self.log(logType, logInfo)
 
-    def logRun(self, umlFunction, trainData, trainLabels, testData, testLabels,
-               learnerFunction, arguments, metrics, extraInfo=None,
+    def logRun(self, useLog, umlFunction, trainData, trainLabels, testData,
+               testLabels, learnerFunction, arguments, metrics, extraInfo=None,
                numFolds=None):
         """
         Log information about each run.
 
         Add information related to each run on training and testing
-        data.
+        data. Runs should only be logged during a user call to the
+        function, not internal calls, this is determined by the logger's
+        ``position`` attribute.
 
         Parameters
         ----------
@@ -294,63 +308,68 @@ class UmlLogger(object):
         numFolds : int
             The number of folds if k-fold cross validation utilized.
         """
-        logType = "run"
-        logInfo = {}
-        logInfo["function"] = umlFunction
-        if isinstance(learnerFunction, (str, six.text_type)):
-            functionCall = learnerFunction
-        else:
-            # TODO test this
-            # we get the source code of the function as a list of strings and
-            # glue them together
-            funcLines = inspect.getsourcelines(learnerFunction)
-            funcString = ""
-            for i in range(len(funcLines) - 1):
-                funcString += str(funcLines[i])
-            if funcLines is None:
-                funcLines = "N/A"
-            functionCall = funcString
-        logInfo["learner"] = functionCall
-        # integers or strings passed for Y values, convert if necessary
-        if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
-            trainData = trainData.copy()
-            trainLabels = trainData.features.extract(trainLabels)
-        if isinstance(testLabels, (six.string_types, int, numpy.int64)):
-            testData = testData.copy()
-            testLabels = testData.features.extract(testLabels)
-        if trainData is not None:
-            logInfo["trainData"] = trainData.name
-            logInfo["trainDataPoints"] = len(trainData.points)
-            logInfo["trainDataFeatures"] = len(trainData.features)
-        if trainLabels is not None:
-            logInfo["trainLabels"] = trainLabels.name
-            logInfo["trainLabelsPoints"] = len(trainLabels.points)
-            logInfo["trainLabelsFeatures"] = len(trainLabels.features)
-        if testData is not None:
-            logInfo["testData"] = testData.name
-            logInfo["testDataPoints"] = len(testData.points)
-            logInfo["testDataFeatures"] = len(testData.features)
-        if testLabels is not None:
-            logInfo["testLabels"] = testLabels.name
-            logInfo["testLabelsPoints"] = len(testLabels.points)
-            logInfo["testLabelsFeatures"] = len(testLabels.features)
+        if enableLogging(useLog) and self.position == 1:
+            logType = "run"
+            logInfo = {}
+            logInfo["function"] = umlFunction
+            if isinstance(learnerFunction, (str, six.text_type)):
+                functionCall = learnerFunction
+            else:
+                # TODO test this
+                # we get the source code of the function as a list of strings
+                # and glue them together
+                funcLines = inspect.getsourcelines(learnerFunction)
+                funcString = ""
+                for i in range(len(funcLines) - 1):
+                    funcString += str(funcLines[i])
+                if funcLines is None:
+                    funcLines = "N/A"
+                functionCall = funcString
+            logInfo["learner"] = functionCall
+            # integers or strings passed for Y values, convert if necessary
+            if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
+                trainData = trainData.copy()
+                trainLabels = trainData.features.extract(trainLabels)
+            if isinstance(testLabels, (six.string_types, int, numpy.int64)):
+                testData = testData.copy()
+                testLabels = testData.features.extract(testLabels)
+            if trainData is not None:
+                logInfo["trainData"] = trainData.name
+                logInfo["trainDataPoints"] = len(trainData.points)
+                logInfo["trainDataFeatures"] = len(trainData.features)
+            if trainLabels is not None:
+                logInfo["trainLabels"] = trainLabels.name
+                logInfo["trainLabelsPoints"] = len(trainLabels.points)
+                logInfo["trainLabelsFeatures"] = len(trainLabels.features)
+            if testData is not None:
+                logInfo["testData"] = testData.name
+                logInfo["testDataPoints"] = len(testData.points)
+                logInfo["testDataFeatures"] = len(testData.features)
+            if testLabels is not None:
+                logInfo["testLabels"] = testLabels.name
+                logInfo["testLabelsPoints"] = len(testLabels.points)
+                logInfo["testLabelsFeatures"] = len(testLabels.features)
 
-        if arguments is not None and arguments != {}:
-            logInfo['arguments'] = arguments
+            if arguments is not None and arguments != {}:
+                logInfo['arguments'] = arguments
 
-        if metrics is not None and metrics != {}:
-            logInfo["metrics"] = metrics
+            if metrics is not None and metrics != {}:
+                logInfo["metrics"] = metrics
 
-        if extraInfo is not None and extraInfo != {}:
-            logInfo["extraInfo"] = extraInfo
+            if extraInfo is not None and extraInfo != {}:
+                logInfo["extraInfo"] = extraInfo
 
-        self.logType = logType
-        self.logInfo = logInfo
+            self.log(logType, logInfo)
 
-    def logCrossValidation(self, trainData, trainLabels, learnerFunction,
-                           arguments, metric, performance, folds=None):
+    def logCrossValidation(self, useLog, trainData, trainLabels,
+                           learnerFunction, arguments, metric, performance,
+                           folds=None):
         """
         Log the results of cross validation.
+
+        Cross validation can occur at any time, even by internal calls
+        to the function, based on the useLog value and the value of
+        enableCrossValidationDeepLogging in config.
 
         Parameters
         ----------
@@ -370,16 +389,16 @@ class UmlLogger(object):
         folds : int
             The number of folds.
         """
-        logType = "crossVal"
-        logInfo = {}
-        logInfo["learner"] = learnerFunction
-        logInfo["learnerArgs"] = arguments
-        logInfo["folds"] = folds
-        logInfo["metric"] = metric.__name__
-        logInfo["performance"] = performance
+        if enableLogging(useLog) and enableDeepLogging():
+            logType = "crossVal"
+            logInfo = {}
+            logInfo["learner"] = learnerFunction
+            logInfo["learnerArgs"] = arguments
+            logInfo["folds"] = folds
+            logInfo["metric"] = metric.__name__
+            logInfo["performance"] = performance
 
-        self.logType = logType
-        self.logInfo = logInfo
+            self.log(logType, logInfo)
 
 
     ###################
@@ -466,60 +485,25 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def logCapture(function):
-    """
-    Wrapper to add data to log when function is called by the user.
-
-    UML function wrapper for handling logging of top-level UML
-    functions. Ensures that only calls made by user are logged, ignoring
-    internal calls to logged functions. Performs the timing of each
-    operation inserts the necessary information into the log.
-    """
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        logger = UML.logger.active
-        try:
-            logger.position += 1
-            timer = Stopwatch()
-            timer.start("timer")
-            ret = function(*args, **kwargs)
-        except Exception:
-            einfo = sys.exc_info()
-            reraise(*einfo)
-        finally:
-            logger.position -= 1
-            timer.stop("timer")
-        if function.__name__ == 'crossValidateBackend':
-            enableDeep = "enableCrossValidationDeepLogging"
-            deepLog = UML.settings.get("logger", enableDeep)
-            deepLog = deepLog.lower() == 'true'
-            if deepLog:
-                logger.log(logger.logType, logger.logInfo)
-        elif logger.position == 0:
-            logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
-            logger.log(logger.logType, logger.logInfo)
-        return ret
-    return wrapper
-
-def directCall(function):
+def logPosition(function):
     """
     Wrapper to signal a function has been called by the user.
 
-    UML function wrapper used to ensure that internal calls to other
-    logged functions are not logged when the called function can be
-    logged but is not currently being logged.
+    UML function wrapper used to ensure that internal calls to
+    logged functions are not logged. This can be used as a decorator
+    for functions which are not logged, or wrap logged functions when
+    the logging is deactivated.
     """
     @wraps(function)
     def wrapper(*args, **kwargs):
-        logger = UML.logger.active
+        UML.logger.active.position += 1
         try:
-            logger.position += 1
             ret = function(*args, **kwargs)
         except Exception:
             einfo = sys.exc_info()
             reraise(*einfo)
         finally:
-            logger.position -= 1
+            UML.logger.active.position -= 1
         return ret
     return wrapper
 
@@ -531,6 +515,36 @@ def enableLogging(useLog):
         useLog = UML.settings.get("logger", "enabledByDefault")
         useLog = useLog.lower() == 'true'
     return useLog
+
+def enableDeepLogging():
+    """
+    Access enableCrossValidationDeepLogging value from configuration.
+    """
+    deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
+    deepLog = deepLog.lower() == 'true'
+    return deepLog
+
+def handleLogging(useLog, logType, *args, **kwargs):
+    """
+    Store information to be logged in the logger.
+    """
+    logTypes = {'load': UML.logger.active.logLoad,
+                'prep': UML.logger.active.logPrep,
+                'run': UML.logger.active.logRun,
+                'data': UML.logger.active.logData,
+                'crossVal': UML.logger.active.logCrossValidation}
+    if enableLogging(useLog):
+        if logType in logTypes:
+            logFunc = logTypes[logType]
+            logFunc(useLog, *args, **kwargs)
+        else:
+            if args:
+                UML.log(logType, args)
+            if kwargs:
+                UML.log(logType, kwargs)
+    else:
+        UML.logger.active.logType = None
+        UML.logger.active.logInfo = None
 
 def stringToDatetime(string):
     """
@@ -695,14 +709,20 @@ def _buildLoadLogString(timestamp, log):
     """
     dataCol = "{0} Loaded".format(log["returnType"])
     fullLog = _logHeader(dataCol, timestamp)
-    if log['path'] is not None:
-        fullLog += _formatRunLine("path", log["path"])
-        dataCol = ""
-    if log['name'] is not None:
-        fullLog += _formatRunLine("name", log["name"])
-        dataCol = ""
-    fullLog += _formatRunLine("# of points", log["numPoints"])
-    fullLog += _formatRunLine("# of features", log["numFeatures"])
+    if log["returnType"] != "TrainedLearner":
+        fullLog += _formatRunLine("# of points", log["numPoints"])
+        fullLog += _formatRunLine("# of features", log["numFeatures"])
+        for title in ['sparsity', 'name', 'path', 'seed']:
+            if log[title] is not None:
+                fullLog += _formatRunLine(title, log[title])
+    else:
+        fullLog += _formatRunLine("Learner name", log["learnerName"])
+        if log['learnerArgs'] is not None and log['learnerArgs'] != {}:
+            argString = "Arguments: "
+            argString += _dictToKeywordString(log["learnerArgs"])
+            for string in wrap(argString, 79, subsequent_indent=" "*11):
+                fullLog += string
+                fullLog += "\n"
     return fullLog
 
 def _buildPrepLogString(timestamp, log):

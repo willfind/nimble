@@ -26,7 +26,7 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.logger import enableLogging, logCapture
+from UML.logger import handleLogging, logPosition
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.exceptions import FileFormatException
@@ -268,11 +268,13 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             assert numpyMaker == numpy.zeros
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         return UML.createData(returnType, rawSparse, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
     else:
         raw = numpyMaker((numPoints, numFeatures))
         return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
 
 
 def transposeMatrix(matrixObj):
@@ -2683,7 +2685,7 @@ def generateAllPairs(items):
 
     return pairs
 
-
+@logPosition
 def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
@@ -2693,11 +2695,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
-    if enableLogging(useLog):
-        wrapped = logCapture(crossValidateBackend)
-        return wrapped(learnerName, X, Y, performanceFunction, arguments,
-                       folds, scoreMode, useLog=False, **kwarguments)
-
     if not isinstance(X, Base):
         raise InvalidArgumentType("X must be a Base object")
     if Y is not None:
@@ -2812,9 +2809,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
-    UML.logger.active.logCrossValidation(X, Y, learnerName, merged,
-                                         performanceFunction,
-                                         performanceOfEachCombination, folds)
+    handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
+                  performanceFunction, performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
 
