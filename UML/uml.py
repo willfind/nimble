@@ -1257,7 +1257,7 @@ def learnerType(learnerNames):
 @logPosition
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          numFolds=None, doneValidData=False, doneValidArguments1=False,
+          numFolds=10, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
           done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
           **kwarguments):
@@ -1390,8 +1390,13 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += "out-of-the-box options) or there must be no choices in "
             msg += "the parameters."
             raise InvalidArgumentValueCombination(msg)
-        if numFolds is None:
-            numFolds = min(10, len(trainX.points))
+        if numFolds > len(trainX.points):
+            msg = "There must be a minimum of one fold per point in the data."
+            msg += "Cross validation was triggered to select the best "
+            msg += "parameter set but the 'numFolds' parameter was set to "
+            msg += str(numFolds) + " and trainX only contains "
+            msg += str(len(trainX.points)) + " points."
+            raise InvalidArgumentValueCombination(msg)
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
@@ -1420,7 +1425,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default',
-                  numFolds=None, useLog=None, storeLog='unset', **kwarguments):
+                  numFolds=10, useLog=None, storeLog='unset', **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1587,7 +1592,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
-                 numFolds=None, useLog=None, storeLog='unset', **kwarguments):
+                 numFolds=10, useLog=None, storeLog='unset', **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -1757,6 +1762,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         extraInfo = {"bestParams": trainedLearner.arguments}
     if trainX == testX:
         name = "trainAndTestOnTrainingData"
+        testX = None
+        testY = None
     else:
         name = "trainAndTest"
     handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
@@ -1767,7 +1774,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
-                               numFolds=None, arguments=None, output=None,
+                               numFolds=10, arguments=None, output=None,
                                scoreMode='label', multiClassStrategy='default',
                                useLog=None, **kwarguments):
     """
@@ -1902,15 +1909,18 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     0.0
     """
     if crossValidationError:
-        if numFolds is None:
-            numFolds = min(10, len(trainX.points))
+        merged = _mergeArguments(arguments, kwarguments)
         results = crossValidateReturnBest(learnerName, trainX, trainY,
-                                          performanceFunction, arguments,
-                                          numFolds, scoreMode, useLog,
-                                           **kwarguments)
+                                          performanceFunction, merged,
+                                          numFolds, scoreMode, useLog)
         performance = results[1]
-        # TODO need to add logging entry to show this function was called
-        # right now only the cross validation is being logged.
+        metrics = {}
+        for key, value in zip([performanceFunction], [performance]):
+            metrics[key.__name__] = value
+        handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
+                      trainY, None, None, learnerName, merged, metrics,
+                      extraInfo={'crossValidationError': True})
+
     else:
         performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                    performanceFunction, arguments, output,

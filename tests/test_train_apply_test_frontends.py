@@ -11,6 +11,7 @@ from UML import trainAndTest
 
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
@@ -126,13 +127,15 @@ def test_trainAndTest():
     assert isinstance(runError, float)
 
     #with multiple values for one argument for the algorithm
-    runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1, 2))
+    runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
+                            fractionIncorrect, k=(1, 2), numFolds=3)
     assert isinstance(runError, float)
 
     #with small data set
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2]]
     trainObj1 = createData('Matrix', data=data1, featureNames=variables)
-    runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1, 2))
+    runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
+                            fractionIncorrect, k=(1, 2), numFolds=3)
     assert isinstance(runError, float)
 
 
@@ -385,6 +388,74 @@ def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
                                    multiClassStrategy="OneVsOne", lamb=1)
 
 
+def test_trainFunctions_cv_triggered_errors():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 10
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _pt in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    # no performanceFunction (only train and trainAndApply; required in Test functions)
+    try:
+        UML.train(learner, trainObjData, trainObjLabels, k=(1,3))
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "performanceFunction" in str(iavc)
+    try:
+        UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
+                          k=(1,3))
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "performanceFunction" in str(iavc)
+
+    # numFolds too large
+    try:
+        UML.train(learner, trainObjData, trainObjLabels,
+                  performanceFunction=fractionIncorrect, k=(1,3), numFolds=11)
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "numFolds" in str(iavc)
+    try:
+        UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
+                          performanceFunction=fractionIncorrect, k=(1,3), numFolds=11)
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "numFolds" in str(iavc)
+    try:
+        UML.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
+                         testObjLabels, performanceFunction=fractionIncorrect,
+                         k=(1,3), numFolds=11)
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "numFolds" in str(iavc)
+    try:
+        # training error
+        UML.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
+                                       performanceFunction=fractionIncorrect,
+                                       k=(1,3), numFolds=11)
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination as iavc:
+        assert "numFolds" in str(iavc)
+    try:
+        # cross-validation error
+        UML.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
+                                       performanceFunction=fractionIncorrect,
+                                       crossValidationError=True, numFolds=11)
+        assert False # expect InvalidArgumentValueCombination
+    except InvalidArgumentValue as iavc:
+        # different exception since this triggers crossValidation directly
+        assert "folds" in str(iavc)
+
+
+
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -406,20 +477,21 @@ def test_frontend_CV_triggering():
     try:
         try:
             train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                  performanceFunction=fractionIncorrect, k=(1, 2))
+                  performanceFunction=fractionIncorrect, k=(1, 2), numFolds=5)
         except CVWasCalledException:
             pass
 
         try:
             trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                          performanceFunction=fractionIncorrect, testX=trainObj, k=(1, 2))
+                          performanceFunction=fractionIncorrect, testX=trainObj, k=(1, 2),
+                          numFolds=5)
         except CVWasCalledException:
             pass
 
         try:
             trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=(1, 2))
+                         k=(1, 2), numFolds=5)
         except CVWasCalledException:
             pass
     except Exception:
@@ -430,16 +502,17 @@ def test_frontend_CV_triggering():
 
     # demonstrate some succesful calls
     tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-               performanceFunction=fractionIncorrect, k=(1, 2))
+               performanceFunction=fractionIncorrect, k=(1, 2), numFolds=5)
     assert hasattr(tl, 'apply')
 
     result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                           testX=trainObj, performanceFunction=fractionIncorrect, k=(1, 2))
+                           testX=trainObj, performanceFunction=fractionIncorrect, k=(1, 2),
+                           numFolds=5)
     assert isinstance(result, UML.data.Matrix)
 
     error = trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=(1, 2))
+                         k=(1, 2), numFolds=5)
     assert isinstance(error, float)
 
 
