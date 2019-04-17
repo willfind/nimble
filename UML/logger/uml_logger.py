@@ -276,8 +276,8 @@ class UmlLogger(object):
             self.log(logType, logInfo)
 
     def logRun(self, useLog, umlFunction, trainData, trainLabels, testData,
-               testLabels, learnerFunction, arguments, metrics, extraInfo=None,
-               numFolds=None):
+               testLabels, learnerFunction, arguments, metrics=None,
+               extraInfo=None, time=None):
         """
         Log information about each run.
 
@@ -306,11 +306,11 @@ class UmlLogger(object):
             The arguments passed to the learner.
         metrics : dict
             The results of the testing on a run.
-        extraInfo
+        extraInfo: dict
             Any extra information to add to the log. Typically provides
             the best parameters from cross validation.
-        numFolds : int
-            The number of folds if k-fold cross validation utilized.
+        time : float, None
+            The time to run the function. None if function is not timed.
         """
         if enableLogging(useLog):
             logType = "run"
@@ -362,6 +362,9 @@ class UmlLogger(object):
 
             if extraInfo is not None and extraInfo != {}:
                 logInfo["extraInfo"] = extraInfo
+
+            if time:
+                logInfo["time"] = time
 
             self.log(logType, logInfo)
 
@@ -728,10 +731,10 @@ def _buildRunLogString(timestamp, log):
     Constructs the string that will be output for run logTypes.
     """
     # header data
-    timer = log.get("timer", "")
-    if timer:
-        timer = "Completed in {0:.3f} seconds".format(log['timer'])
-    fullLog = _logHeader(timer, timestamp)
+    time = log.get("time", "")
+    if time:
+        time = "Completed in {0:.3f} seconds".format(log['time'])
+    fullLog = _logHeader(time, timestamp)
     fullLog += '\n{0}("{1}")\n'.format(log['function'], log["learner"])
     # train and test data
     fullLog += _formatRunLine("Data", "# points", "# features")
@@ -950,6 +953,25 @@ def _lambdaFunctionString(function):
         else:
             lambdaString += letter
     return lambdaString
+
+def startTimer(useLog):
+    """
+    Start and return a timer object if this will be logged.
+    """
+    if enableLogging(useLog):
+        timer = Stopwatch()
+        timer.start("timer")
+        return timer
+    return
+
+def stopTimer(timer):
+    """
+    Stop the timer and return the run time.
+    """
+    if timer is not None:
+        timer.stop("timer")
+        return timer.calcRunTime("timer")
+    return
 
 #######################
 ### Initialization  ###

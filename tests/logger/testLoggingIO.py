@@ -10,6 +10,7 @@ import ast
 import sys
 import sqlite3
 import tempfile
+import re
 
 from nose import with_setup
 from nose.tools import raises
@@ -188,16 +189,20 @@ def testRunTypeFunctionsUseLog():
     testXObj = UML.createData("Matrix", testX, useLog=False)
     testYObj = UML.createData("Matrix", testY, useLog=False)
 
+    timePattern = re.compile(r"'time': [0-9]+\.[0-9]+")
+
     # train
     tl = UML.train("sciKitLearn.SVC", trainXObj, trainYObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'train'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndApply
     predictions = UML.trainAndApply("sciKitLearn.SVC", trainXObj, trainYObj,
                                     testXObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndApply'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndTest
     performance = UML.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
@@ -207,6 +212,7 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'trainAndTest'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # normalizeData
     # copy to avoid modifying original data
@@ -215,6 +221,7 @@ def testRunTypeFunctionsUseLog():
     UML.normalizeData('sciKitLearn.PCA', trainXNormalize, testX=testXNormalize)
     logInfo = getLastLogData()
     assert "'function': 'normalizeData'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndTestOnTrainingData
     results = UML.trainAndTestOnTrainingData("sciKitLearn.SVC", trainXObj,
@@ -224,11 +231,13 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'trainAndTestOnTrainingData'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # TrainedLearner.apply
     predictions = tl.apply(testXObj)
     logInfo = getLastLogData()
     assert "'function': 'TrainedLearner.apply'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # TrainedLearner.test
     performance = tl.test(testXObj, testYObj, performanceFunction=RMSE)
@@ -236,6 +245,7 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'TrainedLearner.test'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 

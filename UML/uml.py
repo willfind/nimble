@@ -15,7 +15,7 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.logger import handleLogging
+from UML.logger import handleLogging, startTimer, stopTimer
 from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
@@ -505,19 +505,19 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         [[-1.739 2.588]]
         )
     """
+    timer = startTimer(useLog)
     (_, trueLearnerName) = _unpackLearnerName(learnerName)
+    merged = _mergeArguments(arguments, kwarguments)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments=arguments,
-                   useLog=False, **kwarguments)
-    normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False,
-                               **kwarguments)
+    tl = UML.train(learnerName, trainX, trainY, arguments=merged,
+                   useLog=False)
+    normalizedTrain = tl.apply(trainX, arguments=merged, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=arguments, useLog=False,
-                                  **kwarguments)
+        normalizedTest = tl.apply(testX, arguments=merged, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
@@ -529,10 +529,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         testX.referenceDataFrom(normalizedTest, useLog=False)
         testX.name = testX.name + " " + trueLearnerName
 
-    merged = _mergeArguments(arguments, kwarguments)
-
+    time = stopTimer(timer)
     handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
-                  learnerName, merged, None)
+                  learnerName, merged, time=time)
 
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
@@ -1359,6 +1358,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> print(cValue, kernelValue)
     0.1 linear
     """
+    timer = startTimer(useLog)
     (package, trueLearnerName) = _unpackLearnerName(learnerName)
     if not doneValidData:
         _validData(trainX, trainY, None, None, [False, False])
@@ -1405,10 +1405,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                      multiClassStrategy, bestArgument)
+    time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,
-                  funcString, bestArgument, None)
+                  funcString, bestArgument, time=time)
 
     return trainedLearner
 
@@ -1540,16 +1541,18 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
          [3.000]]
         )
     """
+    timer = startTimer(useLog)
     _validData(trainX, trainY, testX, None, [False, False])
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+    merged = _mergeArguments(arguments, kwarguments)
 
     trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, arguments,
+                               performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
                                useLog=False, storeLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               done2dOutputFlagCheck=True)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
@@ -1559,14 +1562,13 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
             testX = trainX
 
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    time = stopTimer(timer)
 
-    merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-
     handleLogging(useLog, "run", "trainAndApply", trainX, trainY, testX, None,
-                  learnerName, merged, None, extraInfo=extraInfo)
+                  learnerName, merged, extraInfo=extraInfo, time=time)
 
     return results
 
@@ -1711,15 +1713,16 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> perform
     0.0
     """
+    timer = startTimer(useLog)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
+    merged = _mergeArguments(arguments, kwarguments)
 
     trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, arguments,
+                               performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
                                useLog=False, storeLog=useLog,
-                               doneValidData=True, done2dOutputFlagCheck=True,
-                               **kwarguments)
+                               doneValidData=True, done2dOutputFlagCheck=True)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
@@ -1727,11 +1730,11 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
                                        useLog=False)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
+    time = stopTimer(timer)
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
         metrics[key.__name__] = value
-    merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
@@ -1740,7 +1743,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     else:
         name = "trainAndTest"
     handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
-                  learnerName, merged, metrics, extraInfo=extraInfo)
+                  learnerName, merged, metrics, extraInfo, time)
 
     return performance
 
