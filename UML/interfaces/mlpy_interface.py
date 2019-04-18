@@ -299,15 +299,24 @@ class Mlpy(UniversalInterface):
         raise RuntimeError()
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         if hasattr(learner, 'pred'):
-            return self._pred(learner, testX, arguments, customDict)
+            method = 'pred'
+            toCall = self._pred
         elif hasattr(learner, 'transform'):
-            return self._transform(learner, testX, arguments, customDict)
+            method = 'transform'
+            toCall = self._transform
         else:
             msg = "Cannot apply this learner to data, no predict or "
             msg = "transform function"
             raise TypeError(msg)
+        if 'useT' in customDict and customDict['useT']:
+            ignore = ['self']
+        else:
+            ignore = self._XDataAliases + ['self']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        applyArgs = arguments.getLimitedArguments(backendArgs)
+        return toCall(learner, testX, applyArgs, customDict)
 
 
     def _getAttributes(self, learnerBackend):
@@ -338,25 +347,18 @@ class Mlpy(UniversalInterface):
         params = customDict['predNames']
         if len(params) > 0:
             if customDict['useT']:
-                return learner.pred(arguments['t'])
-            else:
-                return learner.pred(testX)
+                testX = arguments['t']
+                del arguments['t']
+            return learner.pred(testX, **arguments)
         else:
-            return learner.pred()
+            return learner.pred(**arguments)
 
     def _transform(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying transform function of a mlpy learner
         object.
         """
-        toPass = {}
-        if customDict['transNames'] is not None:
-            for argName in arguments:
-                if argName in customDict['transNames']:
-                    if argName not in self._XDataAliases:
-                        toPass[argName] = arguments[argName]
-
-        return learner.transform(testX, **toPass)
+        return learner.transform(testX, **arguments)
 
 
     ###############

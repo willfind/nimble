@@ -334,22 +334,27 @@ class SciKitLearn(UniversalInterface):
         pass
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         if hasattr(learner, 'predict'):
-            return self._predict(learner, testX, arguments, customDict)
+            method = 'predict'
+            toCall = self._predict
         elif hasattr(learner, 'transform'):
-            return self._transform(learner, testX, arguments, customDict)
-        # labels_ is the return for learners with fit_predict only
-        elif hasattr(learner, 'labels_'):
-            return learner.labels_
-        # embedding_ is the return for learners with fit_transform only
-        elif hasattr(learner, 'embedding_'):
-            return learner.embedding_
+            method = 'transform'
+            toCall = self._transform
+        elif hasattr(learner, 'fit_predict'):
+            method = 'fit_predict'
+            toCall = self._fit_predict
+        elif hasattr(learner, 'fit_transform'):
+            method = 'fit_transform'
+            toCall = self._fit_transform
         else:
             msg = "Cannot apply this learner to data, no predict or "
             msg += "transform function"
             raise TypeError(msg)
-
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        applyArgs = arguments.getLimitedArguments(backendArgs)
+        return toCall(learner, testX, applyArgs, customDict)
 
     def _getAttributes(self, learnerBackend):
         obj = learnerBackend
@@ -385,14 +390,28 @@ class SciKitLearn(UniversalInterface):
         Wrapper for the underlying predict function of a scikit-learn
         learner object.
         """
-        return learner.predict(testX)
+        return learner.predict(testX, **arguments)
 
     def _transform(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying transform function of a scikit-learn
         learner object.
         """
-        return learner.transform(testX)
+        return learner.transform(testX, **arguments)
+
+    def _fit_predict(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying fit_predict function of a
+        scikit-learn learner object.
+        """
+        return learner.labels_
+
+    def _fit_transform(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying fit_transform function of a
+        scikit-learn learner object.
+        """
+        return learner.embedding_
 
     ###############
     ### HELPERS ###

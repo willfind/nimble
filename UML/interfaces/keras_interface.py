@@ -342,9 +342,16 @@ class Keras(UniversalInterface):
         return learner
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         if hasattr(learner, 'predict'):
-            return self._predict(learner, testX, arguments, customDict)
+            if isinstance(testX, UML.data.Sparse):
+                method = 'predict_generator'
+            else:
+                method = 'predict'
+            ignore = ['X', 'x', 'self']
+            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+            applyArgs = arguments.getLimitedArguments(backendArgs)
+            return self._predict(learner, testX, applyArgs, customDict)
         else:
             msg = "Cannot apply this learner to data, no predict function"
             raise TypeError(msg)
@@ -382,18 +389,15 @@ class Keras(UniversalInterface):
         object.
         """
         if isinstance(testX, UML.data.Sparse):
-            fitParams = {}
             def sparseGenerator():
                 while True:
                     for i in range(len(testX.points)):
                         tmpData = testX.pointView(i).copyAs('numpy matrix')
                         yield tmpData
-            fitParams['generator'] = sparseGenerator()
-            fitParams['steps'] = arguments['steps']
-            fitParams['max_queue_size'] = arguments['max_queue_size']
-            return learner.predict_generator(**fitParams)
+            arguments['generator'] = sparseGenerator()
+            return learner.predict_generator(**arguments)
         else:
-            return learner.predict(testX)
+            return learner.predict(testX, **arguments)
 
 
     ###############
@@ -415,6 +419,10 @@ class Keras(UniversalInterface):
                      'initial_epoch'],
                     'args', 'kwargs',
                     [None, 1, 1, None, None, None, None, 10, 1, False, 0])
+        elif name == 'predict_generator':
+            return (['steps', 'max_queue_size', 'workers',
+                     'use_multiprocessing', 'verbose'],
+                    'args', 'kwargs', [None, 10, 1, False, 0])
 
         namedModule = self._searcher.findInPackage(parent, name)
 

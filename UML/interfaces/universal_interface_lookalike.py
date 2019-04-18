@@ -50,7 +50,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
         pass
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         """
         use the given learner to do testing/prediction on the given test set
         TAKES a TrainedLearner object that can be tested on

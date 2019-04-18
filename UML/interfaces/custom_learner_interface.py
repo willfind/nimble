@@ -175,7 +175,7 @@ class CustomLearnerInterface(UniversalInterface):
                             customDict):
         return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         return learner.applyForInterface(testX, arguments)
 
     def _getAttributes(self, learnerBackend):

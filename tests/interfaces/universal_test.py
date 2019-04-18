@@ -102,7 +102,7 @@ class TestInterface(UniversalInterface):
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         return (learnerName, trainX, trainY, arguments)
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         return testX
 
     def _findCallableBackend(self, name):
@@ -353,7 +353,7 @@ class AlwaysWarnInterface(UniversalInterface):
         sys.stderr.flush()
         pass
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         self.writeWarningToStdErr()
         sys.stderr.flush()
         return testX

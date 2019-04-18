@@ -884,44 +884,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return bestIndex
 
-    def _formatScoresToOvA(self, learnerName, learner, testX, applyResults,
-                           rawScores, arguments, customDict):
-        """
-        Helper that takes raw scores in any of the three accepted
-        formats (binary case best score, one vs one pairwise tournament
-        by natural label ordering, or one vs all by natural label
-        ordering) and returns them in a one vs all accepted format.
-        """
-        order = self._getScoresOrder(learner)
-        numLabels = len(order)
-        if numLabels == 2 and len(rawScores.features) == 1:
-            ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return UML.createData("Matrix", ret)
-
-        if applyResults is None:
-            applyResults = self._applier(learner, testX, arguments, customDict)
-            applyResults = self._outputTransformation(
-                learnerName, applyResults, arguments, "match", "label",
-                customDict)
-        if len(rawScores.features) != 3:
-            strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
-        else:
-            strategy = checkClassificationStrategy(self, learnerName,
-                                                   arguments)
-        # want the scores to be per label, regardless of the original format,
-        # so we check the strategy, and modify it if necessary
-        if not strategy:
-            scores = []
-            for i in range(len(rawScores.points)):
-                combinedScores = calculateSingleLabelScoresFromOneVsOneScores(
-                    rawScores.pointView(i), numLabels)
-                scores.append(combinedScores)
-            scores = numpy.array(scores)
-            return UML.createData("Matrix", scores)
-        else:
-            return rawScores
-
-
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
     ##############################################
@@ -1202,7 +1164,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @abc.abstractmethod
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, customDict):
         """
         Perform testing/prediction on the test set using TrainedLearner.
 
@@ -1540,10 +1502,8 @@ class TrainedLearner(object):
         """
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-
-        #			self.interface._validateOutputFlag(output)
-        #			self.interface._validateScoreModeFlag(scoreMode)
-        mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+        mergedArguments = MergedArguments(self.transformedArguments, arguments,
+                                          kwarguments, validate=False)
 
         # input transformation
         transformedInputs = self.interface._inputTransformation(
@@ -1557,8 +1517,9 @@ class TrainedLearner(object):
         if scoreMode != 'label':
             scores = self.getScores(testX, usedArguments)
         if scoreMode != 'allScores':
-            labels = self.interface._applier(self.backend, transTestX,
-                                             usedArguments, self.customDict)
+            labels = self.interface._applier(self.learnerName, self.backend,
+                                             transTestX, usedArguments,
+                                             self.customDict)
             labels = self.interface._outputTransformation(
                 self.learnerName, labels, usedArguments, output, "label",
                 self.customDict)
@@ -1737,6 +1698,45 @@ class TrainedLearner(object):
 
         return discovered
 
+    def _formatScoresToOvA(self, testX, applyResults, rawScores, arguments):
+        """
+        Helper that takes raw scores in any of the three accepted
+        formats (binary case best score, one vs one pairwise tournament
+        by natural label ordering, or one vs all by natural label
+        ordering) and returns them in a one vs all accepted format.
+        """
+        order = self.interface._getScoresOrder(self.backend)
+        numLabels = len(order)
+        if numLabels == 2 and len(rawScores.features) == 1:
+            ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
+            return UML.createData("Matrix", ret)
+
+        if applyResults is None:
+            applyResults = self.interface._applier(
+                self.learnerName, self.backend, testX, arguments,
+                self.customDict)
+            applyResults = self.interface._outputTransformation(
+                self.learnerName, applyResults, arguments, "match", "label",
+                self.customDict)
+        if len(rawScores.features) != 3:
+            strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
+        else:
+            strategy = checkClassificationStrategy(
+                self.interface, self.learnerName, arguments)
+        # want the scores to be per label, regardless of the original format,
+        # so we check the strategy, and modify it if necessary
+        if not strategy:
+            scores = []
+            for i in range(len(rawScores.points)):
+                combinedScores = calculateSingleLabelScoresFromOneVsOneScores(
+                    rawScores.pointView(i), numLabels)
+                scores.append(combinedScores)
+            scores = numpy.array(scores)
+            return UML.createData("Matrix", scores)
+        else:
+            return rawScores
+
+
     @captureOutput
     def getScores(self, testX, arguments=None, **kwarguments):
         """
@@ -1750,7 +1750,8 @@ class TrainedLearner(object):
         UML.data.Matrix
             The label scores.
         """
-        usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+        usedArguments = MergedArguments(self.transformedArguments, arguments,
+                                        kwarguments, validate=False)
         (_, _, testX, usedArguments) = self.interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
             self.customDict)
@@ -1760,9 +1761,8 @@ class TrainedLearner(object):
         umlTypeRawScores = self.interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self.customDict)
-        formatedRawOrder = self.interface._formatScoresToOvA(
-            self.learnerName, self.backend, testX, None, umlTypeRawScores,
-            usedArguments, self.customDict)
+        formatedRawOrder = self._formatScoresToOvA(
+            testX, None, umlTypeRawScores, usedArguments)
         internalOrder = self.interface._getScoresOrder(self.backend)
         naturalOrder = sorted(internalOrder)
         if numpy.array_equal(naturalOrder, internalOrder):
@@ -1962,3 +1962,57 @@ def relabeler(point, label=None):
         return 0
     else:
         return 1
+
+class MergedArguments(dict):
+    """
+    Combines all the arguments stored in a TrainedLearner and additional
+    arguments provided via the arguments parameter and kwarguments.
+    This object will behave the same as a python dictionary, but
+    includes the getLimitedArguments method to get a subset of the
+    arguments.
+
+    NOTE: Setting validate to False will allow instantiation even if
+    there is a conflict with the arguments. Deferring raising the
+    exception in case of invalid arguments allows for better detail in
+    exception message.
+    """
+    def __init__(self, trainArguments, argumentsParam, kwargsParam,
+                 validate=True):
+        # allow instatiation whether arguments are valid or not.
+        # deferring exception in case of invalid arguments allows for
+        # better detail in exception message.
+        arguments = trainArguments
+        for dictionary in [argumentsParam, kwargsParam]:
+            if dictionary:
+                for arg, value in dictionary.items():
+                    if arg not in trainArguments:
+                        arguments[arg] = value
+                    elif value != trainArguments[arg]:
+                        arguments[arg] = value
+        self._invalidArguments = []
+        invalid = []
+        for arg in self:
+            if arg not in trainArguments:
+                invalid.append(arg)
+        self.validated = False
+        if self._invalidArguments and validate:
+            raiseInvalidArguments(trainArguments)
+        elif validate:
+            self.validated = True
+        super(MergedArguments, self).__init__(arguments)
+
+    def getLimitedArguments(self,limitTo):
+        if not self.validated and self._invalidArguments:
+            raiseInvalidArguments(limitTo)
+        limited = {}
+        for name in limitTo:
+            limited[name] = self[name]
+        return limited
+
+    def raiseInvalidArguments(validArguments):
+        msg = "EXTRA LEARNER PARAMETER! "
+        msg += "The following parameter names cannot be applied: "
+        msg += prettyListString(self._invalidArguments, useAnd=True)
+        msg += ". The allowed parameters are: "
+        msg += prettyListString(validArguments, useAnd=True)
+        raise InvalidArgumentValue(msg)
