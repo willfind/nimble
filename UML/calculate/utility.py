@@ -211,11 +211,13 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
 
 
 def _generateAllZeros(length):
-    return UML.createData("List", numpy.zeros([length, 1], dtype=int))
+    return UML.createData("List", numpy.zeros([length, 1], dtype=int),
+                          useLog=False)
 
 
 def _generateAllOnes(length):
-    return UML.createData("List", numpy.ones([length, 1], dtype=int))
+    return UML.createData("List", numpy.ones([length, 1], dtype=int),
+                          useLog=False)
 
 
 def _generateMixedRandom(length):
@@ -224,7 +226,7 @@ def _generateMixedRandom(length):
         # we don't want all zeros or all ones
         if numpy.any(correct) and not numpy.all(correct):
             break
-    correct = UML.createData(returnType="List", data=correct)
+    correct = UML.createData(returnType="List", data=correct, useLog=False)
     return correct
 
 
@@ -236,15 +238,16 @@ def _generatePredicted(knowns, predictionType):
 
     """
     workingCopy = knowns.copy()
-    workingCopy.features.setName(0, 'PredictedClassLabel')
+    workingCopy.features.setName(0, 'PredictedClassLabel', useLog=False)
     # Labels
     if predictionType == 0:
         return workingCopy
     # Labels and the score for that label (aka 'bestScores')
     elif predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
-        scores = UML.createData(returnType="List", data=scores, featureNames=['LabelScore'])
-        workingCopy.features.add(scores)
+        scores = UML.createData(returnType="List", data=scores,
+                                featureNames=['LabelScore'], useLog=False)
+        workingCopy.features.add(scores, useLog=False)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
     else:
@@ -261,7 +264,8 @@ def _generatePredicted(knowns, predictionType):
                 currConfidences[1] = winner
             dataToFill.append(currConfidences)
 
-        scores = UML.createData(returnType="List", data=dataToFill, featureNames=['0', '1'])
+        scores = UML.createData(returnType="List", data=dataToFill,
+                                featureNames=['0', '1'], useLog=False)
         return scores
 
 

@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-import UML
+
 import six
 import numpy
-#import numpy
+
+import UML
 
 def objConstructorMaker(returnType):
     """
@@ -20,7 +21,8 @@ def objConstructorMaker(returnType):
             return UML.createData(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType)
+                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
@@ -28,7 +30,7 @@ def objConstructorMaker(returnType):
             return UML.createData(returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, elementType=elementType, name=name, path=path,
                 keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith)
+                replaceMissingWith=replaceMissingWith, useLog=False)
 
     return constructor
 
@@ -51,7 +53,8 @@ def viewConstructorMaker(concreteType):
             orig = UML.createData(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType)
+                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
@@ -61,7 +64,8 @@ def viewConstructorMaker(concreteType):
                 featureNames=featureNames, name=name, path=path, elementType=elementType,
                 keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith)
-
+        origHasPts = orig.points._namesCreated()
+        origHasFts = orig.features._namesCreated()
         # generate points of data to be present before and after the viewable
         # data in the concrete object
         if len(orig.points) != 0:
@@ -78,9 +82,9 @@ def viewConstructorMaker(concreteType):
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                    elementType=elementType)
 
-            firstPoint.points.add(orig)
+            firstPoint.points.add(orig, useLog=False)
             full = firstPoint
-            full.points.add(lastPoint)
+            full.points.add(lastPoint, useLog=False)
 
             pStart = 1
             pEnd = len(full.points) - 2
@@ -99,14 +103,19 @@ def viewConstructorMaker(concreteType):
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
                                                      elementType=elementType)
 
-            lastFeature.transpose()
+            lastFeature.transpose(useLog=False)
 
-            full.features.add(lastFeature)
+            full.features.add(lastFeature, useLog=False)
             fStart = None
             fEnd = len(full.features) - 2
         else:
             fStart = None
             fEnd = None
+
+        if not origHasPts:
+            full.points.setNames(None)
+        if not origHasFts:
+            full.features.setNames(None)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
         ret._name = orig.name

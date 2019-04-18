@@ -12,6 +12,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.customLearners.ridge_regression import RidgeRegression
 from UML.configuration import configSafetyWrapper
+from .assertionHelpers import noLogEntryExpected
 
 
 class LoveAtFirstSightClassifier(CustomLearner):
@@ -279,13 +280,25 @@ def test_settings_autoRegister_safety():
     UML.helpers.autoRegisterFromSettings()
 
 @configSafetyWrapper
+@noLogEntryExpected
 def test_logCount():
+    saved = copy.copy(UML.interfaces.available)
+
     UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     lst = UML.listLearners("Foo")
     params = UML.learnerParameters("Foo.LoveAtFirstSightClassifier")
     defaults = UML.learnerDefaultValues("Foo.LoveAtFirstSightClassifier")
     lType = UML.learnerType("Foo.LoveAtFirstSightClassifier")
     UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+
+    UML.registerCustomLearnerAsDefault("Bar", UncallableLearner)
+    lst = UML.listLearners("Bar")
+    params = UML.learnerParameters("Bar.UncallableLearner")
+    defaults = UML.learnerDefaultValues("Bar.UncallableLearner")
+    lType = UML.learnerType("Bar.UncallableLearner")
+    UML.deregisterCustomLearnerAsDefault("Bar", 'UncallableLearner')
+
+    assert saved == UML.interfaces.available
 
 
 # case 1: register new learner NOT as default

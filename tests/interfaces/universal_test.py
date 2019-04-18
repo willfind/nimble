@@ -14,6 +14,7 @@ import UML
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.helpers import generateClassificationData
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 class Initable(object):
@@ -90,10 +91,10 @@ class TestInterface(UniversalInterface):
         return outputValue
 
     def _configurableOptionNames(self):
-        return []
+        return ['option']
 
     def _optionDefaults(self, option):
-        return []
+        return None
 
     def _exposedFunctions(self):
         return [self.exposedOne, self.exposedTwo, self.exposedThree]
@@ -222,13 +223,31 @@ def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
     assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
 
 
-###############
-### version ###
-###############
+@noLogEntryExpected
+def test_accessible():
+    assert TestObject.accessible()
 
+@noLogEntryExpected
+def test_getCanonicalName():
+    assert TestObject.getCanonicalName() == 'Test'
+
+@noLogEntryExpected
+def test_learnerType():
+    assert TestObject.learnerType('l0') is None
+
+@noLogEntryExpected
+def test_isAlias():
+    assert TestObject.isAlias('test')
+
+@noLogEntryExpected
 def test_version():
-    ret = TestObject.version()
-    assert ret == "0.0.0"
+    assert TestObject.version() == '0.0.0'
+
+@noLogEntryExpected
+def test_setOptionGetOption():
+    assert TestObject.getOption('option') is None
+    TestObject.setOption('option', 'set')
+    assert TestObject.getOption('option') == 'set'
 
 #########################
 ### exposed functions ###
@@ -291,8 +310,6 @@ class AlwaysWarnInterface(UniversalInterface):
         return self._getDefaultValues(name)
 
     def learnerType(self, name):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
         pass
 
     def _getScores(self, learner, testX, arguments, customDict):
@@ -300,7 +317,7 @@ class AlwaysWarnInterface(UniversalInterface):
         sys.stderr.flush()
         num = len(testX.points)
         raw = [0] * num
-        return UML.createData("Matrix", raw)
+        return UML.createData("Matrix", raw, useLog=False)
 
     def _getScoresOrder(self, learner):
         self.writeWarningToStdErr()
@@ -390,6 +407,7 @@ def backend_warningscapture(toCall, prepCall=None):
 
 
 def test_warningscapture_trainAndApply():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.trainAndApply('foo', None)
 
@@ -403,6 +421,7 @@ def test_warningscapture_trainAndTest():
     def metric(x, y):
         return 0
 
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.trainAndTest('foo', trainX, trainY, testX, testY, metric)
 
@@ -410,6 +429,7 @@ def test_warningscapture_trainAndTest():
 
 
 def test_warningscapture_train():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.train('foo', None)
 
@@ -426,6 +446,7 @@ def test_warningscapture_TL_test():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @oneLogEntryExpected
     def wrapped(arg):
         arg.test(testX, testY, metric)
 
@@ -439,6 +460,7 @@ def test_warningscapture_TL_apply():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @oneLogEntryExpected
     def wrapped(arg):
         arg.apply(testX)
 
@@ -452,6 +474,7 @@ def test_warningscapture_TL_retrain():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @oneLogEntryExpected
     def wrapped(arg):
         arg.retrain(testX, testY)
 
@@ -465,6 +488,7 @@ def test_warningscapture_TL_incrementalTrain():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @oneLogEntryExpected
     def wrapped(arg):
         arg.incrementalTrain(testX, testY)
 
@@ -478,6 +502,7 @@ def test_warningscapture_TL_getAttributes():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @noLogEntryExpected
     def wrapped(arg):
         arg.getAttributes()
 
@@ -491,6 +516,7 @@ def test_warningscapture_TL_getScores():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
+    @noLogEntryExpected
     def wrapped(arg):
         arg.getScores(testX)
 
@@ -498,6 +524,7 @@ def test_warningscapture_TL_getScores():
 
 
 def test_warningscapture_listLearners():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.listLearners()
 
@@ -505,6 +532,7 @@ def test_warningscapture_listLearners():
 
 
 def test_warningscapture_findCallable():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.findCallable('foo')
 
@@ -512,6 +540,7 @@ def test_warningscapture_findCallable():
 
 
 def test_warningscapture_getLearnerParameterNames():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.getLearnerParameterNames('foo')
 
@@ -519,11 +548,11 @@ def test_warningscapture_getLearnerParameterNames():
 
 
 def test_warningscapture_getLearnerDefaultValues():
+    @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.getLearnerDefaultValues('foo')
 
     backend_warningscapture(wrapped)
-
 
 # import each test suite
 

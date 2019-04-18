@@ -28,6 +28,7 @@ from UML.helpers import generateClassificationData
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
 from six.moves import range
+from .assertionHelpers import oneLogEntryExpected
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
@@ -42,7 +43,7 @@ def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLab
 
     rawFeatures = [[pythonRandom.random() for _x in range(numFeatures)] for _y in range(numPoints)]
 
-    return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
+    return (createData(dataType, rawFeatures, useLog=False), createData(dataType, labelsRaw, useLog=False))
 
 
 def test_crossValidate_XY_unchanged():
@@ -510,3 +511,21 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     # should have 100 percent accuracy, so these results should be the same
     assert nonAvgResult == avgResult
+
+@oneLogEntryExpected
+def back_crossValidate_logCount(toCall):
+    classifierAlgo = 'Custom.KNNClassifier'
+    X, Y = _randomLabeledDataSet(numLabels=5)
+    copyX = X.copy()
+    copyY = Y.copy()
+    result = toCall(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
+
+@oneLogEntryExpected
+def test_crossValidate_logCount():
+    back_crossValidate_logCount(crossValidate)
+
+def test_crossValidateReturnAll_logCount():
+    back_crossValidate_logCount(crossValidateReturnAll)
+
+def test_crossValidateReturnBest_logCount():
+    back_crossValidate_logCount(crossValidateReturnBest)

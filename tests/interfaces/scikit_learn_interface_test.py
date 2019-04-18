@@ -27,6 +27,7 @@ from UML.interfaces.universal_interface import UniversalInterface
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
+from ..assertionHelpers import oneLogEntryExpected
 
 scipy = UML.importModule('scipy.sparse')
 sklearn = UML.importExternalLibraries.importModule("sklearn")
@@ -706,6 +707,17 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
         trainer_ret_l = loadTrainedLearner(tmpFile.name)
         return trainer_ret_l.apply(givenTestX)
 
+@oneLogEntryExpected
+def test_saveLoadTrainedLearner_logCount():
+    train = [[1, -1, -3, -3, -1],
+              [2, 0.4, -0.8, 0.2, -0.3],
+              [3, 2, 1, 2, 4]]
+    trainObj = UML.createData('Matrix', train, useLog=False)
+
+    tl = UML.train('SciKitLearn.LogisticRegression', trainObj, 0, useLog=False)
+    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+        tl.save(tmpFile.name)
+        load = loadTrainedLearner(tmpFile.name)
 
 def equalityAssertHelper(ret1, ret2, ret3=None):
     def identicalThenApprox(lhs, rhs):

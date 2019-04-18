@@ -5,6 +5,7 @@ mechanisms for controlling logging are functioning as expected.
 
 from __future__ import absolute_import
 import os
+import tempfile
 
 from nose.plugins.attrib import attr
 import numpy
@@ -21,43 +22,66 @@ def logEntryCount(logger):
     return entryCount[0][0]
 
 @configSafetyWrapper
-def test_createData():
+def back_load(toCall, *args, **kwargs):
     logger = UML.logger.active
 
     # count number of starting log entries
     UML.settings.set('logger', 'enabledByDefault', 'True')
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, None, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, False, *args)
     assert start == end
 
     UML.settings.set('logger', 'enabledByDefault', 'False')
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=True)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=None)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, None, *args)
     assert start == end
 
-    start = logEntryCount(logger)
-    data = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
-    end = logEntryCount(logger)
+    start, end = loadAndCheck(toCall, False, *args)
     assert start == end
+
+def loadAndCheck(toCall, useLog, *args):
+    logger = UML.logger.active
+    # count number of starting log entries
+    startCount = logEntryCount(logger)
+    # call the function we're testing for log control
+    toCall(*args, useLog=useLog)
+    # make sure it has the expected effect on the count
+    endCount = logEntryCount(logger)
+    return (startCount, endCount)
+
+def test_createData():
+    back_load(UML.createData, 'Matrix', [[1, 2, 3], [4, 5, 6]])
+
+def test_createRandomData():
+    back_load(UML.createRandomData, 'Sparse', 5, 5, 0.99)
+
+def test_loadData():
+    obj = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
+    with tempfile.NamedTemporaryFile(suffix='.umld') as tmpFile:
+        obj.save(tmpFile.name)
+        back_load(UML.loadData, tmpFile.name)
+
+def test_loadTrainedLearner():
+    train = UML.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
+    test = UML.createData('Matrix', [[3], [2], [1]], useLog=False)
+    tl = UML.train('custom.KNNClassifier', train, test)
+    with tempfile.NamedTemporaryFile(suffix='.umlm') as tmpFile:
+        tl.save(tmpFile.name)
+        back_load(UML.loadTrainedLearner, tmpFile.name)
+
+def test_setRandomSeed():
+    UML.randomness.startAlternateControl()
+    back_load(UML.setRandomSeed, 1337)
+    UML.randomness.endAlternateControl()
 
 # helper function which checks log status for runs
 def runAndCheck(toCall, useLog):
@@ -405,6 +429,17 @@ def test_flattenUnflatten_featureAxis():
 
     flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck)
 
+def test_merge():
+    mData = [[1, 4], [2, 5], [3, 6]]
+    mPtNames = ['p0', 'p6', 'p12']
+    mFtNames = ['f2', 'f3']
+    mergeObj = UML.createData('Matrix', mData, pointNames=mPtNames,
+                              featureNames=mFtNames)
+    def wrapped(obj, useLog):
+        obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
 ############################
 # Points/Features/Elements #
 ############################
@@ -588,3 +623,61 @@ def test_features_add():
 
     backend(wrapped, prepAndCheck)
 
+def test_features_splitByParsing():
+    def customParser(val):
+        if val == 1:
+            return ['a', 1]
+        elif val == 2:
+            return ['b', 2]
+        else:
+            return ['c', 3]
+    def wrapped(obj, useLog):
+        return obj.features.splitByParsing(1, customParser, ['str', 'int'], useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_splitByCollapsingFeatures():
+    def wrapped(obj, useLog):
+        return obj.points.splitByCollapsingFeatures(['f0', 'f1', 'f2'],
+                                                    'featureNames', 'values',
+                                                    useLog = useLog)
+    backend(wrapped, prepAndCheck)
+
+def test_points_combineByExpandingFeatures():
+    def wrapped(obj, useLog):
+        newData = [['Bolt', '100m', 9.81],
+                   ['Bolt', '200m', 19.78],
+                   ['Gatlin', '100m', 9.89],
+                   ['de Grasse', '200m', 20.02],
+                   ['de Grasse', '100m', 9.91]]
+        fNames = ['athlete', 'dist', 'time']
+        newObj = UML.createData('Matrix', newData, featureNames=fNames, useLog=False)
+        return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_setName():
+    def wrapped(obj, useLog):
+        return obj.points.setName(0, 'newPointName', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_setName():
+    def wrapped(obj, useLog):
+        return obj.features.setName(0, 'newFeatureName', useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_points_setNames():
+    def wrapped(obj, useLog):
+        newNames = ['new_pt' + str(i) for i in range(18)]
+        return obj.points.setNames(newNames, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)
+
+def test_features_setNames():
+    def wrapped(obj, useLog):
+        newNames = ['new_ft' + str(i) for i in range(3)]
+        return obj.features.setNames(newNames, useLog=useLog)
+
+    backend(wrapped, prepAndCheck)

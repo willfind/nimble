@@ -45,6 +45,9 @@ from UML.exceptions import ImproperObjectAction
 from UML.randomness import numpyRandom
 
 from .baseObject import DataTestObject
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import assertNoNamesGenerated
 
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
@@ -56,6 +59,8 @@ preservePair = (preserveAPath, preserveRPath)
 
 
 ### Helpers used by tests in the test class ###
+
+twoLogEntriesExpected = logCountAssertionFactory(2)
 
 def passThrough(value):
     return value
@@ -176,7 +181,7 @@ class StructureDataSafe(StructureShared):
     #############
     # copyAs #
     #############
-
+    @noLogEntryExpected
     def test_copy_withZeros(self):
         """ Test copyAs() produces an equal object and doesn't just copy the references """
         data1 = [[1, 2, 3, 0], [1, 0, 3, 0], [2, 4, 6, 0], [0, 0, 0, 0]]
@@ -238,7 +243,8 @@ class StructureDataSafe(StructureShared):
         assert listOfDict == []
 
         dictOfList = orig.copyAs(format='dict of list')
-        assert dictOfList == {'_DEFAULT_#0': [], '_DEFAULT_#1': []}
+        assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
+        assert all(val == [] for val in dictOfList.values())
 
 
     def test_copy_Fempty(self):
@@ -604,6 +610,7 @@ class StructureDataSafe(StructureShared):
 
         ret = toTest.points.copy(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_copy_handmadeSingle(self):
         """ Test points.copy() against handmade output when copying one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -614,13 +621,9 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-        # View objects utilize point and feature names, so we ignore this check
-        if not isinstance(toTest, BaseView):
-            # Check that names have not been generated unnecessarily
-            assert not toTest.points._namesCreated()
-            assert not toTest.features._namesCreated()
-            assert not copy1.points._namesCreated()
-            assert not copy1.features._namesCreated()
+        # Check that names have not been generated unnecessarily
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(copy1)
 
     def test_points_copy_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -656,7 +659,7 @@ class StructureDataSafe(StructureShared):
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(expTest)
 
-
+    @twoLogEntriesExpected
     def test_points_copy_handmadeListSequence(self):
         """ Test points.copy() against handmade output for multiple copies """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -1375,6 +1378,7 @@ class StructureDataSafe(StructureShared):
 
         ret = toTest.features.copy(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_copy_handmadeSingle(self):
         """ Test features.copy() against handmade output when copying one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1386,13 +1390,9 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-        # View objects utilize point and feature names, so we ignore this check
-        if not isinstance(toTest, BaseView):
-            # Check that names have not been generated unnecessarily
-            assert not toTest.points._namesCreated()
-            assert not toTest.features._namesCreated()
-            assert not copy1.points._namesCreated()
-            assert not copy1.features._namesCreated()
+        # Check that names have not been generated unnecessarily
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(copy1)
 
     def test_features_copy_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1439,7 +1439,7 @@ class StructureDataSafe(StructureShared):
         expEnd = self.constructor(data)
         assert toTest.isIdentical(expEnd)
 
-
+    @twoLogEntriesExpected
     def test_features_copy_handmadeListSequence(self):
         """ Test features.copy() against handmade output for several copies by list """
         pointNames = ['1', '4', '7']
@@ -2351,7 +2351,7 @@ class StructureModifying(StructureShared):
         ret2 = self.constructor(exp2)
         assert ret2.isIdentical(toTest)
 
-
+    @logCountAssertionFactory(3)
     def test_transpose_handmade(self):
         """ Test transpose() function against handmade output """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2368,6 +2368,8 @@ class StructureModifying(StructureShared):
         dataObjT.transpose()
         assert dataObj1.isIdentical(dataObj2)
         assert dataObj2.isIdentical(dataObjT)
+        assertNoNamesGenerated(dataObj1)
+        assertNoNamesGenerated(dataObj2)
 
     def test_transpose_handmadeWithZeros(self):
         """ Test transpose() function against handmade output """
@@ -2568,7 +2570,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
         self.backend_add_exception_outOfOrder_with_defaults('feature')
 
-
+    @oneLogEntryExpected
     def backend_add_emptyObject(self, axis, insertBefore=None):
         empty = [[], []]
 
@@ -2608,7 +2610,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() with an insertBefore ID when the calling object is feature empty raises exception """
         self.backend_add_emptyObject('feature', 0)
 
-
+    @oneLogEntryExpected
     def backend_add_handmadeSingle(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
@@ -2671,7 +2673,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() against handmade output for a single added feature in the middle"""
         self.backend_add_handmadeSingle('feature', 1)
 
-
+    @logCountAssertionFactory(4)
     def backend_add_handmadeSequence(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
@@ -2708,7 +2710,7 @@ class StructureModifying(StructureShared):
                 dataExpected = [[1, 10, 0, 0.01, 0.1, 2, 3], [4, 11, 0, 0.02, 0.2, 5, 6], [7, 12, 0, 0.03, 0.3, 8, 9]]
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toInsert.transpose()
+            toInsert.transpose(useLog=False)
             for nextAdd in toInsert.features:
                 toTest.features.add(nextAdd, insertBefore)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
@@ -2739,7 +2741,7 @@ class StructureModifying(StructureShared):
         """ Test features.add() against handmade output for a sequence of additions in the middle"""
         self.backend_add_handmadeSequence('feature', 1)
 
-
+    @oneLogEntryExpected
     def backend_add_selfInsert(self, axis, insertBefore=None):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -3000,6 +3002,30 @@ class StructureModifying(StructureShared):
     def test_addFeatures_noReorderAddedHasDefaultNames(self):
         self.backend_add_noReorderAddedHasDefaultNames('feature')
 
+    def backend_add_lazyNameGeneration(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            toTest.points.add(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # toInsert has default names
+            toInsert = self.constructor(insertData)
+            toTest.features.add(toInsert)
+
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(toInsert)
+
+    def test_addPoints_lazyNameGeneration(self):
+        self.backend_add_lazyNameGeneration('point')
+
+    def test_addFeatures_lazyNameGeneration(self):
+        self.backend_add_lazyNameGeneration('feature')
+
     def backend_add_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
@@ -3074,6 +3100,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.sort(sortBy=1, sortHelper=[1,2,0])
 
+    @oneLogEntryExpected
     def test_points_sort_naturalByFeature(self):
         """ Test points.sort() when we specify a feature to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
@@ -3105,7 +3132,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-
+    @oneLogEntryExpected
     def test_points_sort_scorer(self):
         """ Test points.sort() when we specify a scoring function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
@@ -3125,7 +3152,9 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
 
+    @oneLogEntryExpected
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
         data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
@@ -3148,6 +3177,7 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_dataTypeRetainedFromList(self):
         """ Test points.sort() data not converted when sorting by list"""
@@ -3160,6 +3190,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData)
 
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_indicesList(self):
         """ Test points.sort() when we specify a list of indices """
@@ -3187,6 +3218,7 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_points_sort_mixedList(self):
         """ Test points.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
@@ -3244,6 +3276,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.sort(sortBy=1, sortHelper=[1,2,0])
 
+    @oneLogEntryExpected
     def test_features_sort_naturalByPointWithNames(self):
         """ Test features.sort() when we specify a point to sort by; includes featureNames """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
@@ -3275,7 +3308,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-
+    @oneLogEntryExpected
     def test_features_sort_scorer(self):
         """ Test features.sort() when we specify a scoring function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
@@ -3297,6 +3330,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
 
+    @oneLogEntryExpected
     def test_features_sort_comparator(self):
         """ Test features.sort() when we specify a comparator function """
         data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
@@ -3319,7 +3353,7 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
-
+        assertNoNamesGenerated(toTest)
 
     def test_features_sort_dataTypeRetainedFromList(self):
         """ Test features.sort() data not converted when sorting by list"""
@@ -3332,6 +3366,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData)
 
         assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_features_sort_indicesList(self):
         """ Test features.sort() when we specify a list of indices """
@@ -3359,6 +3394,7 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
 
+    @oneLogEntryExpected
     def test_features_sort_mixedList(self):
         """ Test features.sort() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
@@ -3410,6 +3446,7 @@ class StructureModifying(StructureShared):
 
         ret = toTest.points.extract(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_extract_handmadeSingle(self):
         """ Test points.extract() against handmade output when extracting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3421,10 +3458,8 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
-        assert not ext1.points._namesCreated()
-        assert not ext1.features._namesCreated()
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ext1)
 
     def test_points_extract_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3460,7 +3495,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_points_extract_handmadeListSequence(self):
         """ Test points.extract() against handmade output for several list extractions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -4195,6 +4230,7 @@ class StructureModifying(StructureShared):
 
         ret = toTest.features.extract(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_extract_handmadeSingle(self):
         """ Test features.extract() against handmade output when extracting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4207,10 +4243,8 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
-        assert not ext1.points._namesCreated()
-        assert not ext1.features._namesCreated()
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(ext1)
 
     def test_features_extract_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4261,7 +4295,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_features_extract_handmadeListSequence(self):
         """ Test features.extract() against handmade output for several extractions by list """
         pointNames = ['1', '4', '7']
@@ -4870,6 +4904,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.delete(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_delete_handmadeSingle(self):
         """ Test points.delete() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4879,8 +4914,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_points_delete_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4909,7 +4943,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_points_delete_handmadeListSequence(self):
         """ Test points.delete() against handmade output for several list deletions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -5510,6 +5544,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.delete(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_delete_handmadeSingle(self):
         """ Test features.delete() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5520,8 +5555,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(expEnd)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_features_delete_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5562,7 +5596,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
-
+    @twoLogEntriesExpected
     def test_features_delete_handmadeListSequence(self):
         """ Test features.delete() against handmade output for several deletions by list """
         pointNames = ['1', '4', '7']
@@ -6058,6 +6092,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         toTest.points.retain(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_retain_handmadeSingle(self):
         """ Test points.retain() against handmade output when retaining one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6067,8 +6102,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp1)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_points_retain_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6114,6 +6148,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(exp)
 
+    @twoLogEntriesExpected
     def test_points_retain_handmadeListSequence(self):
         """ Test points.retain() against handmade output for several list retentions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -6743,6 +6778,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.retain(['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_retain_handmadeSingle(self):
         """ Test features.retain() against handmade output when retaining one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6753,8 +6789,7 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(exp1)
 
         # Check that names have not been generated unnecessarily
-        assert not toTest.points._namesCreated()
-        assert not toTest.features._namesCreated()
+        assertNoNamesGenerated(toTest)
 
     def test_features_retain_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -6809,6 +6844,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
+    @twoLogEntriesExpected
     def test_features_retain_handmadeListSequence(self):
         """ Test features.retain() against handmade output for several retentions by list """
         pointNames = ['1', '4', '7']
@@ -7258,94 +7294,6 @@ class StructureModifying(StructureShared):
     def test_features_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
 
-    #####################
-    # referenceDataFrom #
-    #####################
-
-    @raises(InvalidArgumentType)
-    def test_referenceDataFrom_exceptionWrongType(self):
-        """ Test referenceDataFrom() throws exception when other is not the same type """
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        retType0 = UML.data.available[0]
-        retType1 = UML.data.available[1]
-
-        objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
-        objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
-
-        # at least one of these two will be the wrong type
-        orig.referenceDataFrom(objType0)
-        orig.referenceDataFrom(objType1)
-
-
-    def test_referenceDataFrom_data_axisNames(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, -4]]
-        featureNames = ['1', '2', '3', '4']
-        pNames = ['-1']
-        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
-
-        ret = orig.referenceDataFrom(other)  # RET CHECK
-
-        assert orig.data is other.data
-        assert '-1' in orig.points.getNames()
-        assert '1' in orig.features.getNames()
-        assert ret is None
-
-    def test_referenceDataFrom_ObjName_Paths(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, ]]
-        featureNames = ['1', '2', '3']
-        pNames = ['-1']
-        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
-
-        orig._name = "testName"
-        orig._absPath = "testAbsPath"
-        orig._relPath = "testRelPath"
-
-        other._name = "testNameother"
-        other._absPath = "testAbsPathother"
-        other._relPath = "testRelPathother"
-
-        orig.referenceDataFrom(other)
-
-        assert orig.name == "testName"
-        assert orig.absolutePath == "testAbsPathother"
-        assert orig.relativePath == 'testRelPathother'
-
-        assert other.name == "testNameother"
-        assert other.absolutePath == "testAbsPathother"
-        assert other.relativePath == 'testRelPathother'
-
-
-    def test_referenceDataFrom_allMetadataAttributes(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pNames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-
-        data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
-        other = self.constructor(data2, )
-
-        orig.referenceDataFrom(other)
-
-        assert orig._pointCount == len(other.points)
-        assert orig._featureCount == len(other.features)
-
-        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
-        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
-
     ### using match module ###
 
     def test_features_retain_match_missing(self):
@@ -7400,6 +7348,108 @@ class StructureModifying(StructureShared):
         expTest.features.setNames(['c'])
         assert toTest == expTest
 
+    #####################
+    # referenceDataFrom #
+    #####################
+
+    @raises(InvalidArgumentType)
+    def test_referenceDataFrom_exceptionWrongType(self):
+        """ Test referenceDataFrom() throws exception when other is not the same type """
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        retType0 = UML.data.available[0]
+        retType1 = UML.data.available[1]
+
+        objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
+        objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
+
+        # at least one of these two will be the wrong type
+        orig.referenceDataFrom(objType0)
+        orig.referenceDataFrom(objType1)
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_data_axisNames(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, -4]]
+        featureNames = ['1', '2', '3', '4']
+        pNames = ['-1']
+        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
+
+        ret = orig.referenceDataFrom(other)  # RET CHECK
+
+        assert orig.data is other.data
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
+        assert ret is None
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_lazyNameGeneration(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        orig = self.constructor(data1)
+
+        data2 = [[-1, -2, -3, -4]]
+        other = self.constructor(data2)
+
+        orig.referenceDataFrom(other)
+
+        assertNoNamesGenerated(orig)
+        assertNoNamesGenerated(other)
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_ObjName_Paths(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, ]]
+        featureNames = ['1', '2', '3']
+        pNames = ['-1']
+        other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
+
+        orig._name = "testName"
+        orig._absPath = "testAbsPath"
+        orig._relPath = "testRelPath"
+
+        other._name = "testNameother"
+        other._absPath = "testAbsPathother"
+        other._relPath = "testRelPathother"
+
+        orig.referenceDataFrom(other)
+
+        assert orig.name == "testName"
+        assert orig.absolutePath == "testAbsPathother"
+        assert orig.relativePath == 'testRelPathother'
+
+        assert other.name == "testNameother"
+        assert other.absolutePath == "testAbsPathother"
+        assert other.relativePath == 'testRelPathother'
+
+    @oneLogEntryExpected
+    def test_referenceDataFrom_allMetadataAttributes(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+        data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
+        other = self.constructor(data2, )
+
+        orig.referenceDataFrom(other)
+
+        assert orig._pointCount == len(other.points)
+        assert orig._featureCount == len(other.features)
+
+        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
+        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
+
     ######################
     # points.transform() #
     ######################
@@ -7440,6 +7490,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.transform(noChange, points=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_points_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7457,6 +7508,18 @@ class StructureModifying(StructureShared):
 
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
+
+    def test_points_transform_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitAllDeci(point):
+            value = point[1]
+            return [value, value, value]
+
+        lowerCounts = origObj.points.transform(emitAllDeci)  # RET CHECK
+
+        assertNoNamesGenerated(origObj)
 
     def test_points_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -7478,6 +7541,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    @oneLogEntryExpected
     def test_points_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7563,6 +7627,7 @@ class StructureModifying(StructureShared):
 
         toTest.features.transform(noChange, features=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_features_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7583,6 +7648,20 @@ class StructureModifying(StructureShared):
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
 
+    def test_features_transform_Handmade_lazyNameGeneration(self):
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData))
+
+        def emitAllEqual(feature):
+            first = feature[0]
+            for value in feature:
+                if value != first:
+                    return [0, 0, 0, 0]
+            return [1, 1, 1, 1]
+
+        lowerCounts = origObj.features.transform(emitAllEqual)  # RET CHECK
+
+        assertNoNamesGenerated(origObj)
 
     def test_features_transform_NamePath_preservation(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -7607,7 +7686,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
+    @oneLogEntryExpected
     def test_features_transform_HandmadeLimited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -7671,6 +7750,7 @@ class StructureModifying(StructureShared):
 
         toTest.elements.transform(noChange, features=['a', 'b'])
 
+    @oneLogEntryExpected
     def test_elements_transform_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -7682,6 +7762,7 @@ class StructureModifying(StructureShared):
         assert [1, 2, 3] in retRaw
         assert [4, 5, 6] in retRaw
         assert [7, 8, 9] in retRaw
+        assertNoNamesGenerated(toTest)
 
 
     def test_elements_transform_NamePath_preservation(self):
@@ -7698,7 +7779,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
@@ -7710,7 +7791,7 @@ class StructureModifying(StructureShared):
         assert [0, 6, 7] in retRaw
         assert [8, 0, 10] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -7722,7 +7803,7 @@ class StructureModifying(StructureShared):
         assert [5, 5, 7] in retRaw
         assert [7, 9, 9] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -7736,7 +7817,7 @@ class StructureModifying(StructureShared):
         assert [4, 5, 7] in retRaw
         assert [7, 8, 9] in retRaw
 
-
+    @oneLogEntryExpected
     def test_elements_transform_DictionaryAllMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
@@ -7750,7 +7831,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(expTest)
 
-
+    @oneLogEntryExpected
     def test_elements_transform_DictionaryAllMappedStrings(self):
         data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         names = ['one', 'two', 'three']
@@ -8004,7 +8085,7 @@ class StructureModifying(StructureShared):
         except Exception:
             assert False  # expected InvalidArgumentValueCombination
 
-
+    @oneLogEntryExpected
     def test_fillWith_fullObjectFill(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
@@ -8020,8 +8101,9 @@ class StructureModifying(StructureShared):
 
         assert toTest == exp
         assert toTest != arg
+        assertNoNamesGenerated(toTest)
 
-
+    @twoLogEntriesExpected
     def test_fillWith_vectorFill(self):
         raw = [[1, 2], [3, 4]]
         toTestP = self.constructor(raw)
@@ -8062,7 +8144,7 @@ class StructureModifying(StructureShared):
             assert toTest[p, f + 1] == 0
             assert toTest[p + 1, f + 1] == 0
 
-
+    @logCountAssertionFactory(4)
     def test_fillWith_constants(self):
         toTest0 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         exp0 = self.constructor([[0, 1, 1], [0, 1, 1], [0, 0, 0]])
@@ -8124,6 +8206,7 @@ class StructureModifying(StructureShared):
     def test_flattenToOneFeature_vector(self):
         self.back_flatten_vector('feature')
 
+    @oneLogEntryExpected
     def back_flatten_vector(self, axis):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         raw = [1, -1, 2, -2, 3, -3, 4, -4]
@@ -8140,8 +8223,8 @@ class StructureModifying(StructureShared):
         expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
 
         if axis != 'point':
-            testObj.transpose()
-            expObj.transpose()
+            testObj.transpose(useLog=False)
+            expObj.transpose(useLog=False)
 
         ret = getattr(testObj, target)()
 
@@ -8178,6 +8261,7 @@ class StructureModifying(StructureShared):
     def test_flattenToOneFeature_rectangleRandom(self):
         self.back_flatten_rectangleRandom('feature')
 
+    @oneLogEntryExpected
     def back_flatten_rectangleRandom(self, axis):
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
@@ -8345,6 +8429,7 @@ class StructureModifying(StructureShared):
 
 
     # unflatten something that was flattened - include name transformation
+    @oneLogEntryExpected
     def test_unflattenFromOnePoint_handmadeWithNames(self):
         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
@@ -8358,7 +8443,8 @@ class StructureModifying(StructureShared):
         toTest.unflattenFromOnePoint(2)
         assert toTest == exp
 
-    # unflatten something that was flattend - include name transformation
+    # unflatten something that was flattened - include name transformation
+    @oneLogEntryExpected
     def test_unflattenFromOneFeature_handmadeWithNames(self):
         raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
@@ -8380,6 +8466,7 @@ class StructureModifying(StructureShared):
     def test_unflattenFromOneFeature_handmadeDefaultNames(self):
         self.back_unflatten_handmadeDefaultNames('feature')
 
+    @oneLogEntryExpected
     def back_unflatten_handmadeDefaultNames(self, axis):
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         raw = [[1, 10, 20, 2]]
@@ -8389,7 +8476,7 @@ class StructureModifying(StructureShared):
         if axis == 'point':
             exp = self.constructor(expData)
         else:
-            toTest.transpose()
+            toTest.transpose(useLog=False)
             exp = self.constructor(expData.T)
 
         getattr(toTest, target)(2)
@@ -8412,6 +8499,7 @@ class StructureModifying(StructureShared):
     def test_flatten_to_unflatten_feature_roundTrip(self):
         self.back_flatten_to_unflatten_roundTrip('feature')
 
+    @logCountAssertionFactory(4)
     def back_flatten_to_unflatten_roundTrip(self, axis):
         targetDown = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
         targetUp = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
@@ -8942,13 +9030,17 @@ class StructureModifying(StructureShared):
                 ]
             combinations += comboStrict
 
+        @oneLogEntryExpected
+        def performMerge():
+            test.merge(tRight, point=pt, feature=ft, onFeature=on)
+
         for i, exp in enumerate(expected):
             pt = combinations[i][0]
             ft = combinations[i][1]
             try:
                 test = left.copy()
                 tRight = right.copy()
-                test.merge(tRight, point=pt, feature=ft, onFeature=on)
+                performMerge()
                 assert test == exp
             except InvalidArgumentValue:
                 assert exp is InvalidArgumentValue

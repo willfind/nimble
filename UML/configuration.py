@@ -567,7 +567,7 @@ def configSafetyWrapper(toWrap):
     configuration file, and associated global UML state. To be used to
     wrap unit tests which intersect with configuration functionality.
     """
-    def wrapped(*args):
+    def wrapped(*args, **kwargs):
         backupFile = tempfile.TemporaryFile()
         configFilePath = os.path.join(UML.UMLPath, 'configuration.ini')
         configurationFile = open(configFilePath, 'r')
@@ -582,7 +582,7 @@ def configSafetyWrapper(toWrap):
         backupAvailable = copy.copy(UML.interfaces.available)
 
         try:
-            toWrap(*args)
+            toWrap(*args, **kwargs)
         finally:
             backupFile.seek(0)
             configurationFile = open(configFilePath, 'w')
