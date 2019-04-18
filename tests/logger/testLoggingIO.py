@@ -10,6 +10,7 @@ import ast
 import sys
 import sqlite3
 import tempfile
+import re
 
 from nose import with_setup
 from nose.tools import raises
@@ -188,16 +189,20 @@ def testRunTypeFunctionsUseLog():
     testXObj = UML.createData("Matrix", testX, useLog=False)
     testYObj = UML.createData("Matrix", testY, useLog=False)
 
+    timePattern = re.compile(r"'time': [0-9]+\.[0-9]+")
+
     # train
     tl = UML.train("sciKitLearn.SVC", trainXObj, trainYObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'train'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndApply
     predictions = UML.trainAndApply("sciKitLearn.SVC", trainXObj, trainYObj,
                                     testXObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndApply'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndTest
     performance = UML.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
@@ -207,6 +212,7 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'trainAndTest'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # normalizeData
     # copy to avoid modifying original data
@@ -215,6 +221,7 @@ def testRunTypeFunctionsUseLog():
     UML.normalizeData('sciKitLearn.PCA', trainXNormalize, testX=testXNormalize)
     logInfo = getLastLogData()
     assert "'function': 'normalizeData'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # trainAndTestOnTrainingData
     results = UML.trainAndTestOnTrainingData("sciKitLearn.SVC", trainXObj,
@@ -224,11 +231,13 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'trainAndTestOnTrainingData'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # TrainedLearner.apply
     predictions = tl.apply(testXObj)
     logInfo = getLastLogData()
     assert "'function': 'TrainedLearner.apply'" in logInfo
+    assert re.search(timePattern, logInfo)
 
     # TrainedLearner.test
     performance = tl.test(testXObj, testYObj, performanceFunction=RMSE)
@@ -236,6 +245,7 @@ def testRunTypeFunctionsUseLog():
     assert "'function': 'TrainedLearner.test'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
+    assert re.search(timePattern, logInfo)
 
     UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
@@ -270,7 +280,6 @@ def testPrepTypeFunctionsUseLog():
         lastLog = getLastLogData()
         expFunc = "'function': '{0}'".format(funcName)
         expID = "'object': '{0}'".format(objectID)
-
         assert expFunc in lastLog
         assert expID in lastLog
 
@@ -325,10 +334,11 @@ def testPrepTypeFunctionsUseLog():
 
     # fillUsingAllData
     dataObj = UML.createData("Matrix", data, useLog=False)
-    def simpleFiller(obj, match):
+    def simpleFiller(obj, match, **kwargs):
         return UML.createData('Matrix', numpy.zeros_like(dataObj.data))
-    dataObj.fillUsingAllData('a', fill=simpleFiller)
-    checkLogContents('fillUsingAllData', 'Matrix', [('fill', 'simpleFiller')])
+    dataObj.fillUsingAllData('a', fill=simpleFiller, a=1, b=3)
+    checkLogContents('fillUsingAllData', 'Matrix', [('match', 'a'), ('fill', 'simpleFiller'),
+                                                    ('a', 1), ('b', 3)])
 
     # flattenToOnePoint
     dataObj = UML.createData("DataFrame", data, useLog=False)
@@ -439,8 +449,8 @@ def testPrepTypeFunctionsUseLog():
 
     # features.sort
     dataObj = UML.createData("Matrix", data, useLog=False)
-    dataObj.features.sort(sortBy=dataObj.points.getName(0))
-    checkLogContents('features.sort', "Matrix", [('sortBy', dataObj.points.getName(0))])
+    dataObj.features.sort(sortBy=[2, 1, 0])
+    checkLogContents('features.sort', "Matrix", [('sortBy', [2, 1, 0])])
 
     # points.copy
     dataObj = UML.createData("Matrix", data, useLog=False)
@@ -471,7 +481,7 @@ def testPrepTypeFunctionsUseLog():
     # features.delete
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.features.delete(number=2, randomize=True)
-    checkLogContents('features.delete', "Matrix", [('number', 2), ('randomize', 'True')])
+    checkLogContents('features.delete', "Matrix", [('number', 2), ('randomize', True)])
 
     def retainer(vector):
         return True
@@ -524,12 +534,12 @@ def testPrepTypeFunctionsUseLog():
     # points.fill
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.points.fill(UML.match.nonNumeric, 0)
-    checkLogContents('points.fill', "Matrix", [('toMatch', 'nonNumeric'), ('toFill', 0)])
+    checkLogContents('points.fill', "Matrix", [('match', 'nonNumeric'), ('fill', 0)])
 
     # features.fill
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.features.fill(1, UML.fill.mean, features=[1,2])
-    checkLogContents('features.fill', "Matrix", [('toMatch', 1), ('toFill', 'mean')])
+    checkLogContents('features.fill', "Matrix", [('match', 1), ('fill', 'mean')])
 
     # elements.multiply/power
     dataObj = UML.ones('Matrix', 5, 5)
@@ -742,9 +752,9 @@ def testShowLogSearchFilters():
         trainYObj = trainObj.features.extract(3)
         testYObj = testObj.features.extract(3)
         # run and crossVal
-        results = UML.trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=trainYObj,
-                                testX=testObj, testY=testYObj, performanceFunction=RMSE,
-                                arguments={"C":(1,0.1)})
+        results = UML.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
+                                   trainY=trainYObj, testX=testObj, testY=testYObj,
+                                   performanceFunction=RMSE, arguments={"k": (3, 5)})
     # edit log runNumbers and timestamps
     location = UML.settings.get("logger", "location")
     name = UML.settings.get("logger", "name")

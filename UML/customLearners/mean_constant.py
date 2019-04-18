@@ -20,6 +20,6 @@ class MeanConstant(CustomLearner):
         raw = numpy.zeros(len(testX.points))
         numpy.ndarray.fill(raw, self.mean)
 
-        ret = UML.createData("Matrix", raw)
-        ret.transpose()
+        ret = UML.createData("Matrix", raw, useLog=False)
+        ret.transpose(useLog=False)
         return ret
