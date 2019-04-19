@@ -132,40 +132,32 @@ class Axis(object):
 
     def _getIndex(self, identifier):
         num = len(self)
-        accepted = (six.string_types, int, numpy.integer)
-
-        toReturn = identifier
         if num == 0:
-            msg = "There are no valid " + self._axis + "identifiers; "
+            msg = "There are no valid " + self._axis + " identifiers; "
             msg += "this object has 0 " + self._axis + "s"
             raise ImproperObjectAction(msg)
-        if identifier is None:
-            msg = "An identifier cannot be None."
-            raise InvalidArgumentType(msg)
-        if not isinstance(identifier, accepted):
-            msg = "The identifier must be either a string (a valid "
-            msg += self._axis + " name) or an integer (python or numpy) index "
-            msg += "between 0 and " + str(num - 1) + " inclusive. "
-            msg += "Instead we got: " + str(identifier)
-            raise InvalidArgumentType(msg)
-        if isinstance(identifier, (int, numpy.integer)):
+        elif isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
-                toReturn = identifier
             if identifier < 0 or identifier >= num:
                 msg = "The given index " + str(identifier) + " is outside of "
                 msg += "the range of possible indices in the " + self._axis
                 msg += " axis (0 to " + str(num - 1) + ")."
                 raise InvalidArgumentValue(msg)
-        if isinstance(identifier, six.string_types):
+        elif isinstance(identifier, six.string_types):
             try:
-                toReturn = self._getIndexByName(identifier)
+                identifier = self._getIndexByName(identifier)
             except KeyError:
                 msg = "The " + self._axis + " name '" + identifier
                 msg += "' cannot be found."
                 raise InvalidArgumentValue(msg)
-
-        return toReturn
+        else:
+            msg = "The identifier must be either a string (a valid "
+            msg += self._axis + " name) or an integer (python or numpy) index "
+            msg += "between 0 and " + str(num - 1) + " inclusive. "
+            msg += "Instead we got: " + str(identifier)
+            raise InvalidArgumentType(msg)
+        return identifier
 
     def _getIndices(self, names):
         if not self._namesCreated():
@@ -1165,22 +1157,21 @@ class Axis(object):
                                    randomize=False):
         axis = self._axis
         axisLength = len(self)
-        hasNameChecker1 = self._hasName
-        if isinstance(self, Points):
-            hasNameChecker2 = self._source.features._hasName
-        else:
-            hasNameChecker2 = self._source.points._hasName
 
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
         targetList = []
         if target is not None and isinstance(target, six.string_types):
             # check if target is a valid name
-            if hasNameChecker1(target):
+            if self._hasName(target):
                 target = self._getIndex(target)
                 targetList.append(target)
             # if not a name then assume it's a query string
             else:
+                if isinstance(self, Points):
+                    hasNameChecker2 = self._source.features._hasName
+                else:
+                    hasNameChecker2 = self._source.points._hasName
                 target = _stringToFunction(target, axis, hasNameChecker2)
 
         # list-like container types
