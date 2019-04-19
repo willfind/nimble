@@ -170,29 +170,32 @@ def testMultipleLearnersSinglePackage():
     assert saved == UML.interfaces.available
 
 
-# test that register and deregister learner records the
-# registartion to UML.settings / the config file
 @configSafetyWrapper
 def testEffectToSettings():
     """ Test that (de)registering is correctly recorded by UML.settings """
     UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     regSec = 'RegisteredLearners'
     opName = 'Foo.LoveAtFirstSightClassifier'
-    opValue = 'UML.tests.testCustomLearnerRegistration.'
+    opValue = 'tests.testCustomLearnerRegistration.'
     opValue += 'LoveAtFirstSightClassifier'
 
     # check that it is listed immediately
     assert UML.settings.get(regSec, opName) == opValue
-    # check that it is recorded to file
+
+    # check that it is *not* recorded to file
     tempSettings = UML.configuration.loadSettings()
-    assert tempSettings.get(regSec, opName) == opValue
+    try:
+        assert tempSettings.get(regSec, opName) == opValue
+        assert False  # expected NoOptionError
+    except six.moves.configparser.NoOptionError:
+        pass
 
     UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
     # check that deregistration removed the entry in the
     # RegisteredLearners section
     try:
-        UML.settings.get(regSec, opName) == opValue
+        assert UML.settings.get(regSec, opName) == opValue
         assert False
     except six.moves.configparser.NoOptionError:
         pass
@@ -329,6 +332,14 @@ def test_registerCustomLearnerNotWrittenToConfig():
                                'Baz.UncallableLearner']
                 for learner in regLearners:
                     assert learner in UML.settings.changes['RegisteredLearners']
+
+                # these two also have configurable options that should be
+                # reflected in the settings
+                opt1 = "LoveAtFirstSightClassifier.option"
+                opt2 = "UncallableLearner.option"
+                assert UML.settings.get("Foo", opt1) == ""
+                assert UML.settings.get("Baz", opt2) == ""
+
                 assert os.path.getsize(tmpConfig.name) == origConfigSize
                 assert registeredLines == origLines
 

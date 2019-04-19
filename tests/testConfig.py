@@ -410,28 +410,13 @@ def test_settings_allowedNames():
 
 @configSafetyWrapper
 @raises(six.moves.configparser.NoSectionError)
-# test that set witout save is temporary
-def test_settings_set_without_save1():
-    # make some change via UML.settings.
-    UML.settings.set("tempSectionName", "temp.Option.Name", '1')
-
-    UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
-
-    # reload it with the starup function, try to load something which
-    # shouldn't be there
-    UML.settings = UML.configuration.loadSettings()
-    UML.settings.get("tempSectionName", 'temp.Option.Name')
-
-
-@configSafetyWrapper
-@raises(six.moves.configparser.NoSectionError)
-# test that set witout save is temporary
-def test_settings_set_without_save2():
+# test that set without save is temporary
+def test_settings_set_without_save():
     # make some change via UML.settings.
     UML.settings.set("tempSectionName", "temp.Option.Name", '1')
     assert UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
 
-    # reload it with the starup function, try to load something which
+    # reload it with the startup function, try to load something which
     # shouldn't be there
     UML.settings = UML.configuration.loadSettings()
     UML.settings.get("tempSectionName", 'temp.Option.Name')
