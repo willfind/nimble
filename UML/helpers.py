@@ -26,7 +26,7 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.logger import handleLogging, logPosition
+from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.exceptions import FileFormatException
@@ -2581,7 +2581,7 @@ def computeMetrics(dependentVar, knownData, predictedData,
     else:
         #known Indicator is a feature ID or group of IDs; we extract the
         # columns it indicates from knownValues
-        knownLabels = knownData.features.copy(dependentVar)
+        knownLabels = knownData.features.copy(dependentVar, useLog=False)
 
     result = performanceFunction(knownLabels, predictedData)
 
@@ -2685,7 +2685,7 @@ def generateAllPairs(items):
 
     return pairs
 
-@logPosition
+
 def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
@@ -2704,7 +2704,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             raise InvalidArgumentType(msg)
         if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
-            Y = X.features.extract(Y)
+            Y = X.features.extract(Y, useLog=False)
 
         if len(Y.features) > 1 and scoreMode != 'label':
             msg = "When dealing with multi dimensional outputs / predictions, "
@@ -2761,7 +2761,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             curRunResult = UML.trainAndApply(
                 learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                 testX=curTestingX, arguments=curArgumentCombination,
-                scoreMode=scoreMode, useLog=useLog)
+                scoreMode=scoreMode, useLog=False)
 
             performanceOfEachCombination[argSetIndex][0] = (
                 curArgumentCombination)
@@ -2784,7 +2784,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.points.add(curTestingY)
+                collectedY.points.add(curTestingY, useLog=False)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2799,7 +2799,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].points.add(results[resultIndex])
+                results[0].points.add(results[resultIndex], useLog=False)
 
             # TODO raise RuntimeError(
             #     "How do we guarantee Y and results are in same order?")
@@ -2904,9 +2904,10 @@ class _foldIteratorClass():
             if copied is None:
                 resultsList.append((None, None))
             else:
-                currTest = copied.points.extract(self.foldList[self.index])
+                currTest = copied.points.extract(self.foldList[self.index],
+                                                 useLog=False)
                 currTrain = copied
-                currTrain.points.sort(sortHelper=indices)
+                currTrain.points.sort(sortHelper=indices, useLog=False)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList

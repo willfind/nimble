@@ -405,4 +405,3 @@ def test_kNeighborsClassifier_multipleMatch_K3():
         toTest = UML.createData(t, data, useLog=False)
         expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
-    UML.showLog(maximumEntries=4)

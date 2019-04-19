@@ -58,8 +58,8 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.features.calculate(func)
-        oneFuncResults.transpose()
+        oneFuncResults = dataContainer.features.calculate(func, useLog=False)
+        oneFuncResults.transpose(useLog=False)
         oneFuncResultsList = oneFuncResults.copyAs(format="python list")
         appendColumns(resultsTable, oneFuncResultsList)
 
@@ -116,7 +116,8 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None,
         subsetIndices = []
         subsetIndices.extend(leftIndicesToSelect)
         subsetIndices.extend(rightIndicesToSelect)
-        dataContainer = dataContainer.features.copy(subsetIndices)
+        dataContainer = dataContainer.features.copy(subsetIndices,
+                                                    useLog=False)
         isSubset = True
     else:
         isSubset = False
@@ -153,9 +154,10 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.features.calculate(func)
-        funcResults.transpose()
-        aggregateResults = funcResults.features.calculate(UML.calculate.mean)
+        funcResults = dataContainer.features.calculate(func, useLog=False)
+        funcResults.transpose(useLog=False)
+        aggregateResults = funcResults.features.calculate(UML.calculate.mean,
+                                                          useLog=False)
         aggregateResults = aggregateResults.copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
