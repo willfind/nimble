@@ -733,7 +733,8 @@ def createData(
         elementType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False,
         reuseData=False, inputSeparator='automatic',
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan', 
+                        'NULL', 'NA'),
         replaceMissingWith=numpy.nan, useLog=None):
     """
     Function to instantiate one of the UML data container types.
