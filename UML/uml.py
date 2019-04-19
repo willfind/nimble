@@ -1299,9 +1299,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         May only be 'default' 'OneVsAll' or 'OneVsOne'
     numFolds : int
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default None
-        will set ``numFolds`` to the the minimum between the 10 and the
-        number of points in ``trainX`` if cross-validation is triggered.
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1479,11 +1477,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
-    numFolds : int, None
+    numFolds : int
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default None
-        will set ``numFolds`` to the the minimum between the 10 and the
-        number of points in ``trainX`` if cross-validation is triggered.
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1656,11 +1652,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
-    numFolds : int, None
+    numFolds : int
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default None
-        will set ``numFolds`` to the the minimum between the 10 and the
-        number of points in ``trainX`` if cross-validation is triggered.
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1820,11 +1814,9 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         act as the return value. In the False case, we train on the
         training data, and then use the same data as the withheld
         testing data. By default, this flag is set to False.
-    numFolds : int, None
+    numFolds : int
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default None
-        will set ``numFolds`` to the the minimum between the 10 and the
-        number of points in ``trainX`` if cross-validation is triggered.
+        the number of points in ``trainX``. Default 10.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
