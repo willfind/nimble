@@ -2116,7 +2116,7 @@ def autoRegisterFromSettings():
         try:
             module = importlib.import_module(modPath)
             learnerClass = getattr(module, attrName)
-            UML.registerCustomLearner(packName, learnerClass)
+            UML.registerCustomLearnerAsDefault(packName, learnerClass)
         except ImportError:
             msg = "When trying to automatically register a custom "
             msg += "learner at " + key + " we were unable to import "
@@ -2166,7 +2166,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings)
+        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
+                                             save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):

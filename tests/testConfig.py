@@ -324,7 +324,7 @@ def test_settings_syncingNewInterface():
     UML.interfaces.available.append(ignoreInterface)
 
     # run sync
-    UML.configuration.syncWithInterfaces(UML.settings)
+    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
 
     # reload settings - to make sure the syncing was recorded
     UML.settings = UML.configuration.loadSettings()
@@ -346,7 +346,7 @@ def test_settings_syncingSafety():
     UML.interfaces.available.append(tempInterface1)
 
     # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings)
+    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
     UML.settings = UML.configuration.loadSettings()
 
     UML.settings.set('Test', 'Temp0', '0')
@@ -358,7 +358,7 @@ def test_settings_syncingSafety():
     UML.interfaces.available.append(tempInterface2)
 
     # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings)
+    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
     UML.settings = UML.configuration.loadSettings()
 
     assert UML.settings.get("Test", 'Temp0') == '0'
@@ -374,7 +374,7 @@ def test_settings_syncingChanges():
     UML.interfaces.available.append(tempInterface2)
 
     # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings)
+    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
     UML.settings = UML.configuration.loadSettings()
 
     UML.settings.set('Test', 'Temp0', '0')
@@ -385,7 +385,7 @@ def test_settings_syncingChanges():
 
     # change Test option names and resync
     tempInterface1.optionNames[1] = 'NotTemp1'
-    UML.configuration.syncWithInterfaces(UML.settings)
+    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
 
     # check values of both changed and unchanged names
     assert UML.settings.get('Test', 'Temp0') == '0'
@@ -410,28 +410,13 @@ def test_settings_allowedNames():
 
 @configSafetyWrapper
 @raises(six.moves.configparser.NoSectionError)
-# test that set witout save is temporary
-def test_settings_set_without_save1():
-    # make some change via UML.settings.
-    UML.settings.set("tempSectionName", "temp.Option.Name", '1')
-
-    UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
-
-    # reload it with the starup function, try to load something which
-    # shouldn't be there
-    UML.settings = UML.configuration.loadSettings()
-    UML.settings.get("tempSectionName", 'temp.Option.Name')
-
-
-@configSafetyWrapper
-@raises(six.moves.configparser.NoSectionError)
-# test that set witout save is temporary
-def test_settings_set_without_save2():
+# test that set without save is temporary
+def test_settings_set_without_save():
     # make some change via UML.settings.
     UML.settings.set("tempSectionName", "temp.Option.Name", '1')
     assert UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
 
-    # reload it with the starup function, try to load something which
+    # reload it with the startup function, try to load something which
     # shouldn't be there
     UML.settings = UML.configuration.loadSettings()
     UML.settings.get("tempSectionName", 'temp.Option.Name')
