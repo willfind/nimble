@@ -55,47 +55,19 @@ class SparseAxis(Axis):
         return self._structuralVectorized_implementation(
             structure, targetList, pointNames, featureNames)
 
-    def _sort_implementation(self, sortBy, sortHelper):
+    def _sort_implementation(self, indexPosition):
         source = self._source
-
-        if isinstance(sortHelper, list):
-            sortedData = []
-            idxDict = {val: idx for idx, val in enumerate(sortHelper)}
-            if isinstance(self, Points):
-                sortedData = [idxDict[val] for val in source.data.row]
-                source.data.row = numpy.array(sortedData)
-            else:
-                sortedData = [idxDict[val] for val in source.data.col]
-                source.data.col = numpy.array(sortedData)
-            names = self._getNames()
-            newNameOrder = [names[idx] for idx in sortHelper]
-            source._sorted = None
-            return newNameOrder
-
-        axisAttr = 'points' if isinstance(self, Points) else 'features'
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axisAttr)
-
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
-        reverseIdxPosition = numpy.empty(indexPosition.shape[0])
-        for i in range(indexPosition.shape[0]):
-            reverseIdxPosition[indexPosition[i]] = i
+        reverseIdxPosition = numpy.empty(len(indexPosition))
+        for i, idxPos in enumerate(indexPosition):
+            reverseIdxPosition[idxPos] = i
 
         if isinstance(self, Points):
             source.data.row[:] = reverseIdxPosition[source.data.row]
         else:
             source.data.col[:] = reverseIdxPosition[source.data.col]
-
-        # we need to return an array of the feature names in their new order.
-        # convert indices of their previous location into their names
-        newNameOrder = []
-        for i in range(len(indexPosition)):
-            oldIndex = indexPosition[i]
-            newName = self._getName(oldIndex)
-            newNameOrder.append(newName)
-
         source._sorted = None
-        return newNameOrder
 
     def _transform_implementation(self, function, limitTo):
         modData = []

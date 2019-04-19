@@ -210,9 +210,9 @@ class List(Base):
             outFile.write(fnamesLine)
 
         for point in self.points:
-            currPname = point.points.getName(0)
             first = True
             if includePointNames:
+                currPname = point.points.getName(0)
                 outFile.write(currPname)
                 first = False
 
@@ -526,13 +526,12 @@ class List(Base):
 
         self.data = merged
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self):
-        binaryFts = {}
-        for idx, val in enumerate(self.data):
-            if val[0] not in binaryFts:
-                binaryFts[val[0]] = []
-            binaryFts[val[0]].append(idx)
-        return binaryFts
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
+        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
+        for ptIdx, val in enumerate(self.data):
+            ftIdx = uniqueVals.index(val[0])
+            toFill[ptIdx, ftIdx] = 1
+        return List(toFill.tolist())
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
@@ -581,9 +580,10 @@ class List(Base):
                     return res
 
                 if format == 'List':
-                    return List(listForm,
-                                pointNames=self.points._getNamesNoGeneration(),
-                                featureNames=self.features._getNamesNoGeneration())
+                    ptNames = self.points._getNamesNoGeneration()
+                    ftNames = self.features._getNamesNoGeneration()
+                    return List(listForm, pointNames=ptNames,
+                                featureNames=ftNames, shape=self.shape)
                 else:
                     return listForm
 

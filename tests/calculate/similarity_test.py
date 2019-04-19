@@ -6,20 +6,22 @@ from nose.tools import raises
 
 from UML import createData
 from UML.calculate import cosineSimilarity
+from UML.calculate import rSquared
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from ..assertionHelpers import noLogEntryExpected
 
 ####################
 # cosineSimilarity #
 ####################
-
+@noLogEntryExpected
 def test_cosineSimilarity():
     orig = numpy.array([[1], [0]])
     orth = numpy.array([[0], [1]])
     neg = numpy.array([[-1], [0]])
 
-    origMatrix = createData('Matrix', data=orig)
-    orthMatrix = createData('Matrix', data=orth)
-    negMatrix = createData('Matrix', data=neg)
+    origMatrix = createData('Matrix', data=orig, useLog=False)
+    orthMatrix = createData('Matrix', data=orth, useLog=False)
+    negMatrix = createData('Matrix', data=neg, useLog=False)
 
     result0 = cosineSimilarity(origMatrix, origMatrix)
     result1 = cosineSimilarity(origMatrix, orthMatrix)

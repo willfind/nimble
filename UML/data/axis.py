@@ -29,11 +29,13 @@ from UML.exceptions import ImproperObjectAction
 from UML.exceptions import InvalidArgumentTypeCombination
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.randomness import pythonRandom
+from UML.logger import handleLogging
 from .points import Points
+from .features import Features
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import validateInputString, logCaptureFactory
-from .dataHelpers import isAllowedSingleElement
+from .dataHelpers import validateInputString
+from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 
 class Axis(object):
     """
@@ -87,7 +89,8 @@ class Axis(object):
 
         return copy.copy(namesList)
 
-    def _setName(self, oldIdentifier, newName):
+
+    def _setName(self, oldIdentifier, newName, useLog=None):
         if isinstance(self, Points):
             namesDict = self._source.pointNames
         else:
@@ -100,7 +103,12 @@ class Axis(object):
             self._setAllDefault()
         self._setName_implementation(oldIdentifier, newName)
 
-    def _setNames(self, assignments=None):
+        handleLogging(useLog, 'prep', '{ax}s.setName'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('setName'),
+                      oldIdentifier, newName)
+
+
+    def _setNames(self, assignments=None, useLog=None):
         if isinstance(self, Points):
             names = 'pointNames'
             namesInverse = 'pointNamesInverse'
@@ -117,6 +125,10 @@ class Axis(object):
         else:
             assignments = valuesToPythonList(assignments, 'assignments')
             self._setNamesFromList(assignments, count)
+
+        handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('setNames'),
+                      assignments)
 
     def _getIndex(self, identifier):
         num = len(self)
@@ -167,22 +179,28 @@ class Axis(object):
     #########################
     # Structural Operations #
     #########################
-
-    def _copy(self, toCopy, start, end, number, randomize):
+    def _copy(self, toCopy, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
         source = self._source
         if isinstance(self, Points):
-            ret.features.setNames(source.features._getNamesNoGeneration())
+            ret.features.setNames(source.features._getNamesNoGeneration(),
+                                  useLog=False)
         else:
-            ret.points.setNames(source.points._getNamesNoGeneration())
+            ret.points.setNames(source.points._getNamesNoGeneration(),
+                                useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
+        handleLogging(useLog, 'prep', '{ax}s.copy'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('copy'),
+                      toCopy, start, end, number, randomize)
+
         return ret
 
-    def _extract(self, toExtract, start, end, number, randomize):
+
+    def _extract(self, toExtract, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('extract', toExtract, start, end,
                                               number, randomize)
 
@@ -193,29 +211,45 @@ class Axis(object):
 
         self._source.validate()
 
+        handleLogging(useLog, 'prep', '{ax}s.extract'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('extract'),
+                      toExtract, start, end, number, randomize)
+
         return ret
 
-    def _delete(self, toDelete, start, end, number, randomize):
+
+    def _delete(self, toDelete, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
         self._adjustCountAndNames(ret)
         self._source.validate()
 
-    def _retain(self, toRetain, start, end, number, randomize):
+        handleLogging(useLog, 'prep', '{ax}s.delete'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('delete'),
+                      toDelete, start, end, number, randomize)
+
+
+    def _retain(self, toRetain, start, end, number, randomize, useLog=None):
         ref = self._genericStructuralFrontend('retain', toRetain, start, end,
                                               number, randomize)
 
         ref._relPath = self._source.relativePath
         ref._absPath = self._source.absolutePath
 
-        self._source.referenceDataFrom(ref)
+        self._source.referenceDataFrom(ref, useLog=False)
 
         self._source.validate()
+
+        handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('retain'),
+                      toRetain, start,  end, number, randomize)
+
 
     def _count(self, condition):
         return self._genericStructuralFrontend('count', condition)
 
-    def _sort(self, sortBy, sortHelper):
+
+    def _sort(self, sortBy, sortHelper, useLog=None):
         if sortBy is not None and sortHelper is not None:
             msg = "Cannot specify a feature to sort by and a helper function. "
             msg += "Either sortBy or sortHelper must be None"
@@ -233,12 +267,14 @@ class Axis(object):
             axisCount = self._source._featureCount
             otherCount = self._source._pointCount
 
+        sortByArg = copy.copy(sortBy)
         if sortBy is not None and isinstance(sortBy, six.string_types):
             axisObj = self._source._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
 
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            indices = constructIndicesList(self._source, self._axis, sortHelper)
+            indices = constructIndicesList(self._source, self._axis,
+                                           sortHelper)
             if len(indices) != axisCount:
                 msg = "This object contains {0} {1}s, "
                 msg += "but sortHelper has {2} identifiers"
@@ -249,17 +285,27 @@ class Axis(object):
                 msg += "but sortHelper has {2} unique identifiers"
                 msg = msg.format(axisCount, self._axis, len(set(indices)))
                 raise InvalidArgumentValue(msg)
-
-            sortHelper = indices
+            indexPosition = indices
+        else:
+            axis = self._axis + 's'
+            indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
 
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
             return
 
-        newNameOrder = self._sort_implementation(sortBy, sortHelper)
-        self._setNames(newNameOrder)
+        self._sort_implementation(indexPosition)
+
+        if self._namesCreated():
+            names = self._getNames()
+            reorderedNames = [names[idx] for idx in indexPosition]
+            self._setNames(reorderedNames, useLog=False)
 
         self._source.validate()
+
+        handleLogging(useLog, 'prep', '{ax}s.sort'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('sort'),
+                      sortByArg, sortHelper)
 
     # def _flattenToOne(self):
     #     if self._source._pointCount == 0 or self._source._featureCount == 0:
@@ -348,14 +394,19 @@ class Axis(object):
     #     setAxisNames(ret[0])
     #     setOffAxisNames(ret[1])
 
-    def _shuffle(self):
+
+    def _shuffle(self, useLog=None):
         values = len(self)
         indices = list(range(values))
         pythonRandom.shuffle(indices)
 
-        self._sort(sortBy=None, sortHelper=indices)
+        self._sort(sortBy=None, sortHelper=indices, useLog=False)
 
-    def _transform(self, function, limitTo):
+        handleLogging(useLog, 'prep', '{ax}s.shuffle'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('shuffle'))
+
+
+    def _transform(self, function, limitTo, useLog=None):
         if self._source._pointCount == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
@@ -369,13 +420,17 @@ class Axis(object):
 
         self._transform_implementation(function, limitTo)
 
+        handleLogging(useLog, 'prep', '{ax}s.transform'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('transform'),
+                      function, limitTo)
+
         self._source.validate()
 
     ###########################
     # Higher Order Operations #
     ###########################
 
-    def _calculate(self, function, limitTo):
+    def _calculate(self, function, limitTo, useLog=None):
         if limitTo is not None:
             limitTo = copy.copy(limitTo)
             limitTo = constructIndicesList(self._source, self._axis, limitTo)
@@ -395,22 +450,27 @@ class Axis(object):
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
-                ret.points.setNames(names)
+                ret.points.setNames(names, useLog=False)
             elif self._namesCreated():
-                ret.points.setNames(self._getNamesNoGeneration())
+                ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
         else:
             if limitTo is not None and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
-                ret.features.setNames(names)
+                ret.features.setNames(names, useLog=False)
             elif self._namesCreated():
-                ret.features.setNames(self._getNamesNoGeneration())
+                ret.features.setNames(self._getNamesNoGeneration(),
+                                      useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
         self._source.validate()
+
+        handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('calculate'),
+                      function, limitTo)
 
         return ret
 
@@ -448,13 +508,15 @@ class Axis(object):
                     msg += "container of valid values"
                     raise InvalidArgumentValue(msg)
 
-        ret = UML.createData(self._source.getTypeString(), retData)
+        ret = UML.createData(self._source.getTypeString(), retData,
+                             useLog=False)
         if self._axis != 'point':
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         return ret
 
-    def _add(self, toAdd, insertBefore):
+
+    def _add(self, toAdd, insertBefore, useLog=None):
         self._validateInsertableData(toAdd)
         if self._source.getTypeString() != toAdd.getTypeString():
             toAdd = toAdd.copyAs(self._source.getTypeString())
@@ -472,7 +534,13 @@ class Axis(object):
 
         self._source.validate()
 
-    def _mapReduce(self, mapper, reducer):
+        handleLogging(useLog, 'prep',
+                      '{ax}s.add'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('add'),
+                      toAdd, insertBefore)
+
+
+    def _mapReduce(self, mapper, reducer, useLog=None):
         if isinstance(self, Points):
             targetCount = len(self._source.points)
             otherCount = len(self._source.features)
@@ -484,9 +552,6 @@ class Axis(object):
             otherAxis = 'point'
             viewIter = self._source.features
 
-        if targetCount == 0:
-            return UML.createData(self._source.getTypeString(),
-                                  numpy.empty(shape=(0, 0)), useLog=False)
         if otherCount == 0:
             msg = "We do not allow operations over {0}s if there are 0 {1}s"
             msg = msg.format(self._axis, otherAxis)
@@ -501,36 +566,46 @@ class Axis(object):
 
         self._source.validate()
 
-        mapResults = {}
-        # apply the mapper to each point in the data
-        for value in viewIter:
-            currResults = mapper(value)
-            # the mapper will return a list of key value pairs
-            for (k, v) in currResults:
-                # if key is new, we must add an empty list
-                if k not in mapResults:
-                    mapResults[k] = []
-                # append value to the list of values associated with the key
-                mapResults[k].append(v)
+        if targetCount == 0:
+            ret = UML.createData(self._source.getTypeString(),
+                                 numpy.empty(shape=(0, 0)), useLog=False)
+        else:
+            mapResults = {}
+            # apply the mapper to each point in the data
+            for value in viewIter:
+                currResults = mapper(value)
+                # the mapper will return a list of key value pairs
+                for (k, v) in currResults:
+                    # if key is new, we must add an empty list
+                    if k not in mapResults:
+                        mapResults[k] = []
+                    # append value to list of values associated with the key
+                    mapResults[k].append(v)
 
-        # apply the reducer to the list of values associated with each key
-        ret = []
-        for mapKey in mapResults:
-            mapValues = mapResults[mapKey]
-            # the reducer will return a tuple of a key to a value
-            redRet = reducer(mapKey, mapValues)
-            if redRet is not None:
-                (redKey, redValue) = redRet
-                ret.append([redKey, redValue])
-        ret = UML.createData(self._source.getTypeString(), ret, useLog=False)
+            # apply the reducer to the list of values associated with each key
+            ret = []
+            for mapKey in mapResults:
+                mapValues = mapResults[mapKey]
+                # the reducer will return a tuple of a key to a value
+                redRet = reducer(mapKey, mapValues)
+                if redRet is not None:
+                    (redKey, redValue) = redRet
+                    ret.append([redKey, redValue])
+            ret = UML.createData(self._source.getTypeString(), ret,
+                                 useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
+        handleLogging(useLog, 'prep', '{ax}s.mapReduce'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('mapReduce'),
+                      mapper, reducer)
+
         return ret
 
+
     def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
-              **kwarguments):
+              useLog=None, **kwarguments):
         modified = None
         toTransform = fill.factory(toMatch, toFill, **kwarguments)
 
@@ -538,23 +613,28 @@ class Axis(object):
             def bools(values):
                 return [True if toMatch(val) else False for val in values]
 
-            modified = self._calculate(bools, limitTo)
+            modified = self._calculate(bools, limitTo, useLog=False)
             if isinstance(self, Points):
                 currNames = modified.points.getNames()
                 modNames = [n + "_modified" for n in currNames]
-                modified.points.setNames(modNames)
+                modified.points.setNames(modNames, useLog=False)
             else:
                 currNames = modified.features.getNames()
                 modNames = [n + "_modified" for n in currNames]
-                modified.features.setNames(modNames)
+                modified.features.setNames(modNames, useLog=False)
 
-        self._transform(toTransform, limitTo)
+        self._transform(toTransform, limitTo, useLog=False)
 
         self._source.validate()
 
+        handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('fill'),
+                      toMatch, toFill, limitTo, returnModified, **kwarguments)
+
         return modified
 
-    def _normalize(self, subtract, divide, applyResultTo):
+
+    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
         # used to trigger later conditionals
         alsoIsObj = isinstance(applyResultTo, UML.data.Base)
 
@@ -620,7 +700,7 @@ class Axis(object):
                 elif inOffLen == 1:
                     if inMainLen != objMainLen:
                         raise InvalidArgumentValue(vecErr)
-                    argval.transpose()
+                    argval.transpose(useLog=False)
                     return True
                 # treat it as a mis-sized object
                 else:
@@ -694,7 +774,7 @@ class Axis(object):
         #			divIsVec = True
 
         if isinstance(self, Points):
-            indexGetter = lambda x: self._getIndex(x.points.getName(0))
+            indexGetter = lambda x: x._pStart
             if isinstance(subtract, six.string_types):
                 subtract = self._statistics(subtract)
                 subIsVec = True
@@ -702,7 +782,7 @@ class Axis(object):
                 divide = self._statistics(divide)
                 divIsVec = True
         else:
-            indexGetter = lambda x: self._getIndex(x.features.getName(0))
+            indexGetter = lambda x: x._fStart
             if isinstance(subtract, six.string_types):
                 subtract = self._statistics(subtract)
                 subIsVec = True
@@ -728,13 +808,13 @@ class Axis(object):
         if subtract is not None and subtract != 0:
             if subIsVec:
                 if isinstance(self, Points):
-                    self._transform(subber, None)
+                    self._transform(subber, None, useLog=False)
                     if alsoIsObj:
-                        applyResultTo.points.transform(subber)
+                        applyResultTo.points.transform(subber, useLog=False)
                 else:
-                    self._transform(subber, None)
+                    self._transform(subber, None, useLog=False)
                     if alsoIsObj:
-                        applyResultTo.features.transform(subber)
+                        applyResultTo.features.transform(subber, useLog=False)
             else:
                 self._source -= subtract
                 if alsoIsObj:
@@ -744,17 +824,21 @@ class Axis(object):
         if divide is not None and divide != 1:
             if divIsVec:
                 if isinstance(self, Points):
-                    self._transform(diver, None)
+                    self._transform(diver, None, useLog=False)
                     if alsoIsObj:
-                        applyResultTo.points.transform(diver)
+                        applyResultTo.points.transform(diver, useLog=False)
                 else:
-                    self._transform(diver, None)
+                    self._transform(diver, None, useLog=False)
                     if alsoIsObj:
-                        applyResultTo.features.transform(diver)
+                        applyResultTo.features.transform(diver, useLog=False)
             else:
                 self._source /= divide
                 if alsoIsObj:
                     applyResultTo /= divide
+
+        handleLogging(useLog, 'prep', '{ax}s.normalize'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('normalize'),
+                      subtract, divide, applyResultTo)
 
     ###################
     # Query functions #
@@ -803,7 +887,7 @@ class Axis(object):
             toCall = dotProd
 
         transposed = self._source.copy()
-        transposed.transpose()
+        transposed.transpose(useLog=False)
 
         if isinstance(self, Points):
             ret = toCall(self._source, transposed)
@@ -822,7 +906,7 @@ class Axis(object):
             return self._statisticsBackend(statisticsFunction)
         else:
             # groupByFeature is only a parameter for .features
-            res = self._source.groupByFeature(groupByFeature)
+            res = self._source.groupByFeature(groupByFeature, useLog=False)
             for k in res:
                 res[k] = res[k].features._statisticsBackend(statisticsFunction)
             return res
@@ -864,13 +948,13 @@ class Axis(object):
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = UML.calculate.standardDeviation
 
-        ret = self._calculate(toCall, limitTo=None)
+        ret = self._calculate(toCall, limitTo=None, useLog=False)
         if isinstance(self, Points):
-            ret.points.setNames(self._getNames())
-            ret.features.setName(0, cleanFuncName)
+            ret.points.setNames(self._getNames(), useLog=False)
+            ret.features.setName(0, cleanFuncName, useLog=False)
         else:
-            ret.points.setName(0, cleanFuncName)
-            ret.features.setNames(self._getNames())
+            ret.points.setName(0, cleanFuncName, useLog=False)
+            ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
 
@@ -1530,7 +1614,15 @@ class Axis(object):
         endNames = objNames[insertedBefore:]
 
         newNames = startNames + adjustedNames + endNames
-        setObjNames(newNames)
+        setObjNames(newNames, useLog=False)
+
+    def _sigFunc(self, funcName):
+        """
+        Get the top level function containing the correct signature.
+        """
+        if isinstance(self, Points):
+            return getattr(Points, funcName)
+        return getattr(Features, funcName)
 
     ####################
     # Abstract Methods #

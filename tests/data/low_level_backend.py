@@ -15,8 +15,8 @@ points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
-points.getIndices, features.getIndices, constructIndicesList
-
+points.getIndices, features.getIndices, constructIndicesList, copy
+features.hasName, points.hasName
 """
 
 from __future__ import absolute_import
@@ -40,6 +40,8 @@ from UML.data.dataHelpers import constructIndicesList
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from UML.randomness import pythonRandom
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ###########
 # helpers #
@@ -350,6 +352,7 @@ class LowLevelBackend(object):
         toTest = self.constructor()
         toTest.points.setName("hello", "2")
 
+    @logCountAssertionFactory(2)
     def test_points_setName_handmade_viaIndex(self):
         """ Test points.setName() against handmade input when specifying the pointName by index """
         origNames = ["zero", "one", "two", "three"]
@@ -420,6 +423,7 @@ class LowLevelBackend(object):
         toTest = self.constructor()
         toTest.features.setName("hello", "2")
 
+    @logCountAssertionFactory(2)
     def test_features_setName_handmade_viaIndex(self):
         """ Test features.setName() against handmade input when specifying the featureName by index """
         origFeatureNames = ["zero", "one", "two", "three"]
@@ -497,6 +501,7 @@ class LowLevelBackend(object):
         toTest.points.setNames(newNames)
         assert toTest._nextDefaultValuePoint > 17
 
+    @oneLogEntryExpected
     def test_points_setNames_handmadeList(self):
         """ Test points.setNames() against handmade output """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
@@ -540,6 +545,7 @@ class LowLevelBackend(object):
         toTest.points.setNames(toAssign)
         assert toTest.points.getNames() == []
 
+    @oneLogEntryExpected
     def test_points_setNames_handmadeDict(self):
         """ Test points.setNames() against handmade output """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
@@ -618,6 +624,7 @@ class LowLevelBackend(object):
         toTest.features.setNames(toAssign)
         assert toTest.features.getNames() == []
 
+    @oneLogEntryExpected
     def test_features_setNames_handmadeDict(self):
         """ Test features.setNames() against handmade output """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
@@ -668,6 +675,7 @@ class LowLevelBackend(object):
         toTest.features.setNames(newFeatureNames)
         assert toTest._nextDefaultValueFeature > 17
 
+    @oneLogEntryExpected
     def test_features_setNames_handmadeList(self):
         """ Test features.setNames() against handmade output """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
@@ -981,6 +989,7 @@ class LowLevelBackend(object):
     ############################################################
 
     # consistency checks between all sources of axis name information
+    @noLogEntryExpected
     def test_name_index_consistency(self):
         pnames = ['p0', 'p1', 'p2', 'p3', 'p4']
         fnames = ['fa', 'fb', 'fc']
@@ -1009,10 +1018,29 @@ class LowLevelBackend(object):
         assert fByName == fByPyIndex
         assert fByNames == fByPyIndex
 
+
+    ###########################
+    # points/features.hasName #
+    ###########################
+    @noLogEntryExpected
+    def test_hasName(self):
+        pnames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        fnames = ['fa', 'fb', 'fc']
+        toTest = self.constructor(featureNames=fnames, pointNames=pnames)
+
+        for name in pnames:
+            assert toTest.points.hasName(name)
+        for name in fnames:
+            assert toTest.features.hasName(name)
+        notNames = ['x', 'y', 'z']
+        for name in notNames:
+            assert not toTest.points.hasName(name)
+            assert not toTest.features.hasName(name)
+
     ###########
     # __len__ #
     ###########
-
+    @noLogEntryExpected
     def test_len_handmade(self):
         zeroZero = self.constructor(psize=0, fsize=0)
         assert len(zeroZero) == 0
@@ -1038,6 +1066,41 @@ class LowLevelBackend(object):
         nn = self.constructor(psize=11, fsize=33)
         len(nn)
 
+    #####################################
+    # points.__len__ / features.__len__ #
+    #####################################
+    @noLogEntryExpected
+    def test_axis_len_handmade(self):
+        zeroZero = self.constructor(psize=0, fsize=0)
+        assert len(zeroZero.points) == 0
+        assert len(zeroZero.features) == 0
+        zeroOne = self.constructor(psize=0, fsize=1)
+        assert len(zeroOne.points) == 0
+        assert len(zeroOne.features) == 1
+        zeroN = self.constructor(psize=0, fsize=12)
+        assert len(zeroN.points) == 0
+        assert len(zeroN.features) == 12
+
+        oneZero = self.constructor(psize=1, fsize=0)
+        assert len(oneZero.points) == 1
+        assert len(oneZero.features) == 0
+        oneOne = self.constructor(psize=1, fsize=1)
+        assert len(oneOne.points) == 1
+        assert len(oneOne.features) == 1
+        oneN = self.constructor(psize=1, fsize=13)
+        assert len(oneN.points) == 1
+        assert len(oneN.features) == 13
+
+        nZero = self.constructor(psize=15, fsize=0)
+        assert len(nZero.points) == 15
+        assert len(nZero.features) == 0
+        nOne = self.constructor(psize=11, fsize=1)
+        assert len(nOne.points) == 11
+        assert len(nOne.features) == 1
+
+        nn = self.constructor(psize=11, fsize=33)
+        assert len(nn.points) == 11
+        assert len(nn.features) == 33
 
     #########################
     # constructIndicesList #

@@ -604,9 +604,9 @@ def kNeighborsBackend(method, data, match, **kwarguments):
                 # training data includes only points that have valid data at
                 # each feature this will also remove the point we are
                 # evaluating from the training data
-                trainingData.points.delete(anyValues(match))
+                trainingData.points.delete(anyValues(match), useLog=False)
                 pred = UML.trainAndApply(method, trainingData, -1, predictData,
-                                         **kwarguments)
+                                         useLog=False, **kwarguments)
                 pred = pred[0]
                 tmpDict[pID, fID] = pred
                 # remove this feature so next prediction will not include it
@@ -618,7 +618,7 @@ def kNeighborsBackend(method, data, match, **kwarguments):
         except KeyError:
             return value
 
-    data.elements.transform(transform)
+    data.elements.transform(transform, useLog=False)
 
     return data
 
@@ -633,7 +633,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     if not unmatched:
         msg = statsExceptionNoMatches(funcString, vector)
         raise InvalidArgumentValue(msg)
-    unmatched = UML.createData('List', unmatched)
+    unmatched = UML.createData('List', unmatched, useLog=False)
     stat = statisticsFunction(unmatched)
     if stat is None:
         msg = statsExceptionInvalidInput(funcString, vector)

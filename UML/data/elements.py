@@ -19,12 +19,10 @@ import six
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
-from UML.logger import enableLogging
+from UML.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import logCaptureFactory
 
-logCapture = logCaptureFactory('elements')
 
 class Elements(object):
     """
@@ -179,11 +177,6 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.transform)
-            return wrapped(toTransform, points, features, preserveZeros,
-                           skipNoneReturnValues, useLog=False)
-
         if points is not None:
             points = constructIndicesList(self._source, 'point', points)
         if features is not None:
@@ -193,6 +186,11 @@ class Elements(object):
                                        preserveZeros, skipNoneReturnValues)
 
         self._source.validate()
+
+        handleLogging(useLog, 'prep', 'elements.transform',
+                      self._source.getTypeString(), Elements.transform,
+                      toTransform, points, features, preserveZeros,
+                      skipNoneReturnValues)
 
     ###########################
     # Higher Order Operations #
@@ -308,11 +306,6 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.calculate)
-            return wrapped(function, points, features, preserveZeros,
-                           skipNoneReturnValues, useLog=False)
-
         oneArg = False
         try:
             function(0, 0, 0)
@@ -383,6 +376,11 @@ class Elements(object):
 
         self._source.validate()
 
+        handleLogging(useLog, 'prep', 'elements.calculate',
+                      self._source.getTypeString(), Elements.calculate,
+                      function, points, features, preserveZeros,
+                      skipNoneReturnValues, outputType)
+
         return ret
 
     def count(self, condition):
@@ -424,10 +422,12 @@ class Elements(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculate(function=condition, outputType='Matrix')
+            ret = self.calculate(function=condition, outputType='Matrix',
+                                 useLog=False)
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)
-            ret = self.calculate(function=func, outputType='Matrix')
+            ret = self.calculate(function=func, outputType='Matrix',
+                                 useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -525,10 +525,6 @@ class Elements(object):
              [12.000 12.000]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.multiply)
-            return wrapped(other, useLog=False)
-
         if not isinstance(other, UML.data.Base):
             msg = "'other' must be an instance of a UML data object"
             raise InvalidArgumentType(msg)
@@ -560,9 +556,13 @@ class Elements(object):
         retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self._source.points.setNames(retPNames)
-        self._source.features.setNames(retFNames)
+        self._source.points.setNames(retPNames, useLog=False)
+        self._source.features.setNames(retFNames, useLog=False)
         self._source.validate()
+
+        handleLogging(useLog, 'prep', 'elements.multiply',
+                      self._source.getTypeString(), Elements.multiply, other)
+
 
     def power(self, other, useLog=None):
         """
@@ -596,10 +596,6 @@ class Elements(object):
              [64.000 64.000]]
             )
         """
-        if enableLogging(useLog):
-            wrapped = logCapture(self.power)
-            return wrapped(other, useLog=False)
-
         # other is UML or single numerical value
         singleValue = dataHelpers._looksNumeric(other)
         if not singleValue and not isinstance(other, UML.data.Base):
@@ -628,7 +624,7 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight)
+            self.transform(powFromRight, useLog=False)
         else:
             def powFromRight(val, pnum, fnum):
                 try:
@@ -637,9 +633,12 @@ class Elements(object):
                     self._source._numericValidation()
                     other._numericValidation(right=True)
                     raise e
-            self._source.elements.transform(powFromRight)
+            self.transform(powFromRight, useLog=False)
 
         self._source.validate()
+
+        handleLogging(useLog, 'prep', 'elements.power',
+                      self._source.getTypeString(), Elements.power, other)
 
     ########################
     # Higher Order Helpers #

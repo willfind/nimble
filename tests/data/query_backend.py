@@ -16,6 +16,7 @@ import os
 import os.path
 from functools import reduce
 from copy import deepcopy
+from unittest.mock import patch
 
 import numpy
 from nose.tools import *
@@ -34,6 +35,8 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import assertNoNamesGenerated
 
 
 preserveName = "PreserveTestName"
@@ -54,6 +57,12 @@ def _pnames(num):
     for i in range(num):
         ret.append('p' + str(i))
     return ret
+
+class CalledFunctionException(Exception):
+    pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
 
 
 class QueryBackend(DataTestObject):
@@ -88,6 +97,8 @@ class QueryBackend(DataTestObject):
 
         assert rPoints == 1
         assert cPoints == 3
+        assertNoNamesGenerated(toTestR)
+        assertNoNamesGenerated(toTestC)
 
 
     #################
@@ -121,32 +132,40 @@ class QueryBackend(DataTestObject):
 
         assert rFeatures == 3
         assert cFeatures == 1
+        assertNoNamesGenerated(toTestR)
+        assertNoNamesGenerated(toTestC)
 
 
     #################
     # isIdentical() #
     #################
-
+    @noLogEntryExpected
     def test_isIdentical_False(self):
         """ Test isIdentical() against some non-equal input """
         toTest = self.constructor([[4, 5]])
         assert not toTest.isIdentical(self.constructor([[1, 1], [2, 2]]))
         assert not toTest.isIdentical(self.constructor([[1, 2, 3]]))
         assert not toTest.isIdentical(self.constructor([[1, 2]]))
+        assertNoNamesGenerated(toTest)
 
+    @noLogEntryExpected
     def test_isIdentical_FalseBozoTypes(self):
         """ Test isIdentical() against some non-equal input of crazy types """
         toTest = self.constructor([[4, 5]])
         assert not toTest.isIdentical(numpy.matrix([[1, 1], [2, 2]]))
         assert not toTest.isIdentical('self.constructor([[1,2,3]])')
         assert not toTest.isIdentical(toTest.isIdentical)
+        assertNoNamesGenerated(toTest)
 
+    @noLogEntryExpected
     def test_isIdentical_True(self):
         """ Test isIdentical() against some actually equal input """
         toTest1 = self.constructor([[4, 5]])
         toTest2 = self.constructor(deepcopy([[4, 5]]))
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
     def test_isIdentical_FalseWithNaN(self):
         """ Test isIdentical() against some non-equal input with nan"""
@@ -154,6 +173,8 @@ class QueryBackend(DataTestObject):
         toTest2 = self.constructor(deepcopy([[1, numpy.nan, 3]]))
         assert not toTest1.isIdentical(toTest2)
         assert not toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
     def test_isIdentical_TrueWithNaN(self):
         """ Test isIdentical() against some actually equal input with nan """
@@ -161,12 +182,14 @@ class QueryBackend(DataTestObject):
         toTest2 = self.constructor(deepcopy([[1, numpy.nan, 5]]))
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
+        assertNoNamesGenerated(toTest1)
+        assertNoNamesGenerated(toTest2)
 
 
     ############
     # writeFile #
     ############
-
+    @noLogEntryExpected
     def test_writeFile_CSVhandmade(self):
         """ Test writeFile() for csv extension with both data and featureNames """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -188,6 +211,18 @@ class QueryBackend(DataTestObject):
         assert toWrite.isIdentical(readObj)
 
         assert toWrite == orig
+
+    def test_writeFile_CSVhandmade_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
+
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, format='csv', includeNames=False)
+
+        assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSVauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
@@ -267,7 +302,7 @@ class QueryBackend(DataTestObject):
         excludeAxis('point')
         excludeAxis('feature')
 
-
+    @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
         """ Test writeFile() for mtx extension with both data and featureNames """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
@@ -286,6 +321,18 @@ class QueryBackend(DataTestObject):
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
+
+    def test_writeFile_MTXhandmade_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
+
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=False)
+
+        assertNoNamesGenerated(toWrite)
 
     def test_writeFile_MTXauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its MTX output """
@@ -328,6 +375,16 @@ class QueryBackend(DataTestObject):
         assert toSave.isIdentical(LoadObj)
         assert LoadObj.isIdentical(toSave)
 
+    def test_save_lazyNameGeneration(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toSave = self.constructor(data)
+
+        toSave.save(tmpFile.name)
+
+        assertNoNamesGenerated(toSave)
+
     def test_save_extensionHandling(self):
         tmpFile = tempfile.NamedTemporaryFile()
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
@@ -346,11 +403,23 @@ class QueryBackend(DataTestObject):
         else:
             assert False
 
+    @oneLogEntryExpected
+    def test_saveAndLoad_logCount(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        toSave.save(tmpFile.name)
+        LoadObj = loadData(tmpFile.name)
+
 
     ##############
     # __getitem__#
     ##############
-
+    @noLogEntryExpected
     def test_getitem_allExamples(self):
         """
 
@@ -535,7 +604,7 @@ class QueryBackend(DataTestObject):
     ################
     # pointView #
     ################
-
+    @noLogEntryExpected
     def test_pointView_FEmpty(self):
         """ Test pointView() when accessing a feature empty object """
         data = [[], []]
@@ -546,7 +615,7 @@ class QueryBackend(DataTestObject):
 
         assert len(v.features) == 0
 
-
+    @noLogEntryExpected
     def test_pointView_isinstance(self):
         pointNames = ['1', '4', '7']
         featureNames = ["one", "two", "three"]
@@ -567,7 +636,7 @@ class QueryBackend(DataTestObject):
     ##################
     # featureView #
     ##################
-
+    @noLogEntryExpected
     def test_featureView_FEmpty(self):
         """ Test featureView() when accessing a point empty object """
         data = [[], []]
@@ -578,6 +647,7 @@ class QueryBackend(DataTestObject):
 
         assert len(v.points) == 0
 
+    @noLogEntryExpected
     def test_featureView_isinstance(self):
         """ Test featureView() returns an instance of the BaseView """
         pointNames = ['1', '4', '7']
@@ -677,7 +747,7 @@ class QueryBackend(DataTestObject):
             if textCheck:
                 print(ivc)
 
-
+    @noLogEntryExpected
     def test_ViewAccess_AllLimits(self):
         data = [[11, 12, 13, 14], [0, 0, 0, 0], [21, 22, 23, 24], [0, 0, 0, 0], [31, 32, 33, 34]]
         pnames = ['p1', 'p2', 'p3', 'p4', 'p5']
@@ -727,7 +797,7 @@ class QueryBackend(DataTestObject):
     # containsZero #
     ################
 
-
+    @noLogEntryExpected
     def test_containsZero_simple(self):
         """ Test containsZero works as expected on simple numerical data """
         dataAll = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
@@ -741,6 +811,9 @@ class QueryBackend(DataTestObject):
         assert dAll.containsZero() is True
         assert dSome.containsZero() is True
         assert dNone.containsZero() is False
+        assertNoNamesGenerated(dAll)
+        assertNoNamesGenerated(dSome)
+        assertNoNamesGenerated(dNone)
 
     ##########
     # __eq__ #
@@ -1110,6 +1183,37 @@ class QueryBackend(DataTestObject):
     # points.similarities / features.similarities #
     ###############################################
 
+    # similarities calls the correlation and covariance in the calculate module
+    # First we will test that similarities calls each calculate module function
+    def test_points_similarities_callsCalculateFunction(self):
+        simFuncs = {'correlation': 'correlation', 'covariance': 'covariance',
+                    'sample covariance': 'covariance',
+                    'population covariance' : 'covariance'}
+        for simFunc in simFuncs:
+            calcFunc = simFuncs[simFunc]
+            self.backend_sim_callsFunctions(simFunc, calcFunc, 'point')
+
+    def test_features_similarities_callsCalculateFunction(self):
+        simFuncs = {'correlation': 'correlation', 'covariance': 'covariance',
+                    'sample covariance': 'covariance',
+                    'population covariance' : 'covariance'}
+        for simFunc in simFuncs:
+            calcFunc = simFuncs[simFunc]
+            self.backend_sim_callsFunctions(simFunc, calcFunc, 'feature')
+
+    @raises(CalledFunctionException)
+    def backend_sim_callsFunctions(self, objFunc, calcFunc, axis):
+        toPatch = 'UML.calculate.' + calcFunc
+        with patch(toPatch, side_effect=calledException):
+            if axis == 'point':
+                data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
+                obj = self.constructor(data)
+                obj.points.similarities(objFunc)
+            else:
+                data = [[3, 0, 3], [0, 0, 0], [3, 3, 0]]
+                obj = self.constructor(data)
+                obj.features.similarities(objFunc)
+
     @raises(InvalidArgumentType)
     def test_points_similarities_InvalidParamType(self):
         """ Test points.similarities raise exception for unexpected param type """
@@ -1157,6 +1261,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct sample covariance results """
         self.backend_Sim_SampleCovarianceResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_SampleCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1169,7 +1274,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("covariance ")
         else:
             ret = trans.features.similarities("sample\tcovariance")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         # hand computed results
         expRow0 = [3, 1.5, 1.5]
@@ -1195,6 +1300,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct population covariance results """
         self.backend_Sim_populationCovarianceResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_populationCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1207,7 +1313,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("population COvariance")
         else:
             ret = trans.features.similarities("populationcovariance")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         # hand computed results
         expRow0 = [2, 1, 1]
@@ -1233,6 +1339,7 @@ class QueryBackend(DataTestObject):
         """ Test identity between population covariance and population std of features """
         self.backend_Sim_STDandVarianceIdentity(False)
 
+    @noLogEntryExpected
     def backend_Sim_STDandVarianceIdentity(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1245,7 +1352,7 @@ class QueryBackend(DataTestObject):
         else:
             ret = trans.features.similarities("populationcovariance")
             stdVector = trans.features.statistics("\npopulationstd")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         numpy.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
         numpy.testing.assert_approx_equal(ret[1, 1], stdVector[1] * stdVector[1])
@@ -1261,6 +1368,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct correlation results """
         self.backend_Sim_CorrelationResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_CorrelationResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1273,7 +1381,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("correlation")
         else:
             ret = trans.features.similarities("corre lation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         expRow0 = [1, (1. / 2), (1. / 2)]
         expRow1 = [(1. / 2), 1, (-1. / 2)]
@@ -1356,6 +1464,7 @@ class QueryBackend(DataTestObject):
         """ Test features.similarities returns correct dot product results """
         self.backend_Sim_DotProductResult(False)
 
+    @noLogEntryExpected
     def backend_Sim_DotProductResult(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1368,7 +1477,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.similarities("Dot Product")
         else:
             ret = trans.features.similarities("dotproduct\n")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
         expObj = self.constructor(expData)
@@ -1459,6 +1568,49 @@ class QueryBackend(DataTestObject):
     # pointStatistics # #featureStatistics #
     ################### ####################
 
+    # # statistics calls several functions in the calculate module
+    # # First we will test that statistics calls each calculate module function
+    def test_points_statistics_callsCalculateFunction(self):
+        statFuncs = {'max': 'maximum', 'mean': 'mean', 'median': 'median',
+                     'min': 'minimum', 'population std': 'standardDeviation',
+                     'population standard deviation': 'standardDeviation',
+                     'proportion missing': 'proportionMissing',
+                     'proportion zero': 'proportionZero',
+                     'sample standard deviation': 'standardDeviation',
+                     'sample std': 'standardDeviation',
+                     'standard deviation': 'standardDeviation',
+                     'std': 'standardDeviation', 'unique count': 'uniqueCount'}
+        for statFunc in statFuncs:
+            calcFunc = statFuncs[statFunc]
+            self.backend_stat_callsFunctions(statFunc, calcFunc, 'point')
+
+    def test_features_statistics_callsCalculateFunction(self):
+        statFuncs = {'max': 'maximum', 'mean': 'mean', 'median': 'median',
+                     'min': 'minimum', 'population std': 'standardDeviation',
+                     'population standard deviation': 'standardDeviation',
+                     'proportion missing': 'proportionMissing',
+                     'proportion zero': 'proportionZero',
+                     'sample standard deviation': 'standardDeviation',
+                     'sample std': 'standardDeviation',
+                     'standard deviation': 'standardDeviation',
+                     'std': 'standardDeviation', 'unique count': 'uniqueCount'}
+        for statFunc in statFuncs:
+            calcFunc = statFuncs[statFunc]
+            self.backend_stat_callsFunctions(statFunc, calcFunc, 'feature')
+
+    @raises(CalledFunctionException)
+    def backend_stat_callsFunctions(self, objFunc, calcFunc, axis):
+        toPatch = 'UML.calculate.' + calcFunc
+        with patch(toPatch, side_effect=calledException):
+            if axis == 'point':
+                data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
+                obj = self.constructor(data)
+                obj.points.statistics(objFunc)
+            else:
+                data = [[3, 0, 3], [0, 0, 0], [3, 3, 0]]
+                obj = self.constructor(data)
+                obj.features.statistics(objFunc)
+
     def test_pointStatistics_max(self):
         """ Test pointStatistics returns correct max results """
         self.backend_Stat_max(True)
@@ -1467,6 +1619,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct max results """
         self.backend_Stat_max(False)
 
+    @noLogEntryExpected
     def backend_Stat_max(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1482,7 +1635,7 @@ class QueryBackend(DataTestObject):
 
         else:
             ret = trans.features.statistics("max ")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1502,6 +1655,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct mean results """
         self.backend_Stat_mean(False)
 
+    @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
         orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
         if isinstance(orig, UML.data.BaseView):
@@ -1513,6 +1667,7 @@ class QueryBackend(DataTestObject):
         assert expObjf == res['f']
         assert expObjm == res['m']
 
+    @noLogEntryExpected
     def backend_Stat_mean(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1527,7 +1682,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("Mean")
         else:
             ret = trans.features.statistics(" MEAN")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1547,6 +1702,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct median results """
         self.backend_Stat_median(False)
 
+    @noLogEntryExpected
     def backend_Stat_median(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1561,7 +1717,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("MeDian")
         else:
             ret = trans.features.statistics("median")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1582,6 +1738,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct min results """
         self.backend_Stat_min(False)
 
+    @noLogEntryExpected
     def backend_Stat_min(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1596,7 +1753,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("mIN")
         else:
             ret = trans.features.statistics("min")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1616,6 +1773,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct uniqueCount results """
         self.backend_Stat_uniqueCount(False)
 
+    @noLogEntryExpected
     def backend_Stat_uniqueCount(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, -1]]
         dataT = numpy.array(data).T.tolist()
@@ -1630,7 +1788,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("unique Count")
         else:
             ret = trans.features.statistics("UniqueCount")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1650,6 +1808,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct proportionMissing results """
         self.backend_Stat_proportionMissing(False)
 
+    @noLogEntryExpected
     def backend_Stat_proportionMissing(self, axis):
         data = [[1, None, 1], [0, 1, float('nan')], [1, float('nan'), None]]
         dataT = numpy.array(data).T.tolist()
@@ -1664,7 +1823,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("Proportion Missing ")
         else:
             ret = trans.features.statistics("proportionmissing")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1684,6 +1843,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct proportionZero results """
         self.backend_Stat_proportionZero(False)
 
+    @noLogEntryExpected
     def backend_Stat_proportionZero(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1700,7 +1860,7 @@ class QueryBackend(DataTestObject):
             ret = trans.features.statistics("proportion Zero")
             assert len(ret.points) == 1
             assert len(ret.features) == 3
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1720,6 +1880,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct sample std results """
         self.backend_Stat_sampleStandardDeviation(False)
 
+    @noLogEntryExpected
     def backend_Stat_sampleStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1734,7 +1895,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("samplestd  ")
         else:
             ret = trans.features.statistics("standard deviation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1764,6 +1925,7 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct population std results """
         self.backend_Stat_populationStandardDeviation(False)
 
+    @noLogEntryExpected
     def backend_Stat_populationStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
@@ -1778,7 +1940,7 @@ class QueryBackend(DataTestObject):
             ret = orig.points.statistics("popu  lationstd")
         else:
             ret = trans.features.statistics("population standarddeviation")
-            ret.transpose()
+            ret.transpose(useLog=False)
 
         assert len(ret.points) == 3
         assert len(ret.features) == 1
@@ -1857,12 +2019,12 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plot_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -1872,6 +2034,7 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     ###########################
     # plotFeatureDistribution #
@@ -1879,12 +2042,12 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -1894,6 +2057,7 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
 
     #############################
@@ -1902,12 +2066,12 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     def test_plotFeatureAgainstFeature_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
+            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -1917,11 +2081,12 @@ class QueryBackend(DataTestObject):
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     ###################
     # points.__iter__ #
     ###################
-
+    @noLogEntryExpected
     def test_points_iter_FemptyCorrectness(self):
         data = [[], []]
         data = numpy.array(data)
@@ -1951,6 +2116,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
+    @noLogEntryExpected
     def test_points_iter_exactValueViaFor(self):
         """ Test .points() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
@@ -2012,7 +2178,7 @@ class QueryBackend(DataTestObject):
     #####################
     # features.__iter__ #
     #####################
-
+    @noLogEntryExpected
     def test_features_iter_PemptyCorrectness(self):
         data = [[], []]
         data = numpy.array(data).T
@@ -2042,7 +2208,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
-
+    @noLogEntryExpected
     def test_features_iter_exactValueViaFor(self):
         """ Test .features() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
@@ -2112,7 +2278,7 @@ class QueryBackend(DataTestObject):
     #####################
     # elements.__iter__ #
     #####################
-
+    @noLogEntryExpected
     def test_elements_iter_noNextPempty(self):
         """ test .elements() has no next value when object is point empty """
         data = [[], []]
@@ -2137,6 +2303,7 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
+    @noLogEntryExpected
     def test_elements_iter_exactValueViaFor(self):
         """ Test .elements() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
@@ -2228,7 +2395,7 @@ class QueryBackend(DataTestObject):
     #####################################################
     # points.nonZeroIterator / features.nonZeroIterator #
     #####################################################
-
+    @noLogEntryExpected
     def test_points_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
@@ -2238,6 +2405,7 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
+        assertNoNamesGenerated(obj)
 
     def test_points_nonZeroIterator_empty(self):
         data = []
@@ -2249,6 +2417,7 @@ class QueryBackend(DataTestObject):
 
         assert ret == []
 
+    @noLogEntryExpected
     def test_features_nonZeroIterator_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
@@ -2258,6 +2427,7 @@ class QueryBackend(DataTestObject):
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
+        assertNoNamesGenerated(obj)
 
     def test_features_nonZeroIterator_empty(self):
         data = []
@@ -2272,7 +2442,7 @@ class QueryBackend(DataTestObject):
     ###########
     # inverse #
     ###########
-
+    @noLogEntryExpected
     def test_inverse_multiplicative(self):
         """ Test computation of multiplicative inverse."""
         from scipy import linalg
@@ -2291,7 +2461,7 @@ class QueryBackend(DataTestObject):
         assert invObj == resObj
         assert toTest == orig
 
-
+    @noLogEntryExpected
     def test_inverse_pseudoInverse(self):
         """ Test computation of pseudo-inverse using singular-value decomposition. """
         from scipy import linalg
@@ -2322,6 +2492,7 @@ class QueryBackend(DataTestObject):
         """ Test solveLinearSystem using least squares method. """
         self.backend_solveLinearSystem(solveFunction='least squares')
 
+    @noLogEntryExpected
     def backend_solveLinearSystem(self, solveFunction):
         from scipy import linalg
         A = numpy.array([[1, 20], [-30, 4]])

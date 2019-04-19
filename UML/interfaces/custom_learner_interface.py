@@ -165,7 +165,7 @@ class CustomLearnerInterface(UniversalInterface):
         if isinstance(outputValue, UML.data.Base):
             return outputValue
         else:
-            return UML.createData('Matrix', outputValue)
+            return UML.createData('Matrix', outputValue, useLog=False)
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         ret = self.registeredLearners[learnerName]()
