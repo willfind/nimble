@@ -507,6 +507,20 @@ class QueryBackend(DataTestObject):
         assert toTest[0.0] == 0
         assert toTest[1.0] == 1
 
+    def test_getitem_floatKeysInList(self):
+        """ Test __getitem__ correctly interprets a list of float valued keys """
+        featureNames = ["one", "two", "three", "zero"]
+        pnames = ['1', '4', '7', '0']
+        data = [[1, 2, 3, 0], [4, 5, 0, 0], [7, 0, 9, 0], [0, 0, 0, 0]]
+
+        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+        exp = self.constructor([[2, 0], [0, 0]], pointNames=['1', '7'], featureNames=['two', 'zero'])
+        assert toTest[[0.0, 2.0], [1.0, 3.0]] == exp
+
+        data = [[0, 1, 2, 3]]
+        toTest = self.constructor(data)
+        exp = self.constructor([[0, 1]])
+        assert toTest[[0.0, 1.0]] == exp
 
     def test_getitem_SinglePoint(self):
         """ Test __getitem__ has vector style access for one point object """

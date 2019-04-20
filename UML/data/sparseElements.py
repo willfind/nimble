@@ -74,7 +74,7 @@ class SparseElements(Elements):
             values = coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values)
+            return UML.createData(outputType, values, useLog=False)
         # subset of data
         if preserveZeros:
             dataSubset = []
@@ -89,7 +89,7 @@ class SparseElements(Elements):
             values = coo_matrix((dataSubset, (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values)
+            return UML.createData(outputType, values, useLog=False)
         # zeros not preserved
         return self._calculate_genericVectorized(
             function, points, features, outputType)
@@ -151,13 +151,13 @@ class SparseElements(Elements):
         # is being hijacked by the wrapper: even if it was False, Sparse can't
         # contain None values.
         ret = self.calculate(wrapper, None, None, preserveZeros=False,
-                             skipNoneReturnValues=True)
+                             skipNoneReturnValues=True, useLog=False)
 
         pnames = self._source.points._getNamesNoGeneration()
         fnames = self._source.features._getNamesNoGeneration()
-        self._source.referenceDataFrom(ret)
-        self._source.points.setNames(pnames)
-        self._source.features.setNames(fnames)
+        self._source.referenceDataFrom(ret, useLog=False)
+        self._source.points.setNames(pnames, useLog=False)
+        self._source.features.setNames(fnames, useLog=False)
 
 
     def _transformEachElement_zeroPreserve_implementation(

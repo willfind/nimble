@@ -26,7 +26,7 @@ from UML.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
-from UML.logger import logPosition, Stopwatch, handleLogging
+from UML.logger import handleLogging, startTimer, stopTimer
 from UML.helpers import _mergeArguments
 from UML.helpers import generateAllPairs, countWins, inspectArguments
 from UML.helpers import extractWinningPredictionIndex
@@ -127,8 +127,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
     @captureOutput
     def trainAndApply(self, learnerName, trainX, trainY=None, testX=None,
-                      arguments=None, output=None, scoreMode='label',
-                      timer=None):
+                      arguments=None, output=None, scoreMode='label'):
         """
         Train a model and apply it to the test data.
 
@@ -172,24 +171,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             associated with that class are desired, or 'allScores' if a
             matrix containing the scores for every class label are
             desired.
-        timer : UML.logger.Stopwatch
-            Used to record the time to train the model. This information
-            will be stored in the log.
 
         Returns
         -------
         results
             The resulting output of applying learner.
         """
-        learner = self.train(learnerName, trainX, trainY, arguments=arguments,
-                             timer=timer)
-        if timer is not None:
-            timer.start('apply')
+        learner = self.train(learnerName, trainX, trainY, arguments=arguments)
         # call TrainedLearner's apply method
         # (which is already wrapped to perform transformation)
         ret = learner.apply(testX, {}, output, scoreMode, useLog=False)
-        if timer is not None:
-            timer.stop('apply')
 
         return ret
 
@@ -197,7 +188,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     @captureOutput
     def trainAndTest(self, learnerName, trainX, trainY, testX, testY,
                      performanceFunction, arguments=None, output='match',
-                     scoreMode='label', timer=None, **kwarguments):
+                     scoreMode='label', **kwarguments):
         """
         Train a model and get the results of its performance.
 
@@ -260,9 +251,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             associated with that class are desired, or 'allScores' if a
             matrix containing the scores for every class label are
             desired.
-        timer : UML.logger.Stopwatch
-            Used to record the time to train the model. This information
-            will be stored in the log.
         kwarguments
             Keyword arguments specified variables that are passed to the
             learner. To make use of multiple permutations, specify
@@ -279,23 +267,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             The calculated value of the ``performanceFunction`` after
             the test.
         """
-        learner = self.train(learnerName, trainX, trainY, arguments=arguments,
-                             timer=timer)
-        if timer is not None:
-            timer.start('test')
+        learner = self.train(learnerName, trainX, trainY, arguments=arguments)
         # call TrainedLearner's test method
         # (which is already wrapped to perform transformation)
         ret = learner.test(testX, testY, performanceFunction, {}, output,
                            scoreMode, useLog=False)
-        if timer is not None:
-            timer.stop('test')
 
         return ret
 
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None,
-              multiClassStrategy='default', arguments=None, timer=None):
+              multiClassStrategy='default', arguments=None):
         """
         Fit the learner model using training data.
 
@@ -324,9 +307,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             send to the logger regardless of the global option. If False,
             do **NOT** send to the logger, regardless of the global
             option.
-        timer : UML.logger.Stopwatch
-            Used to record the time to train the model. This will be
-            stored in the log.
         """
         if multiClassStrategy != 'default':
             #if we need to do multiclassification by ourselves
@@ -355,8 +335,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainLabels = trainY.points.calculate(relabeler,
                                                           useLog=False)
                     trainedLearner = self._train(
-                        learnerName, trainX, trainLabels, arguments=arguments,
-                        timer=timer)
+                        learnerName, trainX, trainLabels, arguments=arguments)
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
@@ -392,23 +371,20 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainedLearners.append(
                         self._train(
                             learnerName, pairData.copy(),
-                            pairTrueLabels.copy(), arguments=arguments,
-                            timer=timer)
+                            pairTrueLabels.copy(), arguments=arguments)
                         )
                     pairData.features.add(pairTrueLabels, useLog=False)
                     trainX.points.add(pairData, useLog=False)
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
-        return self._train(learnerName, trainX, trainY, arguments=arguments,
-                           timer=timer)
+        return self._train(learnerName, trainX, trainY, arguments=arguments)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None,
-               timer=None):
+    def _train(self, learnerName, trainX, trainY=None, arguments=None):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
-                                           arguments, timer)
+                                           arguments)
         trainedBackend, transformedInputs, customDict = packedBackend
 
         has2dOutput = False
@@ -435,7 +411,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             raise InvalidArgumentValue(msg)
 
 
-    def _trainBackend(self, learnerName, trainX, trainY, arguments, timer):
+    def _trainBackend(self, learnerName, trainX, trainY, arguments):
         ### PLANNING ###
 
         # verify the learner is available
@@ -468,12 +444,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ### LEARNER CREATION / TRAINING ###
 
         # train the instantiated learner
-        if timer is not None:
-            timer.start('train')
         trainedBackend = self._trainer(learnerName, transTrainX, transTrainY,
                                        transArguments, customDict)
-        if timer is not None:
-            timer.stop('train')
 
         return (trainedBackend, transformedInputs, customDict)
 
@@ -1307,7 +1279,6 @@ class TrainedLearner(object):
             setattr(self, methodName, wrapped)
 
     @captureOutput
-    @logPosition
     def test(self, testX, testY, performanceFunction, arguments=None,
              output='match', scoreMode='label', useLog=None, **kwarguments):
         """
@@ -1387,6 +1358,7 @@ class TrainedLearner(object):
         --------
         TODO
         """
+        timer = startTimer(useLog)
         #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
         #                               multiClassStrategy)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
@@ -1398,6 +1370,8 @@ class TrainedLearner(object):
                           useLog=False)
         performance = UML.helpers.computeMetrics(testY, None, pred,
                                                  performanceFunction)
+        time = stopTimer(timer)
+
         metrics = {}
         for key, value in zip([performanceFunction], [performance]):
             metrics[key.__name__] = value
@@ -1409,7 +1383,7 @@ class TrainedLearner(object):
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=metrics, extraInfo=None, numFolds=None)
+                      metrics=metrics, extraInfo=None, time=time)
 
         return performance
 
@@ -1423,7 +1397,6 @@ class TrainedLearner(object):
         return ret
 
     @captureOutput
-    @logPosition
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
         """
@@ -1500,6 +1473,7 @@ class TrainedLearner(object):
         --------
         TODO
         """
+        timer = startTimer(useLog)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
         mergedArguments = MergedArguments(self.transformedArguments, arguments,
@@ -1542,6 +1516,8 @@ class TrainedLearner(object):
 
             ret = labels
 
+        time = stopTimer(timer)
+
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
         # (self, umlFunction, trainData, trainLabels, testData, testLabels,
@@ -1549,7 +1525,7 @@ class TrainedLearner(object):
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=None, extraInfo=None, numFolds=None)
+                      metrics=None, extraInfo=None, time=time)
 
         return ret
 
@@ -1588,7 +1564,6 @@ class TrainedLearner(object):
         # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
-    @logPosition
     def retrain(self, trainX, trainY=None, useLog=None):
         """
         Train the model on new data.
@@ -1622,8 +1597,7 @@ class TrainedLearner(object):
             has2dOutput = len(outputData) > 1
 
         trainedBackend = self.interface._trainBackend(self.learnerName, trainX,
-                                                      trainY, self.arguments,
-                                                      None)
+                                                      trainY, self.arguments)
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
         customDict = trainedBackend[2]
@@ -1637,7 +1611,6 @@ class TrainedLearner(object):
                       None, None, self.learnerName, self.arguments, None)
 
     @captureOutput
-    @logPosition
     def incrementalTrain(self, trainX, trainY=None, useLog=None):
         """
         Extend the training of this learner with additional data.

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import six.moves.configparser
 import tempfile
 import os
+from unittest import mock
 import numpy
 import copy
 from nose.tools import raises
@@ -169,35 +170,38 @@ def testMultipleLearnersSinglePackage():
     assert saved == UML.interfaces.available
 
 
-# test that register and deregister learner records the
-# registartion to UML.settings / the config file
 @configSafetyWrapper
 def testEffectToSettings():
     """ Test that (de)registering is correctly recorded by UML.settings """
     UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     regSec = 'RegisteredLearners'
     opName = 'Foo.LoveAtFirstSightClassifier'
-    opValue = 'UML.tests.testCustomLearnerRegistration.'
+    opValue = 'tests.testCustomLearnerRegistration.'
     opValue += 'LoveAtFirstSightClassifier'
 
     # check that it is listed immediately
     assert UML.settings.get(regSec, opName) == opValue
-    # check that it is recorded to file
+
+    # check that it is *not* recorded to file
     tempSettings = UML.configuration.loadSettings()
-    assert tempSettings.get(regSec, opName) == opValue
+    try:
+        assert tempSettings.get(regSec, opName) == opValue
+        assert False  # expected NoOptionError
+    except six.moves.configparser.NoOptionError:
+        pass
 
     UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
     # check that deregistration removed the entry in the
     # RegisteredLearners section
     try:
-        UML.settings.get(regSec, opName) == opValue
+        assert UML.settings.get(regSec, opName) == opValue
         assert False
     except six.moves.configparser.NoOptionError:
         pass
 
 # test that registering a sample custom learner with option names
-# will affect UML.settings and the config file
+# will affect UML.settings but not the config file
 @configSafetyWrapper
 def testRegisterLearnerWithOptionNames():
     """ Test the availability of a custom learner's options """
@@ -205,6 +209,9 @@ def testRegisterLearnerWithOptionNames():
     learnerName = 'LoveAtFirstSightClassifier'
 
     assert UML.settings.get('Foo', learnerName + '.option') == ""
+    with open(UML.settings.path) as config:
+        for line in config.readlines():
+            assert 'Foo' not in line
 
     UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
@@ -295,3 +302,220 @@ def test_logCount():
     UML.deregisterCustomLearnerAsDefault("Bar", 'UncallableLearner')
 
     assert saved == UML.interfaces.available
+
+
+# case 1: register new learner NOT as default
+@configSafetyWrapper
+def test_registerCustomLearnerNotWrittenToConfig():
+    saved = copy.copy(UML.interfaces.available)
+    tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
+    # copy current config to tmpConfig
+    with open(UML.settings.path, 'r') as config:
+        origLines = config.readlines()
+        for line in origLines:
+            tmpConfig.write(line)
+        tmpConfig.close()
+    origConfigSize = os.path.getsize(UML.settings.path)
+    try:
+        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('UML.settings', new=newSession):
+            with mock.patch('UML.interfaces.available', new=[]):
+                UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+                UML.registerCustomLearner("Bar", RidgeRegression)
+                UML.registerCustomLearner("Baz", UncallableLearner)
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    registeredLines = testConfig.readlines()
+
+                # new learners are present in changes, but not in config
+                regLearners = ['Foo.LoveAtFirstSightClassifier', 'Bar.RidgeRegression',
+                               'Baz.UncallableLearner']
+                for learner in regLearners:
+                    assert learner in UML.settings.changes['RegisteredLearners']
+
+                # these two also have configurable options that should be
+                # reflected in the settings
+                opt1 = "LoveAtFirstSightClassifier.option"
+                opt2 = "UncallableLearner.option"
+                assert UML.settings.get("Foo", opt1) == ""
+                assert UML.settings.get("Baz", opt2) == ""
+
+                assert os.path.getsize(tmpConfig.name) == origConfigSize
+                assert registeredLines == origLines
+
+                UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+                UML.deregisterCustomLearner("Bar", 'RidgeRegression')
+                UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    deregisteredLines = testConfig.readlines()
+
+                # learners ToDelete in changes and removed from config
+                for learner in regLearners:
+                    learnerObj = UML.settings.changes['RegisteredLearners'][learner]
+                    assert isinstance(learnerObj, UML.configuration.ToDelete)
+                assert os.path.getsize(tmpConfig.name) == origConfigSize
+                assert deregisteredLines == origLines
+    finally:
+        os.unlink(tmpConfig.name)
+        assert saved == UML.interfaces.available
+
+
+# case 2: register new learner as default
+@configSafetyWrapper
+def test_registerCustomLearnerAsDefaultWrittenToConfig():
+    saved = copy.copy(UML.interfaces.available)
+    tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
+    with open(UML.settings.path, 'r') as config:
+        origLines = config.readlines()
+        for line in origLines:
+            tmpConfig.write(line)
+        tmpConfig.close()
+    origConfigSize = os.path.getsize(UML.settings.path)
+    try:
+        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('UML.settings', new=newSession):
+            with mock.patch('UML.interfaces.available', new=[]):
+                UML.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
+                UML.registerCustomLearnerAsDefault("Bar", RidgeRegression)
+                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    registeredLines = testConfig.readlines()
+
+                testLoc = 'tests.testCustomLearnerRegistration'
+                fooLine = 'Foo.LoveAtFirstSightClassifier = '
+                fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
+                barLine = 'Bar.RidgeRegression = '
+                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                bazLine = 'Baz.UncallableLearner = '
+                bazLine += testLoc + '.UncallableLearner\n'
+
+                # changes should be empty; all learners should be written to config
+                assert UML.settings.changes == {}
+                assert registeredLines != origLines
+                for line in [fooLine, barLine, bazLine]:
+                    assert line in registeredLines and line not in origLines
+
+                UML.deregisterCustomLearnerAsDefault("Foo", 'LoveAtFirstSightClassifier')
+                UML.deregisterCustomLearnerAsDefault("Bar", 'RidgeRegression')
+                UML.deregisterCustomLearnerAsDefault("Baz", 'UncallableLearner')
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    deregisteredLines = testConfig.readlines()
+
+                # changes should be empty; all learners removed from config
+                assert UML.settings.changes == {}
+                assert deregisteredLines == origLines
+                for line in [fooLine, barLine, bazLine]:
+                    assert line not in deregisteredLines and line not in origLines
+    finally:
+        os.unlink(tmpConfig.name)
+        assert saved == UML.interfaces.available
+
+
+# case 3: register new learner as default and deregister NOT as default
+@configSafetyWrapper
+def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
+    saved = copy.copy(UML.interfaces.available)
+    tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
+    with open(UML.settings.path, 'r') as config:
+        origLines = config.readlines()
+        for line in origLines:
+            tmpConfig.write(line)
+        tmpConfig.close()
+    origConfigSize = os.path.getsize(UML.settings.path)
+    try:
+        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('UML.settings', new=newSession):
+            with mock.patch('UML.interfaces.available', new=[]):
+                UML.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
+                UML.registerCustomLearnerAsDefault("Bar", RidgeRegression)
+                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    registeredLines = testConfig.readlines()
+
+                testLoc = 'tests.testCustomLearnerRegistration'
+                fooLine = 'Foo.LoveAtFirstSightClassifier = '
+                fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
+                barLine = 'Bar.RidgeRegression = '
+                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                bazLine = 'Baz.UncallableLearner = '
+                bazLine += testLoc + '.UncallableLearner\n'
+
+                # changes should be empty; all learners should be written to config
+                assert UML.settings.changes == {}
+                assert registeredLines != origLines
+                for line in [fooLine, barLine, bazLine]:
+                    assert line in registeredLines and line not in origLines
+
+                UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+                UML.deregisterCustomLearner("Bar", 'RidgeRegression')
+                UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+
+                with open(tmpConfig.name, 'r') as testConfig:
+                    deregisteredLines = testConfig.readlines()
+
+                # learners ToDelete in changes; all learners remain in config
+                regLearners = ['Foo.LoveAtFirstSightClassifier', 'Bar.RidgeRegression',
+                               'Baz.UncallableLearner']
+                for learner in regLearners:
+                    learnerObj = UML.settings.changes['RegisteredLearners'][learner]
+                    assert isinstance(learnerObj, UML.configuration.ToDelete)
+                assert os.path.getsize(tmpConfig.name) > origConfigSize
+                assert deregisteredLines == registeredLines
+
+                # check that cannot access deregistered learners anymore
+                # even though they are still present in the config file
+                for interface in ['Foo', 'Bar', 'Baz']:
+                    try:
+                        UML.listLearners(interface)
+                        assert False # expecting InvalidArgumentValue
+                    except InvalidArgumentValue:
+                        pass
+    finally:
+        os.unlink(tmpConfig.name)
+        assert saved == UML.interfaces.available
+
+
+@configSafetyWrapper
+def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
+    saved = copy.copy(UML.interfaces.available)
+    tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
+    with open(UML.settings.path, 'r') as config:
+        for line in config.readlines():
+            tmpConfig.write(line)
+        tmpConfig.close()
+    try:
+        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('UML.settings', new=newSession):
+            with mock.patch('UML.interfaces.available', new=[]):
+                UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+                UML.registerCustomLearner("Bar", RidgeRegression)
+                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+
+                assert 'Foo.LoveAtFirstSightClassifier' in UML.settings.changes['RegisteredLearners']
+                assert 'Bar.RidgeRegression' in UML.settings.changes['RegisteredLearners']
+                assert 'Baz.UncallableLearner' not in UML.settings.changes['RegisteredLearners']
+
+        with open(tmpConfig.name, 'r') as testConfig:
+            testLines = testConfig.readlines()
+        with open(UML.settings.path, 'r') as origConfig:
+            origLines = origConfig.readlines()
+
+        assert testLines != origLines
+        testLoc = 'tests.testCustomLearnerRegistration'
+        fooLine = 'Foo.LoveAtFirstSightClassifier = '
+        fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
+        assert fooLine not in testLines and fooLine not in origLines
+        barLine = 'Bar.RidgeRegression = '
+        barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+        assert barLine not in testLines and barLine not in origLines
+        bazLine = 'Baz.UncallableLearner = '
+        bazLine += testLoc + '.UncallableLearner\n'
+        assert bazLine in testLines and bazLine not in origLines
+
+    finally:
+        os.unlink(tmpConfig.name)
+        assert saved == UML.interfaces.available

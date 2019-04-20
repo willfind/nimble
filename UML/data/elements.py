@@ -19,10 +19,9 @@ import six
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
-from UML.logger import logPosition, handleLogging
+from UML.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import buildArgDict
 
 
 class Elements(object):
@@ -68,7 +67,7 @@ class Elements(object):
     #########################
     # Structural Operations #
     #########################
-    @logPosition
+
     def transform(self, toTransform, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   useLog=None):
@@ -188,18 +187,15 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(('toTransform', 'points', 'features',
-                                'preserveZeros', 'skipNoneReturnValues'),
-                               (None, None, False, False),
-                               toTransform, points, features, preserveZeros,
-                               skipNoneReturnValues)
         handleLogging(useLog, 'prep', 'elements.transform',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.transform,
+                      toTransform, points, features, preserveZeros,
+                      skipNoneReturnValues)
 
     ###########################
     # Higher Order Operations #
     ###########################
-    @logPosition
+
     def calculate(self, function, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   outputType=None, useLog=None):
@@ -380,14 +376,10 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(('function', 'points', 'features',
-                                'preserveZeros', 'skipNoneReturnValues',
-                                'outputType'),
-                               (None, None, False, False, None),
-                               function, points, features, preserveZeros,
-                               skipNoneReturnValues, outputType)
         handleLogging(useLog, 'prep', 'elements.calculate',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.calculate,
+                      function, points, features, preserveZeros,
+                      skipNoneReturnValues, outputType)
 
         return ret
 
@@ -500,7 +492,7 @@ class Elements(object):
     ########################
     # Numerical Operations #
     ########################
-    @logPosition
+
     def multiply(self, other, useLog=None):
         """
         Multiply objects element-wise.
@@ -568,11 +560,10 @@ class Elements(object):
         self._source.features.setNames(retFNames, useLog=False)
         self._source.validate()
 
-        argDict = buildArgDict(('other',), (), other)
         handleLogging(useLog, 'prep', 'elements.multiply',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.multiply, other)
 
-    @logPosition
+
     def power(self, other, useLog=None):
         """
         Raise the elements of this object to a power.
@@ -646,9 +637,8 @@ class Elements(object):
 
         self._source.validate()
 
-        argDict = buildArgDict(('other',), (), other)
         handleLogging(useLog, 'prep', 'elements.power',
-                      self._source.getTypeString(), argDict)
+                      self._source.getTypeString(), Elements.power, other)
 
     ########################
     # Higher Order Helpers #

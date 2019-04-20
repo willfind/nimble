@@ -2115,18 +2115,20 @@ def test_DataOutputWithMissingDataTypes1D():
         orig2 = UML.createData(t, (1,2,"None"))
         orig3 = UML.createData(t, {'a':1, 'b':2, 'c':"None"})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig10 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
-        orig10.features.sort(sortBy=orig10.points.getName(0))
-        orig4 = UML.createData(t, numpy.array([1,2,"None"]))
-        orig5 = UML.createData(t, numpy.matrix([1,2,"None"]))
+        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
+        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig5 = UML.createData(t, numpy.array([1,2,"None"]))
+        orig6 = UML.createData(t, numpy.matrix([1,2,"None"]))
         if pd:
-            orig6 = UML.createData(t, pd.DataFrame([[1,2,"None"]]))
-            orig7 = UML.createData(t, pd.Series([1,2,"None"]))
-            orig8 = UML.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
+            orig7 = UML.createData(t, pd.DataFrame([[1,2,"None"]]))
+            orig8 = UML.createData(t, pd.Series([1,2,"None"]))
+            orig9 = UML.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
         if scipy:
-            orig9 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+            orig10 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+            orig11 = UML.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+            orig12 = UML.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
-        originals = [orig1, orig2, orig3, orig10, orig4, orig5, orig6, orig7, orig8, orig9]
+        originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
         for orig in originals:
             if orig.getTypeString() == "List":
@@ -2156,17 +2158,17 @@ def test_DataOutputWithMissingDataTypes2D():
         orig2 = UML.createData(t, ((1,2,'None'), (3,4,'b')))
         orig3 = UML.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig7 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.features.sort(sortBy=orig7.points.getName(0))
-        orig4 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig5 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig5 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig6 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:
-            orig6 = UML.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+            orig7 = UML.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
             orig8 = UML.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
         if scipy:
             orig9 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
-        originals = [orig1, orig2, orig3, orig7, orig4, orig5, orig6, orig8, orig9]
+        originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:
             if orig.getTypeString() == "List":
                 assert orig.data[0][0] == expListOutput[0][0]
