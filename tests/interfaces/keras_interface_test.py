@@ -1,16 +1,19 @@
 """
 Unit tests for keras_interface.py
 
+Cannot test for expected result equality due to inability to control for
+randomness in Keras.
 """
 
 from __future__ import absolute_import
 
 import numpy as np
+from nose.tools import raises
 
 import UML
 from UML import createData
 from UML.interfaces.keras_interface import Keras
-
+from UML.exceptions import InvalidArgumentValue
 from .skipTestDecorator import SkipMissing
 
 keras = UML.importExternalLibraries.importModule("keras")
@@ -108,3 +111,57 @@ def testKeras_Sparse_FitGenerator():
 
     x = mym.apply(testX=x_train)
     assert len(x.points) == len(x_train.points)
+
+@keraSkipDec
+def test_TrainedLearnerApplyArguments():
+    """ Test a keras function that accept arguments for predict"""
+    x_train = createData('Matrix', np.random.random((1000, 20)))
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
+    x_test = np.random.random((100, 20))
+
+    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
+    layer1 = {'type':'Dropout', 'rate':0.5}
+    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layers = [layer0, layer1, layer2]
+
+    # Sequential.predict takes a 'steps' argument. Default is 20
+    mym = UML.train(
+        'keras.Sequential', trainX=x_train, trainY=y_train,
+        optimizer='sgd', layers=layers, loss='binary_crossentropy',
+        metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,
+        nesterov=True, shuffle=False)
+    # using arguments parameter
+    newArgs = mym.apply(testX=x_train, arguments={'steps': 50})
+    # using kwarguments
+    newArgs = mym.apply(testX=x_train, steps=50)
+
+@keraSkipDec
+def test_TrainedLearnerApplyArguments_exception():
+    """ Test an keras function with invalid arguments for predict"""
+    x_train = createData('Matrix', np.random.random((1000, 20)))
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
+    x_test = np.random.random((100, 20))
+
+    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
+    layer1 = {'type':'Dropout', 'rate':0.5}
+    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layers = [layer0, layer1, layer2]
+
+    # Sequential.predict does not take a 'foo' argument.
+    mym = UML.train(
+        'keras.Sequential', trainX=x_train, trainY=y_train,
+        optimizer='sgd', layers=layers, loss='binary_crossentropy',
+        metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,
+        nesterov=True, shuffle=False)
+    try:
+        # using arguments parameter
+        newArgs1 = mym.apply(testX=x_train, arguments={'foo': 50})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    try:
+        # using kwarguments
+        newArgs2 = mym.apply(testX=x_train, foo=50)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass

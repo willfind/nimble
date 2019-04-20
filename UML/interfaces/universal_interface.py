@@ -1954,7 +1954,7 @@ class MergedArguments(dict):
         # allow instatiation whether arguments are valid or not.
         # deferring exception in case of invalid arguments allows for
         # better detail in exception message.
-        arguments = trainArguments
+        arguments = trainArguments.copy()
         for dictionary in [argumentsParam, kwargsParam]:
             if dictionary:
                 for arg, value in dictionary.items():
@@ -1963,26 +1963,25 @@ class MergedArguments(dict):
                     elif value != trainArguments[arg]:
                         arguments[arg] = value
         self._invalidArguments = []
-        invalid = []
-        for arg in self:
+        for arg in arguments:
             if arg not in trainArguments:
-                invalid.append(arg)
+                self._invalidArguments.append(arg)
         self.validated = False
         if self._invalidArguments and validate:
-            raiseInvalidArguments(trainArguments)
+            self.raiseInvalidArguments(trainArguments)
         elif validate:
             self.validated = True
         super(MergedArguments, self).__init__(arguments)
 
     def getLimitedArguments(self,limitTo):
         if not self.validated and self._invalidArguments:
-            raiseInvalidArguments(limitTo)
+            self.raiseInvalidArguments(limitTo)
         limited = {}
         for name in limitTo:
             limited[name] = self[name]
         return limited
 
-    def raiseInvalidArguments(validArguments):
+    def raiseInvalidArguments(self, validArguments):
         msg = "EXTRA LEARNER PARAMETER! "
         msg += "The following parameter names cannot be applied: "
         msg += prettyListString(self._invalidArguments, useAnd=True)

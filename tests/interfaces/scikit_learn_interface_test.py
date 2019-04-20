@@ -696,6 +696,48 @@ def testConvertYTrainDType():
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
+@sklSkipDec
+def test_TrainedLearnerApplyArguments():
+    """ Test an skl function that accept arguments transform """
+    data = [[-1., -1.],
+            [-1., -1.],
+            [ 1.,  1.],
+            [ 1.,  1.]]
+
+    dataObj = UML.createData('Matrix', data)
+
+    # StandardScaler.transform takes a 'copy' argument. Default is None.
+    tl = UML.train('SciKitLearn.StandardScaler', dataObj)
+    # using arguments parameter
+    transformed = tl.apply(dataObj, arguments={'copy':True})
+
+    # using kwarguments
+    transformed = tl.apply(dataObj, copy=True)
+
+@sklSkipDec
+def test_TrainedLearnerApplyArguments_exception():
+    """ Test an skl function with invalid arguments for transform """
+    data = [[-1., -1.],
+            [-1., -1.],
+            [ 1.,  1.],
+            [ 1.,  1.]]
+
+    dataObj = UML.createData('Matrix', data)
+
+    # StandardScaler.transform does not takes a 'foo' argument
+    tl = UML.train('SciKitLearn.StandardScaler', dataObj)
+    try:
+        # using arguments parameter
+        transformed = tl.apply(dataObj, arguments={'foo': True})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    try:
+        # using kwarguments
+        transformed = tl.apply(dataObj, foo=True)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
 
 def _apply_saveLoad(trainerLearnerObj, givenTestX):
     """
