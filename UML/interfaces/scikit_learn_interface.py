@@ -278,7 +278,7 @@ class SciKitLearn(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return UML.createData(outputType, outputValue)
+        return UML.createData(outputType, outputValue, useLog=False)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):

@@ -69,10 +69,10 @@ class DataFrameAxis(Axis):
 
         pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
-            ret = df.iloc[targetList, :]
+            ret = df.values[targetList, :]
             axis = 0
         else:
-            ret = df.iloc[:, targetList]
+            ret = df.values[:, targetList]
             axis = 1
 
         if structure.lower() != "copy":
@@ -83,8 +83,8 @@ class DataFrameAxis(Axis):
         else:
             df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
-        return UML.data.DataFrame(ret, pointNames=pointNames,
-                                  featureNames=featureNames)
+        return UML.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
+                                  featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering

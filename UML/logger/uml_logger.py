@@ -60,6 +60,9 @@ class UmlLogger(object):
         self.cursor = None
         self.isAvailable = False
         self.position = 0
+        self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
+                         'run': self.logRun, 'data': self.logData,
+                         'crossVal': self.logCrossValidation}
 
 
     def setup(self, newFileName=None):
@@ -208,7 +211,7 @@ class UmlLogger(object):
         path : str
             The path to the data in the loaded object.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "load"
             logInfo = {}
             logInfo["returnType"] = returnType
@@ -236,7 +239,7 @@ class UmlLogger(object):
             The information generated during the call to the report
             function.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "data"
             logInfo = {}
             logInfo["reportType"] = reportType
@@ -244,7 +247,7 @@ class UmlLogger(object):
 
             self.log(logType, logInfo)
 
-    def logPrep(self, useLog, umlFunction, dataObject, arguments):
+    def logPrep(self, useLog, umlFunction, dataObject, func, *args, **kwargs):
         """
         Log information about a data preparation step performed.
 
@@ -262,18 +265,19 @@ class UmlLogger(object):
         arguments : dict
             A mapping of the argument name to the argument's value.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "prep"
             logInfo = {}
             logInfo["function"] = umlFunction
             logInfo["object"] = dataObject
+            arguments = _buildArgDict(func, *args, **kwargs)
             logInfo["arguments"] = arguments
 
             self.log(logType, logInfo)
 
     def logRun(self, useLog, umlFunction, trainData, trainLabels, testData,
-               testLabels, learnerFunction, arguments, metrics, extraInfo=None,
-               numFolds=None):
+               testLabels, learnerFunction, arguments, metrics=None,
+               extraInfo=None, time=None):
         """
         Log information about each run.
 
@@ -302,13 +306,13 @@ class UmlLogger(object):
             The arguments passed to the learner.
         metrics : dict
             The results of the testing on a run.
-        extraInfo
+        extraInfo: dict
             Any extra information to add to the log. Typically provides
             the best parameters from cross validation.
-        numFolds : int
-            The number of folds if k-fold cross validation utilized.
+        time : float, None
+            The time to run the function. None if function is not timed.
         """
-        if enableLogging(useLog) and self.position == 1:
+        if enableLogging(useLog):
             logType = "run"
             logInfo = {}
             logInfo["function"] = umlFunction
@@ -358,6 +362,9 @@ class UmlLogger(object):
 
             if extraInfo is not None and extraInfo != {}:
                 logInfo["extraInfo"] = extraInfo
+
+            if time:
+                logInfo["time"] = time
 
             self.log(logType, logInfo)
 
@@ -485,28 +492,6 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def logPosition(function):
-    """
-    Wrapper to signal a function has been called by the user.
-
-    UML function wrapper used to ensure that internal calls to
-    logged functions are not logged. This can be used as a decorator
-    for functions which are not logged, or wrap logged functions when
-    the logging is deactivated.
-    """
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        UML.logger.active.position += 1
-        try:
-            ret = function(*args, **kwargs)
-        except Exception:
-            einfo = sys.exc_info()
-            reraise(*einfo)
-        finally:
-            UML.logger.active.position -= 1
-        return ret
-    return wrapper
-
 def enableLogging(useLog):
     """
     Access useLog value from configuration, if not explictly defined.
@@ -528,23 +513,15 @@ def handleLogging(useLog, logType, *args, **kwargs):
     """
     Store information to be logged in the logger.
     """
-    logTypes = {'load': UML.logger.active.logLoad,
-                'prep': UML.logger.active.logPrep,
-                'run': UML.logger.active.logRun,
-                'data': UML.logger.active.logData,
-                'crossVal': UML.logger.active.logCrossValidation}
     if enableLogging(useLog):
-        if logType in logTypes:
-            logFunc = logTypes[logType]
+        if logType in UML.logger.active.logTypes:
+            logFunc = UML.logger.active.logTypes[logType]
             logFunc(useLog, *args, **kwargs)
         else:
             if args:
                 UML.log(logType, args)
             if kwargs:
                 UML.log(logType, kwargs)
-    else:
-        UML.logger.active.logType = None
-        UML.logger.active.logInfo = None
 
 def stringToDatetime(string):
     """
@@ -754,10 +731,10 @@ def _buildRunLogString(timestamp, log):
     Constructs the string that will be output for run logTypes.
     """
     # header data
-    timer = log.get("timer", "")
-    if timer:
-        timer = "Completed in {0:.3f} seconds".format(log['timer'])
-    fullLog = _logHeader(timer, timestamp)
+    time = log.get("time", "")
+    if time:
+        time = "Completed in {0:.3f} seconds".format(log['time'])
+    fullLog = _logHeader(time, timestamp)
     fullLog += '\n{0}("{1}")\n'.format(log['function'], log["learner"])
     # train and test data
     fullLog += _formatRunLine("Data", "# points", "# features")
@@ -891,6 +868,110 @@ def _logHeader(left, right):
     lineLog = "\n"
     lineLog += "{0:60}{1:>19}\n".format(left, right)
     return lineLog
+
+def _buildArgDict(func, *args, **kwargs):
+    """
+    Creates the dictionary of arguments for the prep logType. Adds all
+    required arguments and any keyword arguments that are not the
+    default values.
+
+    Parameters
+    ----------
+    argNames : tuple
+        The names of all arguments in the function.
+    defaults : tuple
+        The default values of the arguments.
+    """
+    argNames, _, _, defaults = UML.helpers.inspectArguments(func)
+    argNames = argNames[1:] # ignore self arg
+    nameArgMap = {}
+    for name, arg in zip(argNames, args):
+        if callable(arg):
+            nameArgMap[name] = _extractFunctionString(arg)
+        elif isinstance(arg, UML.data.Base):
+            nameArgMap[name] = arg.name
+        else:
+            nameArgMap[name] = str(arg)
+
+    defaultDict = {}
+    if defaults:
+        startDefaults = len(argNames) - len(defaults)
+        defaultArgs = argNames[startDefaults:]
+        for name, value in zip(defaultArgs, defaults):
+            if name != 'useLog':
+                defaultDict[name] = str(value)
+
+    argDict = {}
+    for name in nameArgMap:
+        if name not in defaultDict:
+            argDict[name] = nameArgMap[name]
+        elif nameArgMap[name] != defaultDict[name]:
+            argDict[name] = nameArgMap[name]
+    for name, value in kwargs.items():
+        value = str(value)
+        if name in defaultDict and value != defaultDict[name]:
+            argDict[name] = value
+        else:
+            argDict[name] = value
+
+    return argDict
+
+def _extractFunctionString(function):
+    """
+    Extracts function name or lambda function if passed a function,
+    Otherwise returns a string.
+    """
+    try:
+        functionName = function.__name__
+        if functionName != "<lambda>":
+            return functionName
+        else:
+            return _lambdaFunctionString(function)
+    except AttributeError:
+        return str(function)
+
+def _lambdaFunctionString(function):
+    """
+    Returns a string of a lambda function.
+    """
+    sourceLine = inspect.getsourcelines(function)[0][0]
+    line = re.findall(r'lambda.*', sourceLine)[0]
+    lambdaString = ""
+    afterColon = False
+    openParenthesis = 1
+    for letter in line:
+        if letter == "(":
+            openParenthesis += 1
+        elif letter == ")":
+            openParenthesis -= 1
+        elif letter == ":":
+            afterColon = True
+        elif letter == "," and afterColon:
+            return lambdaString
+        if openParenthesis == 0:
+            return lambdaString
+        else:
+            lambdaString += letter
+    return lambdaString
+
+def startTimer(useLog):
+    """
+    Start and return a timer object if this will be logged.
+    """
+    if enableLogging(useLog):
+        timer = Stopwatch()
+        timer.start("timer")
+        return timer
+    return
+
+def stopTimer(timer):
+    """
+    Stop the timer and return the run time.
+    """
+    if timer is not None:
+        timer.stop("timer")
+        return timer.calcRunTime("timer")
+    return
 
 #######################
 ### Initialization  ###
