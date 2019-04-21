@@ -224,7 +224,9 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
     (_, _, testTrans, _) = interface._inputTransformation(
         learnerName, None, None, testObj, algArgs, tlObj.customDict)
-    rawScores = interface._getScores(tlObj.backend, testTrans, algArgs,
+    rawScores = interface._getScores(tlObj.learnerName, tlObj.backend,
+                                     testTrans, algArgs,
+                                     tlObj.transformedArguments,
                                      tlObj.customDict)
 
     return ovaNotOvOFormatted(rawScores, applyResults, 4)

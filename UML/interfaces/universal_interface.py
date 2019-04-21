@@ -856,6 +856,32 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return bestIndex
 
+    def _getMethodArguments(self, argNames, newArguments, storedArguments):
+        applyArgs = {}
+        invalidArguments = []
+        for arg, value in newArguments.items():
+            # valid argument change
+            if arg in argNames and arg in storedArguments :
+                applyArgs[arg] = value
+            # not a valid argument for apply
+            else:
+                invalidArguments.append(arg)
+        if invalidArguments:
+            msg = "EXTRA PARAMETER! "
+            msg += "The following parameter names cannot be applied: "
+            msg += prettyListString(invalidArguments, useAnd=True)
+            msg += ". The allowed parameters are: "
+            msg += prettyListString(argNames, useAnd=True)
+            raise InvalidArgumentValue(msg)
+
+        # use stored values for any remaining arguments
+        for arg in argNames:
+            if arg not in applyArgs:
+                applyArgs[arg] = storedArguments[arg]
+
+        return applyArgs
+
+
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
     ##############################################
@@ -1009,7 +1035,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         pass
 
     @abc.abstractmethod
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         """
         If the learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception.
@@ -1136,7 +1163,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @abc.abstractmethod
-    def _applier(self, learnerName, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         """
         Perform testing/prediction on the test set using TrainedLearner.
 
@@ -1363,9 +1391,7 @@ class TrainedLearner(object):
         #                               multiClassStrategy)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-        # need to do this here so we
-        mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
-
+        mergedArguments = _mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
         performance = UML.helpers.computeMetrics(testY, None, pred,
@@ -1386,15 +1412,6 @@ class TrainedLearner(object):
                       metrics=metrics, extraInfo=None, time=time)
 
         return performance
-
-    def _mergeWithTrainArguments(self, newArguments1, newArguments2):
-        """
-        When calling apply, merges our fixed arguments with our provided
-        arguments, giving the new arguments precedence if needed.
-        """
-        ret = _mergeArguments(self.transformedArguments, newArguments1)
-        ret = _mergeArguments(ret, newArguments2)
-        return ret
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
@@ -1476,8 +1493,7 @@ class TrainedLearner(object):
         timer = startTimer(useLog)
         UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-        mergedArguments = MergedArguments(self.transformedArguments, arguments,
-                                          kwarguments, validate=False)
+        mergedArguments = _mergeArguments(arguments, kwarguments)
 
         # input transformation
         transformedInputs = self.interface._inputTransformation(
@@ -1493,6 +1509,7 @@ class TrainedLearner(object):
         if scoreMode != 'allScores':
             labels = self.interface._applier(self.learnerName, self.backend,
                                              transTestX, usedArguments,
+                                             self.transformedArguments,
                                              self.customDict)
             labels = self.interface._outputTransformation(
                 self.learnerName, labels, usedArguments, output, "label",
@@ -1687,7 +1704,7 @@ class TrainedLearner(object):
         if applyResults is None:
             applyResults = self.interface._applier(
                 self.learnerName, self.backend, testX, arguments,
-                self.customDict)
+                self.transformedArguments, self.customDict)
             applyResults = self.interface._outputTransformation(
                 self.learnerName, applyResults, arguments, "match", "label",
                 self.customDict)
@@ -1723,14 +1740,15 @@ class TrainedLearner(object):
         UML.data.Matrix
             The label scores.
         """
-        usedArguments = MergedArguments(self.transformedArguments, arguments,
-                                        kwarguments, validate=False)
+        usedArguments = _mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self.interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
             self.customDict)
 
-        rawScores = self.interface._getScores(self.backend, testX,
-                                              usedArguments, self.customDict)
+        rawScores = self.interface._getScores(self.learnerName, self.backend,
+                                              testX, usedArguments,
+                                              self.transformedArguments,
+                                              self.customDict)
         umlTypeRawScores = self.interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self.customDict)
@@ -1935,56 +1953,3 @@ def relabeler(point, label=None):
         return 0
     else:
         return 1
-
-class MergedArguments(dict):
-    """
-    Combines all the arguments stored in a TrainedLearner and additional
-    arguments provided via the arguments parameter and kwarguments.
-    This object will behave the same as a python dictionary, but
-    includes the getLimitedArguments method to get a subset of the
-    arguments.
-
-    NOTE: Setting validate to False will allow instantiation even if
-    there is a conflict with the arguments. Deferring raising the
-    exception in case of invalid arguments allows for better detail in
-    exception message.
-    """
-    def __init__(self, trainArguments, argumentsParam, kwargsParam,
-                 validate=True):
-        # allow instatiation whether arguments are valid or not.
-        # deferring exception in case of invalid arguments allows for
-        # better detail in exception message.
-        arguments = trainArguments.copy()
-        for dictionary in [argumentsParam, kwargsParam]:
-            if dictionary:
-                for arg, value in dictionary.items():
-                    if arg not in trainArguments:
-                        arguments[arg] = value
-                    elif value != trainArguments[arg]:
-                        arguments[arg] = value
-        self._invalidArguments = []
-        for arg in arguments:
-            if arg not in trainArguments:
-                self._invalidArguments.append(arg)
-        self.validated = False
-        if self._invalidArguments and validate:
-            self.raiseInvalidArguments(trainArguments)
-        elif validate:
-            self.validated = True
-        super(MergedArguments, self).__init__(arguments)
-
-    def getLimitedArguments(self,limitTo):
-        if not self.validated and self._invalidArguments:
-            self.raiseInvalidArguments(limitTo)
-        limited = {}
-        for name in limitTo:
-            limited[name] = self[name]
-        return limited
-
-    def raiseInvalidArguments(self, validArguments):
-        msg = "EXTRA LEARNER PARAMETER! "
-        msg += "The following parameter names cannot be applied: "
-        msg += prettyListString(self._invalidArguments, useAnd=True)
-        msg += ". The allowed parameters are: "
-        msg += prettyListString(validArguments, useAnd=True)
-        raise InvalidArgumentValue(msg)

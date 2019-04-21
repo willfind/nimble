@@ -175,9 +175,18 @@ class Mlpy(UniversalInterface):
         return [ret]
 
 
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         if hasattr(learner, 'pred_values'):
-            return learner.pred_values(testX)
+            method = 'pred_values'
+            ignore = self._XDataAliases + ['self']
+            if 'useT' in customDict and customDict['useT']:
+                ignore.remove('t')
+            print(method, learnerName)
+            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+            scoreArgs = self._getMethodArguments(backendArgs, newArguments,
+                                                 storedArguments)
+            return learner.pred_values(testX, **scoreArgs)
         else:
             raise NotImplementedError('Cannot get scores for this learner')
 
@@ -299,7 +308,8 @@ class Mlpy(UniversalInterface):
         raise RuntimeError()
 
 
-    def _applier(self, learnerName, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         if hasattr(learner, 'pred'):
             method = 'pred'
             toCall = self._pred
@@ -310,12 +320,13 @@ class Mlpy(UniversalInterface):
             msg = "Cannot apply this learner to data, no predict or "
             msg = "transform function"
             raise TypeError(msg)
+        ignore = self._XDataAliases + ['self']
         if 'useT' in customDict and customDict['useT']:
-            ignore = ['self']
-        else:
-            ignore = self._XDataAliases + ['self']
+            ignore.remove('t')
+
         backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        applyArgs = arguments.getLimitedArguments(backendArgs)
+        applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
         return toCall(learner, testX, applyArgs, customDict)
 
 
@@ -436,7 +447,7 @@ class Mlpy(UniversalInterface):
                              0.1, 100, True, False, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred':
+            elif name == 'pred' or name == 'pred_values':
                 pnames = ['t']
             else:
                 return None
@@ -455,7 +466,7 @@ class Mlpy(UniversalInterface):
                 pdefaults = ['l2r_lr', 1, 0.01, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred':
+            elif name == 'pred' or name == 'pred_values':
                 pnames = ['t']
             else:
                 return None

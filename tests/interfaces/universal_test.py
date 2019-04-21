@@ -312,7 +312,8 @@ class AlwaysWarnInterface(UniversalInterface):
     def learnerType(self, name):
         pass
 
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         self.writeWarningToStdErr()
         sys.stderr.flush()
         num = len(testX.points)
@@ -353,7 +354,8 @@ class AlwaysWarnInterface(UniversalInterface):
         sys.stderr.flush()
         pass
 
-    def _applier(self, learnerName, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         self.writeWarningToStdErr()
         sys.stderr.flush()
         return testX

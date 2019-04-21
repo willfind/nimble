@@ -135,7 +135,8 @@ class CustomLearnerInterface(UniversalInterface):
         return ret
 
 
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         return learner.getScores(testX)
 
     def _getScoresOrder(self, learner):
@@ -175,7 +176,8 @@ class CustomLearnerInterface(UniversalInterface):
                             customDict):
         return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
-    def _applier(self, learnerName, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, arguments, storedArguments,
+                 customDict):
         return learner.applyForInterface(testX, arguments)
 
     def _getAttributes(self, learnerBackend):

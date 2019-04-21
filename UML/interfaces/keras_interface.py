@@ -160,14 +160,21 @@ class Keras(UniversalInterface):
 
         return [ret]
 
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         if hasattr(learner, 'decision_function'):
+            method = 'decision_function'
             toCall = learner.decision_function
         elif hasattr(learner, 'predict_proba'):
+            method = 'predict_proba'
             toCall = learner.predict_proba
         else:
             raise NotImplementedError('Cannot get scores for this learner')
-        raw = toCall(testX)
+        ignore = ['X', 'x', 'self']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        scoreArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        raw = toCall(testX, **scoreArgs)
         # in binary classification, we return a row vector. need to reshape
         if len(raw.shape) == 1:
             return raw.reshape(len(raw), 1)
@@ -342,7 +349,8 @@ class Keras(UniversalInterface):
         return learner
 
 
-    def _applier(self, learnerName, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         if hasattr(learner, 'predict'):
             if isinstance(testX, UML.data.Sparse):
                 method = 'predict_generator'
@@ -350,7 +358,8 @@ class Keras(UniversalInterface):
                 method = 'predict'
             ignore = ['X', 'x', 'self']
             backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-            applyArgs = arguments.getLimitedArguments(backendArgs)
+            applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                                 storedArguments)
             return self._predict(learner, testX, applyArgs, customDict)
         else:
             msg = "Cannot apply this learner to data, no predict function"
