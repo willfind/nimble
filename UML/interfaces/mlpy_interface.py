@@ -182,7 +182,6 @@ class Mlpy(UniversalInterface):
             ignore = self._XDataAliases + ['self']
             if 'useT' in customDict and customDict['useT']:
                 ignore.remove('t')
-            print(method, learnerName)
             backendArgs = self._paramQuery(method, learnerName, ignore)[0]
             scoreArgs = self._getMethodArguments(backendArgs, newArguments,
                                                  storedArguments)
