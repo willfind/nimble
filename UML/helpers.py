@@ -524,47 +524,63 @@ def elementTypeConvert(rawData, elementType):
             data = numpy.matrix(rawData, dtype=object)
         return data
 
+def replaceNumpyValues(data, toReplace, replaceWith):
+    """
+    Replace values in a numpy matrix or array.
+
+    Parameters
+    ----------
+    data : numpy.matrix, numpy.array
+        A numpy array of data.
+    toReplace : list
+        A list of values to search and replace in the data.
+    replaceWith : value
+        The value which will replace any values in ``toReplace``.
+    """
+    # if data has numeric dtype and replacing with a numeric value, do not
+    # process any non-numeric values since it can only contain numeric values
+    if (numpy.issubclass_(data.dtype.type, numpy.number)
+            and isinstance(replaceWith, (int, float, numpy.number))):
+        toReplace = [val for val in toReplace
+                     if isinstance(val, (int, float, numpy.number))]
+
+    # numpy.isin cannot handle nan replacement, so if nan is in
+    # toReplace we instead set the flag to trigger nan replacement
+    replaceNan = any(isinstance(val, float) and numpy.isnan(val)
+                     for val in toReplace)
+
+    # try to avoid converting dtype if possible for efficiency.
+    try:
+        data[numpy.isin(data, toReplace)] = replaceWith
+        if replaceNan:
+            data[data != data] = replaceWith
+    except ValueError:
+        data = data.astype(numpy.object_)
+        data[numpy.isin(data, toReplace)] = replaceWith
+        if replaceNan:
+            data[data != data] = replaceWith
+    return data
+
 def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
                        elementType=None):
     """
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    nanIsMissing = False
-    for missing in treatAsMissing:
-        if isinstance(missing, float) and numpy.isnan(missing):
-            nanIsMissing = True
-            break
-    # replace nan if nan in treatAsMissing and replaceMissing data is not nan
-    replaceNan = nanIsMissing and replaceMissingData == replaceMissingData
-
-    def replacer(data):
-        """
-        Replace values in a numpy array.
-        """
-        try:
-            # Try to avoid converting dtype if possible for efficiency.
-            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
-            if replaceNan:
-                data[data != data] = replaceMissingWith
-        except ValueError:
-            data = data.astype(numpy.object_)
-            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
-            if replaceNan:
-                data[data != data] = replaceMissingWith
-        return data
-
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
-        handleMissing = replacer(handleMissing)
+        handleMissing = replaceNumpyValues(handleMissing, treatAsMissing,
+                                           replaceMissingWith)
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = replacer(rawData)
+        handleMissing = replaceNumpyValues(rawData, treatAsMissing,
+                                           replaceMissingWith)
         rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
-        handleMissing = replacer(rawData.data)
+        handleMissing = replaceNumpyValues(rawData.data, treatAsMissing,
+                                           replaceMissingWith)
         handleMissing = elementTypeConvert(handleMissing, elementType)
         # elementTypeConvert returns matrix, need a 1D array
         handleMissing = handleMissing.A1
