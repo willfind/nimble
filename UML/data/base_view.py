@@ -116,39 +116,6 @@ class BaseView(Base):
     # Reimplemented Operations #
     ############################
 
-    def _copyNames(self, CopyObj):
-        CopyObj.pointNamesInverse = self.points._getNamesNoGeneration()
-        CopyObj.pointNames = copy.copy(self._source.pointNames)
-        CopyObj.featureNamesInverse = self.features._getNamesNoGeneration()
-        CopyObj.featureNames = copy.copy(self._source.featureNames)
-
-        nextDefaultValueFeature = self._source._nextDefaultValueFeature
-        nextDefaultValuePoint = self._source._nextDefaultValuePoint
-        CopyObj._nextDefaultValueFeature = nextDefaultValueFeature
-        CopyObj._nextDefaultValuePoint = nextDefaultValuePoint
-
-        if (len(self.points) != len(self._source.points)
-                and self._source._pointNamesCreated()):
-            if self._pStart != 0:
-                CopyObj.pointNames = {}
-                for idx, name in enumerate(CopyObj.pointNamesInverse):
-                    CopyObj.pointNames[name] = idx
-            else:
-                names = self._source.pointNamesInverse
-                for name in names[self._pEnd:len(self._source.points) + 1]:
-                    del CopyObj.pointNames[name]
-
-        if (len(self.features) != len(self._source.features)
-                and self._source._featureNamesCreated()):
-            if self._fStart != 0:
-                CopyObj.featureNames = {}
-                for idx, name in enumerate(CopyObj.featureNamesInverse):
-                    CopyObj.featureNames[name] = idx
-            else:
-                names = self._source.featureNamesInverse
-                for name in names[self._fEnd:len(self._source.features) + 1]:
-                    del CopyObj.featureNames[name]
-
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 

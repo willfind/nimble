@@ -702,3 +702,61 @@ def allDataIdentical(arr1, arr2):
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
     except Exception:
         return False
+
+def createListOfDict(data, featureNames):
+    """
+    Create a list of dictionaries mapping feature names to point values.
+
+    Dictionaries are in point order.
+    """
+    listofdict = []
+    for point in data:
+        feature_dict = {}
+        for i, value in enumerate(point):
+            feature = featureNames[i]
+            feature_dict[feature] = value
+        listofdict.append(feature_dict)
+    return listofdict
+
+def createDictOfList(data, featureNames, nFeatures):
+    """
+    Create a python dictionary mapping feature names to python lists.
+
+    Each list contains the values in the feature in point order.
+    """
+    dictoflist = {}
+    for i in range(nFeatures):
+        feature = featureNames[i]
+        values_list = data[:, i].tolist()
+        dictoflist[feature] = values_list
+    return dictoflist
+
+
+def createDataNoValidation(returnType, data, pointNames=None,
+                           featureNames=None, reuseData=False):
+    """
+    Instantiate a new object without validating the data.
+
+    This function assumes that data being used is already in a format
+    acceptable for UML and the returnType's __init__ method. This allows
+    for faster instantiation than through createData. However, if the
+    data has not already been processed by UML, it is not recommended to
+    use this function.  Note that this function will handle point and
+    feature names, but all other metadata will be set to default values.
+    """
+    if hasattr(data, 'dtype'):
+        if data.dtype not in [numpy.float, numpy.object_]:
+            raise InvalidArgumentType("data must have float or object dtype")
+        # this could be a numeric subsection from a UML object with an 'object'
+        # dtype. We optimize the dtype here to support operations requiring a
+        # numeric dtype.
+        try:
+            data = data.astype(numpy.float)
+        except ValueError:
+            pass
+    initMethod = getattr(UML.data, returnType)
+    if returnType == 'List':
+        return initMethod(data, pointNames=pointNames, featureNames=featureNames,
+                          reuseData=reuseData, checkAll=False)
+    return initMethod(data, pointNames=pointNames, featureNames=featureNames,
+                      reuseData=reuseData)
