@@ -4,7 +4,9 @@ import numpy
 
 import UML
 from UML import match
+from ..assertionHelpers import noLogEntryExpected
 
+@noLogEntryExpected
 def backend_match_value(toMatch, true, false):
     """backend for match functions that accept a value"""
     for t in true:
@@ -54,17 +56,18 @@ def test_match_negative():
     false = positiveValues + zeroValues + stringValues + misingValues
     backend_match_value(match.negative, true, false)
 
+@noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
     data = numpy.array(data, dtype=numpy.object_)
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         # test whole matrix
         if anyOrAll == 'any':
             assert func(toTest)
         else:
             allMatching = toTest[:,2]
-            allMatching.features.add(allMatching)
+            allMatching.features.add(allMatching, useLog=False)
             assert func(allMatching)
         # test by feature
         for i, feature in enumerate(toTest.features):
@@ -80,7 +83,7 @@ def backend_match_anyAll(anyOrAll, func, data):
             else:
                 assert func(feature)
         # test by point
-        toTest = UML.createData(t, data.T)
+        toTest = UML.createData(t, data.T, useLog=False)
         for i, point in enumerate(toTest.points):
             # index 0 never contains any matching values
             if i == 0:

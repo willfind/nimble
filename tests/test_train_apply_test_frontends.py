@@ -14,6 +14,7 @@ from UML.randomness import pythonRandom
 from UML.exceptions import InvalidArgumentValueCombination
 import six
 from six.moves import range
+from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -450,3 +451,69 @@ def test_train_trainAndApply_perfFunc_reqForCV():
         assert False
     except InvalidArgumentValueCombination:
         pass
+
+def back_logCount(toCall):
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(),
+             int(pythonRandom.random() * 3) + 1] for _pt in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables, useLog=False)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables, useLog=False)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    out = toCall('Custom.KNNClassifier', trainObjData, trainObjLabels, testObjData,
+           testObjLabels, fractionIncorrect)
+
+@oneLogEntryExpected
+def test_train_logCount_noCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.train(learner, trainX, trainY)
+    back_logCount(wrapped)
+
+@oneLogEntryExpected
+def test_trainAndApply_logCount_noCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction)
+    back_logCount(wrapped)
+
+@oneLogEntryExpected
+def test_trainAndTest_logCount_noCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction)
+    back_logCount(wrapped)
+
+@oneLogEntryExpected
+def test_trainAndTestOnTrainingData_logCount_noCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
+    back_logCount(wrapped)
+
+@logCountAssertionFactory(2)
+def test_train_logCount_withCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=(1,2))
+    back_logCount(wrapped)
+
+@logCountAssertionFactory(2)
+def test_trainAndApply_logCount_withCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=(1,2))
+    back_logCount(wrapped)
+
+@logCountAssertionFactory(2)
+def test_trainAndTest_logCount_withCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=(1,2))
+    back_logCount(wrapped)
+
+@logCountAssertionFactory(2)
+def test_trainAndTestOnTrainingData_logCount_withCV():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=(1,2))
+    back_logCount(wrapped)
+

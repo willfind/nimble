@@ -8,6 +8,8 @@ import random
 
 import numpy
 
+from .logger import handleLogging
+
 pythonRandom = random.Random(42)
 numpyRandom = numpy.random.RandomState(42)
 
@@ -17,7 +19,7 @@ _saved = (None, None)
 _stillDefault = True
 
 
-def setRandomSeed(seed):
+def setRandomSeed(seed, useLog=None):
     """
     Set the seeds on all sources of randomness in UML.
 
@@ -33,6 +35,8 @@ def setRandomSeed(seed):
     numpyRandom.seed(seed)
     if _saved != (None, None):
         _stillDefault = False
+
+    handleLogging(useLog, 'setRandomSeed', seed=seed)
 
 
 def generateSubsidiarySeed():
@@ -92,7 +96,7 @@ def startAlternateControl(seed=None):
     """
     global _saved
     _saved = (pythonRandom.getstate(), numpyRandom.get_state())
-    setRandomSeed(seed)
+    setRandomSeed(seed, useLog=False)
 
 
 def endAlternateControl():

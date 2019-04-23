@@ -10,18 +10,14 @@ import math
 import numbers
 import inspect
 import re
-from functools import wraps
-import sys
 
 import six
 from six.moves import range
-from six import reraise
 import numpy
 
 import UML
 from UML import importModule
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.logger import Stopwatch
 
 pd = importModule('pandas')
 
@@ -488,7 +484,11 @@ def constructIndicesList(obj, axis, values, argName=None):
     valuesList = valuesToPythonList(values, argName)
     try:
         axisObj = obj._getAxis(axis)
-        indicesList = [axisObj.getIndex(val) for val in valuesList]
+        axisLen = len(axisObj)
+        # faster to bypass getIndex if value is already a valid index
+        indicesList = [v if (isinstance(v, (int, numpy.integer))
+                             and 0 <= v < axisLen)
+                       else axisObj.getIndex(v) for v in valuesList]
     except InvalidArgumentValue as iav:
         msg = "Invalid value for the argument '{0}'. ".format(argName)
         # add more detail to msg; slicing to exclude quotes
@@ -621,117 +621,6 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
 
     return fill
 
-def extractFunctionString(function):
-    """
-    Extracts function name or lambda function if passed a function,
-    Otherwise returns a string.
-    """
-    try:
-        functionName = function.__name__
-        if functionName != "<lambda>":
-            return functionName
-        else:
-            return lambdaFunctionString(function)
-    except AttributeError:
-        return str(function)
-
-def lambdaFunctionString(function):
-    """
-    Returns a string of a lambda function.
-    """
-    sourceLine = inspect.getsourcelines(function)[0][0]
-    line = re.findall(r'lambda.*', sourceLine)[0]
-    lambdaString = ""
-    afterColon = False
-    openParenthesis = 1
-    for letter in line:
-        if letter == "(":
-            openParenthesis += 1
-        elif letter == ")":
-            openParenthesis -= 1
-        elif letter == ":":
-            afterColon = True
-        elif letter == "," and afterColon:
-            return lambdaString
-        if openParenthesis == 0:
-            return lambdaString
-        else:
-            lambdaString += letter
-    return lambdaString
-
-def buildArgDict(argNames, defaults, *args, **kwargs):
-    """
-    Creates the dictionary of arguments for the prep logType. Adds all
-    required arguments and any keyword arguments that are not the
-    default values.
-    """
-    # remove self from argNames
-    argNames = argNames[1:]
-    nameArgMap = {}
-    for name, arg in zip(argNames, args):
-        if callable(arg):
-            nameArgMap[name] = extractFunctionString(arg)
-        elif isinstance(arg, UML.data.Base):
-            nameArgMap[name] = arg.name
-        else:
-            nameArgMap[name] = str(arg)
-    startDefaults = len(argNames) - len(defaults)
-    defaultArgs = argNames[startDefaults:]
-    defaultDict = {}
-    for name, value in zip(defaultArgs, defaults):
-        if name != "useLog":
-            defaultDict[name] = str(value)
-
-    argDict = {}
-    for name in nameArgMap:
-        if name not in defaultDict:
-            argDict[name] = nameArgMap[name]
-        elif name in defaultDict and defaultDict[name] != nameArgMap[name]:
-            argDict[name] = nameArgMap[name]
-    for name in kwargs:
-        if name in defaultDict and defaultDict[name] != kwargs[name]:
-            argDict[name] = kwargs[name]
-
-    return argDict
-
-def logCaptureFactory(prefix=None):
-    """
-    Creates a wrapper for wrapping functions that will be logged.
-    """
-    def logCapture(function):
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-            logger = UML.logger.active
-            try:
-                logger.position += 1
-                timer = Stopwatch()
-                timer.start("timer")
-                ret = function(*args, **kwargs)
-                logger.position -= 1
-            except Exception:
-                logger.position = 0
-                einfo = sys.exc_info()
-                reraise(*einfo)
-            finally:
-                timer.stop("timer")
-            if logger.position == 0:
-                funcName = function.__name__
-                self = function.__self__
-                names, _, _, defaults = UML.helpers.inspectArguments(function)
-                if prefix is None:
-                    # Base
-                    funcName = function.__name__
-                    cls = self.getTypeString()
-                else:
-                    # Points, Features, Elements
-                    funcName = prefix + '.' + function.__name__
-                    cls = self._source.getTypeString()
-                argDict = buildArgDict(names, defaults, *args, **kwargs)
-                logger.logPrep(funcName, cls, argDict)
-                logger.log(logger.logType, logger.logInfo)
-            return ret
-        return wrapper
-    return logCapture
 
 def allDataIdentical(arr1, arr2):
     """
@@ -748,3 +637,61 @@ def allDataIdentical(arr1, arr2):
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
     except Exception:
         return False
+
+def createListOfDict(data, featureNames):
+    """
+    Create a list of dictionaries mapping feature names to point values.
+
+    Dictionaries are in point order.
+    """
+    listofdict = []
+    for point in data:
+        feature_dict = {}
+        for i, value in enumerate(point):
+            feature = featureNames[i]
+            feature_dict[feature] = value
+        listofdict.append(feature_dict)
+    return listofdict
+
+def createDictOfList(data, featureNames, nFeatures):
+    """
+    Create a python dictionary mapping feature names to python lists.
+
+    Each list contains the values in the feature in point order.
+    """
+    dictoflist = {}
+    for i in range(nFeatures):
+        feature = featureNames[i]
+        values_list = data[:, i].tolist()
+        dictoflist[feature] = values_list
+    return dictoflist
+
+
+def createDataNoValidation(returnType, data, pointNames=None,
+                           featureNames=None, reuseData=False):
+    """
+    Instantiate a new object without validating the data.
+
+    This function assumes that data being used is already in a format
+    acceptable for UML and the returnType's __init__ method. This allows
+    for faster instantiation than through createData. However, if the
+    data has not already been processed by UML, it is not recommended to
+    use this function.  Note that this function will handle point and
+    feature names, but all other metadata will be set to default values.
+    """
+    if hasattr(data, 'dtype'):
+        if data.dtype not in [numpy.float, numpy.object_]:
+            raise InvalidArgumentType("data must have float or object dtype")
+        # this could be a numeric subsection from a UML object with an 'object'
+        # dtype. We optimize the dtype here to support operations requiring a
+        # numeric dtype.
+        try:
+            data = data.astype(numpy.float)
+        except ValueError:
+            pass
+    initMethod = getattr(UML.data, returnType)
+    if returnType == 'List':
+        return initMethod(data, pointNames=pointNames, featureNames=featureNames,
+                          reuseData=reuseData, checkAll=False)
+    return initMethod(data, pointNames=pointNames, featureNames=featureNames,
+                      reuseData=reuseData)

@@ -13,15 +13,47 @@ except:
     import mock
 
 import UML
-from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.helpers import _intFloatOrString
+# from .. import logger
+from .assertionHelpers import oneLogEntryExpected
+
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
 
 returnTypes = copy.copy(UML.data.available)
 returnTypes.append(None)
+
+class NoIter(object):
+    def __init__(self, vals):
+        self.vals = vals
+
+    def __len__(self):
+        return len(self.vals)
+
+class IterNext(object):
+    def __init__(self, vals):
+        self.vals = vals
+        self.pos = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.pos < len(self.vals):
+            self.pos += 1
+            return self.vals[self.pos - 1]
+        else:
+            raise StopIteration()
+
+class GetItemOnly(object):
+    def __init__(self, vals):
+        self.vals = vals
+
+    def __getitem__(self, key):
+        return self.vals[key]
 
 ###########################
 # Data values correctness #
@@ -48,6 +80,38 @@ def test_createData_raw_noStringConversion():
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_invalidPointOrFeatureNames():
+    for t in returnTypes:
+        try:
+            pNames = NoIter(['1', '4'])
+            toTest = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames)
+            assert False # expected InvalidArgumentType
+        except InvalidArgumentType:
+            pass
+
+        try:
+            fNames = NoIter(['a', 'b', 'c'])
+            toTest = UML.createData(t, [[1,2,3], [4,5,6]], featureNames=fNames)
+            assert False # expected InvalidArgumentType
+        except InvalidArgumentType:
+            pass
+
+def test_createData_raw_pointAndFeatureIterators():
+    for t in returnTypes:
+        pNames = IterNext(['1', '4'])
+        fNames = IterNext(['a', 'b', 'c'])
+        toTest1 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                featureNames=fNames)
+        assert toTest1.points.getNames() == ['1', '4']
+        assert toTest1.features.getNames() == ['a', 'b', 'c']
+
+        pNames = GetItemOnly(['1', '4'])
+        fNames = GetItemOnly(['a', 'b', 'c'])
+        toTest2 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                featureNames=fNames)
+        assert toTest2.points.getNames() == ['1', '4']
+        assert toTest2.features.getNames() == ['a', 'b', 'c']
 
 
 def test_createData_CSV_data():
@@ -2112,18 +2176,20 @@ def test_DataOutputWithMissingDataTypes1D():
         orig2 = UML.createData(t, (1,2,"None"))
         orig3 = UML.createData(t, {'a':1, 'b':2, 'c':"None"})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig10 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
-        orig10.features.sort(sortBy=orig10.points.getName(0))
-        orig4 = UML.createData(t, numpy.array([1,2,"None"]))
-        orig5 = UML.createData(t, numpy.matrix([1,2,"None"]))
+        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
+        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig5 = UML.createData(t, numpy.array([1,2,"None"]))
+        orig6 = UML.createData(t, numpy.matrix([1,2,"None"]))
         if pd:
-            orig6 = UML.createData(t, pd.DataFrame([[1,2,"None"]]))
-            orig7 = UML.createData(t, pd.Series([1,2,"None"]))
-            orig8 = UML.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
+            orig7 = UML.createData(t, pd.DataFrame([[1,2,"None"]]))
+            orig8 = UML.createData(t, pd.Series([1,2,"None"]))
+            orig9 = UML.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
         if scipy:
-            orig9 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+            orig10 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+            orig11 = UML.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+            orig12 = UML.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
-        originals = [orig1, orig2, orig3, orig10, orig4, orig5, orig6, orig7, orig8, orig9]
+        originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
         for orig in originals:
             if orig.getTypeString() == "List":
@@ -2153,17 +2219,17 @@ def test_DataOutputWithMissingDataTypes2D():
         orig2 = UML.createData(t, ((1,2,'None'), (3,4,'b')))
         orig3 = UML.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig7 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
-        orig7.features.sort(sortBy=orig7.points.getName(0))
-        orig4 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig5 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig5 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig6 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:
-            orig6 = UML.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+            orig7 = UML.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
             orig8 = UML.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
         if scipy:
             orig9 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
-        originals = [orig1, orig2, orig3, orig7, orig4, orig5, orig6, orig8, orig9]
+        originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:
             if orig.getTypeString() == "List":
                 assert orig.data[0][0] == expListOutput[0][0]
@@ -2212,6 +2278,20 @@ def test_createData_csv_nonremoval_efficiency():
                 assert fromList == fromCSV
             finally:
                 UML.helpers._removalCleanupAndSelectionOrdering = backup
+
+
+#################
+# Logging count #
+#################
+def test_createData_logCount():
+    """Test createData adds one entry to the log for each return type"""
+
+    @oneLogEntryExpected
+    def byType(rType):
+        toTest = UML.createData(rType, [[1,2,3], [4,5,6], [7,8,9]])
+
+    for t in returnTypes:
+        byType(t)
 
 
 # tests for combination of one name set being specified and one set being

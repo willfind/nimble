@@ -24,6 +24,7 @@ from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
+from .dataHelpers import createDataNoValidation
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -238,18 +239,18 @@ class Sparse(Base):
         self._sorted = other._sorted
 
     def _copyAs_implementation(self, format):
-
-        if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data, useLog=False)
-            # Due to duplicate removal done in createData, we cannot guarantee
-            # that the internal sorting is preserved in the returned object.
-            return ret
-        if format == 'List':
-            return UML.createData('List', self.data, useLog=False)
-        if format == 'Matrix':
-            return UML.createData('Matrix', self.data, useLog=False)
-        if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, useLog=False)
+        if format is None:
+            format = 'Sparse'
+        if format in UML.data.available:
+            ptNames = self.points._getNamesNoGeneration()
+            ftNames = self.features._getNamesNoGeneration()
+            if format == 'Sparse':
+                data = self.data.copy()
+            else:
+                data = self.data.todense()
+            # reuseData=True since we already made copies here
+            return createDataNoValidation(format, data, ptNames, ftNames,
+                                          reuseData=True)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -1248,9 +1249,9 @@ class SparseView(BaseView, Sparse):
             return numpy.array(limited)
 
         limited = self._source.points.copy(start=self._pStart,
-                                           end=self._pEnd - 1)
+                                           end=self._pEnd - 1, useLog=False)
         limited = limited.features.copy(start=self._fStart,
-                                        end=self._fEnd - 1)
+                                        end=self._fEnd - 1, useLog=False)
 
         if format is None:
             return limited

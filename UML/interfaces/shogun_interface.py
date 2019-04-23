@@ -302,7 +302,7 @@ class Shogun(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        ret = UML.createData(outputType, retRaw)
+        ret = UML.createData(outputType, retRaw, useLog=False)
 
         if outputFormat == 'label':
             remap = customDict['remap']
@@ -313,7 +313,8 @@ class Shogun(UniversalInterface):
 
                     return inverseMapper
 
-                ret.elements.transform(makeInverseMapper(remap), features=0)
+                ret.elements.transform(makeInverseMapper(remap), features=0,
+                                       useLog=False)
 
         return ret
 

@@ -95,7 +95,7 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
 
-    return UML.createData(aObj.getTypeString(), invData)
+    return UML.createData(aObj.getTypeString(), invData, useLog=False)
     # invObj.transpose()
     # invObj.data = invData
     # if aObj.getTypeString() != invObj.getTypeString:
@@ -178,7 +178,7 @@ def pseudoInverse(aObj, method='svd'):
             _handleNonSupportedTypes(exception)
     else:
         pinvData = scipy.linalg.pinv(pinvObj.data)
-    pinvObj.transpose()
+    pinvObj.transpose(useLog=False)
     pinvObj.data = numpy.asmatrix(pinvData)
     if aObj.getTypeString() != 'Matrix':
         pinvObj = pinvObj.copyAs(aObj.getTypeString())
@@ -266,7 +266,7 @@ def solve(aObj, bObj):
         solution = numpy.asmatrix(solution)
 
     sol = UML.createData(aOriginalType, solution,
-                             featureNames=aObj.features.getNames())
+                         featureNames=aObj.features.getNames(), useLog=False)
 
     return sol
 
@@ -330,7 +330,7 @@ def leastSquaresSolution(aObj, bObj):
         solution = numpy.asmatrix(solution[0])
 
     sol = UML.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames())
+                         featureNames=aObj.features.getNames(), useLog=False)
     return sol
 
 
@@ -354,7 +354,7 @@ def _backendsolversValidation(aObj, bObj):
                 'A and b have incompatible dimensions.')
         else:
             bObj = bObj.copy()
-            bObj.flattenToOneFeature()
+            bObj.flattenToOneFeature(useLog=False)
     elif len(bObj.points) > 1 and len(bObj.features) == 1:
         if len(aObj.points) != len(bObj.points):
             raise InvalidArgumentValueCombination(

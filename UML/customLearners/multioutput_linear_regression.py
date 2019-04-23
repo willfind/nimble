@@ -30,7 +30,7 @@ class MultiOutputLinearRegression(CustomLearner):
         rawTrainX = trainX.copyAs('numpymatrix')
 
         for i in range(len(trainY.features)):
-            currY = trainY.features.copy(i)
+            currY = trainY.features.copy(i, useLog=False)
             rawCurrY = currY.copyAs('numpyarray', outputAs1D=True)
 
             currModel = LinearRegression()
@@ -48,4 +48,4 @@ class MultiOutputLinearRegression(CustomLearner):
         results = numpy.matrix(results)
         results = results.transpose()
 
-        return UML.createData("Matrix", results)
+        return UML.createData("Matrix", results, useLog=False)

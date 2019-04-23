@@ -50,4 +50,4 @@ class RidgeRegression(CustomLearner):
 
         pred = numpy.dot(self.w.transpose(), rawXFxP)
 
-        return UML.createData("Matrix", pred.transpose())
+        return UML.createData("Matrix", pred.transpose(), useLog=False)
