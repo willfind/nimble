@@ -98,10 +98,11 @@ class List(Base):
             if reuseData:
                 data = data
             else:
-                data = [copy.deepcopy(i) for i in data]#copy.deepcopy(data)
                 #this is to convert a list x=[[1,2,3]]*2 to a
                 # list y=[[1,2,3], [1,2,3]]
                 # the difference is that x[0] is x[1], but y[0] is not y[1]
+                # Both list and FeatureViewer have a copy method.
+                data = [pt.copy() for pt in data]
 
         if isinstance(data, numpy.matrix):
             #case5: data is a numpy matrix. shape is already in np matrix
@@ -582,6 +583,7 @@ class List(Base):
                 self.source = source
                 self.fStart = fStart
                 self.fRange = fEnd - fStart
+                self.limit = None
 
             def setLimit(self, pIndex):
                 """
@@ -612,6 +614,14 @@ class List(Base):
 
             def __ne__(self, other):
                 return not self.__eq__(other)
+
+            def copy(self):
+                """
+                Create a copy of this FeatureViewer.
+                """
+                ret = FeatureViewer(self.source, self.fStart, self.fRange)
+                ret.setLimit(self.limit)
+                return ret
 
         class ListPassThrough(object):
             """

@@ -4,64 +4,72 @@ import UML
 from UML import fill
 from UML import match
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from ..assertionHelpers import noLogEntryExpected
 
-
+@noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNumeric():
     func = fill.factory(1, 0)
     data = [1, 1, 2]
     exp = [0, 0, 2]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchString_fillString():
     func = fill.factory('a', 'b')
     data = ['a', 'a', 'c']
     exp = ['b', 'b', 'c']
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchString_fillNumeric():
     func = fill.factory('a', 0)
     data = ['a', 'a', 'c']
     exp = [0, 0, 'c']
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchNumeric_fillString():
     func = fill.factory(0, 'a')
     data = [0, 0, 1]
     exp = ['a', 'a', 1]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNone():
     func = fill.factory(1, None)
     data = [1, 1, 0]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest)[0] != func(toTest)[0]
         assert func(toTest)[1] != func(toTest)[1]
         assert func(toTest)[2] == func(toTest)[2]
 
+@noLogEntryExpected
 def test_fillFactory_matchString_fillNone():
     func = fill.factory('a', None)
     data = ['a', 'a', 0]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest)[0] != func(toTest)[0]
         assert func(toTest)[1] != func(toTest)[1]
         assert func(toTest)[2] == func(toTest)[2]
 
+@noLogEntryExpected
 def test_fillFactory_matchList_fillConstant():
     func = fill.factory([1, 2], 0)
     data = [1, 2, 1, 2]
     exp = [0, 0, 0, 0]
     assert func(data) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchList_fillFunction():
     func = fill.factory([1, 2], fill.mean)
     # 1, 2 should be ignored for mean calculation
@@ -69,65 +77,73 @@ def test_fillFactory_matchList_fillFunction():
     exp = [3, 3, 3]
     assert func(data) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchFunction_fillConstant():
     func = fill.factory(match.missing, 0)
     data = [None, None, None]
     exp = [0, 0, 0]
     assert func(data) == exp
 
+@noLogEntryExpected
 def test_fillFactory_matchFunction_fillFunction():
     func = fill.factory(match.missing, fill.mean)
     data = [1, None, 5]
     exp = [1, 3, 5]
     assert func(data) == exp
 
+@noLogEntryExpected
 def test_constant_noMatches():
     data = [1, 2, 2, 9]
     match = lambda x: False
     constant = 100
     expected = [1, 2, 2, 9]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
+@noLogEntryExpected
 def test_constant_number_ignoreMatches():
     data = [1, 2, 2, 9]
     match = lambda x: x == 2
     constant = 100
     expected = [1, 100, 100, 9]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
+@noLogEntryExpected
 def test_constant_string_ignoreMatches():
     data = [1, 2, 2, 9]
     match = lambda x: x == 2
     constant = ""
     expected = [1, "", "", 9]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
+@noLogEntryExpected
 def test_constant_allMatches():
     data = [1, 2, 2, 9]
     match = lambda x: x in [1, 2, 9]
     constant = 100
     expected = [100, 100, 100, 100]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
+@noLogEntryExpected
 def backend_fill(func, data, match, expected=None):
     "backend for fill functions that do not require additional arguments"
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert func(toTest, match) == expected
 
+@noLogEntryExpected
 def backend_fill_exception(func, data, match, exceptionType):
     "backend for fill functions when testing exception raising"
     for t in UML.data.available:
         try:
-            toTest = UML.createData(t, data)
+            toTest = UML.createData(t, data, useLog=False)
             func(toTest, match)
             assert False  # Expected an exception
         except exceptionType as et:
@@ -254,6 +270,7 @@ def test_interpolate_withMatch():
     expected = [1, 4, 7, 10]
     backend_fill(fill.interpolate, data, match, expected)
 
+@noLogEntryExpected
 def test_interpolate_withArguments():
     data = [1, "na", "na", 5]
     arguments = {}
@@ -263,9 +280,10 @@ def test_interpolate_withArguments():
     match = lambda x: x == "na"
     expected = [1, 7, 9, 5]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         assert fill.interpolate(toTest, match, **arguments) == expected
 
+@noLogEntryExpected
 def test_interpolate_xKwargIncluded_exception():
     data = [1, "na", "na", 5]
     arguments = {}
@@ -276,104 +294,114 @@ def test_interpolate_xKwargIncluded_exception():
     match = lambda x: x == "na"
     for t in UML.data.available:
         try:
-            toTest = UML.createData(t, data)
+            toTest = UML.createData(t, data, useLog=False)
             ret = fill.interpolate(toTest, match, **arguments)
             assert False  # expected TypeError
         except TypeError:
             pass
 
+@noLogEntryExpected
 def test_kNeighborsRegressor_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     match = lambda x: False
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         expTest = toTest.copy()
         assert fill.kNeighborsRegressor(toTest, match) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsRegressor_withMatch_K1():
     data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsRegressor_withMatch_K3():
     data = [[1, 1, 5], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [5, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 1, 5], [1, 1, 3], [2, 2, 2], [2, 2, 2], [3, 3, 3], [5, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsRegressor_multipleMatch_K1():
     data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsRegressor_multipleMatch_K3():
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsClassifier_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     match = lambda x: False
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
+        toTest = UML.createData(t, data, useLog=False)
         expTest = toTest.copy()
         assert fill.kNeighborsClassifier(toTest, match) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsClassifier_withMatch_K1():
     data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsClassifier_withMatch_K3():
     data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 2], [2, 3, 3], [3, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsClassifier_multipleMatch_K1():
     data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
+@noLogEntryExpected
 def test_kNeighborsClassifier_multipleMatch_K3():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
     for t in UML.data.available:
-        toTest = UML.createData(t, data)
-        expTest = UML.createData(t, expData)
+        toTest = UML.createData(t, data, useLog=False)
+        expTest = UML.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest

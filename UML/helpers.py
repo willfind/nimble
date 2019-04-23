@@ -26,7 +26,7 @@ from six.moves import range
 from six.moves import zip
 
 import UML
-from UML.logger import enableLogging, logCapture
+from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.exceptions import FileFormatException
@@ -268,11 +268,13 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             assert numpyMaker == numpy.zeros
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         return UML.createData(returnType, rawSparse, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
     else:
         raw = numpyMaker((numPoints, numFeatures))
         return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
 
 
 def transposeMatrix(matrixObj):
@@ -526,36 +528,41 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    # check if nan values are included in treatAsMissing
     nanIsMissing = False
     for missing in treatAsMissing:
         if isinstance(missing, float) and numpy.isnan(missing):
             nanIsMissing = True
             break
-    # boolean function for whether value should be treated as missing
-    def missingCheck(x):
-        if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
-            return True
-        else:
-            return x in treatAsMissing
-    # vectorize missingCheck function
-    missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
+    # replace nan if nan in treatAsMissing and replaceMissing data is not nan
+    replaceNan = nanIsMissing and replaceMissingData == replaceMissingData
+
+    def replacer(data):
+        """
+        Replace values in a numpy array.
+        """
+        try:
+            # Try to avoid converting dtype if possible for efficiency.
+            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
+            if replaceNan:
+                data[data != data] = replaceMissingWith
+        except ValueError:
+            data = data.astype(numpy.object_)
+            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
+            if replaceNan:
+                data[data != data] = replaceMissingWith
+        return data
 
     if isinstance(rawData, (list, tuple)):
-        # use raw data (converting to numpy array for lists) to apply
-        # vectorized function
-        handleMissing = numpy.array(rawData, dtype=object)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = numpy.array(rawData, dtype=numpy.object_)
+        handleMissing = replacer(handleMissing)
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = rawData.astype(object)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = replacer(rawData)
         rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
-        handleMissing = rawData.data.astype(object)
-        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = replacer(rawData.data)
         handleMissing = elementTypeConvert(handleMissing, elementType)
         # elementTypeConvert returns matrix, need a 1D array
         handleMissing = handleMissing.A1
@@ -573,7 +580,8 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path, keepPoints,
         keepFeatures, elementType=None, reuseData=False,
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
+                        'NULL', 'NA'),
         replaceMissingWith=numpy.nan):
     """
     1. Set up autoType
@@ -2112,7 +2120,7 @@ def autoRegisterFromSettings():
         try:
             module = importlib.import_module(modPath)
             learnerClass = getattr(module, attrName)
-            UML.registerCustomLearner(packName, learnerClass)
+            UML.registerCustomLearnerAsDefault(packName, learnerClass)
         except ImportError:
             msg = "When trying to automatically register a custom "
             msg += "learner at " + key + " we were unable to import "
@@ -2162,7 +2170,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings)
+        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
+                                             save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
@@ -2577,7 +2586,7 @@ def computeMetrics(dependentVar, knownData, predictedData,
     else:
         #known Indicator is a feature ID or group of IDs; we extract the
         # columns it indicates from knownValues
-        knownLabels = knownData.features.copy(dependentVar)
+        knownLabels = knownData.features.copy(dependentVar, useLog=False)
 
     result = performanceFunction(knownLabels, predictedData)
 
@@ -2691,11 +2700,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
-    if enableLogging(useLog):
-        wrapped = logCapture(crossValidateBackend)
-        return wrapped(learnerName, X, Y, performanceFunction, arguments,
-                       folds, scoreMode, useLog=False, **kwarguments)
-
     if not isinstance(X, Base):
         raise InvalidArgumentType("X must be a Base object")
     if Y is not None:
@@ -2705,7 +2709,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             raise InvalidArgumentType(msg)
         if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
-            Y = X.features.extract(Y)
+            Y = X.features.extract(Y, useLog=False)
 
         if len(Y.features) > 1 and scoreMode != 'label':
             msg = "When dealing with multi dimensional outputs / predictions, "
@@ -2762,7 +2766,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             curRunResult = UML.trainAndApply(
                 learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                 testX=curTestingX, arguments=curArgumentCombination,
-                scoreMode=scoreMode, useLog=useLog)
+                scoreMode=scoreMode, useLog=False)
 
             performanceOfEachCombination[argSetIndex][0] = (
                 curArgumentCombination)
@@ -2785,7 +2789,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.points.add(curTestingY)
+                collectedY.points.add(curTestingY, useLog=False)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2800,7 +2804,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].points.add(results[resultIndex])
+                results[0].points.add(results[resultIndex], useLog=False)
 
             # TODO raise RuntimeError(
             #     "How do we guarantee Y and results are in same order?")
@@ -2810,9 +2814,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
-    UML.logger.active.logCrossValidation(X, Y, learnerName, merged,
-                                         performanceFunction,
-                                         performanceOfEachCombination, folds)
+    handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
+                  performanceFunction, performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
 
@@ -2906,9 +2909,10 @@ class _foldIteratorClass():
             if copied is None:
                 resultsList.append((None, None))
             else:
-                currTest = copied.points.extract(self.foldList[self.index])
+                currTest = copied.points.extract(self.foldList[self.index],
+                                                 useLog=False)
                 currTrain = copied
-                currTrain.points.sort(sortHelper=indices)
+                currTrain.points.sort(sortHelper=indices, useLog=False)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList

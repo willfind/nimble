@@ -43,41 +43,37 @@ class ListAxis(Axis):
         process how each function handles the returned value, these are
         managed separately by each frontend function.
         """
-        data = numpy.matrix(self._source.data, dtype=object)
-
         pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
-            keepList = []
-            for idx in range(len(self)):
-                if idx not in targetList:
-                    keepList.append(idx)
-            satisfying = data[targetList, :]
+            satisfying = [self._source.data[pt] for pt in targetList]
             if structure != 'copy':
-                keep = data[keepList, :]
-                self._source.data = keep.tolist()
+                keepList = [i for i in range(len(self)) if i not in targetList]
+                self._source.data = [self._source.data[pt] for pt in keepList]
+            if satisfying == []:
+                return UML.data.List(satisfying, pointNames=pointNames,
+                                     featureNames=featureNames,
+                                     shape=((0, self._source.shape[1])),
+                                     checkAll=False, reuseData=True)
 
         else:
             if self._source.data == []:
                 # create empty matrix with correct shape
-                shape = (len(self._source.points), len(self))
+                shape = (len(self._source.points), len(targetList))
                 empty = numpy.empty(shape)
-                data = numpy.matrix(empty, dtype=numpy.object_)
-
-            keepList = []
-            for idx in range(len(self)):
-                if idx not in targetList:
-                    keepList.append(idx)
-            satisfying = data[:, targetList]
+                satisfying = numpy.matrix(empty, dtype=numpy.object_)
+            else:
+                satisfying = [[self._source.data[pt][ft] for ft in targetList]
+                              for pt in range(len(self._source.points))]
             if structure != 'copy':
-                keep = data[:, keepList]
-                self._source.data = keep.tolist()
-
-            if structure != 'copy':
+                keepList = [i for i in range(len(self)) if i not in targetList]
+                self._source.data = [[self._source.data[pt][ft] for ft in keepList]
+                                     for pt in range(len(self._source.points))]
                 remainingFts = self._source._numFeatures - len(targetList)
                 self._source._numFeatures = remainingFts
 
         return UML.data.List(satisfying, pointNames=pointNames,
-                             featureNames=featureNames, reuseData=True)
+                             featureNames=featureNames,
+                             checkAll=False, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # run through target axis and change indices

@@ -18,6 +18,7 @@ from UML.calculate import rootMeanSquareError
 from UML.calculate import rSquared
 from UML.calculate import varianceFractionRemaining
 from UML.exceptions import InvalidArgumentValue
+from ..assertionHelpers import noLogEntryExpected
 
 ####################
 # detectBestResult #
@@ -115,7 +116,7 @@ def test_detectBestResult_exceptionsAreReported():
     except InvalidArgumentValue as iav:
         assert wanted in iav.value
 
-
+@noLogEntryExpected
 def _backend(performanceFunction, optimality):
     assert performanceFunction.optimal == optimality
     try:
@@ -132,6 +133,10 @@ def test_detectBestResult_rootMeanSquareError():
 
 def test_detectBestResult_meanAbsoluteError():
     _backend(meanAbsoluteError, 'min')
+
+
+def test_detectBestResult_fractionCorrect():
+    _backend(fractionCorrect, 'max')
 
 
 def test_detectBestResult_fractionIncorrect():

@@ -15,7 +15,7 @@ from six.moves import zip
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.logger import enableLogging, logCapture, directCall
+from UML.logger import handleLogging, startTimer, stopTimer
 from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
@@ -34,15 +34,17 @@ from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
 from UML.helpers import createConstantHelper
 from UML.helpers import computeMetrics
-from UML.randomness import numpyRandom
+from UML.randomness import numpyRandom, generateSubsidiarySeed
+from UML.randomness import startAlternateControl, endAlternateControl
 from UML.calculate import detectBestResult
 
 cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
+
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
-        featureNames='automatic', elementType='float', name=None):
+        featureNames='automatic', elementType='float', name=None, useLog=None):
     """
     Generate a data object with random contents.
 
@@ -132,6 +134,8 @@ def createRandomData(
     if elementType != "int" and elementType != "float":
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
+    seed = generateSubsidiarySeed()
+    startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType.lower() == 'sparse':
         if not scipy:
@@ -146,7 +150,7 @@ def createRandomData(
         # order on a grid, and sample that without replacement
         gridSize = numPoints * numFeatures
         nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
-                                         replace=False)
+                                        replace=False)
 
         # The point value is determined by counting how many groups of
         # numFeatures fit into the position number
@@ -190,9 +194,13 @@ def createRandomData(
                 randData = binarySparsityMatrix * filledIntMatrix
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
+    endAlternateControl()
+
+    handleLogging(useLog, 'load', "Random " + returnType, numPoints,
+                  numFeatures, name, sparsity=sparsity, seed=seed)
 
     return createData(returnType, data=randData, pointNames=pointNames,
-                      featureNames=featureNames, name=name)
+                      featureNames=featureNames, name=name, useLog=False)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
@@ -426,11 +434,13 @@ def identity(returnType, size, pointNames='automatic',
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
         return UML.createData(returnType, rawCoo, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
     else:
         raw = numpy.identity(size)
         return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name)
+                              featureNames=featureNames, name=name,
+                              useLog=False)
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
@@ -495,43 +505,34 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         [[-1.739 2.588]]
         )
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(normalizeData)
-        else:
-            wrapped = directCall(normalizeData)
-        return wrapped(learnerName, trainX, trainY, testX, arguments,
-                       useLog=False, **kwarguments)
-
+    timer = startTimer(useLog)
     (_, trueLearnerName) = _unpackLearnerName(learnerName)
+    merged = _mergeArguments(arguments, kwarguments)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments=arguments,
-                   useLog=False, **kwarguments)
-    normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False,
-                               **kwarguments)
+    tl = UML.train(learnerName, trainX, trainY, arguments=merged,
+                   useLog=False)
+    normalizedTrain = tl.apply(trainX, arguments=merged, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=arguments, useLog=False,
-                                  **kwarguments)
+        normalizedTest = tl.apply(testX, arguments=merged, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
     # modify references and names for trainX and testX
-    trainX.referenceDataFrom(normalizedTrain)
+    trainX.referenceDataFrom(normalizedTrain, useLog=False)
     trainX.name = trainX.name + " " + trueLearnerName
 
     if testX is not None:
-        testX.referenceDataFrom(normalizedTest)
+        testX.referenceDataFrom(normalizedTest, useLog=False)
         testX.name = testX.name + " " + trueLearnerName
 
-    merged = _mergeArguments(arguments, kwarguments)
-    UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None,
-                             learnerName, merged, None)
+    time = stopTimer(timer)
+    handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
+                  learnerName, merged, time=time)
 
-    return None
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
     """
@@ -732,7 +733,8 @@ def createData(
         elementType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False,
         reuseData=False, inputSeparator='automatic',
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan'),
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan', 
+                        'NULL', 'NA'),
         replaceMissingWith=numpy.nan, useLog=None):
     """
     Function to instantiate one of the UML data container types.
@@ -913,16 +915,6 @@ def createData(
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(createData)
-        else:
-            wrapped = directCall(createData)
-        return wrapped(returnType, data, pointNames, featureNames, elementType,
-                       name, path, keepPoints, keepFeatures,
-                       ignoreNonNumericalFeatures, reuseData, inputSeparator,
-                       treatAsMissing, replaceMissingWith, useLog=False)
-
     retAllowed = copy.copy(UML.data.available)
     retAllowed.append(None)
     if returnType not in retAllowed:
@@ -942,9 +934,6 @@ def createData(
             path=path, keepPoints=keepPoints, keepFeatures=keepFeatures,
             reuseData=reuseData, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)
-        UML.logger.active.logLoad(returnType, len(ret.points),
-                                  len(ret.features), name, path)
-        return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
         ret = createDataFromFile(
@@ -954,14 +943,15 @@ def createData(
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             inputSeparator=inputSeparator, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)
-        UML.logger.active.logLoad(returnType, len(ret.points),
-                                  len(ret.features), name, path)
-        return ret
     # no other allowed inputs
     else:
         msg = "data must contain either raw data or the path to a file to be "
         msg += "loaded"
         raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'load', returnType, len(ret.points),
+                  len(ret.features), name, path)
+    return ret
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
@@ -1014,14 +1004,6 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     --------
     TODO
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(crossValidate)
-        else:
-            wrapped = directCall(crossValidate)
-        return wrapped(learnerName, X, Y, performanceFunction, arguments,
-                       numFolds, scoreMode, useLog, **kwarguments)
-
     bestResult = crossValidateReturnBest(learnerName, X, Y,
                                          performanceFunction, arguments,
                                          numFolds, scoreMode, useLog,
@@ -1031,6 +1013,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
 #return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments,
 #                            numFolds, scoreMode, useLog, **kwarguments)
+
 
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
                            arguments=None, numFolds=10, scoreMode='label',
@@ -1098,14 +1081,6 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(crossValidateReturnAll)
-        else:
-            wrapped = directCall(crossValidateReturnAll)
-        return wrapped(learnerName, X, Y, performanceFunction, arguments,
-                       numFolds, scoreMode, useLog, **kwarguments)
-
     ret = crossValidateBackend(learnerName, X, Y, performanceFunction,
                                arguments, numFolds, scoreMode, useLog,
                                **kwarguments)
@@ -1168,14 +1143,6 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(crossValidateReturnBest)
-        else:
-            wrapped = directCall(crossValidateReturnBest)
-        return wrapped(learnerName, X, Y, performanceFunction, arguments,
-                       numFolds, scoreMode, useLog, **kwarguments)
-
     resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction,
                                         arguments, numFolds, scoreMode, useLog,
                                         **kwarguments)
@@ -1380,18 +1347,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> print(cValue, kernelValue)
     0.1 linear
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(train)
-        else:
-            wrapped = directCall(train)
-        return wrapped(learnerName, trainX, trainY, performanceFunction,
-                       arguments, scoreMode, multiClassStrategy,
-                       doneValidData, doneValidArguments1,
-                       doneValidArguments2, doneValidMultiClassStrategy,
-                       done2dOutputFlagCheck, useLog=False, storeLog=useLog,
-                       **kwarguments)
-
+    timer = startTimer(useLog)
     (package, trueLearnerName) = _unpackLearnerName(learnerName)
     if not doneValidData:
         _validData(trainX, trainY, None, None, [False, False])
@@ -1405,8 +1361,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
 
     merged = _mergeArguments(arguments, kwarguments)
-    if storeLog != 'unset':
-        useLog = storeLog
 
     # perform CV (if needed)
     argCheck = ArgumentIterator(merged)
@@ -1424,11 +1378,13 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
+        if storeLog == 'unset':
+            storeLog = useLog
         results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
                                               performanceFunction, merged,
                                               numFolds=numFolds,
                                               scoreMode=scoreMode,
-                                              useLog=useLog)
+                                              useLog=storeLog)
         bestArgument, _ = results
 
     else:
@@ -1437,11 +1393,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     multiClassStrategy, bestArgument, useLog)
+                                     multiClassStrategy, bestArgument)
+    time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
-    UML.logger.active.logRun("train", trainX, trainY, None, None, funcString,
-                             bestArgument, None)
+    handleLogging(useLog, "run", "train", trainX, trainY, None, None,
+                  funcString, bestArgument, time=time)
 
     return trainedLearner
 
@@ -1449,7 +1406,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default', useLog=None,
-                  storeLog='unset', **kwarguments):
+                  **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1573,46 +1530,34 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
          [3.000]]
         )
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(trainAndApply)
-        else:
-            wrapped = directCall(trainAndApply)
-        return wrapped(learnerName, trainX, trainY, testX, performanceFunction,
-                       arguments, output, scoreMode, multiClassStrategy,
-                       useLog=False, storeLog=useLog, **kwarguments)
-
+    timer = startTimer(useLog)
     _validData(trainX, trainY, testX, None, [False, False])
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
-
-    if storeLog != 'unset':
-        useLog = storeLog
+    merged = _mergeArguments(arguments, kwarguments)
 
     trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, arguments,
+                               performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               useLog=False, storeLog=useLog, doneValidData=True,
+                               done2dOutputFlagCheck=True)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
             testX = trainX.copy()
-            testX.features.delete(trainY)
+            testX.features.delete(trainY, useLog=False)
         else:
             testX = trainX
 
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    time = stopTimer(timer)
 
-    merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-
-    UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None,
-                             learnerName,
-                             merged, None, extraInfo=extraInfo)
+    handleLogging(useLog, "run", "trainAndApply", trainX, trainY, testX, None,
+                  learnerName, merged, extraInfo=extraInfo, time=time)
 
     return results
 
@@ -1757,38 +1702,28 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> perform
     0.0
     """
-    if UML.logger.active.position == 0:
-        if enableLogging(useLog):
-            wrapped = logCapture(trainAndTest)
-        else:
-            wrapped = directCall(trainAndTest)
-        return wrapped(learnerName, trainX, trainY, testX, testY,
-                       performanceFunction, arguments, output, scoreMode,
-                       multiClassStrategy, useLog=False, storeLog=useLog,
-                       **kwarguments)
-
+    timer = startTimer(useLog)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
+    merged = _mergeArguments(arguments, kwarguments)
 
-    if storeLog != 'unset':
-        useLog = storeLog
     trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, arguments,
+                               performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+                               useLog=False, storeLog=useLog,
+                               doneValidData=True, done2dOutputFlagCheck=True)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
-        testY = testX.features.extract(testY)
+        testY = testX.features.extract(testY, useLog=False)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
-                                       useLog=useLog)
+                                       useLog=False)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
+    time = stopTimer(timer)
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
         metrics[key.__name__] = value
-    merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
@@ -1796,11 +1731,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         name = "trainAndTestOnTrainingData"
     else:
         name = "trainAndTest"
-    UML.logger.active.logRun(name, trainX, trainY, testX, testY, learnerName,
-                             merged, metrics, extraInfo=extraInfo)
+    handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
+                  learnerName, merged, metrics, extraInfo, time)
 
     return performance
-
 
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
@@ -1937,10 +1871,10 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     >>> perform
     0.0
     """
-
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                performanceFunction, arguments, output,
-                               scoreMode, multiClassStrategy, useLog)
+                               scoreMode, multiClassStrategy, useLog,
+                               **kwarguments)
     return performance
 
 
@@ -2052,7 +1986,7 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
                               searchForText, regex, saveToFileName, append)
 
 
-def loadData(inputPath):
+def loadData(inputPath, useLog=None):
     """
     Load UML Base object.
 
@@ -2079,10 +2013,13 @@ def loadData(inputPath):
     if not isinstance(ret, UML.data.Base):
         msg = 'File does not contain a UML valid data Object.'
         raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'load', ret.getTypeString(), len(ret.points),
+                  len(ret.features), ret.name, inputPath)
     return ret
 
 
-def loadTrainedLearner(inputPath):
+def loadTrainedLearner(inputPath, useLog=None):
     """
     Load UML trainedLearner object.
 
@@ -2108,6 +2045,9 @@ def loadTrainedLearner(inputPath):
     if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
         msg = 'File does not contain a UML valid trainedLearner Object.'
         raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'load', "TrainedLearner",
+                  learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
 
 
