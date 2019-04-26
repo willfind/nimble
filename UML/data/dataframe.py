@@ -20,6 +20,7 @@ from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import createDataNoValidation
 
 pd = UML.importModule('pandas')
 scipy = UML.importModule('scipy.sparse')
@@ -184,33 +185,37 @@ class DataFrame(Base):
             scipycsc, scipycsr or None. If format is None, a new
             DataFrame will be created.
         """
-        dataArray = self.data.values.copy()
-        if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray, useLog=False)
-        if format == 'Sparse':
-            return UML.createData('Sparse', dataArray, useLog=False)
-        if format == 'List':
-            return UML.createData('List', dataArray, useLog=False)
-        if format == 'Matrix':
-            return UML.createData('Matrix', dataArray, useLog=False)
+        if format is None:
+            format = 'DataFrame'
+        if format in UML.data.available:
+            ptNames = self.points._getNamesNoGeneration()
+            ftNames = self.features._getNamesNoGeneration()
+            if format == 'DataFrame':
+                data = self.data.copy()
+                # instantiation expects index and columns to be pandas defaults
+                data.reset_index(drop=True, inplace=True)
+                data.columns = range(len(self.features))
+            else:
+                data = np.matrix(self.data.values)
+            # reuseData=True since we already made copies here
+            return createDataNoValidation(format, data, ptNames, ftNames,
+                                          reuseData=True)
         if format == 'pythonlist':
-            return dataArray.tolist()
+            return self.data.values.tolist()
         if format == 'numpyarray':
-            return dataArray
+            return self.data.values.copy()
         if format == 'numpymatrix':
-            return np.matrix(dataArray)
+            return np.matrix(self.data.values)
         if format == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csc_matrix(dataArray)
+            return scipy.sparse.csc_matrix(self.data.values)
         if format == 'scipycsr':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csr_matrix(dataArray)
-
-        return UML.createData('DataFrame', dataArray, useLog=False)
+            return scipy.sparse.csr_matrix(self.data.values)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):

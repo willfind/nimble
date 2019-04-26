@@ -297,27 +297,25 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
     row in rawData
     4. Convert data to np matrix
     """
-    if (not isinstance(pointNames, str)
-            and not isinstance(featureNames, str)
-            and not isinstance(pointNames, bool)
-            and not isinstance(featureNames, bool)
-            and pointNames is not None
-            and featureNames is not None):
+    acceptedNameTypes = (str, bool, type(None), list, dict)
+    if not isinstance(pointNames, acceptedNameTypes):
         try:
-            if callable(getattr(pointNames, '__len__')) \
-                    and callable(getattr(pointNames, '__getitem__')) \
-                    and callable(getattr(featureNames, '__len__')) \
-                    and callable(getattr(featureNames, '__getitem__')):
-                pass
-        except AttributeError:
-            msg = ("if pointNames and featureNames are not 'bool' or a 'str'"
-                   "they should be other 'iterable' object")
-            raise AttributeError(msg)
-
+            pointNames = [val for val in pointNames]
+        except TypeError:
+            msg = "if pointNames are not 'bool' or a 'str', "
+            msg += "they should be other 'iterable' object"
+            raise InvalidArgumentType(msg)
+    if not isinstance(featureNames, acceptedNameTypes):
+        try:
+            featureNames = [val for val in featureNames]
+        except TypeError:
+            msg = "if featureNames are not 'bool' or a 'str', "
+            msg += "they should be other 'iterable' object"
+            raise InvalidArgumentType(msg)
     # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
     # featureNames must be those keys
     # pointNames must be False or automatic
-    elif isinstance(rawData, dict):
+    if isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
             rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
@@ -524,47 +522,63 @@ def elementTypeConvert(rawData, elementType):
             data = numpy.matrix(rawData, dtype=object)
         return data
 
+def replaceNumpyValues(data, toReplace, replaceWith):
+    """
+    Replace values in a numpy matrix or array.
+
+    Parameters
+    ----------
+    data : numpy.matrix, numpy.array
+        A numpy array of data.
+    toReplace : list
+        A list of values to search and replace in the data.
+    replaceWith : value
+        The value which will replace any values in ``toReplace``.
+    """
+    # if data has numeric dtype and replacing with a numeric value, do not
+    # process any non-numeric values since it can only contain numeric values
+    if (numpy.issubclass_(data.dtype.type, numpy.number)
+            and isinstance(replaceWith, (int, float, numpy.number))):
+        toReplace = [val for val in toReplace
+                     if isinstance(val, (int, float, numpy.number))]
+
+    # numpy.isin cannot handle nan replacement, so if nan is in
+    # toReplace we instead set the flag to trigger nan replacement
+    replaceNan = any(isinstance(val, float) and numpy.isnan(val)
+                     for val in toReplace)
+
+    # try to avoid converting dtype if possible for efficiency.
+    try:
+        data[numpy.isin(data, toReplace)] = replaceWith
+        if replaceNan:
+            data[data != data] = replaceWith
+    except ValueError:
+        data = data.astype(numpy.object_)
+        data[numpy.isin(data, toReplace)] = replaceWith
+        if replaceNan:
+            data[data != data] = replaceWith
+    return data
+
 def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
                        elementType=None):
     """
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    nanIsMissing = False
-    for missing in treatAsMissing:
-        if isinstance(missing, float) and numpy.isnan(missing):
-            nanIsMissing = True
-            break
-    # replace nan if nan in treatAsMissing and replaceMissing data is not nan
-    replaceNan = nanIsMissing and replaceMissingData == replaceMissingData
-
-    def replacer(data):
-        """
-        Replace values in a numpy array.
-        """
-        try:
-            # Try to avoid converting dtype if possible for efficiency.
-            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
-            if replaceNan:
-                data[data != data] = replaceMissingWith
-        except ValueError:
-            data = data.astype(numpy.object_)
-            data[numpy.isin(data, treatAsMissing)] = replaceMissingWith
-            if replaceNan:
-                data[data != data] = replaceMissingWith
-        return data
-
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
-        handleMissing = replacer(handleMissing)
+        handleMissing = replaceNumpyValues(handleMissing, treatAsMissing,
+                                           replaceMissingWith)
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = replacer(rawData)
+        handleMissing = replaceNumpyValues(rawData, treatAsMissing,
+                                           replaceMissingWith)
         rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
-        handleMissing = replacer(rawData.data)
+        handleMissing = replaceNumpyValues(rawData.data, treatAsMissing,
+                                           replaceMissingWith)
         handleMissing = elementTypeConvert(handleMissing, elementType)
         # elementTypeConvert returns matrix, need a 1D array
         handleMissing = handleMissing.A1

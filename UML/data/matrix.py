@@ -21,6 +21,7 @@ from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
+from .dataHelpers import createDataNoValidation
 
 scipy = UML.importModule('scipy.io')
 
@@ -196,21 +197,19 @@ class Matrix(Base):
         self.data = other.data
 
     def _copyAs_implementation(self, format):
-
-        if format is None or format == 'Matrix':
-            return UML.createData('Matrix', self.data, useLog=False)
-        if format == 'Sparse':
-            return UML.createData('Sparse', self.data, useLog=False)
-        if format == 'List':
-            return UML.createData('List', self.data, useLog=False)
-        if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, useLog=False)
+        if format is None:
+            format = 'Matrix'
+        if format in UML.data.available:
+            ptNames = self.points._getNamesNoGeneration()
+            ftNames = self.features._getNamesNoGeneration()
+            # reuseData=False since using original data
+            return createDataNoValidation(format, self.data, ptNames, ftNames)
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
             return numpy.array(self.data)
         if format == 'numpymatrix':
-            return numpy.matrix(self.data)
+            return self.data.copy()
         if format == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
@@ -221,8 +220,6 @@ class Matrix(Base):
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
-
-        return UML.createData('Matrix', self.data, useLog=False)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
