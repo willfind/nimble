@@ -4024,11 +4024,16 @@ class Base(object):
         what fits within the limitations, then omit points or features
         from the middle portions of the data.
 
-        Returns a list of list of strings. The length of the outer list
+        Returns three values. The first is list of list of strings representing
+        the data values we have space for. The length of the outer list
         is less than or equal to maxHeight. The length of the inner lists
         will all be the same, a length we will designate as n. The sum of
         the individual strings in each inner list will be less than or
-        equal to maxWidth - ((n-1) * len(colSep)).
+        equal to maxWidth - ((n-1) * len(colSep)). The second returned
+        value will be a list, where the ith value is of the maximum width taken
+        up by the strings or feature name in the ith column of the data. The
+        third returned value is a list of feature names matching the columns
+        represented in the first return value.
         """
         if self._pointCount == 0 or self._featureCount == 0:
             fNames = None
