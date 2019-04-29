@@ -453,7 +453,7 @@ class List(Base):
 
         matched = []
         merged = []
-        unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])
+        unmatchedFtCountR = len(right[0]) - len(matchingFtIdx[1])
         matchMapper = {}
         for pt in left:
             match = [right[i] for i in range(len(right))
@@ -498,19 +498,20 @@ class List(Base):
             for row in right:
                 target = row[onIdxR]
                 if target not in matched:
-                    pt = [numpy.nan] * (len(left[0]) + unmatchedPtCountR)
+                    pt = [numpy.nan] * (len(left[0]) + unmatchedFtCountR)
                     for i, j in zip(matchingFtIdx[0], matchingFtIdx[1]):
                         pt[i] = row[j]
                     pt[len(left[0]):] = [row[i] for i in range(len(right[0]))
                                          if i not in matchingFtIdx[1]]
                     merged.append(pt)
 
-        self._featureCount = len(left[0]) + unmatchedPtCountR
+        self._featureCount = len(left[0]) + unmatchedFtCountR
         self._pointCount = len(merged)
         if onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
+        self._numFeatures = self._featureCount
 
         self.data = merged
 

@@ -1476,8 +1476,6 @@ class Points(object):
                     appendedPts.append("{0}_{1}".format(name, i))
             self.setNames(appendedPts, useLog=False)
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
                       self._source.getTypeString(),
                       Points.splitByCollapsingFeatures, featuresToCollapse,
@@ -1607,8 +1605,6 @@ class Points(object):
 
         if self._source._pointNamesCreated():
             self.setNames(pNames, useLog=False)
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
                       self._source.getTypeString(),

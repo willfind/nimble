@@ -29,49 +29,67 @@ from .structure_backend import StructureDataSafe
 
 from .view_access_backend import ViewAccess
 
+def objectsDecoratedForObjectValidation():
+    try:
+        assert UML.data.Base.objectValidation
+        assert UML.data.Elements.objectValidation
+        assert UML.data.Features.objectValidation
+        assert UML.data.Points.objectValidation
+    except AttributeError:
+        return False
+    return True
+
 
 class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                    StructureDataSafe, ViewAccess):
     def __init__(self):
         super(TestListView, self).__init__('ListView')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                      StructureDataSafe, ViewAccess):
     def __init__(self):
         super(TestMatrixView, self).__init__('MatrixView')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                      StructureDataSafe, ViewAccess):
     def __init__(self):
         super(TestSparseView, self).__init__('SparseView')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestDataFrameView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                         StructureDataSafe, ViewAccess):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
     def __init__(self):
         super(TestList, self).__init__('List')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestMatrix(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
     def __init__(self):
         super(TestMatrix, self).__init__('Matrix')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
+        assert objectsDecoratedForObjectValidation()
 
 
 class TestBaseOnly(LowLevelBackend):
