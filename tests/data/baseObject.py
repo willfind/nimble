@@ -1,7 +1,4 @@
 from __future__ import absolute_import
-import inspect
-from unittest import mock
-from functools import wraps
 
 import six
 import numpy
@@ -127,106 +124,7 @@ def viewConstructorMaker(concreteType):
 
     return constructor
 
-def getOtherPaths(argList, kwargDict):
-    # other object for these functions will always be first positional
-    # arg or in kwargs; numeric binary other is not always a UML object
-    if argList and hasattr(argList[0], '_absPath'):
-        otherAbsPath = argList[0]._absPath
-    elif 'other' in kwargDict and hasattr(kwargDict['other'], '_absPath'):
-        otherAbsPath = kwargDict['other']._absPath
-    else:
-        otherAbsPath = None
 
-    if argList and hasattr(argList[0], '_relPath'):
-        otherRelPath = argList[0]._relPath
-    elif 'other' in kwargDict and hasattr(kwargDict['other'], '_relPath'):
-        otherRelPath = kwargDict['other']._relPath
-    else:
-        otherRelPath = None
-
-    return otherAbsPath, otherRelPath
-
-def methodObjectValidation(func):
-    @wraps(func)
-    def wrapped(self, *args, **kwargs):
-        if hasattr(self, '_source'):
-            source = self._source
-        else:
-            source = self
-        assert isinstance(source, UML.data.Base)
-        # store Base arguments for validation after function call
-        baseArgs = []
-        for argVal in (list(args) + list(kwargs.values())):
-            if isinstance(argVal, UML.data.Base):
-                baseArgs.append(argVal)
-        # name and path preservation
-        startName = source._name
-        startAbsPath = source._absPath
-        startRelPath = source._relPath
-
-        ret = func(self, *args, **kwargs)
-
-        source.validate()
-        if isinstance(ret, UML.data.Base):
-            ret.validate()
-        for arg in baseArgs:
-            arg.validate()
-
-
-
-        assert source._name == startName
-        funcName = func.__name__
-        inplaceNumeric = ['__iadd__', '__isub__', '__imul__', '__idiv__',
-                          '__ifloordiv__', '__itruediv__', '__imod__']
-
-        finalAbsPath = startAbsPath
-        finalRelPath = startRelPath
-        # referenceDataFrom always gets path from other object, inplace numeric
-        # binary will follow dataHelpers.binaryOpNamePathMerge logic
-        if funcName == 'referenceDataFrom':
-            finalAbsPath, finalRelPath = getOtherPaths(args, kwargs)
-        elif funcName in inplaceNumeric:
-            otherAbsPath, otherRelPath = getOtherPaths(args, kwargs)
-            if startAbsPath is None and otherAbsPath is not None:
-                finalAbsPath = otherAbsPath
-            elif startAbsPath is not None and otherAbsPath is not None:
-                finalAbsPath = None
-            if startRelPath is None and otherRelPath is not None:
-                finalRelPath = otherRelPath
-            elif startRelPath is not None and otherRelPath is not None:
-                finalRelPath = None
-
-        assert source._absPath == finalAbsPath
-        assert source._relPath == finalRelPath
-
-        return ret
-    return wrapped
-
-
-def objectValidatedClass(cls):
-    for attr in cls.__dict__:
-        if inspect.isfunction(getattr(cls, attr)):
-            func = getattr(cls, attr)
-            # ignore functions that interfere with __init__ or recurse
-            # because they are used in validate
-            ignore = ['__init__', 'validate', 'getTypeString', 'setNames',
-                      'getName', 'getNames', 'getIndex', '__len__', '__getitem__']
-            if (func.__name__ not in ignore and
-                    (not func.__name__.startswith('_')
-                     or func.__name__.startswith('__'))):
-                setattr(cls, attr, methodObjectValidation(func))
-    cls.objectValidation = True
-    return cls
-
-objectValidatedBase = objectValidatedClass(UML.data.base.Base)
-objectValidatedElements = objectValidatedClass(UML.data.elements.Elements)
-objectValidatedFeatures = objectValidatedClass(UML.data.features.Features)
-objectValidatedPoints = objectValidatedClass(UML.data.points.Points)
-
-@mock.patch('UML.data.points.Points', new_callable=objectValidatedPoints)
-@mock.patch('UML.data.points.Features', new_callable=objectValidatedFeatures)
-@mock.patch('UML.data.points.Elements', new_callable=objectValidatedElements)
-@mock.patch('UML.data.base.Base', new_callable=objectValidatedBase)
 class DataTestObject(object):
     def __init__(self, returnType):
         if returnType.endswith("View"):
