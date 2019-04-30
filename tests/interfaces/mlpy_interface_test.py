@@ -362,3 +362,70 @@ def testMlpyListLearners():
                     for key in dSet.keys():
                         assert key in pSet
 
+@mlpySkipDec
+def test_applier_acceptsNewArguments():
+    """ Test an mlpy function that accept arguments for pred and transform """
+    data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
+    dataObj = UML.createData('Matrix', data)
+
+    # MFastHCluster.pred takes a 't' argument.
+    expected = UML.trainAndApply("mlpy.MFastHCluster", dataObj, arguments={'t': 1})
+    tl = UML.train('mlpy.MFastHCluster', dataObj, arguments={'t': 0})
+    origArgs = tl.apply(dataObj)
+    newArgs = tl.apply(dataObj, arguments={'t': 1})
+    assert origArgs != newArgs
+    assert newArgs == expected
+
+    # PCA.transform takes a 'k' argument, by default it is None
+    expected = UML.trainAndApply("mlpy.PCA", dataObj, k=1)
+    tl = UML.train('mlpy.PCA', dataObj)
+    origArgs = tl.apply(dataObj)
+    newArgs = tl.apply(dataObj, k=1)
+    assert origArgs != newArgs
+    assert newArgs == expected
+
+@mlpySkipDec
+def test_applier_exception():
+    """ Test an mlpy function with invalid arguments for pred and transform """
+    data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
+    dataObj = UML.createData('Matrix', data)
+    # MFastHCluster.pred does not take a 'foo' argument
+    tl = UML.train('mlpy.MFastHCluster', dataObj, t=1)
+    try:
+        newArgs = tl.apply(dataObj, arguments={'foo': 1})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # PCA.transform does not take a 'foo' argument
+    tl = UML.train('mlpy.PCA', dataObj)
+    try:
+        newArgs = tl.apply(dataObj, foo=1)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+@mlpySkipDec
+def test_getScores_exception():
+    """ Test an mlpy function with invalid arguments for pred_values"""
+    data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2], [3, 1, 500]]
+    trainingObj = UML.createData('Matrix', data)
+
+    data2 = [[2, 3], [-200, 0]]
+    testObj = UML.createData('Matrix', data2)
+
+    # LibLinear.pred_values does not take a 'foo' argument.
+    tl = UML.train('mlpy.LibLinear', trainingObj, 0)
+    # in arguments parameter
+    try:
+        newArgs = tl.getScores(testObj, arguments={'foo': 1})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    # as keyword argument
+    try:
+        newArgs = tl.getScores(testObj, foo=1)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+

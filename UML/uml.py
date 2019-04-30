@@ -511,13 +511,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     tl = UML.train(learnerName, trainX, trainY, arguments=merged,
                    useLog=False)
-    normalizedTrain = tl.apply(trainX, arguments=merged, useLog=False)
+    normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=merged, useLog=False)
+        normalizedTest = tl.apply(testX, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
@@ -733,7 +733,7 @@ def createData(
         elementType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False,
         reuseData=False, inputSeparator='automatic',
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan', 
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
                         'NULL', 'NA'),
         replaceMissingWith=numpy.nan, useLog=None):
     """
