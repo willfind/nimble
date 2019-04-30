@@ -2936,6 +2936,9 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
+class cv(tuple):
+    pass
+
 class ArgumentIterator:
     """
     Constructor takes a dict mapping strings to tuples.
@@ -2968,9 +2971,9 @@ class ArgumentIterator:
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
                 try:
-                    if isinstance(rawArgumentInput[key], tuple):
+                    if isinstance(rawArgumentInput[key], cv):
                         self.numPermutations *= len(rawArgumentInput[key])
-                except TypeError: # taking len of non tuple
+                except TypeError: # taking len of non cv object
                     pass #numPermutations not increased
             self.permutationsList = _buildArgPermutationsList([], {}, 0,
                                                               rawArgumentInput)
@@ -3036,7 +3039,7 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
         curValues = rawArgInput[curKey]
 
         try:
-            if not isinstance(curValues, tuple):
+            if not isinstance(curValues, cv):
                 raise TypeError()
             # if there are multiple values, add one key-value pair to the
             # the current dict, make recursive call to build the rest of the

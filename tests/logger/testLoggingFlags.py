@@ -286,7 +286,7 @@ def test_Deep_crossValidateReturnBest():
 
 def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        k = UML.cv([2, 3])  # we are not calling CV directly, we need to trigger it
         return UML.train(learnerName, trainX, trainY,
                          performanceFunction=fractionIncorrect, useLog=useLog,
                          k=k)
@@ -295,7 +295,7 @@ def test_Deep_train():
 
 def test_Deep_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        k = UML.cv([2, 3])  # we are not calling CV directly, we need to trigger it
         return UML.trainAndApply(learnerName, trainX, trainY, testX,
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog, k=k)
@@ -304,7 +304,7 @@ def test_Deep_trainAndApply():
 
 def test_Deep_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = (2, 3)  # we are not calling CV directly, we need to trigger it
+        k = UML.cv([2, 3])  # we are not calling CV directly, we need to trigger it
         return UML.trainAndTest(learnerName, trainX, trainY, testX, testY,
                                 performanceFunction=fractionIncorrect,
                                 useLog=useLog, k=k)

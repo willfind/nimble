@@ -13,6 +13,7 @@ sys.path.append('../..')
 
 from UML.helpers import ArgumentIterator
 from UML.helpers import _buildArgPermutationsList
+from UML.helpers import cv
 
 # example call to _buildArgPermutationsList:
 # if rawArgInput is {'a':(1,2,3), 'b':(4,5)}
@@ -22,7 +23,7 @@ from UML.helpers import _buildArgPermutationsList
 def test_buildArgPermutationsList():
     """Assert that the permutations are exhaustive"""
 
-    argumentDict = {'a': (1, 2, 3), 'b': (4, 5)}
+    argumentDict = {'a': cv([1, 2, 3]), 'b': cv([4, 5])}
     returned = _buildArgPermutationsList([], {}, 0, argumentDict)
     assert returned
     tupleLengthsList = []
@@ -37,7 +38,7 @@ def test_buildArgPermutationsList():
 
 
     #do a hardcorded example
-    returned = _buildArgPermutationsList([], {}, 0, {'a': (1, 2, 3), 'b': (4, 5)})
+    returned = _buildArgPermutationsList([], {}, 0, {'a': cv([1, 2, 3]), 'b': cv([4, 5])})
     shouldBeList = [{'a': 1, 'b': 4}, {'a': 2, 'b': 4}, {'a': 3, 'b': 4}, {'a': 1, 'b': 5}, {'a': 2, 'b': 5},
                     {'a': 3, 'b': 5}]
     shouldBeListOfStrings = [str(curHash) for curHash in shouldBeList]
@@ -59,7 +60,7 @@ def test_ArgumentIterator():
     except StopIteration:
         pass
 
-    argumentDict = {'a': (1, 2, 3), 'b': (4, 5)}
+    argumentDict = {'a': cv([1, 2, 3]), 'b': cv([4, 5])}
     returned = ArgumentIterator(argumentDict)
 
     iterationCount = 0
@@ -72,7 +73,7 @@ def test_ArgumentIterator():
 
 
 def test_ArgumentIterator_stringsAndTuples():
-    arguments = {'a': 'hello', 'b': (1, 2, 5)}
+    arguments = {'a': 'hello', 'b': cv([1, 2, 5])}
 
     returned = ArgumentIterator(arguments)
 
@@ -84,7 +85,7 @@ def test_ArgumentIterator_stringsAndTuples():
 
 
 def test_ArgumentIterator_seperateResults():
-    arguments = {'a': 'hello', 'b': (1, 2, 5)}
+    arguments = {'a': 'hello', 'b': cv([1, 2, 5])}
 
     argIter = ArgumentIterator(arguments)
 
