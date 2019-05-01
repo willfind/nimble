@@ -696,6 +696,96 @@ def testConvertYTrainDType():
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
+@sklSkipDec
+def test_applier_acceptsNewArguments():
+    """ Test an skl function that accepts new arguments for transform """
+    data = [[-1., -1.],
+            [-1., -1.],
+            [ 1.,  1.],
+            [ 1.,  1.]]
+
+    dataObj = UML.createData('Matrix', data)
+
+    # StandardScaler.transform takes a 'copy' argument. Default is None.
+    tl = UML.train('SciKitLearn.StandardScaler', dataObj)
+    assert tl.transformedArguments['copy'] is None
+    # using arguments parameter
+    transformed = tl.apply(dataObj, arguments={'copy':True})
+
+    # using kwarguments
+    transformed = tl.apply(dataObj, copy=True)
+
+@sklSkipDec
+def test_applier_exception():
+    """ Test an skl function with invalid arguments for transform """
+    data = [[-1., -1.],
+            [-1., -1.],
+            [ 1.,  1.],
+            [ 1.,  1.]]
+
+    dataObj = UML.createData('Matrix', data)
+
+    # StandardScaler.transform does not takes a 'foo' argument
+    tl = UML.train('SciKitLearn.StandardScaler', dataObj)
+    assert 'foo' not in tl.transformedArguments
+    try:
+        # using arguments parameter
+        transformed = tl.apply(dataObj, arguments={'foo': True})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    try:
+        # using kwarguments
+        transformed = tl.apply(dataObj, foo=True)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+@sklSkipDec
+def test_getScores_acceptsNewArguments():
+    """ Test an skl function that accepts new arguments for predict_proba """
+    train = [[1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1],
+             [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
+    testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+    # Need to set elementType b/c conversion will not be done when check_input=False
+    trainObj = UML.createData('Matrix', train, elementType=numpy.float32)
+    testObj = UML.createData('Matrix', testX, elementType=numpy.float32)
+
+    # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
+    tl = UML.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
+    assert tl.transformedArguments['check_input'] is True
+    # using arguments parameter
+    transformed = tl.apply(testObj, arguments={'check_input':False})
+
+    # using kwarguments
+    transformed = tl.apply(testObj, check_input=False)
+
+@sklSkipDec
+def test_getScores_exception():
+    """ Test an skl function with invalid arguments for predict_proba """
+    train = [[1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1],
+             [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
+    testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+    trainObj = UML.createData('Matrix', train, elementType=numpy.float32)
+    testObj = UML.createData('Matrix', testX, elementType=numpy.float32)
+
+    # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
+    tl = UML.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
+    assert 'foo' not in tl.transformedArguments
+    try:
+        # using arguments parameter
+        transformed = tl.getScores(testObj, arguments={'foo': True})
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+    try:
+        # using kwarguments
+        transformed = tl.getScores(testObj, foo=True)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
 
 def _apply_saveLoad(trainerLearnerObj, givenTestX):
     """

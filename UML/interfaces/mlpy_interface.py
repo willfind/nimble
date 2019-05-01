@@ -175,9 +175,17 @@ class Mlpy(UniversalInterface):
         return [ret]
 
 
-    def _getScores(self, learner, testX, arguments, customDict):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         if hasattr(learner, 'pred_values'):
-            return learner.pred_values(testX)
+            method = 'pred_values'
+            ignore = self._XDataAliases + ['self']
+            if 'useT' in customDict and customDict['useT']:
+                ignore.remove('t')
+            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+            scoreArgs = self._getMethodArguments(backendArgs, newArguments,
+                                                 storedArguments)
+            return learner.pred_values(testX, **scoreArgs)
         else:
             raise NotImplementedError('Cannot get scores for this learner')
 
@@ -299,15 +307,26 @@ class Mlpy(UniversalInterface):
         raise RuntimeError()
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         if hasattr(learner, 'pred'):
-            return self._pred(learner, testX, arguments, customDict)
+            method = 'pred'
+            toCall = self._pred
         elif hasattr(learner, 'transform'):
-            return self._transform(learner, testX, arguments, customDict)
+            method = 'transform'
+            toCall = self._transform
         else:
             msg = "Cannot apply this learner to data, no predict or "
             msg = "transform function"
             raise TypeError(msg)
+        ignore = self._XDataAliases + ['self']
+        if 'useT' in customDict and customDict['useT']:
+            ignore.remove('t')
+
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        return toCall(learner, testX, applyArgs, customDict)
 
 
     def _getAttributes(self, learnerBackend):
@@ -338,25 +357,18 @@ class Mlpy(UniversalInterface):
         params = customDict['predNames']
         if len(params) > 0:
             if customDict['useT']:
-                return learner.pred(arguments['t'])
-            else:
-                return learner.pred(testX)
+                testX = arguments['t']
+                del arguments['t']
+            return learner.pred(testX, **arguments)
         else:
-            return learner.pred()
+            return learner.pred(**arguments)
 
     def _transform(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying transform function of a mlpy learner
         object.
         """
-        toPass = {}
-        if customDict['transNames'] is not None:
-            for argName in arguments:
-                if argName in customDict['transNames']:
-                    if argName not in self._XDataAliases:
-                        toPass[argName] = arguments[argName]
-
-        return learner.transform(testX, **toPass)
+        return learner.transform(testX, **arguments)
 
 
     ###############
@@ -434,7 +446,7 @@ class Mlpy(UniversalInterface):
                              0.1, 100, True, False, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred':
+            elif name == 'pred' or name == 'pred_values':
                 pnames = ['t']
             else:
                 return None
@@ -453,7 +465,7 @@ class Mlpy(UniversalInterface):
                 pdefaults = ['l2r_lr', 1, 0.01, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred':
+            elif name == 'pred' or name == 'pred_values':
                 pnames = ['t']
             else:
                 return None
