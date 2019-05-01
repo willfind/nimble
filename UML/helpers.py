@@ -2936,8 +2936,24 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
-class cv(tuple):
-    pass
+class cv(object):
+    def __init__(self, argumentList):
+        try:
+            self.argumentList = tuple(argumentList)
+        except TypeError:
+            msg = "argumentList must be iterable."
+
+    def __getitem__(self, key):
+        return self.argumentList.__getitem__(key)
+
+    def __len__(self):
+        return self.argumentList.__len__()
+
+    def __str__(self):
+        return self.argumentList.__str__()
+
+    def __repr__(self):
+        return self.argumentList.__repr__()
 
 class ArgumentIterator:
     """
