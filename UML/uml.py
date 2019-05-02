@@ -1381,18 +1381,20 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
-        results = crossValidateBackend(
+        crossValidationResults = crossValidateBackend(
             learnerName, trainX, trainY, performanceFunction, merged,
             folds=numFolds, scoreMode=scoreMode, useLog=storeLog)
-        bestArguments = results.bestArguments
+        bestArguments = crossValidationResults.bestArguments
     else:
+        crossValidationResults = None
         bestArguments = merged
 
 
     interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     multiClassStrategy, bestArguments)
+                                     bestArguments, multiClassStrategy,
+                                     crossValidationResults)
     time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName

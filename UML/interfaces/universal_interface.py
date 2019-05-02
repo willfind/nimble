@@ -277,8 +277,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @captureOutput
-    def train(self, learnerName, trainX, trainY=None,
-              multiClassStrategy='default', arguments=None):
+    def train(self, learnerName, trainX, trainY=None, arguments=None,
+              multiClassStrategy='default', crossValidationResults=None):
         """
         Fit the learner model using training data.
 
@@ -378,11 +378,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
-        return self._train(learnerName, trainX, trainY, arguments=arguments)
+        return self._train(learnerName, trainX, trainY, arguments,
+                           crossValidationResults)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None):
+    def _train(self, learnerName, trainX, trainY=None, arguments=None,
+               crossValidationResults=None):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
                                            arguments)
         trainedBackend, transformedInputs, customDict = packedBackend
@@ -396,7 +398,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedInputs,
-                              customDict, trainedBackend, self, has2dOutput)
+                              customDict, trainedBackend, self, has2dOutput,
+                              crossValidationResults)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -1273,7 +1276,8 @@ class TrainedLearner(object):
         will be 1-dimensional.
     """
     def __init__(self, learnerName, arguments, transformedInputs, customDict,
-                 backend, interfaceObject, has2dOutput):
+                 backend, interfaceObject, has2dOutput,
+                 crossValidationResults):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -1289,6 +1293,7 @@ class TrainedLearner(object):
         self.backend = backend
         self.interface = interfaceObject
         self.has2dOutput = has2dOutput
+        self.crossValidation = crossValidationResults
 
         exposedFunctions = self.interface._exposedFunctions()
         for exposed in exposedFunctions:

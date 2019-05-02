@@ -455,7 +455,6 @@ def test_trainFunctions_cv_triggered_errors():
         assert "folds" in str(iavc)
 
 
-
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -504,6 +503,9 @@ def test_frontend_CV_triggering():
     tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                performanceFunction=fractionIncorrect, k=UML.cv([1, 2]), numFolds=5)
     assert hasattr(tl, 'apply')
+    assert tl.crossValidation is not None
+    assert tl.crossValidation.performanceFunction == fractionIncorrect
+    assert tl.crossValidation.numFolds == 5
 
     result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                            testX=trainObj, performanceFunction=fractionIncorrect, k=UML.cv([1, 2]),
