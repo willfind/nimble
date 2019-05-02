@@ -2707,6 +2707,78 @@ def generateAllPairs(items):
     return pairs
 
 
+class CrossValidationResults():
+    """
+    Container for cross-validation results.
+    """
+    def __init__(self, results, performanceFunction, numFolds):
+        self.results = results
+        self.performanceFunction = performanceFunction
+        self.numFolds = numFolds
+        self._bestArguments = None
+        self._bestScore = None
+
+    @property
+    def bestArguments(self):
+        """
+        The best argument based on the performanceFunction.
+        """
+        if self._bestArguments is not None:
+            return self._bestArguments
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestArguments
+
+    @property
+    def bestScore(self):
+        """
+        The best score based on the performanceFunction.
+        """
+        if self._bestScore is not None:
+            return self._bestScore
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestScore
+
+    def _bestArgumentsAndScore(self):
+        """
+        The best argument and score based on the performanceFunction.
+        """
+        detected = UML.calculate.detectBestResult(self.performanceFunction)
+        if detected == 'max':
+            maximumIsBest = True
+        elif detected == 'min':
+            maximumIsBest = False
+        else:
+            msg = "Unable to automatically determine whether maximal or "
+            msg += "minimal scores are considered optimal for the the "
+            msg += "given performanceFunction. "
+            msg += "By adding an attribute named 'optimal' to "
+            msg += "performanceFunction with either the value 'min' or 'max' "
+            msg += "depending on whether minimum or maximum returned values "
+            msg += "are associated with correctness, this error should be "
+            msg += "avoided."
+
+
+        bestArgumentAndScoreTuple = None
+        for curResultTuple in self.results:
+            _, curScore = curResultTuple
+            #if curArgument is the first or best we've seen:
+            #store its details in bestArgumentAndScoreTuple
+            if bestArgumentAndScoreTuple is None:
+                bestArgumentAndScoreTuple = curResultTuple
+            else:
+                if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+                if (not maximumIsBest
+                        and curScore < bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+
+        return bestArgumentAndScoreTuple
+
+
 def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
@@ -2833,7 +2905,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
                   performanceFunction, performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
-    return performanceOfEachCombination
+    return CrossValidationResults(performanceOfEachCombination,
+                                  performanceFunction, folds)
 
 
 def makeFoldIterator(dataList, folds):

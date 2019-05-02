@@ -1012,12 +1012,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     --------
     TODO
     """
-    bestResult = crossValidateReturnBest(learnerName, X, Y,
-                                         performanceFunction, arguments,
-                                         numFolds, scoreMode, useLog,
-                                         **kwarguments)
-
-    return bestResult[1]
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.bestScore
 
 #return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments,
 #                            numFolds, scoreMode, useLog, **kwarguments)
@@ -1097,11 +1095,10 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    ret = crossValidateBackend(learnerName, X, Y, performanceFunction,
-                               arguments, numFolds, scoreMode, useLog,
-                               **kwarguments)
-
-    return ret
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.results
 
 
 def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
@@ -1167,40 +1164,10 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction,
-                                        arguments, numFolds, scoreMode, useLog,
-                                        **kwarguments)
-
-    bestArgumentAndScoreTuple = None
-
-    detected = detectBestResult(performanceFunction)
-    if detected == 'max':
-        maximumIsBest = True
-    elif detected == 'min':
-        maximumIsBest = False
-    else:
-        msg = "Unable to automatically determine whether maximal or "
-        msg += "minimal scores are considered optimal for the the "
-        msg += "given performanceFunction. "
-        msg += "By adding an attribute named 'optimal' to "
-        msg += "performanceFunction with either the value 'min' or 'max' "
-        msg += "depending on whether minimum or maximum returned values "
-        msg += "are associated with correctness, this error should be "
-        msg += "avoided."
-
-    for curResultTuple in resultsAll:
-        _, curScore = curResultTuple
-        #if curArgument is the first or best we've seen:
-        #store its details in bestArgumentAndScoreTuple
-        if bestArgumentAndScoreTuple is None:
-            bestArgumentAndScoreTuple = curResultTuple
-        else:
-            if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
-                bestArgumentAndScoreTuple = curResultTuple
-            if not maximumIsBest and curScore < bestArgumentAndScoreTuple[1]:
-                bestArgumentAndScoreTuple = curResultTuple
-
-    return bestArgumentAndScoreTuple
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.bestArguments, results.bestScore
 
 
 def learnerType(learnerNames):
@@ -1414,25 +1381,23 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
-        results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
-                                              performanceFunction, merged,
-                                              numFolds=numFolds,
-                                              scoreMode=scoreMode,
-                                              useLog=storeLog)
-        bestArgument, _ = results
-
+        results = crossValidateBackend(
+            learnerName, trainX, trainY, performanceFunction, merged,
+            folds=numFolds, scoreMode=scoreMode, useLog=storeLog)
+        bestArguments = results.bestArguments
     else:
-        bestArgument = merged
+        bestArguments = merged
+
 
     interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     multiClassStrategy, bestArgument)
+                                     multiClassStrategy, bestArguments)
     time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,
-                  funcString, bestArgument, time=time)
+                  funcString, bestArguments, time=time)
 
     return trainedLearner
 
