@@ -178,6 +178,13 @@ class StructureShared(DataTestObject):
 
 class StructureDataSafe(StructureShared):
 
+    def test_objectValidationSetup(self):
+        """ Test that object validation has been setup """
+        assert hasattr(UML.data.Base, 'objectValidation')
+        assert hasattr(UML.data.Elements, 'objectValidation')
+        assert hasattr(UML.data.Features, 'objectValidation')
+        assert hasattr(UML.data.Points, 'objectValidation')
+
     #############
     # copyAs #
     #############

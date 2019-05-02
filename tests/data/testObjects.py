@@ -12,6 +12,9 @@ defined in this file.
 """
 
 from __future__ import absolute_import
+import inspect
+from functools import wraps
+
 import UML
 
 from .numerical_backend import AllNumerical
@@ -91,3 +94,138 @@ class TestBaseOnly(LowLevelBackend):
             return ret
 
         self.constructor = makeAndDefine
+
+
+def getOtherPaths(argList, kwargDict):
+    # other object for these functions will always be first positional
+    # arg or in kwargs; numeric binary other is not always a UML object
+    if argList and hasattr(argList[0], '_absPath'):
+        otherAbsPath = argList[0]._absPath
+    elif 'other' in kwargDict and hasattr(kwargDict['other'], '_absPath'):
+        otherAbsPath = kwargDict['other']._absPath
+    else:
+        otherAbsPath = None
+
+    if argList and hasattr(argList[0], '_relPath'):
+        otherRelPath = argList[0]._relPath
+    elif 'other' in kwargDict and hasattr(kwargDict['other'], '_relPath'):
+        otherRelPath = kwargDict['other']._relPath
+    else:
+        otherRelPath = None
+
+    return otherAbsPath, otherRelPath
+
+
+def methodObjectValidation(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if hasattr(self, '_source'):
+            source = self._source
+        else:
+            source = self
+        assert isinstance(source, UML.data.Base)
+        # store Base arguments for validation after function call
+        baseArgs = []
+        for argVal in (list(args) + list(kwargs.values())):
+            if isinstance(argVal, UML.data.Base):
+                baseArgs.append(argVal)
+        # name and path preservation
+        startName = source._name
+        startAbsPath = source._absPath
+        startRelPath = source._relPath
+
+        ret = func(self, *args, **kwargs)
+
+        source.validate()
+        if isinstance(ret, UML.data.Base):
+            ret.validate()
+        for arg in baseArgs:
+            arg.validate()
+
+        assert source._name == startName
+        funcName = func.__name__
+        inplaceNumeric = ['__iadd__', '__isub__', '__imul__', '__idiv__',
+                          '__ifloordiv__', '__itruediv__', '__imod__']
+
+        finalAbsPath = startAbsPath
+        finalRelPath = startRelPath
+        # referenceDataFrom always gets path from other object, inplace numeric
+        # binary will follow dataHelpers.binaryOpNamePathMerge logic
+        if funcName == 'referenceDataFrom':
+            finalAbsPath, finalRelPath = getOtherPaths(args, kwargs)
+        elif funcName in inplaceNumeric:
+            otherAbsPath, otherRelPath = getOtherPaths(args, kwargs)
+            if startAbsPath is None and otherAbsPath is not None:
+                finalAbsPath = otherAbsPath
+            elif startAbsPath is not None and otherAbsPath is not None:
+                finalAbsPath = None
+            if startRelPath is None and otherRelPath is not None:
+                finalRelPath = otherRelPath
+            elif startRelPath is not None and otherRelPath is not None:
+                finalRelPath = None
+
+        assert source._absPath == finalAbsPath
+        assert source._relPath == finalRelPath
+
+        return ret
+    return wrapped
+
+
+def objectValidationMethods(cls):
+    methodMap = {'class': cls}
+    for attr in cls.__dict__:
+        if inspect.isfunction(getattr(cls, attr)):
+            func = getattr(cls, attr)
+            # ignore functions that interfere with __init__ or recurse
+            # because they are used in validate
+            ignore = ['__init__', 'validate', 'getTypeString', 'setNames',
+                      'getName', 'getNames', 'getIndex', '__len__',
+                      '__getitem__'] # __getitem__ ignored for efficiency
+            if (func.__name__ not in ignore and
+                    (not func.__name__.startswith('_')
+                     or func.__name__.startswith('__'))):
+                methodMap[attr] = func
+    return methodMap
+
+
+def setClassAttributes(classes, wrapper=None):
+    for cls in classes:
+        for key, function in objectValidationDict[cls].items():
+            if key != 'class':
+                if wrapper is not None:
+                    function = wrapper(function)
+                setattr(objectValidationDict[cls]['class'], key, function)
+
+
+def startObjectValidation(self):
+    classList = ['Base', 'Elements', 'Features', 'Points']
+    setClassAttributes(classList, methodObjectValidation)
+    for cls in classList:
+        # set an attribute to allow tests to check this has been setup
+        setattr(objectValidationDict[cls]['class'], 'objectValidation', True)
+
+
+def stopObjectValidation(self):
+    classList = ['Base', 'Elements', 'Features', 'Points']
+    setClassAttributes(classList)
+    for cls in classList:
+        delattr(objectValidationDict[cls]['class'], 'objectValidation')
+
+
+def addSetupAndTeardown(classList, setup, teardown):
+    for cls in classList:
+        setattr(cls, 'setUp', setup)
+        setattr(cls, 'tearDown', teardown)
+
+objectValidationDict = {}
+objectValidationDict['Base'] = objectValidationMethods(UML.data.base.Base)
+objectValidationDict['Elements'] = objectValidationMethods(UML.data.elements.Elements)
+objectValidationDict['Features'] = objectValidationMethods(UML.data.features.Features)
+objectValidationDict['Points'] = objectValidationMethods(UML.data.points.Points)
+
+classesToObjectValidate = [AllNumerical, NumericalDataSafe, QueryBackend,
+                           LowLevelBackend, HighLevelAll, HighLevelDataSafe,
+                           StructureAll, StructureDataSafe, ViewAccess]
+
+addSetupAndTeardown(classesToObjectValidate, startObjectValidation,
+                    stopObjectValidation)

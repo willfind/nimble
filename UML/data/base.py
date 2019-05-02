@@ -693,7 +693,6 @@ class Base(object):
         bool
             True if approximately equal, else False.
         """
-        self.validate()
         #first check to make sure they have the same number of rows and columns
         if self._pointCount != len(other.points):
             return False
@@ -966,8 +965,6 @@ class Base(object):
             msg = "We do not allow writing to file when an object has "
             msg += "0 points or features"
             raise ImproperObjectAction(msg)
-
-        self.validate()
 
         # if format is not specified, we fall back on the extension in outPath
         if format is None:
@@ -1475,17 +1472,17 @@ class Base(object):
         level : int
             The extent to which to validate the data.
         """
-        if self._pointNamesCreated():
+        if self.points._namesCreated():
             assert self._pointCount == len(self.points.getNames())
-        if self._featureNamesCreated():
+        if self.features._namesCreated():
             assert self._featureCount == len(self.features.getNames())
 
         if level > 0:
-            if self._pointNamesCreated():
+            if self.points._namesCreated():
                 for key in self.points.getNames():
                     index = self.points.getIndex(key)
                     assert self.points.getName(index) == key
-            if self._featureNamesCreated():
+            if self.features._namesCreated():
                 for key in self.features.getNames():
                     index = self.features.getIndex(key)
                     assert self.features.getName(index) == key
@@ -2124,8 +2121,6 @@ class Base(object):
         handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
                       Base.transpose)
 
-        self.validate()
-
 
     def referenceDataFrom(self, other, useLog=None):
         """
@@ -2189,7 +2184,6 @@ class Base(object):
         handleLogging(useLog, 'prep', "referenceDataFrom",
                       self.getTypeString(), Base.referenceDataFrom, other)
 
-        self.validate()
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
@@ -2427,7 +2421,6 @@ class Base(object):
         handleLogging(useLog, 'prep', "fillWith",
                       self.getTypeString(), Base.fillWith, values, pointStart,
                       featureStart, pointEnd, featureEnd)
-        self.validate()
 
 
     def fillUsingAllData(self, match, fill, points=None, features=None,

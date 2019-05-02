@@ -4071,7 +4071,32 @@ def inspectArguments(func):
     Return is the tuple (args, varargs, keywords, defaults)
     """
     try:
-        argspec = inspect.getfullargspec(func)[:4] #py3
+        # py>=3.3
+        # in py>=3.5 inspect.signature can extract the original signature
+        # of wrapped functions
+        sig = inspect.signature(func)
+        a = []
+        if inspect.isclass(func) or hasattr(func, '__self__'):
+            # add self to classes and bounded methods to align
+            # with output of getfullargspec
+            a.append('self')
+        v = None
+        k = None
+        d = []
+        for param in sig.parameters.values():
+            if param.kind == param.POSITIONAL_OR_KEYWORD:
+                a.append(param.name)
+                if param.default is not param.empty:
+                    d.append(param.default)
+            elif param.kind == param.VAR_POSITIONAL:
+                v = param.name
+            elif param.kind == param.VAR_KEYWORD:
+                k = param.name
+        d = tuple(d)
+        argspec = tuple([a, v, k , d])
     except AttributeError:
-        argspec = inspect.getargspec(func) #py2
+        try:
+            argspec = inspect.getfullargspec(func)[:4] # p>=3
+        except AttributeError:
+            argspec = inspect.getargspec(func) # py2
     return argspec

@@ -99,6 +99,10 @@ def confirmExpectedNames(toTest, axis, expected):
 
 class LowLevelBackend(object):
 
+    def test_objectValidationSetup(self):
+        """ Test that object validation has been setup """
+        assert hasattr(Base, 'objectValidation')
+
     ##########################
     # _pointNameDifference() #
     ##########################
