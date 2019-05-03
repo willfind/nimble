@@ -376,6 +376,6 @@ def test_retrain_CVArg():
     predOnes1 = tl.apply(testObj)
     assert predOnes1 == expOnes
 
-    tl.retrain(trainObj, 0, predictZero=UML.cv([True, False]))
+    tl.retrain(trainObj, 0, predictZero=UML.CV([True, False]))
     predZeros1 = tl.apply(testObj)
     assert predZeros1 == expZeros

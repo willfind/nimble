@@ -52,7 +52,7 @@ from .uml import showLog
 from .uml import learnerType
 from .uml import loadData
 from .uml import loadTrainedLearner
-from .helpers import cv
+from .helpers import CV
 
 capturedErr = tempfile.NamedTemporaryFile()
 

@@ -1681,7 +1681,7 @@ class TrainedLearner(object):
 
         merged = _mergeArguments(arguments, kwarguments)
         for arg, value in merged.items():
-            if isinstance(value, UML.cv):
+            if isinstance(value, UML.CV):
                 msg = "Cannot provide a cross-validation arguments "
                 msg += "for parameters to retrain a TrainedLearner. "
                 msg += "If wanting to perform cross-validation, use "

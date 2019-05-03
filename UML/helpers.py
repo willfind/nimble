@@ -29,6 +29,7 @@ import UML
 from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
+from UML.exceptions import ImproperObjectAction
 from UML.exceptions import FileFormatException
 from UML.data import Base
 from UML.data.dataHelpers import isAllowedSingleElement
@@ -2769,7 +2770,6 @@ class CrossValidationResults():
             msg += "are associated with correctness, this error should be "
             msg += "avoided."
 
-
         bestArgumentAndScoreTuple = None
         for curResultTuple in self.results:
             _, curScore = curResultTuple
@@ -3017,7 +3017,7 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
-class cv(object):
+class CV(object):
     def __init__(self, argumentList):
         try:
             self.argumentTuple = tuple(argumentList)
@@ -3027,6 +3027,9 @@ class cv(object):
     def __getitem__(self, key):
         return self.argumentTuple[key]
 
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
     def __len__(self):
         return len(self.argumentTuple)
 
@@ -3034,7 +3037,7 @@ class cv(object):
         return str(self.argumentTuple)
 
     def __repr__(self):
-        return repr(self.argumentTuple)
+        return "CV(" + str(list(self.argumentTuple)) + ")"
 
 class ArgumentIterator:
     """
@@ -3068,9 +3071,9 @@ class ArgumentIterator:
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
                 try:
-                    if isinstance(rawArgumentInput[key], cv):
+                    if isinstance(rawArgumentInput[key], CV):
                         self.numPermutations *= len(rawArgumentInput[key])
-                except TypeError: # taking len of non cv object
+                except TypeError: # taking len of non CV object
                     pass #numPermutations not increased
             self.permutationsList = _buildArgPermutationsList([], {}, 0,
                                                               rawArgumentInput)
@@ -3136,7 +3139,7 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
         curValues = rawArgInput[curKey]
 
         try:
-            if not isinstance(curValues, cv):
+            if not isinstance(curValues, CV):
                 raise TypeError()
             # if there are multiple values, add one key-value pair to the
             # the current dict, make recursive call to build the rest of the

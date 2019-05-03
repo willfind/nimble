@@ -755,7 +755,7 @@ def testShowLogSearchFilters():
         results = UML.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
                                    trainY=trainYObj, testX=testObj, testY=testYObj,
                                    performanceFunction=RMSE,
-                                   arguments={"k": UML.cv([3, 5])})
+                                   arguments={"k": UML.CV([3, 5])})
     # edit log runNumbers and timestamps
     location = UML.settings.get("logger", "location")
     name = UML.settings.get("logger", "name")
@@ -778,7 +778,7 @@ def testShowLogSearchFilters():
     pathToFile = os.path.join(location,name)
     UML.showLog(levelOfDetail=3, leastRunsAgo=0, mostRunsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
     fullShowLogSize = os.path.getsize(pathToFile)
-
+    UML.showLog(levelOfDetail=3, leastRunsAgo=0, mostRunsAgo=5, maximumEntries=100)
     # level of detail
     UML.showLog(levelOfDetail=3, saveToFileName=pathToFile)
     mostDetailedSize = os.path.getsize(pathToFile)

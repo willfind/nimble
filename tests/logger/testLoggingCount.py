@@ -50,7 +50,7 @@ uml_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 uml_notLogged = [
-    'cv', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
     'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
@@ -208,8 +208,8 @@ def test_importModule_logCount():
     pd = UML.importModule('pandas')
 
 @noLogEntryExpected
-def test_cv_logCount():
-    k = UML.cv([1, 3, 5])
+def test_CV_logCount():
+    k = UML.CV([1, 3, 5])
 
 ########
 # Base #
