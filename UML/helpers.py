@@ -2718,6 +2718,14 @@ class CrossValidationResults():
         self._bestArguments = None
         self._bestScore = None
 
+    def __str__(self):
+        return str(self.results)
+
+    def __repr__(self):
+        ret = "CrossValidationResults({}, {}, {})"
+        ret = ret.format(self.results, self.performanceFunction, self.numFolds)
+        return ret
+
     @property
     def bestArguments(self):
         """
