@@ -1561,8 +1561,6 @@ class Features(object):
         self._source._featureCount = numRetFeatures
         self.setNames(fNames, useLog=False)
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep', 'features.splitByParsing',
                       self._source.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)

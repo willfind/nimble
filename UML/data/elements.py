@@ -185,8 +185,6 @@ class Elements(object):
         self._transform_implementation(toTransform, points, features,
                                        preserveZeros, skipNoneReturnValues)
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep', 'elements.transform',
                       self._source.getTypeString(), Elements.transform,
                       toTransform, points, features, preserveZeros,
@@ -374,8 +372,6 @@ class Elements(object):
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep', 'elements.calculate',
                       self._source.getTypeString(), Elements.calculate,
                       function, points, features, preserveZeros,
@@ -558,7 +554,6 @@ class Elements(object):
         retFNames = retNames[1]
         self._source.points.setNames(retPNames, useLog=False)
         self._source.features.setNames(retFNames, useLog=False)
-        self._source.validate()
 
         handleLogging(useLog, 'prep', 'elements.multiply',
                       self._source.getTypeString(), Elements.multiply, other)
@@ -634,8 +629,6 @@ class Elements(object):
                     other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', 'elements.power',
                       self._source.getTypeString(), Elements.power, other)

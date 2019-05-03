@@ -209,8 +209,6 @@ class Axis(object):
         ret._relPath = self._source.relativePath
         ret._absPath = self._source.absolutePath
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep', '{ax}s.extract'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('extract'),
                       toExtract, start, end, number, randomize)
@@ -222,7 +220,6 @@ class Axis(object):
         ret = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
         self._adjustCountAndNames(ret)
-        self._source.validate()
 
         handleLogging(useLog, 'prep', '{ax}s.delete'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('delete'),
@@ -237,8 +234,6 @@ class Axis(object):
         ref._absPath = self._source.absolutePath
 
         self._source.referenceDataFrom(ref, useLog=False)
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('retain'),
@@ -300,8 +295,6 @@ class Axis(object):
             names = self._getNames()
             reorderedNames = [names[idx] for idx in indexPosition]
             self._setNames(reorderedNames, useLog=False)
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', '{ax}s.sort'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('sort'),
@@ -424,8 +417,6 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('transform'),
                       function, limitTo)
 
-        self._source.validate()
-
     ###########################
     # Higher Order Operations #
     ###########################
@@ -465,8 +456,6 @@ class Axis(object):
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('calculate'),
@@ -532,8 +521,6 @@ class Axis(object):
 
         self._setAddedCountAndNames(toAdd, insertBefore)
 
-        self._source.validate()
-
         handleLogging(useLog, 'prep',
                       '{ax}s.add'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('add'),
@@ -563,8 +550,6 @@ class Axis(object):
             raise InvalidArgumentType("The mapper must be callable")
         if not hasattr(reducer, '__call__'):
             raise InvalidArgumentType("The reducer must be callable")
-
-        self._source.validate()
 
         if targetCount == 0:
             ret = UML.createData(self._source.getTypeString(),
@@ -624,8 +609,6 @@ class Axis(object):
                 modified.features.setNames(modNames, useLog=False)
 
         self._transform(toTransform, limitTo, useLog=False)
-
-        self._source.validate()
 
         handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
                       self._source.getTypeString(), self._sigFunc('fill'),
@@ -856,7 +839,6 @@ class Axis(object):
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
-        ret.validate()
         return ret
 
     ###################
