@@ -1528,8 +1528,8 @@ class TrainedLearner(object):
                 rowIndex = scoreOrder.index(labels[pointIndex, 0])
                 return row[rowIndex]
 
-            scoreVector = scores.points.calculate(grabValue)
-            labels.features.add(scoreVector)
+            scoreVector = scores.points.calculate(grabValue, useLog=False)
+            labels.features.add(scoreVector, useLog=False)
 
             ret = labels
 
@@ -1660,12 +1660,15 @@ class TrainedLearner(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        (trainX, trainY, _, arguments) = self.interface._inputTransformation(
+        transformed = self.interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self.customDict)
-        self.backend = self.interface._incrementalTrainer(self.backend, trainX,
-                                                          trainY, arguments,
-                                                          self.customDict)
+        transformedTrainX = transformed[0]
+        transformedTrainY = transformed[1]
+        transformedArguments = transformed[3]
+        self.backend = self.interface._incrementalTrainer(
+            self.backend, transformedTrainX, transformedTrainY,
+            transformedArguments, self.customDict)
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
@@ -1713,7 +1716,7 @@ class TrainedLearner(object):
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return UML.createData("Matrix", ret)
+            return UML.createData("Matrix", ret, useLog=False)
 
         if applyResults is None:
             applyResults = self.interface._applier(
@@ -1736,7 +1739,7 @@ class TrainedLearner(object):
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
-            return UML.createData("Matrix", scores)
+            return UML.createData("Matrix", scores, useLog=False)
         else:
             return rawScores
 
@@ -1894,17 +1897,17 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = oneLabelResults
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    rawPredictions.features.setName(0, str(label))
+                    rawPredictions.features.setName(0, str(label), useLog=False)
                 else:
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    oneLabelResults.features.setName(0, str(label))
-                    rawPredictions.features.add(oneLabelResults)
+                    oneLabelResults.features.setName(0, str(label), useLog=False)
+                    rawPredictions.features.add(oneLabelResults, useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
                 getWinningPredictionIndices = rawPredictions.points.calculate(
-                    extractWinningPredictionIndex)
+                    extractWinningPredictionIndex, useLog=False)
                 winningPredictionIndices = getWinningPredictionIndices.copyAs(
                     format="python list")
                 winningLabels = []
@@ -1912,7 +1915,8 @@ class TrainedLearners(TrainedLearner):
                     winningLabels.append([self.labelSet[int(winningIndex)]])
                 return UML.createData(rawPredictions.getTypeString(),
                                       winningLabels,
-                                      featureNames=['winningLabel'])
+                                      featureNames=['winningLabel'],
+                                      useLog=False)
 
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
@@ -1929,7 +1933,8 @@ class TrainedLearners(TrainedLearner):
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
                 resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                                                  featureNames=featureNames,
+                                                  useLog=False)
                 return resultsContainer
 
             elif scoreMode.lower() == 'allScores'.lower():
@@ -1956,7 +1961,7 @@ class TrainedLearners(TrainedLearner):
                 #wrap data in Base container
                 return UML.createData(rawPredictions.getTypeString(),
                                       resultsContainer,
-                                      featureNames=colHeaders)
+                                      featureNames=colHeaders, useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)
@@ -1973,14 +1978,14 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = partialResults.copyAs(format="List")
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
-                    partialResults.features.setName(0, predictionName)
-                    rawPredictions.features.add(partialResults)
+                    partialResults.features.setName(0, predictionName, useLog=False)
+                    rawPredictions.features.add(partialResults, useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
                 ret = rawPredictions.points.calculate(
-                    extractWinningPredictionLabel)
-                ret.features.setName(0, "winningLabel")
+                    extractWinningPredictionLabel, useLog=False)
+                ret.features.setName(0, "winningLabel", useLog=False)
                 return ret
             elif scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list
@@ -1997,7 +2002,8 @@ class TrainedLearners(TrainedLearner):
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
                 resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                                                  featureNames=featureNames,
+                                                  useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(i) for i in self.labelSet])
@@ -2015,7 +2021,7 @@ class TrainedLearners(TrainedLearner):
 
                 return UML.createData(rawPredictions.getTypeString(),
                                       resultsContainer,
-                                      featureNames=colHeaders)
+                                      featureNames=colHeaders, useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)

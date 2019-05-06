@@ -332,10 +332,12 @@ class UmlLogger(object):
             # integers or strings passed for Y values, convert if necessary
             if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
                 trainData = trainData.copy()
-                trainLabels = trainData.features.extract(trainLabels)
+                trainLabels = trainData.features.extract(trainLabels,
+                                                         useLog=False)
             if isinstance(testLabels, (six.string_types, int, numpy.int64)):
                 testData = testData.copy()
-                testLabels = testData.features.extract(testLabels)
+                testLabels = testData.features.extract(testLabels,
+                                                       useLog=False)
             if trainData is not None:
                 logInfo["trainData"] = trainData.name
                 logInfo["trainDataPoints"] = len(trainData.points)

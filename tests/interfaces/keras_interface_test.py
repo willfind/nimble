@@ -15,23 +15,26 @@ from UML import createData
 from UML.interfaces.keras_interface import Keras
 from UML.exceptions import InvalidArgumentValue
 from .skipTestDecorator import SkipMissing
+from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
 keras = UML.importExternalLibraries.importModule("keras")
 
 keraSkipDec = SkipMissing('Keras')
 
 @keraSkipDec
+@noLogEntryExpected
 def test_Keras_version():
     interface = Keras()
     assert interface.version() == keras.__version__
 
 @keraSkipDec
+@logCountAssertionFactory(5)
 def testKerasAPI():
     """
     Test Keras can handle a variety of arguments passed to all major learning functions
     """
-    x_train = createData('Matrix', np.random.random((1000, 20)))
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
+    x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
     layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
     layer1 = {'type':'Dropout', 'rate':0.5}
@@ -64,12 +67,13 @@ def testKerasAPI():
     bestArgument, bestScore = UML.crossValidateReturnBest("keras.Sequential", X=x_train, Y=y_train, optimizer='sgd', layers=layers, loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True, performanceFunction=UML.calculate.loss.rootMeanSquareError)
 
 @keraSkipDec
+@logCountAssertionFactory(3)
 def testKerasIncremental():
     """
     Test Keras can handle and incrementalTrain call
     """
-    x_train = createData('Matrix', np.random.random((1000, 20)))
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
+    x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
     layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
     layer1 = {'type':'Dropout', 'rate':0.5}
@@ -89,6 +93,7 @@ def testKerasIncremental():
     assert len(x.points) == len(x_train.points)
 
 @keraSkipDec
+@logCountAssertionFactory(2)
 def testKeras_Sparse_FitGenerator():
     """
     Test Keras on Sparse data; uses different training method - fit_generator
@@ -96,8 +101,8 @@ def testKeras_Sparse_FitGenerator():
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
-    x_train = createData('Sparse', x_data)
-    y_train = createData('Matrix', y_data)
+    x_train = createData('Sparse', x_data, useLog=False)
+    y_train = createData('Matrix', y_data, useLog=False)
 
     layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':7}
     layer1 = {'type':'Dropout', 'rate':0.5}
@@ -113,11 +118,11 @@ def testKeras_Sparse_FitGenerator():
     assert len(x.points) == len(x_train.points)
 
 @keraSkipDec
+@logCountAssertionFactory(3)
 def test_TrainedLearnerApplyArguments():
     """ Test a keras function that accept arguments for predict"""
-    x_train = createData('Matrix', np.random.random((1000, 20)))
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
-    x_test = np.random.random((100, 20))
+    x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
     layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
     layer1 = {'type':'Dropout', 'rate':0.5}
@@ -136,11 +141,11 @@ def test_TrainedLearnerApplyArguments():
     newArgs = mym.apply(testX=x_train, steps=50)
 
 @keraSkipDec
+@logCountAssertionFactory(1)
 def test_TrainedLearnerApplyArguments_exception():
     """ Test an keras function with invalid arguments for predict"""
-    x_train = createData('Matrix', np.random.random((1000, 20)))
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)))
-    x_test = np.random.random((100, 20))
+    x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
     layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
     layer1 = {'type':'Dropout', 'rate':0.5}
