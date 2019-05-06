@@ -157,7 +157,7 @@ def testMlpyHandmadeInnerProductTrainingPCA():
     assert ret is not None
 
 @mlpySkipDec
-@logCountAssertionFactory(1)
+@logCountAssertionFactory(3)
 def testMlpyScoreMode():
     """ Test mlpy() scoreMode flags"""
     variables = ["Y", "x1", "x2"]
@@ -166,23 +166,23 @@ def testMlpyScoreMode():
 
     data2 = [[2, 3], [-200, 0]]
     testObj = UML.createData('Matrix', data2, useLog=False)
-    #
-    # # default scoreMode is 'label'
-    # ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
-    # assert len(ret.points) == 2
-    # assert len(ret.features) == 1
+
+    # default scoreMode is 'label'
+    ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+    assert len(ret.points) == 2
+    assert len(ret.features) == 1
 
     bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
     assert len(bestScores.points) == 2
     assert len(bestScores.features) == 2
 
-    # allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
-    #                               scoreMode='allScores')
-    # assert len(allScores.points) == 2
-    # assert len(allScores.features) == 3
-    #
-    # checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
+    allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
+                                  scoreMode='allScores')
+    assert len(allScores.points) == 2
+    assert len(allScores.features) == 3
+
+    checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
 @mlpySkipDec
 @logCountAssertionFactory(3)
