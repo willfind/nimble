@@ -32,14 +32,6 @@ class UniversalInterfaceLookalike(UniversalInterface):
         """
         pass
 
-    def _getScores(self, learner, testX, arguments, customDict):
-        """
-        If the learner is a classifier, then return the scores for each
-        class on each data point, otherwise raise an exception.
-
-        """
-        pass
-
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         """
@@ -50,7 +42,8 @@ class UniversalInterfaceLookalike(UniversalInterface):
         pass
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
         """
         use the given learner to do testing/prediction on the given test set
         TAKES a TrainedLearner object that can be tested on
@@ -129,7 +122,8 @@ class UniversalInterfaceLookalike(UniversalInterface):
         pass
 
 
-    def _getScores(self, learner, testX):
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
         """
         If the learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception.
@@ -137,7 +131,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
         """
         pass
 
-    def _getScoresOrder(self, learner, testX):
+    def _getScoresOrder(self, learner):
         """
         If the learner is a classifier, then return a list of the the labels corresponding
         to each column of the return from getScores

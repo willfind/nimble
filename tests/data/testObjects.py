@@ -12,7 +12,11 @@ defined in this file.
 """
 
 from __future__ import absolute_import
+
 import UML
+
+from .baseObject import startObjectValidation
+from .baseObject import stopObjectValidation
 
 from .numerical_backend import AllNumerical
 from .numerical_backend import NumericalDataSafe
@@ -91,3 +95,9 @@ class TestBaseOnly(LowLevelBackend):
             return ret
 
         self.constructor = makeAndDefine
+
+    def setUp(self):
+        startObjectValidation()
+
+    def tearDown(self):
+        stopObjectValidation()

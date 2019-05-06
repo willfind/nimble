@@ -511,13 +511,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     tl = UML.train(learnerName, trainX, trainY, arguments=merged,
                    useLog=False)
-    normalizedTrain = tl.apply(trainX, arguments=merged, useLog=False)
+    normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=merged, useLog=False)
+        normalizedTest = tl.apply(testX, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
@@ -733,7 +733,7 @@ def createData(
         elementType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False,
         reuseData=False, inputSeparator='automatic',
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan', 
+        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
                         'NULL', 'NA'),
         replaceMissingWith=numpy.nan, useLog=None):
     """
@@ -915,18 +915,6 @@ def createData(
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """
-    accepted = (bool, list, dict)
-    if pointNames != 'automatic' and not isinstance(pointNames, accepted):
-        msg = "pointNames may only be the values True, False, 'automatic' or "
-        msg += "a list or dict specifying a mapping between names and indices."
-        raise InvalidArgumentType(msg)
-
-    if featureNames != 'automatic' and not isinstance(featureNames, accepted):
-        msg = "featureNames may only be the values True, False, 'automatic' "
-        msg += "or a list or dict specifying a mapping between names and "
-        msg += "indices."
-        raise InvalidArgumentType(msg)
-
     retAllowed = copy.copy(UML.data.available)
     retAllowed.append(None)
     if returnType not in retAllowed:
@@ -1257,7 +1245,7 @@ def learnerType(learnerNames):
 
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          doneValidData=False, doneValidArguments1=False,
+          numFolds=10, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
           done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
           **kwarguments):
@@ -1298,6 +1286,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1384,14 +1375,19 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += "out-of-the-box options) or there must be no choices in "
             msg += "the parameters."
             raise InvalidArgumentValueCombination(msg)
-
-        #modify numFolds if needed
-        numFolds = len(trainX.points) if len(trainX.points) < 10 else 10
+        if numFolds > len(trainX.points):
+            msg = "There must be a minimum of one fold per point in the data."
+            msg += "Cross validation was triggered to select the best "
+            msg += "parameter set but the 'numFolds' parameter was set to "
+            msg += str(numFolds) + " and trainX only contains "
+            msg += str(len(trainX.points)) + " points."
+            raise InvalidArgumentValueCombination(msg)
+        # useLog value stored if call to train is from another function
+        if storeLog == 'unset':
+            storeLog = useLog
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
-        if storeLog == 'unset':
-            storeLog = useLog
         results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
                                               performanceFunction, merged,
                                               numFolds=numFolds,
@@ -1417,8 +1413,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
-                  scoreMode='label', multiClassStrategy='default', useLog=None,
-                  **kwarguments):
+                  scoreMode='label', multiClassStrategy='default',
+                  numFolds=10, useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1470,6 +1466,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1552,8 +1551,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=False, storeLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True)
+                               numFolds=numFolds, useLog=False,
+                               storeLog=useLog, doneValidData=True,
+                               done2dOutputFlagCheck=True, **kwarguments)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
@@ -1576,8 +1576,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
-                 scoreMode='label', multiClassStrategy='default', useLog=None,
-                 storeLog='unset', **kwarguments):
+                 scoreMode='label', multiClassStrategy='default',
+                 numFolds=10, useLog=None, **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -1641,6 +1641,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
+    numFolds : int
+        The number of folds used in the cross validation. Cannot exceed
+        the number of points in ``trainX``. Default 10.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1715,15 +1718,18 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     0.0
     """
     timer = startTimer(useLog)
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, None)
+    _validData(trainX, trainY, testX, testY, [True, True])
+    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+
     merged = _mergeArguments(arguments, kwarguments)
 
     trainedLearner = UML.train(learnerName, trainX, trainY,
                                performanceFunction, merged,
                                scoreMode='label',
                                multiClassStrategy=multiClassStrategy,
-                               useLog=False, storeLog=useLog,
-                               doneValidData=True, done2dOutputFlagCheck=True)
+                               numFolds=numFolds, useLog=False,
+                               storeLog=useLog, doneValidData=True,
+                               done2dOutputFlagCheck=True)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
@@ -1741,6 +1747,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         extraInfo = {"bestParams": trainedLearner.arguments}
     if trainX == testX:
         name = "trainAndTestOnTrainingData"
+        testX = None
+        testY = None
     else:
         name = "trainAndTest"
     handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
@@ -1797,7 +1805,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         testing data. By default, this flag is set to False.
     numFolds : int
         The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``, ``trainY``. Default is 10.
+        the number of points in ``trainX``. Default 10.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -1883,10 +1891,24 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     >>> perform
     0.0
     """
-    performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
-                               performanceFunction, arguments, output,
-                               scoreMode, multiClassStrategy, useLog,
-                               **kwarguments)
+    if crossValidationError:
+        merged = _mergeArguments(arguments, kwarguments)
+        results = crossValidateReturnBest(learnerName, trainX, trainY,
+                                          performanceFunction, merged,
+                                          numFolds, scoreMode, useLog)
+        performance = results[1]
+        metrics = {}
+        for key, value in zip([performanceFunction], [performance]):
+            metrics[key.__name__] = value
+        handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
+                      trainY, None, None, learnerName, merged, metrics,
+                      extraInfo={'crossValidationError': True})
+
+    else:
+        performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
+                                   performanceFunction, arguments, output,
+                                   scoreMode, multiClassStrategy, numFolds,
+                                   useLog, **kwarguments)
     return performance
 
 
