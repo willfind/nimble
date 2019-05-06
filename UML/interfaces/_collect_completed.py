@@ -7,7 +7,7 @@ from __future__ import print_function
 import os
 import importlib
 import abc
-from . import universal_interface
+from .universal_interface import UniversalInterface
 
 displayErrors = False
 
@@ -33,8 +33,7 @@ def collectUnexpectedInterfaces(pythonModules):
     """
     possibleInterfaces = []
     # setup seen with the interfaces we know we don't want to load/try to load
-    seen = set(["UniversalInterface", "UniversalInterfaceLookalike",
-                "CustomLearnerInterface"])
+    seen = set(["UniversalInterface", "CustomLearnerInterface"])
     for toImport in pythonModules:
         importedModule = importlib.import_module('.' + toImport, __package__)
         contents = dir(importedModule)
@@ -44,8 +43,7 @@ def collectUnexpectedInterfaces(pythonModules):
         for valueName in contents:
             value = getattr(importedModule, valueName)
             if (isinstance(value, abc.ABCMeta)
-                    and issubclass(value,
-                                   universal_interface.UniversalInterface)):
+                    and issubclass(value, UniversalInterface)):
                 if not valueName in seen:
                     seen.add(valueName)
                     possibleInterfaces.append(value)
