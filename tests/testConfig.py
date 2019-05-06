@@ -316,17 +316,18 @@ def test_settings_savingOption():
 
 
 @configSafetyWrapper
-def test_settings_syncingNewInterface():
-    """ Test UML.configuration.syncWithInterfaces correctly modifies file """
+def test_settings_addingNewInterface():
+    """ Test UML.configuration.setInterfaceOptions correctly modifies file """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     UML.interfaces.available.append(tempInterface)
     ignoreInterface = OptionNamedLookalike("ig", [])
     UML.interfaces.available.append(ignoreInterface)
 
-    # run sync
-    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
+    # set options for all interfaces
+    for interface in UML.interfaces.available:
+        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
 
-    # reload settings - to make sure the syncing was recorded
+    # reload settings - to make sure the options setting was recorded
     UML.settings = UML.configuration.loadSettings()
 
     # make sure there is no section associated with the optionless
@@ -340,25 +341,27 @@ def test_settings_syncingNewInterface():
 
 
 @configSafetyWrapper
-def test_settings_syncingSafety():
-    """ Test that syncing preserves values already in the config file """
+def test_settings_setInterfaceOptionsSafety():
+    """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     UML.interfaces.available.append(tempInterface1)
 
-    # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
+    # set options for all interfaces, then reload
+    for interface in UML.interfaces.available:
+        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
     UML.settings = UML.configuration.loadSettings()
 
     UML.settings.set('Test', 'Temp0', '0')
     UML.settings.set('Test', 'Temp1', '1')
     UML.settings.saveChanges()
 
-    # now set up another trigger for syncing
+    # now set up another trigger to set options for
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
     UML.interfaces.available.append(tempInterface2)
 
-    # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
+    # set options for all interfaces, then reload
+    for interface in UML.interfaces.available:
+        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
     UML.settings = UML.configuration.loadSettings()
 
     assert UML.settings.get("Test", 'Temp0') == '0'
@@ -366,15 +369,16 @@ def test_settings_syncingSafety():
 
 
 @configSafetyWrapper
-def test_settings_syncingChanges():
-    """ Test that syncing interfaces properly saves current changes """
+def test_settings_setInterfaceOptionsChanges():
+    """ Test that setting interface options properly saves current changes """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
     UML.interfaces.available.append(tempInterface1)
     UML.interfaces.available.append(tempInterface2)
 
-    # run sync, then reload
-    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
+    # set options for all interfaces, then reload
+    for interface in UML.interfaces.available:
+        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
     UML.settings = UML.configuration.loadSettings()
 
     UML.settings.set('Test', 'Temp0', '0')
@@ -383,9 +387,10 @@ def test_settings_syncingChanges():
 
     assert UML.settings.get('Test', 'Temp0') == '0'
 
-    # change Test option names and resync
+    # change Test option names and reset options for all interfaces
     tempInterface1.optionNames[1] = 'NotTemp1'
-    UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available, True)
+    for interface in UML.interfaces.available:
+        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
 
     # check values of both changed and unchanged names
     assert UML.settings.get('Test', 'Temp0') == '0'
@@ -395,7 +400,7 @@ def test_settings_syncingChanges():
         pass
     assert UML.settings.get('Test', 'NotTemp1') == ''
 
-    # check that the temp value for testOther is unaffeected
+    # check that the temp value for testOther is unaffected
     assert UML.settings.get('TestOther', 'Temp0') == 'unchanged'
 
 

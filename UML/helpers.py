@@ -2186,8 +2186,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
-                                             save=save)
+        UML.configuration.setInterfaceOptions(UML.settings, currInterface,
+                                              save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
