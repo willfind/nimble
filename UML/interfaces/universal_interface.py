@@ -1597,6 +1597,13 @@ class TrainedLearner(object):
               ``trainX`` containing the labels.
             * UML Base object - contains the labels that correspond to
               ``trainX``.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -1645,6 +1652,13 @@ class TrainedLearner(object):
             ``trainX`` containing the labels.
             * UML Base object - contains the labels that correspond to
               ``trainX``.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
         (trainX, trainY, _, arguments) = self.interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
@@ -1793,8 +1807,81 @@ class TrainedLearners(TrainedLearner):
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
+        """
+        Apply the learner to the test data.
+
+        Return the application of this learner to the given test data
+        (i.e. performing prediction, transformation, etc. as appropriate
+        to the learner). Equivalent to having called ``trainAndApply``,
+        as long as the data and parameter setup for training was the
+        same.
+
+        Parameters
+        ----------
+        testX : UML Base object
+            Data set on which the trained learner will be applied (i.e.
+            performing prediction, transformation, etc. as appropriate
+            to the learner).
+        performanceFunction : function
+            If cross validation is triggered to select from the given
+            argument set, then this function will be used to generate a
+            performance score for the run. Function is of the form:
+            def func(knownValues, predictedValues).
+            Look in UML.calculate for pre-made options. Default is None,
+            since if there is no parameter selection to be done, it is
+            not used.
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To make use of multiple permutations, specify different
+            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately. These will
+            be merged with kwarguments for the learner.
+        output : str
+            The kind of UML Base object that the output of this function
+            should be in. Any of the normal string inputs to the
+            createData ``returnType`` parameter are accepted here.
+            Alternatively, the value 'match' will indicate to use the
+            type of the ``trainX`` parameter.
+        scoreMode : str
+            In the case of a classifying learner, this specifies the
+            type of output wanted: 'label' if we class labels are
+            desired, 'bestScore' if both the class label and the score
+            associated with that class are desired, or 'allScores' if a
+            matrix containing the scores for every class label are
+            desired.
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. To make use of multiple permutations, specify
+            different values for parameters as a tuple.
+            eg. arg1=(1,2,3), arg2=(4,5,6) which correspond to
+            permutations/argument states with one element from arg1 and
+            one element from arg2, such that an example generated
+            permutation/argument state would be ``arg1=2, arg2=4``.
+            Will be merged with ``arguments``.
+
+        Returns
+        -------
+        results
+            The resulting output of applying learner.
+
+        See Also
+        --------
+        UML.trainAndApply, test
+
+        Examples
+        --------
+        TODO
+        """
         rawPredictions = None
-        # import pdb; pdb.set_trace()
         #1 VS All
         if self.method == 'OneVsAll':
             for trainedLearner in self.trainedLearnersList:
