@@ -527,7 +527,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
             npRaw = numpy.array(lolFromRaw, dtype=object)
             finalRaw = scipy.sparse.coo_matrix(npRaw)
         else:
-            finalRaw = baseObj.copyAs(rawType)
+            finalRaw = baseObj.copy(to=rawType)
 
         ret = UML.createData(returnType=returnType, data=finalRaw,
                              pointNames=pointNames, featureNames=featureNames)
@@ -1433,7 +1433,7 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUse = orig.copyAs("pythonlist")
+                toUse = orig.copy(to="pythonlist")
                 fromOrig = UML.createData(
                     t, toUse, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
@@ -1477,7 +1477,7 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
@@ -1522,7 +1522,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,

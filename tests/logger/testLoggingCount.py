@@ -94,14 +94,14 @@ match_tested = list(map(prefixAdder('UML.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'copy', 'fillUsingAllData', 'featureReport', 'fillWith',
-    'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature', 'merge',
+    'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
+    'flattenToOnePoint', 'groupByFeature', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copyAs', 'featureView', 'getTypeString', 'hashCode',
+    'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
     'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
     'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
     'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',

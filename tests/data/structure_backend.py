@@ -3,7 +3,7 @@
 Methods tested in this file:
 
 In object StructureDataSafe:
-copyAs, points.copy, features.copy
+copy, points.copy, features.copy
 
 In object StructureModifying:
 __init__,  transpose, points.add, features.add, points.sort,
@@ -186,18 +186,18 @@ class StructureDataSafe(StructureShared):
         assert hasattr(UML.data.Points, 'objectValidation')
 
     #############
-    # copyAs #
+    # copy #
     #############
     @noLogEntryExpected
     def test_copy_withZeros(self):
-        """ Test copyAs() produces an equal object and doesn't just copy the references """
+        """ Test copy() produces an equal object and doesn't just copy the references """
         data1 = [[1, 2, 3, 0], [1, 0, 3, 0], [2, 4, 6, 0], [0, 0, 0, 0]]
         featureNames = ['one', 'two', 'three', 'four']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pointNames, featureNames=featureNames)
 
         dup1 = orig.copy()
-        dup2 = orig.copyAs(orig.getTypeString())
+        dup2 = orig.copy(to=orig.getTypeString())
 
         assert orig.isIdentical(dup1)
         assert dup1.isIdentical(orig)
@@ -211,7 +211,7 @@ class StructureDataSafe(StructureShared):
 
 
     def test_copy_Pempty(self):
-        """ test copyAs() produces the correct outputs when given an point empty object """
+        """ test copy() produces the correct outputs when given an point empty object """
         data = [[], []]
         data = numpy.array(data).T
 
@@ -221,41 +221,41 @@ class StructureDataSafe(StructureShared):
         matixObj = createData(returnType="Matrix", data=data)
         dataframeObj = createData(returnType="DataFrame", data=data)
 
-        copySparse = orig.copyAs(format='Sparse')
+        copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
 
-        copyList = orig.copyAs(format='List')
+        copyList = orig.copy(to='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
 
-        copyMatrix = orig.copyAs(format='Matrix')
+        copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
 
-        copyDataFrame = orig.copyAs(format='DataFrame')
+        copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.isIdentical(copyDataFrame)
         assert dataframeObj.isIdentical(copyDataFrame)
 
-        pyList = orig.copyAs(format='python list')
+        pyList = orig.copy(to='python list')
         assert pyList == []
 
-        numpyArray = orig.copyAs(format='numpy array')
+        numpyArray = orig.copy(to='numpy array')
         assert numpy.array_equal(numpyArray, data)
 
-        numpyMatrix = orig.copyAs(format='numpy matrix')
+        numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        listOfDict = orig.copyAs(format='list of dict')
+        listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
 
-        dictOfList = orig.copyAs(format='dict of list')
+        dictOfList = orig.copy(to='dict of list')
         assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
         assert all(val == [] for val in dictOfList.values())
 
 
     def test_copy_Fempty(self):
-        """ test copyAs() produces the correct outputs when given an feature empty object """
+        """ test copy() produces the correct outputs when given an feature empty object """
         data = [[], []]
         data = numpy.array(data)
 
@@ -265,39 +265,39 @@ class StructureDataSafe(StructureShared):
         matixObj = createData(returnType="Matrix", data=data)
         dataframeObj = createData(returnType="DataFrame", data=data)
 
-        copySparse = orig.copyAs(format='Sparse')
+        copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
 
-        copyList = orig.copyAs(format='List')
+        copyList = orig.copy(to='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
 
-        copyMatrix = orig.copyAs(format='Matrix')
+        copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
 
-        copyDataFrame = orig.copyAs(format='DataFrame')
+        copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.isIdentical(copyDataFrame)
         assert dataframeObj.isIdentical(copyDataFrame)
 
-        pyList = orig.copyAs(format='python list')
+        pyList = orig.copy(to='python list')
         assert pyList == [[], []]
 
-        numpyArray = orig.copyAs(format='numpy array')
+        numpyArray = orig.copy(to='numpy array')
         assert numpy.array_equal(numpyArray, data)
 
-        numpyMatrix = orig.copyAs(format='numpy matrix')
+        numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        listOfDict = orig.copyAs(format='list of dict')
+        listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
 
-        dictOfList = orig.copyAs(format='dict of list')
+        dictOfList = orig.copy(to='dict of list')
         assert dictOfList == {}
 
     def test_copy_Trueempty(self):
-        """ test copyAs() produces the correct outputs when given a point and feature empty object """
+        """ test copy() produces the correct outputs when given a point and feature empty object """
         data = numpy.empty(shape=(0, 0))
 
         orig = self.constructor(data)
@@ -306,39 +306,39 @@ class StructureDataSafe(StructureShared):
         matixObj = createData(returnType="Matrix", data=data)
         dataframeObj = createData(returnType="DataFrame", data=data)
 
-        copySparse = orig.copyAs(format='Sparse')
+        copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
 
-        copyList = orig.copyAs(format='List')
+        copyList = orig.copy(to='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
 
-        copyMatrix = orig.copyAs(format='Matrix')
+        copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
 
-        copyDataFrame = orig.copyAs(format='DataFrame')
+        copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.isIdentical(copyDataFrame)
         assert dataframeObj.isIdentical(copyDataFrame)
 
-        pyList = orig.copyAs(format='python list')
+        pyList = orig.copy(to='python list')
         assert pyList == []
 
-        numpyArray = orig.copyAs(format='numpy array')
+        numpyArray = orig.copy(to='numpy array')
         assert numpy.array_equal(numpyArray, data)
 
-        numpyMatrix = orig.copyAs(format='numpy matrix')
+        numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        listOfDict = orig.copyAs(format='list of dict')
+        listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
 
-        dictOfList = orig.copyAs(format='dict of list')
+        dictOfList = orig.copy(to='dict of list')
         assert dictOfList == {}
 
     def test_copy_rightTypeTrueCopy(self):
-        """ Test copyAs() will return all of the right type and do not show each other's modifications"""
+        """ Test copy() will return all of the right type and do not show each other's modifications"""
 
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -352,7 +352,7 @@ class StructureDataSafe(StructureShared):
         pointsShuffleIndices = [3, 1, 2, 0]
         featuresShuffleIndices = [1, 2, 0]
 
-        copySparse = orig.copyAs(format='Sparse')
+        copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
@@ -364,7 +364,7 @@ class StructureDataSafe(StructureShared):
         copySparse.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
-        copyList = orig.copyAs(format='List')
+        copyList = orig.copy(to='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
@@ -376,7 +376,7 @@ class StructureDataSafe(StructureShared):
         copyList.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
-        copyMatrix = orig.copyAs(format='Matrix')
+        copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
@@ -388,7 +388,7 @@ class StructureDataSafe(StructureShared):
         copyMatrix.features.sort(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
-        copyDataFrame = orig.copyAs(format='DataFrame')
+        copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
@@ -401,46 +401,46 @@ class StructureDataSafe(StructureShared):
         assert orig[0, 0] == 1
 
 
-        pyList = orig.copyAs(format='python list')
+        pyList = orig.copy(to='python list')
         assert type(pyList) == list
         pyList[0][0] = 5
         assert orig[0, 0] == 1
 
-        numpyArray = orig.copyAs(format='numpy array')
+        numpyArray = orig.copy(to='numpy array')
         assert type(numpyArray) == type(numpy.array([]))
         numpyArray[0, 0] = 5
         assert orig[0, 0] == 1
 
-        numpyMatrix = orig.copyAs(format='numpy matrix')
+        numpyMatrix = orig.copy(to='numpy matrix')
         assert type(numpyMatrix) == type(numpy.matrix([]))
         numpyMatrix[0, 0] = 5
         assert orig[0, 0] == 1
 
         if scipy:
-            spcsc = orig.copyAs(format='scipy csc')
+            spcsc = orig.copy(to='scipy csc')
             assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
             spcsc[0, 0] = 5
             assert orig[0, 0] == 1
 
-            spcsr = orig.copyAs(format='scipy csr')
+            spcsr = orig.copy(to='scipy csr')
             assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
             spcsr[0, 0] = 5
             assert orig[0, 0] == 1
 
-        listOfDict = orig.copyAs(format='list of dict')
+        listOfDict = orig.copy(to='list of dict')
         assert type(listOfDict) == list
         assert type(listOfDict[0]) == dict
         listOfDict[0]['one'] = 5
         assert orig[0, 0] == 1
 
-        dictOfList = orig.copyAs(format='dict of list')
+        dictOfList = orig.copy(to='dict of list')
         assert type(dictOfList) == dict
         assert type(dictOfList['one']) == list
         dictOfList['one'][0] = 5
         assert orig[0, 0] == 1
 
     def test_copy_rowsArePointsFalse(self):
-        """ Test copyAs() will return data in the right places when rowsArePoints is False"""
+        """ Test copy() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
         dataT = numpy.array(data).T
 
@@ -450,126 +450,126 @@ class StructureDataSafe(StructureShared):
 
         for retType in UML.data.available:
 
-            out = orig.copyAs(retType, rowsArePoints=False)
+            out = orig.copy(to=retType, rowsArePoints=False)
 
             desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
 
             assert out == desired
 
-        out = orig.copyAs(format='pythonlist', rowsArePoints=False)
+        out = orig.copy(to='pythonlist', rowsArePoints=False)
 
         assert out == dataT.tolist()
 
-        out = orig.copyAs(format='numpyarray', rowsArePoints=False)
+        out = orig.copy(to='numpyarray', rowsArePoints=False)
 
         assert numpy.array_equal(out, dataT)
 
-        out = orig.copyAs(format='numpymatrix', rowsArePoints=False)
+        out = orig.copy(to='numpymatrix', rowsArePoints=False)
 
         assert numpy.array_equal(out, dataT)
 
         if scipy:
 
-            out = orig.copyAs(format='scipycsr', rowsArePoints=False)
+            out = orig.copy(to='scipycsr', rowsArePoints=False)
 
             assert numpy.array_equal(out.toarray(), dataT)
 
-            out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+            out = orig.copy(to='scipycsc', rowsArePoints=False)
 
             assert numpy.array_equal(out.toarray(), dataT)
 
-        out = orig.copyAs(format='list of dict', rowsArePoints=False)
+        out = orig.copy(to='list of dict', rowsArePoints=False)
 
         desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
-        desired = desired.copyAs(format='list of dict')
+        desired = desired.copy(to='list of dict')
 
         assert out == desired
 
-        out = orig.copyAs(format='dict of list', rowsArePoints=False)
+        out = orig.copy(to='dict of list', rowsArePoints=False)
 
         desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
-        desired = desired.copyAs(format='dict of list')
+        desired = desired.copy(to='dict of list')
 
         assert out == desired
 
     def test_copy_outputAs1DWrongFormat(self):
-        """ Test copyAs will raise exception when given an unallowed format """
+        """ Test copy will raise exception when given an unallowed format """
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         try:
-            orig.copyAs("List", outputAs1D=True)
+            orig.copy(to="List", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
         try:
-            orig.copyAs("Matrix", outputAs1D=True)
+            orig.copy(to="Matrix", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
         try:
-            orig.copyAs("Sparse", outputAs1D=True)
+            orig.copy(to="Sparse", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
         try:
-            orig.copyAs("numpy matrix", outputAs1D=True)
+            orig.copy(to="numpy matrix", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
         if scipy:
             try:
-                orig.copyAs("scipy csr", outputAs1D=True)
+                orig.copy(to="scipy csr", outputAs1D=True)
                 assert False
             except InvalidArgumentValueCombination as ivc:
                 print(ivc)
             try:
-                orig.copyAs("scipy csc", outputAs1D=True)
+                orig.copy(to="scipy csc", outputAs1D=True)
                 assert False
             except InvalidArgumentValueCombination as ivc:
                 print(ivc)
         try:
-            orig.copyAs("list of dict", outputAs1D=True)
+            orig.copy(to="list of dict", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
         try:
-            orig.copyAs("dict of list", outputAs1D=True)
+            orig.copy(to="dict of list", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
             print(ivc)
 
     @raises(ImproperObjectAction)
     def test_copy_outputAs1DWrongShape(self):
-        """ Test copyAs will raise exception when given an unallowed shape """
+        """ Test copy will raise exception when given an unallowed shape """
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        orig.copyAs("numpy array", outputAs1D=True)
+        orig.copy(to="numpy array", outputAs1D=True)
 
 
-    def test_copyAs_outpuAs1DTrue(self):
-        """ Test copyAs() will return successfully output 1d for all allowable possibilities"""
+    def test_copy_outpuAs1DTrue(self):
+        """ Test copy() will return successfully output 1d for all allowable possibilities"""
         dataPv = [[1, 2, 0, 3]]
         dataFV = [[1], [2], [3], [0]]
         origPV = self.constructor(dataPv)
         origFV = self.constructor(dataFV)
 
-        outPV = origPV.copyAs('python list', outputAs1D=True)
+        outPV = origPV.copy(to='python list', outputAs1D=True)
         assert outPV == [1, 2, 0, 3]
 
-        outFV = origFV.copyAs('numpy array', outputAs1D=True)
+        outFV = origFV.copy(to='numpy array', outputAs1D=True)
         assert numpy.array_equal(outFV, numpy.array([1, 2, 3, 0]))
 
-    def test_copyAs_NameAndPath(self):
-        """ Test copyAs() will preserve name and path attributes"""
+    def test_copy_NameAndPath(self):
+        """ Test copy() will preserve name and path attributes"""
 
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
-        name = 'copyAsTestName'
+        name = 'copyTestName'
         orig = self.constructor(data)
         with tempfile.NamedTemporaryFile(suffix=".csv") as source:
             orig.writeFile(source.name, 'csv', includeNames=False)
@@ -581,25 +581,25 @@ class StructureDataSafe(StructureShared):
         assert orig.absolutePath == path
         assert orig.relativePath == os.path.relpath(path)
 
-        copySparse = orig.copyAs(format='Sparse')
+        copySparse = orig.copy(to='Sparse')
         assert copySparse.name == orig.name
         assert copySparse.path == orig.path
         assert copySparse.absolutePath == path
         assert copySparse.relativePath == os.path.relpath(path)
 
-        copyList = orig.copyAs(format='List')
+        copyList = orig.copy(to='List')
         assert copyList.name == orig.name
         assert copyList.path == orig.path
         assert copyList.absolutePath == path
         assert copyList.relativePath == os.path.relpath(path)
 
-        copyMatrix = orig.copyAs(format='Matrix')
+        copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.name == orig.name
         assert copyMatrix.path == orig.path
         assert copyMatrix.absolutePath == path
         assert copyMatrix.relativePath == os.path.relpath(path)
 
-        copyDataFrame = orig.copyAs(format='DataFrame')
+        copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.name == orig.name
         assert copyDataFrame.path == orig.path
         assert copyDataFrame.absolutePath == path
@@ -7764,7 +7764,7 @@ class StructureModifying(StructureShared):
 
         ret = toTest.elements.transform(passThrough)  # RET CHECK
         assert ret is None
-        retRaw = toTest.copyAs(format="python list")
+        retRaw = toTest.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
         assert [4, 5, 6] in retRaw
@@ -7792,7 +7792,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest.elements.transform(plusOne, preserveZeros=True)
-        retRaw = toTest.copyAs(format="python list")
+        retRaw = toTest.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
         assert [0, 6, 7] in retRaw
@@ -7804,7 +7804,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest.elements.transform(plusOneOnlyEven, skipNoneReturnValues=True)
-        retRaw = toTest.copyAs(format="python list")
+        retRaw = toTest.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
         assert [5, 5, 7] in retRaw
@@ -7818,7 +7818,7 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
         toTest.elements.transform(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
-        retRaw = toTest.copyAs(format="python list")
+        retRaw = toTest.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
         assert [4, 5, 7] in retRaw

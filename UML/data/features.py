@@ -268,7 +268,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy, Base.copyAs
+        Base.copy, Base.copy
 
         Examples
         --------
@@ -991,7 +991,7 @@ class Features(object):
         to make a copy in order to modify any specific data.
 
         >>> def transformMiddlePoint(ft):
-        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
         >>> data = UML.ones('Matrix', 3, 5)
@@ -1063,7 +1063,7 @@ class Features(object):
         a copy is necessary to modify any specific data.
 
         >>> def changeMiddlePoint(ft):
-        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
         >>> data = UML.ones('Matrix', 3, 5)

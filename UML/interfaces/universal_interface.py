@@ -322,7 +322,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # Get set of unique class labels
                 labelVector = trainY.copy()
                 labelVector.transpose(useLog=False)
-                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelVectorToList = labelVector.copy(to="python list")[0]
                 labelSet = list(set(labelVectorToList))
 
                 # For each class label in the set of labels:  convert the true
@@ -353,7 +353,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # 2-combinations of class labels
                 labelVector = trainX.features.copy([trainY])
                 labelVector.transpose(useLog=False)
-                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelVectorToList = labelVector.copy(to="python list")[0]
                 labelSet = list(set(labelVectorToList))
                 labelPairs = generateAllPairs(labelSet)
 
@@ -1909,8 +1909,8 @@ class TrainedLearners(TrainedLearner):
 
                 getWinningPredictionIndices = rawPredictions.points.calculate(
                     extractWinningPredictionIndex)
-                winningPredictionIndices = getWinningPredictionIndices.copyAs(
-                    format="python list")
+                winningPredictionIndices = getWinningPredictionIndices.copy(
+                    to="python list")
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
                     winningLabels.append([self.labelSet[int(winningIndex)]])
@@ -1922,7 +1922,7 @@ class TrainedLearners(TrainedLearner):
                 #construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 indexToLabel = rawPredictions.features.getNames()
                 tempResultsList = []
                 for row in predictionMatrix:
@@ -1945,7 +1945,7 @@ class TrainedLearners(TrainedLearner):
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
                 featureNamesItoN = rawPredictions.features.getNames()
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)
@@ -1974,7 +1974,7 @@ class TrainedLearners(TrainedLearner):
                                                       'label', useLog)
                 # put predictions into table of predictions
                 if rawPredictions is None:
-                    rawPredictions = partialResults.copyAs(format="List")
+                    rawPredictions = partialResults.copy(to="List")
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
                     partialResults.features.setName(0, predictionName)
@@ -1990,7 +1990,7 @@ class TrainedLearners(TrainedLearner):
                 # construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 tempResultsList = []
                 for row in predictionMatrix:
                     scores = countWins(row)
@@ -2007,7 +2007,7 @@ class TrainedLearners(TrainedLearner):
                 colHeaders = sorted([str(i) for i in self.labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)

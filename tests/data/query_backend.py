@@ -2068,7 +2068,7 @@ class QueryBackend(DataTestObject):
             assert startSize == 0
 
             randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
-            raw = randGenerated.copyAs('pythonlist')
+            raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process
@@ -2091,7 +2091,7 @@ class QueryBackend(DataTestObject):
             assert startSize == 0
 
             randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
-            raw = randGenerated.copyAs('pythonlist')
+            raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process
@@ -2115,7 +2115,7 @@ class QueryBackend(DataTestObject):
             assert startSize == 0
 
             randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
-            raw = randGenerated.copyAs('pythonlist')
+            raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process

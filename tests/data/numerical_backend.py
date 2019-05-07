@@ -504,8 +504,8 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
 def makeAllData(constructor, rhsCons, n, sparsity):
     randomlf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
     randomrf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
-    lhsf = randomlf.copyAs("numpymatrix")
-    rhsf = randomrf.copyAs("numpymatrix")
+    lhsf = randomlf.copy(to="numpymatrix")
+    rhsf = randomrf.copy(to="numpymatrix")
     lhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
     rhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
 
@@ -1372,8 +1372,8 @@ class NumericalModifying(DataTestObject):
 
             randomlf = UML.createRandomData('Matrix', n, n, .2)
             randomrf = UML.createRandomData('Matrix', n, n, .2)
-            lhsf = randomlf.copyAs("numpymatrix")
-            rhsf = randomrf.copyAs("numpymatrix")
+            lhsf = randomlf.copy(to="numpymatrix")
+            rhsf = randomrf.copy(to="numpymatrix")
             lhsi = numpy.matrix(numpy.ones((n, n)))
             rhsi = numpy.matrix(numpy.ones((n, n)))
 

@@ -553,7 +553,7 @@ class HighLevelDataSafe(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         ret = toTest.elements.calculate(passThrough)
-        retRaw = ret.copyAs(format="python list")
+        retRaw = ret.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
         assert [4, 5, 6] in retRaw
@@ -565,7 +565,7 @@ class HighLevelDataSafe(DataTestObject):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
         ret = toTest.elements.calculate(plusOne, preserveZeros=True)
-        retRaw = ret.copyAs(format="python list")
+        retRaw = ret.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
         assert [0, 6, 7] in retRaw
@@ -577,7 +577,7 @@ class HighLevelDataSafe(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         ret = toTest.elements.calculate(plusOneOnlyEven, skipNoneReturnValues=True)
-        retRaw = ret.copyAs(format="python list")
+        retRaw = ret.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
         assert [5, 5, 7] in retRaw
@@ -591,7 +591,7 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.elements.calculate(plusOneOnlyEven, points='4', features=[1, 'three'],
                                              skipNoneReturnValues=True)
-        retRaw = ret.copyAs(format="python list")
+        retRaw = ret.copy(to="python list")
 
         assert [5, 7] in retRaw
 

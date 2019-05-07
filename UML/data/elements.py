@@ -648,7 +648,7 @@ class Elements(object):
             features = numpy.array(features)
         else:
             features = numpy.array(range(len(self._source.features)))
-        toCalculate = self._source.copyAs('numpyarray')
+        toCalculate = self._source.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:
