@@ -29,6 +29,7 @@ import UML
 from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
+from UML.exceptions import ImproperObjectAction
 from UML.exceptions import FileFormatException
 from UML.data import Base
 from UML.data.dataHelpers import isAllowedSingleElement
@@ -2707,6 +2708,85 @@ def generateAllPairs(items):
     return pairs
 
 
+class CrossValidationResults():
+    """
+    Container for cross-validation results.
+    """
+    def __init__(self, results, performanceFunction, numFolds):
+        self.results = results
+        self.performanceFunction = performanceFunction
+        self.numFolds = numFolds
+        self._bestArguments = None
+        self._bestScore = None
+
+    def __str__(self):
+        return str(self.results)
+
+    def __repr__(self):
+        ret = "CrossValidationResults({}, {}, {})"
+        ret = ret.format(self.results, self.performanceFunction, self.numFolds)
+        return ret
+
+    @property
+    def bestArguments(self):
+        """
+        The best argument based on the performanceFunction.
+        """
+        if self._bestArguments is not None:
+            return self._bestArguments
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestArguments
+
+    @property
+    def bestScore(self):
+        """
+        The best score based on the performanceFunction.
+        """
+        if self._bestScore is not None:
+            return self._bestScore
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestScore
+
+    def _bestArgumentsAndScore(self):
+        """
+        The best argument and score based on the performanceFunction.
+        """
+        detected = UML.calculate.detectBestResult(self.performanceFunction)
+        if detected == 'max':
+            maximumIsBest = True
+        elif detected == 'min':
+            maximumIsBest = False
+        else:
+            msg = "Unable to automatically determine whether maximal or "
+            msg += "minimal scores are considered optimal for the the "
+            msg += "given performanceFunction. "
+            msg += "By adding an attribute named 'optimal' to "
+            msg += "performanceFunction with either the value 'min' or 'max' "
+            msg += "depending on whether minimum or maximum returned values "
+            msg += "are associated with correctness, this error should be "
+            msg += "avoided."
+
+        bestArgumentAndScoreTuple = None
+        for curResultTuple in self.results:
+            _, curScore = curResultTuple
+            #if curArgument is the first or best we've seen:
+            #store its details in bestArgumentAndScoreTuple
+            if bestArgumentAndScoreTuple is None:
+                bestArgumentAndScoreTuple = curResultTuple
+            else:
+                if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+                if (not maximumIsBest
+                        and curScore < bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+
+        return bestArgumentAndScoreTuple
+
+
 def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
@@ -2833,7 +2913,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
                   performanceFunction, performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
-    return performanceOfEachCombination
+    return CrossValidationResults(performanceOfEachCombination,
+                                  performanceFunction, folds)
 
 
 def makeFoldIterator(dataList, folds):
@@ -2936,6 +3017,28 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
+class CV(object):
+    def __init__(self, argumentList):
+        try:
+            self.argumentTuple = tuple(argumentList)
+        except TypeError:
+            msg = "argumentList must be iterable."
+
+    def __getitem__(self, key):
+        return self.argumentTuple[key]
+
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
+    def __len__(self):
+        return len(self.argumentTuple)
+
+    def __str__(self):
+        return str(self.argumentTuple)
+
+    def __repr__(self):
+        return "CV(" + str(list(self.argumentTuple)) + ")"
+
 class ArgumentIterator:
     """
     Constructor takes a dict mapping strings to tuples.
@@ -2968,9 +3071,9 @@ class ArgumentIterator:
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
                 try:
-                    if isinstance(rawArgumentInput[key], tuple):
+                    if isinstance(rawArgumentInput[key], CV):
                         self.numPermutations *= len(rawArgumentInput[key])
-                except TypeError: # taking len of non tuple
+                except TypeError: # taking len of non CV object
                     pass #numPermutations not increased
             self.permutationsList = _buildArgPermutationsList([], {}, 0,
                                                               rawArgumentInput)
@@ -3036,7 +3139,7 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
         curValues = rawArgInput[curKey]
 
         try:
-            if not isinstance(curValues, tuple):
+            if not isinstance(curValues, CV):
                 raise TypeError()
             # if there are multiple values, add one key-value pair to the
             # the current dict, make recursive call to build the rest of the

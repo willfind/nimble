@@ -128,14 +128,14 @@ def test_trainAndTest():
 
     #with multiple values for one argument for the algorithm
     runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=(1, 2), numFolds=3)
+                            fractionIncorrect, k=UML.CV([1, 2]), numFolds=3)
     assert isinstance(runError, float)
 
     #with small data set
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2]]
     trainObj1 = createData('Matrix', data=data1, featureNames=variables)
     runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=(1, 2), numFolds=3)
+                            fractionIncorrect, k=UML.CV([1, 2]), numFolds=3)
     assert isinstance(runError, float)
 
 
@@ -405,13 +405,13 @@ def test_trainFunctions_cv_triggered_errors():
     learner = 'Custom.KNNClassifier'
     # no performanceFunction (only train and trainAndApply; required in Test functions)
     try:
-        UML.train(learner, trainObjData, trainObjLabels, k=(1,3))
+        UML.train(learner, trainObjData, trainObjLabels, k=UML.CV([1, 3]))
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "performanceFunction" in str(iavc)
     try:
         UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                          k=(1,3))
+                          k=UML.CV([1, 3]))
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "performanceFunction" in str(iavc)
@@ -419,20 +419,20 @@ def test_trainFunctions_cv_triggered_errors():
     # numFolds too large
     try:
         UML.train(learner, trainObjData, trainObjLabels,
-                  performanceFunction=fractionIncorrect, k=(1,3), numFolds=11)
+                  performanceFunction=fractionIncorrect, k=UML.CV([1, 3]), numFolds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "numFolds" in str(iavc)
     try:
         UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                          performanceFunction=fractionIncorrect, k=(1,3), numFolds=11)
+                          performanceFunction=fractionIncorrect, k=UML.CV([1, 3]), numFolds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "numFolds" in str(iavc)
     try:
         UML.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
                          testObjLabels, performanceFunction=fractionIncorrect,
-                         k=(1,3), numFolds=11)
+                         k=UML.CV([1, 3]), numFolds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "numFolds" in str(iavc)
@@ -440,7 +440,7 @@ def test_trainFunctions_cv_triggered_errors():
         # training error
         UML.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
                                        performanceFunction=fractionIncorrect,
-                                       k=(1,3), numFolds=11)
+                                       k=UML.CV([1, 3]), numFolds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "numFolds" in str(iavc)
@@ -453,7 +453,6 @@ def test_trainFunctions_cv_triggered_errors():
     except InvalidArgumentValue as iavc:
         # different exception since this triggers crossValidation directly
         assert "folds" in str(iavc)
-
 
 
 def test_frontend_CV_triggering():
@@ -477,13 +476,13 @@ def test_frontend_CV_triggering():
     try:
         try:
             train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                  performanceFunction=fractionIncorrect, k=(1, 2), numFolds=5)
+                  performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), numFolds=5)
         except CVWasCalledException:
             pass
 
         try:
             trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                          performanceFunction=fractionIncorrect, testX=trainObj, k=(1, 2),
+                          performanceFunction=fractionIncorrect, testX=trainObj, k=UML.CV([1, 2]),
                           numFolds=5)
         except CVWasCalledException:
             pass
@@ -491,7 +490,7 @@ def test_frontend_CV_triggering():
         try:
             trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=(1, 2), numFolds=5)
+                         k=UML.CV([1, 2]), numFolds=5)
         except CVWasCalledException:
             pass
     except Exception:
@@ -502,17 +501,20 @@ def test_frontend_CV_triggering():
 
     # demonstrate some succesful calls
     tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-               performanceFunction=fractionIncorrect, k=(1, 2), numFolds=5)
+               performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), numFolds=5)
     assert hasattr(tl, 'apply')
+    assert tl.crossValidation is not None
+    assert tl.crossValidation.performanceFunction == fractionIncorrect
+    assert tl.crossValidation.numFolds == 5
 
     result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                           testX=trainObj, performanceFunction=fractionIncorrect, k=(1, 2),
+                           testX=trainObj, performanceFunction=fractionIncorrect, k=UML.CV([1, 2]),
                            numFolds=5)
     assert isinstance(result, UML.data.Matrix)
 
     error = trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=(1, 2), numFolds=5)
+                         k=UML.CV([1, 2]), numFolds=5)
     assert isinstance(error, float)
 
 
@@ -527,14 +529,14 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     # Default value of performanceFunction is None, which since we're doing
     # CV should fail
     try:
-        tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=(1, 2))
+        tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=UML.CV([1, 2]))
         assert False
     except InvalidArgumentValueCombination:
         pass
 
     try:
         result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                               testX=trainObj, k=(1, 2))
+                               testX=trainObj, k=UML.CV([1, 2]))
         assert False
     except InvalidArgumentValueCombination:
         pass
@@ -583,24 +585,24 @@ def test_trainAndTestOnTrainingData_logCount_noCV():
 @logCountAssertionFactory(2)
 def test_train_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=(1,2))
+        return UML.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=UML.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndApply_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=(1,2))
+        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=UML.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndTest_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=(1,2))
+        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=UML.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndTestOnTrainingData_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=(1,2))
+        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=UML.CV([1, 2]))
     back_logCount(wrapped)
 
