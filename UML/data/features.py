@@ -268,7 +268,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy, Base.copy
+        Base.copy
 
         Examples
         --------

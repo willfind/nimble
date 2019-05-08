@@ -266,7 +266,7 @@ class Points(object):
 
         See Also
         --------
-        Base.copy, Base.copy
+        Base.copy
 
         Examples
         --------
