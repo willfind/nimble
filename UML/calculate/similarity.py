@@ -2,15 +2,15 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.calculate import fractionIncorrect
 from UML.calculate import varianceFractionRemaining
 
 
 def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, UML.data.Base):
-        msg = "predictedValues must be derived class of UML.data.Base"
+    if not isinstance(predictedValues, nimble.data.Base):
+        msg = "predictedValues must be derived class of nimble.data.Base"
         raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
         msg = "predictedValues must be labels only; this has more than "
@@ -20,8 +20,8 @@ def _validatePredictedAsLabels(predictedValues):
 
 def cosineSimilarity(knownValues, predictedValues):
     _validatePredictedAsLabels(predictedValues)
-    if not isinstance(knownValues, UML.data.Base):
-        msg = "knownValues must be derived class of UML.data.Base"
+    if not isinstance(knownValues, nimble.data.Base):
+        msg = "knownValues must be derived class of nimble.data.Base"
         raise InvalidArgumentType(msg)
 
     known = knownValues.copyAs(format="numpy array").flatten()
@@ -102,7 +102,7 @@ def rSquared(knownValues, predictedValues):
     """
     Calculate the r-squared (or coefficient of determination) of the
     predictedValues given the knownValues. This will be equal to 1 -
-    UML.calculate.varianceFractionRemaining() of the same inputs.
+    nimble.calculate.varianceFractionRemaining() of the same inputs.
 
     """
     return 1.0 - varianceFractionRemaining(knownValues, predictedValues)

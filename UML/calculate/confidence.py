@@ -3,9 +3,10 @@ import math
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import ImproperObjectAction, PackageException
-scipy = UML.importModule('scipy.stats')
+
+scipy = nimble.importModule('scipy.stats')
 
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
@@ -56,6 +57,6 @@ def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
     rawErrors = known.copyAs('numpyarray') - predicted.copyAs('numpyarray')
     rawErrors = numpy.absolute(rawErrors)
-    errors = UML.createData("Matrix", rawErrors)
+    errors = nimble.createData("Matrix", rawErrors)
 
     return confidenceIntervalHelper(errors, None, confidence)

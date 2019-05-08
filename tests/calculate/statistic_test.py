@@ -1,11 +1,11 @@
 """
-Tests for UML.calculate.statistics
+Tests for nimble.calculate.statistics
 """
 
-# Many of the functions in UML.calculate.statitic are tested not directly
+# Many of the functions in nimble.calculate.statitic are tested not directly
 # in this module, but through the functions that call them: featureReport
-# in UML.logger.tests.data_set_analyzier_tests and in the data
-# hierarchy in UML.data.tests.query_backend
+# in nimble.logger.tests.data_set_analyzier_tests and in the data
+# hierarchy in nimble.data.tests.query_backend
 
 
 from __future__ import absolute_import
@@ -20,7 +20,7 @@ from six.moves import range
 from nose.tools import raises
 from nose.tools import assert_almost_equal
 
-import UML
+import UML as nimble
 from UML import createData
 from UML.calculate import standardDeviation
 from UML.calculate import quartiles
@@ -58,7 +58,7 @@ testDataTypes = ['List', 'DataFrame']#'Matrix','Sparse'
 @noLogEntryExpected
 def testProportionMissing():
     raw = [[1, 2, np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.proportionMissing
+    func = nimble.calculate.statistic.proportionMissing
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -76,7 +76,7 @@ def testProportionMissing():
 @noLogEntryExpected
 def testProportionZero():
     raw = [[1, 2, np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.proportionZero
+    func = nimble.calculate.statistic.proportionZero
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -93,7 +93,7 @@ def testProportionZero():
 @noLogEntryExpected
 def testMinimum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.minimum
+    func = nimble.calculate.statistic.minimum
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -110,7 +110,7 @@ def testMinimum():
 @noLogEntryExpected
 def testMaximum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.maximum
+    func = nimble.calculate.statistic.maximum
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -127,7 +127,7 @@ def testMaximum():
 @noLogEntryExpected
 def testMean():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.mean
+    func = nimble.calculate.statistic.mean
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -145,7 +145,7 @@ def testMean():
 @noLogEntryExpected
 def testMedian():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.median
+    func = nimble.calculate.statistic.median
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -162,7 +162,7 @@ def testMedian():
 @noLogEntryExpected
 def testStandardDeviation():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
-    func = UML.calculate.statistic.standardDeviation
+    func = nimble.calculate.statistic.standardDeviation
     for dataType in testDataTypes:
         objl = createData(dataType, raw, useLog=False)
 
@@ -180,7 +180,7 @@ def testStandardDeviation():
 @noLogEntryExpected
 def testUniqueCount():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
-    func = UML.calculate.statistic.uniqueCount
+    func = nimble.calculate.statistic.uniqueCount
     for dataType in ['List', 'DataFrame']:
         objl = createData(dataType, raw, useLog=False)
 
@@ -197,7 +197,7 @@ def testUniqueCount():
 
 def testFeatureType():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
-    func = UML.calculate.statistic.featureType
+    func = nimble.calculate.statistic.featureType
     for dataType in ['List', 'DataFrame']:
         objl = createData(dataType, raw)
 
@@ -214,7 +214,7 @@ def testFeatureType():
 
 def testQuartiles():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [2, 2, 3], [10, 10, 10]]
-    func = UML.calculate.statistic.quartiles
+    func = nimble.calculate.statistic.quartiles
     for dataType in testDataTypes:
         objl = createData(dataType, raw)
 
@@ -232,14 +232,14 @@ def testQuartiles():
 
 def testIsMissing():
     raw = [1, 2.0, 3, np.nan, None, 'a']
-    func = UML.calculate.statistic._isMissing
+    func = nimble.calculate.statistic._isMissing
     ret = [func(i) for i in raw]
     retCorrect = [False, False, False, True, True, False]
     assert all([ret[i] == retCorrect[i] for i in range(len(raw))])
 
 
 def testIsNumericalFeatureGuesser():
-    func = UML.calculate.statistic._isNumericalFeatureGuesser
+    func = nimble.calculate.statistic._isNumericalFeatureGuesser
     raw = [1, 2.0, 3, np.nan, None]
     assert func(raw)
     raw = [1, 2.0, 3, np.nan, None, 'a']
@@ -249,7 +249,7 @@ def testIsNumericalFeatureGuesser():
 
 
 def testIsNumericalPoint():
-    func = UML.calculate.statistic._isNumericalPoint
+    func = nimble.calculate.statistic._isNumericalPoint
     assert func(1) and func(2.0) and func(3)
     assert ~func(np.nan)
     assert ~func(None)
@@ -262,40 +262,40 @@ def testIsNumericalPoint():
 @raises(PackageException)
 @mock.patch('UML.calculate.statistic.scipy', new=None)
 def test_residuals_exception_sciPyNotInstalled():
-    pred = UML.createData("Matrix", [[2],[3],[4]])
-    control = UML.createData("Matrix", [[2],[3],[4]])
-    UML.calculate.residuals(pred, control)
+    pred = nimble.createData("Matrix", [[2],[3],[4]])
+    control = nimble.createData("Matrix", [[2],[3],[4]])
+    nimble.calculate.residuals(pred, control)
 
 # L not uml object
 @raises(InvalidArgumentType)
-def test_residuals_exception_toPredictNotUML():
+def test_residuals_exception_toPredictNotNimble():
     pred = [[1],[2],[3]]
-    control = UML.createData("Matrix", [[2],[3],[4]])
-    UML.calculate.residuals(pred, control)
+    control = nimble.createData("Matrix", [[2],[3],[4]])
+    nimble.calculate.residuals(pred, control)
 
 # R not uml object
 @raises(InvalidArgumentType)
-def test_residuals_exception_controlVarsNotUML():
-    pred = UML.createData("Matrix", [[2],[3],[4]])
+def test_residuals_exception_controlVarsNotNimble():
+    pred = nimble.createData("Matrix", [[2],[3],[4]])
     control = [[1],[2],[3]]
-    UML.calculate.residuals(pred, control)
+    nimble.calculate.residuals(pred, control)
 
 # diff number of points
 @raises(InvalidArgumentValueCombination)
 def test_residauls_exception_differentNumberOfPoints():
-    pred = UML.createData("Matrix", [[2],[3],[4]])
-    control = UML.createData("Matrix", [[2],[3],[4],[5]])
-    UML.calculate.residuals(pred, control)
+    pred = nimble.createData("Matrix", [[2],[3],[4]])
+    control = nimble.createData("Matrix", [[2],[3],[4],[5]])
+    nimble.calculate.residuals(pred, control)
 
 # zero points or zero features
 def test_residuals_exception_zeroAxisOnParam():
-    predOrig = UML.createData("Matrix", [[2],[3],[4]])
-    controlOrig = UML.createData("Matrix", [[2,2],[3,3],[4,4]])
+    predOrig = nimble.createData("Matrix", [[2],[3],[4]])
+    controlOrig = nimble.createData("Matrix", [[2,2],[3,3],[4,4]])
 
     try:
         pred = predOrig.copy().points.extract(lambda x: False)
         control = controlOrig.copy().points.extract(lambda x: False)
-        UML.calculate.residuals(pred, control)
+        nimble.calculate.residuals(pred, control)
         assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
@@ -303,7 +303,7 @@ def test_residuals_exception_zeroAxisOnParam():
 
     try:
         pred = predOrig.copy().features.extract(lambda x: False)
-        UML.calculate.residuals(pred, controlOrig)
+        nimble.calculate.residuals(pred, controlOrig)
         assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
@@ -311,7 +311,7 @@ def test_residuals_exception_zeroAxisOnParam():
 
     try:
         control = controlOrig.copy().features.extract(lambda x: False)
-        UML.calculate.residuals(predOrig, control)
+        nimble.calculate.residuals(predOrig, control)
         assert False  # expected InvalidArgumentValue
     except InvalidArgumentValue as ae:
 #        print ae
@@ -321,15 +321,15 @@ def test_residuals_exception_zeroAxisOnParam():
 @noLogEntryExpected
 def test_residuals_matches_SKL():
     try:
-        UML.helpers.findBestInterface("scikitlearn")
+        nimble.helpers.findBestInterface("scikitlearn")
     except InvalidArgumentValue:
         return
 
     # with handmade data
-    pred = UML.createData("Matrix", [[0],[2],[4]], useLog=False)
-    control = UML.createData("Matrix", [[1],[2],[3]], useLog=False)
-    umlRet = UML.calculate.residuals(pred, control)
-    tl = UML.train("scikitlearn.LinearRegression", control, pred, useLog=False)
+    pred = nimble.createData("Matrix", [[0],[2],[4]], useLog=False)
+    control = nimble.createData("Matrix", [[1],[2],[3]], useLog=False)
+    umlRet = nimble.calculate.residuals(pred, control)
+    tl = nimble.train("scikitlearn.LinearRegression", control, pred, useLog=False)
     sklRet = pred - tl.apply(control, useLog=False)
 
     assert sklRet.isApproximatelyEqual(umlRet)
@@ -337,8 +337,8 @@ def test_residuals_matches_SKL():
 
     # with generated data
     (control, pred), (ignore1,ignore2) = generateRegressionData(2, 10, 3)
-    umlRet = UML.calculate.residuals(pred, control)
-    tl = UML.train("scikitlearn.LinearRegression", control, pred, useLog=False)
+    umlRet = nimble.calculate.residuals(pred, control)
+    tl = nimble.train("scikitlearn.LinearRegression", control, pred, useLog=False)
     sklRet = pred - tl.apply(control, useLog=False)
 
     assert sklRet.isApproximatelyEqual(umlRet)

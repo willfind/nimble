@@ -11,7 +11,7 @@ import math
 import numpy
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from UML.randomness import numpyRandom
 
@@ -211,13 +211,13 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
 
 
 def _generateAllZeros(length):
-    return UML.createData("List", numpy.zeros([length, 1], dtype=int),
-                          useLog=False)
+    return nimble.createData("List", numpy.zeros([length, 1], dtype=int),
+                             useLog=False)
 
 
 def _generateAllOnes(length):
-    return UML.createData("List", numpy.ones([length, 1], dtype=int),
-                          useLog=False)
+    return nimble.createData("List", numpy.ones([length, 1], dtype=int),
+                             useLog=False)
 
 
 def _generateMixedRandom(length):
@@ -226,7 +226,7 @@ def _generateMixedRandom(length):
         # we don't want all zeros or all ones
         if numpy.any(correct) and not numpy.all(correct):
             break
-    correct = UML.createData(returnType="List", data=correct, useLog=False)
+    correct = nimble.createData(returnType="List", data=correct, useLog=False)
     return correct
 
 
@@ -245,8 +245,8 @@ def _generatePredicted(knowns, predictionType):
     # Labels and the score for that label (aka 'bestScores')
     elif predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
-        scores = UML.createData(returnType="List", data=scores,
-                                featureNames=['LabelScore'], useLog=False)
+        scores = nimble.createData(returnType="List", data=scores,
+                                   featureNames=['LabelScore'], useLog=False)
         workingCopy.features.add(scores, useLog=False)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
@@ -264,8 +264,8 @@ def _generatePredicted(knowns, predictionType):
                 currConfidences[1] = winner
             dataToFill.append(currConfidences)
 
-        scores = UML.createData(returnType="List", data=dataToFill,
-                                featureNames=['0', '1'], useLog=False)
+        scores = nimble.createData(returnType="List", data=dataToFill,
+                                   featureNames=['0', '1'], useLog=False)
         return scores
 
 

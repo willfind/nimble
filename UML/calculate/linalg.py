@@ -1,5 +1,5 @@
 """
-Linear algebra functions that can be used with UML base objects.
+Linear algebra functions that can be used with nimble base objects.
 """
 
 from __future__ import absolute_import
@@ -7,31 +7,31 @@ import re
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, \
     InvalidArgumentValue, \
     InvalidArgumentValueCombination
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 
 def inverse(aObj):
     """
-    Compute the (multiplicative) inverse of a UML Base object.
+    Compute the (multiplicative) inverse of a nimble Base object.
 
     Parameters
     ----------
-    aObj : UML Base object.
+    aObj : nimble Base object.
         Square object to be inverted.
 
     Returns
     -------
-    aInv : UML Base object.
+    aInv : nimble Base object.
         Inverse of the object `aObj`
 
     Raises
     ------
     InvalidArgumentType:
-        If `aObj` is not a UML Base Object.
+        If `aObj` is not a nimble Base Object.
         If `aObj` elements types are not supported.
 
     InvalidArgumentValue:
@@ -40,9 +40,9 @@ def inverse(aObj):
 
     Examples
     --------
-    >>> from UML.calculate import inverse
+    >>> from nimble.calculate import inverse
     >>> raw = [[1, 2], [3, 4]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> data
     Matrix(
     [[1.000 2.000]
@@ -57,9 +57,9 @@ def inverse(aObj):
     if scipy is None:
         msg = "scipy must be installed in order to use the inverse function."
         raise PackageException(msg)
-    if not isinstance(aObj, UML.data.Base):
+    if not isinstance(aObj, nimble.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of UML.data.Base")
+            "Object must be derived class of nimble.data.Base")
     if not len(aObj.points) and not len(aObj.features):
         return aObj.copy()
     if len(aObj.points) != len(aObj.features):
@@ -95,7 +95,7 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
 
-    return UML.createData(aObj.getTypeString(), invData, useLog=False)
+    return nimble.createData(aObj.getTypeString(), invData, useLog=False)
     # invObj.transpose()
     # invObj.data = invData
     # if aObj.getTypeString() != invObj.getTypeString:
@@ -105,14 +105,14 @@ def inverse(aObj):
 
 def pseudoInverse(aObj, method='svd'):
     """
-    Compute the (Moore-Penrose) pseudo-inverse of a UML Base object.
+    Compute the (Moore-Penrose) pseudo-inverse of a nimble Base object.
 
     Calculate a generalized inverse of a matrix using singular-value
     decomposition (default) or least squares solver.
 
     Parameters
     ----------
-    aObj : UML Base object.
+    aObj : nimble Base object.
         Square object to be pseudo-inverted.
     method : str.
         - 'svd'. Uses singular-value decomposition by default.
@@ -120,13 +120,13 @@ def pseudoInverse(aObj, method='svd'):
 
     Returns
     -------
-    aPInv : UML Base object.
+    aPInv : nimble Base object.
         Pseudo-inverse of the object `aObj`
 
     Raises
     ------
     InvalidArgumentType:
-        If `aObj` is not a UML Base Object.
+        If `aObj` is not a nimble Base Object.
         If `aObj` elements types are not supported.
 
     InvalidArgumentValue:
@@ -134,8 +134,8 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> from UML.calculate import pseudoInverse
-    >>> data = UML.createRandomData('Matrix',
+    >>> from nimble.calculate import pseudoInverse
+    >>> data = nimble.createRandomData('Matrix',
     >>>                              numPoints=4,
     >>>                              numFeatures=3,
     >>>                              sparsity=0.5)
@@ -156,9 +156,9 @@ def pseudoInverse(aObj, method='svd'):
     if scipy is None:
         msg = "scipy must be installed in order to use the pseudoInverse function."
         raise PackageException(msg)
-    if not isinstance(aObj, UML.data.Base):
+    if not isinstance(aObj, nimble.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of UML.data.Base.")
+            "Object must be derived class of nimble.data.Base.")
     if not len(aObj.points) and not len(aObj.features):
         return aObj
     if method not in ['least-squares', 'svd']:
@@ -191,20 +191,20 @@ def solve(aObj, bObj):
 
     Parameters
     ----------
-    aObj : (M, M) UML Base object.
+    aObj : (M, M) nimble Base object.
         Square object.
-    bObj : (M) UML Base object.
-        Right-hand side UML Base object in A x = b.
+    bObj : (M) nimble Base object.
+        Right-hand side nimble Base object in A x = b.
 
     Returns
     -------
-    xObj : (M) UML Base object.
+    xObj : (M) nimble Base object.
         Solution to the system A x = b. Shape of `xObj` matches `bObj`.
 
     Raises
     ------
     InvalidArgumentType:
-        If `aObj` or `bObj` is not a UML Base Object.
+        If `aObj` or `bObj` is not a nimble Base Object.
         If `aObj` elements types are not supported.
 
     InvalidArgumentValue:
@@ -216,11 +216,11 @@ def solve(aObj, bObj):
 
     Examples
     --------
-    >>> from UML.calculate import solve
+    >>> from nimble.calculate import solve
     >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
-    >>> aObj = UML.createData('Matrix', aData)
+    >>> aObj = nimble.createData('Matrix', aData)
     >>> bData = [2,4,-1]
-    >>> bObj = UML.createData('Matrix', bData)
+    >>> bObj = nimble.createData('Matrix', bData)
     >>> aObj
     Matrix(
         [[3.000 2.000  0.000]
@@ -254,7 +254,7 @@ def solve(aObj, bObj):
         solution = scipy.linalg.solve(aObj.data, bObj.data)
         solution = solution.T
 
-    elif isinstance(aObj, UML.data.sparse.SparseView):
+    elif isinstance(aObj, nimble.data.sparse.SparseView):
         aCopy = aObj.copy()
         solution = scipy.sparse.linalg.spsolve(aCopy.data,
                                                numpy.asarray(bObj.data))
@@ -265,7 +265,7 @@ def solve(aObj, bObj):
                                                numpy.asarray(bObj.data))
         solution = numpy.asmatrix(solution)
 
-    sol = UML.createData(aOriginalType, solution,
+    sol = nimble.createData(aOriginalType, solution,
                          featureNames=aObj.features.getNames(), useLog=False)
 
     return sol
@@ -282,20 +282,20 @@ def leastSquaresSolution(aObj, bObj):
 
     Parameters
     ----------
-    aObj : (M, N) UML Base object.
+    aObj : (M, N) nimble Base object.
         Left hand side object in A x = b.
-    bObj : (M) UML Base object.
-        Right-hand side UML Base object in A x = b. (1-D)
+    bObj : (M) nimble Base object.
+        Right-hand side nimble Base object in A x = b. (1-D)
 
     Returns
     -------
-    xObj : (N) UML Base object.
+    xObj : (N) nimble Base object.
         Least-squares solution.
 
     Raises
     ------
     InvalidArgumentType:
-        If `aObj` or `bObj` is not a UML Base Object.
+        If `aObj` or `bObj` is not a nimble Base Object.
         If `aObj` elements types are not supported.
 
     InvalidArgumentValue:
@@ -318,7 +318,7 @@ def leastSquaresSolution(aObj, bObj):
         solution = scipy.linalg.lstsq(aObj.data, bObj.data)
         solution = solution[0].T
 
-    elif isinstance(aObj, UML.data.sparse.SparseView):
+    elif isinstance(aObj, nimble.data.sparse.SparseView):
         aCopy = aObj.copy()
         solution = scipy.sparse.linalg.lsqr(aCopy.data,
                                             numpy.asarray(bObj.data))
@@ -329,7 +329,7 @@ def leastSquaresSolution(aObj, bObj):
                                             numpy.asarray(bObj.data))
         solution = numpy.asmatrix(solution[0])
 
-    sol = UML.createData(aOriginalType, solution,
+    sol = nimble.createData(aOriginalType, solution,
                          featureNames=aObj.features.getNames(), useLog=False)
     return sol
 
@@ -339,12 +339,14 @@ def _backendsolversValidation(aObj, bObj):
     if scipy is None:
         msg = "scipy must be installed in order to use the leastSquaresSolution function."
         raise PackageException(msg)
-    if not isinstance(aObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Left hand side object must be derived class of UML.data.Base.")
-    if not isinstance(bObj, UML.data.Base):
-        raise InvalidArgumentType(
-            "Right hand side object must be derived class of UML.data.Base.")
+    if not isinstance(aObj, nimble.data.Base):
+        msg = "Left hand side object must be derived class of "
+        msg += "nimble.data.Base."
+        raise InvalidArgumentType(msg)
+    if not isinstance(bObj, nimble.data.Base):
+        msg = "Right hand side object must be derived class of "
+        msg += "nimble.data.Base."
+        raise InvalidArgumentType(msg)
 
     if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")

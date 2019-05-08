@@ -1,5 +1,5 @@
 """
-Tests for the functions defined in UML.calculate.utility
+Tests for the functions defined in nimble.calculate.utility
 
 """
 
@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import numpy
 from nose.tools import *
 
-import UML
+import UML as nimble
 from UML.calculate import cosineSimilarity
 from UML.calculate import detectBestResult
 from UML.calculate import fractionCorrect
@@ -42,7 +42,7 @@ def test_detectBestResult_labels_inconsistentForDifferentKnowns():
             elif numpy.all(rawPred):
                 return 1
             else:
-                return UML.calculate.meanAbsoluteError(knowns, predicted)
+                return nimble.calculate.meanAbsoluteError(knowns, predicted)
         # case: knowns all ones
         elif numpy.all(rawKnowns):
             # case: predicted all wrong
@@ -52,9 +52,9 @@ def test_detectBestResult_labels_inconsistentForDifferentKnowns():
             elif numpy.all(rawPred):
                 return 1
             else:
-                return 1 - UML.calculate.meanAbsoluteError(knowns, predicted)
+                return 1 - nimble.calculate.meanAbsoluteError(knowns, predicted)
 
-        return UML.calculate.meanAbsoluteError(knowns, predicted)
+        return nimble.calculate.meanAbsoluteError(knowns, predicted)
 
     detectBestResult(foo)
 
@@ -67,7 +67,7 @@ def test_detectBestResult_labels_allcorrect_equals_allwrong():
 @raises(InvalidArgumentValue)
 def test_detectBestResult_labels_nonmonotonic_minmizer():
     def foo(knowns, predicted):
-        ret = UML.calculate.fractionIncorrect(knowns, predicted)
+        ret = nimble.calculate.fractionIncorrect(knowns, predicted)
         if ret > .25 and ret < .5:
             return .6
         if ret >= .5 and ret < .75:
@@ -83,7 +83,7 @@ def test_detectBestResult_labels_nonmonotonic_maxizer():
         if knowns == predicted:
             return 100
         else:
-            return UML.randomness.pythonRandom.randint(0, 20)
+            return nimble.randomness.pythonRandom.randint(0, 20)
 
     detectBestResult(foo)
 
