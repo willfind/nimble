@@ -6,15 +6,15 @@ from __future__ import absolute_import
 import numpy
 import six
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 
 def missing(value):
     """
     Determine if a value is missing.
 
-    Return True if UML considers the value to be missing. Missing values
-    in UML are None and (python or numpy) nan values.
+    Return True if nimble considers the value to be missing. Missing
+    values in nimble are None and (python or numpy) nan values.
 
     Parameters
     ----------
@@ -254,7 +254,7 @@ def anyValues(match):
     """
     Factory for functions which will determine if any values match.
 
-    The returned function is designed to input a UML data object and
+    The returned function is designed to input a nimble data object and
     output True if one or more values in that object contain a match,
     otherwise False.
 
@@ -281,7 +281,7 @@ def anyValues(match):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, -1]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyNegativeOne = anyValues(-1)
     >>> anyNegativeOne(data)
     True
@@ -289,7 +289,7 @@ def anyValues(match):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyLetterD = anyValues('D')
     >>> anyLetterD(data)
     False
@@ -303,7 +303,7 @@ def allValues(match):
     """
     Factory for functions which will determine if all values match.
 
-    The returned function is designed to input a UML data object and
+    The returned function is designed to input a nimble data object and
     output True if every value in that object is a match, otherwise
     False.
 
@@ -330,7 +330,7 @@ def allValues(match):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, 1]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allOne = allValues(1)
     >>> allOne(data)
     True
@@ -338,7 +338,7 @@ def allValues(match):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allLetterA = allValues('A')
     >>> allLetterA(data)
     False
@@ -353,12 +353,12 @@ def anyMissing(data):
     Determine if any values in the data are missing.
 
     Return True if one or more values in the data are considered to be
-    missing. Missing values in UML are None and (python or numpy) nan
+    missing. Missing values in nimble are None and (python or numpy) nan
     values.
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -373,14 +373,14 @@ def anyMissing(data):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, None, 1]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyMissing(data)
     True
 
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyMissing(data)
     False
     """
@@ -391,11 +391,11 @@ def allMissing(data):
     Determine if all values in the data are missing.
 
     Return True if every value in the data is considered to be missing.
-    Missing values in UML are None and (python or numpy) nan values.
+    Missing values in nimble are None and (python or numpy) nan values.
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -410,14 +410,14 @@ def allMissing(data):
     >>> raw = [[float('nan'), None, None],
     ...        [float('nan'), None, None],
     ...        [float('nan'), None, None]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allMissing(data)
     True
 
     >>> raw = [[float('nan'), None, None],
     ...        [float('nan'), 0, None],
     ...        [float('nan'), None, None]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allMissing(data)
     False
     """
@@ -432,7 +432,7 @@ def anyNumeric(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -447,14 +447,14 @@ def anyNumeric(data):
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyNumeric(data)
     True
 
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyNumeric(data)
     False
     """
@@ -469,7 +469,7 @@ def allNumeric(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -484,14 +484,14 @@ def allNumeric(data):
     >>> raw = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, float('nan')]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allNumeric(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, '?']]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allNumeric(data)
     False
     """
@@ -507,7 +507,7 @@ def anyNonNumeric(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -522,14 +522,14 @@ def anyNonNumeric(data):
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyNonNumeric(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyNonNumeric(data)
     False
     """
@@ -544,7 +544,7 @@ def allNonNumeric(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -559,14 +559,14 @@ def allNonNumeric(data):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allNonNumeric(data)
     True
 
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allNonNumeric(data)
     False
     """
@@ -581,7 +581,7 @@ def anyZero(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -596,14 +596,14 @@ def anyZero(data):
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyZero(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyZero(data)
     False
     """
@@ -618,7 +618,7 @@ def allZero(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -633,14 +633,14 @@ def allZero(data):
     >>> raw = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 0]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allZero(data)
     True
 
     >>> raw = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 1]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allZero(data)
     False
     """
@@ -655,7 +655,7 @@ def anyNonZero(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -670,14 +670,14 @@ def anyNonZero(data):
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyNonZero(data)
     True
 
     >>> raw = [[0, 0, 0.0],
     ...        [0, 0, 0.0],
     ...        [0, 0, 0.0]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyNonZero(data)
     False
     """
@@ -692,7 +692,7 @@ def allNonZero(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -707,14 +707,14 @@ def allNonZero(data):
     >>> raw = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', -3.0]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allNonZero(data)
     True
 
     >>> raw = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', 0.0]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allNonZero(data)
     False
     """
@@ -729,7 +729,7 @@ def anyPositive(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -744,14 +744,14 @@ def anyPositive(data):
     >>> raw = [[1, 'a', -1],
     ...        [1, 'b', -2],
     ...        [1, 'c', -3]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyPositive(data)
     True
 
     >>> raw = [[0, 'a', -1],
     ...        [0, 'b', -2],
     ...        [0, 'c', -3]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyPositive(data)
     False
     """
@@ -766,7 +766,7 @@ def allPositive(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -781,14 +781,14 @@ def allPositive(data):
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1.0, 2.0, 3.0]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allPositive(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [0.0, 2.0, 3.0]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allPositive(data)
     False
     """
@@ -803,7 +803,7 @@ def anyNegative(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -818,14 +818,14 @@ def anyNegative(data):
     >>> raw = [[0, 'a', -1],
     ...        [1, 'b', -2],
     ...        [2, 'c', -3]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyNegative(data)
     True
 
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', None],
     ...        [1, 'c', 3]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> anyNegative(data)
     False
     """
@@ -840,7 +840,7 @@ def allNegative(data):
 
     Parameters
     ----------
-    data : UML object
+    data : nimble Base object
 
     Returns
     -------
@@ -855,14 +855,14 @@ def allNegative(data):
     >>> raw = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [-1.0, -2.0, -3.0]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allNegative(data)
     True
 
     >>> raw = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [0.0, -2.0, -3.0]]
-    >>> data = UML.createData('List', raw)
+    >>> data = nimble.createData('List', raw)
     >>> allNegative(data)
     False
     """

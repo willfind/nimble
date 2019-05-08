@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import UML
+import UML as nimble
 from UML import fill
 from UML import match
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -11,8 +11,8 @@ def test_fillFactory_matchNumeric_fillNumeric():
     func = fill.factory(1, 0)
     data = [1, 1, 2]
     exp = [0, 0, 2]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
 @noLogEntryExpected
@@ -20,8 +20,8 @@ def test_fillFactory_matchString_fillString():
     func = fill.factory('a', 'b')
     data = ['a', 'a', 'c']
     exp = ['b', 'b', 'c']
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
 @noLogEntryExpected
@@ -29,8 +29,8 @@ def test_fillFactory_matchString_fillNumeric():
     func = fill.factory('a', 0)
     data = ['a', 'a', 'c']
     exp = [0, 0, 'c']
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
 @noLogEntryExpected
@@ -38,16 +38,16 @@ def test_fillFactory_matchNumeric_fillString():
     func = fill.factory(0, 'a')
     data = [0, 0, 1]
     exp = ['a', 'a', 1]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest) == exp
 
 @noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNone():
     func = fill.factory(1, None)
     data = [1, 1, 0]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest)[0] != func(toTest)[0]
         assert func(toTest)[1] != func(toTest)[1]
         assert func(toTest)[2] == func(toTest)[2]
@@ -56,8 +56,8 @@ def test_fillFactory_matchNumeric_fillNone():
 def test_fillFactory_matchString_fillNone():
     func = fill.factory('a', None)
     data = ['a', 'a', 0]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest)[0] != func(toTest)[0]
         assert func(toTest)[1] != func(toTest)[1]
         assert func(toTest)[2] == func(toTest)[2]
@@ -97,8 +97,8 @@ def test_constant_noMatches():
     match = lambda x: False
     constant = 100
     expected = [1, 2, 2, 9]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
 @noLogEntryExpected
@@ -107,8 +107,8 @@ def test_constant_number_ignoreMatches():
     match = lambda x: x == 2
     constant = 100
     expected = [1, 100, 100, 9]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
 @noLogEntryExpected
@@ -117,8 +117,8 @@ def test_constant_string_ignoreMatches():
     match = lambda x: x == 2
     constant = ""
     expected = [1, "", "", 9]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
 @noLogEntryExpected
@@ -127,23 +127,23 @@ def test_constant_allMatches():
     match = lambda x: x in [1, 2, 9]
     constant = 100
     expected = [100, 100, 100, 100]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert fill.constant(toTest, match, constant) == expected
 
 @noLogEntryExpected
 def backend_fill(func, data, match, expected=None):
     "backend for fill functions that do not require additional arguments"
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert func(toTest, match) == expected
 
 @noLogEntryExpected
 def backend_fill_exception(func, data, match, exceptionType):
     "backend for fill functions when testing exception raising"
-    for t in UML.data.available:
+    for t in nimble.data.available:
         try:
-            toTest = UML.createData(t, data, useLog=False)
+            toTest = nimble.createData(t, data, useLog=False)
             func(toTest, match)
             assert False  # Expected an exception
         except exceptionType as et:
@@ -279,8 +279,8 @@ def test_interpolate_withArguments():
     arguments['fp'] = [5, 13, 21]
     match = lambda x: x == "na"
     expected = [1, 7, 9, 5]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         assert fill.interpolate(toTest, match, **arguments) == expected
 
 @noLogEntryExpected
@@ -292,9 +292,9 @@ def test_interpolate_xKwargIncluded_exception():
     arguments['fp'] = [5, 13, 21]
     arguments['x'] = [1]  # disallowed argument
     match = lambda x: x == "na"
-    for t in UML.data.available:
+    for t in nimble.data.available:
         try:
-            toTest = UML.createData(t, data, useLog=False)
+            toTest = nimble.createData(t, data, useLog=False)
             ret = fill.interpolate(toTest, match, **arguments)
             assert False  # expected TypeError
         except TypeError:
@@ -304,8 +304,8 @@ def test_interpolate_xKwargIncluded_exception():
 def test_kNeighborsRegressor_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     match = lambda x: False
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         expTest = toTest.copy()
         assert fill.kNeighborsRegressor(toTest, match) == expTest
 
@@ -315,9 +315,9 @@ def test_kNeighborsRegressor_withMatch_K1():
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -326,9 +326,9 @@ def test_kNeighborsRegressor_withMatch_K3():
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 1, 5], [1, 1, 3], [2, 2, 2], [2, 2, 2], [3, 3, 3], [5, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -337,9 +337,9 @@ def test_kNeighborsRegressor_multipleMatch_K1():
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -348,17 +348,17 @@ def test_kNeighborsRegressor_multipleMatch_K3():
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
 def test_kNeighborsClassifier_noMatches():
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     match = lambda x: False
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         expTest = toTest.copy()
         assert fill.kNeighborsClassifier(toTest, match) == expTest
 
@@ -368,9 +368,9 @@ def test_kNeighborsClassifier_withMatch_K1():
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -379,9 +379,9 @@ def test_kNeighborsClassifier_withMatch_K3():
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 2], [2, 3, 3], [3, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -390,9 +390,9 @@ def test_kNeighborsClassifier_multipleMatch_K1():
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
     expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
 
 @noLogEntryExpected
@@ -401,7 +401,7 @@ def test_kNeighborsClassifier_multipleMatch_K3():
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
-        expTest = UML.createData(t, expData, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expData, useLog=False)
         assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
