@@ -15,7 +15,7 @@ import sys
 import numpy
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
@@ -261,7 +261,7 @@ class Mlpy(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return UML.createData(outputType, outputValue, useLog=False)
+        return nimble.createData(outputType, outputValue, useLog=False)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
@@ -403,7 +403,7 @@ class Mlpy(UniversalInterface):
                 if 'seed' in args:
                     index = args.index('seed')
                     negdex = index - len(args)
-                    d[negdex] = UML.randomness.generateSubsidiarySeed()
+                    d[negdex] = nimble.randomness.generateSubsidiarySeed()
                 return (args, v, k, d)
             except TypeError:
                 try:
@@ -412,7 +412,7 @@ class Mlpy(UniversalInterface):
                     if 'seed' in args:
                         index = args.index('seed')
                         negdex = index - len(args)
-                        d[negdex] = UML.randomness.generateSubsidiarySeed()
+                        d[negdex] = nimble.randomness.generateSubsidiarySeed()
                     return (args, v, k, d)
                 except TypeError:
                     pass
@@ -511,7 +511,7 @@ class Mlpy(UniversalInterface):
         elif parent.lower() == 'kmeans'.lower():
             if name == '__init__':
                 pnames = ['k', 'plus', 'seed']
-                pdefaults = [False, UML.randomness.generateSubsidiarySeed()]
+                pdefaults = [False, nimble.randomness.generateSubsidiarySeed()]
             elif name == 'learn':
                 pnames = ['x']
             elif name == 'pred':

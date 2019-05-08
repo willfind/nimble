@@ -5,8 +5,7 @@ Base class for a CustomLearner.
 from __future__ import absolute_import
 import copy
 
-import UML
-
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from UML.customLearners import CustomLearner
 from UML.interfaces.universal_interface import UniversalInterface
@@ -163,10 +162,10 @@ class CustomLearnerInterface(UniversalInterface):
     def _outputTransformation(self, learnerName, outputValue,
                               transformedInputs, outputType, outputFormat,
                               customDict):
-        if isinstance(outputValue, UML.data.Base):
+        if isinstance(outputValue, nimble.data.Base):
             return outputValue
         else:
-            return UML.createData('Matrix', outputValue, useLog=False)
+            return nimble.createData('Matrix', outputValue, useLog=False)
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         ret = self.registeredLearners[learnerName]()

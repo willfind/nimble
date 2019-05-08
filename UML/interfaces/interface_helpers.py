@@ -10,7 +10,7 @@ import numpy
 import six
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from UML.randomness import pythonRandom
 
@@ -212,13 +212,13 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
     """
     dataX = [[-100, 3], [-122, 1], [118, 1], [117, 5],
              [1, -191], [-2, -118], [-1, 200], [3, 222]]
-    xObj = UML.createData("Matrix", dataX)
+    xObj = nimble.createData("Matrix", dataX)
     # we need classes > 2 to test the multiclass strategy, and we should be
     # able to tell structurally when classes != 3
     dataY = [[0], [0], [1], [1], [2], [2], [3], [3]]
-    yObj = UML.createData("Matrix", dataY)
+    yObj = nimble.createData("Matrix", dataY)
     dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
-    testObj = UML.createData("Matrix", dataTest)
+    testObj = nimble.createData("Matrix", dataTest)
 
     tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
@@ -241,12 +241,12 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
     InvalidArgumentValue if there are conflicting definitive votes for
     different strategies.
     """
-    if not isinstance(scoresPerPoint, UML.data.Base):
-        scoresPerPoint = UML.createData('Matrix', scoresPerPoint,
-                                        reuseData=True)
-    if not isinstance(predictedLabels, UML.data.Base):
-        predictedLabels = UML.createData('Matrix', predictedLabels,
-                                         reuseData=True)
+    if not isinstance(scoresPerPoint, nimble.data.Base):
+        scoresPerPoint = nimble.createData('Matrix', scoresPerPoint,
+                                           reuseData=True)
+    if not isinstance(predictedLabels, nimble.data.Base):
+        predictedLabels = nimble.createData('Matrix', predictedLabels,
+                                            reuseData=True)
     length = len(scoresPerPoint.points)
     scoreLength = len(scoresPerPoint.features)
 

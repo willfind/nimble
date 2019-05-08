@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.customLearners import CustomLearner
 
 
@@ -20,6 +20,6 @@ class MeanConstant(CustomLearner):
         raw = numpy.zeros(len(testX.points))
         numpy.ndarray.fill(raw, self.mean)
 
-        ret = UML.createData("Matrix", raw, useLog=False)
+        ret = nimble.createData("Matrix", raw, useLog=False)
         ret.transpose(useLog=False)
         return ret

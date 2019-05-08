@@ -11,7 +11,7 @@ import logging
 import numpy
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
@@ -38,7 +38,7 @@ class Keras(UniversalInterface):
         if kerasDir is not None:
             sys.path.insert(0, kerasDir)
 
-        self.keras = UML.importModule('keras')
+        self.keras = nimble.importModule('keras')
 
         backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
@@ -263,7 +263,7 @@ class Keras(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return UML.createData(outputType, outputValue, useLog=False)
+        return nimble.createData(outputType, outputValue, useLog=False)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
@@ -274,7 +274,7 @@ class Keras(UniversalInterface):
         self.learnerName = learnerName
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
-        if isinstance(trainX, UML.data.Sparse):
+        if isinstance(trainX, nimble.data.Sparse):
             param = 'fit_generator'
         else:
             param = 'fit'
@@ -301,7 +301,7 @@ class Keras(UniversalInterface):
                 value = arguments[name]
             fitParams[name] = value
 
-        if isinstance(trainX, UML.data.Sparse):
+        if isinstance(trainX, nimble.data.Sparse):
             def sparseGenerator():
                 while True:
                     for i in range(len(trainX.points)):
@@ -352,7 +352,7 @@ class Keras(UniversalInterface):
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
         if hasattr(learner, 'predict'):
-            if isinstance(testX, UML.data.Sparse):
+            if isinstance(testX, nimble.data.Sparse):
                 method = 'predict_generator'
             else:
                 method = 'predict'
@@ -370,9 +370,9 @@ class Keras(UniversalInterface):
         obj = learnerBackend
         generators = None
         checkers = []
-        checkers.append(UML.interfaces.interface_helpers.noLeading__)
-        checkers.append(UML.interfaces.interface_helpers.notCallable)
-        checkers.append(UML.interfaces.interface_helpers.notABCAssociated)
+        checkers.append(nimble.interfaces.interface_helpers.noLeading__)
+        checkers.append(nimble.interfaces.interface_helpers.notCallable)
+        checkers.append(nimble.interfaces.interface_helpers.notABCAssociated)
 
         ret = collectAttributes(obj, generators, checkers)
         return ret
@@ -397,7 +397,7 @@ class Keras(UniversalInterface):
         Wrapper for the underlying predict function of a keras learner
         object.
         """
-        if isinstance(testX, UML.data.Sparse):
+        if isinstance(testX, nimble.data.Sparse):
             def sparseGenerator():
                 while True:
                     for i in range(len(testX.points)):
@@ -454,7 +454,7 @@ class Keras(UniversalInterface):
             if 'random_state' in args:
                 index = args.index('random_state')
                 negdex = index - len(args)
-                d[negdex] = UML.randomness.generateSubsidiarySeed()
+                d[negdex] = nimble.randomness.generateSubsidiarySeed()
             return (args, v, k, d)
         except TypeError:
             try:
@@ -463,7 +463,7 @@ class Keras(UniversalInterface):
                 if 'random_state' in args:
                     index = args.index('random_state')
                     negdex = index - len(args)
-                    d[negdex] = UML.randomness.generateSubsidiarySeed()
+                    d[negdex] = nimble.randomness.generateSubsidiarySeed()
                 return (args, v, k, d)
             except TypeError:
                 return self._paramQueryHardCoded(name, parent, ignore)

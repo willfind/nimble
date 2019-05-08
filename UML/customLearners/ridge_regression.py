@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.customLearners import CustomLearner
 
 
@@ -17,7 +17,7 @@ class RidgeRegression(CustomLearner):
         self.lamb = lamb
 
         # setup for intercept term
-        #		ones = UML.createData("Matrix", numpy.ones(len(trainX.points)))
+        #		ones = nimble.createData("Matrix", numpy.ones(len(trainX.points)))
         #		ones.transpose()
         #		trainX = trainX.copy()
         #		trainX.features.add(ones)
@@ -39,7 +39,7 @@ class RidgeRegression(CustomLearner):
 
     def apply(self, testX):
     # setup intercept
-    #		ones = UML.createData("Matrix", numpy.ones(len(testX.points)))
+    #		ones = nimble.createData("Matrix", numpy.ones(len(testX.points)))
     #		ones.transpose()
     #		testX = testX.copy()
     #		testX.features.add(ones)
@@ -50,4 +50,4 @@ class RidgeRegression(CustomLearner):
 
         pred = numpy.dot(self.w.transpose(), rawXFxP)
 
-        return UML.createData("Matrix", pred.transpose(), useLog=False)
+        return nimble.createData("Matrix", pred.transpose(), useLog=False)

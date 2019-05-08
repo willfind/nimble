@@ -13,7 +13,7 @@ count should make use of the wrappers in tests/assertionHelpers.py
 import sys
 import tempfile
 
-import UML
+import UML as nimble
 import UML.calculate as calculate
 import UML.fill as fill
 import UML.match as match
@@ -27,7 +27,7 @@ from UML.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
-modules = [UML, calculate, fill, match]
+modules = [nimble, calculate, fill, match]
 classes = [Base, Axis, Points, Features, Elements, UniversalInterface,
            TrainedLearner]
 modulesAndClasses = modules + classes
@@ -189,27 +189,27 @@ def testAllUserFacingLoggingTested():
             print(removed)
         assert False
 
-#######
-# UML #
-#######
+##########
+# nimble #
+##########
 @oneLogEntryExpected
 def test_log_logCount():
     customString = "enter this string into the log"
-    UML.log("customString", customString)
+    nimble.log("customString", customString)
 
 @noLogEntryExpected
 def test_showLog_logCount():
     def wrapped(obj):
-        return UML.showLog()
+        return nimble.showLog()
     captureOutput(wrapped)
 
 @noLogEntryExpected
 def test_importModule_logCount():
-    pd = UML.importModule('pandas')
+    pd = nimble.importModule('pandas')
 
 @noLogEntryExpected
 def test_CV_logCount():
-    k = UML.CV([1, 3, 5])
+    k = nimble.CV([1, 3, 5])
 
 ########
 # Base #
@@ -217,8 +217,8 @@ def test_CV_logCount():
 
 @noLogEntryExpected
 def test_copy_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
 def test_featureReport_logCount():
@@ -237,27 +237,27 @@ def test_groupByFeature_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.groupByFeature(0)
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         ts = obj.getTypeString()
 
 @noLogEntryExpected
 def test_hashCode_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
 
 @noLogEntryExpected
 def test_nameIsDefault_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.nameIsDefault()
 
 @noLogEntryExpected
@@ -274,8 +274,8 @@ def test_toString_logCount():
 
 @noLogEntryExpected
 def test_validate_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
 
 ############################
@@ -286,8 +286,8 @@ def test_points_shuffle_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.points.shuffle()
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -295,8 +295,8 @@ def test_features_shuffle_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.features.shuffle()
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -348,8 +348,8 @@ def captureOutput(toCall):
     backupOut = sys.stdout
     sys.stdout = tmpFile
     try:
-        for rType in UML.data.available:
-            obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+        for rType in nimble.data.available:
+            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
             ret = toCall(obj)
     finally:
         sys.stdout = backupOut

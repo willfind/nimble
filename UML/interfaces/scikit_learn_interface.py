@@ -13,7 +13,7 @@ import warnings
 import numpy
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.interface_helpers import collectAttributes
@@ -285,12 +285,12 @@ class SciKitLearn(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return UML.createData(outputType, outputValue, useLog=False)
+        return nimble.createData(outputType, outputValue, useLog=False)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         if self._versionSplit[1] < 19:
-            msg = "UML was tested using sklearn 0.19 and above, we cannot be "
+            msg = "nimble was tested using sklearn 0.19 and above, we cannot be "
             msg += "sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
@@ -369,9 +369,9 @@ class SciKitLearn(UniversalInterface):
         obj = learnerBackend
         generators = None
         checkers = []
-        checkers.append(UML.interfaces.interface_helpers.noLeading__)
-        checkers.append(UML.interfaces.interface_helpers.notCallable)
-        checkers.append(UML.interfaces.interface_helpers.notABCAssociated)
+        checkers.append(nimble.interfaces.interface_helpers.noLeading__)
+        checkers.append(nimble.interfaces.interface_helpers.notCallable)
+        checkers.append(nimble.interfaces.interface_helpers.notABCAssociated)
 
         ret = collectAttributes(obj, generators, checkers)
         return ret
