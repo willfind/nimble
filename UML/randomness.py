@@ -1,6 +1,6 @@
 """
 Contains functions and objects controlling how randomness is used in
-UML functions and tests.
+nimble functions and tests.
 """
 
 from __future__ import absolute_import
@@ -21,7 +21,7 @@ _stillDefault = True
 
 def setRandomSeed(seed, useLog=None):
     """
-    Set the seeds on all sources of randomness in UML.
+    Set the seeds on all sources of randomness in nimble.
 
     Parameters
     ----------
@@ -62,9 +62,9 @@ def stillDefaultState():
     state of the internal sources of randomness (with the exception of
     calls made within a section designated by startUncontrolledSection
     and endUncontrolledSection). Return True if there has been no
-    modification during this 'session' of UML. To be used in unit tests
-    which rely on comparing hard coded results to calls to functions
-    that rely on randomness in order to abort if we are in an
+    modification during this 'session' of nimble. To be used in unit
+    tests which rely on comparing hard coded results to calls to
+    functions that rely on randomness in order to abort if we are in an
     unpredictable state.
     """
     # for now, don't know exactly to to make this correct, so anything that
@@ -80,12 +80,12 @@ def startAlternateControl(seed=None):
     Called to open a certain section of code that needs to a different
     kind of randomness than the current default, without changing the
     reproducibility of later random calls outside of the section. This
-    saves the state of the UML internal random sources, and calls
+    saves the state of the nimble internal random sources, and calls
     setRandomSeed using the given parameter. The saved state can then be
     restored with a call to endAlternateControl. Meant to be used in
     unit tests, to either protect later calls from the modifications in
     this section, or to ensure consistency regardless of the current
-    state of randomness in UML.
+    state of randomness in nimble.
 
     Parameters
     ----------

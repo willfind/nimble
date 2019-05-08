@@ -5,8 +5,7 @@ Custom assertion types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
 
-
-import UML
+import UML as nimble
 from UML.configuration import configSafetyWrapper
 from UML.data import BaseView
 
@@ -21,9 +20,9 @@ def logCountAssertionFactory(count):
     def logCountAssertion(function):
         @configSafetyWrapper
         def wrapped(*args, **kwargs):
-            UML.settings.set('logger', 'enabledByDefault', 'True')
-            UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
-            logger = UML.logger.active
+            nimble.settings.set('logger', 'enabledByDefault', 'True')
+            nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+            logger = nimble.logger.active
             countQuery = "SELECT COUNT(entry) FROM logger"
             startCount = logger.extractFromLog(countQuery)[0][0]
             ret = function(*args, **kwargs)

@@ -1,5 +1,5 @@
 """
-Module demonstrating the UML-forced One vs One and One vs All multi-class classification
+Module demonstrating the nimble-forced One vs One and One vs All multi-class classification
 strategies. Also demonstrates the possible output formats allowed when calling learners.
 
 """
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsOne")
-    print('One vs One, best score format:') 
+    print('One vs One, best score format:')
     print(resultsBestScoreOvO)
 
     resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
@@ -59,11 +59,11 @@ if __name__ == "__main__":
     resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsAll")
-    print('One vs All, best score format:') 
+    print('One vs All, best score format:')
     print(resultsBestScoreOvA)
 
     resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
                                      multiClassStrategy="OneVsAll")
     print('One vs All, all scores format:')
-    print(resultsAllScoresOvA) 
+    print(resultsAllScoresOvA)

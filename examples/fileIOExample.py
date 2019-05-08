@@ -6,14 +6,15 @@ files. Uses a portion of the UCI ML repository census income data set (aka Adult
 
 import sys
 import os.path
-import UML
+
+import UML as nimble
 from UML import createData
 from UML import match
 
 if __name__ == "__main__":
 
     # string manipulation to get and make paths
-    projectRoot = os.path.dirname(UML.UMLPath)
+    projectRoot = os.path.dirname(nimble.nimblePath)
     inFileName = "adult_income_classification_tiny.csv"
     nameSplit = inFileName.rsplit('.')
 

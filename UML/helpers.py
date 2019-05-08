@@ -25,7 +25,7 @@ import six
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
@@ -37,9 +37,9 @@ from UML.data.sparse import removeDuplicatesNative
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 
-scipy = UML.importModule('scipy.io')
-pd = UML.importModule('pandas')
-requests = UML.importModule('requests')
+scipy = nimble.importModule('scipy.io')
+pd = nimble.importModule('pandas')
+requests = nimble.importModule('requests')
 
 try:
     intern = sys.intern
@@ -71,14 +71,14 @@ def findBestInterface(package):
     Attempt to determine the interface.
 
     Takes the string name of a possible interface provided to some other
-    function by a UML user, and attempts to find the interface which
+    function by a nimble user, and attempts to find the interface which
     best matches that name amoung those available. If it does not match
     any available interfaces, then an exception is thrown.
     """
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         if package == interface.getCanonicalName():
             return interface
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         if interface.isAlias(package):
             return interface
     msg = "package '" + package
@@ -233,12 +233,12 @@ def extractNamesFromPdSeries(rawData, pnamesID, fnamesID):
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
                          pointNames, featureNames, name):
     """
-    Create UML data objects containing constant values.
+    Create nimble data objects containing constant values.
 
-    Use numpy.ones or numpy.zeros to create constant UML objects of the
-    designated returnType.
+    Use numpy.ones or numpy.zeros to create constant nimble objects of
+    the designated returnType.
     """
-    retAllowed = copy.copy(UML.data.available)
+    retAllowed = copy.copy(nimble.data.available)
     if returnType not in retAllowed:
         msg = "returnType must be a value in " + str(retAllowed)
         raise InvalidArgumentValue(msg)
@@ -268,14 +268,14 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
         else:  # case: numpyMaker == numpy.zeros
             assert numpyMaker == numpy.zeros
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
-        return UML.createData(returnType, rawSparse, pointNames=pointNames,
-                              featureNames=featureNames, name=name,
-                              useLog=False)
+        return nimble.createData(returnType, rawSparse, pointNames=pointNames,
+                                 featureNames=featureNames, name=name,
+                                 useLog=False)
     else:
         raw = numpyMaker((numPoints, numFeatures))
-        return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name,
-                              useLog=False)
+        return nimble.createData(returnType, raw, pointNames=pointNames,
+                                 featureNames=featureNames, name=name,
+                                 useLog=False)
 
 
 def transposeMatrix(matrixObj):
@@ -439,7 +439,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                 or isinstance(rawData[0], list)
                 or hasattr(rawData[0], 'setLimit'))):
        # attempt to convert the list to floats to remain consistent with other
-       # UML types if unsuccessful we will keep the list as is
+       # nimble types if unsuccessful we will keep the list as is
         try:
             # 1D list
             rawData = list(map(numpy.float, rawData))
@@ -640,7 +640,7 @@ def initDataObject(
                 relPath = path
                 pathsToPass = (absPath, relPath)
 
-    initMethod = getattr(UML.data, returnType)
+    initMethod = getattr(nimble.data, returnType)
     try:
         ret = initMethod(rawData, pointNames=pointNames,
                          featureNames=featureNames, name=name,
@@ -650,7 +650,7 @@ def initDataObject(
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
-            autoMethod = getattr(UML.data, autoType)
+            autoMethod = getattr(nimble.data, autoType)
             ret = autoMethod(rawData, pointNames=pointNames,
                              featureNames=featureNames, name=name,
                              paths=pathsToPass, elementType=elementType,
@@ -716,10 +716,10 @@ def initDataObject(
 def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
     """
     Extracts and sets (if needed) the point and feature names from the
-    given UML Base object, returning the modified object. pointNamesID
-    may be either None, or an integer ID corresponding to a feature in
-    the data object. featureNamesID may b either None, or an integer ID
-    corresponding to a point in the data object.
+    given nimble Base object, returning the modified object.
+    pointNamesID may be either None, or an integer ID corresponding to a
+    feature in the data object. featureNamesID may b either None, or an
+    integer ID corresponding to a point in the data object.
     """
     ret = data
     praw = None
@@ -2120,45 +2120,18 @@ _loadmtxForSparse = _loadmtxForAuto
 _loadmtxForDataFrame = _loadmtxForAuto
 
 
-def autoRegisterFromSettings():
-    """
-    Helper which looks at the learners listed in UML.settings under
-    the 'RegisteredLearners' section and makes sure they are registered.
-    """
-    # query for all entries in 'RegisteredLearners' section
-    toRegister = UML.settings.get('RegisteredLearners', None)
-    # call register custom learner on them
-    for key in toRegister:
-        try:
-            (packName, _) = key.split('.')
-            (modPath, attrName) = toRegister[key].rsplit('.', 1)
-        except Exception:
-            continue
-        try:
-            module = importlib.import_module(modPath)
-            learnerClass = getattr(module, attrName)
-            UML.registerCustomLearnerAsDefault(packName, learnerClass)
-        except ImportError:
-            msg = "When trying to automatically register a custom "
-            msg += "learner at " + key + " we were unable to import "
-            msg += "the learner object from the location " + toRegister[key]
-            msg += " and have therefore ignored that configuration "
-            msg += "entry"
-            print(msg, file=sys.stderr)
-
-
 def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
     """
-    Backend for registering custom Learners in UML.
+    Backend for registering custom Learners in nimble.
 
     A save value of true will run saveChanges(), modifying the config
     file. When save is False the changes will exist only for that
     session, unless saveChanges() is called later in the session.
     """
     # detect name collision
-    for currInterface in UML.interfaces.available:
+    for currInterface in nimble.interfaces.available:
         if not isinstance(currInterface,
-                          UML.interfaces.CustomLearnerInterface):
+                          nimble.interfaces.CustomLearnerInterface):
             if currInterface.isAlias(customPackageName):
                 msg = "The customPackageName '" + customPackageName
                 msg += "' cannot be used: it is an accepted alias of a "
@@ -2167,40 +2140,41 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # do validation before we potentially construct an interface to a
     # custom package
-    UML.customLearners.CustomLearner.validateSubclass(learnerClassObject)
+    nimble.customLearners.CustomLearner.validateSubclass(learnerClassObject)
 
     try:
         currInterface = findBestInterface(customPackageName)
     except InvalidArgumentValue:
-        currInterface = UML.interfaces.CustomLearnerInterface(
+        currInterface = nimble.interfaces.CustomLearnerInterface(
             customPackageName)
-        UML.interfaces.available.append(currInterface)
+        nimble.interfaces.available.append(currInterface)
 
     currInterface.registerLearnerClass(learnerClassObject)
 
     opName = customPackageName + "." + learnerClassObject.__name__
     opValue = learnerClassObject.__module__ + '.' + learnerClassObject.__name__
 
-    UML.settings.set('RegisteredLearners', opName, opValue)
+    nimble.settings.set('RegisteredLearners', opName, opValue)
     if save:
-        UML.settings.saveChanges('RegisteredLearners', opName)
+        nimble.settings.saveChanges('RegisteredLearners', opName)
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
-                                             save=save)
+        nimble.configuration.syncWithInterfaces(nimble.settings,
+                                               [currInterface],
+                                               save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
     """
-    Backend for deregistering custom Learners in UML.
+    Backend for deregistering custom Learners in nimble.
 
     A save value of true will run saveChanges(), modifying the config
     file. When save is False the changes will exist only for that
     session, unless saveChanges() is called later in the session.
     """
     currInterface = findBestInterface(customPackageName)
-    if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+    if not isinstance(currInterface, nimble.interfaces.CustomLearnerInterface):
         msg = "May only attempt to deregister learners from the interfaces of "
         msg += "custom packages. '" + customPackageName
         msg += "' is not a custom package"
@@ -2212,22 +2186,22 @@ def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
     # remove options
     for optName in origOptions:
         if optName not in newOptions:
-            UML.settings.delete(customPackageName, optName)
+            nimble.settings.delete(customPackageName, optName)
             if save:
-                UML.settings.saveChanges(customPackageName, optName)
+                nimble.settings.saveChanges(customPackageName, optName)
 
     if empty:
-        UML.interfaces.available.remove(currInterface)
+        nimble.interfaces.available.remove(currInterface)
         #remove section
-        UML.settings.delete(customPackageName, None)
+        nimble.settings.delete(customPackageName, None)
         if save:
-            UML.settings.saveChanges(customPackageName)
+            nimble.settings.saveChanges(customPackageName)
 
     regOptName = customPackageName + '.' + learnerName
     # delete from registered learner list
-    UML.settings.delete('RegisteredLearners', regOptName)
+    nimble.settings.delete('RegisteredLearners', regOptName)
     if save:
-        UML.settings.saveChanges('RegisteredLearners', regOptName)
+        nimble.settings.saveChanges('RegisteredLearners', regOptName)
 
 
 def countWins(predictions):
@@ -2567,15 +2541,15 @@ def computeMetrics(dependentVar, knownData, predictedData,
 
     Parameters
     ----------
-    dependentVar : indentifier, list, UML Base object
+    dependentVar : indentifier, list, nimble Base object
         Indicate the feature names or indices in knownData containing
         the known labels, or a data object that contains the known
         labels.
-    knownData : UML Base object
+    knownData : nimble Base object
         Data object containing the known labels of the training set, as
         well as the features of the training set. Can be None if
         'dependentVar' is an object containing the labels.
-    predictedData : UML Base object
+    predictedData : nimble Base object
         Data object containing predicted labels/data. Assumes that the
         predicted label (or labels) in the nth row of predictedLabels
         is associated with the same data point/instance as the label in
@@ -2587,8 +2561,8 @@ def computeMetrics(dependentVar, knownData, predictedData,
         be compared. In the three arg case, the first two args are the
         same as in the two arg case, and the third arg must take the
         value of what is to be considered the negative label in this
-        binary classification problem. See UML.calculate for a number of
-        built in examples.
+        binary classification problem. See nimble.calculate for a number
+        of builtin options.
 
     Returns
     -------
@@ -2755,7 +2729,7 @@ class CrossValidationResults():
         """
         The best argument and score based on the performanceFunction.
         """
-        detected = UML.calculate.detectBestResult(self.performanceFunction)
+        detected = nimble.calculate.detectBestResult(self.performanceFunction)
         if detected == 'max':
             maximumIsBest = True
         elif detected == 'min':
@@ -2791,7 +2765,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
     """
-    Same signature as UML.crossValidate, except that the argument
+    Same signature as nimble.crossValidate, except that the argument
     'numFolds' is replaced with 'folds' which is allowed to be either an
     int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
@@ -2859,7 +2833,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # given this fold, do a run for each argument combination
         for curArgumentCombination in argumentCombinationIterator:
             #run algorithm on the folds' training and testing sets
-            curRunResult = UML.trainAndApply(
+            curRunResult = nimble.trainAndApply(
                 learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                 testX=curTestingX, arguments=curArgumentCombination,
                 scoreMode=scoreMode, useLog=False)
@@ -3226,7 +3200,7 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
 
     Returns
     -------
-    tuple of UML.Base objects:
+    tuple of nimble.Base objects:
     (pointsObj, labelsObj, noiselessLabelsObj)
     """
 
@@ -3266,13 +3240,13 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     # then convert
     # finally make matrix object out of the list of points w/ labels in last
     # column of each vector/entry:
-    pointsObj = UML.createData('Matrix', pointsList, useLog=False)
+    pointsObj = nimble.createData('Matrix', pointsList, useLog=False)
 
-    labelsObj = UML.createData('Matrix', labelsList, useLog=False)
+    labelsObj = nimble.createData('Matrix', labelsList, useLog=False)
 
     # todo change actuallavels to something like associatedClusterCentroid
-    noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList,
-                                        useLog=False)
+    noiselessLabelsObj = nimble.createData('Matrix', clusterNoiselessLabelList,
+                                           useLog=False)
 
     # convert datatype if not matrix
     if returnType.lower() != 'matrix':
@@ -3480,7 +3454,7 @@ class LearnerInspector:
         regressorTestData, _, noiselessTestLabels = self.regressorDataTest
 
         try:
-            runResults = UML.trainAndApply(
+            runResults = nimble.trainAndApply(
                 learnerName, trainX=regressorTrainData, trainY=trainLabels,
                 testX=regressorTestData)
         except Exception:
@@ -3525,8 +3499,9 @@ class LearnerInspector:
         testData, testLabels, _ = self.classifierDataTest
 
         try:
-            runResults = UML.trainAndApply(learnerName, trainX=trainData,
-                                           trainY=trainLabels, testX=testData)
+            runResults = nimble.trainAndApply(learnerName, trainX=trainData,
+                                              trainY=trainLabels,
+                                              testX=testData)
         except Exception:
             return 'other'
 
@@ -3712,13 +3687,13 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
 
     Parameters
     ----------
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    testX : UML Base object
+    testX : nimble Base object
         data set on which the trained learner will be applied (i.e.
         performing prediction, transformation, etc. as appropriate to
         the learner).
@@ -3781,9 +3756,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
                            or (point[trainY] == pair[1])))
         pairTrueLabels = pairData.features.extract(trainY)
         #train classifier on that data; apply it to the test set
-        partialResults = UML.trainAndApply(learnerName, pairData,
-                                           pairTrueLabels, testX, output=None,
-                                           arguments=merged, useLog=useLog)
+        partialResults = nimble.trainAndApply(learnerName, pairData,
+                                              pairTrueLabels, testX, output=None,
+                                              arguments=merged, useLog=useLog)
         #put predictions into table of predictions
         if rawPredictions is None:
             rawPredictions = partialResults.copyAs(format="List")
@@ -3814,8 +3789,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
 
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+        resultsContainer = nimble.createData("List", tempResultsList,
+                                             featureNames=featureNames)
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
@@ -3831,8 +3806,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
 
-        return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+        return nimble.createData(rawPredictions.getTypeString(), resultsContainer,
+                                 featureNames=columnHeaders)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)
@@ -3849,13 +3824,13 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
 
     Parameters
     ----------
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    testX : UML Base object
+    testX : nimble Base object
         data set on which the trained learner will be applied (i.e.
         performing prediction, transformation, etc. as appropriate to
         the learner).
@@ -3918,9 +3893,9 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
     for label in labelSet:
         relabeler.__defaults__ = (label,)
         trainLabels = trainY.points.calculate(relabeler)
-        oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels,
-                                            testX, output=None,
-                                            arguments=merged, useLog=useLog)
+        oneLabelResults = nimble.trainAndApply(learnerName, trainX,
+                                               trainLabels, testX, output=None,
+                                               arguments=merged, useLog=useLog)
         # put all results into one Base container, of the same type as trainX
         if rawPredictions is None:
             rawPredictions = oneLabelResults
@@ -3939,8 +3914,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         winningLabels = []
         for [winningIndex] in winningPredictionIndices:
             winningLabels.append([labelSet[int(winningIndex)]])
-        return UML.createData(rawPredictions.getTypeString(), winningLabels,
-                              featureNames=['winningLabel'])
+        return nimble.createData(rawPredictions.getTypeString(), winningLabels,
+                                 featureNames=['winningLabel'])
 
     elif scoreMode.lower() == 'bestScore'.lower():
         # construct a list of lists, with each row in the list containing the
@@ -3956,8 +3931,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
                                     bestLabelAndScore[1]])
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+        resultsContainer = nimble.createData("List", tempResultsList,
+                                             featureNames=featureNames)
         return resultsContainer
 
     elif scoreMode.lower() == 'allScores'.lower():
@@ -3980,8 +3955,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
         #wrap data in Base container
-        return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+        return nimble.createData(rawPredictions.getTypeString(), resultsContainer,
+                                 featureNames=columnHeaders)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)
@@ -4022,8 +3997,8 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
     #     if not isinstance(performanceFunction, list):
     #         performanceFunction = [performanceFunction]
     #         results = [results]
-    #     UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY,
-    #                              learnerName, merged, metrics, timer)
+    #     nimble.logger.active.logRun(f.__name__, trainX, trainY, testX, testY,
+    #                                 learnerName, merged, metrics, timer)
 
     return results
 
@@ -4041,19 +4016,19 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY : identifier, UML Base object
+    trainY : identifier, nimble Base object
         * identifier - The name or index of the feature in ``trainX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``trainX``.
-    testX: UML Base object
+    testX: nimble Base object
         Data to be used for testing.
-    testY : identifier, UML Base object
+    testY : identifier, nimble Base object
         * identifier - A name or index of the feature in ``testX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``testX``.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
@@ -4068,7 +4043,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     useLog : bool, None
@@ -4107,19 +4082,19 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY : identifier, UML Base object
+    trainY : identifier, nimble Base object
         * identifier - The name or index of the feature in ``trainX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``trainX``.
-    testX: UML Base object
+    testX: nimble Base object
         Data to be used for testing.
-    testY : identifier, UML Base object
+    testY : identifier, nimble Base object
         * identifier - A name or index of the feature in ``testX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``testX``.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
@@ -4134,7 +4109,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     useLog : bool, None

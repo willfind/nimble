@@ -1,5 +1,5 @@
 """
-Helper function for importing external packages into UML.
+Helper function for importing external packages into nimble.
 """
 
 def importModule(name):

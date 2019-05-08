@@ -4,7 +4,7 @@ out-of-the-box, custom learner.
 
 """
 
-import UML
+import UML as nimble
 from UML.calculate import rootMeanSquareError as RMSE
 from UML.randomness import numpyRandom
 
@@ -19,26 +19,26 @@ if __name__ == "__main__":
     testXRaw = numpyRandom.randint(-10, 10, (testPoints, feats))
     testYRaw = testXRaw.dot(targetCoefs)
 
-    # encapsulate in UML Base objects
-    trainX = UML.createData("Matrix", trainXRaw)
-    trainY = UML.createData("Matrix", trainYRaw)
-    testX = UML.createData("Matrix", testXRaw)
-    testY = UML.createData("Matrix", testYRaw)
+    # encapsulate in nimble Base objects
+    trainX = nimble.createData("Matrix", trainXRaw)
+    trainY = nimble.createData("Matrix", trainYRaw)
+    testX = nimble.createData("Matrix", testXRaw)
+    testY = nimble.createData("Matrix", testYRaw)
 
     # an example of getting a TrainedLearner and querying its attributes. In
     # RidgeRegression's case, we check the learned coefficients, named 'w'
-    trained = UML.train("custom.RidgeRegression", trainX, trainY, arguments={'lamb': 0})
+    trained = nimble.train("custom.RidgeRegression", trainX, trainY, arguments={'lamb': 0})
     print("Coefficients:")
     print(trained.getAttributes()['w'])
 
     # Two ways of getting predictions
     pred1 = trained.apply(testX, arguments={'lamb': 0})
-    pred2 = UML.trainAndApply("custom.RidgeRegression", trainX, trainY, testX, arguments={'lamb': 0})
+    pred2 = nimble.trainAndApply("custom.RidgeRegression", trainX, trainY, testX, arguments={'lamb': 0})
     assert pred1.isIdentical(pred2)
 
     # Using cross validation to explicitly determine a winning argument set
-    results = UML.crossValidateReturnBest("custom.RidgeRegression", trainX, trainY, RMSE,
-                                          lamb=UML.CV([0, .5, 1]))
+    results = nimble.crossValidateReturnBest("custom.RidgeRegression", trainX, trainY, RMSE,
+                                          lamb=nimble.CV([0, .5, 1]))
     bestArgument, bestScore = results
 
     print("Best argument set: " + str(bestArgument))
@@ -48,5 +48,5 @@ if __name__ == "__main__":
     # Also: arguments to the learner are given in the python **kwargs style, not as
     # an explicit dict like  seen above.
     # Using lamb = 1 in this case so that there actually are errors
-    error = UML.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
+    error = nimble.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
     print("rootMeanSquareError of predictions with lamb=1: " + str(error))

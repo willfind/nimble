@@ -8,7 +8,7 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML import learnerType
 from UML import createData
 from UML.exceptions import InvalidArgumentValue
@@ -174,7 +174,7 @@ class FoldIteratorTester(object):
 class TestList(FoldIteratorTester):
     def __init__(self):
         def maker(data=None, featureNames=False):
-            return UML.createData("List", data=data, featureNames=featureNames)
+            return nimble.createData("List", data=data, featureNames=featureNames)
 
         super(TestList, self).__init__(maker)
 
@@ -182,7 +182,7 @@ class TestList(FoldIteratorTester):
 class TestMatrix(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return UML.createData("Matrix", data=data, featureNames=featureNames)
+            return nimble.createData("Matrix", data=data, featureNames=featureNames)
 
         super(TestMatrix, self).__init__(maker)
 
@@ -190,7 +190,7 @@ class TestMatrix(FoldIteratorTester):
 class TestSparse(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return UML.createData("Sparse", data=data, featureNames=featureNames)
+            return nimble.createData("Sparse", data=data, featureNames=featureNames)
 
         super(TestSparse, self).__init__(maker)
 
@@ -200,7 +200,7 @@ class TestRand(FoldIteratorTester):
         def maker(data, featureNames=False):
             possible = ['List', 'Matrix', 'Sparse']
             returnType = possible[pythonRandom.randint(0, 2)]
-            return UML.createData(returnType=returnType, data=data, featureNames=featureNames)
+            return nimble.createData(returnType=returnType, data=data, featureNames=featureNames)
 
         super(TestRand, self).__init__(maker)
 
@@ -235,7 +235,7 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 
     for curAlgorithm in knownAlgorithmToTypeHash.keys():
         actualType = knownAlgorithmToTypeHash[curAlgorithm]
-        predictedType = UML.learnerType(curAlgorithm)
+        predictedType = nimble.learnerType(curAlgorithm)
         try:
             assert (actualType in predictedType)
         except AssertionError:
@@ -552,7 +552,7 @@ def test_computeMetrics_2d_2arg():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
     assert isinstance(result, float)
     assert result == 0.0
@@ -565,7 +565,7 @@ def test_computeMetrics_2d_labelsInData():
     trainingObj = createData('Matrix', data=training)
     predictedObj = createData('Matrix', data=predictedLabels)
 
-    metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics([0, 2], trainingObj, predictedObj, metricFunctions)
     assert result == 0.0
 
@@ -580,7 +580,7 @@ def test_computeMetrics_1d_2d_symmetric():
     origObj = createData('Matrix', data=origData)
     outObj = createData('Matrix', data=outputData)
 
-    metricFunctions = UML.calculate.cosineSimilarity
+    metricFunctions = nimble.calculate.cosineSimilarity
     result = computeMetrics(origObj, None, outObj, metricFunctions)
     assert result == 1.0
 
@@ -593,7 +593,7 @@ def test_computeMetrics_multiple_metrics_disallowed():
     origObj = createData('Matrix', data=origData)
     outObj = createData('Matrix', data=outputData)
 
-    metricFunctions = [UML.calculate.cosineSimilarity, rootMeanSquareError]
+    metricFunctions = [nimble.calculate.cosineSimilarity, rootMeanSquareError]
     computeMetrics(origObj, None, outObj, metricFunctions)
 
 

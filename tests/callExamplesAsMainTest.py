@@ -32,7 +32,7 @@ def test_callAllAsMain():
         cmd = ("python", scriptLoc, tempOutDir)
         spP = subprocess.PIPE
 
-        # We want these scripts to run with the local copy of UML, so we need
+        # We want these scripts to run with the local copy of nimble, so we need
         # the current working directory (as established by runTests) to be
         # on the path variable in the subprocess. However, we also want the
         # environment to otherwise be the same (because we know it works).

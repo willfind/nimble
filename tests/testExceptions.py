@@ -1,11 +1,11 @@
 """
-Test the UML exception hierarchy, output and catching
+Test the nimble exception hierarchy, output and catching
 """
 from __future__ import absolute_import
 
 from nose.tools import raises
 
-from UML.exceptions import UMLException
+from UML.exceptions import nimbleException
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentTypeCombination
 from UML.exceptions import InvalidArgumentValueCombination
@@ -13,32 +13,32 @@ from UML.exceptions import ImproperObjectAction, PackageException
 from UML.exceptions import FileFormatException
 
 @raises(TypeError)
-def test_UMLException_noMessage():
+def test_nimbleException_noMessage():
     # TypeError raised because value missing for __init__
-    raise UMLException()
+    raise nimbleException()
     assert False
 
-@raises(UMLException)
-def test_UMLException_withMessage():
-    raise UMLException('message')
+@raises(nimbleException)
+def test_nimbleException_withMessage():
+    raise nimbleException('message')
     assert False
 
-def test_UMLException_strOutput():
+def test_nimbleException_strOutput():
     try:
-        raise UMLException('message')
+        raise nimbleException('message')
         assert False
-    except UMLException as e:
+    except nimbleException as e:
         assert str(e) == "'message'"
 
-def test_UMLException_reprOutput():
+def test_nimbleException_reprOutput():
     try:
-        raise UMLException('message')
+        raise nimbleException('message')
         assert False
-    except UMLException as e:
-        assert repr(e) == "UMLException('message')"
+    except nimbleException as e:
+        assert repr(e) == "nimbleException('message')"
 
-def test_UMLException_customSubClassInheritance():
-    class CustomException(UMLException):
+def test_nimbleException_customSubClassInheritance():
+    class CustomException(nimbleException):
         pass
 
     try:
@@ -51,7 +51,7 @@ def test_UMLException_customSubClassInheritance():
     try:
         raise CustomException('custom message')
         assert False
-    except UMLException:
+    except nimbleException:
         pass
 
     try:
@@ -61,14 +61,14 @@ def test_UMLException_customSubClassInheritance():
         pass
 
     try:
-        raise UMLException('exception')
+        raise nimbleException('exception')
         assert False
     except CustomException:
         assert False
-    except UMLException:
+    except nimbleException:
         pass
 
-def back_UMLExceptions(exception, subClassOf=None):
+def back_nimbleExceptions(exception, subClassOf=None):
     try:
         raise exception('exception')
         assert False
@@ -78,7 +78,7 @@ def back_UMLExceptions(exception, subClassOf=None):
     try:
         raise exception('exception')
         assert False
-    except UMLException:
+    except nimbleException:
         pass
 
     if subClassOf:
@@ -89,22 +89,22 @@ def back_UMLExceptions(exception, subClassOf=None):
             pass
 
 def test_ImproperObjectAction():
-    back_UMLExceptions(ImproperObjectAction, TypeError)
+    back_nimbleExceptions(ImproperObjectAction, TypeError)
 
 def test_InvalidArgumentType():
-    back_UMLExceptions(InvalidArgumentType, TypeError)
+    back_nimbleExceptions(InvalidArgumentType, TypeError)
 
 def test_InvalidArgumentValue():
-    back_UMLExceptions(InvalidArgumentValue, ValueError)
+    back_nimbleExceptions(InvalidArgumentValue, ValueError)
 
 def test_InvalidArgumentTypeCombination():
-    back_UMLExceptions(InvalidArgumentTypeCombination, TypeError)
+    back_nimbleExceptions(InvalidArgumentTypeCombination, TypeError)
 
 def test_InvalidArgumentValueCombination():
-    back_UMLExceptions(InvalidArgumentValueCombination, ValueError)
+    back_nimbleExceptions(InvalidArgumentValueCombination, ValueError)
 
 def test_PackageException():
-    back_UMLExceptions(PackageException, ImportError)
+    back_nimbleExceptions(PackageException, ImportError)
 
 def test_FileFormatException():
-    back_UMLExceptions(FileFormatException, ValueError)
+    back_nimbleExceptions(FileFormatException, ValueError)
