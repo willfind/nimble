@@ -203,7 +203,7 @@ class QueryBackend(DataTestObject):
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
+        toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)
@@ -221,7 +221,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='csv', includeNames=False)
+        toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
 
@@ -240,7 +240,7 @@ class QueryBackend(DataTestObject):
             toWrite._writeFile_implementation = None
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
+        toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)
 
@@ -281,7 +281,7 @@ class QueryBackend(DataTestObject):
                 setter(None)
 
             # call writeFile
-            exclude.writeFile(tmpFile.name, format='csv', includeNames=True)
+            exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
             if axis == 'point':
@@ -315,7 +315,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=True)
+        toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)
@@ -331,7 +331,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=False)
+        toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
 
@@ -350,7 +350,7 @@ class QueryBackend(DataTestObject):
             toWrite._writeFile_implementation = None
 
         # call writeFile
-        toWrite.writeFile(tmpFile.name, format='mtx', includeNames=True)
+        toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)

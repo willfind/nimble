@@ -905,7 +905,7 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
-    def writeFile(self, outPath, format=None, includeNames=True):
+    def writeFile(self, outPath, fileFormat=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
 
@@ -914,7 +914,7 @@ class Base(object):
         outPath : str
             The location (including file name and extension) where
             we want to write the output file.
-        format : str
+        fileFormat : str
             The formating of the file we write. May be None, 'csv', or
             'mtx'; if None, we use the extension of outPath to determine
             the format.
@@ -930,13 +930,13 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         # if format is not specified, we fall back on the extension in outPath
-        if format is None:
+        if fileFormat is None:
             split = outPath.rsplit('.', 1)
-            format = None
+            fileFormat = None
             if len(split) > 1:
-                format = split[1].lower()
+                fileFormat = split[1].lower()
 
-        if format not in ['csv', 'mtx']:
+        if fileFormat not in ['csv', 'mtx']:
             msg = "Unrecognized file format. Accepted types are 'csv' and "
             msg += "'mtx'. They may either be input as the format parameter, "
             msg += "or as the extension in the outPath"
@@ -962,17 +962,17 @@ class Base(object):
 
         try:
             self._writeFile_implementation(
-                outPath, format, includePointNames, includeFeatureNames)
+                outPath, fileFormat, includePointNames, includeFeatureNames)
         except Exception:
-            if format.lower() == "csv":
+            if fileFormat.lower() == "csv":
                 toOut = self.copy(to="Matrix")
                 toOut._writeFile_implementation(
-                    outPath, format, includePointNames, includeFeatureNames)
+                    outPath, fileFormat, includePointNames, includeFeatureNames)
                 return
-            if format.lower() == "mtx":
+            if fileFormat.lower() == "mtx":
                 toOut = self.copy(to='Sparse')
                 toOut._writeFile_implementation(
-                    outPath, format, includePointNames, includeFeatureNames)
+                    outPath, fileFormat, includePointNames, includeFeatureNames)
                 return
 
     def save(self, outputPath):

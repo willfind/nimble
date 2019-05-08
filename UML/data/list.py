@@ -167,7 +167,7 @@ class List(Base):
                 return False
         return True
 
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         """
         Function to write the data in this object to a file using the
@@ -183,10 +183,10 @@ class List(Base):
         #     msg += "or as the extension in the outPath"
         #     raise InvalidArgumentValue(msg)
 
-        if format == 'csv':
+        if fileFormat == 'csv':
             return self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        if format == 'mtx':
+        if fileFormat == 'mtx':
             return self._writeFileMTX_implementation(
                 outPath, includePointNames, includeFeatureNames)
 

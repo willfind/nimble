@@ -1375,7 +1375,7 @@ def test_createData_keepPF_AllPossibleNatOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2], 'all']
@@ -1394,7 +1394,7 @@ def test_createData_keepPF_AllPossibleReverseOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2], [0, 1, 2]]
@@ -1427,8 +1427,7 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
@@ -1471,8 +1470,7 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
@@ -1516,8 +1514,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
