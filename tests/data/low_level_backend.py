@@ -1147,7 +1147,7 @@ class LowLevelBackend(object):
     def testconstructIndicesList_pythonGenerator(self):
         self.constructIndicesList_backend(lambda lst: (val for val in lst))
 
-    def testconstructIndicesList_UMLObjects(self):
+    def testconstructIndicesList_NimbleObjects(self):
         for retType in available:
             self.constructIndicesList_backend(
                 lambda lst: createData(retType, lst, elementType=object))

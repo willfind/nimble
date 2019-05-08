@@ -7,11 +7,11 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from .elements import Elements
 from .elements_view import ElementsView
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
@@ -21,7 +21,7 @@ class SparseElements(Elements):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 
@@ -56,7 +56,7 @@ class SparseElements(Elements):
 
     def _calculate_implementation(self, function, points, features,
                                   preserveZeros, outputType):
-        if not isinstance(self._source, UML.data.BaseView):
+        if not isinstance(self._source, nimble.data.BaseView):
             data = self._source.data.data
             row = self._source.data.row
             col = self._source.data.col
@@ -74,7 +74,7 @@ class SparseElements(Elements):
             values = coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values, useLog=False)
+            return nimble.createData(outputType, values, useLog=False)
         # subset of data
         if preserveZeros:
             dataSubset = []
@@ -89,7 +89,7 @@ class SparseElements(Elements):
             values = coo_matrix((dataSubset, (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return UML.createData(outputType, values, useLog=False)
+            return nimble.createData(outputType, values, useLog=False)
         # zeros not preserved
         return self._calculate_genericVectorized(
             function, points, features, outputType)
@@ -100,8 +100,8 @@ class SparseElements(Elements):
 
     def _multiply_implementation(self, other):
         """
-        Perform element wise multiplication of this UML Base object
-        against the provided other UML Base object. Both objects must
+        Perform element wise multiplication of this nimble Base object
+        against the provided other nimble Base object. Both objects must
         contain only numeric data. The pointCount and featureCount of
         both objects must be equal. The types of the two objects may be
         different, but the returned object will be the inplace
@@ -110,8 +110,8 @@ class SparseElements(Elements):
         # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
         # for other.data as any dense or sparse matrix
         toMul = None
-        directMul = isinstance(other, (UML.data.Sparse, UML.data.Matrix))
-        notView = not isinstance(other, UML.data.BaseView)
+        directMul = isinstance(other, (nimble.data.Sparse, nimble.data.Matrix))
+        notView = not isinstance(other, nimble.data.BaseView)
         if directMul and notView:
             toMul = other.data
         else:

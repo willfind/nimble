@@ -27,7 +27,7 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML import loadData
 from UML.data import BaseView
 from UML.data.dataHelpers import formatIfNeeded
@@ -261,14 +261,14 @@ class QueryBackend(DataTestObject):
         def excludeAxis(axis):
             if axis == 'point':
                 exclude = self.constructor(data, featureNames=featureNames)
-                if isinstance(exclude, UML.data.BaseView):
+                if isinstance(exclude, nimble.data.BaseView):
                     setter = exclude._source.points.setNames
                 else:
                     setter = exclude.points.setNames
                 count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
-                if isinstance(exclude, UML.data.BaseView):
+                if isinstance(exclude, nimble.data.BaseView):
                     setter = exclude._source.features.setNames
                 else:
                     setter = exclude.features.setNames
@@ -395,7 +395,7 @@ class QueryBackend(DataTestObject):
 
         toSave.save(tmpFile.name)
         LoadObj = loadData(tmpFile.name + '.umld')
-        assert isinstance(LoadObj, UML.data.Base)
+        assert isinstance(LoadObj, nimble.data.Base)
 
         try:
             LoadObj = loadData(tmpFile.name)
@@ -886,7 +886,7 @@ class QueryBackend(DataTestObject):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
-                randGen = UML.createRandomData("List", pNum, fNum, 0)
+                randGen = nimble.createRandomData("List", pNum, fNum, 0)
                 raw = randGen.data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
@@ -904,7 +904,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
-        randGen = UML.createRandomData("List", 9, 9, 0)
+        randGen = nimble.createRandomData("List", 9, 9, 0)
         raw = randGen.data
 
         suffix = [1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999]
@@ -968,7 +968,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
-        randGen = UML.createRandomData("List", 9, 3, 0)
+        randGen = nimble.createRandomData("List", 9, 3, 0)
 
         data = self.constructor(randGen.data)
 
@@ -1057,7 +1057,7 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
-        randGen = UML.createRandomData("List", 5, 5, 0, elementType='int')
+        randGen = nimble.createRandomData("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
     @attr('slow')
@@ -1073,7 +1073,7 @@ class QueryBackend(DataTestObject):
                 for j in range(f):
                     raw[i].append(val)
 
-            return UML.createData(rType, raw)
+            return nimble.createData(rType, raw)
 
         def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, includeFNames):
             if pNum == 0 and fNum == 0:
@@ -1089,7 +1089,7 @@ class QueryBackend(DataTestObject):
                 data.features.extract(0)
             else:
                 if valLen is None:
-                    data = UML.createRandomData("List", pNum, fNum, .25, elementType='int')
+                    data = nimble.createRandomData("List", pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
                 if includeFNames:
@@ -1139,7 +1139,7 @@ class QueryBackend(DataTestObject):
     ############
 
     def back_reprOutput(self, numPts, numFts, truncated=False):
-        randGen = UML.createRandomData("List", numPts, numFts, 0)
+        randGen = nimble.createRandomData("List", numPts, numFts, 0)
         pNames = ['pt' + str(i) for i in range(numPts)]
         fNames = ['ft' + str(i) for i in range(numFts)]
         data = self.constructor(randGen.data, pointNames=pNames, featureNames=fNames)
@@ -1701,7 +1701,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
         orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
-        if isinstance(orig, UML.data.BaseView):
+        if isinstance(orig, nimble.data.BaseView):
             return
         #don't test view.
         res = orig.features.statistics('mean', groupByFeature='gender')
@@ -2067,7 +2067,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2090,7 +2090,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2114,7 +2114,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = UML.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copyAs('pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it

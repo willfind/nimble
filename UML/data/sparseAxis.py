@@ -1,6 +1,6 @@
 """
 Implementations and helpers specific to performing axis-generic
-operations on a UML Sparse object.
+operations on a nimble Sparse object.
 """
 
 from __future__ import absolute_import
@@ -8,13 +8,13 @@ from abc import abstractmethod
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
@@ -27,7 +27,7 @@ class SparseAxis(Axis):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 
@@ -160,9 +160,9 @@ class SparseAxis(Axis):
 
         ret = targeted.tocoo()
 
-        return UML.data.Sparse(ret, pointNames=pointNames,
-                               featureNames=featureNames,
-                               reuseData=True)
+        return nimble.data.Sparse(ret, pointNames=pointNames,
+                                  featureNames=featureNames,
+                                  reuseData=True)
 
     def _structuralIterative_implementation(self, structure, targetList,
                                             pointNames, featureNames):
@@ -216,8 +216,8 @@ class SparseAxis(Axis):
         ret = coo_matrix((targetData, (targetRows, targetCols)),
                          shape=targetShape)
 
-        return UML.data.Sparse(ret, pointNames=pointNames,
-                               featureNames=featureNames, reuseData=True)
+        return nimble.data.Sparse(ret, pointNames=pointNames,
+                                  featureNames=featureNames, reuseData=True)
 
     def _unique_implementation(self):
         if self._source._sorted is None:
@@ -276,14 +276,14 @@ class SparseAxis(Axis):
             shape = (axisCount, len(self._source.features))
             uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
                                    shape=shape)
-            return UML.createData('Sparse', uniqueCoo, pointNames=axisNames,
-                                  featureNames=offAxisNames, useLog=False)
+            return nimble.createData('Sparse', uniqueCoo, pointNames=axisNames,
+                                     featureNames=offAxisNames, useLog=False)
         else:
             shape = (len(self._source.points), axisCount)
             uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
                                    shape=shape)
-            return UML.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
-                                  featureNames=axisNames, useLog=False)
+            return nimble.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
+                                     featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

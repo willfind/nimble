@@ -22,7 +22,7 @@ import operator
 import six
 import numpy
 
-import UML
+import UML as nimble
 from UML import fill
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import ImproperObjectAction
@@ -46,7 +46,7 @@ class Axis(object):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
     def __init__(self, source, **kwargs):
@@ -497,7 +497,7 @@ class Axis(object):
                     msg += "container of valid values"
                     raise InvalidArgumentValue(msg)
 
-        ret = UML.createData(self._source.getTypeString(), retData,
+        ret = nimble.createData(self._source.getTypeString(), retData,
                              useLog=False)
         if self._axis != 'point':
             ret.transpose(useLog=False)
@@ -552,8 +552,8 @@ class Axis(object):
             raise InvalidArgumentType("The reducer must be callable")
 
         if targetCount == 0:
-            ret = UML.createData(self._source.getTypeString(),
-                                 numpy.empty(shape=(0, 0)), useLog=False)
+            ret = nimble.createData(self._source.getTypeString(),
+                                    numpy.empty(shape=(0, 0)), useLog=False)
         else:
             mapResults = {}
             # apply the mapper to each point in the data
@@ -576,8 +576,8 @@ class Axis(object):
                 if redRet is not None:
                     (redKey, redValue) = redRet
                     ret.append([redKey, redValue])
-            ret = UML.createData(self._source.getTypeString(), ret,
-                                 useLog=False)
+            ret = nimble.createData(self._source.getTypeString(), ret,
+                                    useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -619,7 +619,7 @@ class Axis(object):
 
     def _normalize(self, subtract, divide, applyResultTo, useLog=None):
         # used to trigger later conditionals
-        alsoIsObj = isinstance(applyResultTo, UML.data.Base)
+        alsoIsObj = isinstance(applyResultTo, nimble.data.Base)
 
         # the operation is different when the input is a vector
         # or produces a vector (ie when the input is a statistics
@@ -629,16 +629,16 @@ class Axis(object):
         divIsVec = False
 
         # check it is within the desired types
-        allowedTypes = (int, float, six.string_types, UML.data.Base)
+        allowedTypes = (int, float, six.string_types, nimble.data.Base)
         if subtract is not None:
             if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
+                msg += "an int, float, string, or is a nimble data object"
                 raise InvalidArgumentType(msg)
         if divide is not None:
             if not isinstance(divide, allowedTypes):
                 msg = "The argument named divide must have a value that is "
-                msg += "an int, float, string, or is a UML data object"
+                msg += "an int, float, string, or is a nimble data object"
                 raise InvalidArgumentType(msg)
 
         # check that if it is a string, it is one of the accepted values
@@ -668,7 +668,7 @@ class Axis(object):
 
             if inMainLen != objMainLen or inOffLen != objOffLen:
                 vecErr = argname + " "
-                vecErr += "was a UML object in the shape of a "
+                vecErr += "was a nimble object in the shape of a "
                 vecErr += "vector (" + str(inPC) + " x "
                 vecErr += str(inFC) + "), "
                 vecErr += "but the length of long axis did not match "
@@ -688,7 +688,7 @@ class Axis(object):
                 # treat it as a mis-sized object
                 else:
                     msg = argname + " "
-                    msg += "was a UML object with a shape of ("
+                    msg += "was a nimble object with a shape of ("
                     msg += str(inPC) + " x " + str(inFC) + "), "
                     msg += "but it doesn't match the shape of the calling"
                     msg += "object (" + str(objPC) + " x "
@@ -721,8 +721,8 @@ class Axis(object):
                 msg += "calling object (" + str(callMainLen) + ")"
                 raise InvalidArgumentValue(msg)
             if objIn and callOffLen != alsoOffLen:
-                msg = "When a non-vector UML object is given for the subtract "
-                msg += "or divide arguments, then applyResultTo "
+                msg = "When a non-vector nimble object is given for the "
+                msg += "subtract or divide arguments, then applyResultTo "
                 msg += "must have the same number of " + offAxis
                 msg += "s (" + str(alsoOffLen) + ") as the calling object "
                 msg += "(" + str(callOffLen) + ")"
@@ -730,10 +730,10 @@ class Axis(object):
 
         # actually check that objects are the correct shape/size
         objArg = False
-        if isinstance(subtract, UML.data.Base):
+        if isinstance(subtract, nimble.data.Base):
             subIsVec = validateInObjectSize("subtract", subtract)
             objArg = True
-        if isinstance(divide, UML.data.Base):
+        if isinstance(divide, nimble.data.Base):
             divIsVec = validateInObjectSize("divide", divide)
             objArg = True
 
@@ -854,12 +854,12 @@ class Axis(object):
                                             'similarities')
 
         if cleanFuncName == 'correlation':
-            toCall = UML.calculate.correlation
+            toCall = nimble.calculate.correlation
         elif cleanFuncName in ['covariance', 'samplecovariance']:
-            toCall = UML.calculate.covariance
+            toCall = nimble.calculate.covariance
         elif cleanFuncName == 'populationcovariance':
             def populationCovariance(X, X_T):
-                return UML.calculate.covariance(X, X_T, False)
+                return nimble.calculate.covariance(X, X_T, False)
 
             toCall = populationCovariance
         elif cleanFuncName == 'dotproduct':
@@ -904,31 +904,31 @@ class Axis(object):
                                             'statistics')
 
         if cleanFuncName == 'max':
-            toCall = UML.calculate.maximum
+            toCall = nimble.calculate.maximum
         elif cleanFuncName == 'mean':
-            toCall = UML.calculate.mean
+            toCall = nimble.calculate.mean
         elif cleanFuncName == 'median':
-            toCall = UML.calculate.median
+            toCall = nimble.calculate.median
         elif cleanFuncName == 'min':
-            toCall = UML.calculate.minimum
+            toCall = nimble.calculate.minimum
         elif cleanFuncName == 'uniquecount':
-            toCall = UML.calculate.uniqueCount
+            toCall = nimble.calculate.uniqueCount
         elif cleanFuncName == 'proportionmissing':
-            toCall = UML.calculate.proportionMissing
+            toCall = nimble.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
-            toCall = UML.calculate.proportionZero
+            toCall = nimble.calculate.proportionZero
         elif cleanFuncName in ['std', 'standarddeviation']:
             def sampleStandardDeviation(values):
-                return UML.calculate.standardDeviation(values, True)
+                return nimble.calculate.standardDeviation(values, True)
 
             toCall = sampleStandardDeviation
         elif cleanFuncName in ['samplestd', 'samplestandarddeviation']:
             def sampleStandardDeviation(values):
-                return UML.calculate.standardDeviation(values, True)
+                return nimble.calculate.standardDeviation(values, True)
 
             toCall = sampleStandardDeviation
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
-            toCall = UML.calculate.standardDeviation
+            toCall = nimble.calculate.standardDeviation
 
         ret = self._calculate(toCall, limitTo=None, useLog=False)
         if isinstance(self, Points):
@@ -1373,9 +1373,9 @@ class Axis(object):
         if toAdd is None:
             msg = "The argument 'toAdd' must not have a value of None"
             raise InvalidArgumentType(msg)
-        if not isinstance(toAdd, UML.data.Base):
+        if not isinstance(toAdd, nimble.data.Base):
             msg = "The argument 'toAdd' must be an instance of the "
-            msg += "UML.data.Base  class. The value we recieved was "
+            msg += "nimble.data.Base  class. The value we recieved was "
             msg += str(toAdd) + ", had the type " + str(type(toAdd))
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(toAdd.__class__))
@@ -1438,7 +1438,7 @@ class Axis(object):
             msg = "The argument named " + argName + " must not share any "
             msg += self._axis + "Names with the calling object, yet the "
             msg += "following names occured in both: "
-            msg += UML.exceptions.prettyListString(shared)
+            msg += nimble.exceptions.prettyListString(shared)
             if truncated:
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
@@ -1451,7 +1451,7 @@ class Axis(object):
         """
         if other is None:
             raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, UML.data.Base):
+        if not isinstance(other, nimble.data.Base):
             msg = "The other object must be an instance of base"
             raise InvalidArgumentType(msg)
 
@@ -1512,7 +1512,7 @@ class Axis(object):
                     table.append([lGetter(lname), lname, "   ",
                                   rGetter(rname), rname])
 
-                msg += UML.logger.tableString.tableString(table)
+                msg += nimble.logger.tableString.tableString(table)
                 print(msg, file=sys.stderr)
 
                 raise InvalidArgumentValue(msg)

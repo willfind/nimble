@@ -13,7 +13,7 @@ import six
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import PackageException
 from UML.docHelpers import inheritDocstringsFactory
@@ -26,8 +26,8 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 
-scipy = UML.importModule('scipy.io')
-pd = UML.importModule('pandas')
+scipy = nimble.importModule('scipy.io')
+pd = nimble.importModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class List(Base):
@@ -82,7 +82,7 @@ class List(Base):
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
             # self.data will be = data, shape will be (len(data), len(data[0]))
-            #case4: data=[<UML.data.list.FeatureViewer object at 0x43fd410>]
+            #case4: data=[<nimble.data.list.FeatureViewer object at 0x43fd410>]
                 numFeatures = len(data[0])
                 if checkAll:#check all items
                     for i in data:
@@ -274,7 +274,7 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
-        if format in UML.data.available:
+        if format in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             reuseData = True
@@ -310,7 +310,7 @@ class List(Base):
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
-        if not isinstance(values, UML.data.Base):
+        if not isinstance(values, nimble.data.Base):
             values = [values] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
@@ -551,8 +551,8 @@ class List(Base):
                         and format != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
-                    intermediate = UML.createData('Matrix', emptyStandin,
-                                                  useLog=False)
+                    intermediate = nimble.createData('Matrix', emptyStandin,
+                                                     useLog=False)
                     return intermediate.copyAs(format)
 
                 listForm = [[self._source.data[pID][fID] for fID
@@ -691,7 +691,7 @@ class List(Base):
         return False
 
     def _mul__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:
             ret = self.copy()
@@ -700,13 +700,13 @@ class List(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML Base object against the provided other
-        UML Base object. Both object must contain only numeric data. The
-        featureCount of the calling object must equal the pointCount of
-        the other object. The types of the two objects may be different,
-        and the return is guaranteed to be the same type as at least one
-        out of the two, to be automatically determined according to
-        efficiency constraints.
+        Matrix multiply this nimble Base object against the provided
+        other nimble Base object. Both object must contain only numeric
+        data. The featureCount of the calling object must equal the
+        pointCount of the other object. The types of the two objects may
+        be different, and the return is guaranteed to be the same type
+        as at least one out of the two, to be automatically determined
+        according to efficiency constraints.
         """
         ret = []
         for sPoint in self.points:
@@ -721,10 +721,10 @@ class List(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML Base object by the provided
-        scalar. This object must contain only numeric data. The 'scalar'
-        parameter must be a numeric data type. The returned object will
-        be the inplace modification of the calling object.
+        Multiply every element of this nimble Base object by the
+        provided scalar. This object must contain only numeric data. The
+        'scalar' parameter must be a numeric data type. The returned
+        object will be the inplace modification of the calling object.
         """
         for point in self.data:
             for i in range(len(point)):

@@ -1,6 +1,6 @@
 """
 Implementations and helpers specific to performing axis-generic
-operations on a UML List object.
+operations on a nimble List object.
 """
 
 from __future__ import absolute_import
@@ -9,7 +9,7 @@ from abc import abstractmethod
 
 import numpy
 
-import UML
+import UML as nimble
 from .axis import Axis
 from .points import Points
 
@@ -25,7 +25,7 @@ class ListAxis(Axis):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 
@@ -50,10 +50,10 @@ class ListAxis(Axis):
                 keepList = [i for i in range(len(self)) if i not in targetList]
                 self._source.data = [self._source.data[pt] for pt in keepList]
             if satisfying == []:
-                return UML.data.List(satisfying, pointNames=pointNames,
-                                     featureNames=featureNames,
-                                     shape=((0, self._source.shape[1])),
-                                     checkAll=False, reuseData=True)
+                return nimble.data.List(satisfying, pointNames=pointNames,
+                                        featureNames=featureNames,
+                                        shape=((0, self._source.shape[1])),
+                                        checkAll=False, reuseData=True)
 
         else:
             if self._source.data == []:
@@ -71,9 +71,9 @@ class ListAxis(Axis):
                 remainingFts = self._source._numFeatures - len(targetList)
                 self._source._numFeatures = remainingFts
 
-        return UML.data.List(satisfying, pointNames=pointNames,
-                             featureNames=featureNames,
-                             checkAll=False, reuseData=True)
+        return nimble.data.List(satisfying, pointNames=pointNames,
+                                featureNames=featureNames,
+                                checkAll=False, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # run through target axis and change indices
@@ -102,11 +102,11 @@ class ListAxis(Axis):
         axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
                                                    uniqueIndices)
         if isinstance(self, Points):
-            return UML.createData('List', uniqueData, pointNames=axisNames,
-                                  featureNames=offAxisNames, useLog=False)
+            return nimble.createData('List', uniqueData, pointNames=axisNames,
+                                     featureNames=offAxisNames, useLog=False)
         else:
-            return UML.createData('List', uniqueData, pointNames=offAxisNames,
-                                  featureNames=axisNames, useLog=False)
+            return nimble.createData('List', uniqueData, pointNames=offAxisNames,
+                                      featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

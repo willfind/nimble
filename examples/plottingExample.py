@@ -1,5 +1,5 @@
 """
-Script demonstrating the various options available for plotting UML
+Script demonstrating the various options available for plotting nimble
 data objects. By default, outputs plots to the screen. If a directory
 is passed as an argument to the script, then plots will instead
 be written as files in that directory
@@ -13,7 +13,7 @@ import numpy
 import os
 import sys
 
-import UML
+import UML as nimble
 
 if __name__ == "__main__":
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         givenOutDir = sys.argv[1]
 
     rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
-    objNorm = UML.createData("Matrix", rawNorm, featureNames=["N(0,1)"])
+    objNorm = nimble.createData("Matrix", rawNorm, featureNames=["N(0,1)"])
 
     # 1000 samples of N(0,1)
     def plotDistributionNormal(plotObj, outDir):
@@ -51,8 +51,8 @@ if __name__ == "__main__":
         raw1 = numpy.random.rand(50, 1)
         raw2 = numpy.random.rand(50, 1)
         scaled = (raw1 * 3) + raw2
-        obj1 = UML.createData("Matrix", raw1)
-        obj2 = UML.createData("Matrix", scaled)
+        obj1 = nimble.createData("Matrix", raw1)
+        obj2 = nimble.createData("Matrix", scaled)
         obj1.features.add(obj2)
 
         #obj1.features.setName(0, "[0, 1) random noise")
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         obj1.plotFeatureAgainstFeature(0, 1, outPath=outPath)
 
 
-    checkObj = UML.createData("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
+    checkObj = nimble.createData("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
 
     def makeCheckered(val, p, f):
         pParity = p % 2

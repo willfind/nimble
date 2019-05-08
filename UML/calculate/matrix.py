@@ -5,16 +5,16 @@ from UML.exceptions import InvalidArgumentType
 
 def elementwiseMultiply(left, right):
     """
-    Perform element wise multiplication of two provided UML Base objects
-    with the result being returned in a separate UML Base object. Both
+    Perform element wise multiplication of two provided nimble Base objects
+    with the result being returned in a separate nimble Base object. Both
     objects must contain only numeric data. The pointCount and featureCount
     of both objects must be equal. The types of the two objects may be
     different. None is always returned.
 
     """
-    # check left is UML
+    # check left is nimble
     if not isinstance(left, Base):
-        msg = "'left' must be an instance of a UML data object"
+        msg = "'left' must be an instance of a nimble data object"
         raise InvalidArgumentType(msg)
 
     left = left.copy()
@@ -28,10 +28,10 @@ def elementwisePower(left, right):
     as the bases and the values in the right object as exponents. A new object
     will be created, and the input obects will be un-modified.
     """
-    # check left is UML
+    # check left is nimble
 
     if not isinstance(left, Base):
-        msg = "'left' must be an instance of a UML data object"
+        msg = "'left' must be an instance of a nimble data object"
         raise InvalidArgumentType(msg)
 
     left = left.copy()

@@ -1,6 +1,6 @@
 """
 Implementations and helpers specific to performing axis-generic
-operations on a UML Matrix object.
+operations on a nimble Matrix object.
 """
 
 from __future__ import absolute_import
@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 import numpy
 
-import UML
+import UML as nimble
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
@@ -23,7 +23,7 @@ class MatrixAxis(Axis):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 
@@ -53,8 +53,8 @@ class MatrixAxis(Axis):
             self._source.data = numpy.delete(self._source.data,
                                              targetList, axisVal)
 
-        return UML.data.Matrix(ret, pointNames=pointNames,
-                               featureNames=featureNames, reuseData=True)
+        return nimble.data.Matrix(ret, pointNames=pointNames,
+                                  featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
@@ -77,12 +77,12 @@ class MatrixAxis(Axis):
         axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
                                                    uniqueIndices)
         if isinstance(self, Points):
-            return UML.createData('Matrix', uniqueData, pointNames=axisNames,
-                                  featureNames=offAxisNames, useLog=False)
+            return nimble.createData('Matrix', uniqueData, pointNames=axisNames,
+                                     featureNames=offAxisNames, useLog=False)
         else:
-            return UML.createData('Matrix', uniqueData,
-                                  pointNames=offAxisNames,
-                                  featureNames=axisNames, useLog=False)
+            return nimble.createData('Matrix', uniqueData,
+                                     pointNames=offAxisNames,
+                                     featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

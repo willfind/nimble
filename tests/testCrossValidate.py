@@ -13,13 +13,11 @@ import nose
 from nose.tools import *
 from nose.plugins.attrib import attr
 
-import UML
-
+import UML as nimble
 from UML import crossValidate
 from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
-
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.calculate import *
 from UML.randomness import pythonRandom
@@ -33,8 +31,8 @@ from .assertionHelpers import oneLogEntryExpected
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
     """returns a tuple of two data objects of type dataType
-    the first object in the tuple contains the feature information ('X' in UML language)
-    the second object in the tuple contains the labels for each feature ('Y' in UML language)
+    the first object in the tuple contains the feature information ('X' in nimble language)
+    the second object in the tuple contains the labels for each feature ('Y' in nimble language)
     """
     if numLabels is None:
         labelsRaw = [[pythonRandom.random()] for _x in range(numPoints)]
@@ -62,14 +60,14 @@ def test_crossValidate_XY_unchanged():
 
 def test_crossValidate_callable():
     """tests that crossValidate is callable on different learners with
-    different UML data types
+    different nimble data types
 
     """
     #just scrap data to make sure it doesn't crash
     numLabels = 3
     numPoints = 10
 
-    for dType in UML.data.available:
+    for dType in nimble.data.available:
         X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
 
         classifierAlgos = ['Custom.KNNClassifier']
@@ -263,7 +261,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
 
 @attr('slow')
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def test_crossValidate_foldingRandomness():
     """Assert that for a dataset, the same algorithm will generate the same model
     (and have the same accuracy) when presented with identical random state (and
@@ -274,16 +272,16 @@ def test_crossValidate_foldingRandomness():
     numTrials = 5
     for _ in range(numTrials):
         X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
-        seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
+        seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
         print(seed)
-        UML.setRandomSeed(seed)
+        nimble.setRandomSeed(seed)
         resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
-        UML.setRandomSeed(seed)
+        nimble.setRandomSeed(seed)
         resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
         assert resultOne == resultTwo
 
 @attr('slow')
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def test_crossValidateReturnAll():
     """Check basic properties of crossValidateReturnAll
 
@@ -299,18 +297,18 @@ def test_crossValidateReturnAll():
     assert 1 == len(result)
     assert result[0][0] == {}
     #try with some extra elements, including the default
-    result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3]))
+    result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3]))
     assert result
     assert 3 == len(result)
 
     # since the same seed is used, and these calls are effectively building the
     # same arguments, the scores in results list should be the same, though
     # ordered differently
-    seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
-    UML.setRandomSeed(seed)
-    result1 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3, 4, 5]))
-    UML.setRandomSeed(seed)
-    result2 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 5, 4, 3, 2]))
+    seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
+    nimble.setRandomSeed(seed)
+    result1 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3, 4, 5]))
+    nimble.setRandomSeed(seed)
+    result2 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
     resultOneScores = [curEntry[1] for curEntry in result1]
@@ -331,7 +329,7 @@ def test_crossValidateReturnAll():
 
 @attr('slow')
 @configSafetyWrapper
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def test_crossValidateReturnBest():
     """Check that the best / fittest argument set is returned.
 
@@ -349,7 +347,7 @@ def test_crossValidateReturnBest():
         learnerType = "classification"
 
         def train(self, trainX, trainY, wrapped, flip, **args):
-            self.trained = UML.train(wrapped, trainX, trainY, **args)
+            self.trained = nimble.train(wrapped, trainX, trainY, **args)
             self.flip = flip
 
         def apply(self, testX):
@@ -362,22 +360,22 @@ def test_crossValidateReturnBest():
                     ret[i][0] = 0
             return ret
 
-    UML.registerCustomLearner('custom', FlipWrapper)
+    nimble.registerCustomLearner('custom', FlipWrapper)
 
     # want to have a predictable random state in order to control folding
-    seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
+    seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
 
     def trial(metric, maximize):
         # get a baseline result
-        UML.setRandomSeed(seed)
+        nimble.setRandomSeed(seed)
         resultTuple = crossValidateReturnBest('custom.FlipWrapper', X, Y,
-                                              metric, flip=UML.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
+                                              metric, flip=nimble.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
-        UML.setRandomSeed(seed)
+        nimble.setRandomSeed(seed)
         allResultsList = crossValidateReturnAll('custom.FlipWrapper', X, Y,
-                                                metric, flip=UML.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
+                                                metric, flip=nimble.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
         #since same args were used, the best tuple should be in allResultsList
         allArguments = [curResult[0] for curResult in allResultsList]
         allScores = [curResult[1] for curResult in allResultsList]
@@ -402,7 +400,7 @@ def test_crossValidateReturnBest():
     trial(fractionIncorrect, False)
     trial(fractionCorrect, True)
 
-    UML.deregisterCustomLearner('custom', 'FlipWrapper')
+    nimble.deregisterCustomLearner('custom', 'FlipWrapper')
 
 
 def test_crossValidateReturnEtc_withDefaultArgs():
@@ -495,12 +493,12 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
-    UML.registerCustomLearner('custom', UnitPredictor)
+    nimble.registerCustomLearner('custom', UnitPredictor)
 
     data = [1, 3, 5, 6, 8, 4, 10, -12, -2, 22]
-    X = UML.createData("Matrix", data)
+    X = nimble.createData("Matrix", data)
     X.transpose()
-    Y = UML.createData("Matrix", data)
+    Y = nimble.createData("Matrix", data)
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False

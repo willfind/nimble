@@ -12,7 +12,7 @@ try:
 except ImportError:
     imported = False
 
-import UML
+import UML as nimble
 from UML.customLearners import CustomLearner
 
 
@@ -48,4 +48,4 @@ class MultiOutputLinearRegression(CustomLearner):
         results = numpy.matrix(results)
         results = results.transpose()
 
-        return UML.createData("Matrix", results, useLog=False)
+        return nimble.createData("Matrix", results, useLog=False)

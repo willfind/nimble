@@ -19,7 +19,7 @@ from UML.exceptions import ImproperObjectAction
 
 class Points(object):
     """
-    Methods that can be called on the a UML Base objects point axis.
+    Methods that can be called on the a nimble Base objects point axis.
     """
     def __init__(self, source):
         self._source = source
@@ -47,8 +47,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getName(1)
         'b'
         """
@@ -68,8 +68,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getNames()
         ['a', 'b', 'c', 'd']
         """
@@ -98,8 +98,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.setName('b', 'new')
         >>> data.points.getNames()
         ['a', 'new', 'c', 'd']
@@ -129,8 +129,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.setNames(['1', '2', '3', '4'])
         >>> data.points.getNames()
         ['1', '2', '3', '4']
@@ -158,8 +158,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndex('c')
         2
         """
@@ -187,8 +187,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndices(['c', 'a', 'd'])
         [2, 0, 3]
         """
@@ -209,8 +209,8 @@ class Points(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     pointNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.hasName('a')
         True
         >>> data.points.hasName('e')
@@ -262,7 +262,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See Also
         --------
@@ -274,9 +274,9 @@ class Points(object):
         ...        [2, 2, 2, 2],
         ...        [3, 3, 3, 3],
         ...        [4, 4, 4, 4]]
-        >>> data = UML.createData('Matrix', raw,
-        ...                       featureNames=['a', 'b', 'c', 'd'],
-        ...                       pointNames=['1', '2', '3', '4'])
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          featureNames=['a', 'b', 'c', 'd'],
+        ...                          pointNames=['1', '2', '3', '4'])
         >>> single = data.points.copy('1')
         >>> single
         Matrix(
@@ -324,7 +324,7 @@ class Points(object):
             pointNames={'1':0, '2':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> numberRandom = data.points.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
@@ -377,7 +377,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See Also
         --------
@@ -387,7 +387,8 @@ class Points(object):
         --------
         Extract a single point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> single = data.points.extract('a')
         >>> single
         Matrix(
@@ -403,7 +404,8 @@ class Points(object):
 
         Extract multiple points.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> multiple = data.points.extract(['a', 2])
         >>> multiple
         Matrix(
@@ -419,7 +421,8 @@ class Points(object):
 
         Extract point when the function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> func = data.points.extract(lambda pt: pt[2] == 1)
         >>> func
         Matrix(
@@ -435,8 +438,9 @@ class Points(object):
 
         Extract point when the string filter function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
-        ...                     featureNames=['f1', 'f2', 'f3'])
+        >>> data = nimble.identity('Matrix', 3,
+        ...                        pointNames=['a', 'b', 'c'],
+        ...                        featureNames=['f1', 'f2', 'f3'])
         >>> strFunc = data.points.extract("f2 != 0")
         >>> strFunc
         Matrix(
@@ -454,7 +458,8 @@ class Points(object):
 
         Extract points from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> startEnd = data.points.extract(start=1, end=2)
         >>> startEnd
         Matrix(
@@ -470,7 +475,8 @@ class Points(object):
 
         Select a set number to extract, starting from the first point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> numberNoRandom = data.points.extract(number=2)
         >>> numberNoRandom
         Matrix(
@@ -486,8 +492,9 @@ class Points(object):
 
         Select a set number to extract, choosing points at random.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.points.extract(number=2, randomize=True)
         >>> numberRandom
         Matrix(
@@ -550,7 +557,8 @@ class Points(object):
         --------
         Delete a single point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete('a')
         >>> data
         Matrix(
@@ -561,7 +569,8 @@ class Points(object):
 
         Delete multiple points.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(['a', 2])
         >>> data
         Matrix(
@@ -571,7 +580,8 @@ class Points(object):
 
         Delete point when the function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(lambda pt: pt[2] == 1)
         >>> data
         Matrix(
@@ -582,8 +592,9 @@ class Points(object):
 
         Delete point when the string filter function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
-        ...                     featureNames=['f1', 'f2', 'f3'])
+        >>> data = nimble.identity('Matrix', 3,
+        ...                        pointNames=['a', 'b', 'c'],
+        ...                        featureNames=['f1', 'f2', 'f3'])
         >>> data.points.delete("f2 != 0")
         >>> data
         Matrix(
@@ -595,7 +606,8 @@ class Points(object):
 
         Delete points from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(start=1, end=2)
         >>> data
         Matrix(
@@ -605,7 +617,8 @@ class Points(object):
 
         Select a set number to delete, starting from the first point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(number=2)
         >>> data
         Matrix(
@@ -615,8 +628,9 @@ class Points(object):
 
         Select a set number to delete, choosing points at random.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(number=2, randomize=True)
         >>> data
         Matrix(
@@ -673,7 +687,8 @@ class Points(object):
         --------
         Retain a single point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain('a')
         >>> data
         Matrix(
@@ -683,7 +698,8 @@ class Points(object):
 
         Retain multiple points.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(['a', 2])
         >>> data
         Matrix(
@@ -694,7 +710,8 @@ class Points(object):
 
         Retain point when the function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(lambda pt: pt[2] == 1)
         >>> data
         Matrix(
@@ -704,8 +721,9 @@ class Points(object):
 
         Retain point when the string filter function returns True.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
-        ...                     featureNames=['f1', 'f2', 'f3'])
+        >>> data = nimble.identity('Matrix', 3,
+        ...                        pointNames=['a', 'b', 'c'],
+        ...                        featureNames=['f1', 'f2', 'f3'])
         >>> data.points.retain("f2 != 0")
         >>> data
         Matrix(
@@ -716,7 +734,8 @@ class Points(object):
 
         Retain points from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(start=1, end=2)
         >>> data
         Matrix(
@@ -727,7 +746,8 @@ class Points(object):
 
         Select a set number to retain, starting from the first point.
 
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(number=2)
         >>> data
         Matrix(
@@ -738,8 +758,9 @@ class Points(object):
 
         Select a set number to retain, choosing points at random.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('Matrix', 3, pointNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('Matrix', 3)
+        >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(number=2, randomize=True)
         >>> data
         Matrix(
@@ -777,14 +798,14 @@ class Points(object):
 
         >>> def sumIsOne(pt):
         ...     return sum(pt) == 1
-        >>> data = UML.identity('List', 3)
+        >>> data = nimble.identity('List', 3)
         >>> data.points.count(sumIsOne)
         3
 
         Count when the string filter function returns True.
 
-        >>> data = UML.identity('List', 3,
-        ...                     featureNames=['ft1', 'ft2', 'ft3'])
+        >>> data = nimble.identity('List', 3,
+        ...                        featureNames=['ft1', 'ft2', 'ft3'])
         >>> data.points.count("ft1 == 0")
         2
         """
@@ -816,7 +837,8 @@ class Points(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> fts = ['dept', 'ID', 'quantity']
-        >>> orders = UML.createData('DataFrame', raw, featureNames=fts)
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=fts)
         >>> orders.points.sort('ID')
         >>> orders
         DataFrame(
@@ -834,7 +856,7 @@ class Points(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
-        >>> orders = UML.createData('DataFrame', raw, pointNames=pts)
+        >>> orders = nimble.createData('DataFrame', raw, pointNames=pts)
         >>> orders.points.sort(sortHelper=['o_1', 'o_2', 'o_3', 'o_4'])
         >>> orders
         DataFrame(
@@ -855,7 +877,8 @@ class Points(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> fts = ['dept', 'ID', 'quantity']
-        >>> orders = UML.createData('DataFrame', raw, featureNames=fts)
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=fts)
         >>> orders.points.sort(sortHelper=compareQuantity)
         >>> orders
         DataFrame(
@@ -876,7 +899,8 @@ class Points(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> fts = ['dept', 'ID', 'quantity']
-        >>> orders = UML.createData('DataFrame', raw, featureNames=fts)
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=fts)
         >>> orders.points.sort(sortHelper=scoreQuantity)
         >>> orders
         DataFrame(
@@ -969,7 +993,7 @@ class Points(object):
         --------
         Transform all points; apply to all features.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.points.transform(lambda pt: pt + 2)
         >>> data
         Matrix(
@@ -986,7 +1010,7 @@ class Points(object):
         ...     ptList = pt.copyAs('python list', outputAs1D=True)
         ...     ptList[2] += 4
         ...     return ptList
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.points.transform(transformMiddleFeature)
         >>> data
         Matrix(
@@ -997,7 +1021,7 @@ class Points(object):
 
         Transform a subset of points.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.points.transform(lambda pt: pt + 6, points=[0, 2])
         >>> data
         Matrix(
@@ -1031,7 +1055,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See also
         --------
@@ -1041,7 +1065,7 @@ class Points(object):
         --------
         Apply calculation to all points; apply to all features.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> addTwo = data.points.calculate(lambda pt: pt + 2)
         >>> addTwo
         Matrix(
@@ -1058,7 +1082,7 @@ class Points(object):
         ...     ptList = pt.copyAs('python list', outputAs1D=True)
         ...     ptList[2] += 4
         ...     return ptList
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> changeMiddle = data.points.calculate(changeMiddleFeature)
         >>> changeMiddle
         Matrix(
@@ -1070,7 +1094,7 @@ class Points(object):
         Transform a subset of points.
 
         >>> ptNames = ['p1', 'p2', 'p3']
-        >>> data = UML.identity('Matrix', 3, pointNames=ptNames)
+        >>> data = nimble.identity('Matrix', 3, pointNames=ptNames)
         >>> calc = data.points.calculate(lambda pt: pt + 6,
         ...                              points=[2, 0])
         >>> calc
@@ -1095,8 +1119,8 @@ class Points(object):
 
         Parameters
         ----------
-        toAdd : UML Base object
-            The UML Base object whose contents we will be including
+        toAdd : nimble Base object
+            The nimble Base object whose contents we will be including
             in this object. Must have the same number of features as the
             calling object, but not necessarily in the same order. Must
             not share any point names with the calling object.
@@ -1111,8 +1135,8 @@ class Points(object):
         --------
         Append added data; default names.
 
-        >>> data = UML.zeros('Matrix', 2, 3)
-        >>> toAdd = UML.ones('Matrix', 2, 3)
+        >>> data = nimble.zeros('Matrix', 2, 3)
+        >>> toAdd = nimble.ones('Matrix', 2, 3)
         >>> data.points.add(toAdd)
         >>> data
         Matrix(
@@ -1125,11 +1149,11 @@ class Points(object):
         Reorder names.
 
         >>> rawData = [[1, 2, 3], [1, 2, 3]]
-        >>> data = UML.createData('Matrix', rawData,
-        ...                       featureNames=['a', 'b', 'c'])
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          featureNames=['a', 'b', 'c'])
         >>> rawAdd = [[3, 2, 1], [3, 2, 1]]
-        >>> toAdd = UML.createData('Matrix', rawAdd,
-        ...                        featureNames=['c', 'b', 'a'])
+        >>> toAdd = nimble.createData('Matrix', rawAdd,
+        ...                           featureNames=['c', 'b', 'a'])
         >>> data.points.add(toAdd)
         >>> data
         Matrix(
@@ -1143,11 +1167,11 @@ class Points(object):
         Insert before another point; mixed object types.
 
         >>> rawData = [[1, 1, 1], [4, 4, 4]]
-        >>> data = UML.createData('Matrix', rawData,
-        ...                       pointNames=['1', '4'])
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          pointNames=['1', '4'])
         >>> rawAdd = [[2, 2, 2], [3, 3, 3]]
-        >>> toAdd = UML.createData('List', rawAdd,
-        ...                        pointNames=['2', '3'])
+        >>> toAdd = nimble.createData('List', rawAdd,
+        ...                           pointNames=['2', '3'])
         >>> data.points.add(toAdd, insertBefore='4')
         >>> data
         Matrix(
@@ -1193,7 +1217,8 @@ class Points(object):
         ...             [72968, 'Dome', 'New Orleans Saints'],
         ...             [76500, 'Open', 'Miami Dolphins']]
         >>> fts = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> data = UML.createData('Matrix', stadiums, featureNames=fts)
+        >>> data = nimble.createData('Matrix', stadiums,
+        ...                          featureNames=fts)
         >>> data.points.mapReduce(roofMapper, roofReducer)
         Matrix(
             [[Open 3]
@@ -1214,12 +1239,12 @@ class Points(object):
 
         Examples
         --------
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> raw = [[1, 1, 1, 1],
         ...        [2, 2, 2, 2],
         ...        [3, 3, 3, 3],
         ...        [4, 4, 4, 4]]
-        >>> data = UML.createData('DataFrame', raw)
+        >>> data = nimble.createData('DataFrame', raw)
         >>> data.points.shuffle()
         >>> data
         DataFrame(
@@ -1239,8 +1264,8 @@ class Points(object):
         Fill matching values within each point with a specified value
         based on the values in that point. The ``fill`` value can be
         a constant or a determined based on unmatched values in the
-        point. The match and fill modules in UML offer common functions
-        for these operations.
+        point. The match and fill modules in nimble offer common
+        functions for these operations.
 
         Parameters
         ----------
@@ -1249,13 +1274,13 @@ class Points(object):
             * list - values to locate within each point
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from UML's match module: missing, nonNumeric, zero, etc.
+              from nimble's match module: missing, nonNumeric, zero, etc
         fill : value or function
             * value - a value to fill each matching value in each point
             * function - must be in the format fill(point, match) or
               fill(point, match, arguments) and return the transformed
               point as a list of values. Certain fill methods can be
-              imported from UML's fill module: mean, median, mode,
+              imported from nimble's fill module: mean, median, mode,
               forwardFill, backwardFill, interpolation
         arguments : dict
             Any additional arguments being passed to the fill
@@ -1280,7 +1305,7 @@ class Points(object):
         ...        [1, 1, 'na'],
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.points.fill('na', -1)
         >>> data
         Matrix(
@@ -1291,17 +1316,17 @@ class Points(object):
              [-1.000 2.000 2.000 ]]
             )
 
-        Fill using UML's match and fill modules; limit to last point.
-        Note: None is converted to numpy.nan in UML.
+        Fill using nimble's match and fill modules; limit to last point.
+        Note: None is converted to numpy.nan in nimble.
 
-        >>> from UML import match
-        >>> from UML import fill
+        >>> from nimble import match
+        >>> from nimble import fill
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, None],
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.points.fill(match.missing, fill.mode, points=4)
         >>> data
         Matrix(
@@ -1326,30 +1351,30 @@ class Points(object):
 
         Parameters
         ----------
-        subtract : number, str, UML Base object
+        subtract : number, str, nimble Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though points.statistics)
-            * UML Base object - If a vector shaped object is given, then
-              the value associated with each point will be subtracted
-              from all values of that point. Otherwise, the values in
-              the object are used for elementwise subtraction
-        divide : number, str, UML Base object
+            * nimble Base object - If a vector shaped object is given,
+              then the value associated with each point will be
+              subtracted from all values of that point. Otherwise, the
+              values in the object are used for elementwise subtraction
+        divide : number, str, nimble Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though pointStatistics)
-            * UML Base object - If a vector shaped object is given, then
-              the value associated with each point will be used in
+            * nimble Base object - If a vector shaped object is given,
+              then the value associated with each point will be used in
               division of all values for that point. Otherwise, the
               values in the object are used for elementwise division.
-        applyResultTo : UML Base object, statistical method
-            If a UML Base object is given, then perform the same
+        applyResultTo : nimble Base object, statistical method
+            If a nimble Base object is given, then perform the same
             operations to it as are applied to the calling object.
             However, if a statistical method is specified as subtract or
             divide, then concrete values are first calculated only from
             querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a UML Base object
-            was given for the subtract or divide arguments.
+            on applyResultTo using the results; as if a nimble Base
+            object was given for the subtract or divide arguments.
 
         Examples
         --------
@@ -1432,7 +1457,7 @@ class Points(object):
         ...        ['LA', 20, 21, 21],
         ...        ['CHI', 0, 2, 7]]
         >>> fts = ['city', 'jan', 'feb', 'mar']
-        >>> temp = UML.createData('Matrix', raw, featureNames=fts)
+        >>> temp = nimble.createData('Matrix', raw, featureNames=fts)
         >>> temp.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
         ...                                       'month', 'temp')
         >>> temp
@@ -1553,7 +1578,8 @@ class Points(object):
         ...        ['de Grasse', '200m', 20.02],
         ...        ['de Grasse', '100m', 9.91]]
         >>> fts = ['athlete', 'dist', 'time']
-        >>> sprinters = UML.createData('Matrix', raw, featureNames=fts)
+        >>> sprinters = nimble.createData('Matrix', raw,
+        ...                               featureNames=fts)
         >>> sprinters.points.combineByExpandingFeatures('dist', 'time')
         >>> sprinters
         Matrix(
@@ -1636,7 +1662,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
             The object containing only unique points.
 
         Examples
@@ -1646,7 +1672,7 @@ class Points(object):
         ...        ['b', 7, 1],
         ...        ['a', 1, 3]]
         >>> ptNames = ['p1', 'p2', 'p3', 'p1_copy']
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames)
         >>> uniquePoints = data.points.unique()
         >>> uniquePoints
         Matrix(
@@ -1678,7 +1704,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
         """
         return self._similarities(similarityFunction)
 
@@ -1697,7 +1723,7 @@ class Points(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
         """
         return self._statistics(statisticsFunction)
 

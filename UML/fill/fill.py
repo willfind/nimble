@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.match import convertMatchToFunction
 from UML.match import anyValues
 from UML.exceptions import InvalidArgumentValue
@@ -26,13 +26,13 @@ def factory(match, fill, **kwarguments):
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. nimble offers common use-case functions in its
+          match module.
     fill : value or function
         * value - The value which will replace any matching values.
         * function - Input a value and return the value which will
-          replace the input value. UML offers common use-case functions
-          in this module.
+          replace the input value. Nimble offers common use-case
+          functions in this module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
         fill function.
@@ -43,24 +43,24 @@ def factory(match, fill, **kwarguments):
 
     See Also
     --------
-    UML.match
+    nimble.match
 
     Examples
     --------
     Match a value and fill with a different value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> transform = factory('na', 0)
     >>> transform(data)
     [1, 0, 3, 0, 5]
 
-    Match using a function from UML's match module and fill using
+    Match using a function from nimble's match module and fill using
     another function in this module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [1, 0, 3, 0, 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> transform = factory(match.zero, backwardFill)
     >>> transform(data)
     [1.0, 3.0, 3.0, 5.0, 5.0]
@@ -88,14 +88,14 @@ def constant(vector, match, constantValue):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
     constantValue : value
         The value which will replace any matching values.
 
@@ -107,22 +107,22 @@ def constant(vector, match, constantValue):
 
     See Also
     --------
-    UML.match
+    nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, 'na', 0)
     [1, 0, 3, 0, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [1, 0, 3, 0, 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, match.zero, 99)
     [1.0, 99, 3.0, 99, 5.0]
     """
@@ -139,14 +139,14 @@ def mean(vector, match):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
 
     Returns
     -------
@@ -155,26 +155,26 @@ def mean(vector, match):
 
     See Also
     --------
-    median, mode, UML.match
+    median, mode, nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, 'na')
     [1, 3.0, 3, 3.0, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, match.zero)
     [6.0, 4.0, 2.0, 4.0, 4.0]
     """
-    return statsBackend(vector, match, 'mean', UML.calculate.mean)
+    return statsBackend(vector, match, 'mean', nimble.calculate.mean)
 
 def median(vector, match):
     """
@@ -186,14 +186,14 @@ def median(vector, match):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
 
     Returns
     -------
@@ -203,26 +203,26 @@ def median(vector, match):
 
     See Also
     --------
-    mean, mode, UML.match
+    mean, mode, nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> median(data, 'na')
     [1, 3.0, 3, 3.0, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> median(data, match.zero)
     [6.0, 4.0, 2.0, 4.0, 4.0]
     """
-    return statsBackend(vector, match, 'median', UML.calculate.median)
+    return statsBackend(vector, match, 'median', nimble.calculate.median)
 
 def mode(vector, match):
     """
@@ -233,14 +233,14 @@ def mode(vector, match):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
 
     Returns
     -------
@@ -249,26 +249,26 @@ def mode(vector, match):
 
     See Also
     --------
-    mean, median, UML.match
+    mean, median, nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 1, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, 'na')
     [1, 1.0, 1, 1.0, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 6, 2, 0, 0]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, match.zero)
     [6.0, 6.0, 2.0, 6.0, 6.0]
     """
-    return statsBackend(vector, match, 'mode', UML.calculate.mode)
+    return statsBackend(vector, match, 'mode', nimble.calculate.mode)
 
 def forwardFill(vector, match):
     """
@@ -281,14 +281,14 @@ def forwardFill(vector, match):
 
     Parameters
     ----------
-    vector : UML point or feature
-       A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+       A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
 
     Returns
     -------
@@ -298,22 +298,22 @@ def forwardFill(vector, match):
 
     See Also
     --------
-    backwardFill, UML.match
+    backwardFill, nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, 'na')
     [1, 1, 3, 3, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, match.zero)
     [6.0, 6.0, 2.0, 2.0, 4.0]
     """
@@ -340,14 +340,14 @@ def backwardFill(vector, match):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
 
     Returns
     -------
@@ -357,22 +357,22 @@ def backwardFill(vector, match):
 
     See Also
     --------
-    forwardFill, UML.match
+    forwardFill, nimble.match
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, 'na')
     [1, 3, 3, 5, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, match.zero)
     [6.0, 2.0, 2.0, 4.0, 4.0]
     """
@@ -401,14 +401,14 @@ def interpolate(vector, match, **kwarguments):
 
     Parameters
     ----------
-    vector : UML point or feature
-        A UML object or UML view object containing one point or feature.
+    vector : nimble point or feature
+        A nimble Base object containing one point or feature.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
         numpy.interp.
@@ -421,22 +421,22 @@ def interpolate(vector, match, **kwarguments):
 
     See Also
     --------
-    UML.match, numpy.interp
+    nimble.match, numpy.interp
 
     Examples
     --------
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, 'na')
     [1, 2.0, 3, 4.0, 5]
 
-    Match using a function from UML's match module.
+    Match using a function from nimble's match module.
 
-    >>> from UML import match
+    >>> from nimble import match
     >>> raw = [6, 0, 4, 0, 2]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, match.zero)
     [6.0, 5.0, 4.0, 3.0, 2.0]
     """
@@ -478,14 +478,14 @@ def kNeighborsRegressor(data, match, **kwarguments):
 
     Parameters
     ----------
-    data : UML point or feature
-        A UML object or UML view object containing the data.
+    data : nimble point or feature
+        A nimble Base object containing the data.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
         skl.kNeighborsRegressor.
@@ -498,7 +498,7 @@ def kNeighborsRegressor(data, match, **kwarguments):
 
     See Also
     --------
-    UML.match
+    nimble.match
 
     Examples
     --------
@@ -507,7 +507,7 @@ def kNeighborsRegressor(data, match, **kwarguments):
     ...        [1, 1, 'na'],
     ...        [2, 2, 2],
     ...        ['na', 2, 2]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> kNeighborsRegressor(data, 'na', arguments={'n_neighbors': 3})
     Matrix(
         [[  1   1   1  ]
@@ -532,14 +532,14 @@ def kNeighborsClassifier(data, match, **kwarguments):
 
     Parameters
     ----------
-    data : UML point or feature
-        A UML object or UML view object containing the data.
+    data : nimble point or feature
+        A nimble Base object containing the data.
     match : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
-          be filled. UML offers common use-case functions in its match
-          module.
+          be filled. Nimble offers common use-case functions in its
+          match module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
         skl.kNeighborsClassifier.
@@ -552,7 +552,7 @@ def kNeighborsClassifier(data, match, **kwarguments):
 
     See Also
     --------
-    UML.match
+    nimble.match
 
     Examples
     --------
@@ -561,7 +561,7 @@ def kNeighborsClassifier(data, match, **kwarguments):
     ...        [1, 1, 'na'],
     ...        [2, 2, 2],
     ...        ['na', 2, 2]]
-    >>> data = UML.createData('Matrix', raw)
+    >>> data = nimble.createData('Matrix', raw)
     >>> kNeighborsClassifier(data, 'na', arguments={'n_neighbors': 3})
     Matrix(
         [[  1   1   1  ]
@@ -605,8 +605,8 @@ def kNeighborsBackend(method, data, match, **kwarguments):
                 # each feature this will also remove the point we are
                 # evaluating from the training data
                 trainingData.points.delete(anyValues(match), useLog=False)
-                pred = UML.trainAndApply(method, trainingData, -1, predictData,
-                                         useLog=False, **kwarguments)
+                pred = nimble.trainAndApply(method, trainingData, -1, predictData,
+                                            useLog=False, **kwarguments)
                 pred = pred[0]
                 tmpDict[pID, fID] = pred
                 # remove this feature so next prediction will not include it
@@ -624,7 +624,7 @@ def kNeighborsBackend(method, data, match, **kwarguments):
 
 def statsBackend(vector, match, funcString, statisticsFunction):
     """
-    Backend for filling with a statistics function from UML.calculate.
+    Backend for filling with a statistics function from nimble.calculate.
     """
     match = convertMatchToFunction(match)
     unmatched = [val for val in vector if not match(val)]
@@ -633,7 +633,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     if not unmatched:
         msg = statsExceptionNoMatches(funcString, vector)
         raise InvalidArgumentValue(msg)
-    unmatched = UML.createData('List', unmatched, useLog=False)
+    unmatched = nimble.createData('List', unmatched, useLog=False)
     stat = statisticsFunction(unmatched)
     if stat is None:
         msg = statsExceptionInvalidInput(funcString, vector)
@@ -660,12 +660,12 @@ def getNameAndIndex(axis, vector):
     if axis == 'point':
         if vector._pointNamesCreated():
             name = vector.points.getName(0)
-        if isinstance(vector, UML.data.BaseView):
+        if isinstance(vector, nimble.data.BaseView):
             index = vector._pStart
     else:
         if vector._featureNamesCreated():
             name = vector.features.getName(0)
-        if isinstance(vector, UML.data.BaseView):
+        if isinstance(vector, nimble.data.BaseView):
             index = vector._fStart
 
     return name, index

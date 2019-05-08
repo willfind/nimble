@@ -7,7 +7,7 @@ Methods tested in this file:
 """
 
 from __future__ import absolute_import
-import UML
+
 from UML.data import Base, BaseView
 from UML.data.points import Points
 from UML.data.points_view import PointsView

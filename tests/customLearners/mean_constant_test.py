@@ -1,20 +1,21 @@
 from __future__ import absolute_import
-import UML
 
 from nose.tools import *
+
+import UML as nimble
 
 
 def testMeanConstantSimple():
     """ Test MeanConstant by checking the ouput given simple hand made inputs """
 
     dataX = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20], [0, 1, 0], [1, 2, 3]]
-    trainX = UML.createData('Matrix', dataX)
+    trainX = nimble.createData('Matrix', dataX)
 
     dataY = [[0], [1], [0], [1], [0], [1]]
-    trainY = UML.createData('Matrix', dataY)
+    trainY = nimble.createData('Matrix', dataY)
 
     name = 'Custom.MeanConstant'
-    ret = UML.trainAndApply(name, trainX=trainX, trainY=trainY, testX=trainX)
+    ret = nimble.trainAndApply(name, trainX=trainX, trainY=trainY, testX=trainX)
 
     assert len(ret.points) == 6
     assert len(ret.features) == 1

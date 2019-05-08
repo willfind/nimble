@@ -1,6 +1,6 @@
 """
 Definitions for functions that can be used as performance functions by
-UML. Specifically, this only contains those functions that measure
+nimble. Specifically, this only contains those functions that measure
 loss; or in other words, those where smaller values indicate a higher
 level of correctness in the predicted values.
 
@@ -12,15 +12,15 @@ from math import sqrt
 import numpy
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.data import Base
 from UML.data import Matrix
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 
 def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, UML.data.Base):
-        msg = "predictedValues must be derived class of UML.data.Base"
+    if not isinstance(predictedValues, nimble.data.Base):
+        msg = "predictedValues must be derived class of nimble.data.Base"
         raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
         msg = "predictedValues must be labels only; this has more than "
@@ -42,13 +42,13 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
     knownIsEmpty = len(knownValues.points) == 0 or len(knownValues.features) == 0
     predIsEmpty = len(predictedValues.points) == 0 or len(predictedValues.features) == 0
     if knownValues is None or not isinstance(knownValues, Base):
-        msg = "knownValues must be derived class of UML.data.Base"
+        msg = "knownValues must be derived class of nimble.data.Base"
         raise InvalidArgumentType(msg)
     if knownIsEmpty:
         msg = "Empty 'knownValues' object in error calculator"
         raise InvalidArgumentValue(msg)
     if predictedValues is None or not isinstance(predictedValues, Base):
-        msg = "predictedValues must be derived class of UML.data.Base"
+        msg = "predictedValues must be derived class of nimble.data.Base"
         raise InvalidArgumentType(msg)
     if predIsEmpty:
         msg = "Empty 'predictedValues' object in error calculator"
@@ -154,7 +154,7 @@ fractionIncorrect.optimal = 'min'
 def varianceFractionRemaining(knownValues, predictedValues):
     """
     Calculate the how much variance is has not been correctly predicted in the
-    predicted values. This will be equal to 1 - UML.calculate.rsquared() of
+    predicted values. This will be equal to 1 - nimble.calculate.rsquared() of
     the same inputs.
     """
     if len(knownValues.points) != len(predictedValues.points):

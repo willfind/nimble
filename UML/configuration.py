@@ -1,19 +1,19 @@
 """
 Contains code relating to file I/O and manipulation of the optional
-configuration of UML.
+configuration of nimble.
 
-During UML initialization, there is a specific order to tasks relating
-to configuration. Before any operation that might rely on being able to
-access UML.settings (for example, interface initialization) we must load
-it from file, so that in the normal course of operations, user set
-values are available to be used accross UML. Alternatively, in the case
-that there is a new source of user set options (for example, an
-interface that has been loaded for the first time) we still load from
+During nimble initialization, there is a specific order to tasks
+relating to configuration. Before any operation that might rely on being
+able to access nimble.settings (for example, interface initialization)
+we must load it from file, so that in the normal course of operations,
+user set values are available to be used accross nimble. Alternatively,
+in the case that there is a new source of user set options (for example,
+an interface that has been loaded for the first time) we still load from
 the config file first, then do initialization of all of the those
-modules that might need access to UML.settings, using hard coded
-defaults if needed, then at the end of UML initialization we will always
-perform a syncing helper, which will ensure that the configuration file
-reflects all available options.
+modules that might need access to nimble.settings, using hard coded
+defaults if needed, then at the end of nimble initialization we will
+always perform a syncing helper, which will ensure that the
+configuration file reflects all available options.
 """
 
 # Note: .ini format's option names are not case sensitive?
@@ -24,19 +24,17 @@ import copy
 import sys
 import tempfile
 import inspect
+import importlib
 
 import six
 from six.moves import configparser
 
-import six
-import six.moves.configparser
-
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
 
 currentFile = inspect.getfile(inspect.currentframe())
-UMLPath = os.path.dirname(os.path.abspath(currentFile))
+nimblePath = os.path.dirname(os.path.abspath(currentFile))
 
 class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
     """
@@ -224,7 +222,7 @@ class ToDelete(object):
 
 class SessionConfiguration(object):
     """
-    Class through which UML user interacts with the saveable
+    Class through which nimble user interacts with the saveable
     configuration options define behavior dependent on the host system.
     The backend is a SortedConfigParser (essentially a SafeConfigParser
     where sections and options are written in sorted order) object which
@@ -303,7 +301,8 @@ class SessionConfiguration(object):
                     else:
                         found = True
                         for kOpt in self.changes[kSec]:
-                            if not isinstance(self.changes[kSec][kOpt], ToDelete):
+                            if not isinstance(self.changes[kSec][kOpt],
+                                              ToDelete):
                                 ret[kOpt] = self.changes[kSec][kOpt]
             if not found:
                 raise configparser.NoSectionError()
@@ -350,7 +349,7 @@ class SessionConfiguration(object):
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
                 raise InvalidArgumentType(msg)
-            if len(UML.helpers.inspectArguments(toCall)[0]) != 1:
+            if len(nimble.helpers.inspectArguments(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
                 raise InvalidArgumentValue(msg)
 
@@ -418,7 +417,7 @@ class SessionConfiguration(object):
         try:
             ignore = True
             # raises InvalidArgumentValue if not an interface name
-            interface = UML.helpers.findBestInterface(section)
+            interface = nimble.helpers.findBestInterface(section)
             ignore = False
             acceptedNames = interface.optionNames
             if option not in acceptedNames:
@@ -531,7 +530,7 @@ def loadSettings():
     into a SessionConfiguration. The SessionConfiguration object is then
     returned.
     """
-    target = os.path.join(UML.UMLPath, 'configuration.ini')
+    target = os.path.join(nimble.nimblePath, 'configuration.ini')
 
     if not os.path.exists(target):
         fp = open(target, 'w')
@@ -545,9 +544,10 @@ def syncWithInterfaces(settingsObj, interfaceList, save):
     """
     Synchronizes the configuration file, settings object in memory, and
     the the available interfaces, so that all three have the same option
-    names and default values. This is called during UML initialization
-    after available interfaces have been detected, but before a user
-    could have to rely on accessing options for that interface.
+    names and default values. This is called during nimble
+    initialization after available interfaces have been detected, but
+    before a user could have to rely on accessing options for that
+    interface.
     """
     for interface in interfaceList:
         interfaceName = interface.getCanonicalName()
@@ -561,15 +561,42 @@ def syncWithInterfaces(settingsObj, interfaceList, save):
                 settingsObj.saveChanges(interfaceName, opName)
 
 
+def autoRegisterFromSettings():
+    """
+    Helper which looks at the learners listed in nimble.settings under
+    the 'RegisteredLearners' section and makes sure they are registered.
+    """
+    # query for all entries in 'RegisteredLearners' section
+    toRegister = nimble.settings.get('RegisteredLearners', None)
+    # call register custom learner on them
+    for key in toRegister:
+        try:
+            (packName, _) = key.split('.')
+            (modPath, attrName) = toRegister[key].rsplit('.', 1)
+        except Exception:
+            continue
+        try:
+            module = importlib.import_module(modPath)
+            learnerClass = getattr(module, attrName)
+            nimble.registerCustomLearnerAsDefault(packName, learnerClass)
+        except ImportError:
+            msg = "When trying to automatically register a custom "
+            msg += "learner at " + key + " we were unable to import "
+            msg += "the learner object from the location " + toRegister[key]
+            msg += " and have therefore ignored that configuration "
+            msg += "entry"
+            print(msg, file=sys.stderr)
+
+
 def configSafetyWrapper(toWrap):
     """
-    Decorator which ensures the safety of UML.settings, the
-    configuration file, and associated global UML state. To be used to
-    wrap unit tests which intersect with configuration functionality.
+    Decorator which ensures the safety of nimble.settings, the
+    configuration file, and associated global nimble state. To be used
+    to wrap unit tests which intersect with configuration functionality.
     """
     def wrapped(*args, **kwargs):
         backupFile = tempfile.TemporaryFile()
-        configFilePath = os.path.join(UML.UMLPath, 'configuration.ini')
+        configFilePath = os.path.join(nimble.nimblePath, 'configuration.ini')
         configurationFile = open(configFilePath, 'r')
         if sys.version_info.major < 3:
             backupFile.write(configurationFile.read())
@@ -577,9 +604,9 @@ def configSafetyWrapper(toWrap):
             backupFile.write(bytes(configurationFile.read(), 'utf-8'))#python 3
         configurationFile.close()
 
-        backupChanges = copy.copy(UML.settings.changes)
-        backupHooks = copy.copy(UML.settings.hooks)
-        backupAvailable = copy.copy(UML.interfaces.available)
+        backupChanges = copy.copy(nimble.settings.changes)
+        backupHooks = copy.copy(nimble.settings.hooks)
+        backupAvailable = copy.copy(nimble.interfaces.available)
 
         try:
             toWrap(*args, **kwargs)
@@ -592,19 +619,19 @@ def configSafetyWrapper(toWrap):
                 configurationFile.write(backupFile.read().decode()) # python3
             configurationFile.close()
 
-            UML.settings = UML.configuration.loadSettings()
-            UML.settings.changes = backupChanges
-            UML.settings.hooks = backupHooks
-            UML.interfaces.available = backupAvailable
+            nimble.settings = nimble.configuration.loadSettings()
+            nimble.settings.changes = backupChanges
+            nimble.settings.hooks = backupHooks
+            nimble.interfaces.available = backupAvailable
 
             # this guarantees that if these options had been changed in the
             # wrapped function, that active logger will have the correct open
             # files before we continue on
-            loggerLocation = UML.settings.get("logger", 'location')
-            loggerName = UML.settings.get("logger", 'name')
-            UML.settings.set("logger", 'location', loggerLocation)
-            UML.settings.set("logger", 'name', loggerName)
-            UML.settings.saveChanges("logger")
+            loggerLocation = nimble.settings.get("logger", 'location')
+            loggerName = nimble.settings.get("logger", 'name')
+            nimble.settings.set("logger", 'location', loggerLocation)
+            nimble.settings.set("logger", 'name', loggerName)
+            nimble.settings.saveChanges("logger")
 
     wrapped.__name__ = toWrap.__name__
     wrapped.__doc__ = toWrap.__doc__

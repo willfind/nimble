@@ -8,11 +8,11 @@ import itertools
 
 import numpy as np
 
-import UML
+import UML as nimble
 from .elements import Elements
 from .elements_view import ElementsView
 
-pd = UML.importModule('pandas')
+pd = nimble.importModule('pandas')
 if pd:
     import pandas as pd
 
@@ -22,7 +22,7 @@ class DataFrameElements(Elements):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 
@@ -83,14 +83,14 @@ class DataFrameElements(Elements):
 
     def _multiply_implementation(self, other):
         """
-        Perform element wise multiplication of this UML Base object
-        against the provided other UML Base object. Both objects must
+        Perform element wise multiplication of this nimble Base object
+        against the provided other nimble Base object. Both objects must
         contain only numeric data. The pointCount and featureCount of
         both objects must be equal. The types of the two objects may be
         different, but the returned object will be the inplace
         modification of the calling object.
         """
-        if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Sparse):
             result = other.data.multiply(self._source.data.values)
             if hasattr(result, 'todense'):
                 result = result.todense()

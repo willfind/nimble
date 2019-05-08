@@ -8,14 +8,14 @@ from __future__ import division
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
 from .features_view import FeaturesView
 
-pd = UML.importModule('pandas')
+pd = nimble.importModule('pandas')
 if pd:
     import pandas as pd
 
@@ -25,7 +25,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 

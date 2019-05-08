@@ -4,11 +4,11 @@ import math
 
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 
 numericalTypes = (int, float, int, numpy.number)
 
@@ -162,7 +162,7 @@ def mode(values):
     """
     Given a 1D vector of values, find the most frequent value.
     """
-    collections = UML.importModule('collections')
+    collections = nimble.importModule('collections')
     nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
@@ -243,7 +243,7 @@ def quartiles(values, ignoreNoneOrNan=True):
     if not _isNumericalFeatureGuesser(values):
         return (None, None, None)
 
-    if isinstance(values, UML.data.Base):
+    if isinstance(values, nimble.data.Base):
         #conver to a horizontal array
         values = values.copyAs("numpyarray").flatten()
 
@@ -295,18 +295,18 @@ def residuals(toPredict, controlVars):
     """
     Calculate the residuals of toPredict, by a linear regression model using the controlVars.
 
-    toPredict: UML Base object, where each feature will be used as the independant
+    toPredict: nimble Base object, where each feature will be used as the independant
     variable in a separate linear regression model with the controlVars as the
     dependant variables.
 
-    controlVars: UML Base object, with the same number of points as toPredict. Each
+    controlVars: nimble Base object, with the same number of points as toPredict. Each
     point will be used as the dependant variables to do predictions for the
     corresponding point in toPredict.
 
-    Returns: UML Base object of the same size as toPredict, containing the calculated
+    Returns: nimble Base object of the same size as toPredict, containing the calculated
     residuals.
 
-    Raises: InvalidArgumentType if toPredict and controlVars are not UML
+    Raises: InvalidArgumentType if toPredict and controlVars are not nimble
     data objects and InvalidArgumentValue if either has nonzero points
     or features and InvalidArgumentValueCombination if they have a different
     number of points.
@@ -315,11 +315,11 @@ def residuals(toPredict, controlVars):
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 
-    if not isinstance(toPredict, UML.data.Base):
-        msg = "toPredict must be a UML data object"
+    if not isinstance(toPredict, nimble.data.Base):
+        msg = "toPredict must be a nimble data object"
         raise InvalidArgumentType(msg)
-    if not isinstance(controlVars, UML.data.Base):
-        msg = "controlVars must be a UML data object"
+    if not isinstance(controlVars, nimble.data.Base):
+        msg = "controlVars must be a nimble data object"
         raise InvalidArgumentType(msg)
 
     tpP = len(toPredict.points)
@@ -342,7 +342,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.features.add(UML.ones(workingType, cvP, 1), useLog=False)
+    workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
     workingCV = workingCV.copyAs("numpy matrix")
     workingTP = toPredict.copyAs("numpy matrix")
 

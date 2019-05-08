@@ -10,10 +10,11 @@ If there is a tie, use k=1
 
 from __future__ import absolute_import
 
-import UML
+import UML as nimble
 from UML.customLearners import CustomLearner
 from UML.exceptions import PackageException
-scipy = UML.importModule('scipy.spatial')
+
+scipy = nimble.importModule('scipy.spatial')
 
 
 class KNNClassifier(CustomLearner):

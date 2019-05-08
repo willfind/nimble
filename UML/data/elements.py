@@ -16,7 +16,7 @@ from abc import abstractmethod
 import numpy
 import six
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction
 from UML.logger import handleLogging
@@ -33,7 +33,7 @@ class Elements(object):
 
     Parameters
     ----------
-    source : UML Base object
+    source : nimble Base object
         The object containing the elements.
     kwds
         Included due to best practices so args may automatically be
@@ -107,7 +107,7 @@ class Elements(object):
         --------
         Simple transformation to all elements.
 
-        >>> data = UML.ones('Matrix', 5, 5)
+        >>> data = nimble.ones('Matrix', 5, 5)
         >>> data.elements.transform(lambda elem: elem + 1)
         >>> data
         Matrix(
@@ -120,7 +120,7 @@ class Elements(object):
 
         Transform while preserving zero values.
 
-        >>> data = UML.identity('Sparse', 5)
+        >>> data = nimble.identity('Sparse', 5)
         >>> data.elements.transform(lambda elem: elem + 10,
         ...                         preserveZeros=True)
         >>> data
@@ -134,7 +134,7 @@ class Elements(object):
 
         Transforming a subset of points and features.
 
-        >>> data = UML.ones('List', 4, 4)
+        >>> data = nimble.ones('List', 4, 4)
         >>> data.elements.transform(lambda elem: elem + 1,
         ...                         points=[0, 1], features=[0, 2])
         >>> data
@@ -159,7 +159,7 @@ class Elements(object):
         >>> raw = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> dontSkip = UML.createData('Matrix', raw)
+        >>> dontSkip = nimble.createData('Matrix', raw)
         >>> dontSkip.elements.transform(addTenToEvens)
         >>> dontSkip
         Matrix(
@@ -167,7 +167,7 @@ class Elements(object):
              [14.000  nan   16.000]
              [ nan   18.000  nan  ]]
             )
-        >>> skip = UML.createData('Matrix', raw)
+        >>> skip = nimble.createData('Matrix', raw)
         >>> skip.elements.transform(addTenToEvens,
         ...                         skipNoneReturnValues=True)
         >>> skip
@@ -219,14 +219,14 @@ class Elements(object):
         skipNoneReturnValues : bool
             Bypass values when ``function`` returns None. If False, the
             value None will replace the value if None is returned.
-        outputType: UML data type
+        outputType: nimble data type
             Return an object of the specified type. If None, the
             returned object will have the same type as the calling
             object.
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See also
         --------
@@ -236,7 +236,7 @@ class Elements(object):
         --------
         Simple calculation on all elements.
 
-        >>> data = UML.ones('Matrix', 5, 5)
+        >>> data = nimble.ones('Matrix', 5, 5)
         >>> twos = data.elements.calculate(lambda elem: elem + 1)
         >>> twos
         Matrix(
@@ -249,9 +249,9 @@ class Elements(object):
 
         Calculate while preserving zero values.
 
-        >>> data = UML.identity('Sparse', 5)
-        >>> addTenDiagonal = data.elements.calculate(lambda elem: elem + 10,
-        ...                                      preserveZeros=True)
+        >>> data = nimble.identity('Sparse', 5)
+        >>> addTenDiagonal = data.elements.calculate(lambda x: x + 10,
+        ...                                          preserveZeros=True)
         >>> addTenDiagonal
         Sparse(
             [[11.000   0      0      0      0   ]
@@ -263,7 +263,7 @@ class Elements(object):
 
         Calculate on a subset of points and features.
 
-        >>> data = UML.ones('List', 4, 4)
+        >>> data = nimble.ones('List', 4, 4)
         >>> calc = data.elements.calculate(lambda elem: elem + 1,
         ...                                points=[0, 1],
         ...                                features=[0, 2])
@@ -287,7 +287,7 @@ class Elements(object):
         >>> raw = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> dontSkip = data.elements.calculate(addTenToEvens)
         >>> dontSkip
         Matrix(
@@ -367,7 +367,7 @@ class Elements(object):
                     f += 1
                 p += 1
 
-            ret = UML.createData(optType, valueArray, useLog=False)
+            ret = nimble.createData(optType, valueArray, useLog=False)
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
@@ -406,7 +406,7 @@ class Elements(object):
 
         >>> def greaterThanZero(elem):
         ...     return elem > 0
-        >>> data = UML.identity('Matrix', 5)
+        >>> data = nimble.identity('Matrix', 5)
         >>> numGreaterThanZero = data.elements.count(greaterThanZero)
         >>> numGreaterThanZero
         5
@@ -451,20 +451,20 @@ class Elements(object):
 
         See Also
         --------
-        UML.calculate.uniqueCount
+        nimble.calculate.uniqueCount
 
         Examples
         --------
         Count for all elements.
 
-        >>> data = UML.identity('Matrix', 5)
+        >>> data = nimble.identity('Matrix', 5)
         >>> unique = data.elements.countUnique()
         >>> unique
         {1.0: 5, 0.0: 20}
 
         Count for a subset of elements.
 
-        >>> data = UML.identity('Matrix', 5)
+        >>> data = nimble.identity('Matrix', 5)
         >>> unique = data.elements.countUnique(points=0,
         ...                                    features=[0, 1, 2])
         >>> unique
@@ -493,16 +493,16 @@ class Elements(object):
         """
         Multiply objects element-wise.
 
-        Perform element-wise multiplication of this UML Base object
-        against the provided ``other`` UML Base object, with the result
-        being stored in-place in the calling object. Both objects must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different.
+        Perform element-wise multiplication of this nimble Base object
+        against the provided ``other`` nimble Base object, with the
+        result being stored in-place in the calling object. Both objects
+        must contain only numeric data. The pointCount and featureCount
+        of both objects must be equal. The types of the two objects may
+        be different.
 
         Parameters
         ----------
-        other : UML object
+        other : nimble object
             The object containing the elements to multiply with the
             elements in this object.
 
@@ -512,8 +512,8 @@ class Elements(object):
         ...         [2, 3]]
         >>> raw2 = [[3, 2],
         ...         [6, 4]]
-        >>> data1 = UML.createData('Matrix', raw1)
-        >>> data2 = UML.createData('Matrix', raw2)
+        >>> data1 = nimble.createData('Matrix', raw1)
+        >>> data2 = nimble.createData('Matrix', raw2)
         >>> data1.elements.multiply(data2)
         >>> data1
         Matrix(
@@ -521,8 +521,8 @@ class Elements(object):
              [12.000 12.000]]
             )
         """
-        if not isinstance(other, UML.data.Base):
-            msg = "'other' must be an instance of a UML data object"
+        if not isinstance(other, nimble.data.Base):
+            msg = "'other' must be an instance of a nimble data object"
             raise InvalidArgumentType(msg)
 
         if len(self._source.points) != len(other.points):
@@ -563,15 +563,15 @@ class Elements(object):
         """
         Raise the elements of this object to a power.
 
-        The power to raise each element to can be either a UML object or
-        a single numerical value. If ``other`` is an object, both must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different.
+        The power to raise each element to can be either a nimble object
+        or a single numerical value. If ``other`` is an object, both
+        must contain only numeric data. The pointCount and featureCount
+        of both objects must be equal. The types of the two objects may
+        be different.
 
         Parameters
         ----------
-        other : numerical value, UML object
+        other : numerical value, nimble object
             * numerical value - the power to raise each element to
             * The object containing the elements to raise the elements
               in this object to
@@ -582,8 +582,8 @@ class Elements(object):
         ...         [2, 64]]
         >>> raw2 = [[3, 2],
         ...         [6, 1]]
-        >>> data1 = UML.createData('Matrix', raw1)
-        >>> data2 = UML.createData('Matrix', raw2)
+        >>> data1 = nimble.createData('Matrix', raw1)
+        >>> data2 = nimble.createData('Matrix', raw2)
         >>> data1.elements.power(data2)
         >>> data1
         Matrix(
@@ -591,14 +591,14 @@ class Elements(object):
              [64.000 64.000]]
             )
         """
-        # other is UML or single numerical value
+        # other is nimble or single numerical value
         singleValue = dataHelpers._looksNumeric(other)
-        if not singleValue and not isinstance(other, UML.data.Base):
-            msg = "'other' must be an instance of a UML Base object "
+        if not singleValue and not isinstance(other, nimble.data.Base):
+            msg = "'other' must be an instance of a nimble Base object "
             msg += "or a single numeric value"
             raise InvalidArgumentType(msg)
 
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             # same shape
             if len(self._source.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
@@ -611,7 +611,7 @@ class Elements(object):
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperObjectAction(msg)
 
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             def powFromRight(val, pnum, fnum):
                 try:
                     return val ** other[pnum, fnum]
@@ -655,17 +655,17 @@ class Elements(object):
             values = function(toCalculate)
             # check if values has numeric dtype
             if numpy.issubdtype(values.dtype, numpy.number):
-                return UML.createData(outputType, values, useLog=False)
+                return nimble.createData(outputType, values, useLog=False)
 
-            return UML.createData(outputType, values,
-                                  elementType=numpy.object_, useLog=False)
+            return nimble.createData(outputType, values,
+                                     elementType=numpy.object_, useLog=False)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
             values = function(toCalculate)
-            return UML.createData(outputType, values,
-                                  elementType=numpy.object_, useLog=False)
+            return nimble.createData(outputType, values,
+                                     elementType=numpy.object_, useLog=False)
 
     #####################
     # Abstract Methods  #

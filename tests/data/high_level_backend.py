@@ -36,7 +36,7 @@ try:
 except:
     import mock
 
-import UML
+import UML as nimble
 from UML import match
 from UML import fill
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -203,19 +203,19 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(lowerCounts)
 
     @oneLogEntryExpected
-    def test_points_calculate_functionReturnsUMLObject(self):
+    def test_points_calculate_functionReturnsNimbleObject(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
                                   featureNames=featureNames)
 
-        def returnUMLObj(point):
+        def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, UML.data.Base)
+            assert isinstance(ret, nimble.data.Base)
             return ret
 
-        calc = toTest.points.calculate(returnUMLObj)
+        calc = toTest.points.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
         exp = self.constructor(expData, pointNames=pointNames)
@@ -261,19 +261,19 @@ class HighLevelDataSafe(DataTestObject):
 
         assert lowerCounts.isIdentical(exp)
 
-    def test_points_calculate_functionReturnsUMLObject_limited(self):
+    def test_points_calculate_functionReturnsNimbleObject_limited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
                                   featureNames=featureNames)
 
-        def returnUMLObj(point):
+        def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, UML.data.Base)
+            assert isinstance(ret, nimble.data.Base)
             return ret
 
-        calc = toTest.points.calculate(returnUMLObj, points=['two', 'zero'])
+        calc = toTest.points.calculate(returnNimbleObj, points=['two', 'zero'])
 
         expData = [[2, 0.2, 0.06], [2, 0.2, 0.02]]
         exp = self.constructor(expData, pointNames=['two', 'zero'])
@@ -409,19 +409,19 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(lowerCounts)
 
     @oneLogEntryExpected
-    def test_features_calculate_functionReturnsUMLObject(self):
+    def test_features_calculate_functionReturnsNimbleObject(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
                                   featureNames=featureNames)
 
-        def returnUMLObj(feature):
+        def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, UML.data.Base)
+            assert isinstance(ret, nimble.data.Base)
             return ret
 
-        calc = toTest.features.calculate(returnUMLObj)
+        calc = toTest.features.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
         exp = self.constructor(expData, featureNames=featureNames)
@@ -473,19 +473,19 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor(expectedOut, featureNames=expFNames)
         assert lowerCounts.isIdentical(exp)
 
-    def test_features_calculate_functionReturnsUMLObject_limited(self):
+    def test_features_calculate_functionReturnsNimbleObject_limited(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
                                   featureNames=featureNames)
 
-        def returnUMLObj(feature):
+        def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, UML.data.Base)
+            assert isinstance(ret, nimble.data.Base)
             return ret
 
-        calc = toTest.features.calculate(returnUMLObj, features=['deci', 'number'])
+        calc = toTest.features.calculate(returnNimbleObj, features=['deci', 'number'])
 
         expData = [[0.2, 2], [0.2, 2], [0.2, 2], [0.4, 2]]
         exp = self.constructor(expData, featureNames=['deci', 'number'])
@@ -911,8 +911,8 @@ class HighLevelDataSafe(DataTestObject):
 
             toTest = self.constructor(data)
 
-            for retType in UML.data.available:
-                currObj = UML.createData(retType, data, useLog=False)
+            for retType in nimble.data.available:
+                currObj = nimble.createData(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
                 assertNoNamesGenerated(toTest)
@@ -1773,7 +1773,7 @@ class HighLevelModifying(DataTestObject):
             d = func.__func__.__defaults__
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
-            a, va, vk, d = UML.helpers.inspectArguments(func)
+            a, va, vk, d = nimble.helpers.inspectArguments(func)
             assert d == (None, None, None, None)
 
         if axis == 'point':
@@ -1834,7 +1834,7 @@ class HighLevelModifying(DataTestObject):
             pass
 
 
-    # exception wrong length vector shaped UML object
+    # exception wrong length vector shaped nimble object
     def test_points_normalize_exception_wrong_vector_length(self):
         self.back_normalize_exception_wrong_vector_length('point')
 
@@ -1859,7 +1859,7 @@ class HighLevelModifying(DataTestObject):
             pass
 
 
-    # exception wrong size of UML object
+    # exception wrong size of nimble object
     def test_points_normalize_exception_wrong_size_object(self):
         self.back_normalize_exception_wrong_size_object('point')
 
@@ -1954,10 +1954,10 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
 
-        for retType in UML.data.available:
+        for retType in nimble.data.available:
             currObj = obj.copy()
-            sub = UML.createData(retType, [1] * 3)
-            div = UML.createData(retType, [0.5] * 3)
+            sub = nimble.createData(retType, [1] * 3)
+            div = nimble.createData(retType, [0.5] * 3)
             ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
 
             assert ret is None

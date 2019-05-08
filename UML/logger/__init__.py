@@ -1,13 +1,13 @@
 """
-Attributes callable directly from UML.logger.
+Attributes callable directly from nimble.logger.
 
-active logger is set upon UML instantiation.
+active logger is set upon nimble instantiation.
 """
 
 from __future__ import absolute_import
 from .data_set_analyzer import produceFeaturewiseReport
 from .data_set_analyzer import produceAggregateReport
-from .uml_logger import UmlLogger, initLoggerAndLogConfig
+from .uml_logger import NimbleLogger, initLoggerAndLogConfig
 from .uml_logger import handleLogging
 from .uml_logger import startTimer, stopTimer
 from .uml_logger import stringToDatetime

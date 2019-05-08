@@ -23,7 +23,7 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import ImproperObjectAction, PackageException
 from UML.exceptions import InvalidArgumentValueCombination
@@ -43,9 +43,9 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 
-cython = UML.importModule('cython')
+cython = nimble.importModule('cython')
 
-cloudpickle = UML.importModule('cloudpickle')
+cloudpickle = nimble.importModule('cloudpickle')
 
 mplError = None
 try:
@@ -414,7 +414,7 @@ class Base(object):
         """
         Returns True if self.name has a default value
         """
-        return self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+        return self.name.startswith(DEFAULT_NAME_PREFIX)
 
     ###########################
     # Higher Order Operations #
@@ -443,8 +443,8 @@ class Base(object):
         TODO - outstanding PR, will need an update.
 
         >>> raw = [['a'], ['b'], ['c']]
-        >>> data = UML.createData('Matrix', raw,
-        ...                       featureNames=['replace'])
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          featureNames=['replace'])
         >>> replaced = data.replaceFeatureWithBinaryFeatures('replace')
         >>> replaced
         ['replace=a', 'replace=b', 'replace=c']
@@ -508,8 +508,8 @@ class Base(object):
         --------
         >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'transform', 'keep2']
-        >>> data = UML.createData('Matrix', raw,
-        ...                       featureNames=featureNames)
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          featureNames=featureNames)
         >>> mapping = data.transformFeatureToIntegers('transform')
         >>> mapping
         {0: 'a', 1: 'b', 2: 'c'}
@@ -573,10 +573,10 @@ class Base(object):
         dict
             Each unique feature (or group of features) to group by as
             keys. When ``countUniqueValueOnly`` is False,  the value at
-            each key is a UML object containing the ungrouped features
-            of points within that group. When ``countUniqueValueOnly``
-            is True, the values are the number of points within that
-            group.
+            each key is a nimble object containing the ungrouped
+            features of points within that group. When
+            ``countUniqueValueOnly`` is True, the values are the number
+            of points within that group.
 
         Examples
         --------
@@ -589,8 +589,8 @@ class Base(object):
         ...        ['SEC', 'Florida', 10, 3],
         ...        ['SEC', 'Georgia', 11, 3]]
         >>> ftNames = ['conference', 'team', 'wins', 'losses']
-        >>> top10 = UML.createData('DataFrame', raw,
-        ...                        featureNames=ftNames)
+        >>> top10 = nimble.createData('DataFrame', raw,
+        ...                           featureNames=ftNames)
         >>> groupByLosses = top10.groupByFeature('losses')
         >>> list(groupByLosses.keys())
         [0, 1, 2, 3]
@@ -684,7 +684,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML Base object
+        other : nimble Base object
             The object with which to compare approximate equality with
             this object.
 
@@ -707,21 +707,21 @@ class Base(object):
         """
         Return a new object which has the same data.
 
-        The copy will be in the same UML format as this object and in
+        The copy will be in the same nimble format as this object and in
         addition to copying this objects data, the name and path
         metadata will by copied as well.
 
         Returns
         -------
-        UML Base object
+        nimble Base object
             A copy of this object
 
         Examples
         --------
         >>> raw = [[1, 3, 5], [2, 4, 6]]
         >>> ptNames = ['odd', 'even']
-        >>> data = UML.createData('List', raw, pointNames=ptNames,
-        ...                       name="odd&even")
+        >>> data = nimble.createData('List', raw, pointNames=ptNames,
+        ...                          name="odd&even")
         >>> data
         List(
             [[1.000 3.000 5.000]
@@ -782,7 +782,7 @@ class Base(object):
         --------
         Returning a 2-tuple.
 
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> raw = [[1, 0, 0],
         ...        [0, 1, 0],
         ...        [0, 0, 1],
@@ -790,7 +790,7 @@ class Base(object):
         ...        [0, 1, 0],
         ...        [0, 0, 1]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames)
         >>> trainData, testData = data.trainAndTestSets(.34)
         >>> trainData
         Matrix(
@@ -809,7 +809,7 @@ class Base(object):
 
         Returning a 4-tuple.
 
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> raw = [[1, 0, 0, 1],
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3],
@@ -817,7 +817,7 @@ class Base(object):
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames)
         >>> fourTuple = data.trainAndTestSets(.34, labels=3)
         >>> trainX, trainY = fourTuple[0], fourTuple[1]
         >>> testX, testY = fourTuple[2], fourTuple[3]
@@ -1027,7 +1027,7 @@ class Base(object):
             output file.
         """
         if not cloudpickle:
-            msg = "To save UML objects, cloudpickle must be installed"
+            msg = "To save nimble objects, cloudpickle must be installed"
             raise PackageException(msg)
 
         extension = '.umld'
@@ -1046,7 +1046,7 @@ class Base(object):
 
     def getTypeString(self):
         """
-        The UML Type of this object.
+        The nimble Type of this object.
 
         A string representing the non-abstract type of this
         object (e.g. Matrix, Sparse, etc.) that can be passed to
@@ -1148,8 +1148,8 @@ class Base(object):
             * index - the index of the point or feature to get.
             * list - a list of names or indices to get. Note: the points
               and/or features will be returned in the order of the list.
-            * slice - a slice of names or indices to get. Note: UML uses
-              inclusive values.
+            * slice - a slice of names or indices to get. Note: nimble
+              uses inclusive values.
 
         Examples
         --------
@@ -1161,9 +1161,9 @@ class Base(object):
         >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
         >>> featureNames = ['id', 'age', 'department', 'salary',
         ...                 'gender']
-        >>> office = UML.createData('Matrix', raw,
-        ...                         pointNames=pointNames,
-        ...                         featureNames=featureNames)
+        >>> office = nimble.createData('Matrix', raw,
+        ...                            pointNames=pointNames,
+        ...                            featureNames=featureNames)
 
         Get a single value.
 
@@ -1384,7 +1384,7 @@ class Base(object):
         Factory function to create a read only view into the calling
         data object. Views may only be constructed from contiguous,
         in-order points and features whose overlap defines a window into
-        the data. The returned View object is part of UML's datatypes
+        the data. The returned View object is part of nimble's datatypes
         hiearchy, and will have access to all of the same methods as
         anything that inherits from Base; though only those
         that do not modify the data can be called without an exception
@@ -1416,8 +1416,8 @@ class Base(object):
 
         Returns
         -------
-        UML view object
-            A UML Base object with read-only access.
+        nimble view object
+            A nimble Base object with read-only access.
 
         See Also
         --------
@@ -1850,7 +1850,7 @@ class Base(object):
 
         toPlot = getter(index)
 
-        quartiles = UML.calculate.quartiles(toPlot)
+        quartiles = nimble.calculate.quartiles(toPlot)
 
         IQR = quartiles[2] - quartiles[0]
         binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
@@ -2095,7 +2095,7 @@ class Base(object):
         Examples
         --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
-        >>> data = UML.createData('List', raw)
+        >>> data = nimble.createData('List', raw)
         >>> data
         List(
             [[1.000 2.000 3.000]
@@ -2134,7 +2134,7 @@ class Base(object):
 
         Parameters
         ----------
-        other : UML Base object
+        other : nimble Base object
             Must be of the same type as the calling object. Also, the
             shape of other should be consistent with the shape of this
             object.
@@ -2143,7 +2143,7 @@ class Base(object):
         --------
         Reference data from an object of all zero values.
 
-        >>> data = UML.ones('List', 2, 3, name='data')
+        >>> data = nimble.ones('List', 2, 3, name='data')
         >>> data
         List(
             [[1.000 1.000 1.000]
@@ -2152,9 +2152,9 @@ class Base(object):
             )
         >>> ptNames = ['1', '4']
         >>> ftNames = ['a', 'b', 'c']
-        >>> toReference = UML.zeros('List', 2, 3, pointNames=ptNames,
-        ...                         featureNames=ftNames,
-        ...                         name='reference')
+        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
+        ...                            featureNames=ftNames,
+        ...                            name='reference')
         >>> data.referenceDataFrom(toReference)
         >>> data
         List(
@@ -2195,7 +2195,7 @@ class Base(object):
         Parameters
         ----------
         format : str
-            To return a specific kind of UML Base object, one may
+            To return a specific kind of nimble Base object, one may
             specify the format parameter to be 'List', 'Matrix',
             'Sparse' or 'DataFrame', To specify a raw return type (which
             will not include point or feature names), one may specify:
@@ -2211,8 +2211,8 @@ class Base(object):
         --------
         >>> ptNames = ['0', '1']
         >>> ftNames = ['a', 'b']
-        >>> data = UML.identity('Matrix', 2, pointNames=ptNames,
-        ...                     featureNames=ftNames)
+        >>> data = nimble.identity('Matrix', 2, pointNames=ptNames,
+        ...                        featureNames=ftNames)
         >>> asDataFrame = data.copyAs('DataFrame')
         >>> asDataFrame
         DataFrame(
@@ -2230,7 +2230,7 @@ class Base(object):
         [{'a': 1.0, 'b': 0.0}, {'a': 0.0, 'b': 1.0}]
         """
         #make lower case, strip out all white space and periods, except if
-        # format is one of the accepted UML data types
+        # format is one of the accepted nimble data types
         if not isinstance(format, six.string_types):
             raise InvalidArgumentType("format must be a string")
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2270,9 +2270,9 @@ class Base(object):
                 msg = "scipy formats cannot output point or feature empty "
                 msg += "objects"
                 raise InvalidArgumentValue(msg)
-        # UML, numpy and scipy types
+        # nimble, numpy and scipy types
         ret = self._copyAs_implementation(format)
-        if isinstance(ret, UML.data.Base):
+        if isinstance(ret, nimble.data.Base):
             if not rowsArePoints:
                 ret.transpose()
             ret._name = self.name
@@ -2332,11 +2332,11 @@ class Base(object):
 
         Parameters
         ----------
-        values : constant or UML Base object
+        values : constant or nimble Base object
             * constant - a constant value with which to fill the data
               seletion.
-            * UML Base object - Size must be consistent with the given
-              start and end indices.
+            * nimble Base object - Size must be consistent with the
+              given start and end indices.
         pointStart : int or str
             The inclusive index or name of the first point in the
             calling object whose contents will be modified.
@@ -2359,8 +2359,8 @@ class Base(object):
         --------
         An object of ones filled with zeros from (0, 0) to (2, 2).
 
-        >>> data = UML.ones('Matrix', 5, 5)
-        >>> filler = UML.zeros('Matrix', 3, 3)
+        >>> data = nimble.ones('Matrix', 5, 5)
+        >>> filler = nimble.zeros('Matrix', 3, 3)
         >>> data.fillWith(filler, 0, 0, 2, 2)
         >>> data
         Matrix(
@@ -2385,11 +2385,11 @@ class Base(object):
             msg += "or equal to featureEnd (" + str(featureEnd) + ")."
             raise InvalidArgumentValueCombination(msg)
 
-        if isinstance(values, UML.data.Base):
+        if isinstance(values, nimble.data.Base):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
             if len(values.points) != prange:
-                msg = "When the values argument is a UML Base object, the "
+                msg = "When the values argument is a nimble Base object, the "
                 msg += "size of values must match the range of modification. "
                 msg += "There are " + str(len(values.points)) + " points in "
                 msg += "values, yet pointStart (" + str(pointStart) + ")"
@@ -2397,7 +2397,7 @@ class Base(object):
                 msg += "of length " + str(prange)
                 raise InvalidArgumentValueCombination(msg)
             if len(values.features) != frange:
-                msg = "When the values argument is a UML Base object, the "
+                msg = "When the values argument is a nimble Base object, the "
                 msg += "size of values must match the range of modification. "
                 msg += "There are " + str(len(values.features)) + " features "
                 msg += "in values, yet featureStart (" + str(featureStart)
@@ -2411,8 +2411,9 @@ class Base(object):
               or isinstance(values, six.string_types)):
             pass  # no modifications needed
         else:
-            msg = "values may only be a UML Base object, or a single numeric "
-            msg += "value, yet we received something of " + str(type(values))
+            msg = "values may only be a nimble Base object, or a single "
+            msg += "numeric value, yet we received something of "
+            msg += str(type(values))
             raise InvalidArgumentType(msg)
 
         self._fillWith_implementation(values, psIndex, fsIndex,
@@ -2438,12 +2439,12 @@ class Base(object):
             * list - values to locate within each feature
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from UML's match module: missing, nonNumeric, zero, etc.
+              from nimble's match module: missing, nonNumeric, zero, etc
         fill : function
             a function in the format fill(feature, match) or
             fill(feature, match, arguments) and return the transformed
-            data as a UML data object. Certain fill methods can be
-            imported from UML's fill module:
+            data as a nimble data object. Certain fill methods can be
+            imported from nimble's fill module:
             kNeighborsRegressor, kNeighborsClassifier
         points : identifier or list of identifiers
             Select specific points to apply fill to. If points is None,
@@ -2466,13 +2467,13 @@ class Base(object):
         Fill using the value that occurs most often in each points 3
         nearest neighbors.
 
-        >>> from UML.fill import kNeighborsClassifier
+        >>> from nimble.fill import kNeighborsClassifier
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.fillUsingAllData('na', kNeighborsClassifier,
         ...                       n_neighbors=3)
         >>> data
@@ -2565,8 +2566,8 @@ class Base(object):
         ...        [3, 4]]
         >>> ptNames = ['1', '4']
         >>> ftNames = ['a', 'b']
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
-        ...                       featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
+        ...                          featureNames=ftNames)
         >>> data.flattenToOnePoint()
         >>> data
         Matrix(
@@ -2628,8 +2629,8 @@ class Base(object):
         ...        [3, 4]]
         >>> ptNames = ['1', '4']
         >>> ftNames = ['a', 'b']
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
-        ...                       featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
+        ...                          featureNames=ftNames)
         >>> data.flattenToOneFeature()
         >>> data
         Matrix(
@@ -2805,7 +2806,7 @@ class Base(object):
         With all default names.
 
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
@@ -2821,8 +2822,8 @@ class Base(object):
         >>> ftNames = {'a | 1':0, 'b | 1':1, 'c | 1':2,
         ...            'a | 4':3, 'b | 4':4, 'c | 4':5,
         ...            'a | 7':6, 'b | 7':7, 'c | 7':8}
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
-        ...                       featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
+        ...                          featureNames=ftNames)
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
@@ -2895,7 +2896,7 @@ class Base(object):
         With default names.
 
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
@@ -2911,8 +2912,8 @@ class Base(object):
         ...            '1 | b':3, '4 | b':4, '7 | b':5,
         ...            '1 | c':6, '4 | c':7, '7 | c':8}
         >>> ftNames = {'Flattened':0}
-        >>> data = UML.createData('Matrix', raw, pointNames=ptNames,
-        ...                       featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
+        ...                          featureNames=ftNames)
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
@@ -2976,7 +2977,7 @@ class Base(object):
         Parameters
         ----------
         other : Base
-            The UML data object containing the data to merge.
+            The nimble data object containing the data to merge.
         point, feature : str
             The allowed strings for the point and feature arguments are
             as follows:
@@ -3016,13 +3017,13 @@ class Base(object):
         >>> dataL = [["a", 1, 'X'], ["b", 2, 'Y'], ["c", 3, 'Z']]
         >>> fNamesL = ["f1", "f2", "f3"]
         >>> pNamesL = ["p1", "p2", "p3"]
-        >>> left = UML.createData('Matrix', dataL, pointNames=pNamesL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData('Matrix', dataL, pointNames=pNamesL,
+        ...                          featureNames=fNamesL)
         >>> dataR = [['Z', "f", 6], ['Y', "e", 5], ['X', "d", 4]]
         >>> fNamesR = ["f3", "f4", "f5"]
         >>> pNamesR = ["p3", "p2", "p1"]
-        >>> right = UML.createData('Matrix', dataR, pointNames=pNamesR,
-        ...                        featureNames=fNamesR)
+        >>> right = nimble.createData('Matrix', dataR, pointNames=pNamesR,
+        ...                           featureNames=fNamesR)
         >>> left.merge(right, point='strict', feature='union')
         >>> left
         Matrix(
@@ -3032,8 +3033,8 @@ class Base(object):
             pointNames={'p1':0, 'p2':1, 'p3':2}
             featureNames={'f1':0, 'f2':1, 'f3':2, 'f4':3, 'f5':4}
             )
-        >>> left = UML.createData('Matrix', dataL, pointNames=pNamesL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData('Matrix', dataL, pointNames=pNamesL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
         Matrix(
@@ -3050,12 +3051,12 @@ class Base(object):
         here the ``"id"`` feature will be used to match points.
         >>> dataL = [["a", 1, 'id1'], ["b", 2, 'id2'], ["c", 3, 'id3']]
         >>> fNamesL = ["f1", "f2", "id"]
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> dataR = [['id3', "x", 7], ['id4', "y", 8], ['id5', "z", 9]]
         >>> fNamesR = ["id", "f4", "f5"]
-        >>> right = UML.createData("DataFrame", dataR,
-        ...                        featureNames=fNamesR)
+        >>> right = nimble.createData("DataFrame", dataR,
+        ...                           featureNames=fNamesR)
         >>> left.merge(right, point='union', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3067,8 +3068,8 @@ class Base(object):
              [nan nan id5  z   9 ]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -3080,8 +3081,8 @@ class Base(object):
              [id5]]
             featureNames={'id':0}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='left',
         ...            onFeature="id")
         >>> left
@@ -3093,8 +3094,8 @@ class Base(object):
              [nan nan id5]]
             featureNames={'f1':0, 'f2':1, 'id':2}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3102,8 +3103,8 @@ class Base(object):
             [[c 3 id3 x 7]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
@@ -3111,8 +3112,8 @@ class Base(object):
             [[id3]]
             featureNames={'id':0}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='left',
         ...            onFeature="id")
         >>> left
@@ -3120,8 +3121,8 @@ class Base(object):
             [[c 3 id3]]
             featureNames={'f1':0, 'f2':1, 'id':2}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3131,8 +3132,8 @@ class Base(object):
              [c 3 id3  x   7 ]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -3142,8 +3143,8 @@ class Base(object):
              [id3]]
             featureNames={'id':0}
             )
-        >>> left = UML.createData("DataFrame", dataL,
-        ...                       featureNames=fNamesL)
+        >>> left = nimble.createData("DataFrame", dataL,
+        ...                          featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='left',
         ...            onFeature="id")
         >>> left
@@ -3279,7 +3280,7 @@ class Base(object):
             uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
             uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
             if not (uniqueFtL or uniqueFtR):
-                msg = "UML only supports joining on a feature which "
+                msg = "nimble only supports joining on a feature which "
                 msg += "contains only unique values in one or both objects."
                 raise InvalidArgumentValue(msg)
 
@@ -3422,9 +3423,9 @@ class Base(object):
         """
 
         if pseudoInverse:
-            inverse = UML.calculate.pseudoInverse(self)
+            inverse = nimble.calculate.pseudoInverse(self)
         else:
-            inverse = UML.calculate.inverse(self)
+            inverse = nimble.calculate.inverse(self)
         return inverse
 
 
@@ -3434,14 +3435,14 @@ class Base(object):
 
        Parameters
        ----------
-       b : UML Base object.
+       b : nimble Base object.
         Vector shaped object.
        solveFuction : str
         * 'solve' - assumes square matrix.
         * 'least squares' - Computes object x such that 2-norm |b - Ax|
           is minimized.
         """
-        if not isinstance(b, UML.data.Base):
+        if not isinstance(b, nimble.data.Base):
             msg = "b must be an instance of Base."
             raise InvalidArgumentType(msg)
 
@@ -3450,9 +3451,9 @@ class Base(object):
         if not isinstance(solveFunction, str):
             raise InvalidArgumentType(msg)
         elif solveFunction == 'solve':
-            return UML.calculate.solve(self, b)
+            return nimble.calculate.solve(self, b)
         elif solveFunction == 'least squares':
-            return UML.calculate.leastSquaresSolution(self, b)
+            return nimble.calculate.leastSquaresSolution(self, b)
         else:
             raise InvalidArgumentValue(msg)
 
@@ -3469,7 +3470,7 @@ class Base(object):
         Perform matrix multiplication or scalar multiplication on this
         object depending on the input ``other``.
         """
-        if (not isinstance(other, UML.data.Base)
+        if (not isinstance(other, nimble.data.Base)
                 and not dataHelpers._looksNumeric(other)):
             return NotImplemented
 
@@ -3479,7 +3480,7 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         # test element type other
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if len(other.points) == 0 or len(other.features) == 0:
                 msg = "Cannot do a multiplication when points or features is "
                 msg += "empty"
@@ -3500,13 +3501,13 @@ class Base(object):
             other._numericValidation(right=True)
             raise e
 
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if self._pointNamesCreated():
                 ret.points.setNames(self.points.getNames(), useLog=False)
             if other._featureNamesCreated():
                 ret.features.setNames(other.features.getNames(), useLog=False)
 
-        pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
+        pathSource = 'merge' if isinstance(other, nimble.data.Base) else 'self'
 
         dataHelpers.binaryOpNamePathMerge(self, other, ret, None, pathSource)
 
@@ -3536,8 +3537,8 @@ class Base(object):
     def __add__(self, other):
         """
         Perform addition on this object, element wise if 'other' is a
-        UML Base object, or element wise with a scalar if other is some
-        kind of numeric value.
+        nimble Base object, or element wise with a scalar if other is
+        some kind of numeric value.
         """
         return self._genericNumericBinary('__add__', other)
 
@@ -3550,14 +3551,14 @@ class Base(object):
     def __iadd__(self, other):
         """
         Perform in-place addition on this object, element wise if
-        ``other`` is a UML Base object, or element wise with a scalar if
-        ``other`` is some kind of numeric value.
+        ``other`` is a nimble Base object, or element wise with a scalar
+        if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__iadd__', other)
 
     def __sub__(self, other):
         """
-        Subtract from this object, element wise if ``other`` is a UML
+        Subtract from this object, element wise if ``other`` is a nimble
         data object, or element wise by a scalar if ``other`` is some
         kind of numeric value.
         """
@@ -3572,16 +3573,16 @@ class Base(object):
     def __isub__(self, other):
         """
         Subtract (in place) from this object, element wise if ``other``
-        is a UML Base object, or element wise with a scalar if ``other``
-        is some kind of numeric value.
+        is a nimble Base object, or element wise with a scalar if
+        ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__isub__', other)
 
     def __div__(self, other):
         """
         Perform division using this object as the numerator, elementwise
-        if ``other`` is a UML Base object, or element wise by a scalar
-        if other is some kind of numeric value.
+        if ``other`` is a nimble Base object, or element wise by a
+        scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__div__', other)
 
@@ -3595,15 +3596,15 @@ class Base(object):
     def __idiv__(self, other):
         """
         Perform division (in place) using this object as the numerator,
-        elementwise if ``other`` is a UML Base object, or elementwise by
-        a scalar if ``other`` is some kind of numeric value.
+        elementwise if ``other`` is a nimble Base object, or elementwise
+        by a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__idiv__', other)
 
     def __truediv__(self, other):
         """
         Perform true division using this object as the numerator,
-        elementwise if ``other`` is a UML Base object, or element wise
+        elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__truediv__', other)
@@ -3618,7 +3619,7 @@ class Base(object):
     def __itruediv__(self, other):
         """
         Perform true division (in place) using this object as the
-        numerator, elementwise if ``other`` is a UML Base object, or
+        numerator, elementwise if ``other`` is a nimble Base object, or
         elementwise by a scalar if ``other`` is some kind of numeric
         value.
         """
@@ -3627,8 +3628,8 @@ class Base(object):
     def __floordiv__(self, other):
         """
         Perform floor division using this object as the numerator,
-        elementwise if ``other`` is a UML Base object, or elementwise by
-        a scalar if ``other`` is some kind of numeric value.
+        elementwise if ``other`` is a nimble Base object, or elementwise
+        by a scalar if ``other`` is some kind of numeric value.
         """
         return self._genericNumericBinary('__floordiv__', other)
 
@@ -3643,7 +3644,7 @@ class Base(object):
     def __ifloordiv__(self, other):
         """
         Perform floor division (in place) using this object as the
-        numerator, elementwise if ``other`` is a UML Base object, or
+        numerator, elementwise if ``other`` is a nimble Base object, or
         elementwise by a scalar if ```other``` is some kind of numeric
         value.
         """
@@ -3652,8 +3653,8 @@ class Base(object):
     def __mod__(self, other):
         """
         Perform mod using the elements of this object as the dividends,
-        elementwise if ``other`` is a UML Base object, or elementwise by
-        a scalar if other is some kind of numeric value.
+        elementwise if ``other`` is a nimble Base object, or elementwise
+        by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__mod__', other)
 
@@ -3667,7 +3668,7 @@ class Base(object):
     def __imod__(self, other):
         """
         Perform mod (in place) using the elements of this object as the
-        dividends, elementwise if 'other' is a UML Base object, or
+        dividends, elementwise if 'other' is a nimble Base object, or
         elementwise by a scalar if other is some kind of numeric value.
         """
         return self._genericNumericBinary('__imod__', other)
@@ -3676,9 +3677,9 @@ class Base(object):
     def __pow__(self, other, z):
         """
         Perform exponentiation (iterated __mul__) using the elements of
-        this object as the bases, elemen wise if ``other`` is a UML data
-        object, or elementwise by a scalar if ``other`` is some kind of
-        numeric value.
+        this object as the bases, elemen wise if ``other`` is a nimble
+        data object, or elementwise by a scalar if ``other`` is some
+        kind of numeric value.
         """
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do ** when points or features is empty"
@@ -3709,11 +3710,11 @@ class Base(object):
         if other == 0 or other % 2 == 0:
             identityPNames = 'automatic' if retPNames is None else retPNames
             identityFNames = 'automatic' if retFNames is None else retFNames
-            identity = UML.createData(self.getTypeString(),
-                                      numpy.eye(self._pointCount),
-                                      pointNames=identityPNames,
-                                      featureNames=identityFNames,
-                                      useLog=False)
+            identity = nimble.createData(self.getTypeString(),
+                                         numpy.eye(self._pointCount),
+                                         pointNames=identityPNames,
+                                         featureNames=identityFNames,
+                                         useLog=False)
         if other == 0:
             return identity
 
@@ -3750,8 +3751,8 @@ class Base(object):
         """
         Perform in-place exponentiation (iterated __mul__) using the
         elements of this object as the bases, element wise if ``other``
-        is a UML Base object, or elementwise by a scalar if ``other`` is
-        some kind of numeric value.
+        is a nimble Base object, or elementwise by a scalar if ``other``
+        is some kind of numeric value.
         """
         ret = self.__pow__(other)
         self.referenceDataFrom(ret, useLog=False)
@@ -3824,10 +3825,10 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericNumericBinary_validation(self, opName, other):
-        isUML = isinstance(other, UML.data.Base)
+        isNimble = isinstance(other, nimble.data.Base)
 
-        if not isUML and not dataHelpers._looksNumeric(other):
-            msg = "'other' must be an instance of a UML Base object or a "
+        if not isNimble and not dataHelpers._looksNumeric(other):
+            msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
 
@@ -3835,24 +3836,24 @@ class Base(object):
         self._numericValidation()
 
         # test element type other
-        if isUML:
+        if isNimble:
             other._numericValidation(right=True)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__',
                     '__rtruediv__', '__itruediv__', '__floordiv__',
                     '__rfloordiv__', '__ifloordiv__', '__mod__', '__rmod__',
                     '__imod__', ]
-        if isUML and opName in divNames:
+        if isNimble and opName in divNames:
             if other.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
                 raise ZeroDivisionError(msg)
-            if isinstance(other, UML.data.Matrix):
+            if isinstance(other, nimble.data.Matrix):
                 if False in numpy.isfinite(other.data):
                     msg = "Cannot perform " + opName + " when the second "
                     msg += "argument contains any NaNs or Infs"
                     raise InvalidArgumentValue(msg)
-        if not isUML and opName in divNames:
+        if not isNimble and opName in divNames:
             if other == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
@@ -3860,9 +3861,9 @@ class Base(object):
 
     def _genericNumericBinary(self, opName, other):
 
-        isUML = isinstance(other, UML.data.Base)
+        isNimble = isinstance(other, nimble.data.Base)
 
-        if isUML:
+        if isNimble:
             if opName.startswith('__r'):
                 return NotImplemented
 
@@ -3874,7 +3875,7 @@ class Base(object):
         # if unary:
         (retPNames, retFNames) = (None, None)
 
-        if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
+        if opName in ['__pos__', '__neg__', '__abs__'] or not isNimble:
             if self._pointNamesCreated():
                 retPNames = self.points.getNames()
             if self._featureNamesCreated():
@@ -3901,7 +3902,7 @@ class Base(object):
             ret.features.setNames(None, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
-        pathSource = 'merge' if isUML else 'self'
+        pathSource = 'merge' if isNimble else 'self'
         dataHelpers.binaryOpNamePathMerge(
             self, other, ret, nameSource, pathSource)
         return ret
@@ -3921,7 +3922,7 @@ class Base(object):
                 self.referenceDataFrom(ret, useLog=False)
                 ret = self
             else:
-                ret = UML.createData(startType, ret.data, useLog=False)
+                ret = nimble.createData(startType, ret.data, useLog=False)
 
         return ret
 
@@ -4371,7 +4372,7 @@ class Base(object):
 
                 msg = leftAxis + " to " + rightAxis + " name inconsistencies "
                 msg += "when calling left." + callSym + "(right) \n"
-                msg += UML.logger.tableString.tableString(table)
+                msg += nimble.logger.tableString.tableString(table)
                 print(msg, file=sys.stderr)
                 raise InvalidArgumentValue(msg)
 

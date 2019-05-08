@@ -6,14 +6,14 @@ set (aka Adult).
 """
 import sys
 import os.path
-import UML
 
+import UML as nimble
 from UML import createData
 from UML import match
 
 if __name__ == "__main__":
     # string manipulation to get and make paths
-    projectRoot = os.path.dirname(UML.UMLPath)
+    projectRoot = os.path.dirname(nimble.nimblePath)
     projectData = os.path.join(projectRoot, "datasets")
 
     # if a directory is given, we will output the numerical data to that location.

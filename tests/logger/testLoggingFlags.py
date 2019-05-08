@@ -10,7 +10,7 @@ import tempfile
 from nose.plugins.attrib import attr
 import numpy
 
-import UML
+import UML as nimble
 from UML.helpers import generateClassificationData
 from UML.calculate import fractionIncorrect
 from UML.configuration import configSafetyWrapper
@@ -23,10 +23,10 @@ def logEntryCount(logger):
 
 @configSafetyWrapper
 def back_load(toCall, *args, **kwargs):
-    logger = UML.logger.active
+    logger = nimble.logger.active
 
     # count number of starting log entries
-    UML.settings.set('logger', 'enabledByDefault', 'True')
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
@@ -37,7 +37,7 @@ def back_load(toCall, *args, **kwargs):
     start, end = loadAndCheck(toCall, False, *args)
     assert start == end
 
-    UML.settings.set('logger', 'enabledByDefault', 'False')
+    nimble.settings.set('logger', 'enabledByDefault', 'False')
 
     start, end = loadAndCheck(toCall, True, *args)
     assert start + 1 == end
@@ -49,7 +49,7 @@ def back_load(toCall, *args, **kwargs):
     assert start == end
 
 def loadAndCheck(toCall, useLog, *args):
-    logger = UML.logger.active
+    logger = nimble.logger.active
     # count number of starting log entries
     startCount = logEntryCount(logger)
     # call the function we're testing for log control
@@ -59,36 +59,36 @@ def loadAndCheck(toCall, useLog, *args):
     return (startCount, endCount)
 
 def test_createData():
-    back_load(UML.createData, 'Matrix', [[1, 2, 3], [4, 5, 6]])
+    back_load(nimble.createData, 'Matrix', [[1, 2, 3], [4, 5, 6]])
 
 def test_createRandomData():
-    back_load(UML.createRandomData, 'Sparse', 5, 5, 0.99)
+    back_load(nimble.createRandomData, 'Sparse', 5, 5, 0.99)
 
 def test_loadData():
-    obj = UML.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
+    obj = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
     with tempfile.NamedTemporaryFile(suffix='.umld') as tmpFile:
         obj.save(tmpFile.name)
-        back_load(UML.loadData, tmpFile.name)
+        back_load(nimble.loadData, tmpFile.name)
 
 def test_loadTrainedLearner():
-    train = UML.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
-    test = UML.createData('Matrix', [[3], [2], [1]], useLog=False)
-    tl = UML.train('custom.KNNClassifier', train, test)
+    train = nimble.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
+    test = nimble.createData('Matrix', [[3], [2], [1]], useLog=False)
+    tl = nimble.train('custom.KNNClassifier', train, test)
     with tempfile.NamedTemporaryFile(suffix='.umlm') as tmpFile:
         tl.save(tmpFile.name)
-        back_load(UML.loadTrainedLearner, tmpFile.name)
+        back_load(nimble.loadTrainedLearner, tmpFile.name)
 
 def test_setRandomSeed():
-    UML.randomness.startAlternateControl()
-    back_load(UML.setRandomSeed, 1337)
-    UML.randomness.endAlternateControl()
+    nimble.randomness.startAlternateControl()
+    back_load(nimble.setRandomSeed, 1337)
+    nimble.randomness.endAlternateControl()
 
 # helper function which checks log status for runs
 def runAndCheck(toCall, useLog):
     # generate data
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
-    logger = UML.logger.active
+    logger = nimble.logger.active
     # count number of starting log entries
     startCount = logEntryCount(logger)
 
@@ -103,7 +103,7 @@ def runAndCheck(toCall, useLog):
 def backend(toCall, validator):
     # for each combination of local and global, call and check
 
-    UML.settings.set('logger', 'enabledByDefault', 'True')
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     (start, end) = validator(toCall, useLog=True)
     assert start + 1 == end
@@ -114,7 +114,7 @@ def backend(toCall, validator):
     (start, end) = validator(toCall, useLog=False)
     assert start == end
 
-    UML.settings.set('logger', 'enabledByDefault', 'False')
+    nimble.settings.set('logger', 'enabledByDefault', 'False')
 
     (start, end) = validator(toCall, useLog=True)
     assert start + 1 == end
@@ -127,19 +127,19 @@ def backend(toCall, validator):
 
 def test_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.train(learnerName, trainX, trainY, useLog=useLog)
+        return nimble.train(learnerName, trainX, trainY, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
 def test_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndApply(learnerName, trainX, trainY, testX, useLog=useLog)
+        return nimble.trainAndApply(learnerName, trainX, trainY, testX, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
 def test_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndTest(
+        return nimble.trainAndTest(
             learnerName, trainX, trainY, testX, testY,
             performanceFunction=fractionIncorrect, useLog=useLog)
 
@@ -147,7 +147,7 @@ def test_trainAndTest():
 
 def test_trainAndTestOnTrainingData_trainError():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndTestOnTrainingData(
+        return nimble.trainAndTestOnTrainingData(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             crossValidationError=False, useLog=useLog)
 
@@ -155,20 +155,20 @@ def test_trainAndTestOnTrainingData_trainError():
 
 def test_normalizeData():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.normalizeData('mlpy.PCA', trainX, testX=testX,
+        return nimble.normalizeData('mlpy.PCA', trainX, testX=testX,
                                   arguments={'k': 1}, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
 #def test_trainAndTestOvO():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+#		return nimble.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
 
 #	backend(wrapped, runAndCheck)
 
 #def test_trainAndTestOvA():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+#		return nimble.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
 
 #	backend(wrapped, runAndCheck)
 
@@ -176,7 +176,7 @@ def test_TrainedLearner_apply():
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
     # get a trained learner
-    tl = UML.train(learnerName, trainX, trainY, useLog=False)
+    tl = nimble.train(learnerName, trainX, trainY, useLog=False)
 
     def wrapped(trainX, trainY, testX, testY, useLog):
         return tl.apply(testX, useLog=useLog)
@@ -187,7 +187,7 @@ def test_TrainedLearner_test():
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
     # get a trained learner
-    tl = UML.train(learnerName, trainX, trainY, useLog=False)
+    tl = nimble.train(learnerName, trainX, trainY, useLog=False)
 
     def wrapped(trainX, trainY, testX, testY, useLog):
         return tl.test(testX, testY, performanceFunction=fractionIncorrect,
@@ -209,8 +209,8 @@ def backendDeep(toCall, validator):
         msg += "function renamed to the tested function so it can be "
         msg += "determined how many log entries should be added"
         raise TypeError(msg)
-    UML.settings.set('logger', 'enabledByDefault', 'True')
-    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
     # the deep logging flag is continget on global and local
     # control, so we confirm that in those instances where
@@ -222,7 +222,7 @@ def backendDeep(toCall, validator):
     assert startT2 + expectedLogChangeTrue == endT2
     assert startT3 == endT3
 
-    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True)
     (startF2, endF2) = validator(toCall, useLog=None)
@@ -236,8 +236,8 @@ def backendDeep(toCall, validator):
     assert (endT1 - startT1) - 1 == (endF1 - startF1)
     assert (endT2 - startT2) - 1 == (endF2 - startF2)
 
-    UML.settings.set('logger', 'enabledByDefault', 'False')
-    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+    nimble.settings.set('logger', 'enabledByDefault', 'False')
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
     # the deep logging flag is contingent on global and local
     # control, so we confirm that logging is called or
@@ -248,7 +248,7 @@ def backendDeep(toCall, validator):
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
     assert startT3 == endT3
 
-    UML.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
     (startF2, endF2) = validator(toCall, useLog=None) # 0 logs added
@@ -262,7 +262,7 @@ def backendDeep(toCall, validator):
 
 def test_Deep_crossValidate():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidate(learnerName, trainX, trainY,
+        return nimble.crossValidate(learnerName, trainX, trainY,
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog)
     wrapped.__name__ = 'crossValidate'
@@ -270,7 +270,7 @@ def test_Deep_crossValidate():
 
 def test_Deep_crossValidateReturnAll():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidateReturnAll(
+        return nimble.crossValidateReturnAll(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
     wrapped.__name__ = 'crossValidateReturnAll'
@@ -278,7 +278,7 @@ def test_Deep_crossValidateReturnAll():
 
 def test_Deep_crossValidateReturnBest():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidateReturnBest(
+        return nimble.crossValidateReturnBest(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             useLog=useLog)
     wrapped.__name__ = 'crossValidateReturnBest'
@@ -286,8 +286,8 @@ def test_Deep_crossValidateReturnBest():
 
 def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = UML.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return UML.train(learnerName, trainX, trainY,
+        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
+        return nimble.train(learnerName, trainX, trainY,
                          performanceFunction=fractionIncorrect, useLog=useLog,
                          k=k)
     wrapped.__name__ = 'train'
@@ -295,8 +295,8 @@ def test_Deep_train():
 
 def test_Deep_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = UML.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return UML.trainAndApply(learnerName, trainX, trainY, testX,
+        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
+        return nimble.trainAndApply(learnerName, trainX, trainY, testX,
                                  performanceFunction=fractionIncorrect,
                                  useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndApply'
@@ -304,8 +304,8 @@ def test_Deep_trainAndApply():
 
 def test_Deep_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = UML.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return UML.trainAndTest(learnerName, trainX, trainY, testX, testY,
+        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
+        return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
                                 performanceFunction=fractionIncorrect,
                                 useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndTest'
@@ -313,7 +313,7 @@ def test_Deep_trainAndTest():
 
 def test_Deep_trainAndTestOnTrainingData_CVError():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndTestOnTrainingData(
+        return nimble.trainAndTestOnTrainingData(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
             crossValidationError=True, useLog=useLog)
     wrapped.__name__ = 'trainAndTestOnTrainingData'
@@ -326,10 +326,10 @@ def prepAndCheck(toCall, useLog):
     pNames = ['p' + str(i) for i in range(18)]
     fNames = ['f0', 'f1', 'f2']
     # createData not logged
-    dataObj = UML.createData("Matrix", data, pointNames=pNames,
+    dataObj = nimble.createData("Matrix", data, pointNames=pNames,
                              featureNames=fNames, useLog=False)
 
-    logger = UML.logger.active
+    logger = nimble.logger.active
     # count number of starting log entries
     startCount = logEntryCount(logger)
 
@@ -387,7 +387,7 @@ def test_fillWith():
 
 def test_fillUsingAllData():
     def simpleFiller(obj, match):
-        return UML.createData('Matrix', numpy.zeros((18, 3)), useLog=False)
+        return nimble.createData('Matrix', numpy.zeros((18, 3)), useLog=False)
     def wrapped(obj, useLog):
         obj.fillUsingAllData('a', fill=simpleFiller, useLog=useLog)
 
@@ -409,7 +409,7 @@ def test_summaryReport():
 def flattenUnflattenBackend(toCall, validator):
     # for each combination of local and global, call and check
 
-    UML.settings.set('logger', 'enabledByDefault', 'True')
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     (start, end) = validator(toCall, useLog=True)
     assert start + 2 == end
@@ -420,7 +420,7 @@ def flattenUnflattenBackend(toCall, validator):
     (start, end) = validator(toCall, useLog=False)
     assert start == end
 
-    UML.settings.set('logger', 'enabledByDefault', 'False')
+    nimble.settings.set('logger', 'enabledByDefault', 'False')
 
     (start, end) = validator(toCall, useLog=True)
     assert start + 2 == end
@@ -449,7 +449,7 @@ def test_merge():
     mData = [[1, 4], [2, 5], [3, 6]]
     mPtNames = ['p0', 'p6', 'p12']
     mFtNames = ['f2', 'f3']
-    mergeObj = UML.createData('Matrix', mData, pointNames=mPtNames,
+    mergeObj = nimble.createData('Matrix', mData, pointNames=mPtNames,
                               featureNames=mFtNames)
     def wrapped(obj, useLog):
         obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
@@ -626,7 +626,7 @@ def test_elements_transform():
 def test_points_add():
     def wrapped(obj, useLog):
         appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toAppend = UML.createData("Matrix", appendData, useLog=False)
+        toAppend = nimble.createData("Matrix", appendData, useLog=False)
         return obj.points.add(toAppend, useLog=useLog)
 
     backend(wrapped, prepAndCheck)
@@ -634,7 +634,7 @@ def test_points_add():
 def test_features_add():
     def wrapped(obj, useLog):
         appendData = numpy.zeros((18,1))
-        toAppend = UML.createData("Matrix", appendData, useLog=False)
+        toAppend = nimble.createData("Matrix", appendData, useLog=False)
         return obj.features.add(toAppend, useLog=useLog)
 
     backend(wrapped, prepAndCheck)
@@ -667,7 +667,7 @@ def test_points_combineByExpandingFeatures():
                    ['de Grasse', '200m', 20.02],
                    ['de Grasse', '100m', 9.91]]
         fNames = ['athlete', 'dist', 'time']
-        newObj = UML.createData('Matrix', newData, featureNames=fNames, useLog=False)
+        newObj = nimble.createData('Matrix', newData, featureNames=fNames, useLog=False)
         return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
 
     backend(wrapped, prepAndCheck)

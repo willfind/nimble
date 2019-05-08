@@ -1,24 +1,25 @@
 """
 Unit tests for data creation functions other than createData, which generate
 the values placed in the data object. Specifically tested are:
-UML.createRandomData, UML.ones, UML.zeros, UML.identity
+nimble.createRandomData, nimble.ones, nimble.zeros, nimble.identity
 
 """
 
 from __future__ import absolute_import
 import numpy
 import copy
-from nose.tools import *
 
-import UML
+from nose.tools import *
+from six.moves import range
+
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML import createRandomData
-from six.moves import range
 from .assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
-returnTypes = copy.copy(UML.data.available)
+returnTypes = copy.copy(nimble.data.available)
 
 
 ########################
@@ -138,7 +139,7 @@ def test_createRandomData_logCount():
 
     @oneLogEntryExpected
     def byType(rType):
-        toTest = UML.createRandomData(rType, 5, 5, 0)
+        toTest = nimble.createRandomData(rType, 5, 5, 0)
 
     for t in returnTypes:
         byType(t)
@@ -186,8 +187,8 @@ def back_constant_emptyCreation(toTest):
         retPEmpty = toTest(t, 0, 2)
         retFEmpty = toTest(t, 2, 0)
 
-        expFEmpty = UML.createData(t, fEmpty)
-        expPEmpty = UML.createData(t, pEmpty)
+        expFEmpty = nimble.createData(t, fEmpty)
+        expPEmpty = nimble.createData(t, pEmpty)
 
         assert retPEmpty == expPEmpty
         assert retFEmpty == expFEmpty
@@ -249,7 +250,7 @@ def back_constant_logCount(toTest):
 ### ones ###
 ############
 
-#UML.ones(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
+#nimble.ones(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
@@ -257,33 +258,33 @@ def back_constant_logCount(toTest):
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_ones_sizeChecking():
-    back_constant_sizeChecking(UML.ones)
+    back_constant_sizeChecking(nimble.ones)
 
 
 def test_ones_emptyCreation():
-    back_constant_emptyCreation(UML.ones)
+    back_constant_emptyCreation(nimble.ones)
 
 
 def test_ones_correctSizeAndContents():
-    back_constant_correctSizeAndContents(UML.ones, 1)
+    back_constant_correctSizeAndContents(nimble.ones, 1)
 
 
 def test_ones_correctNames():
-    back_constant_correctNames(UML.ones)
+    back_constant_correctNames(nimble.ones)
 
 
 def test_ones_conversionEqualityBetweenTypes():
-    back_constant_conversionEqualityBetweenTypes(UML.ones)
+    back_constant_conversionEqualityBetweenTypes(nimble.ones)
 
 
 def test_ones_logCount():
-    back_constant_logCount(UML.ones)
+    back_constant_logCount(nimble.ones)
 
 #############
 ### zeros ###
 #############
 
-#UML.zeros(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
+#nimble.zeros(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
@@ -291,33 +292,33 @@ def test_ones_logCount():
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_zeros_sizeChecking():
-    back_constant_sizeChecking(UML.zeros)
+    back_constant_sizeChecking(nimble.zeros)
 
 
 def test_zeros_emptyCreation():
-    back_constant_emptyCreation(UML.zeros)
+    back_constant_emptyCreation(nimble.zeros)
 
 
 def test_zeros_correctSizeAndContents():
-    back_constant_correctSizeAndContents(UML.zeros, 0)
+    back_constant_correctSizeAndContents(nimble.zeros, 0)
 
 
 def test_zeros_correctNames():
-    back_constant_correctNames(UML.zeros)
+    back_constant_correctNames(nimble.zeros)
 
 
 def test_zeros_conversionEqualityBetweenTypes():
-    back_constant_conversionEqualityBetweenTypes(UML.zeros)
+    back_constant_conversionEqualityBetweenTypes(nimble.zeros)
 
 def test_zeros_logCount():
-    back_constant_logCount(UML.zeros)
+    back_constant_logCount(nimble.zeros)
 
 
 ################
 ### identity ###
 ################
 
-#UML.identity(returnType, size, pointNames=None, featureNames=None, name=None)
+#nimble.identity(returnType, size, pointNames=None, featureNames=None, name=None)
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
@@ -327,7 +328,7 @@ def test_zeros_logCount():
 
 def test_identity_sizeChecking():
     try:
-        UML.identity("Matrix", -1)
+        nimble.identity("Matrix", -1)
         assert False  # expected InvalidArgumentValue for negative size
     except InvalidArgumentValue:
         pass
@@ -335,7 +336,7 @@ def test_identity_sizeChecking():
         assert False  # expected InvalidArgumentValue for negative size
 
     try:
-        UML.identity("Matrix", 0)
+        nimble.identity("Matrix", 0)
         assert False  # expected InvalidArgumentValue for 0 valued size
     except InvalidArgumentValue:
         pass
@@ -346,7 +347,7 @@ def test_identity_sizeChecking():
 def test_identity_correctSizeAndContents():
     for t in returnTypes:
         for size in range(1, 5):
-            toTest = UML.identity(t, size)
+            toTest = nimble.identity(t, size)
             assert t == toTest.getTypeString()
             for p in range(size):
                 for f in range(size):
@@ -362,7 +363,7 @@ def test_identity_correctNames():
     fnames = ["f1", "f2"]
 
     for t in returnTypes:
-        ret = UML.identity(t, 2, pointNames=pnames, featureNames=fnames, name=objName)
+        ret = nimble.identity(t, 2, pointNames=pnames, featureNames=fnames, name=objName)
 
         assert ret.points.getNames() == pnames
         assert ret.features.getNames() == fnames
@@ -373,11 +374,11 @@ def test_identity_conversionEqualityBetweenTypes():
     size = 7
 
     for makeT in returnTypes:
-        ret = UML.identity(makeT, size)
+        ret = nimble.identity(makeT, size)
 
         for matchT in returnTypes:
             convertedRet = ret.copyAs(matchT)
-            toMatch = UML.identity(matchT, size)
+            toMatch = nimble.identity(matchT, size)
 
             assert convertedRet == toMatch
 
@@ -385,7 +386,7 @@ def test_identity_logCount():
 
     @noLogEntryExpected
     def byType(rType):
-        toTest = UML.identity(rType, 5)
+        toTest = nimble.identity(rType, 5)
 
     for t in returnTypes:
         byType(t)

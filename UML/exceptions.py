@@ -1,17 +1,18 @@
 """
-Module defining exceptions to be used in UML.
+Module defining exceptions to be used in nimble.
 
 """
 from __future__ import absolute_import
 from six.moves import range
 
-class UMLException(Exception):
+class nimbleException(Exception):
     """
     Override Python's Exception, requiring a value upon instantiation.
     """
     def __init__(self, value):
         self.value = value
         self.className = self.__class__.__name__
+        super(nimbleException, self).__init__()
 
     def __str__(self):
         return repr(self.value)
@@ -19,7 +20,7 @@ class UMLException(Exception):
     def __repr__(self):
         return "{cls}({val})".format(cls=self.className, val=repr(self.value))
 
-class InvalidArgumentType(UMLException, TypeError):
+class InvalidArgumentType(nimbleException, TypeError):
     """
     Raised when an argument type causes a failure.
 
@@ -29,7 +30,7 @@ class InvalidArgumentType(UMLException, TypeError):
     """
     pass
 
-class InvalidArgumentValue(UMLException, ValueError):
+class InvalidArgumentValue(nimbleException, ValueError):
     """
     Raised when an argument value causes a failure.
 
@@ -41,7 +42,7 @@ class InvalidArgumentValue(UMLException, ValueError):
     """
     pass
 
-class InvalidArgumentTypeCombination(UMLException, TypeError):
+class InvalidArgumentTypeCombination(nimbleException, TypeError):
     """
     Raised when the types of two or more arguments causes a failure.
 
@@ -52,7 +53,7 @@ class InvalidArgumentTypeCombination(UMLException, TypeError):
     """
     pass
 
-class InvalidArgumentValueCombination(UMLException, ValueError):
+class InvalidArgumentValueCombination(nimbleException, ValueError):
     """
     Raised when the values of two or more arguments causes a failure.
 
@@ -63,7 +64,7 @@ class InvalidArgumentValueCombination(UMLException, ValueError):
     """
     pass
 
-class ImproperObjectAction(UMLException, TypeError):
+class ImproperObjectAction(nimbleException, TypeError):
     """
     Raised when the characteristics of the object prevent the operation.
 
@@ -73,7 +74,7 @@ class ImproperObjectAction(UMLException, TypeError):
     """
     pass
 
-class PackageException(UMLException, ImportError):
+class PackageException(nimbleException, ImportError):
     """
     Raised when a package is not installed, but needed.
 
@@ -81,11 +82,12 @@ class PackageException(UMLException, ImportError):
     """
     pass
 
-class FileFormatException(UMLException, ValueError):
+class FileFormatException(nimbleException, ValueError):
     """
     Raised when the formatting of a file is not as expected.
     """
     pass
+
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
@@ -107,8 +109,8 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     return ret
 
 
-def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str, delim='=',
-                     valueStr=str):
+def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+                     delim='=', valueStr=str):
     """
     Used in the creation of exception messages to display dicts in a more
     appealing way than default.

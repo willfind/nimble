@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.customLearners import CustomLearner
 
 
@@ -25,8 +25,8 @@ class MultiOutputRidgeRegression(CustomLearner):
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i, useLog=False)
 
-            currTL = UML.train('Custom.RidgeRegression', trainX, currY,
-                               lamb=lamb, useLog=False)
+            currTL = nimble.train('Custom.RidgeRegression', trainX, currY,
+                                  lamb=lamb, useLog=False)
             self._learners.append(currTL)
 
     def apply(self, testX):

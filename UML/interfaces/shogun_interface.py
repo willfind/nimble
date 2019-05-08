@@ -1,5 +1,5 @@
 """
-A UML interface building off of the modular python interface
+A nimble interface building off of the modular python interface
 for Shogun ML.
 
 """
@@ -28,8 +28,7 @@ import os
 import json
 import distutils.version
 
-import UML
-
+import UML as nimble
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.exceptions import InvalidArgumentValue
@@ -302,7 +301,7 @@ class Shogun(UniversalInterface):
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        ret = UML.createData(outputType, retRaw, useLog=False)
+        ret = nimble.createData(outputType, retRaw, useLog=False)
 
         if outputFormat == 'label':
             remap = customDict['remap']
@@ -363,7 +362,7 @@ class Shogun(UniversalInterface):
                 else:
                     initArgs[name] = trainY
 
-        # it may be the case that the UML passed the args needed to initialize
+        # it may be the case that the nimble passed the args needed to initialize
         # a kernel. If not, it isn't useable until we do it ourselves
         for name in kernels:
             currKern = arguments[name]
@@ -477,7 +476,7 @@ class Shogun(UniversalInterface):
         ranDiscovery = False
 
         # find most likely manifest file
-        metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
+        metadataPath = os.path.join(nimble.nimblePath, 'interfaces', 'metadata')
         best, exact = self._findBestManifest(metadataPath)
         exists = os.path.exists(best) if best is not None else False
         if exists:
@@ -760,7 +759,7 @@ def _remapLabelsRange(toRemap):
     """
     Transform toRemap so its n unique values are mapped into the value range 0 to n-1
 
-    toRemap: must be a UML Base object with a single feature. The contained values
+    toRemap: must be a nimble Base object with a single feature. The contained values
     will be transformed, on a first come first serve basis, into the values 0 to n-1
     where n is the number of unique values. This object is modified by this function.
 

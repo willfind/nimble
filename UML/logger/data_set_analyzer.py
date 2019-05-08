@@ -13,7 +13,7 @@ import math
 import six
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValueCombination
 from .tableString import tableString
 
@@ -80,7 +80,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None,
 
     Parameters
     ----------
-    dataContainer : UML.data.Base
+    dataContainer : nimble.data.Base
         The object to analyze the features.
     supplementalFunctions :  list
         Functions to be applied to each feature, which must accept a 1D
@@ -156,8 +156,8 @@ def produceAggregateTable(dataContainer):
     for func in funcs:
         funcResults = dataContainer.features.calculate(func, useLog=False)
         funcResults.transpose(useLog=False)
-        aggregateResults = funcResults.features.calculate(UML.calculate.mean,
-                                                          useLog=False)
+        aggregateResults = funcResults.features.calculate(
+            nimble.calculate.mean, useLog=False)
         aggregateResults = aggregateResults.copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
@@ -206,9 +206,10 @@ def featurewiseFunctionGenerator():
     calculateForEachFeature function.  Includes: min(), max(), mean(),
     median(), standardDeviation(), numUniqueValues()
     """
-    functions = [UML.calculate.minimum, UML.calculate.maximum,
-                 UML.calculate.mean, UML.calculate.median,
-                 UML.calculate.standardDeviation, UML.calculate.uniqueCount]
+    functions = [nimble.calculate.minimum, nimble.calculate.maximum,
+                 nimble.calculate.mean, nimble.calculate.median,
+                 nimble.calculate.standardDeviation,
+                 nimble.calculate.uniqueCount]
     return functions
 
 
@@ -221,7 +222,8 @@ def aggregateFunctionGenerator():
     the proportion of entries that are equal to zero and the proportion
     of entries that are missing (i.e. are None or NaN).
     """
-    functions = [UML.calculate.proportionZero, UML.calculate.proportionMissing]
+    functions = [nimble.calculate.proportionZero,
+                 nimble.calculate.proportionMissing]
     return functions
 
 

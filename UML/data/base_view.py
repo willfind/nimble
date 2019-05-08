@@ -7,7 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 
-import UML
+import UML as nimble
 from UML.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .dataHelpers import readOnlyException
@@ -24,8 +24,8 @@ class BaseView(Base):
 
     Parameters
     ----------
-    source : UML Base object
-        The UML object that this is a view into.
+    source : nimble Base object
+        The nimble object that this is a view into.
     pointStart : int
         The inclusive index of the first point this view will have
         access to.

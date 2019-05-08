@@ -1,6 +1,6 @@
 """
 Module containing most of the user facing functions for the top level
-uml import.
+nimble import.
 """
 
 from __future__ import absolute_import
@@ -12,7 +12,7 @@ import six
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
 from UML.logger import handleLogging, startTimer, stopTimer
@@ -36,10 +36,9 @@ from UML.helpers import createConstantHelper
 from UML.helpers import computeMetrics
 from UML.randomness import numpyRandom, generateSubsidiarySeed
 from UML.randomness import startAlternateControl, endAlternateControl
-from UML.calculate import detectBestResult
 
-cloudpickle = UML.importModule('cloudpickle')
-scipy = UML.importModule('scipy.sparse')
+cloudpickle = nimble.importModule('cloudpickle')
+scipy = nimble.importModule('scipy.sparse')
 
 
 def createRandomData(
@@ -53,7 +52,8 @@ def createRandomData(
     Parameters
     ----------
     returnType : str
-        May be any of the allowed types specified in UML.data.available.
+        May be any of the allowed types specified in
+        nimble.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -85,7 +85,7 @@ def createRandomData(
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
     See Also
@@ -97,9 +97,9 @@ def createRandomData(
     Random integers.
 
     >>> ptNames = ['a', 'b', 'c', 'd', 'e']
-    >>> random = UML.createRandomData('Matrix', 5, 5, 0,
-    ...                               pointNames=ptNames,
-    ...                               elementType='int')
+    >>> random = nimble.createRandomData('Matrix', 5, 5, 0,
+    ...                                  pointNames=ptNames,
+    ...                                  elementType='int')
     >>> random
     Matrix(
         [[52.000 93.000 15.000 72.000 61.000]
@@ -112,7 +112,7 @@ def createRandomData(
 
     Random floats, high sparsity.
 
-    >>> sparse = UML.createRandomData('Sparse', 5, 5, .9)
+    >>> sparse = nimble.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
         [[  0    0 0   0   0]
@@ -211,7 +211,8 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     Parameters
     ----------
     returnType : str
-        May be any of the allowed types specified in UML.data.available.
+        May be any of the allowed types specified in
+        nimble.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -234,7 +235,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
     See Also
@@ -245,7 +246,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     --------
     Ones with default names.
 
-    >>> ones = UML.ones('List', 5, 5)
+    >>> ones = nimble.ones('List', 5, 5)
     >>> ones
     List(
         [[1.000 1.000 1.000 1.000 1.000]
@@ -257,10 +258,10 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Named object of ones with pointNames and featureNames.
 
-    >>> onesDF = UML.ones('DataFrame', 4, 4,
-    ...                   pointNames=['1', '2', '3', '4'],
-    ...                   featureNames=['a', 'b', 'c', 'd'],
-    ...                   name='ones DataFrame')
+    >>> onesDF = nimble.ones('DataFrame', 4, 4,
+    ...                      pointNames=['1', '2', '3', '4'],
+    ...                      featureNames=['a', 'b', 'c', 'd'],
+    ...                      name='ones DataFrame')
     >>> onesDF
     DataFrame(
         [[1.000 1.000 1.000 1.000]
@@ -284,7 +285,8 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     Parameters
     ----------
     returnType : str
-        May be any of the allowed types specified in UML.data.available.
+        May be any of the allowed types specified in
+        nimble.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -307,7 +309,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
     See Also
@@ -318,7 +320,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     --------
     Zeros with default names.
 
-    >>> zeros = UML.zeros('Matrix', 5, 5)
+    >>> zeros = nimble.zeros('Matrix', 5, 5)
     >>> zeros
     Matrix(
         [[0.000 0.000 0.000 0.000 0.000]
@@ -330,10 +332,10 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Named object of zeros with pointNames and featureNames.
 
-    >>> zerosSparse = UML.zeros('Sparse', 4, 4,
-    ...                         pointNames=['1', '2', '3', '4'],
-    ...                         featureNames=['a', 'b', 'c', 'd'],
-    ...                         name='Sparse all-zeros')
+    >>> zerosSparse = nimble.zeros('Sparse', 4, 4,
+    ...                            pointNames=['1', '2', '3', '4'],
+    ...                            featureNames=['a', 'b', 'c', 'd'],
+    ...                            name='Sparse all-zeros')
     >>> zerosSparse
     Sparse(
         [[0 0 0 0]
@@ -361,7 +363,8 @@ def identity(returnType, size, pointNames='automatic',
     Parameters
     ----------
     returnType : str
-        May be any of the allowed types specified in UML.data.available.
+        May be any of the allowed types specified in
+        nimble.data.available.
     size : int
         The number of points and features in the returned object.
     pointNames : 'automatic', list, dict
@@ -382,14 +385,14 @@ def identity(returnType, size, pointNames='automatic',
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
     Examples
     --------
     Identity matrix with default names.
 
-    >>> identity = UML.identity('Matrix', 5)
+    >>> identity = nimble.identity('Matrix', 5)
     >>> identity
     Matrix(
         [[1.000 0.000 0.000 0.000 0.000]
@@ -401,7 +404,7 @@ def identity(returnType, size, pointNames='automatic',
 
     Named object of zeros with pointNames and featureNames.
 
-    >>> identityList = UML.identity('List', 3,
+    >>> identityList = nimble.identity('List', 3,
     ...                             pointNames=['1', '2', '3'],
     ...                             featureNames=['a', 'b', 'c'],
     ...                             name='identity matrix list')
@@ -415,7 +418,7 @@ def identity(returnType, size, pointNames='automatic',
         name="identity matrix list"
         )
     """
-    retAllowed = copy.copy(UML.data.available)
+    retAllowed = copy.copy(nimble.data.available)
     if returnType not in retAllowed:
         msg = "returnType must be a value in " + str(retAllowed)
         raise InvalidArgumentValue(msg)
@@ -433,14 +436,14 @@ def identity(returnType, size, pointNames='automatic',
         assert returnType == 'Sparse'
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
-        return UML.createData(returnType, rawCoo, pointNames=pointNames,
-                              featureNames=featureNames, name=name,
-                              useLog=False)
+        return nimble.createData(returnType, rawCoo, pointNames=pointNames,
+                                 featureNames=featureNames, name=name,
+                                 useLog=False)
     else:
         raw = numpy.identity(size)
-        return UML.createData(returnType, raw, pointNames=pointNames,
-                              featureNames=featureNames, name=name,
-                              useLog=False)
+        return nimble.createData(returnType, raw, pointNames=pointNames,
+                                 featureNames=featureNames, name=name,
+                                 useLog=False)
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
@@ -456,13 +459,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    testX: UML Base object
+    testX: nimble Base object
         Data to be used for testing.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
@@ -474,16 +477,16 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    UML.data.Points.normalize, UML.data.Features.normalize
+    nimble.data.Points.normalize, nimble.data.Features.normalize
 
     Examples
     --------
     Normalize a single data set.
 
     >>> data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = UML.createData("Matrix", data)
+    >>> trainX = nimble.createData("Matrix", data)
     >>> orig = trainX.copy()
-    >>> UML.normalizeData('scikitlearn.PCA', trainX, n_components=2)
+    >>> nimble.normalizeData('scikitlearn.PCA', trainX, n_components=2)
     >>> trainX
     Matrix(
         [[-0.216 0.713 ]
@@ -494,11 +497,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Normalize training and testing data.
 
     >>> data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = UML.createData("Matrix", data1)
+    >>> trainX = nimble.createData("Matrix", data1)
     >>> data2 = [[-1, 0, 5]]
-    >>> testX = UML.createData("Matrix", data2)
-    >>> UML.normalizeData('scikitlearn.PCA', trainX, testX=testX,
-    ...                   n_components=2)
+    >>> testX = nimble.createData("Matrix", data2)
+    >>> nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
+    ...                      n_components=2)
     >>> # trainX is the same as above example.
     >>> testX
     Matrix(
@@ -509,8 +512,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     (_, trueLearnerName) = _unpackLearnerName(learnerName)
     merged = _mergeArguments(arguments, kwarguments)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments=merged,
-                   useLog=False)
+    tl = nimble.train(learnerName, trainX, trainY, arguments=merged,
+                      useLog=False)
     normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
@@ -536,10 +539,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
     """
-    Permanently add a customLearner to be made available to UML.
+    Permanently add a customLearner to be made available to nimble.
 
     Register the given customLearner class so that it is callable by the
-    top level UML functions through the interface of the specified
+    top level nimble functions through the interface of the specified
     custom package. This operation modifies the saved configuration file
     so that this change will be reflected during future sesssions.
 
@@ -558,21 +561,21 @@ def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
     learnerClassObject : class
         The class object implementing the learner you want registered.
         It will be checked using
-        UML.interfaces.CustomLearner.validateSubclass to ensure that all
-        details of the provided implementation are acceptable.
+        nimble.interfaces.CustomLearner.validateSubclass to ensure that
+        all details of the provided implementation are acceptable.
     """
-    UML.helpers.registerCustomLearnerBackend(customPackageName,
-                                             learnerClassObject, True)
+    nimble.helpers.registerCustomLearnerBackend(customPackageName,
+                                                learnerClassObject, True)
 
 
 def registerCustomLearner(customPackageName, learnerClassObject):
     """
-    Add a customLearner to be made available to UML for this session.
+    Add a customLearner to be made available to nimble for this session.
 
     Register the given customLearner class so that it is callable by the
-    top level UML functions through the interface of the specified
+    top level nimble functions through the interface of the specified
     custom package. Though this operation by itself is temporary, it has
-    effects in UML.settings, so subsequent saveChanges operations may
+    effects in nimble.settings, so subsequent saveChanges operations may
     cause it to be reflected in future sessions.
 
     Parameters
@@ -590,16 +593,16 @@ def registerCustomLearner(customPackageName, learnerClassObject):
     learnerClassObject : class
         The class object implementing the learner you want registered.
         It will be checked using
-        UML.interfaces.CustomLearner.validateSubclass to ensure that all
-        details of the provided implementation are acceptable.
+        nimble.interfaces.CustomLearner.validateSubclass to ensure that
+        all details of the provided implementation are acceptable.
     """
-    UML.helpers.registerCustomLearnerBackend(customPackageName,
-                                             learnerClassObject, False)
+    nimble.helpers.registerCustomLearnerBackend(customPackageName,
+                                                learnerClassObject, False)
 
 
 def deregisterCustomLearnerAsDefault(customPackageName, learnerName):
     """
-    Permanently disable a customLearner from being available to UML.
+    Permanently disable a customLearner from being available to nimble.
 
     Remove accessibility of the learner with the given name from the
     interface of the package with the given name permenantly. This
@@ -612,23 +615,25 @@ def deregisterCustomLearnerAsDefault(customPackageName, learnerName):
         The name of the interface / custom package from which the
         learner named 'learnerName' is to be removed from. If that
         learner was the last one grouped in that custom package, then
-        the interface is removed from the UML.interfaces.available list.
+        the interface is removed from the nimble.interfaces.available
+        list.
     learnerName : str
         The name of the learner to be removed from the
         interface / custom package with the name 'customPackageName'.
     """
-    UML.helpers.deregisterCustomLearnerBackend(customPackageName,
-                                               learnerName, True)
+    nimble.helpers.deregisterCustomLearnerBackend(customPackageName,
+                                                  learnerName, True)
 
 
 def deregisterCustomLearner(customPackageName, learnerName):
     """
-    Temporarily disable a customLearner from being available to UML.
+    Temporarily disable a customLearner from being available to nimble.
 
     Remove accessibility of the learner with the given name from the
     interface of the package with the given name temporarily in this
-    session. This has effects in UML.settings, so subsequent saveChanges
-    operations may cause it to be reflected in future sessions.
+    session. This has effects in nimble.settings, so subsequent
+    saveChanges operations may cause it to be reflected in future
+    sessions.
 
     Parameters
     ----------
@@ -636,13 +641,14 @@ def deregisterCustomLearner(customPackageName, learnerName):
         The name of the interface / custom package from which the
         learner named 'learnerName' is to be removed from. If that
         learner was the last one grouped in that custom package, then
-        the interface is removed from the UML.interfaces.available list.
+        the interface is removed from the nimble.interfaces.available
+        list.
     learnerName : str
         The name of the learner to be removed from the
         interface / custom package with the name 'customPackageName'.
     """
-    UML.helpers.deregisterCustomLearnerBackend(customPackageName,
-                                               learnerName, False)
+    nimble.helpers.deregisterCustomLearnerBackend(customPackageName,
+                                                  learnerName, False)
 
 
 def learnerParameters(name):
@@ -693,14 +699,14 @@ def learnerDefaultValues(name):
 
 def listLearners(package=None):
     """
-    Get a list of learners avaliable to UML or a specific package.
+    Get a list of learners avaliable to nimble or a specific package.
 
-    Returns a list a list of learners that are callable through UML's
+    Returns a list a list of learners that are callable through nimble's
     training, applying, and testing functions. If ``package`` is
     specified, the list will contain strings of each learner. If
     ``package`` is None, the list will contain strings in the form of
     'package.learner'. This will differ depending on the packages
-    currently available in UML.interfaces.available.
+    currently available in nimble.interfaces.available.
 
     Parameters
     ----------
@@ -714,7 +720,7 @@ def listLearners(package=None):
     """
     results = []
     if package is None:
-        for interface in UML.interfaces.available:
+        for interface in nimble.interfaces.available:
             packageName = interface.getCanonicalName()
             currResults = interface.listLearners()
             for learnerName in currResults:
@@ -737,20 +743,20 @@ def createData(
                         'NULL', 'NA'),
         replaceMissingWith=numpy.nan, useLog=None):
     """
-    Function to instantiate one of the UML data container types.
+    Function to instantiate one of the nimble data container types.
 
-    Creates a UML data object based on the ``returnType``.  Data can be
-    loaded in a raw form, from a file or from a web page.  Some
+    Creates a nimble data object based on the ``returnType``.  Data can
+    be loaded in a raw form, from a file or from a web page.  Some
     preprocessing of the data can also be done when creating the object
     through the passing various arguments.
 
     Parameters
     ----------
     returnType : str, None
-        Indicates which kind of UML data type to return. Currently
+        Indicates which kind of nimble data type to return. Currently
         accepted are the strings "List", "Matrix", "Sparse" and
         "DataFrame" -- which are **case sensitive**. If None is given,
-        UML will attempt to detect the type most appropriate for the
+        nimble will attempt to detect the type most appropriate for the
         data.
     data : object, str
         The source of the data to be loaded into the returned object.
@@ -856,7 +862,7 @@ def createData(
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object corresponding with the ``returnType``.
 
     See Also
@@ -866,7 +872,7 @@ def createData(
     Examples
     --------
     >>> data = [[1, 2, 3], [4, 5, 6]]
-    >>> asList = UML.createData('List', data, name='simple')
+    >>> asList = nimble.createData('List', data, name='simple')
     >>> asList
     List(
         [[1.000 2.000 3.000]
@@ -878,20 +884,21 @@ def createData(
 
     >>> with open('createData.csv', 'w') as cd:
     ...     out = cd.write('1,2,3\\n4,5,6')
-    >>> fromFile = UML.createData('Matrix', 'createData.csv')
+    >>> fromFile = nimble.createData('Matrix', 'createData.csv')
     >>> fromFile
     Matrix(
         [[1.000 2.000 3.000]
          [4.000 5.000 6.000]]
         name="createData.csv"
-        path="/UML/createData.csv"
+        path="/nimble/createData.csv"
         )
 
     Adding point and feature names.
 
     >>> data = [['a', 'b', 'c'], [0, 0, 1], [1, 0, 0]]
-    >>> asSparse = UML.createData('Sparse', data, pointNames=['1', '2'],
-    ...                           featureNames=True)
+    >>> asSparse = nimble.createData('Sparse', data,
+    ...                              pointNames=['1', '2'],
+    ...                              featureNames=True)
     >>> asSparse
     Sparse(
         [[  0   0 1.000]
@@ -904,10 +911,10 @@ def createData(
 
     >>> data = [[1, 'Missing', 3], [4, 'Missing', 6]]
     >>> ftNames = {'a': 0, 'b': 1, 'c': 2}
-    >>> asDataFrame = UML.createData('DataFrame', data,
-    ...                              featureNames = ftNames,
-    ...                              treatAsMissing=["Missing", 3],
-    ...                              replaceMissingWith=-1)
+    >>> asDataFrame = nimble.createData('DataFrame', data,
+    ...                                 featureNames = ftNames,
+    ...                                 treatAsMissing=["Missing", 3],
+    ...                                 replaceMissingWith=-1)
     >>> asDataFrame
     DataFrame(
         [[1.000 -1.000 -1.000]
@@ -915,7 +922,7 @@ def createData(
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """
-    retAllowed = copy.copy(UML.data.available)
+    retAllowed = copy.copy(nimble.data.available)
     retAllowed.append(None)
     if returnType not in retAllowed:
         msg = "returnType must be a value in " + str(retAllowed)
@@ -964,25 +971,25 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     Parameters
     ----------
     learnerName : str
-        UML compliant algorithm name in the form 'package.algorithm'
+        nimble compliant algorithm name in the form 'package.algorithm'
         e.g. 'sciKitLearn.KNeighborsClassifier'
-    X : UML Base object
+    X : nimble Base object
         points/features data
-    Y : UML Base object
+    Y : nimble Base object
         labels/data about points in X
     performanceFunction : function
-        Look in UML.calculate for premade options. Function used by
+        Look in nimble.calculate for premade options. Function used by
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -998,11 +1005,11 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1047,25 +1054,25 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
     Parameters
     ----------
     learnerName : str
-        UML compliant algorithm name in the form 'package.algorithm'
+        nimble compliant algorithm name in the form 'package.algorithm'
         e.g. 'sciKitLearn.KNeighborsClassifier'
-    X : UML Base object
+    X : nimble Base object
         points/features data
-    Y : UML Base object
+    Y : nimble Base object
         labels/data about points in X
     performanceFunction : function
-        Look in UML.calculate for premade options. Function used by
+        Look in nimble.calculate for premade options. Function used by
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1081,11 +1088,11 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1116,25 +1123,25 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
     Parameters
     ----------
     learnerName : str
-        UML compliant algorithm name in the form 'package.algorithm'
+        nimble compliant algorithm name in the form 'package.algorithm'
         e.g. 'sciKitLearn.KNeighborsClassifier'
-    X : UML Base object
+    X : nimble Base object
         points/features data
-    Y : UML Base object
+    Y : nimble Base object
         labels/data about points in X
     performanceFunction : function
-        Look in UML.calculate for premade options. Function used by
+        Look in nimble.calculate for premade options. Function used by
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        scorevfor  the learner when the learner was passed all three
+        values ofv``k``, separately. These will be merged any
+        kwarguments for the learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1150,11 +1157,11 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1247,29 +1254,29 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
     performanceFunction : function
         If cross validation is triggered to select from the given
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        scorevfor  the learner when the learner was passed all three
+        values ofv``k``, separately. These will be merged any
+        kwarguments for the learner.
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
         output wanted: 'label' if we class labels are desired,
@@ -1291,15 +1298,15 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
-    UML.interfaces.universal_interface.TrainedLearner
+    nimble.interfaces.universal_interface.TrainedLearner
 
     See Also
     --------
@@ -1316,11 +1323,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     ...         [0, 1, 0, 2],
     ...         [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b' ,'c', 'label']
-    >>> trainData = UML.createData('Matrix', data, featureNames=ftNames)
-    >>> tl = UML.train('Custom.KNNClassifier', trainX=trainData,
-    ...                trainY='label')
+    >>> trainData = nimble.createData('Matrix', data,
+    ...                               featureNames=ftNames)
+    >>> tl = nimble.train('Custom.KNNClassifier', trainX=trainData,
+    ...                   trainY='label')
     >>> print(type(tl))
-    <class 'UML.interfaces.universal_interface.TrainedLearner'>
+    <class 'nimble.interfaces.universal_interface.TrainedLearner'>
 
     Passing arguments to the learner. Both the arguments parameter and
     kwarguments can be utilized, they will be merged. Below, ``C`` and
@@ -1333,10 +1341,10 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     ...          [0, 1, 0],
     ...          [0, 0, 1]]
     >>> dataY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = UML.createData('Matrix', dataX)
-    >>> trainY = UML.createData('Matrix', dataY)
-    >>> tl = UML.train('sciKitLearn.SVC', trainX=trainX, trainY=trainY,
-    ...                arguments={'C': 0.1}, kernel='linear')
+    >>> trainX = nimble.createData('Matrix', dataX)
+    >>> trainY = nimble.createData('Matrix', dataY)
+    >>> tl = nimble.train('sciKitLearn.SVC', trainX=trainX, trainY=trainY,
+    ...                   arguments={'C': 0.1}, kernel='linear')
     >>> tlAttributes = tl.getAttributes()
     >>> cValue = tlAttributes['C']
     >>> kernelValue = tlAttributes['kernel']
@@ -1364,7 +1372,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         if performanceFunction is None:
             msg = "Cross validation was triggered to select the best "
             msg += "parameter set, yet no performanceFunction was specified. "
-            msg += "Either one must be specified (see UML.calculate for "
+            msg += "Either one must be specified (see nimble.calculate for "
             msg += "out-of-the-box options) or there must be no choices in "
             msg += "the parameters."
             raise InvalidArgumentValueCombination(msg)
@@ -1419,13 +1427,13 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    testX : UML Base object
+    testX : nimble Base object
         Data set on which the trained learner will be applied (i.e.
         performing prediction, transformation, etc. as appropriate to
         the learner).
@@ -1434,20 +1442,20 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
     output : str
-        The kind of UML Base object that the output of this function
+        The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
@@ -1473,11 +1481,11 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1499,11 +1507,11 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainData = UML.createData('Matrix', rawTrain)
-    >>> testX = UML.createData('Matrix', rawTestX)
-    >>> predict = UML.trainAndApply('Custom.KNNClassifier',
-    ...                             trainX=trainData, trainY=3,
-    ...                             testX=testX)
+    >>> trainData = nimble.createData('Matrix', rawTrain)
+    >>> testX = nimble.createData('Matrix', rawTestX)
+    >>> predict = nimble.trainAndApply('Custom.KNNClassifier',
+    ...                                trainX=trainData, trainY=3,
+    ...                                testX=testX)
     >>> predict
     Matrix(
         [[1.000]
@@ -1523,12 +1531,12 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...              [0, 0, 1]]
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainX = UML.createData('Matrix', rawTrainX)
-    >>> trainY = UML.createData('Matrix', rawTrainY)
-    >>> testX = UML.createData('Matrix', rawTestX)
-    >>> pred = UML.trainAndApply('sciKitLearn.SVC', trainX=trainX,
-    ...                          trainY=trainY, testX=testX,
-    ...                          arguments={'C': 0.1}, kernel='linear')
+    >>> trainX = nimble.createData('Matrix', rawTrainX)
+    >>> trainY = nimble.createData('Matrix', rawTrainY)
+    >>> testX = nimble.createData('Matrix', rawTestX)
+    >>> pred = nimble.trainAndApply('sciKitLearn.SVC', trainX=trainX,
+    ...                             trainY=trainY, testX=testX,
+    ...                             arguments={'C': 0.1}, kernel='linear')
     >>> pred
     Matrix(
         [[1.000]
@@ -1542,13 +1550,13 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
     merged = _mergeArguments(arguments, kwarguments)
 
-    trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, merged,
-                               scoreMode='label',
-                               multiClassStrategy=multiClassStrategy,
-                               numFolds=numFolds, useLog=False,
-                               storeLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True, **kwarguments)
+    trainedLearner = nimble.train(learnerName, trainX, trainY,
+                                  performanceFunction, merged,
+                                  scoreMode='label',
+                                  multiClassStrategy=multiClassStrategy,
+                                  numFolds=numFolds, useLog=False,
+                                  storeLog=useLog, doneValidData=True,
+                                  done2dOutputFlagCheck=True, **kwarguments)
 
     if testX is None:
         if isinstance(trainY, (six.string_types, int, numpy.integer)):
@@ -1592,39 +1600,39 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY : identifier, UML Base object
+    trainY : identifier, nimble Base object
         * identifier - The name or index of the feature in ``trainX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``trainX``.
-    testX: UML Base object
+    testX: nimble Base object
         Data to be used for testing.
-    testY : identifier, UML Base object
+    testY : identifier, nimble Base object
         * identifier - A name or index of the feature in ``testX``
           containing the labels.
-        * UML Base object - contains the labels that correspond to
+        * nimble Base object - contains the labels that correspond to
           ``testX``.
     performanceFunction : function
         If cross validation is triggered to select from the given
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
     output : str
-        The kind of UML Base object that the output of this function
+        The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
@@ -1650,11 +1658,11 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1678,14 +1686,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     ...             [0, 0, 1, 3]]
     >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = UML.createData('Matrix', rawTrain,
-    ...                            featureNames=ftNames)
-    >>> testData = UML.createData('Matrix', rawTest,
-    ...                           featureNames=ftNames)
-    >>> perform = UML.trainAndTest(
+    >>> trainData = nimble.createData('Matrix', rawTrain,
+    ...                               featureNames=ftNames)
+    >>> testData = nimble.createData('Matrix', rawTest,
+    ...                              featureNames=ftNames)
+    >>> perform = nimble.trainAndTest(
     ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
     ...     testX=testData, testY='label',
-    ...     performanceFunction=UML.calculate.fractionIncorrect)
+    ...     performanceFunction=nimble.calculate.fractionIncorrect)
     >>> perform
     0.0
 
@@ -1702,14 +1710,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     >>> rawTestY = [[1], [2], [3]]
-    >>> trainX = UML.createData('Matrix', rawTrainX)
-    >>> trainY = UML.createData('Matrix', rawTrainY)
-    >>> testX = UML.createData('Matrix', rawTestX)
-    >>> testY = UML.createData('Matrix', rawTestY)
-    >>> perform = UML.trainAndTest(
+    >>> trainX = nimble.createData('Matrix', rawTrainX)
+    >>> trainY = nimble.createData('Matrix', rawTrainY)
+    >>> testX = nimble.createData('Matrix', rawTestX)
+    >>> testY = nimble.createData('Matrix', rawTestY)
+    >>> perform = nimble.trainAndTest(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     testX=testX, testY=testY,
-    ...     performanceFunction=UML.calculate.fractionIncorrect,
+    ...     performanceFunction=nimble.calculate.fractionIncorrect,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0
@@ -1720,13 +1728,13 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     merged = _mergeArguments(arguments, kwarguments)
 
-    trainedLearner = UML.train(learnerName, trainX, trainY,
-                               performanceFunction, merged,
-                               scoreMode='label',
-                               multiClassStrategy=multiClassStrategy,
-                               numFolds=numFolds, useLog=False,
-                               storeLog=useLog, doneValidData=True,
-                               done2dOutputFlagCheck=True)
+    trainedLearner = nimble.train(learnerName, trainX, trainY,
+                                  performanceFunction, merged,
+                                  scoreMode='label',
+                                  multiClassStrategy=multiClassStrategy,
+                                  numFolds=numFolds, useLog=False,
+                                  storeLog=useLog, doneValidData=True,
+                                  done2dOutputFlagCheck=True)
 
     if isinstance(testY, (six.string_types, int, numpy.integer)):
         testX = testX.copy()
@@ -1776,18 +1784,18 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     ----------
     learnerName : str
         Name of the learner to be called, in the form 'package.learner'
-    trainX: UML Base object
+    trainX: nimble Base object
         Data to be used for training.
-    trainY: identifier, UML Base object
+    trainY: identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
-        labels or another UML Base object containing the labels that
+        labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
     performanceFunction : function
         If cross validation is triggered to select from the given
         argument set, then this function will be used to generate a
         performance score for the run. Function is of the form:
         def func(knownValues, predictedValues).
-        Look in UML.calculate for pre-made options. Default is None,
+        Look in nimble.calculate for pre-made options. Default is None,
         since if there is no parameter selection to be done, it is not
         used.
     crossValidationError: bool
@@ -1807,13 +1815,13 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
         To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a UML.CV
-        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
-        for  the learner when the learner was passed all three values of
-        ``k``, separately. These will be merged any kwarguments for the
-        learner.
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
     output : str
-        The kind of UML Base object that the output of this function
+        The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
@@ -1836,11 +1844,11 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         Keyword arguments specified variables that are passed to the
         learner. To trigger cross-validation using multiple values for
         arguments, specify different values for each parameter using a
-        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
+        arg2=nimble.CV([4,5,6]) which correspond to permutations/
+        argument states with one element from arg1 and one element from
+        arg2, such that an example generated permutation/argument state
+        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1862,11 +1870,11 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = UML.createData('Matrix', rawTrain,
-    ...                            featureNames=ftNames)
-    >>> perform = UML.trainAndTestOnTrainingData(
+    >>> trainData = nimble.createData('Matrix', rawTrain,
+    ...                               featureNames=ftNames)
+    >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
-    ...     performanceFunction=UML.calculate.fractionIncorrect)
+    ...     performanceFunction=nimble.calculate.fractionIncorrect)
     >>> perform
     0.0
 
@@ -1881,11 +1889,11 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     ...              [0, 1, 0],
     ...              [0, 0, 1]]
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = UML.createData('Matrix', rawTrainX)
-    >>> trainY = UML.createData('Matrix', rawTrainY)
-    >>> perform = UML.trainAndTestOnTrainingData(
+    >>> trainX = nimble.createData('Matrix', rawTrainX)
+    >>> trainY = nimble.createData('Matrix', rawTrainY)
+    >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
-    ...     performanceFunction=UML.calculate.fractionIncorrect,
+    ...     performanceFunction=nimble.calculate.fractionIncorrect,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0
@@ -1937,7 +1945,7 @@ def log(logType, logInfo):
     elif not isinstance(logInfo, (six.string_types, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
         raise InvalidArgumentType(msg)
-    UML.logger.active.log(logType, logInfo)
+    nimble.logger.active.log(logType, logInfo)
 
 
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
@@ -2014,37 +2022,37 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
             msg = "mostRunsAgo must be greater than or equal to "
             msg += "leastRunsAgo"
             raise InvalidArgumentValueCombination(msg)
-    UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo,
-                              startDate, endDate, maximumEntries,
-                              searchForText, regex, saveToFileName, append)
+    nimble.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo,
+                                 startDate, endDate, maximumEntries,
+                                 searchForText, regex, saveToFileName, append)
 
 
 def loadData(inputPath, useLog=None):
     """
-    Load UML Base object.
+    Load nimble Base object.
 
     Parameters
     ----------
     inputPath : str
         The location (including file name and extension) to find a file
-        previously generated by UML.data .save(). Expected file
+        previously generated by nimble.data .save(). Expected file
         extension '.umld'.
 
     Returns
     -------
-    UML.data.Base
+    nimble.data.Base
         Subclass of Base object.
     """
     if not cloudpickle:
-        msg = "To load UML objects, cloudpickle must be installed"
+        msg = "To load nimble objects, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.umld'):
-        msg = 'file extension for a saved UML data object should be .umld'
+        msg = 'file extension for a saved nimble data object should be .umld'
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret, UML.data.Base):
-        msg = 'File does not contain a UML valid data Object.'
+    if not isinstance(ret, nimble.data.Base):
+        msg = 'File does not contain a valid nimble data object.'
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', ret.getTypeString(), len(ret.points),
@@ -2054,7 +2062,7 @@ def loadData(inputPath, useLog=None):
 
 def loadTrainedLearner(inputPath, useLog=None):
     """
-    Load UML trainedLearner object.
+    Load nimble trainedLearner object.
 
     Parameters
     ----------
@@ -2065,18 +2073,19 @@ def loadTrainedLearner(inputPath, useLog=None):
 
     Returns
     -------
-    UML.interfaces.UniversalInterface.TrainedLearner
+    nimble.interfaces.UniversalInterface.TrainedLearner
     """
     if not cloudpickle:
-        msg = "To load UML models, cloudpickle must be installed"
+        msg = "To load nimble models, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.umlm'):
-        msg = 'File extension for a saved UML model should be .umlm'
+        msg = 'File extension for a saved nimble model should be .umlm'
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
-        msg = 'File does not contain a UML valid trainedLearner Object.'
+    if not isinstance(ret,
+                      nimble.interfaces.universal_interface.TrainedLearner):
+        msg = 'File does not contain a nimble valid trainedLearner Object.'
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', "TrainedLearner",

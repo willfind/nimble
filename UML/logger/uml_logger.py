@@ -33,13 +33,13 @@ import six
 from six import reraise
 import numpy
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue
 from .stopwatch import Stopwatch
 
-class UmlLogger(object):
+class NimbleLogger(object):
     """
-    Handle logging of UML functions and generating the log output.
+    Handle logging of nimble functions and generating the log output.
 
     Parameters
     ----------
@@ -247,7 +247,8 @@ class UmlLogger(object):
 
             self.log(logType, logInfo)
 
-    def logPrep(self, useLog, umlFunction, dataObject, func, *args, **kwargs):
+    def logPrep(self, useLog, nimbleFunction, dataObject, func, *args,
+                **kwargs):
         """
         Log information about a data preparation step performed.
 
@@ -258,8 +259,8 @@ class UmlLogger(object):
 
         Parameters
         ----------
-        umlFunction : str
-            The name of the umlFunction called.
+        nimbleFunction : str
+            The name of the nimble function called.
         dataObject : str
             The class of the calling object.
         arguments : dict
@@ -268,14 +269,14 @@ class UmlLogger(object):
         if enableLogging(useLog):
             logType = "prep"
             logInfo = {}
-            logInfo["function"] = umlFunction
+            logInfo["function"] = nimbleFunction
             logInfo["object"] = dataObject
             arguments = _buildArgDict(func, *args, **kwargs)
             logInfo["arguments"] = arguments
 
             self.log(logType, logInfo)
 
-    def logRun(self, useLog, umlFunction, trainData, trainLabels, testData,
+    def logRun(self, useLog, nimbleFunction, trainData, trainLabels, testData,
                testLabels, learnerFunction, arguments, metrics=None,
                extraInfo=None, time=None):
         """
@@ -288,16 +289,16 @@ class UmlLogger(object):
 
         Parameters
         ----------
-        umlFunction : str
-            The name of the umlFunction called.
-        trainData : UML data object
+        nimbleFunction : str
+            The name of the nimble function called.
+        trainData : nimble data object
             The object containing the training data.
-        trainLabels : UML data object, int
+        trainLabels : nimble data object, int
             The object or feature in ``trainData`` containing the
             training labels.
-        testData : UML data object
+        testData : nimble data object
             The object containing the testing data.
-        testLabels : UML data object, int
+        testLabels : nimble data object, int
             The object or feature in ``testData`` containing the
             training labels.
         learnerFunction : str
@@ -315,7 +316,7 @@ class UmlLogger(object):
         if enableLogging(useLog):
             logType = "run"
             logInfo = {}
-            logInfo["function"] = umlFunction
+            logInfo["function"] = nimbleFunction
             if isinstance(learnerFunction, (str, six.text_type)):
                 functionCall = learnerFunction
             else:
@@ -356,7 +357,7 @@ class UmlLogger(object):
 
             if arguments is not None and arguments != {}:
                 for name, value in arguments.items():
-                    if isinstance(value, UML.CV):
+                    if isinstance(value, nimble.CV):
                         arguments[name] = repr(value)
                 logInfo['arguments'] = arguments
 
@@ -383,9 +384,9 @@ class UmlLogger(object):
 
         Parameters
         ----------
-        trainData : UML data object
+        trainData : nimble data object
             The object containing the training data.
-        trainLabels : UML data object, int
+        trainLabels : nimble data object, int
             The object or feature in ``trainData`` containing the
             training labels.
         learnerFunction : str
@@ -404,7 +405,7 @@ class UmlLogger(object):
             logInfo = {}
             logInfo["learner"] = learnerFunction
             for name, value in arguments.items():
-                if isinstance(value, UML.CV):
+                if isinstance(value, nimble.CV):
                     arguments[name] = repr(value)
             logInfo["learnerArgs"] = arguments
             logInfo["folds"] = folds
@@ -503,7 +504,7 @@ def enableLogging(useLog):
     Access useLog value from configuration, if not explictly defined.
     """
     if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = nimble.settings.get("logger", "enabledByDefault")
         useLog = useLog.lower() == 'true'
     return useLog
 
@@ -511,7 +512,7 @@ def enableDeepLogging():
     """
     Access enableCrossValidationDeepLogging value from configuration.
     """
-    deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
+    deepLog = nimble.settings.get("logger", "enableCrossValidationDeepLogging")
     deepLog = deepLog.lower() == 'true'
     return deepLog
 
@@ -520,14 +521,14 @@ def handleLogging(useLog, logType, *args, **kwargs):
     Store information to be logged in the logger.
     """
     if enableLogging(useLog):
-        if logType in UML.logger.active.logTypes:
-            logFunc = UML.logger.active.logTypes[logType]
+        if logType in nimble.logger.active.logTypes:
+            logFunc = nimble.logger.active.logTypes[logType]
             logFunc(useLog, *args, **kwargs)
         else:
             if args:
-                UML.log(logType, args)
+                nimble.log(logType, args)
             if kwargs:
-                UML.log(logType, kwargs)
+                nimble.log(logType, kwargs)
 
 def stringToDatetime(string):
     """
@@ -642,7 +643,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
     Formats the string that will be output for calls to the showLog
     function.
     """
-    fullLog = "{0:^79}\n".format("UML LOGS")
+    fullLog = "{0:^79}\n".format("NIMBLE LOGS")
     fullLog += "." * 79
     previousLogRunNumber = None
     for log in listOfLogs:
@@ -888,13 +889,13 @@ def _buildArgDict(func, *args, **kwargs):
     defaults : tuple
         The default values of the arguments.
     """
-    argNames, _, _, defaults = UML.helpers.inspectArguments(func)
+    argNames, _, _, defaults = nimble.helpers.inspectArguments(func)
     argNames = argNames[1:] # ignore self arg
     nameArgMap = {}
     for name, arg in zip(argNames, args):
         if callable(arg):
             nameArgMap[name] = _extractFunctionString(arg)
-        elif isinstance(arg, UML.data.Base):
+        elif isinstance(arg, nimble.data.Base):
             nameArgMap[name] = arg.name
         else:
             nameArgMap[name] = str(arg)
@@ -989,48 +990,48 @@ def initLoggerAndLogConfig():
     initializes the currently active logger object using those options.
     """
     try:
-        location = UML.settings.get("logger", "location")
+        location = nimble.settings.get("logger", "location")
         if location == "":
-            location = './logs-UML'
-            UML.settings.set("logger", "location", location)
-            UML.settings.saveChanges("logger", "location")
+            location = './logs-nimble'
+            nimble.settings.set("logger", "location", location)
+            nimble.settings.saveChanges("logger", "location")
     except Exception:
-        location = './logs-UML'
-        UML.settings.set("logger", "location", location)
-        UML.settings.saveChanges("logger", "location")
+        location = './logs-nimble'
+        nimble.settings.set("logger", "location", location)
+        nimble.settings.saveChanges("logger", "location")
     finally:
         def cleanThenReInit_Loc(newLocation):
-            UML.logger.active.cleanup()
-            currName = UML.settings.get("logger", 'name')
-            UML.logger.active = UmlLogger(newLocation, currName)
-        UML.settings.hook("logger", "location", cleanThenReInit_Loc)
+            nimble.logger.active.cleanup()
+            currName = nimble.settings.get("logger", 'name')
+            nimble.logger.active = NimbleLogger(newLocation, currName)
+        nimble.settings.hook("logger", "location", cleanThenReInit_Loc)
 
     try:
-        name = UML.settings.get("logger", "name")
+        name = nimble.settings.get("logger", "name")
     except Exception:
-        name = "log-UML"
-        UML.settings.set("logger", "name", name)
-        UML.settings.saveChanges("logger", "name")
+        name = "log-nimble"
+        nimble.settings.set("logger", "name", name)
+        nimble.settings.saveChanges("logger", "name")
     finally:
         def cleanThenReInit_Name(newName):
-            UML.logger.active.cleanup()
-            currLoc = UML.settings.get("logger", 'location')
-            UML.logger.active = UmlLogger(currLoc, newName)
+            nimble.logger.active.cleanup()
+            currLoc = nimble.settings.get("logger", 'location')
+            nimble.logger.active = NimbleLogger(currLoc, newName)
 
-        UML.settings.hook("logger", "name", cleanThenReInit_Name)
+        nimble.settings.hook("logger", "name", cleanThenReInit_Name)
 
     try:
-        loggingEnabled = UML.settings.get("logger", "enabledByDefault")
+        loggingEnabled = nimble.settings.get("logger", "enabledByDefault")
     except Exception:
         loggingEnabled = 'True'
-        UML.settings.set("logger", "enabledByDefault", loggingEnabled)
-        UML.settings.saveChanges("logger", "enabledByDefault")
+        nimble.settings.set("logger", "enabledByDefault", loggingEnabled)
+        nimble.settings.saveChanges("logger", "enabledByDefault")
 
     try:
-        deepCV = UML.settings.get("logger", 'enableCrossValidationDeepLogging')
+        deepCV = nimble.settings.get("logger", 'enableCrossValidationDeepLogging')
     except Exception:
         deepCV = 'False'
-        UML.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
-        UML.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
+        nimble.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
+        nimble.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
-    return UmlLogger(location, name)
+    return NimbleLogger(location, name)

@@ -1,7 +1,7 @@
 """
-Universal Machine Learning
+Nimble
 
-UML offers interfaces into other machine learning packages and
+Nimble offers interfaces into other machine learning packages and
 tools for data representation and processing. Available at
 the top level in this package are the functions necessary to
 create data objects, call machine learning algorithms on that
@@ -13,20 +13,20 @@ import os
 import inspect
 import tempfile
 
-import UML.configuration
-from UML.configuration import UMLPath
+from . import configuration
+from .configuration import nimblePath
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
-from UML.importExternalLibraries import importModule
-import UML.interfaces
-import UML.calculate
-import UML.randomness
-import UML.logger
+from .importExternalLibraries import importModule
+from . import interfaces
+from . import calculate
+from . import randomness
+from . import logger
 
 # Import those functions that we want to be accessible in the
 # top level
-from UML.randomness import setRandomSeed
+from .randomness import setRandomSeed
 from .uml import train
 from .uml import trainAndApply
 from .uml import trainAndTest
@@ -57,33 +57,32 @@ from .helpers import CV
 capturedErr = tempfile.NamedTemporaryFile()
 
 # load settings from configuration file
-settings = UML.configuration.loadSettings()
+settings = configuration.loadSettings()
 
 # now finish out with any other configuration that needs to be done
 
 # These learners are required for unit testing, so we ensure they will
 # be automatically registered by making surey they have entries in
-# UML.settings.
-UML.settings.set("RegisteredLearners", "Custom.RidgeRegression",
-                 'UML.customLearners.RidgeRegression')
-UML.settings.set("RegisteredLearners", "Custom.KNNClassifier",
-                 'UML.customLearners.KNNClassifier')
-UML.settings.set("RegisteredLearners", "Custom.MeanConstant",
-                 'UML.customLearners.MeanConstant')
-UML.settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
-                 'UML.customLearners.MultiOutputRidgeRegression')
-UML.settings.saveChanges("RegisteredLearners")
+# nimble.settings.
+settings.set("RegisteredLearners", "Custom.RidgeRegression",
+             'UML.customLearners.RidgeRegression')
+settings.set("RegisteredLearners", "Custom.KNNClassifier",
+             'UML.customLearners.KNNClassifier')
+settings.set("RegisteredLearners", "Custom.MeanConstant",
+             'UML.customLearners.MeanConstant')
+settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
+             'UML.customLearners.MultiOutputRidgeRegression')
+settings.saveChanges("RegisteredLearners")
 
-# register those custom learners listed in UML.settings
-UML.helpers.autoRegisterFromSettings()
+# register those custom learners listed in nimble.settings
+configuration.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.
-UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available,
-                                     save=True)
+configuration.syncWithInterfaces(settings, interfaces.available, save=True)
 
 # initialize the logging file
-UML.logger.active = UML.logger.initLoggerAndLogConfig()
+logger.active = logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
            'crossValidateReturnAll', 'crossValidateReturnBest',
@@ -93,4 +92,4 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
            'log', 'normalizeData', 'ones', 'registerCustomLearner',
            'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
            'showLog', 'train', 'trainAndApply', 'trainAndTest',
-           'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
+           'trainAndTestOnTrainingData', 'nimblePath', 'zeros']

@@ -1,5 +1,5 @@
 """
-The top level objects and methods which allow UML to interface with
+The top level objects and methods which allow nimble to interface with
 various python packages or custom learners. Also contains the objects
 which store trained learner models and provide functionality for
 applying and testing learners.
@@ -16,7 +16,7 @@ import numpy
 import six
 from six.moves import range
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentValue, ImproperObjectAction
 from UML.exceptions import PackageException
 from UML.docHelpers import inheritDocstringsFactory
@@ -33,18 +33,18 @@ from UML.helpers import extractWinningPredictionIndex
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import extractWinningPredictionIndexAndScore
 
-cloudpickle = UML.importModule('cloudpickle')
+cloudpickle = nimble.importModule('cloudpickle')
 
 
 def captureOutput(toWrap):
     """
     Decorator which will safely redirect standard error within the
-    wrapped function to the temp file at UML.capturedErr.
+    wrapped function to the temp file at nimble.capturedErr.
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
         backupErr = sys.stderr
-        sys.stderr = UML.capturedErr
+        sys.stderr = nimble.capturedErr
         try:
             ret = toWrap(*args, **kwarguments)
         finally:
@@ -65,7 +65,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ### Validate all the information from abstract functions ###
         # enforce a check that the underlying package is accessible at
         # instantiation, aborting the construction of the interface for this
-        # session of UML if it is not.
+        # session of nimble if it is not.
         if not self.accessible():
             msg = "The underlying package for " + self.getCanonicalName()
             msg += " was not accessible, aborting instantiation."
@@ -140,13 +140,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         learnerName : str
             Name of the learner to be called, in the form
             'package.learner'
-        trainX: UML Base object
+        trainX: nimble Base object
             Data to be used for training.
-        trainY: identifier, UML Base object
+        trainY: identifier, nimble Base object
             A name or index of the feature in ``trainX`` containing the
-            labels or another UML Base object containing the labels that
-            correspond to ``trainX``.
-        testX : UML Base object
+            labels or another nimble Base object containing the labels
+            that correspond to ``trainX``.
+        testX : nimble Base object
             data set on which the trained learner will be applied (i.e.
             performing prediction, transformation, etc. as appropriate
             to the learner).
@@ -159,9 +159,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
         output : str
-            The kind of UML Base object that the output of this function
-            should be in. Any of the normal string inputs to the
-            createData ``returnType`` parameter are accepted here.
+            The kind of nimble Base object that the output of this
+            function should be in. Any of the normal string inputs to
+            the createData ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -208,28 +208,28 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         learnerName : str
             Name of the learner to be called, in the form
             'package.learner'
-        trainX: UML Base object
+        trainX: nimble Base object
             Data to be used for training.
-        trainY : identifier, UML Base object
+        trainY : identifier, nimble Base object
             * identifier - The name or index of the feature in
               ``trainX`` containing the labels.
-            * UML Base object - contains the labels that correspond to
-              ``trainX``.
-        testX: UML Base object
+            * nimble Base object - contains the labels that correspond
+              to ``trainX``.
+        testX: nimble Base object
             Data to be used for testing.
-        testY : identifier, UML Base object
+        testY : identifier, nimble Base object
             * identifier - A name or index of the feature in ``testX``
               containing the labels.
-            * UML Base object - contains the labels that correspond to
-              ``testX``.
+            * nimble Base object - contains the labels that correspond
+              to ``testX``.
         performanceFunction : function
             If cross validation is triggered to select from the given
             argument set, then this function will be used to generate a
             performance score for the run. Function is of the form:
             def func(knownValues, predictedValues).
-            Look in UML.calculate for pre-made options. Default is None,
-            since if there is no parameter selection to be done, it is
-            not used.
+            Look in nimble.calculate for pre-made options. Default is
+            None, since if there is no parameter selection to be done,
+            it is not used.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training and application. eg. {'dimensions':5, 'k':5}
@@ -239,9 +239,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
         output : str
-            The kind of UML Base object that the output of this function
-            should be in. Any of the normal string inputs to the
-            createData ``returnType`` parameter are accepted here.
+            The kind of nimble Base object that the output of this
+            function should be in. Any of the normal string inputs to
+            the createData ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -285,12 +285,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         learnerName : str
             Name of the learner to be called, in the form
             'package.learner'
-        trainX: UML Base object
+        trainX: nimble Base object
             Data to be used for training.
-        trainY: identifier, UML Base object
+        trainY: identifier, nimble Base object
             A name or index of the feature in ``trainX`` containing the
-            labels or another UML Base object containing the labels that
-            correspond to ``trainX``.
+            labels or another nimble Base object containing the labels
+            that correspond to ``trainX``.
         multiClassStrategy : str
             May only be 'default' 'OneVsAll' or 'OneVsOne'
         arguments : dict
@@ -344,7 +344,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             #1 VS 1
             if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
                 # want data and labels together in one object for this method
-                if isinstance(trainY, UML.data.Base):
+                if isinstance(trainY, nimble.data.Base):
                     trainX = trainX.copy()
                     trainX.features.add(trainY, useLog=False)
                     trainY = len(trainX.features) - 1
@@ -391,7 +391,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
-        if isinstance(outputData, UML.data.Base):
+        if isinstance(outputData, nimble.data.Base):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
@@ -462,7 +462,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             msg += " is not one of the accepted configurable option names"
             raise InvalidArgumentValue(msg)
 
-        UML.settings.set(self.getCanonicalName(), option, value)
+        nimble.settings.set(self.getCanonicalName(), option, value)
 
 
     def getOption(self, option):
@@ -475,11 +475,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             raise InvalidArgumentValue(msg)
 
         # empty string is the sentinal value indicating that the configuration
-        # file has an option of that name, but the UML user hasn't set a value
-        # for it.
+        # file has an option of that name, but the nimble user hasn't set a
+        # value for it.
         ret = ''
         try:
-            ret = UML.settings.get(self.getCanonicalName(), option)
+            ret = nimble.settings.get(self.getCanonicalName(), option)
         except Exception:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
@@ -897,7 +897,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         Return a list of all learners callable through this interface.
         """
-        isCustom = isinstance(self, UML.interfaces.CustomLearnerInterface)
+        isCustom = isinstance(self, nimble.interfaces.CustomLearnerInterface)
         if self._listLearnersCached is None:
             ret = self._listLearnersBackend()
             if not isCustom:
@@ -1093,7 +1093,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                              arguments, customDict):
         """
         Method called before any package level function which transforms
-        all parameters provided by a UML user.
+        all parameters provided by a nimble user.
 
         trainX, trainY, and testX are filled with the values of the
         parameters of the same name to a call to trainAndApply() or
@@ -1116,7 +1116,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                               customDict):
         """
         Method called before any package level function which transforms
-        the returned value into a format appropriate for a UML user.
+        the returned value into a format appropriate for a nimble user.
         """
         pass
 
@@ -1129,9 +1129,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ----------
         learnerName : str
             The name of the learner.
-        trainX : UML.data.Base
+        trainX : nimble.data.Base
             The training data.
-        trainY : UML.data.Base
+        trainY : nimble.data.Base
             The training labels.
         arguments : dict
             The transformed arguments.
@@ -1153,9 +1153,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ----------
         learnerName : str
             The name of the learner.
-        trainX : UML.data.Base
+        trainX : nimble.data.Base
             The training data.
-        trainY : UML.data.Base
+        trainY : nimble.data.Base
             The training labels.
         arguments : dict
             The transformed arguments.
@@ -1178,7 +1178,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ----------
         learnerName : str
             A TrainedLearner object that can be tested on.
-        testX : UML.data.Base
+        testX : nimble.data.Base
             The testing data.
         arguments : dict
             The transformed arguments.
@@ -1186,7 +1186,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         Returns
         -------
-        UML friendly results.
+        nimble friendly results.
         """
         pass
 
@@ -1203,7 +1203,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     def _optionDefaults(self, option):
         """
         Define package default values that will be used for as long as a
-        default value hasn't been registered in the UML configuration
+        default value hasn't been registered in the nimble configuration
         file. For example, these values will always be used the first
         time an interface is instantiated.
         """
@@ -1215,7 +1215,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
         Returns a list of strings, where each string is the name of a
         configurable option of this interface whose value will be stored
-        in UML's configuration file.
+        in nimble's configuration file.
         """
         pass
 
@@ -1271,7 +1271,7 @@ class TrainedLearner(object):
         The return value from _trainer(), a reference to some object
         that is to be used by the package implementor during
         application.
-    interfaceObject : UML.interfaces.UniversalInterface
+    interfaceObject : nimble.interfaces.UniversalInterface
         A reference to the subclass of UniversalInterface from which
         this TrainedLearner is being instantiated.
     has2dOutput : bool
@@ -1327,21 +1327,21 @@ class TrainedLearner(object):
 
         Parameters
         ----------
-        testX : UML.data.Base
+        testX : nimble.data.Base
             The object containing the test data.
-        testY : identifier, UML Base object
+        testY : identifier, nimble Base object
             * identifier - A name or index of the feature in ``testX``
               containing the labels.
-            * UML Base object - contains the labels that correspond to
-              ``testX``.
+            * nimble Base object - contains the labels that correspond
+              to ``testX``.
         performanceFunction : function
             If cross validation is triggered to select from the given
             argument set, then this function will be used to generate a
             performance score for the run. Function is of the form:
             def func(knownValues, predictedValues).
-            Look in UML.calculate for pre-made options. Default is None,
-            since if there is no parameter selection to be done, it is
-            not used.
+            Look in nimble.calculate for pre-made options. Default is
+            None, since if there is no parameter selection to be done,
+            it is not used.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training and application. eg. {'dimensions':5, 'k':5}
@@ -1351,9 +1351,9 @@ class TrainedLearner(object):
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
         output : str
-            The kind of UML Base object that the output of this function
-            should be in. Any of the normal string inputs to the
-            createData ``returnType`` parameter are accepted here.
+            The kind of nimble Base object that the output of this
+            function should be in. Any of the normal string inputs to
+            the createData ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -1388,21 +1388,22 @@ class TrainedLearner(object):
 
         See Also
         --------
-        UML.trainAndTest, apply
+        nimble.trainAndTest, apply
 
         Examples
         --------
         TODO
         """
         timer = startTimer(useLog)
-        #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
-        #                               multiClassStrategy)
-        UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+        #nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+        #                                  multiClassStrategy)
+        nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+                                          None)
 
         mergedArguments = _mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
-        performance = UML.helpers.computeMetrics(testY, None, pred,
+        performance = nimble.helpers.computeMetrics(testY, None, pred,
                                                  performanceFunction)
         time = stopTimer(timer)
 
@@ -1435,7 +1436,7 @@ class TrainedLearner(object):
 
         Parameters
         ----------
-        testX : UML Base object
+        testX : nimble Base object
             Data set on which the trained learner will be applied (i.e.
             performing prediction, transformation, etc. as appropriate
             to the learner).
@@ -1444,9 +1445,9 @@ class TrainedLearner(object):
             argument set, then this function will be used to generate a
             performance score for the run. Function is of the form:
             def func(knownValues, predictedValues).
-            Look in UML.calculate for pre-made options. Default is None,
-            since if there is no parameter selection to be done, it is
-            not used.
+            Look in nimble.calculate for pre-made options. Default is
+            None, since if there is no parameter selection to be done,
+            it is not used.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training and application. eg. {'dimensions':5, 'k':5}
@@ -1456,9 +1457,9 @@ class TrainedLearner(object):
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
         output : str
-            The kind of UML Base object that the output of this function
-            should be in. Any of the normal string inputs to the
-            createData ``returnType`` parameter are accepted here.
+            The kind of nimble Base object that the output of this
+            function should be in. Any of the normal string inputs to
+            the createData ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -1492,14 +1493,15 @@ class TrainedLearner(object):
 
         See Also
         --------
-        UML.trainAndApply, test
+        nimble.trainAndApply, test
 
         Examples
         --------
         TODO
         """
         timer = startTimer(useLog)
-        UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+        nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+                                          None)
 
         mergedArguments = _mergeArguments(arguments, kwarguments)
 
@@ -1573,7 +1575,7 @@ class TrainedLearner(object):
         TODO
         """
         if not cloudpickle:
-            msg = "To save UML models, cloudpickle must be installed"
+            msg = "To save nimble models, cloudpickle must be installed"
             raise PackageException(msg)
         extension = '.umlm'
         if not outputPath.endswith(extension):
@@ -1603,13 +1605,13 @@ class TrainedLearner(object):
 
         Parameters
         ----------
-        trainX: UML Base object
+        trainX: nimble Base object
             Data to be used for training.
-        trainY : identifier, UML Base object
+        trainY : identifier, nimble Base object
             * identifier - The name or index of the feature in
               ``trainX`` containing the labels.
-            * UML Base object - contains the labels that correspond to
-              ``trainX``.
+            * nimble Base object - contains the labels that correspond
+              to ``trainX``.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training.  These must be singular values, retrain
@@ -1636,17 +1638,22 @@ class TrainedLearner(object):
         --------
         Changing the training data.
 
-        >>> trainX1 = UML.createData('Matrix', [[1, 1], [2, 2], [3, 3]])
-        >>> trainY1 = UML.createData('Matrix', [[1], [2], [3]]) # mean=2
-        >>> testX = UML.createData('Matrix', [[8, 8], [-3, -3]])
-        >>> tl = UML.train('Custom.MeanConstant', trainX1, trainY1)
+        >>> rawTrainX1 = [[1, 1], [2, 2], [3, 3]]
+        >>> trainX1 = nimble.createData('Matrix', rawTrainX1)
+        >>> rawTrainY1 = [[1], [2], [3]] # mean of 2
+        >>> trainY1 = nimble.createData('Matrix', rawTrainY1)
+        >>> rawTestX = [[8, 8], [-3, -3]]
+        >>> testX = nimble.createData('Matrix', rawTestX)
+        >>> tl = nimble.train('Custom.MeanConstant', trainX1, trainY1)
         >>> tl.apply(testX)
         Matrix(
             [[2.000]
              [2.000]]
             )
-        >>> trainX2 = UML.createData('Matrix', [[4, 4], [5, 5], [6, 6]])
-        >>> trainY2 = UML.createData('Matrix', [[4], [5], [6]]) # mean=5
+        >>> rawTrainX2 = [[4, 4], [5, 5], [6, 6]]
+        >>> trainX2 = nimble.createData('Matrix', rawTrainX2)
+        >>> rawTrainY2 = [[4], [5], [6]] # mean of 5
+        >>> trainY2 = nimble.createData('Matrix', rawTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
         Matrix(
@@ -1656,10 +1663,14 @@ class TrainedLearner(object):
 
         Changing the learner arguments.
 
-        >>> trainX = UML.createData('Matrix', [[1, 1], [3, 3], [3, 3]])
-        >>> trainY = UML.createData('Matrix', [[1], [3], [3]])
-        >>> testX = UML.createData('Matrix', [[1, 1], [3, 3]])
-        >>> tl = UML.train('Custom.KNNClassifier', trainX, trainY, k=1)
+        >>> rawTrainX = [[1, 1], [3, 3], [3, 3]]
+        >>> trainX = nimble.createData('Matrix', rawTrainX)
+        >>> rawTrainY = [[1], [3], [3]]
+        >>> trainY = nimble.createData('Matrix', rawTrainY)
+        >>> rawTestX = [[1, 1], [3, 3]]
+        >>> testX = nimble.createData('Matrix', rawTestX)
+        >>> tl = nimble.train('Custom.KNNClassifier', trainX, trainY,
+        ...                   k=1)
         >>> tl.apply(testX)
         Matrix(
             [[1.000]
@@ -1674,18 +1685,18 @@ class TrainedLearner(object):
         """
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
-        if isinstance(outputData, UML.data.Base):
+        if isinstance(outputData, nimble.data.Base):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
         merged = _mergeArguments(arguments, kwarguments)
         for arg, value in merged.items():
-            if isinstance(value, UML.CV):
+            if isinstance(value, nimble.CV):
                 msg = "Cannot provide a cross-validation arguments "
                 msg += "for parameters to retrain a TrainedLearner. "
                 msg += "If wanting to perform cross-validation, use "
-                msg += "UML.train()"
+                msg += "nimble.train()"
                 raise InvalidArgumentValue(msg)
             if arg not in self.transformedArguments:
                 validArgs = list(self.transformedArguments.keys())
@@ -1729,13 +1740,13 @@ class TrainedLearner(object):
 
         Parameters
         ----------
-        trainX: UML Base object
+        trainX: nimble Base object
             Additional data to be used for training.
-        trainY : identifier, UML Base object
+        trainY : identifier, nimble Base object
             * identifier - The name or index of the feature in
             ``trainX`` containing the labels.
-            * UML Base object - contains the labels that correspond to
-              ``trainX``.
+            * nimble Base object - contains the labels that correspond
+              to ``trainX``.
         """
         (trainX, trainY, _, arguments) = self.interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
@@ -1790,7 +1801,7 @@ class TrainedLearner(object):
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return UML.createData("Matrix", ret)
+            return nimble.createData("Matrix", ret)
 
         if applyResults is None:
             applyResults = self.interface._applier(
@@ -1813,7 +1824,7 @@ class TrainedLearner(object):
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
-            return UML.createData("Matrix", scores)
+            return nimble.createData("Matrix", scores)
         else:
             return rawScores
 
@@ -1828,7 +1839,7 @@ class TrainedLearner(object):
 
         Returns
         -------
-        UML.data.Matrix
+        nimble.data.Matrix
             The label scores.
         """
         usedArguments = _mergeArguments(arguments, kwarguments)
@@ -1914,9 +1925,9 @@ class TrainedLearners(TrainedLearner):
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
                     winningLabels.append([self.labelSet[int(winningIndex)]])
-                return UML.createData(rawPredictions.getTypeString(),
-                                      winningLabels,
-                                      featureNames=['winningLabel'])
+                return nimble.createData(rawPredictions.getTypeString(),
+                                         winningLabels,
+                                         featureNames=['winningLabel'])
 
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
@@ -1932,8 +1943,8 @@ class TrainedLearners(TrainedLearner):
                                             bestLabelAndScore[1]])
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                resultsContainer = nimble.createData("List", tempResultsList,
+                                                     featureNames=featureNames)
                 return resultsContainer
 
             elif scoreMode.lower() == 'allScores'.lower():
@@ -1949,7 +1960,7 @@ class TrainedLearners(TrainedLearner):
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)
-                    scores = UML.helpers.extractConfidenceScores(
+                    scores = nimble.helpers.extractConfidenceScores(
                         row, featureNamesItoN)
                     for label, score in scores.items():
                         #get numerical index of label in return object
@@ -1958,9 +1969,9 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
                 #wrap data in Base container
-                return UML.createData(rawPredictions.getTypeString(),
-                                      resultsContainer,
-                                      featureNames=colHeaders)
+                return nimble.createData(rawPredictions.getTypeString(),
+                                         resultsContainer,
+                                         featureNames=colHeaders)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)
@@ -2000,8 +2011,8 @@ class TrainedLearners(TrainedLearner):
 
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                resultsContainer = nimble.createData("List", tempResultsList,
+                                                     featureNames=featureNames)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(i) for i in self.labelSet])
@@ -2017,9 +2028,9 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
 
-                return UML.createData(rawPredictions.getTypeString(),
-                                      resultsContainer,
-                                      featureNames=colHeaders)
+                return nimble.createData(rawPredictions.getTypeString(),
+                                         resultsContainer,
+                                         featureNames=colHeaders)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)
