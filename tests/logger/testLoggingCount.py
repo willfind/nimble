@@ -43,20 +43,20 @@ def prefixAdder(prefix):
 
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
-uml_logged = [
+nimble_logged = [
     'createData', 'createRandomData', 'crossValidate',
     'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
-uml_notLogged = [
+nimble_notLogged = [
     'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
     'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
-uml_funcs = uml_logged + uml_notLogged
-uml_tested = list(map(prefixAdder('UML'), uml_funcs))
+nimble_funcs = nimble_logged + nimble_notLogged
+nimble_tested = list(map(prefixAdder('UML'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
@@ -163,7 +163,7 @@ tl_notLogged = [
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
-USER_FACING_TESTED = (uml_tested + calculate_tested + fill_tested
+USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
                       + match_tested + base_tested + features_tested
                       + points_tested + elements_tested + ui_tested
                       + tl_tested)

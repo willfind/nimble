@@ -11,8 +11,7 @@ import numpy
 from six.moves import range
 from six.moves import zip
 
-import UML
-import UML.data
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import PackageException, ImproperObjectAction
 from UML.docHelpers import inheritDocstringsFactory
@@ -26,12 +25,12 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
     from scipy.io import mmwrite
 
-pd = UML.importModule('pandas')
+pd = nimble.importModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -241,7 +240,7 @@ class Sparse(Base):
     def _copyAs_implementation(self, format):
         if format is None:
             format = 'Sparse'
-        if format in UML.data.available:
+        if format in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if format == 'Sparse':
@@ -265,7 +264,7 @@ class Sparse(Base):
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
         # sort values or call helper as needed
-        constant = not isinstance(values, UML.data.Base)
+        constant = not isinstance(values, nimble.data.Base)
         if constant:
             if values == 0:
                 self._fillWith_zeros_implementation(pointStart, featureStart,
@@ -866,12 +865,12 @@ class Sparse(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML Base object against the provided other
-        UML Base object. Both object must contain only numeric data.
-        The featureCount of the calling object must equal the pointCount
-        of the other object. The types of the two objects may be
-        different, and the return is guaranteed to be the same type as
-        at least one out of the two, to be automatically determined
+        Matrix multiply this nimble Base object against the provided
+        other nimble Base object. Both object must contain only numeric
+        data. The featureCount of the calling object must equal the
+        pointCount of the other object. The types of the two objects may
+        be different, and the return is guaranteed to be the same type
+        as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
         if isinstance(other, BaseView):
@@ -881,14 +880,14 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self.data * other.data
 
-        return UML.createData('Sparse', retData, useLog=False)
+        return nimble.createData('Sparse', retData, useLog=False)
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML Base object by the provided
-        scalar. This object must contain only numeric data. The 'scalar'
-        parameter must be a numeric data type. The returned object will
-        be the inplace modification of the calling object.
+        Multiply every element of this nimble Base object by the
+        provided scalar. This object must contain only numeric data. The
+        'scalar' parameter must be a numeric data type. The returned
+        object will be the inplace modification of the calling object.
         """
         if scalar != 0:
             scaled = self.data.data * scalar
@@ -899,7 +898,7 @@ class Sparse(Base):
                                    (len(self.points), len(self.features)))
 
     def _mul__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:
             ret = self.copy()
@@ -907,7 +906,7 @@ class Sparse(Base):
             return ret
 
         #	def _div__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr() / other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
@@ -926,7 +925,7 @@ class Sparse(Base):
         #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _idiv__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr() / other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
@@ -935,7 +934,7 @@ class Sparse(Base):
         #		return self
 
         #	def _truediv__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr().__truediv__(other.copyAs("scipycsr"))
         #			ret = ret.tocoo()
         #		else:
@@ -954,7 +953,7 @@ class Sparse(Base):
         #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _itruediv__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr().__itruediv__(other.copyAs("scipycsr"))
         #			ret = ret.tocoo()
         #		else:
@@ -966,7 +965,7 @@ class Sparse(Base):
         #		return self
 
         #	def _floordiv__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr() // other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
@@ -989,7 +988,7 @@ class Sparse(Base):
         #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
 
         #	def _ifloordiv__implementation(self, other):
-        #		if isinstance(other, UML.data.Base):
+        #		if isinstance(other, nimble.data.Base):
         #			ret = self.data.tocsr() // other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
@@ -1001,7 +1000,7 @@ class Sparse(Base):
         #		return self
 
     def _mod__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             return super(Sparse, self).__mod__(other)
         else:
             retData = self.data.data % other
@@ -1023,7 +1022,7 @@ class Sparse(Base):
                       reuseData=True)
 
     def _imod__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             return super(Sparse, self).__imod__(other)
         else:
             ret = self.data.data % other
@@ -1239,7 +1238,8 @@ class SparseView(BaseView, Sparse):
 
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
-            intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
+            intermediate = nimble.createData('Matrix', emptyStandin,
+                                             useLog=False)
             return intermediate.copyAs(format)
 
         if format == 'numpyarray':
@@ -1313,13 +1313,13 @@ class SparseView(BaseView, Sparse):
             selfConv = self.copyAs("Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
-            ret = UML.createData("Sparse", ret.data, useLog=False)
+            ret = nimble.createData("Sparse", ret.data, useLog=False)
             return ret
 
         selfConv = self.copyAs("Sparse")
 
         toCall = getattr(selfConv, implName)
         ret = toCall(other)
-        ret = UML.createData(self.getTypeString(), ret.data, useLog=False)
+        ret = nimble.createData(self.getTypeString(), ret.data, useLog=False)
 
         return ret

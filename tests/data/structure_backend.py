@@ -29,7 +29,7 @@ import numpy
 from nose.tools import *
 from six.moves import map
 
-import UML
+import UML as nimble
 from UML import match
 from UML import createData
 from UML.data import List
@@ -49,8 +49,8 @@ from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 
-scipy = UML.importModule('scipy.sparse')
-pd = UML.importModule('pandas')
+scipy = nimble.importModule('scipy.sparse')
+pd = nimble.importModule('pandas')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -180,10 +180,10 @@ class StructureDataSafe(StructureShared):
 
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
-        assert hasattr(UML.data.Base, 'objectValidation')
-        assert hasattr(UML.data.Elements, 'objectValidation')
-        assert hasattr(UML.data.Features, 'objectValidation')
-        assert hasattr(UML.data.Points, 'objectValidation')
+        assert hasattr(nimble.data.Base, 'objectValidation')
+        assert hasattr(nimble.data.Elements, 'objectValidation')
+        assert hasattr(nimble.data.Features, 'objectValidation')
+        assert hasattr(nimble.data.Points, 'objectValidation')
 
     #############
     # copyAs #
@@ -448,11 +448,11 @@ class StructureDataSafe(StructureShared):
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        for retType in UML.data.available:
+        for retType in nimble.data.available:
 
             out = orig.copyAs(retType, rowsArePoints=False)
 
-            desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
+            desired = nimble.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
 
             assert out == desired
 
@@ -636,7 +636,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -772,7 +772,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -842,7 +842,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1303,22 +1303,22 @@ class StructureDataSafe(StructureShared):
         toTest4 = toTest1.copy()
         expTest = toTest1.copy()
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retList = getattr(toTest2, toCall).copy([0, 1, 2, 3], number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).copy(start=0, end=3, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).copy(allTrue, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -1354,21 +1354,21 @@ class StructureDataSafe(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         retList = getattr(toTest1, toCall).copy([1, 2], number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).copy(start=1, end=2, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).copy(middleRowsOrCols, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
@@ -1405,7 +1405,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1578,7 +1578,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1686,7 +1686,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, UML.data.BaseView):
+        if isinstance(toTest, nimble.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -2533,7 +2533,7 @@ class StructureModifying(StructureShared):
         self.backend_add_exception_sharedAxis_unsharedName('feature')
 
 
-    def backend_add_exceptionNonUMLDataType(self, axis):
+    def backend_add_exceptionNonNimbleDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -2543,12 +2543,12 @@ class StructureModifying(StructureShared):
             toTest.features.add([[1], [1], [1]])
 
     @raises(InvalidArgumentType)
-    def test_points_add_exceptionNonUMLDataType(self):
-        self.backend_add_exceptionNonUMLDataType('point')
+    def test_points_add_exceptionNonNimbleDataType(self):
+        self.backend_add_exceptionNonNimbleDataType('point')
 
     @raises(InvalidArgumentType)
-    def test_features_add_exceptionNonUMLDataType(self):
-        self.backend_add_exceptionNonUMLDataType('feature')
+    def test_features_add_exceptionNonNimbleDataType(self):
+        self.backend_add_exceptionNonNimbleDataType('feature')
 
 
     def backend_add_exception_outOfOrder_with_defaults(self, axis):
@@ -2908,35 +2908,35 @@ class StructureModifying(StructureShared):
     def test_features_add_automaticReorder_defaultFeatureNames_mid(self):
         self.backend_add_automaticReorder('feature', True, 1)
 
-    def backend_add_allPossibleUMLDataType(self, axis):
+    def backend_add_allPossibleNimbleDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         currType = self.constructor([]).getTypeString()
-        availableTypes = UML.data.available
+        availableTypes = nimble.data.available
         otherTypes = [retType for retType in availableTypes if retType != currType]
         inserted = []
         for other in otherTypes:
             toTest = self.constructor(data)
             if axis == 'point':
                 insertData = [[-1, -2, -3]]
-                otherTest = UML.createData(other, insertData)
+                otherTest = nimble.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
                 toTest.points.add(otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
-                otherTest = UML.createData(other, insertData)
+                otherTest = nimble.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
                 toTest.features.add(otherTest)
                 inserted.append(toTest)
 
         assert all(exp == obj for obj in inserted)
 
-    def test_points_add_allPossibleUMLDataType(self):
-        self.backend_add_allPossibleUMLDataType('point')
+    def test_points_add_allPossibleNimbleDataType(self):
+        self.backend_add_allPossibleNimbleDataType('point')
 
-    def test_features_add_allPossibleUMLDataType(self):
-        self.backend_add_allPossibleUMLDataType('feature')
+    def test_features_add_allPossibleNimbleDataType(self):
+        self.backend_add_allPossibleNimbleDataType('feature')
 
 
     def backend_add_noReorderWithAllDefaultNames(self, axis):
@@ -4147,22 +4147,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retList = getattr(toTest2, toCall).extract([0, 1, 2, 3], number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).extract(start=0, end=3, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).extract(allTrue, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -4202,21 +4202,21 @@ class StructureModifying(StructureShared):
             expTest1 = toTest1[:, [0, 1, 3]]
             expTest2 = toTest1[:, [0, 2, 3]]
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         retList = getattr(toTest1, toCall).extract([1, 2], number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).extract(start=1, end=2, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).extract(middleRowsOrCols, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
         assert retRange.isIdentical(expRet1) or retList.isIdentical(expRet2)
@@ -5474,22 +5474,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).delete(number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).delete([0, 1, 2, 3], number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).delete(start=0, end=3, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest4, toCall).delete(allTrue, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 1
@@ -5520,21 +5520,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, [0, 1, 3]]
             exp2 = toTest1[:, [0, 2, 3]]
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).delete(start=1, end=2, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).delete(middleRowsOrCols, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -6708,22 +6708,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).retain(number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).retain([0, 1, 2, 3], number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).retain(start=0, end=3, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest4, toCall).retain(allTrue, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 3
@@ -6754,21 +6754,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = UML.randomness.generateSubsidiarySeed()
-        UML.randomness.startAlternateControl(seed)
+        seed = nimble.randomness.generateSubsidiarySeed()
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).retain(start=1, end=2, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        UML.randomness.startAlternateControl(seed)
+        nimble.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).retain(middleRowsOrCols, number=1, randomize=True)
-        UML.randomness.endAlternateControl()
+        nimble.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -7367,11 +7367,11 @@ class StructureModifying(StructureShared):
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
 
-        retType0 = UML.data.available[0]
-        retType1 = UML.data.available[1]
+        retType0 = nimble.data.available[0]
+        retType1 = nimble.data.available[1]
 
-        objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
-        objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
+        objType0 = nimble.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
+        objType1 = nimble.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
         orig.referenceDataFrom(objType0)
@@ -8175,9 +8175,9 @@ class StructureModifying(StructureShared):
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]
         exp = self.constructor(exp)
-        for t in UML.data.available:
+        for t in nimble.data.available:
             toTest = self.constructor(raw)
-            arg = UML.createData(t, fill)
+            arg = nimble.createData(t, fill)
             toTest.fillWith(arg, 0, 0, 1, 1)
             assert toTest == exp
 
@@ -8489,7 +8489,7 @@ class StructureModifying(StructureShared):
         getattr(toTest, target)(2)
         assert toTest == exp
 
-        # check that the name conforms to the standards of how UML objects assign
+        # check that the name conforms to the standards of how nimble objects assign
         # default names
         def checkName(n):
             assert n.startswith(DEFAULT_PREFIX)
@@ -8833,7 +8833,7 @@ class StructureModifying(StructureShared):
 #         getattr(axisObj, 'unflattenFromOne')(2)
 #         assert toTest == exp
 #
-#         # check that the name conforms to the standards of how UML objects assign
+#         # check that the name conforms to the standards of how nimble objects assign
 #         # default names
 #         def checkName(n):
 #             assert n.startswith(DEFAULT_PREFIX)

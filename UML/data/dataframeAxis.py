@@ -1,6 +1,6 @@
 """
 Implementations and helpers specific to performing axis-generic
-operations on a UML DataFrame object.
+operations on a nimble DataFrame object.
 """
 
 from __future__ import absolute_import
@@ -8,13 +8,13 @@ from abc import abstractmethod
 
 import numpy
 
-import UML
+import UML as nimble
 from .axis import Axis
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from .points import Points
 
-pd = UML.importModule('pandas')
+pd = nimble.importModule('pandas')
 
 class DataFrameAxis(Axis):
     """
@@ -25,7 +25,7 @@ class DataFrameAxis(Axis):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
     def _setName_implementation(self, oldIdentifier, newName):
@@ -83,8 +83,8 @@ class DataFrameAxis(Axis):
         else:
             df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
-        return UML.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
-                                  featureNames=featureNames, reuseData=True)
+        return nimble.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
+                                     featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
@@ -107,13 +107,13 @@ class DataFrameAxis(Axis):
                                                    uniqueIndices)
 
         if isinstance(self, Points):
-            return UML.createData('DataFrame', uniqueData,
-                                  pointNames=axisNames,
-                                  featureNames=offAxisNames, useLog=False)
+            return nimble.createData('DataFrame', uniqueData,
+                                     pointNames=axisNames,
+                                     featureNames=offAxisNames, useLog=False)
         else:
-            return UML.createData('DataFrame', uniqueData,
-                                  pointNames=offAxisNames,
-                                  featureNames=axisNames, useLog=False)
+            return nimble.createData('DataFrame', uniqueData,
+                                     pointNames=offAxisNames,
+                                     featureNames=axisNames, useLog=False)
 
     ####################
     # Abstract Methods #

@@ -7,13 +7,13 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
+import UML as nimble
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
 from .features_view import FeaturesView
 
-scipy = UML.importModule('scipy')
+scipy = nimble.importModule('scipy')
 if scipy is not None:
     from scipy.sparse import coo_matrix
 
@@ -23,7 +23,7 @@ class SparseFeatures(SparseAxis, Features):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 

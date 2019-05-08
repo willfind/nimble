@@ -266,14 +266,14 @@ def test_residuals_exception_sciPyNotInstalled():
     control = nimble.createData("Matrix", [[2],[3],[4]])
     nimble.calculate.residuals(pred, control)
 
-# L not uml object
+# L not nimble object
 @raises(InvalidArgumentType)
 def test_residuals_exception_toPredictNotNimble():
     pred = [[1],[2],[3]]
     control = nimble.createData("Matrix", [[2],[3],[4]])
     nimble.calculate.residuals(pred, control)
 
-# R not uml object
+# R not nimble object
 @raises(InvalidArgumentType)
 def test_residuals_exception_controlVarsNotNimble():
     pred = nimble.createData("Matrix", [[2],[3],[4]])
@@ -328,18 +328,18 @@ def test_residuals_matches_SKL():
     # with handmade data
     pred = nimble.createData("Matrix", [[0],[2],[4]], useLog=False)
     control = nimble.createData("Matrix", [[1],[2],[3]], useLog=False)
-    umlRet = nimble.calculate.residuals(pred, control)
+    nimbleRet = nimble.calculate.residuals(pred, control)
     tl = nimble.train("scikitlearn.LinearRegression", control, pred, useLog=False)
     sklRet = pred - tl.apply(control, useLog=False)
 
-    assert sklRet.isApproximatelyEqual(umlRet)
-    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 14)
+    assert sklRet.isApproximatelyEqual(nimbleRet)
+    assert_array_almost_equal(nimbleRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 14)
 
     # with generated data
     (control, pred), (ignore1,ignore2) = generateRegressionData(2, 10, 3)
-    umlRet = nimble.calculate.residuals(pred, control)
+    nimbleRet = nimble.calculate.residuals(pred, control)
     tl = nimble.train("scikitlearn.LinearRegression", control, pred, useLog=False)
     sklRet = pred - tl.apply(control, useLog=False)
 
-    assert sklRet.isApproximatelyEqual(umlRet)
-    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)
+    assert sklRet.isApproximatelyEqual(nimbleRet)
+    assert_array_almost_equal(nimbleRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)

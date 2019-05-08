@@ -1011,22 +1011,22 @@ def mocked_requests_get(*args, **kwargs):
             self.reason = reason
             self.apparent_encoding = encoding
 
-    if args[0] == 'http://mockrequests.uml/CSVNoExtension':
+    if args[0] == 'http://mockrequests.nimble/CSVNoExtension':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVAmbiguousExtension.data':
+    elif args[0] == 'http://mockrequests.nimble/CSVAmbiguousExtension.data':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSV.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSV.csv':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVcarriagereturn.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVcarriagereturn.csv':
         return MockResponse('1,2,3\r4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVunicodetest.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVunicodetest.csv':
         return MockResponse('1,2,\xc2\xa1\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVquotednewline.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVquotednewline.csv':
         # csv allows for newline characters in field values within double quotes
         return MockResponse('1,2,"a/nb"\n4,5,6', 200)
-    elif (args[0] == 'http://mockrequests.uml/MTXNoExtension' or
-          args[0] == 'http://mockrequests.uml/MTXAmbiguousExtension.data' or
-          args[0] == 'http://mockrequests.uml/MTX.mtx'):
+    elif (args[0] == 'http://mockrequests.nimble/MTXNoExtension' or
+          args[0] == 'http://mockrequests.nimble/MTXAmbiguousExtension.data' or
+          args[0] == 'http://mockrequests.nimble/MTX.mtx'):
         mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
         return MockResponse(mtx, 200)
 
@@ -1036,7 +1036,7 @@ def mocked_requests_get(*args, **kwargs):
 def test_createData_http_CSVNoExtension(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVNoExtension'
+        url = 'http://mockrequests.nimble/CSVNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1044,7 +1044,7 @@ def test_createData_http_CSVNoExtension(mock_get):
 def test_createData_http_CSVAmbiguousExtension(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVAmbiguousExtension.data'
+        url = 'http://mockrequests.nimble/CSVAmbiguousExtension.data'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1052,7 +1052,7 @@ def test_createData_http_CSVAmbiguousExtension(mock_get):
 def test_createData_http_CSVFileOK(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSV.csv'
+        url = 'http://mockrequests.nimble/CSV.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1060,7 +1060,7 @@ def test_createData_http_CSVFileOK(mock_get):
 def test_createData_http_CSVCarriageReturn(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVcarriagereturn.csv'
+        url = 'http://mockrequests.nimble/CSVcarriagereturn.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1068,7 +1068,7 @@ def test_createData_http_CSVCarriageReturn(mock_get):
 def test_createData_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVunicodetest.csv'
+        url = 'http://mockrequests.nimble/CSVunicodetest.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1076,7 +1076,7 @@ def test_createData_http_CSVNonUnicodeValues(mock_get):
 def test_createData_http_CSVQuotedNewLine(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVquotednewline.csv'
+        url = 'http://mockrequests.nimble/CSVquotednewline.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1084,7 +1084,7 @@ def test_createData_http_CSVQuotedNewLine(mock_get):
 def test_createData_http_CSVPathsEqualUrl(mock_get):
     for t in returnTypes:
         exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVNoExtension'
+        url = 'http://mockrequests.nimble/CSVNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
@@ -1095,7 +1095,7 @@ def test_createData_http_MTXNoExtension(mock_get):
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
         exp = nimble.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXNoExtension'
+        url = 'http://mockrequests.nimble/MTXNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1105,7 +1105,7 @@ def test_createData_http_MTXAmbiguousExtension(mock_get):
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
         exp = nimble.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXAmbiguousExtension.data'
+        url = 'http://mockrequests.nimble/MTXAmbiguousExtension.data'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1115,7 +1115,7 @@ def test_createData_http_MTXFileOK(mock_get):
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
         exp = nimble.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTX.mtx'
+        url = 'http://mockrequests.nimble/MTX.mtx'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
@@ -1125,7 +1125,7 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
         exp = nimble.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXNoExtension'
+        url = 'http://mockrequests.nimble/MTXNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
@@ -1134,7 +1134,7 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_linkError(mock_get):
     for t in returnTypes:
-        url = 'http://mockrequests.uml/linknotfound.csv'
+        url = 'http://mockrequests.nimble/linknotfound.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
 
 ###################################

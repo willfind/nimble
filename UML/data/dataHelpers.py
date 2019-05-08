@@ -15,7 +15,7 @@ import six
 from six.moves import range
 import numpy
 
-import UML
+import UML as nimble
 from UML import importModule
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 
@@ -673,23 +673,24 @@ def createDataNoValidation(returnType, data, pointNames=None,
     Instantiate a new object without validating the data.
 
     This function assumes that data being used is already in a format
-    acceptable for UML and the returnType's __init__ method. This allows
-    for faster instantiation than through createData. However, if the
-    data has not already been processed by UML, it is not recommended to
-    use this function.  Note that this function will handle point and
-    feature names, but all other metadata will be set to default values.
+    acceptable for nimble and the returnType's __init__ method. This
+    allows for faster instantiation than through createData. However, if
+    the data has not already been processed by nimble, it is not
+    recommended to use this function.  Note that this function will
+    handle point and feature names, but all other metadata will be set
+    to default values.
     """
     if hasattr(data, 'dtype'):
         if data.dtype not in [numpy.float, numpy.object_]:
             raise InvalidArgumentType("data must have float or object dtype")
-        # this could be a numeric subsection from a UML object with an 'object'
-        # dtype. We optimize the dtype here to support operations requiring a
-        # numeric dtype.
+        # this could be a numeric subsection from a nimble object with an
+        # 'object' dtype. We optimize the dtype here to support operations
+        # requiring a numeric dtype.
         try:
             data = data.astype(numpy.float)
         except ValueError:
             pass
-    initMethod = getattr(UML.data, returnType)
+    initMethod = getattr(nimble.data, returnType)
     if returnType == 'List':
         return initMethod(data, pointNames=pointNames, featureNames=featureNames,
                           reuseData=reuseData, checkAll=False)

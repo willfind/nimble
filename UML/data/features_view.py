@@ -5,7 +5,7 @@ base class for read only axis views of data objects.
 
 from __future__ import absolute_import
 
-import UML
+import UML as nimble
 from UML.docHelpers import inheritDocstringsFactory
 from .features import Features
 from .dataHelpers import readOnlyException
@@ -22,8 +22,8 @@ class FeaturesView(Features):
 
     Parameters
     ----------
-    source : UML data object
-        The UML object that this is a view into.
+    source : nimble data object
+        The nimble object that this is a view into.
     """
 
     ####################################

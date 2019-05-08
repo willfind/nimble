@@ -9,7 +9,7 @@ import numpy as np
 from six.moves import range
 from six.moves import zip
 
-import UML
+import UML as nimble
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import PackageException
 from UML.docHelpers import inheritDocstringsFactory
@@ -22,8 +22,8 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 
-pd = UML.importModule('pandas')
-scipy = UML.importModule('scipy.sparse')
+pd = nimble.importModule('pandas')
+scipy = nimble.importModule('scipy.sparse')
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -187,7 +187,7 @@ class DataFrame(Base):
         """
         if format is None:
             format = 'DataFrame'
-        if format in UML.data.available:
+        if format in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if format == 'DataFrame':
@@ -221,7 +221,7 @@ class DataFrame(Base):
                                  pointEnd, featureEnd):
         """
         """
-        if not isinstance(values, UML.data.Base):
+        if not isinstance(values, nimble.data.Base):
             values = values * np.ones((pointEnd - pointStart + 1,
                                        featureEnd - featureStart + 1))
         else:
@@ -393,17 +393,17 @@ class DataFrame(Base):
 
     def _matrixMultiply_implementation(self, other):
         """
-        Matrix multiply this UML Base object against the provided other
-        UML Base object. Both object must contain only numeric data.
-        The featureCount of the calling object must equal the pointCount
-        of the other object. The types of the two objects may be
-        different, and the return is guaranteed to be the same type as
-        at least one out of the two, to be automatically determined
+        Matrix multiply this nimble Base object against the provided
+        other nimble Base object. Both object must contain only numeric
+        data. The featureCount of the calling object must equal the
+        pointCount of the other object. The types of the two objects may
+        be different, and the return is guaranteed to be the same type
+        as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
 
         leftData = np.matrix(self.data)
-        if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Sparse):
             rightData = other.data
         else:
             rightData = np.matrix(other.data)
@@ -412,15 +412,15 @@ class DataFrame(Base):
 
     def _scalarMultiply_implementation(self, scalar):
         """
-        Multiply every element of this UML Base object by the provided
-        scalar. This object must contain only numeric data. The 'scalar'
-        parameter must be a numeric data type. The returned object will
-        be the inplace modification of the calling object.
+        Multiply every element of this nimble Base object by the
+        provided scalar. This object must contain only numeric data. The
+        'scalar' parameter must be a numeric data type. The returned
+        object will be the inplace modification of the calling object.
         """
         self.data = self.data * scalar
 
     def _mul__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:
             ret = self.copy()
@@ -431,8 +431,8 @@ class DataFrame(Base):
         """
         """
         leftData = np.matrix(self.data)
-        if isinstance(other, UML.data.Base):
-            if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Base):
+            if isinstance(other, nimble.data.Sparse):
                 rightData = other.data
             else:
                 rightData = np.matrix(other.data)
@@ -446,8 +446,8 @@ class DataFrame(Base):
         return DataFrame(ret, reuseData=True)
 
     def _iadd__implementation(self, other):
-        if isinstance(other, UML.data.Base):
-            if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Base):
+            if isinstance(other, nimble.data.Sparse):
                 rightData = other.data
             else:
                 rightData = np.matrix(other.data)
@@ -459,8 +459,8 @@ class DataFrame(Base):
 
     def _sub__implementation(self, other):
         leftData = np.matrix(self.data)
-        if isinstance(other, UML.data.Base):
-            if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Base):
+            if isinstance(other, nimble.data.Sparse):
                 rightData = other.data
             else:
                 rightData = np.matrix(other.data)
@@ -478,8 +478,8 @@ class DataFrame(Base):
                          reuseData=True)
 
     def _isub__implementation(self, other):
-        if isinstance(other, UML.data.Base):
-            if isinstance(other, UML.data.Sparse):
+        if isinstance(other, nimble.data.Base):
+            if isinstance(other, nimble.data.Sparse):
                 rightData = other.data
             else:
                 rightData = np.matrix(other.data)
@@ -490,7 +490,7 @@ class DataFrame(Base):
         return self
 
     def _div__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data / other.data.todense()
             elif isinstance(other.data, list):
@@ -507,7 +507,7 @@ class DataFrame(Base):
         return DataFrame(ret, reuseData=True)
 
     def _idiv__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 self.data /= other.data.todense()
             else:
@@ -518,7 +518,7 @@ class DataFrame(Base):
         return self
 
     def _truediv__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values.__truediv__(other.data.todense())
             else:
@@ -532,7 +532,7 @@ class DataFrame(Base):
         return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _itruediv__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = np.matrix(self.data).__itruediv__(other.data.todense())
             else:
@@ -543,7 +543,7 @@ class DataFrame(Base):
         return self
 
     def _floordiv__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values // other.data.todense()
             else:
@@ -558,7 +558,7 @@ class DataFrame(Base):
         return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = np.matrix(self.data) // other.data.todense()
             else:
@@ -569,7 +569,7 @@ class DataFrame(Base):
         return self
 
     def _mod__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values % other.data.todense()
             else:
@@ -585,7 +585,7 @@ class DataFrame(Base):
 
 
     def _imod__implementation(self, other):
-        if isinstance(other, UML.data.Base):
+        if isinstance(other, nimble.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
                 self.data %= other.data.todense()
             else:

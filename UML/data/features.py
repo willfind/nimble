@@ -21,7 +21,7 @@ from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 
 class Features(object):
     """
-    Methods that can be called on the a UML Base objects feature axis.
+    Methods that can be called on the a nimble Base objects feature axis.
     """
     def __init__(self, source):
         self._source = source
@@ -49,8 +49,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getName(1)
         'b'
         """
@@ -70,8 +70,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getNames()
         ['a', 'b', 'c', 'd']
         """
@@ -100,8 +100,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.setName('b', 'new')
         >>> data.features.getNames()
         ['a', 'new', 'c', 'd']
@@ -131,8 +131,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.setNames(['1', '2', '3', '4'])
         >>> data.features.getNames()
         ['1', '2', '3', '4']
@@ -160,8 +160,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndex('c')
         2
         """
@@ -189,8 +189,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndices(['c', 'a', 'd'])
         [2, 0, 3]
         """
@@ -211,8 +211,8 @@ class Features(object):
 
         Examples
         --------
-        >>> data = UML.identity('Matrix', 4,
-        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> data = nimble.identity('Matrix', 4,
+        ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.hasName('a')
         True
         >>> data.features.hasName('e')
@@ -264,7 +264,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See Also
         --------
@@ -276,9 +276,9 @@ class Features(object):
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = UML.createData('Matrix', raw,
-        ...                       pointNames=['a', 'b', 'c', 'd'],
-        ...                       featureNames=['1', '2', '3', '4'])
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          pointNames=['a', 'b', 'c', 'd'],
+        ...                          featureNames=['1', '2', '3', '4'])
         >>> single = data.features.copy('1')
         >>> single
         Matrix(
@@ -339,7 +339,7 @@ class Features(object):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> numberRandom = data.features.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
@@ -394,7 +394,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See Also
         --------
@@ -404,7 +404,8 @@ class Features(object):
         --------
         Extract a single feature.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> single = data.features.extract('a')
         >>> single
         List(
@@ -423,7 +424,8 @@ class Features(object):
 
         Extract multiple features.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> multiple = data.features.extract(['a', 2])
         >>> multiple
         List(
@@ -442,7 +444,8 @@ class Features(object):
 
         Extract feature when the function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> func = data.features.extract(lambda ft: ft[2] == 1)
         >>> func
         List(
@@ -461,8 +464,9 @@ class Features(object):
 
         Extract feature when the string filter function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> data = nimble.identity('List', 3,
+        ...                        featureNames=['a', 'b', 'c'],
+        ...                        pointNames=['p1', 'p2', 'p3'])
         >>> strFunc = data.features.extract("p2 != 0")
         >>> strFunc
         List(
@@ -483,7 +487,8 @@ class Features(object):
 
         Extract features from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> startEnd = data.features.extract(start=1, end=2)
         >>> startEnd
         List(
@@ -502,8 +507,9 @@ class Features(object):
 
         Select a set number to extract, starting from the first feature.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberNoRandom = data.features.extract(number=2)
         >>> numberNoRandom
         List(
@@ -521,7 +527,8 @@ class Features(object):
             )
 
         Select a set number to extract, choosing features at random.
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.features.extract(number=2,
         ...                                      randomize=True)
         >>> numberRandom
@@ -588,7 +595,8 @@ class Features(object):
         --------
         Delete a single feature.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete('a')
         >>> data
         List(
@@ -600,7 +608,8 @@ class Features(object):
 
         Delete multiple features.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete(['a', 2])
         >>> data
         List(
@@ -612,7 +621,8 @@ class Features(object):
 
         Delete feature when the function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete(lambda ft: ft[2] == 1)
         >>> data
         List(
@@ -624,8 +634,9 @@ class Features(object):
 
         Delete feature when the string filter function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> data = nimble.identity('List', 3,
+        ...                        featureNames=['a', 'b', 'c'],
+        ...                        pointNames=['p1', 'p2', 'p3'])
         >>> data.features.delete("p2 != 0")
         >>> data
         List(
@@ -638,7 +649,8 @@ class Features(object):
 
         Delete features from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete(start=1, end=2)
         >>> data
         List(
@@ -650,7 +662,8 @@ class Features(object):
 
         Select a set number to delete, starting from the first feature.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete(number=2)
         >>> data
         List(
@@ -662,8 +675,9 @@ class Features(object):
 
         Select a set number to delete, choosing features at random.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.delete(number=2,  randomize=True)
         >>> data
         List(
@@ -722,7 +736,8 @@ class Features(object):
         --------
         Retain a single feature.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain('a')
         >>> data
         List(
@@ -734,7 +749,8 @@ class Features(object):
 
         Retain multiple features.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain(['a', 2])
         >>> data
         List(
@@ -746,7 +762,8 @@ class Features(object):
 
         Retain feature when the function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain(lambda ft: ft[2] == 1)
         >>> data
         List(
@@ -758,8 +775,9 @@ class Features(object):
 
         Retain feature when the string filter function returns True.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> data = nimble.identity('List', 3,
+        ...                        featureNames=['a', 'b', 'c'],
+        ...                        pointNames=['p1', 'p2', 'p3'])
         >>> data.features.retain("p2 != 0")
         >>> data
         List(
@@ -772,7 +790,8 @@ class Features(object):
 
         Retain features from the inclusive start to the inclusive end.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain(start=1, end=2)
         >>> data
         List(
@@ -784,7 +803,8 @@ class Features(object):
 
         Select a set number to retain, starting from the first feature.
 
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain(number=2)
         >>> data
         List(
@@ -796,8 +816,9 @@ class Features(object):
 
         Select a set number to retain, choosing features at random.
 
-        >>> UML.randomness.setRandomSeed(42)
-        >>> data = UML.identity('List', 3, featureNames=['a', 'b', 'c'])
+        >>> nimble.randomness.setRandomSeed(42)
+        >>> data = nimble.identity('List', 3)
+        >>> data.features.setNames(['a', 'b', 'c'])
         >>> data.features.retain(number=2, randomize=True)
         >>> data
         List(
@@ -836,14 +857,14 @@ class Features(object):
 
         >>> def sumIsOne(ft):
         ...     return sum(ft) == 1
-        >>> data = UML.identity('Matrix', 3)
+        >>> data = nimble.identity('Matrix', 3)
         >>> data.features.count(sumIsOne)
         3
 
         Count when the string filter function returns True.
 
-        >>> data = UML.identity('Matrix', 3,
-        ...                     pointNames=['pt1', 'pt2', 'pt3'])
+        >>> data = nimble.identity('Matrix', 3,
+        ...                        pointNames=['pt1', 'pt2', 'pt3'])
         >>> data.features.count("pt1 == 0")
         2
         """
@@ -878,7 +899,8 @@ class Features(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> cols = ['dept', 'ID', 'quantity']
-        >>> orders = UML.createData('DataFrame', raw, featureNames=cols)
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=cols)
         >>> orders.features.sort(sortHelper=['ID', 'quantity', 'dept'])
         >>> orders
         DataFrame(
@@ -977,7 +999,7 @@ class Features(object):
         --------
         Transform all features; apply to all points.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.features.transform(lambda ft: ft + 2)
         >>> data
         Matrix(
@@ -994,7 +1016,7 @@ class Features(object):
         ...     ftList = ft.copyAs('python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.features.transform(transformMiddlePoint)
         >>> data
         Matrix(
@@ -1005,7 +1027,7 @@ class Features(object):
 
         Transform a subset of features.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> data.features.transform(lambda ft: ft + 6, features=[1, 3])
         >>> data
         Matrix(
@@ -1039,7 +1061,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
 
         See also
         --------
@@ -1049,7 +1071,7 @@ class Features(object):
         --------
         Apply calculation to all features; apply to all points.
 
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> addTwo = data.features.calculate(lambda ft: ft + 2)
         >>> addTwo
         Matrix(
@@ -1066,7 +1088,7 @@ class Features(object):
         ...     ftList = ft.copyAs('python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
-        >>> data = UML.ones('Matrix', 3, 5)
+        >>> data = nimble.ones('Matrix', 3, 5)
         >>> middleChange = data.features.calculate(changeMiddlePoint)
         >>> middleChange
         Matrix(
@@ -1078,7 +1100,7 @@ class Features(object):
         Apply calculation to a subset of features.
 
         >>> ftNames = ['f1', 'f2', 'f3']
-        >>> data = UML.identity('Matrix', 3, featureNames=ftNames)
+        >>> data = nimble.identity('Matrix', 3, featureNames=ftNames)
         >>> calc = data.features.calculate(lambda ft: ft + 6,
         ...                                features=[2, 0])
         >>> calc
@@ -1104,8 +1126,8 @@ class Features(object):
 
         Parameters
         ----------
-        toAdd : UML Base object
-            The UML Base object whose contents we will be including
+        toAdd : nimble Base object
+            The nimble Base object whose contents we will be including
             in this object. Must have the same point names as the
             calling object, but not necessarily in the same order. Must
             not share any feature names with the calling object.
@@ -1120,8 +1142,8 @@ class Features(object):
         --------
         Append added data; default names.
 
-        >>> data = UML.zeros('Matrix', 3, 2)
-        >>> toAdd = UML.ones('Matrix', 3, 2)
+        >>> data = nimble.zeros('Matrix', 3, 2)
+        >>> toAdd = nimble.ones('Matrix', 3, 2)
         >>> data.features.add(toAdd)
         >>> data
         Matrix(
@@ -1133,11 +1155,11 @@ class Features(object):
         Reorder names.
 
         >>> rawData = [[1, 2], [5, 6]]
-        >>> data = UML.createData('Matrix', rawData,
-        ...                       pointNames=['a', 'b'])
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          pointNames=['a', 'b'])
         >>> rawAdd = [[7, 8], [3, 4]]
-        >>> toAdd = UML.createData('Matrix', rawAdd,
-        ...                        pointNames=['b', 'a'])
+        >>> toAdd = nimble.createData('Matrix', rawAdd,
+        ...                           pointNames=['b', 'a'])
         >>> data.features.add(toAdd)
         >>> data
         Matrix(
@@ -1149,11 +1171,11 @@ class Features(object):
         Insert before another point; mixed object types.
 
         >>> rawData = [[1, 4], [5, 8]]
-        >>> data = UML.createData('Matrix', rawData,
-        ...                       featureNames=['1', '4'])
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          featureNames=['1', '4'])
         >>> rawAdd = [[2, 3], [6, 7]]
-        >>> toAdd = UML.createData('List', rawAdd,
-        ...                        featureNames=['2', '3'])
+        >>> toAdd = nimble.createData('List', rawAdd,
+        ...                           featureNames=['2', '3'])
         >>> data.features.add(toAdd, insertBefore='4')
         >>> data
         Matrix(
@@ -1195,7 +1217,8 @@ class Features(object):
         ...        [72968, 'Dome', 'New Orleans Saints'],
         ...        [76500, 'Open', 'Miami Dolphins']]
         >>> ftNames = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> data = UML.createData('Matrix', raw, featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          featureNames=ftNames)
         >>> data.features.mapReduce(typeMapper, typeReducer)
         Matrix(
             [[<class 'int'> 1]
@@ -1216,12 +1239,12 @@ class Features(object):
 
         Examples
         --------
-        >>> UML.randomness.setRandomSeed(42)
+        >>> nimble.randomness.setRandomSeed(42)
         >>> raw = [[1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = UML.createData('DataFrame', raw)
+        >>> data = nimble.createData('DataFrame', raw)
         >>> data.features.shuffle()
         >>> data
         DataFrame(
@@ -1241,7 +1264,7 @@ class Features(object):
         Fill matching values within each feature with a specified value
         based on the values in that feature. The ``fill`` value can be
         a constant or a determined based on unmatched values in the
-        feature. The match and fill modules in UML offer common
+        feature. The match and fill modules in nimble offer common
         functions for these operations.
 
         Parameters
@@ -1251,14 +1274,14 @@ class Features(object):
             * list - values to locate within each feature
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from UML's match module: missing, nonNumeric, zero, etc.
+              from nimble's match module: missing, nonNumeric, zero, etc
         fill : value or function
             * value - a value to fill each matching value in each
               feature
             * function - must be in the format fill(feature, match) or
               fill(feature, match, arguments) and return the transformed
               feature as a list of values. Certain fill methods can be
-              imported from UML's fill module: mean, median, mode,
+              imported from nimble's fill module: mean, median, mode,
               forwardFill, backwardFill, interpolation
         arguments : dict
             Any additional arguments being passed to the fill
@@ -1283,7 +1306,7 @@ class Features(object):
         ...        [1, 1, 'na'],
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.features.fill('na', -1)
         >>> data
         Matrix(
@@ -1294,17 +1317,17 @@ class Features(object):
              [-1.000 2.000 2.000 ]]
             )
 
-        Fill using UML's match and fill modules; limit to first feature.
-        Note: None is converted to numpy.nan in UML.
+        Fill using nimble's match and fill modules; limit to first
+        feature. Note: None is converted to numpy.nan in nimble.
 
-        >>> from UML import match
-        >>> from UML import fill
+        >>> from nimble import match
+        >>> from nimble import fill
         >>> raw = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, None],
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
-        >>> data = UML.createData('Matrix', raw)
+        >>> data = nimble.createData('Matrix', raw)
         >>> data.features.fill(match.missing, fill.mean, features=0)
         >>> data
         Matrix(
@@ -1329,30 +1352,30 @@ class Features(object):
 
         Parameters
         ----------
-        subtract : number, str, UML Base object
+        subtract : number, str, nimble Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though featureStatistics)
-            * UML Base object - If a vector shaped object is given, then
-              the value associated with each feature will be subtracted
-              from all values of that feature. Otherwise, the values in
-              the object are used for elementwise subtraction
-        divide : number, str, UML Base object
+            * nimble Base object - If a vector shaped object is given,
+              then the value associated with each feature will be
+              subtracted from all values of that feature. Otherwise, the
+              values in the object are used for elementwise subtraction
+        divide : number, str, nimble Base object
             * number - a numerical denominator for dividing the data
             * str -  a statistical function (all of the same ones
               callable though featureStatistics)
-            * UML Base object - If a vector shaped object is given, then
-              the value associated with each feature will be used in
-              division of all values for that feature. Otherwise, the
+            * nimble Base object - If a vector shaped object is given,
+              then the value associated with each feature will be used
+              in division of all values for that feature. Otherwise, the
               values in the object are used for elementwise division.
-        applyResultTo : UML Base object, statistical method
-            If a UML Base object is given, then perform the same
+        applyResultTo : nimble Base object, statistical method
+            If a nimble Base object is given, then perform the same
             operations to it as are applied to the calling object.
             However, if a statistical method is specified as subtract or
             divide, then concrete values are first calculated only from
             querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a UML Base object
-            was given for the subtract or divide arguments.
+            on applyResultTo using the results; as if a nimble Base
+            object was given for the subtract or divide arguments.
 
         Examples
         --------
@@ -1363,7 +1386,7 @@ class Features(object):
         ...        [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = UML.createData('Matrix', raw, pts, fts)
+        >>> reviews = nimble.createData('Matrix', raw, pts, fts)
         >>> reviews.features.normalize(subtract='min')
         >>> reviews.features.normalize(divide='max')
         >>> reviews
@@ -1375,14 +1398,14 @@ class Features(object):
             featureNames={'review1':0, 'review2':1, 'review3':2}
             )
 
-        Using UML objects.
+        Using nimble objects.
 
         >>> raw = [[5, 9.8, 92],
         ...        [3, 6.2, 58],
         ...        [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = UML.createData('Matrix', raw, pts, fts)
+        >>> reviews = nimble.createData('Matrix', raw, pts, fts)
         >>> means = reviews.features.statistics('mean')
         >>> stdDevs = reviews.features.statistics('standard deviation')
         >>> reviews.features.normalize(subtract=means, divide=stdDevs)
@@ -1476,7 +1499,8 @@ class Features(object):
         ...        ['Lima, Peru'],
         ...        ['Moscow, Russia']]
         >>> fts = ['location']
-        >>> locations = UML.createData('Matrix', raw, featureNames=fts)
+        >>> locations = nimble.createData('Matrix', raw,
+        ...                               featureNames=fts)
         >>> locations.features.splitByParsing('location', ', ',
         ...                                   ['city', 'country'])
         >>> locations
@@ -1494,7 +1518,7 @@ class Features(object):
         ...        ['HEQ892', 1],
         ...        ['LEQ331', 2]]
         >>> fts = ['product', 'quantity']
-        >>> inventory = UML.createData('List', raw, featureNames=fts)
+        >>> inventory = nimble.createData('List', raw, featureNames=fts)
         >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
         >>> inventory
         List(
@@ -1590,7 +1614,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
             The object containing only unique features.
 
         Examples
@@ -1600,7 +1624,8 @@ class Features(object):
         ...        ['b', 7, 1, 'b'],
         ...        ['c', 2, 9, 'c']]
         >>> ftNames = ['f1', 'f2', 'f3', 'f1_copy']
-        >>> data = UML.createData('Matrix', raw, featureNames=ftNames)
+        >>> data = nimble.createData('Matrix', raw,
+        ...                          featureNames=ftNames)
         >>> uniqueFeatures = data.features.unique()
         >>> uniqueFeatures
         Matrix(
@@ -1633,7 +1658,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
         """
         return self._similarities(similarityFunction)
 
@@ -1652,7 +1677,7 @@ class Features(object):
 
         Returns
         -------
-        UML Base object
+        nimble Base object
         """
         return self._statistics(statisticsFunction, groupByFeature)
 

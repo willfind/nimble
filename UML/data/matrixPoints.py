@@ -22,7 +22,7 @@ class MatrixPoints(MatrixAxis, Points):
 
     Parameters
     ----------
-    source : UML data object
+    source : nimble data object
         The object containing point and feature data.
     """
 

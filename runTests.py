@@ -2,7 +2,7 @@
 
 """
 Script acting as the canonical means to run the test suite for the entirety of
-UML. Run as main to execute.
+nimble. Run as main to execute.
 
 """
 
@@ -25,11 +25,12 @@ try:
 except:
     from six import StringIO#python 3
 
-UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-sys.path.append(os.path.dirname(UMLPath))
-import UML
+nimblePath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+sys.path.append(os.path.dirname(nimblePath))
 
-available = UML.interfaces.available
+import UML as nimble
+
+available = nimble.interfaces.available
 
 
 class ExtensionPlugin(Plugin):
@@ -53,7 +54,7 @@ class ExtensionPlugin(Plugin):
             return False
 
         dname = os.path.dirname(file)
-        if dname == os.path.join(UMLPath, 'interfaces', 'tests'):
+        if dname == os.path.join(nimblePath, 'interfaces', 'tests'):
             fname = os.path.basename(file)
 
             #need to confirm that fname is associated with an interface
@@ -69,7 +70,7 @@ class ExtensionPlugin(Plugin):
             # if it is associated with an available interface.
             if associated:
                 associated = False
-                for interface in UML.interfaces.available:
+                for interface in nimble.interfaces.available:
                     if interface.__module__.rsplit('.', 1)[1] in fname:
                         associated = True
                         break
@@ -175,36 +176,36 @@ class CaptureError(Plugin):
 
 class LoggerControl(object):
     def __enter__(self):
-        self._backupLoc = UML.settings.get('logger', 'location')
-        self._backupName = UML.settings.get('logger', 'name')
-        self._backupEnabled = UML.settings.get('logger', 'enabledByDefault')
-        self._crossValBackupEnabled = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
+        self._backupLoc = nimble.settings.get('logger', 'location')
+        self._backupName = nimble.settings.get('logger', 'name')
+        self._backupEnabled = nimble.settings.get('logger', 'enabledByDefault')
+        self._crossValBackupEnabled = nimble.settings.get('logger', 'enableCrossValidationDeepLogging')
 
         # delete previous testing logs:
-        location = os.path.join(UMLPath, 'logs-UML')
-        mrPath = os.path.join(location, 'log-UML-unitTests.mr')
+        location = os.path.join(nimblePath, 'logs-nimble')
+        mrPath = os.path.join(location, 'log-nimble-unitTests.mr')
         if os.path.exists(mrPath):
             os.remove(mrPath)
 
         # change name of log file (settings hook will init new log
         # files after .set())
-        UML.settings.set('logger', 'location', location)
-        UML.settings.set("logger", 'name', 'log-UML-unitTests')
-        UML.settings.saveChanges("logger")
-        UML.settings.set("logger", "enabledByDefault", "False")
-        UML.settings.saveChanges("logger")
-        UML.settings.set("logger", "enableCrossValidationDeepLogging", "False")
-        UML.settings.saveChanges("logger")
+        nimble.settings.set('logger', 'location', location)
+        nimble.settings.set("logger", 'name', 'log-nimble-unitTests')
+        nimble.settings.saveChanges("logger")
+        nimble.settings.set("logger", "enabledByDefault", "False")
+        nimble.settings.saveChanges("logger")
+        nimble.settings.set("logger", "enableCrossValidationDeepLogging", "False")
+        nimble.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
-        UML.settings.set("logger", 'location', self._backupLoc)
-        UML.settings.saveChanges("logger", 'location')
-        UML.settings.set("logger", 'name', self._backupName)
-        UML.settings.saveChanges("logger", 'name')
-        UML.settings.set("logger", "enabledByDefault", self._backupEnabled)
-        UML.settings.saveChanges("logger", "enabledByDefault")
-        UML.settings.set("logger", "enableCrossValidationDeepLogging", self._crossValBackupEnabled)
-        UML.settings.saveChanges("logger", "enableCrossValidationDeepLogging")
+        nimble.settings.set("logger", 'location', self._backupLoc)
+        nimble.settings.saveChanges("logger", 'location')
+        nimble.settings.set("logger", 'name', self._backupName)
+        nimble.settings.saveChanges("logger", 'name')
+        nimble.settings.set("logger", "enabledByDefault", self._backupEnabled)
+        nimble.settings.saveChanges("logger", "enabledByDefault")
+        nimble.settings.set("logger", "enableCrossValidationDeepLogging", self._crossValBackupEnabled)
+        nimble.settings.saveChanges("logger", "enableCrossValidationDeepLogging")
 
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose
@@ -212,8 +213,8 @@ if __name__ == '__main__':
 
     # TODO: check for -w and override???
 
-    # setup so that this only tests the UML dir, regardless of where it has been called
-    workingDirDef = ["-w", UMLPath]
+    # setup so that this only tests the nimble dir, regardless of where it has been called
+    workingDirDef = ["-w", nimblePath]
     args.extend(workingDirDef)
 
     # Set options so that the logger outputs to a different file than

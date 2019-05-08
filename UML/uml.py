@@ -1,6 +1,6 @@
 """
 Module containing most of the user facing functions for the top level
-uml import.
+nimble import.
 """
 
 from __future__ import absolute_import
