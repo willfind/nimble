@@ -19,7 +19,7 @@ from __future__ import print_function
 import tempfile
 import os
 import os.path
-from copy import deepcopy
+import copy
 try:
     from unittest import mock #python >=3.3
 except:
@@ -185,9 +185,9 @@ class StructureDataSafe(StructureShared):
         assert hasattr(UML.data.Features, 'objectValidation')
         assert hasattr(UML.data.Points, 'objectValidation')
 
-    #############
+    ########
     # copy #
-    #############
+    ########
     @noLogEntryExpected
     def test_copy_withZeros(self):
         """ Test copy() produces an equal object and doesn't just copy the references """
@@ -209,17 +209,17 @@ class StructureDataSafe(StructureShared):
 
         assert orig.data is not dup2.data
 
-
+    @noLogEntryExpected
     def test_copy_Pempty(self):
         """ test copy() produces the correct outputs when given an point empty object """
         data = [[], []]
         data = numpy.array(data).T
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data)
-        listObj = createData(returnType="List", data=data)
-        matixObj = createData(returnType="Matrix", data=data)
-        dataframeObj = createData(returnType="DataFrame", data=data)
+        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
+        listObj = createData(returnType="List", data=data, useLog=False)
+        matixObj = createData(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -253,17 +253,17 @@ class StructureDataSafe(StructureShared):
         assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
         assert all(val == [] for val in dictOfList.values())
 
-
+    @noLogEntryExpected
     def test_copy_Fempty(self):
         """ test copy() produces the correct outputs when given an feature empty object """
         data = [[], []]
         data = numpy.array(data)
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data)
-        listObj = createData(returnType="List", data=data)
-        matixObj = createData(returnType="Matrix", data=data)
-        dataframeObj = createData(returnType="DataFrame", data=data)
+        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
+        listObj = createData(returnType="List", data=data, useLog=False)
+        matixObj = createData(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -296,15 +296,16 @@ class StructureDataSafe(StructureShared):
         dictOfList = orig.copy(to='dict of list')
         assert dictOfList == {}
 
+    @noLogEntryExpected
     def test_copy_Trueempty(self):
         """ test copy() produces the correct outputs when given a point and feature empty object """
         data = numpy.empty(shape=(0, 0))
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data)
-        listObj = createData(returnType="List", data=data)
-        matixObj = createData(returnType="Matrix", data=data)
-        dataframeObj = createData(returnType="DataFrame", data=data)
+        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
+        listObj = createData(returnType="List", data=data, useLog=False)
+        matixObj = createData(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -337,6 +338,7 @@ class StructureDataSafe(StructureShared):
         dictOfList = orig.copy(to='dict of list')
         assert dictOfList == {}
 
+    @noLogEntryExpected
     def test_copy_rightTypeTrueCopy(self):
         """ Test copy() will return all of the right type and do not show each other's modifications"""
 
@@ -344,10 +346,15 @@ class StructureDataSafe(StructureShared):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames, featureNames=featureNames)
-        listObj = createData(returnType="List", data=data, pointNames=pointNames, featureNames=featureNames)
-        matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames, featureNames=featureNames)
-        dataframeObj = createData(returnType="DataFrame", data=data, pointNames=pointNames, featureNames=featureNames)
+        sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames,
+                               featureNames=featureNames, useLog=False)
+        listObj = createData(returnType="List", data=data, pointNames=pointNames,
+                             featureNames=featureNames, useLog=False)
+        matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames,
+                              featureNames=featureNames, useLog=False)
+        dataframeObj = createData(returnType="DataFrame", data=data,
+                                  pointNames=pointNames, featureNames=featureNames,
+                                  useLog=False)
 
         pointsShuffleIndices = [3, 1, 2, 0]
         featuresShuffleIndices = [1, 2, 0]
@@ -356,48 +363,48 @@ class StructureDataSafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.features.setName('two', '2')
-        copySparse.points.setName('one', 'WHAT')
+        copySparse.features.setName('two', '2', useLog=False)
+        copySparse.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copySparse.points.sort(sortHelper=pointsShuffleIndices)
-        copySparse.features.sort(sortHelper=featuresShuffleIndices)
+        copySparse.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
+        copySparse.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyList = orig.copy(to='List')
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.features.setName('two', '2')
-        copyList.points.setName('one', 'WHAT')
+        copyList.features.setName('two', '2', useLog=False)
+        copyList.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyList.points.sort(sortHelper=pointsShuffleIndices)
-        copyList.features.sort(sortHelper=featuresShuffleIndices)
+        copyList.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
+        copyList.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copy(to='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.features.setName('two', '2')
-        copyMatrix.points.setName('one', 'WHAT')
+        copyMatrix.features.setName('two', '2', useLog=False)
+        copyMatrix.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyMatrix.points.sort(sortHelper=pointsShuffleIndices)
-        copyMatrix.features.sort(sortHelper=featuresShuffleIndices)
+        copyMatrix.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
+        copyMatrix.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyDataFrame = orig.copy(to='DataFrame')
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.features.setName('two', '2')
-        copyDataFrame.points.setName('one', 'WHAT')
+        copyDataFrame.features.setName('two', '2', useLog=False)
+        copyDataFrame.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyDataFrame.points.sort(sortHelper=pointsShuffleIndices)
-        copyDataFrame.features.sort(sortHelper=featuresShuffleIndices)
+        copyDataFrame.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
+        copyDataFrame.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
 
@@ -439,6 +446,7 @@ class StructureDataSafe(StructureShared):
         dictOfList['one'][0] = 5
         assert orig[0, 0] == 1
 
+    @noLogEntryExpected
     def test_copy_rowsArePointsFalse(self):
         """ Test copy() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -452,7 +460,8 @@ class StructureDataSafe(StructureShared):
 
             out = orig.copy(to=retType, rowsArePoints=False)
 
-            desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
+            desired = UML.createData(retType, dataT, pointNames=featureNames,
+                                     featureNames=pointNames, useLog=False)
 
             assert out == desired
 
@@ -551,8 +560,8 @@ class StructureDataSafe(StructureShared):
 
         orig.copy(to="numpy array", outputAs1D=True)
 
-
-    def test_copy_outpuAs1DTrue(self):
+    @noLogEntryExpected
+    def test_copy_outputAs1DTrue(self):
         """ Test copy() will return successfully output 1d for all allowable possibilities"""
         dataPv = [[1, 2, 0, 3]]
         dataFV = [[1], [2], [3], [0]]
@@ -605,6 +614,17 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.absolutePath == path
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.Base.copy', calledException)
+    def test_copy__copy__(self):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+        ret = copy.copy(toTest)
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.Base.copy', calledException)
+    def test_copy__deepcopy__(self):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+        ret = copy.deepcopy(toTest)
 
     ###############
     # points.copy #
@@ -2364,9 +2384,9 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         dataTrans = [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
 
-        dataObj1 = self.constructor(deepcopy(data))
-        dataObj2 = self.constructor(deepcopy(data))
-        dataObjT = self.constructor(deepcopy(dataTrans))
+        dataObj1 = self.constructor(copy.deepcopy(data))
+        dataObj2 = self.constructor(copy.deepcopy(data))
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
 
         ret1 = dataObj1.transpose() # RET CHECK
         assert dataObj1.isIdentical(dataObjT)
@@ -2383,9 +2403,9 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
         dataTrans = [[1, 4, 7, 0, 11], [2, 5, 8, 0, 12], [3, 6, 9, 0, 13]]
 
-        dataObj1 = self.constructor(deepcopy(data))
-        dataObj2 = self.constructor(deepcopy(data))
-        dataObjT = self.constructor(deepcopy(dataTrans))
+        dataObj1 = self.constructor(copy.deepcopy(data))
+        dataObj2 = self.constructor(copy.deepcopy(data))
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
 
         ret1 = dataObj1.transpose() # RET CHECK
 
@@ -2406,11 +2426,11 @@ class StructureModifying(StructureShared):
         transPointNames = origFeatureNames
         transFeatureNames = origPointNames
 
-        dataObj1 = self.constructor(deepcopy(data), pointNames=origPointNames,
+        dataObj1 = self.constructor(copy.deepcopy(data), pointNames=origPointNames,
                                                     featureNames=origFeatureNames)
-        dataObj2 = self.constructor(deepcopy(data), pointNames=origPointNames,
+        dataObj2 = self.constructor(copy.deepcopy(data), pointNames=origPointNames,
                                                     featureNames=origFeatureNames)
-        dataObjT = self.constructor(deepcopy(dataTrans), pointNames=transPointNames,
+        dataObjT = self.constructor(copy.deepcopy(dataTrans), pointNames=transPointNames,
                                                          featureNames=transFeatureNames)
         dataObj1.transpose()
         assert dataObj1.points.getNames() == transPointNames
@@ -2430,7 +2450,7 @@ class StructureModifying(StructureShared):
     def test_transpose_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
 
-        dataObj1 = self.constructor(deepcopy(data))
+        dataObj1 = self.constructor(copy.deepcopy(data))
 
         dataObj1._name = "TestName"
         dataObj1._absPath = "TestAbsPath"
@@ -7465,7 +7485,7 @@ class StructureModifying(StructureShared):
     def test_points_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
         origObj.points.transform(None)
 
     @raises(ImproperObjectAction)
@@ -7502,7 +7522,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
             value = point[origObj.features.getIndex('deci')]
@@ -7518,7 +7538,7 @@ class StructureModifying(StructureShared):
 
     def test_points_transform_Handmade_lazyNameGeneration(self):
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData))
+        origObj = self.constructor(copy.deepcopy(origData))
 
         def emitAllDeci(point):
             value = point[1]
@@ -7532,7 +7552,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        toTest = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
             value = point[toTest.features.getIndex('deci')]
@@ -7553,7 +7573,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllDeci(point):
             value = point[origObj.features.getIndex('deci')]
@@ -7569,7 +7589,7 @@ class StructureModifying(StructureShared):
 
     def test_points_transform_nonZeroIterAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
-        origObj = self.constructor(deepcopy(origData))
+        origObj = self.constructor(copy.deepcopy(origData))
 
         def emitNumNZ(point):
             ret = 0
@@ -7624,7 +7644,7 @@ class StructureModifying(StructureShared):
     def test_features_transform_exceptionInputNone(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
         origObj.features.transform(None)
 
     @raises(CalledFunctionException)
@@ -7639,7 +7659,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllEqual(feature):
             first = feature[0]
@@ -7657,7 +7677,7 @@ class StructureModifying(StructureShared):
 
     def test_features_transform_Handmade_lazyNameGeneration(self):
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData))
+        origObj = self.constructor(copy.deepcopy(origData))
 
         def emitAllEqual(feature):
             first = feature[0]
@@ -7674,7 +7694,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        toTest = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllEqual(feature):
             first = feature[0]
@@ -7698,7 +7718,7 @@ class StructureModifying(StructureShared):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
-        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+        origObj = self.constructor(copy.deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
         def emitAllEqual(feature):
             first = feature[0]
@@ -7716,7 +7736,7 @@ class StructureModifying(StructureShared):
 
     def test_features_transform_nonZeroIterAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
-        origObj = self.constructor(deepcopy(origData))
+        origObj = self.constructor(copy.deepcopy(origData))
 
         def emitNumNZ(feature):
             ret = 0

@@ -2274,7 +2274,7 @@ class Base(object):
         ret = self._copy_implementation(to)
         if isinstance(ret, UML.data.Base):
             if not rowsArePoints:
-                ret.transpose()
+                ret.transpose(useLog=False)
             ret._name = self.name
             ret._relPath = self.relativePath
             ret._absPath = self.absolutePath
@@ -2320,6 +2320,12 @@ class Base(object):
             if to == 'listofdict':
                 return createListOfDict(data, featureNames)
             return createDictOfList(data, featureNames, self._pointCount)
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
 
 
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
