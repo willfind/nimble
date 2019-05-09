@@ -151,6 +151,13 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         msg += "the only accepted list formats, yet the (0,0)th element was "
         msg += str(type(rawData[0][0]))
         raise TypeError(msg)
+    mustCopy = ['automatic', True]
+    if pnamesID in mustCopy or fnamesID is mustCopy:
+        # copy rawData to avoid modifying the original user data
+        if isinstance(rawData[0], tuple):
+            rawData = [list(row) for row in rawData]
+        else:
+            rawData = [row.copy() for row in rawData]
 
     firstRow = rawData[0] if len(rawData) > 0 else None
     secondRow = rawData[1] if len(rawData) > 1 else None
@@ -383,11 +390,11 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                                                          featureNames)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
-        # pointNames and featureNames may be True, False, 'automatic', or
-        # explicit names
+        # pointNames and featureNames may be True, False, None, 'automatic', or
+        # explicit names. False and None have the same behavior.
 
         # User explicitly did not want names extracted
-        if pointNames is False:
+        if pointNames is False or pointNames is None:
             # assert that data was not accidentally removed
             assert tempPointNames is None
             pointNames = None
@@ -406,7 +413,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
             pointNames = pointNames
 
         # User explicitly did not want names extracted
-        if featureNames is False:
+        if featureNames is False or featureNames is None:
             # assert that data was not accidentally removed
             assert tempFeatureNames is None
             featureNames = None
@@ -419,7 +426,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
         # We could have extracted name and did
         elif featureNames == 'automatic' and tempFeatureNames is not None:
             featureNames = tempFeatureNames
-        # Point names were provided by user
+        # Feature names were provided by user
         else:
             assert tempFeatureNames is None
             featureNames = featureNames
@@ -438,8 +445,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                 isAllowedSingleElement(rawData[0])
                 or isinstance(rawData[0], list)
                 or hasattr(rawData[0], 'setLimit'))):
-       # attempt to convert the list to floats to remain consistent with other
-       # UML types if unsuccessful we will keep the list as is
+        # attempt to convert the list to floats to remain consistent with other
+        # UML types if unsuccessful we will keep the list as is
         try:
             # 1D list
             rawData = list(map(numpy.float, rawData))
