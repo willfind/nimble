@@ -167,7 +167,7 @@ class List(Base):
                 return False
         return True
 
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         """
         Function to write the data in this object to a file using the
@@ -183,10 +183,10 @@ class List(Base):
         #     msg += "or as the extension in the outPath"
         #     raise InvalidArgumentValue(msg)
 
-        if format == 'csv':
+        if fileFormat == 'csv':
             return self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        if format == 'mtx':
+        if fileFormat == 'mtx':
             return self._writeFileMTX_implementation(
                 outPath, includePointNames, includeFeatureNames)
 
@@ -268,41 +268,41 @@ class List(Base):
         self.data = other.data
         self._numFeatures = other._numFeatures
 
-    def _copyAs_implementation(self, format):
+    def _copy_implementation(self, to):
         isEmpty = False
         if len(self.points) == 0 or len(self.features) == 0:
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
-        if format in UML.data.available:
+        if to in UML.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             reuseData = True
             if isEmpty:
                 data = numpy.matrix(emptyData)
-            elif format == 'List':
+            elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
                 data = numpy.matrix(self.data)
             # reuseData=True since we already made copies here
-            return createDataNoValidation(format, data, ptNames, ftNames,
+            return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if format == 'pythonlist':
+        if to == 'pythonlist':
             return [pt.copy() for pt in self.data]
-        if format == 'numpyarray':
+        if to == 'numpyarray':
             if isEmpty:
                 return emptyData
             return numpy.array(self.data, dtype=self._elementType)
-        if format == 'numpymatrix':
+        if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
             return numpy.matrix(self.data)
-        if format == 'scipycsc':
+        if to == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(numpy.array(self.data))
-        if format == 'scipycsr':
+        if to == 'scipycsr':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
@@ -543,32 +543,31 @@ class List(Base):
             def _getElements(self):
                 return ListElementsView(self)
 
-            def _copyAs_implementation(self, format):
+            def _copy_implementation(self, to):
                 # we only want to change how List and pythonlist copying is
                 # done we also temporarily convert self.data to a python list
-                # for copyAs
+                # for copy
                 if ((len(self.points) == 0 or len(self.features) == 0)
-                        and format != 'List'):
+                        and to != 'List'):
                     emptyStandin = numpy.empty((len(self.points),
                                                 len(self.features)))
                     intermediate = UML.createData('Matrix', emptyStandin,
                                                   useLog=False)
-                    return intermediate.copyAs(format)
+                    return intermediate.copy(to=to)
 
                 listForm = [[self._source.data[pID][fID] for fID
                              in range(self._fStart, self._fEnd)]
                             for pID in range(self._pStart, self._pEnd)]
-                if format is None:
-                    format = 'List'
-                if format not in ['List', 'pythonlist']:
+
+                if to not in ['List', 'pythonlist']:
                     origData = self.data
                     self.data = listForm
-                    res = super(ListView, self)._copyAs_implementation(
-                        format)
+                    res = super(ListView, self)._copy_implementation(
+                        to)
                     self.data = origData
                     return res
 
-                if format == 'List':
+                if to == 'List':
                     ptNames = self.points._getNamesNoGeneration()
                     ftNames = self.features._getNamesNoGeneration()
                     return List(listForm, pointNames=ptNames,

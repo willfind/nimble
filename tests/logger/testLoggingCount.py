@@ -94,14 +94,14 @@ match_tested = list(map(prefixAdder('UML.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'copy', 'fillUsingAllData', 'featureReport', 'fillWith',
-    'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature', 'merge',
+    'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
+    'flattenToOnePoint', 'groupByFeature', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copyAs', 'featureView', 'getTypeString', 'hashCode',
+    'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
     'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
     'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
     'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',
@@ -322,7 +322,7 @@ baseDunder_tested = [
     'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
     'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__',
+    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__', 
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
 pointsDunder_tested = []

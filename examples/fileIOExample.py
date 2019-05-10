@@ -53,5 +53,5 @@ if __name__ == "__main__":
     assert len(trainInPlace.points) == len(trainOutPlace.points)
 
     # output the split and normalized sets for later usage
-    trainInPlace.writeFile(pathTrain, format='csv', includeNames=True)
-    testInPlace.writeFile(pathTest, format='csv', includeNames=True)
+    trainInPlace.writeFile(pathTrain, fileFormat='csv', includeNames=True)
+    testInPlace.writeFile(pathTest, fileFormat='csv', includeNames=True)

@@ -213,9 +213,9 @@ class LoveAtFirstSightClassifier(CustomLearner):
 
     def incrementalTrain(self, trainX, trainY):
         if hasattr(self, 'scope'):
-            self.scope = numpy.union1d(self.scope, trainY.copyAs('numpyarray').flatten())
+            self.scope = numpy.union1d(self.scope, trainY.copy(to='numpyarray').flatten())
         else:
-            self.scope = numpy.unique(trainY.copyAs('numpyarray'))
+            self.scope = numpy.unique(trainY.copy(to='numpyarray'))
         self.prediction = trainY[0, 0]
 
     def apply(self, testX):

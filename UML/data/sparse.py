@@ -89,11 +89,11 @@ class Sparse(Base):
         return SparseElements(self)
 
     def plot(self, outPath=None, includeColorbar=False):
-        toPlot = self.copyAs("Matrix")
+        toPlot = self.copy(to="Matrix")
         toPlot.plot(outPath, includeColorbar)
 
     def _plot(self, outPath=None, includeColorbar=False):
-        toPlot = self.copyAs("Matrix")
+        toPlot = self.copy(to="Matrix")
         return toPlot._plot(outPath, includeColorbar)
 
     def _transpose_implementation(self):
@@ -178,7 +178,7 @@ class Sparse(Base):
 
         outFile.close()
 
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         """
         Function to write the data in this object to a file using the
@@ -194,10 +194,10 @@ class Sparse(Base):
         #     msg += "or as the extension in the outPath"
         #     raise InvalidArgumentValue(msg)
 
-        if format == 'csv':
+        if fileFormat == 'csv':
             return self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        if format == 'mtx':
+        if fileFormat == 'mtx':
             return self._writeFileMTX_implementation(
                 outPath, includePointNames, includeFeatureNames)
 
@@ -238,28 +238,26 @@ class Sparse(Base):
         self.data = other.data
         self._sorted = other._sorted
 
-    def _copyAs_implementation(self, format):
-        if format is None:
-            format = 'Sparse'
-        if format in UML.data.available:
+    def _copy_implementation(self, to):
+        if to in UML.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
-            if format == 'Sparse':
+            if to == 'Sparse':
                 data = self.data.copy()
             else:
                 data = self.data.todense()
             # reuseData=True since we already made copies here
-            return createDataNoValidation(format, data, ptNames, ftNames,
+            return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if format == 'pythonlist':
+        if to == 'pythonlist':
             return self.data.todense().tolist()
-        if format == 'numpyarray':
+        if to == 'numpyarray':
             return numpy.array(self.data.todense())
-        if format == 'numpymatrix':
+        if to == 'numpymatrix':
             return self.data.todense()
-        if format == 'scipycsc':
+        if to == 'scipycsc':
             return self.data.tocsc()
-        if format == 'scipycsr':
+        if to == 'scipycsr':
             return self.data.tocsr()
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
@@ -875,7 +873,7 @@ class Sparse(Base):
         according to efficiency constraints.
         """
         if isinstance(other, BaseView):
-            retData = other.copyAs('scipycsr')
+            retData = other.copy(to='scipycsr')
             retData = self.data * retData
         else:
             # for other.data as any dense or sparse matrix
@@ -908,7 +906,7 @@ class Sparse(Base):
 
         #	def _div__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr() / other.copyAs("scipycsr")
+        #			ret = self.data.tocsr() / other.copy(to="scipycsr")
         #			ret = ret.tocoo()
         #		else:
         #			retData = self.data.data / other
@@ -927,7 +925,7 @@ class Sparse(Base):
 
         #	def _idiv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr() / other.copyAs("scipycsr")
+        #			ret = self.data.tocsr() / other.copy(to="scipycsr")
         #			ret = ret.tocoo()
         #		else:
         #			ret = self.data.data / other
@@ -936,7 +934,7 @@ class Sparse(Base):
 
         #	def _truediv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr().__truediv__(other.copyAs("scipycsr"))
+        #			ret = self.data.tocsr().__truediv__(other.copy(to="scipycsr"))
         #			ret = ret.tocoo()
         #		else:
         #			retData = self.data.data.__truediv__(other)
@@ -955,7 +953,7 @@ class Sparse(Base):
 
         #	def _itruediv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr().__itruediv__(other.copyAs("scipycsr"))
+        #			ret = self.data.tocsr().__itruediv__(other.copy(to="scipycsr"))
         #			ret = ret.tocoo()
         #		else:
         #			retData = self.data.data.__itruediv__(other)
@@ -967,7 +965,7 @@ class Sparse(Base):
 
         #	def _floordiv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr() // other.copyAs("scipycsr")
+        #			ret = self.data.tocsr() // other.copy(to="scipycsr")
         #			ret = ret.tocoo()
         #		else:
         #			retData = self.data.data // other
@@ -990,7 +988,7 @@ class Sparse(Base):
 
         #	def _ifloordiv__implementation(self, other):
         #		if isinstance(other, UML.data.Base):
-        #			ret = self.data.tocsr() // other.copyAs("scipycsr")
+        #			ret = self.data.tocsr() // other.copy(to="scipycsr")
         #			ret = ret.tocoo()
         #		else:
         #			ret = self.data // other
@@ -1209,8 +1207,8 @@ class SparseView(BaseView, Sparse):
         adjY = y + self._fStart
         return self._source[adjX, adjY]
 
-    def _copyAs_implementation(self, format):
-        if format == "Sparse":
+    def _copy_implementation(self, to):
+        if to == "Sparse":
             sourceData = self._source.data.data.copy()
             sourceRow = self._source.data.row.copy()
             sourceCol = self._source.data.col.copy()
@@ -1240,9 +1238,9 @@ class SparseView(BaseView, Sparse):
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = numpy.empty((len(self.points), len(self.features)))
             intermediate = UML.createData('Matrix', emptyStandin, useLog=False)
-            return intermediate.copyAs(format)
+            return intermediate.copy(to=to)
 
-        if format == 'numpyarray':
+        if to == 'numpyarray':
             pStart, pEnd = self._pStart, self._pEnd
             fStart, fEnd = self._fStart, self._fEnd
             limited = self._source.data.todense()[pStart:pEnd, fStart:fEnd]
@@ -1253,10 +1251,7 @@ class SparseView(BaseView, Sparse):
         limited = limited.features.copy(start=self._fStart,
                                         end=self._fEnd - 1, useLog=False)
 
-        if format is None:
-            return limited
-        else:
-            return limited._copyAs_implementation(format)
+        return limited._copy_implementation(to)
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -1290,33 +1285,33 @@ class SparseView(BaseView, Sparse):
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """
-        ret = self.copyAs("Sparse")
+        ret = self.copy(to="Sparse")
         numpy.absolute(ret.data.data, out=ret.data.data)
         ret._name = dataHelpers.nextDefaultObjectName()
 
         return ret
 
     def _mul__implementation(self, other):
-        selfConv = self.copyAs("Sparse")
+        selfConv = self.copy(to="Sparse")
         if isinstance(other, BaseView):
-            other = other.copyAs(other.getTypeString())
+            other = other.copy(to=other.getTypeString())
         return selfConv._mul__implementation(other)
 
     def _genericNumericBinary_implementation(self, opName, other):
         if isinstance(other, BaseView):
-            other = other.copyAs(other.getTypeString())
+            other = other.copy(to=other.getTypeString())
 
         implName = opName[1:] + 'implementation'
         opType = opName[-5:-2]
 
         if opType in ['add', 'sub', 'div', 'truediv', 'floordiv']:
-            selfConv = self.copyAs("Matrix")
+            selfConv = self.copy(to="Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
             ret = UML.createData("Sparse", ret.data, useLog=False)
             return ret
 
-        selfConv = self.copyAs("Sparse")
+        selfConv = self.copy(to="Sparse")
 
         toCall = getattr(selfConv, implName)
         ret = toCall(other)

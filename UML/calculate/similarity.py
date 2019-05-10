@@ -24,8 +24,8 @@ def cosineSimilarity(knownValues, predictedValues):
         msg = "knownValues must be derived class of UML.data.Base"
         raise InvalidArgumentType(msg)
 
-    known = knownValues.copyAs(format="numpy array").flatten()
-    predicted = predictedValues.copyAs(format="numpy array").flatten()
+    known = knownValues.copy(to="numpy array").flatten()
+    predicted = predictedValues.copy(to="numpy array").flatten()
 
     numerator = (numpy.dot(known, predicted))
     denominator = (numpy.linalg.norm(known) * numpy.linalg.norm(predicted))

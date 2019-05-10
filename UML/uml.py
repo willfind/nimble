@@ -526,12 +526,12 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
-        normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
+        normalizedTrain = normalizedTrain.copy(to=trainX.getTypeString())
 
     if testX is not None:
         normalizedTest = tl.apply(testX, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
-            normalizedTest = normalizedTest.copyAs(testX.getTypeString())
+            normalizedTest = normalizedTest.copy(to=testX.getTypeString())
 
     # modify references and names for trainX and testX
     trainX.referenceDataFrom(normalizedTrain, useLog=False)

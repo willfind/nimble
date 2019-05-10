@@ -434,10 +434,10 @@ def testtrainAndApplyOneVsAll():
     print("Results 2 output: " + str(results2.data))
     print("Results 3 output: " + str(results3.data))
 
-    assert results1.copyAs(format="python list")[0][0] >= 0.0
-    assert results1.copyAs(format="python list")[0][0] <= 3.0
+    assert results1.copy(to="python list")[0][0] >= 0.0
+    assert results1.copy(to="python list")[0][0] <= 3.0
 
-    assert results2.copyAs(format="python list")[0][0]
+    assert results2.copy(to="python list")[0][0]
 
 
 def testtrainAndApplyOneVsOne():
@@ -605,7 +605,7 @@ def testExtractWinningPredictionLabel():
     BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
     predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
-    listPredictions = predictions.copyAs(format="python list")
+    listPredictions = predictions.copy(to="python list")
 
     assert listPredictions[0][0] - 3 == 0.0
     assert listPredictions[0][1] - 2 == 0.0

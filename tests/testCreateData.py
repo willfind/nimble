@@ -527,7 +527,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
             npRaw = numpy.array(lolFromRaw, dtype=object)
             finalRaw = scipy.sparse.coo_matrix(npRaw)
         else:
-            finalRaw = baseObj.copyAs(rawType)
+            finalRaw = baseObj.copy(to=rawType)
 
         ret = UML.createData(returnType=returnType, data=finalRaw,
                              pointNames=pointNames, featureNames=featureNames)
@@ -1375,7 +1375,7 @@ def test_createData_keepPF_AllPossibleNatOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2], 'all']
@@ -1394,7 +1394,7 @@ def test_createData_keepPF_AllPossibleReverseOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2], [0, 1, 2]]
@@ -1427,13 +1427,12 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUse = orig.copyAs("pythonlist")
+                toUse = orig.copy(to="pythonlist")
                 fromOrig = UML.createData(
                     t, toUse, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
@@ -1471,13 +1470,12 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
@@ -1516,13 +1514,12 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,

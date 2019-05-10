@@ -287,7 +287,7 @@ class Points(object):
 
         See Also
         --------
-        Base.copy, Base.copyAs
+        Base.copy
 
         Examples
         --------
@@ -1038,7 +1038,7 @@ class Points(object):
         make a copy in order to modify any specific data.
 
         >>> def transformMiddleFeature(pt):
-        ...     ptList = pt.copyAs('python list', outputAs1D=True)
+        ...     ptList = pt.copy(to='python list', outputAs1D=True)
         ...     ptList[2] += 4
         ...     return ptList
         >>> data = UML.ones('Matrix', 3, 5)
@@ -1117,7 +1117,7 @@ class Points(object):
         make a copy in order to modify any specific data.
 
         >>> def changeMiddleFeature(pt):
-        ...     ptList = pt.copyAs('python list', outputAs1D=True)
+        ...     ptList = pt.copy(to='python list', outputAs1D=True)
         ...     ptList[2] += 4
         ...     return ptList
         >>> data = UML.ones('Matrix', 3, 5)

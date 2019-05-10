@@ -27,11 +27,11 @@ class MultiOutputLinearRegression(CustomLearner):
 
     def train(self, trainX, trainY):
         self._models = []
-        rawTrainX = trainX.copyAs('numpymatrix')
+        rawTrainX = trainX.copy(to='numpymatrix')
 
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i, useLog=False)
-            rawCurrY = currY.copyAs('numpyarray', outputAs1D=True)
+            rawCurrY = currY.copy(to='numpyarray', outputAs1D=True)
 
             currModel = LinearRegression()
             currModel.fit(rawTrainX, rawCurrY)
@@ -39,7 +39,7 @@ class MultiOutputLinearRegression(CustomLearner):
 
     def apply(self, testX):
         results = []
-        rawTestX = testX.copyAs('numpymatrix')
+        rawTestX = testX.copy(to='numpymatrix')
 
         for i in range(len(self._models)):
             curr = self._models[i].predict(rawTestX)
