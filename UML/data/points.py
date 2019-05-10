@@ -91,6 +91,13 @@ class Points(object):
             May be either a string not currently in the pointName set,
             or None for an default pointName. newName cannot begin with
             the default prefix.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -122,6 +129,13 @@ class Points(object):
               point names.
             * dict - The mapping for each point name in the format
               {name:index}
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -259,6 +273,13 @@ class Points(object):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -374,6 +395,13 @@ class Points(object):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -541,6 +569,13 @@ class Points(object):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -664,6 +699,13 @@ class Points(object):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -806,6 +848,13 @@ class Points(object):
             Either an iterable, list-like object of identifiers (names
             and/or indices), a comparator or a scoring function, or None
             to indicate the natural ordering.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -955,11 +1004,17 @@ class Points(object):
         ----------
         function
             Must accept the view of a point as an argument.
-
         points : identifier, list of identifiers
             May be a single point name or index, an iterable,
             container of point names and/or indices. None indicates
             application to all points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -1028,6 +1083,13 @@ class Points(object):
         points : point, list of points
             The subset of points to limit the calculation to. If None,
             the calculation will apply to all points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -1106,6 +1168,13 @@ class Points(object):
             indicates that the data will be inserted below all points in
             this object, or in other words: appended to the end of the
             current points.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1175,6 +1244,13 @@ class Points(object):
         reducer : function
             Input the ``mapper`` output and output a two-tuple
             containing the identifier and the reduced value.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1205,6 +1281,16 @@ class Points(object):
     def shuffle(self, useLog=None):
         """
         Permute the indexing of the points to a random order.
+
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Notes
         -----
@@ -1266,6 +1352,13 @@ class Points(object):
         returnModified : return an object containing True for the
             modified values in each point and False for unmodified
             values.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -1350,6 +1443,13 @@ class Points(object):
             querying the calling object, and the operation is performed
             on applyResultTo using the results; as if a UML Base object
             was given for the subtract or divide arguments.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1385,6 +1485,13 @@ class Points(object):
         featureForValues : str
             Describe the feature which will contain the values from the
             collapsed features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Notes
         -----
@@ -1513,6 +1620,13 @@ class Points(object):
         featureWithValues : identifier
             The name or index of the feature of values that corresponds
             to the values in featureWithFeatureNames.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Notes
         -----

@@ -2187,8 +2187,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
-                                             save=save)
+        UML.configuration.setInterfaceOptions(UML.settings, currInterface,
+                                              save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
@@ -3815,7 +3815,8 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+                                          featureNames=featureNames,
+                                          useLog=False)
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
@@ -3832,7 +3833,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
             resultsContainer.append(finalRow)
 
         return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+                              featureNames=columnHeaders, useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)
@@ -3940,7 +3941,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         for [winningIndex] in winningPredictionIndices:
             winningLabels.append([labelSet[int(winningIndex)]])
         return UML.createData(rawPredictions.getTypeString(), winningLabels,
-                              featureNames=['winningLabel'])
+                              featureNames=['winningLabel'], useLog=False)
 
     elif scoreMode.lower() == 'bestScore'.lower():
         # construct a list of lists, with each row in the list containing the
@@ -3957,7 +3958,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+                                          featureNames=featureNames,
+                                          useLog=False)
         return resultsContainer
 
     elif scoreMode.lower() == 'allScores'.lower():
@@ -3981,7 +3983,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
             resultsContainer.append(finalRow)
         #wrap data in Base container
         return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+                              featureNames=columnHeaders, useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)

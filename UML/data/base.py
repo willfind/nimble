@@ -432,6 +432,13 @@ class Base(object):
         ----------
         featureToReplace : int or str
             The index or name of the feature being replaced.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -503,6 +510,13 @@ class Base(object):
         ----------
         featureToConvert : int or str
             The index or name of the feature being replaced.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -567,6 +581,13 @@ class Base(object):
             * list - indices or names of features to group by
         countUniqueValueOnly : bool
             Return only the count of points in the group
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -731,6 +752,13 @@ class Base(object):
             Control whether the order of the points in the returns sets
             matches that of the original object, or if their order is
             randomized.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -864,6 +892,22 @@ class Base(object):
         data set, up to 50 features.  If there are more than 50
         features, only information about 50 of those features will be
         reported.
+
+        Parameters
+        ----------
+        maxFeaturesToCover : int
+            The maximum number of features to include in the report.
+            Default is 50, which is the maximum allowed for this value.
+        displayDigits : int
+            The number of digits to display after a decimal point.
+            Default is 2.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
         ret = produceFeaturewiseReport(
             self, maxFeaturesToCover=maxFeaturesToCover,
@@ -880,6 +924,17 @@ class Base(object):
         summary information about the data set contained in this object.
         Includes proportion of missing values, proportion of zero
         values, total # of points, and number of features.
+
+        displayDigits : int
+            The number of digits to display after a decimal point.
+            Default is 2.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
         ret = produceAggregateReport(self, displayDigits=displayDigits)
         handleLogging(useLog, 'data', "summary", ret)
@@ -2055,6 +2110,16 @@ class Base(object):
         feature and point indices. This operations also includes
         inverting the point and feature names.
 
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
         Examples
         --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
@@ -2101,6 +2166,13 @@ class Base(object):
             Must be of the same type as the calling object. Also, the
             shape of other should be consistent with the shape of this
             object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -2355,6 +2427,13 @@ class Base(object):
         featureEnd : int or str
             The inclusive index or name of the last feature in the
             calling object whose contents will be modified.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
 
         See Also
@@ -2460,6 +2539,13 @@ class Base(object):
         returnModified : return an object containing True for the
             modified values in each feature and False for unmodified
             values.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         kwarguments
             Any additional arguments being passed to the fill function.
 
@@ -2561,6 +2647,16 @@ class Base(object):
         point will have a name of "Flattened". This is an inplace
         operation.
 
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
         See Also
         --------
         unflattenFromOnePoint
@@ -2623,6 +2719,16 @@ class Base(object):
         object will have a point name of "pn_i | fn_j". The single
         feature will have a name of "Flattened". This is an inplace
         operation.
+
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -2800,6 +2906,13 @@ class Base(object):
         ----------
         numPoints : int
             The number of points in the modified object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -2891,6 +3004,13 @@ class Base(object):
         ----------
         numFeatures : int
             The number of features in the modified object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -3003,6 +3123,13 @@ class Base(object):
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
