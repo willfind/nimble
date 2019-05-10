@@ -299,7 +299,7 @@ def test_crossValidateReturnAll():
     assert 1 == len(result)
     assert result[0][0] == {}
     #try with some extra elements, including the default
-    result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=(1, 2, 3))
+    result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3]))
     assert result
     assert 3 == len(result)
 
@@ -308,9 +308,9 @@ def test_crossValidateReturnAll():
     # ordered differently
     seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
     UML.setRandomSeed(seed)
-    result1 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=(1, 2, 3, 4, 5))
+    result1 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3, 4, 5]))
     UML.setRandomSeed(seed)
-    result2 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=(1, 5, 4, 3, 2))
+    result2 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
     resultOneScores = [curEntry[1] for curEntry in result1]
@@ -371,13 +371,13 @@ def test_crossValidateReturnBest():
         # get a baseline result
         UML.setRandomSeed(seed)
         resultTuple = crossValidateReturnBest('custom.FlipWrapper', X, Y,
-                                              metric, flip=(0, .5, .9), wrapped="custom.KNNClassifier")
+                                              metric, flip=UML.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
         UML.setRandomSeed(seed)
         allResultsList = crossValidateReturnAll('custom.FlipWrapper', X, Y,
-                                                metric, flip=(0, .5, .9), wrapped="custom.KNNClassifier")
+                                                metric, flip=UML.CV([0, .5, .9]), wrapped="custom.KNNClassifier")
         #since same args were used, the best tuple should be in allResultsList
         allArguments = [curResult[0] for curResult in allResultsList]
         allScores = [curResult[1] for curResult in allResultsList]

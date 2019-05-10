@@ -356,6 +356,9 @@ class UmlLogger(object):
                 logInfo["testLabelsFeatures"] = len(testLabels.features)
 
             if arguments is not None and arguments != {}:
+                for name, value in arguments.items():
+                    if isinstance(value, UML.CV):
+                        arguments[name] = repr(value)
                 logInfo['arguments'] = arguments
 
             if metrics is not None and metrics != {}:
@@ -404,6 +407,9 @@ class UmlLogger(object):
             logType = "crossVal"
             logInfo = {}
             logInfo["learner"] = learnerFunction
+            for name, value in arguments.items():
+                if isinstance(value, UML.CV):
+                    arguments[name] = repr(value)
             logInfo["learnerArgs"] = arguments
             logInfo["folds"] = folds
             logInfo["metric"] = metric.__name__
@@ -808,7 +814,7 @@ def _buildCVLogString(timestamp, log):
     metric = log["metric"]
     fullLog += "{0}-folding using {1} ".format(folds, metric)
     fullLog += "optimizing for min values\n\n"
-    fullLog += _formatRunLine("Result", "Arguments")
+    fullLog += "{0:<20s}{1:20s}\n".format("Results", "Arguments")
     for arguments, result in log["performance"]:
         argString = _dictToKeywordString(arguments)
         fullLog += "{0:<20.3f}{1:20s}".format(result, argString)

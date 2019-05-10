@@ -41,11 +41,8 @@ def prefixAdder(prefix):
         return prefix + '.' + value
     return addPrefix
 
-# NOTES:
-#  setRandomSeed logged?
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
-#  LogCount Testing Below: log, showLog, importModule
 
+#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
 uml_logged = [
     'createData', 'createRandomData', 'crossValidate',
     'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
@@ -53,16 +50,14 @@ uml_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 uml_notLogged = [
-    'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault', 'identity',
-    'importModule', 'listLearners', 'learnerParameters',
+    'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
-# NOTES:
-#  Untested functions:
 # no calculate functions should be logged.
 calculate_funcs = [
     'confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
@@ -211,6 +206,10 @@ def test_showLog_logCount():
 @noLogEntryExpected
 def test_importModule_logCount():
     pd = UML.importModule('pandas')
+
+@noLogEntryExpected
+def test_CV_logCount():
+    k = UML.CV([1, 3, 5])
 
 ########
 # Base #

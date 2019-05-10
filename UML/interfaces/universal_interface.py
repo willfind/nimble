@@ -277,8 +277,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @captureOutput
-    def train(self, learnerName, trainX, trainY=None,
-              multiClassStrategy='default', arguments=None):
+    def train(self, learnerName, trainX, trainY=None, arguments=None,
+              multiClassStrategy='default', crossValidationResults=None):
         """
         Fit the learner model using training data.
 
@@ -378,11 +378,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
-        return self._train(learnerName, trainX, trainY, arguments=arguments)
+        return self._train(learnerName, trainX, trainY, arguments,
+                           crossValidationResults)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None):
+    def _train(self, learnerName, trainX, trainY=None, arguments=None,
+               crossValidationResults=None):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
                                            arguments)
         trainedBackend, transformedInputs, customDict = packedBackend
@@ -396,7 +398,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedInputs,
-                              customDict, trainedBackend, self, has2dOutput)
+                              customDict, trainedBackend, self, has2dOutput,
+                              crossValidationResults)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -863,15 +866,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             # valid argument change
             if arg in argNames and arg in storedArguments :
                 applyArgs[arg] = value
-            # not a valid argument for apply
+            # not a valid argument for method
             else:
                 invalidArguments.append(arg)
         if invalidArguments:
             msg = "EXTRA PARAMETER! "
-            msg += "The following parameter names cannot be applied: "
-            msg += prettyListString(invalidArguments, useAnd=True)
-            msg += ". The allowed parameters are: "
-            msg += prettyListString(argNames, useAnd=True)
+            if argNames:
+                msg += "The following parameter names cannot be applied: "
+                msg += prettyListString(invalidArguments, useAnd=True)
+                msg += ". The allowed parameters are: "
+                msg += prettyListString(argNames, useAnd=True)
+            else:
+                msg += "No parameters are accepted for this operation"
             raise InvalidArgumentValue(msg)
 
         # use stored values for any remaining arguments
@@ -1273,7 +1279,8 @@ class TrainedLearner(object):
         will be 1-dimensional.
     """
     def __init__(self, learnerName, arguments, transformedInputs, customDict,
-                 backend, interfaceObject, has2dOutput):
+                 backend, interfaceObject, has2dOutput,
+                 crossValidationResults):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -1289,6 +1296,7 @@ class TrainedLearner(object):
         self.backend = backend
         self.interface = interfaceObject
         self.has2dOutput = has2dOutput
+        self.crossValidation = crossValidationResults
 
         exposedFunctions = self.interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1573,12 +1581,17 @@ class TrainedLearner(object):
         # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
-    def retrain(self, trainX, trainY=None, useLog=None):
+    def retrain(self, trainX, trainY=None, arguments=None, useLog=None,
+                **kwarguments):
         """
         Train the model on new data.
 
-        Adjust the learner model by training it on new data, discarding
-        the data used previously.
+        Adjust the learner model by providing new training data and/or
+        changing the learner's argument values. Previously set argument
+        values for this learner model will remain the same, unless
+        overridden by new arguments or kwarguments. If new data is
+        provided, the learner will be trained on that data only,
+        discarding the previous data.
 
         Parameters
         ----------
@@ -1589,13 +1602,23 @@ class TrainedLearner(object):
               ``trainX`` containing the labels.
             * UML Base object - contains the labels that correspond to
               ``trainX``.
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training.  These must be singular values, retrain
+            does not implement cross-validation for multiple argument
+            sets. Will be merged with kwarguments.
         useLog : bool, None
-            Local control for whether to send object creation to the
+            Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
             "logger" "enabledByDefault" configuration option. If True,
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. Must be singular values, retrain does not implement
+            cross-validation for multiple arguments sets.
+            Will be merged with ``arguments``.
 
         See Also
         --------
@@ -1603,7 +1626,43 @@ class TrainedLearner(object):
 
         Examples
         --------
-        TODO
+        Changing the training data.
+
+        >>> trainX1 = UML.createData('Matrix', [[1, 1], [2, 2], [3, 3]])
+        >>> trainY1 = UML.createData('Matrix', [[1], [2], [3]]) # mean=2
+        >>> testX = UML.createData('Matrix', [[8, 8], [-3, -3]])
+        >>> tl = UML.train('Custom.MeanConstant', trainX1, trainY1)
+        >>> tl.apply(testX)
+        Matrix(
+            [[2.000]
+             [2.000]]
+            )
+        >>> trainX2 = UML.createData('Matrix', [[4, 4], [5, 5], [6, 6]])
+        >>> trainY2 = UML.createData('Matrix', [[4], [5], [6]]) # mean=5
+        >>> tl.retrain(trainX2, trainY2)
+        >>> tl.apply(testX)
+        Matrix(
+            [[5.000]
+             [5.000]]
+            )
+
+        Changing the learner arguments.
+
+        >>> trainX = UML.createData('Matrix', [[1, 1], [3, 3], [3, 3]])
+        >>> trainY = UML.createData('Matrix', [[1], [3], [3]])
+        >>> testX = UML.createData('Matrix', [[1, 1], [3, 3]])
+        >>> tl = UML.train('Custom.KNNClassifier', trainX, trainY, k=1)
+        >>> tl.apply(testX)
+        Matrix(
+            [[1.000]
+             [3.000]]
+            )
+        >>> tl.retrain(trainX, trainY, k=3)
+        >>> tl.apply(testX)
+        Matrix(
+            [[3.000]
+             [3.000]]
+            )
         """
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
@@ -1612,16 +1671,41 @@ class TrainedLearner(object):
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
-        trainedBackend = self.interface._trainBackend(self.learnerName, trainX,
-                                                      trainY, self.arguments)
+        merged = _mergeArguments(arguments, kwarguments)
+        for arg, value in merged.items():
+            if isinstance(value, UML.CV):
+                msg = "Cannot provide a cross-validation arguments "
+                msg += "for parameters to retrain a TrainedLearner. "
+                msg += "If wanting to perform cross-validation, use "
+                msg += "UML.train()"
+                raise InvalidArgumentValue(msg)
+            if arg not in self.transformedArguments:
+                validArgs = list(self.transformedArguments.keys())
+                msg = "The argument '" + arg + "' is not valid. "
+                if validArgs:
+                    msg += "Valid arguments for retrain are: "
+                    msg += prettyListString(validArgs)
+                else:
+                    msg += "There are no valid arguments to retrain "
+                    msg += "this learner"
+                raise InvalidArgumentValue(msg)
+            self.arguments[arg] = value
+            self.transformedArguments[arg] = value
+
+        trainedBackend = self.interface._trainBackend(
+            self.learnerName, trainX, trainY, self.transformedArguments)
+
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
         customDict = trainedBackend[2]
 
         self.backend = newBackend
-        self.transformedInputs = transformedInputs
+        self.transformedTrainX = transformedInputs[0]
+        self.transformedTrainY = transformedInputs[1]
+        self.transformedArguments = transformedInputs[3]
         self.customDict = customDict
         self.has2dOutput = has2dOutput
+        self.crossValidation = None
 
         handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
                       None, None, self.learnerName, self.arguments, None)

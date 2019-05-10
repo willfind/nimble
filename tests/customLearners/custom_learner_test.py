@@ -1,12 +1,13 @@
 from __future__ import absolute_import
-import UML
 
 from nose.tools import *
 import numpy.testing
+from six.moves import range
 
+import UML
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
-from six.moves import range
+from UML.exceptions import InvalidArgumentValue
 
 
 @raises(TypeError)
@@ -311,3 +312,70 @@ def testCustomLearnerIncTrainCheck():
     reAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
     # label set now [-2,-1] with -1 as constant prediction value
     verifyScores(reAllScores, 1)
+
+class OneOrZeroClassifier(CustomLearner):
+    """ Classifies all data as either one or zero based on predictZero argument """
+    learnerType = 'classification'
+
+    def train(self, trainX, trainY, predictZero=False):
+        if predictZero:
+            self.prediction = 0
+        else:
+            self.prediction = 1
+
+    def apply(self, testX):
+        preds = [[self.prediction] for _ in range(len(testX.points))]
+        return UML.createData("Matrix", preds)
+
+@configSafetyWrapper
+def test_retrain_withArg():
+    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+
+    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
+    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = UML.zeros('Matrix', 2, 1)
+    expOnes = UML.ones('Matrix', 2, 1)
+
+    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    predOnes1 = tl.apply(testObj)
+    assert predOnes1 == expOnes
+
+    tl.retrain(trainObj, 0, predictZero=True)
+    predZeros1 = tl.apply(testObj)
+    assert predZeros1 == expZeros
+
+@raises(InvalidArgumentValue)
+@configSafetyWrapper
+def test_retrain_invalidArg():
+    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+
+    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
+    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = UML.zeros('Matrix', 2, 1)
+    expOnes = UML.ones('Matrix', 2, 1)
+
+    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    predOnes1 = tl.apply(testObj)
+    assert predOnes1 == expOnes
+
+    tl.retrain(trainObj, 0, foo=True)
+    predZeros1 = tl.apply(testObj)
+    assert predZeros1 == expZeros
+
+@raises(InvalidArgumentValue)
+@configSafetyWrapper
+def test_retrain_CVArg():
+    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+
+    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
+    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = UML.zeros('Matrix', 2, 1)
+    expOnes = UML.ones('Matrix', 2, 1)
+
+    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    predOnes1 = tl.apply(testObj)
+    assert predOnes1 == expOnes
+
+    tl.retrain(trainObj, 0, predictZero=UML.CV([True, False]))
+    predZeros1 = tl.apply(testObj)
+    assert predZeros1 == expZeros
