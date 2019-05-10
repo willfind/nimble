@@ -71,17 +71,20 @@ def testShogun_multiClassDataToBinaryAlg():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunHandmadeBinaryClassification():
     """ Test shogun by calling a binary linear classifier """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 0], [-0, 0, 1], [1, 3, 2]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
+    trainingObj = UML.createData('Matrix', data, featureNames=variables,
+                                 useLog=False)
 
     data2 = [[3, 3], [-1, 0]]
-    testObj = UML.createData('Matrix', data2)
+    testObj = UML.createData('Matrix', data2, useLog=False)
 
     args = {}
-    ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+    ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y",
+                            testX=testObj, output=None, arguments=args)
 
     assert ret is not None
 
@@ -314,6 +317,7 @@ def testShogunScoreModeBinary():
     assert len(ret.points) == 2
     assert len(ret.features) == 2
 
+@shogunSkipDec
 @logCountAssertionFactory(2)
 def TODO_onlineLearneres():
     """ Test shogun can call online learners """
@@ -327,7 +331,8 @@ def TODO_onlineLearneres():
     ret = UML.trainAndApply("shogun.OnlineLibLinear", trainingObj, trainY="Y", testX=testObj, arguments={})
     ret = UML.trainAndApply("shogun.OnlineSVMSGD", trainingObj, trainY="Y", testX=testObj, arguments={})
 
-@logCountAssertionFactory(2)
+@shogunSkipDec
+@logCountAssertionFactory(1)
 def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
     """ Test shogun will correctly apply the provided strategies when given multiclass data and a binary learner """
     variables = ["Y", "x1", "x2"]
@@ -343,6 +348,7 @@ def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
 
 @shogunSkipDec
 @attr('slow')
+@noLogEntryExpected
 def testShogunListLearners():
     """ Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 

@@ -236,6 +236,7 @@ def testSciKitLearnCrossDecomp():
 
 
 @sklSkipDec
+@noLogEntryExpected
 def testSciKitLearnListLearners():
     """ Test scikit learn's listSciKitLearnLearners() by checking the output for those learners we unit test """
 
@@ -854,6 +855,7 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
         trainer_ret_l = loadTrainedLearner(tmpFile.name)
         return trainer_ret_l.apply(givenTestX, useLog=False)
 
+@sklSkipDec
 @oneLogEntryExpected
 def test_saveLoadTrainedLearner_logCount():
     train = [[1, -1, -3, -3, -1],

@@ -357,6 +357,7 @@ def testMlpyClusteringLearners():
     UML.trainAndApply("mlpy.kmeans", trainingObj, output=None, arguments={'k': 2})
 
 @mlpySkipDec
+@noLogEntryExpected
 def testMlpyListLearners():
     """ Test mlpy's listMlpyLearners() by checking the output for those learners we unit test """
 
