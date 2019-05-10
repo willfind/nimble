@@ -4522,7 +4522,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         pass
 
@@ -4556,7 +4556,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _copy_implementation(self, format):
+    def _copy_implementation(self, to):
         pass
 
     @abstractmethod
