@@ -1431,14 +1431,6 @@ class TrainedLearner(object):
             Data set on which the trained learner will be applied (i.e.
             performing prediction, transformation, etc. as appropriate
             to the learner).
-        performanceFunction : function
-            If cross validation is triggered to select from the given
-            argument set, then this function will be used to generate a
-            performance score for the run. Function is of the form:
-            def func(knownValues, predictedValues).
-            Look in UML.calculate for pre-made options. Default is None,
-            since if there is no parameter selection to be done, it is
-            not used.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training and application. eg. {'dimensions':5, 'k':5}
