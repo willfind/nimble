@@ -72,7 +72,7 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if len(orig.points) != 0:
             firstPRaw = [[0] * len(orig.features)]
-            fNamesParam = orig.features.getNames() if orig.features._namesCreated() else 'automatic'
+            fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
                                                     pointNames=['firstPNonView'], featureNames=fNamesParam,
                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
@@ -99,7 +99,7 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if len(orig.features) != 0:
             lastFRaw = [[1] * len(full.points)]
-            fNames = full.points.getNames() if full.points._namesCreated() else 'automatic'
+            fNames = full.points._getNamesNoGeneration()
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
                                                      featureNames=fNames, pointNames=['lastFNonView'],
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all',
