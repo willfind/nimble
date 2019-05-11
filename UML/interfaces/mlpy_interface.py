@@ -209,12 +209,12 @@ class Mlpy(UniversalInterface):
             if trainX.getTypeString() == 'Matrix':
                 transTrainX = trainX.data
             else:
-                transTrainX = trainX.copyAs('numpy matrix')
+                transTrainX = trainX.copy(to='numpy matrix')
         else:
             transTrainX = None
 
         if trainY is not None:
-            transTrainY = trainY.copyAs('numpy array', outputAs1D=True)
+            transTrainY = trainY.copy(to='numpy array', outputAs1D=True)
         else:
             transTrainY = None
 
@@ -222,7 +222,7 @@ class Mlpy(UniversalInterface):
             if testX.getTypeString() == 'Matrix':
                 transTestX = testX.data
             else:
-                transTestX = testX.copyAs('numpy matrix')
+                transTestX = testX.copy(to='numpy matrix')
         else:
             transTestX = None
 

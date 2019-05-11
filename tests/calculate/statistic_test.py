@@ -33,7 +33,7 @@ def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = createData('List', data=dataArr, featureNames=['nums'])
     stDevContainer = testRowList.features.calculate(standardDeviation)
-    stDev = stDevContainer.copyAs(format="python list")[0][0]
+    stDev = stDevContainer.copy(to="python list")[0][0]
     assert_almost_equal(stDev, 3.6379, 3)
 
 @noLogEntryExpected
@@ -333,7 +333,7 @@ def test_residuals_matches_SKL():
     sklRet = pred - tl.apply(control, useLog=False)
 
     assert sklRet.isApproximatelyEqual(nimbleRet)
-    assert_array_almost_equal(nimbleRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 14)
+    assert_array_almost_equal(nimbleRet.copy(to="numpy array"), sklRet.copy(to="numpy array"), 14)
 
     # with generated data
     (control, pred), (ignore1,ignore2) = generateRegressionData(2, 10, 3)
@@ -342,4 +342,4 @@ def test_residuals_matches_SKL():
     sklRet = pred - tl.apply(control, useLog=False)
 
     assert sklRet.isApproximatelyEqual(nimbleRet)
-    assert_array_almost_equal(nimbleRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)
+    assert_array_almost_equal(nimbleRet.copy(to="numpy array"), sklRet.copy(to="numpy array"), 15)

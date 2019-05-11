@@ -98,6 +98,13 @@ class Elements(object):
         skipNoneReturnValues : bool
             If True, any time toTransform() returns None, the value
             originally in the data will remain unmodified.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -223,6 +230,13 @@ class Elements(object):
             Return an object of the specified type. If None, the
             returned object will have the same type as the calling
             object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -505,6 +519,13 @@ class Elements(object):
         other : nimble object
             The object containing the elements to multiply with the
             elements in this object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -575,6 +596,13 @@ class Elements(object):
             * numerical value - the power to raise each element to
             * The object containing the elements to raise the elements
               in this object to
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -648,7 +676,7 @@ class Elements(object):
             features = numpy.array(features)
         else:
             features = numpy.array(range(len(self._source.features)))
-        toCalculate = self._source.copyAs('numpyarray')
+        toCalculate = self._source.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:

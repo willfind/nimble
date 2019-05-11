@@ -540,7 +540,7 @@ def loadSettings():
     return ret
 
 
-def syncWithInterfaces(settingsObj, interfaceList, save):
+def setInterfaceOptions(settingsObj, interface, save):
     """
     Synchronizes the configuration file, settings object in memory, and
     the the available interfaces, so that all three have the same option
@@ -549,16 +549,15 @@ def syncWithInterfaces(settingsObj, interfaceList, save):
     before a user could have to rely on accessing options for that
     interface.
     """
-    for interface in interfaceList:
-        interfaceName = interface.getCanonicalName()
-        optionNames = interface.optionNames
-        for opName in optionNames:
-            try:
-                settingsObj.get(interfaceName, opName)
-            except (configparser.NoSectionError, configparser.NoOptionError):
-                settingsObj.set(interfaceName, opName, "")
-            if save:
-                settingsObj.saveChanges(interfaceName, opName)
+    interfaceName = interface.getCanonicalName()
+    optionNames = interface.optionNames
+    for opName in optionNames:
+        try:
+            settingsObj.get(interfaceName, opName)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            settingsObj.set(interfaceName, opName, "")
+        if save:
+            settingsObj.saveChanges(interfaceName, opName)
 
 
 def autoRegisterFromSettings():

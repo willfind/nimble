@@ -151,6 +151,13 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         msg += "the only accepted list formats, yet the (0,0)th element was "
         msg += str(type(rawData[0][0]))
         raise TypeError(msg)
+    mustCopy = ['automatic', True]
+    if pnamesID in mustCopy or fnamesID is mustCopy:
+        # copy rawData to avoid modifying the original user data
+        if isinstance(rawData[0], tuple):
+            rawData = [list(row) for row in rawData]
+        else:
+            rawData = [row.copy() for row in rawData]
 
     firstRow = rawData[0] if len(rawData) > 0 else None
     secondRow = rawData[1] if len(rawData) > 1 else None
@@ -383,11 +390,11 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                                                          featureNames)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
-        # pointNames and featureNames may be True, False, 'automatic', or
-        # explicit names
+        # pointNames and featureNames may be True, False, None, 'automatic', or
+        # explicit names. False and None have the same behavior.
 
         # User explicitly did not want names extracted
-        if pointNames is False:
+        if pointNames is False or pointNames is None:
             # assert that data was not accidentally removed
             assert tempPointNames is None
             pointNames = None
@@ -406,7 +413,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
             pointNames = pointNames
 
         # User explicitly did not want names extracted
-        if featureNames is False:
+        if featureNames is False or featureNames is None:
             # assert that data was not accidentally removed
             assert tempFeatureNames is None
             featureNames = None
@@ -419,7 +426,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
         # We could have extracted name and did
         elif featureNames == 'automatic' and tempFeatureNames is not None:
             featureNames = tempFeatureNames
-        # Point names were provided by user
+        # Feature names were provided by user
         else:
             assert tempFeatureNames is None
             featureNames = featureNames
@@ -655,7 +662,7 @@ def initDataObject(
                              featureNames=featureNames, name=name,
                              paths=pathsToPass, elementType=elementType,
                              reuseData=reuseData)
-            ret = ret.copyAs(returnType)
+            ret = ret.copy(to=returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except Exception:
@@ -730,7 +737,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
             # discard the point of feature names that pulled along since we
             # extracted these first
             pnames.points.extract(featureNamesID)
-        praw = pnames.copyAs('numpyarray', outputAs1D=True)
+        praw = pnames.copy(to='numpyarray', outputAs1D=True)
         praw = numpy.vectorize(str)(praw)
 
     fraw = None
@@ -739,7 +746,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
         fnames = ret.points.extract(featureNamesID)
         # extracted point names first, so if they existed, they aren't in
         # ret anymore. So we DON'T need to extract them from this object
-        fraw = fnames.copyAs('numpyarray', outputAs1D=True)
+        fraw = fnames.copy(to='numpyarray', outputAs1D=True)
         fraw = numpy.vectorize(str)(fraw)
 
     # have to wait for everything to be extracted before we add the names,
@@ -2160,9 +2167,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        nimble.configuration.syncWithInterfaces(nimble.settings,
-                                               [currInterface],
-                                               save=save)
+        nimble.configuration.setInterfaceOptions(nimble.settings,
+                                                 currInterface, save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
@@ -3250,9 +3256,9 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
 
     # convert datatype if not matrix
     if returnType.lower() != 'matrix':
-        pointsObj = pointsObj.copyAs(returnType)
-        labelsObj = labelsObj.copyAs(returnType)
-        noiselessLabelsObj = noiselessLabelsObj.copyAs(returnType)
+        pointsObj = pointsObj.copy(to=returnType)
+        labelsObj = labelsObj.copy(to=returnType)
+        noiselessLabelsObj = noiselessLabelsObj.copy(to=returnType)
 
     return (pointsObj, labelsObj, noiselessLabelsObj)
 
@@ -3282,8 +3288,8 @@ def sumAbsoluteDifference(dataOne, dataTwo):
         msg += "numbers of points."
         raise InvalidArgumentValueCombination(msg)
 
-    numpyOne = dataOne.copyAs('numpyarray')
-    numpyTwo = dataTwo.copyAs('numpyarray')
+    numpyOne = dataOne.copy(to='numpyarray')
+    numpyTwo = dataTwo.copy(to='numpyarray')
 
     differences = numpyOne - numpyTwo
 
@@ -3741,7 +3747,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     # of class labels
     labelVector = trainX.features.copy([trainY])
     labelVector.transpose()
-    labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+    labelSet = list(set(labelVector.copy(to="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
     # For each pair of class labels: remove all points with one of those
@@ -3761,11 +3767,11 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
                                               arguments=merged, useLog=useLog)
         #put predictions into table of predictions
         if rawPredictions is None:
-            rawPredictions = partialResults.copyAs(format="List")
+            rawPredictions = partialResults.copy(to="List")
         else:
             predName = 'predictions-' + str(predictionFeatureID)
             partialResults.features.setName(0, predName)
-            rawPredictions.features.add(partialResults.copyAs(format="List"))
+            rawPredictions.features.add(partialResults.copy(to="List"))
         pairData.features.add(pairTrueLabels)
         trainX.points.add(pairData)
         predictionFeatureID += 1
@@ -3779,7 +3785,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         # construct a list of lists, with each row in the list containing the
         # predicted label and score of that label for the corresponding row in
         # rawPredictions
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         tempResultsList = []
         for row in predictionMatrix:
             scores = countWins(row)
@@ -3790,13 +3796,14 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = nimble.createData("List", tempResultsList,
-                                             featureNames=featureNames)
+                                             featureNames=featureNames,
+                                             useLog=False)
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
         zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
         labelIndexDict = {str(v): k for k, v in zipIndexLabel}
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         resultsContainer = []
         for row in predictionMatrix:
             finalRow = [0] * len(columnHeaders)
@@ -3806,8 +3813,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
 
-        return nimble.createData(rawPredictions.getTypeString(), resultsContainer,
-                                 featureNames=columnHeaders)
+        return nimble.createData(rawPredictions.getTypeString(),
+                                 resultsContainer, featureNames=columnHeaders,
+                                 useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)
@@ -3876,7 +3884,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
     # Get set of unique class labels
     labelVector = trainY.copy()
     labelVector.transpose()
-    labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+    labelSet = list(set(labelVector.copy(to="python list")[0]))
 
     # For each class label in the set of labels:  convert the true
     # labels in trainY into boolean labels (1 if the point
@@ -3910,18 +3918,18 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.points.calculate(
-            extractWinningPredictionIndex).copyAs(format="python list")
+            extractWinningPredictionIndex).copy(to="python list")
         winningLabels = []
         for [winningIndex] in winningPredictionIndices:
             winningLabels.append([labelSet[int(winningIndex)]])
         return nimble.createData(rawPredictions.getTypeString(), winningLabels,
-                                 featureNames=['winningLabel'])
+                                 featureNames=['winningLabel'], useLog=False)
 
     elif scoreMode.lower() == 'bestScore'.lower():
         # construct a list of lists, with each row in the list containing the
         # predicted label and score of that label for the corresponding row in
         # rawPredictions
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         indexToLabel = rawPredictions.features.getNames()
         tempResultsList = []
         for row in predictionMatrix:
@@ -3932,7 +3940,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = nimble.createData("List", tempResultsList,
-                                             featureNames=featureNames)
+                                             featureNames=featureNames,
+                                             useLog=False)
         return resultsContainer
 
     elif scoreMode.lower() == 'allScores'.lower():
@@ -3943,7 +3952,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
         labelIndexDict = {v: k for k, v in zipIndexLabel}
         featureNamesItoN = rawPredictions.features.getNames()
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         resultsContainer = []
         for row in predictionMatrix:
             finalRow = [0] * len(columnHeaders)
@@ -3955,8 +3964,9 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
                 finalRow[finalIndex] = score
             resultsContainer.append(finalRow)
         #wrap data in Base container
-        return nimble.createData(rawPredictions.getTypeString(), resultsContainer,
-                                 featureNames=columnHeaders)
+        return nimble.createData(rawPredictions.getTypeString(),
+                                 resultsContainer, featureNames=columnHeaders,
+                                 useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)

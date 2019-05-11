@@ -508,7 +508,7 @@ class Axis(object):
     def _add(self, toAdd, insertBefore, useLog=None):
         self._validateInsertableData(toAdd)
         if self._source.getTypeString() != toAdd.getTypeString():
-            toAdd = toAdd.copyAs(self._source.getTypeString())
+            toAdd = toAdd.copy(to=self._source.getTypeString())
 
         if insertBefore is None:
             insertBefore = len(self)

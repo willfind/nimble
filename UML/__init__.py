@@ -79,7 +79,8 @@ configuration.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.
-configuration.syncWithInterfaces(settings, interfaces.available, save=True)
+for interface in interfaces.available:
+    configuration.setInterfaceOptions(settings, interface, save=True)
 
 # initialize the logging file
 logger.active = logger.initLoggerAndLogConfig()

@@ -224,20 +224,20 @@ class Keras(UniversalInterface):
         if trainX is not None:
             if trainX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                trainX = trainX.copyAs('numpy matrix')
+                trainX = trainX.copy(to='numpy matrix')
 
         if trainY is not None:
             if len(trainY.features) > 1:
-                trainY = (trainY.copyAs('numpy array'))
+                trainY = (trainY.copy(to='numpy array'))
             else:
-                trainY = trainY.copyAs('numpy array', outputAs1D=True)
+                trainY = trainY.copy(to='numpy array', outputAs1D=True)
 
         if testX is not None:
             if testX.getTypeString() == 'Matrix':
                 testX = testX.data
             elif testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                testX = testX.copyAs('numpy matrix')
+                testX = testX.copy(to='numpy matrix')
         #
         # # this particular learner requires integer inputs
         # if learnerName == 'MultinomialHMM':
@@ -305,7 +305,7 @@ class Keras(UniversalInterface):
             def sparseGenerator():
                 while True:
                     for i in range(len(trainX.points)):
-                        tmpData = (trainX.pointView(i).copyAs('numpy matrix'),
+                        tmpData = (trainX.pointView(i).copy(to='numpy matrix'),
                                    numpy.matrix(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
@@ -401,7 +401,7 @@ class Keras(UniversalInterface):
             def sparseGenerator():
                 while True:
                     for i in range(len(testX.points)):
-                        tmpData = testX.pointView(i).copyAs('numpy matrix')
+                        tmpData = testX.pointView(i).copy(to='numpy matrix')
                         yield tmpData
             arguments['generator'] = sparseGenerator()
             return learner.predict_generator(**arguments)

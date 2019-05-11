@@ -78,8 +78,8 @@ def TODO_RandomSequenceOfMethods():
     objectList = []
     first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
     objectList.append(first)
-    objectList.append(first.copyAs(format='Matrix'))
-    objectList.append(first.copyAs(format='Sparse'))
+    objectList.append(first.copy(to='Matrix'))
+    objectList.append(first.copy(to='Sparse'))
     runSequence(objectList)
 
     ## dense float trial
@@ -87,8 +87,8 @@ def TODO_RandomSequenceOfMethods():
     objectList = []
     first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
     objectList.append(first)
-    objectList.append(first.copyAs(format='Matrix'))
-    objectList.append(first.copyAs(format='Sparse'))
+    objectList.append(first.copy(to='Matrix'))
+    objectList.append(first.copy(to='Sparse'))
     runSequence(objectList)
 
     # sparse int trial
@@ -96,8 +96,8 @@ def TODO_RandomSequenceOfMethods():
     objectList = []
     first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
     objectList.append(first)
-    objectList.append(first.copyAs(format='Matrix'))
-    objectList.append(first.copyAs(format='Sparse'))
+    objectList.append(first.copy(to='Matrix'))
+    objectList.append(first.copy(to='Sparse'))
     runSequence(objectList)
 
     # sparse float trial
@@ -105,8 +105,8 @@ def TODO_RandomSequenceOfMethods():
     objectList = []
     first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
     objectList.append(first)
-    objectList.append(first.copyAs(format='Matrix'))
-    objectList.append(first.copyAs(format='Sparse'))
+    objectList.append(first.copy(to='Matrix'))
+    objectList.append(first.copy(to='Sparse'))
     runSequence(objectList)
 
 
@@ -256,12 +256,12 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
     if points == 0 or features == 0:
         rawData = numpy.empty((points, features))
         ret = nimble.createData('Matrix', rawData)
-        ret = ret.copyAs(dataType)
+        ret = ret.copy(to=dataType)
     else:
         nimble.randomness.startAlternateControl()
         nimble.setRandomSeed(random.randint(0, 2**32 - 1))
         ret = nimble.createRandomData("Matrix", points, features, .5, elementType='int')
-        ret = ret.copyAs(dataType)
+        ret = ret.copy(to=dataType)
         nimble.randomness.endAlternateControl()
     return ret
 
@@ -552,7 +552,7 @@ generators = {'addFeatures': [genObjMatchPoints],
               'copy': [],
               # TODO !!!! last arg should be bool, but 1d outputs aren't implemented
               # / they're dependent on a raw output in the first arg
-              'copyAs': [genCopyAsFormat, genBool, genFalse],
+              'copy': [genCopyAsFormat, genBool, genFalse],
               'copyFeatures': [ftp(pickGen, genList=(genFID, genFIDList)), None, None],
               'copyPoints': [ftp(pickGen, genList=(genPID, genPIDList)), None, None],
               'elementwiseMultiply': [genObjMatchShape],

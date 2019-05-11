@@ -681,11 +681,11 @@ def createDataNoValidation(returnType, data, pointNames=None,
     to default values.
     """
     if hasattr(data, 'dtype'):
-        if data.dtype not in [numpy.float, numpy.object_]:
-            raise InvalidArgumentType("data must have float or object dtype")
-        # this could be a numeric subsection from a nimble object with an
-        # 'object' dtype. We optimize the dtype here to support operations
-        # requiring a numeric dtype.
+        if not issubclass(data.dtype.type, (numpy.number, numpy.object_)):
+            raise InvalidArgumentType("data must have numeric or object dtype")
+        # this could be a numeric subsection from a UML object with an 'object'
+        # dtype. We optimize the dtype here to support operations requiring a
+        # numeric dtype.
         try:
             data = data.astype(numpy.float)
         except ValueError:

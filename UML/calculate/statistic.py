@@ -245,7 +245,7 @@ def quartiles(values, ignoreNoneOrNan=True):
 
     if isinstance(values, nimble.data.Base):
         #conver to a horizontal array
-        values = values.copyAs("numpyarray").flatten()
+        values = values.copy(to="numpyarray").flatten()
 
     if ignoreNoneOrNan:
         values = [v for v in values if not _isMissing(v)]
@@ -343,8 +343,8 @@ def residuals(toPredict, controlVars):
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
     workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
-    workingCV = workingCV.copyAs("numpy matrix")
-    workingTP = toPredict.copyAs("numpy matrix")
+    workingCV = workingCV.copy(to="numpy matrix")
+    workingTP = toPredict.copy(to="numpy matrix")
 
     x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
     pred = workingCV * x

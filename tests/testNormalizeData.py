@@ -59,7 +59,7 @@ def test_mormalizeData_referenceDataSafety():
             pass
 
         def apply(self, testX):
-            return testX.copyAs('List')
+            return testX.copy(to='List')
 
     nimble.registerCustomLearner("custom", ListOutputer)
 

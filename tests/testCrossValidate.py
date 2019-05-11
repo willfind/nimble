@@ -352,7 +352,7 @@ def test_crossValidateReturnBest():
 
         def apply(self, testX):
             num = int(math.floor(len(testX.points) * self.flip))
-            ret = self.trained.apply(testX).copyAs('pythonList')
+            ret = self.trained.apply(testX).copy(to='pythonList')
             for i in range(num):
                 if ret[i][0] == 0:
                     ret[i][0] = 1

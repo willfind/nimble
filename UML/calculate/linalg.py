@@ -75,7 +75,7 @@ def inverse(aObj):
             raise exception
 
     if aObj.getTypeString() in ['Matrix', 'DataFrame', 'List']:
-        invObj = aObj.copyAs('Matrix')
+        invObj = aObj.copy(to='Matrix')
         try:
             invData = scipy.linalg.inv(invObj.data)
         except scipy.linalg.LinAlgError as exception:
@@ -85,7 +85,7 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
     else:
-        invObj = aObj.copyAs('Sparse')
+        invObj = aObj.copy(to='Sparse')
         try:
             invData = scipy.sparse.linalg.inv(invObj.data.tocsc())
         except RuntimeError as exception:
@@ -99,7 +99,7 @@ def inverse(aObj):
     # invObj.transpose()
     # invObj.data = invData
     # if aObj.getTypeString() != invObj.getTypeString:
-    #     invObj = invObj.copyAs(aObj.getTypeString())
+    #     invObj = invObj.copy(to=aObj.getTypeString())
     # return invObj
 
 
@@ -170,7 +170,7 @@ def pseudoInverse(aObj, method='svd'):
             msg = 'Elements types in object data are not supported.'
             raise InvalidArgumentType(msg)
 
-    pinvObj = aObj.copyAs('Matrix')
+    pinvObj = aObj.copy(to='Matrix')
     if method == 'svd':
         try:
             pinvData = scipy.linalg.pinv2(pinvObj.data)
@@ -181,7 +181,7 @@ def pseudoInverse(aObj, method='svd'):
     pinvObj.transpose(useLog=False)
     pinvObj.data = numpy.asmatrix(pinvData)
     if aObj.getTypeString() != 'Matrix':
-        pinvObj = pinvObj.copyAs(aObj.getTypeString())
+        pinvObj = pinvObj.copy(to=aObj.getTypeString())
     return pinvObj
 
 
@@ -246,9 +246,9 @@ def solve(aObj, bObj):
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
-        aObj = aObj.copyAs('Matrix')
+        aObj = aObj.copy(to='Matrix')
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        bObj = bObj.copyAs('Matrix')
+        bObj = bObj.copy(to='Matrix')
 
     if aObj.getTypeString() == 'Matrix':
         solution = scipy.linalg.solve(aObj.data, bObj.data)
@@ -310,9 +310,9 @@ def leastSquaresSolution(aObj, bObj):
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
-        aObj = aObj.copyAs('Matrix')
+        aObj = aObj.copy(to='Matrix')
     if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        bObj = bObj.copyAs('Matrix')
+        bObj = bObj.copy(to='Matrix')
 
     if aObj.getTypeString() == 'Matrix':
         solution = scipy.linalg.lstsq(aObj.data, bObj.data)

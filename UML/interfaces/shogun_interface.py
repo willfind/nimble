@@ -571,31 +571,31 @@ class Shogun(UniversalInterface):
         try:
             inverseMapping = None
             #if labelsObj.getTypeString() != 'Matrix':
-            labelsObj = labelsObj.copyAs('Matrix')
+            labelsObj = labelsObj.copy(to='Matrix')
             problemType = self._getMachineProblemType(learnerName)
             if problemType == self.shogun.Classifier.PT_MULTICLASS:
                 inverseMapping = _remapLabelsRange(labelsObj)
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
-                flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
+                flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.MulticlassLabels(flattened.astype(float))
             elif problemType == self.shogun.Classifier.PT_BINARY:
                 inverseMapping = _remapLabelsSpecific(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
-                flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
+                flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.BinaryLabels(flattened.astype(float))
             elif problemType == self.shogun.Classifier.PT_REGRESSION:
-                flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
+                flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labels = self.shogun.Features.RegressionLabels(flattened.astype(float))
             else:
                 raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
         except ImportError:
             from shogun.Features import Labels
 
-            flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
+            flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
             labels = Labels(labelsObj.astype(float))
 
         return labels
@@ -605,15 +605,15 @@ class Shogun(UniversalInterface):
         if typeString == 'Sparse':
             #raw = dataObj.data.tocsc().astype(numpy.float)
             #raw = raw.transpose()
-            raw = dataObj.copyAs("scipy csc", rowsArePoints=False)
+            raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
             trans = self.shogun.Features.SparseRealFeatures()
             trans.set_sparse_feature_matrix(raw)
             if 'Online' in learnerName:
                 trans = self.shogun.Features.StreamingSparseRealFeatures(trans)
         else:
-            #raw = dataObj.copyAs('numpyarray').astype(numpy.float)
+            #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
             #raw = raw.transpose()
-            raw = dataObj.copyAs('numpyarray', rowsArePoints=False)
+            raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
             trans = self.shogun.Features.RealFeatures()
             trans.set_feature_matrix(raw)
             if 'Online' in learnerName:

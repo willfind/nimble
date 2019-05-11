@@ -59,7 +59,6 @@ class NimbleLogger(object):
         self.connection = None
         self.cursor = None
         self.isAvailable = False
-        self.position = 0
         self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
                          'run': self.logRun, 'data': self.logData,
                          'crossVal': self.logCrossValidation}
@@ -194,9 +193,9 @@ class NimbleLogger(object):
         """
         Log information about the loading of data or a trained learner.
 
-        Loads should only be logged during a user call to the function,
-        not internal calls, this is determined by the logger's
-        ``position`` attribute.
+        If this will be logged, store an entry in the database with
+        "load" as the logType and a dictionary (stored as a string) of
+        attributes for the loaded object as the logInfo.
 
         Parameters
         ----------
@@ -230,8 +229,9 @@ class NimbleLogger(object):
         """
         Log an object's information reports.
 
-        Add data generated from calls to featureReport and
-        summaryReport to the log.
+        If this will be logged, store an entry in the database with
+        "data" as the logType and a dictionary (stored as a string) of
+        the report data as the logInfo.
 
         reportType : str
             'feature' or 'summary' based on the type of report.
@@ -252,10 +252,10 @@ class NimbleLogger(object):
         """
         Log information about a data preparation step performed.
 
-        Add information regarding the data preprocessing functions
-        called on an object. Prep should only be logged during a user
-        call to the function, not internal calls, this is determined by
-        the logger's ``position`` attribute.
+        If this will be logged, store an entry in the database with
+        "prep" as the logType and a dictionary (stored as a string) of
+        the preprocessing function called and its arguments as the
+        logInfo.
 
         Parameters
         ----------
@@ -282,10 +282,9 @@ class NimbleLogger(object):
         """
         Log information about each run.
 
-        Add information related to each run on training and testing
-        data. Runs should only be logged during a user call to the
-        function, not internal calls, this is determined by the logger's
-        ``position`` attribute.
+        If this will be logged, store an entry in the database with
+        "run" as the logType and a dictionary (stored as a string) of
+        the learner function called and its arguments as the logInfo.
 
         Parameters
         ----------
@@ -334,10 +333,12 @@ class NimbleLogger(object):
             # integers or strings passed for Y values, convert if necessary
             if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
                 trainData = trainData.copy()
-                trainLabels = trainData.features.extract(trainLabels)
+                trainLabels = trainData.features.extract(trainLabels,
+                                                         useLog=False)
             if isinstance(testLabels, (six.string_types, int, numpy.int64)):
                 testData = testData.copy()
-                testLabels = testData.features.extract(testLabels)
+                testLabels = testData.features.extract(testLabels,
+                                                       useLog=False)
             if trainData is not None:
                 logInfo["trainData"] = trainData.name
                 logInfo["trainDataPoints"] = len(trainData.points)
@@ -378,9 +379,12 @@ class NimbleLogger(object):
         """
         Log the results of cross validation.
 
-        Cross validation can occur at any time, even by internal calls
-        to the function, based on the useLog value and the value of
-        enableCrossValidationDeepLogging in config.
+        If this will be logged, store an entry in the database with
+        "crossVal" as the logType and a dictionary (stored as a string)
+        of the preprocessing function called and its arguments as the
+        logInfo. Cross validation can occur at any time, even by
+        internal calls to the function, based on the useLog value and
+        the value of enableCrossValidationDeepLogging in config.
 
         Parameters
         ----------

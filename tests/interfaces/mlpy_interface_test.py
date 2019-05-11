@@ -13,69 +13,76 @@ from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.mlpy_interface import Mlpy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 mlpy = nimble.importExternalLibraries.importModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 
 @mlpySkipDec
+@noLogEntryExpected
 def test_Mlpy_version():
     interface = Mlpy()
     assert interface.version() == mlpy.__version__
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadeSVMClassification():
     """ Test mlpy() by calling on SVM classification with handmade output """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2], [3, 1, 500]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 
     assert ret is not None
 
     expected = [[1.]]
-    expectedObj = nimble.createData('Matrix', expected)
+    expectedObj = nimble.createData('Matrix', expected, useLog=False)
 
     numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadeLogisticRegression():
     """ Test mlpy() by calling on logistic regression on handmade output """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2], [3, 1, 500]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    ret = nimble.trainAndApply("mlpy.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None,
-                            arguments={"solver_type": "l2r_lr"})
+    ret = nimble.trainAndApply("mlpy.LibLinear", trainingObj, trainY="Y", testX=testObj,
+                               output=None, arguments={"solver_type": "l2r_lr"})
 
     assert ret is not None
 
     expected = [[1.]]
-    expectedObj = nimble.createData('Matrix', expected)
+    expectedObj = nimble.createData('Matrix', expected, useLog=False)
 
     numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadeKNN():
     """ Test mlpy() by calling on knn classification on handmade output """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [0, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    ret = nimble.trainAndApply("mlpy.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k": 1})
+    ret = nimble.trainAndApply("mlpy.KNN", trainingObj, trainY="Y", testX=testObj,
+                               output=None, arguments={"k": 1})
 
     assert ret is not None
 
@@ -83,13 +90,14 @@ def testMlpyHandmadeKNN():
     numpy.testing.assert_approx_equal(ret.data[1, 0], 0.)
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadePCA():
     """ Test mlpy() by calling PCA and checking the output has the correct dimension """
     data = [[1, 1, 1], [2, 2, 2], [4, 4, 4]]
-    trainingObj = nimble.createData('Matrix', data)
+    trainingObj = nimble.createData('Matrix', data, useLog=False)
 
     data2 = [[4, 4, 4]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.PCA", trainingObj, testX=testObj, output=None, arguments={'k': 1})
 
@@ -98,13 +106,14 @@ def testMlpyHandmadePCA():
     assert len(ret.data[0]) == 1
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadeKernelPCA():
     """ Test mlpy() by calling PCA with a kernel transformation, checking the output has the correct dimension """
     data = [[1, 1], [2, 2], [3, 3]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.createData('Matrix', data, useLog=False)
 
     data2 = [[4, 4]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None,
                             arguments={"kernel": "KernelGaussian", 'k': 1})
@@ -115,44 +124,47 @@ def testMlpyHandmadeKernelPCA():
 
 @mlpySkipDec
 @raises(InvalidArgumentValue)
+@noLogEntryExpected
 def testMlpyHandmadeInnerProductTrainingPCAException():
     """ Test mlpy by calling a kernel based leaner with no kernel or transformed data """
     data = [[1, 1], [2, 2], [3, 3], [7, 7]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.createData('Matrix', data, useLog=False)
 
     data2 = [[4, 4]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={'k': 1})
 
     assert ret is not None
 
 @mlpySkipDec
+@oneLogEntryExpected
 def testMlpyHandmadeInnerProductTrainingPCA():
     """ Test mlpy by calling PCA with data that has already been run through a kernel """
     import mlpy
 
     data = [[1, 1], [2, 2], [3, 3], [7, 7]]
     kernData = mlpy.kernel_linear(data, data)
-    trainObj = nimble.createData('Matrix', kernData)
+    trainObj = nimble.createData('Matrix', kernData, useLog=False)
 
     data2 = [[4, 4]]
     kernData2 = mlpy.kernel_linear(data2, data2)
-    testObj = nimble.createData('Matrix', kernData2)
+    testObj = nimble.createData('Matrix', kernData2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={'k': 1})
 
     assert ret is not None
 
 @mlpySkipDec
+@logCountAssertionFactory(3)
 def testMlpyScoreMode():
     """ Test mlpy() scoreMode flags"""
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -172,14 +184,15 @@ def testMlpyScoreMode():
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
 @mlpySkipDec
+@logCountAssertionFactory(3)
 def testMlpyScoreModeBinary():
     """ Test mlpy() scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
     data = [[1, 1, 1], [1, 0, 1], [1, -1, -1], [-1, 30, 2], [-1, 30, 3], [-1, 34, 4]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 1], [25, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -199,15 +212,16 @@ def testMlpyScoreModeBinary():
     checkLabelOrderingAndScoreAssociations([1, -1], bestScores, allScores)
 
 @mlpySkipDec
+@logCountAssertionFactory(3)
 def testMlpyRegression():
     """ Test mlpy() regressors problematic in previous implementations """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2], [3, 1, 500]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.Ridge", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
     assert ret is not None
@@ -246,14 +260,15 @@ def testMlpyLARSDisallowed():
     nimble.trainAndApply("mlpy.LARS", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
 @mlpySkipDec
+@logCountAssertionFactory(4)
 def testMlpyRequiredInitArgs():
     """ Test mlpy() learners with required parameters to their __init__ methods"""
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.PLS", trainingObj, trainY="Y", testX=testObj, output=None, arguments={'iters': 10})
     assert ret is not None
@@ -267,14 +282,15 @@ def testMlpyRequiredInitArgs():
     assert ret is not None
 
 @mlpySkipDec
+@logCountAssertionFactory(2)
 def testMlpyUnknownCrashes():
     """ Test mlpy on learners failing for undiagnosed reasons in previous implementation """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.Golub", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
     assert ret is not None
@@ -282,17 +298,18 @@ def testMlpyUnknownCrashes():
     assert ret is not None
 
 @mlpySkipDec
+@logCountAssertionFactory(5)
 def testMlpyKernelLearners():
     """ Test mlpy on a handful of learners that rely on kernels """
     variables = ["Y", "x1", "x2"]
     data4d = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2], [3, 1, 500]]
-    trainingObj4d = nimble.createData('Matrix', data4d, featureNames=variables)
+    trainingObj4d = nimble.createData('Matrix', data4d, featureNames=variables, useLog=False)
 
     data2d = [[0, 1, 1], [0, 0, 1], [0, 3, 2], [1, -300, 2], [1, 1, 500]]
-    trainingObj2d = nimble.createData('Matrix', data2d, featureNames=variables)
+    trainingObj2d = nimble.createData('Matrix', data2d, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("mlpy.KFDA", trainingObj2d, trainY="Y", testX=testObj, output=None,
                             arguments={'kernel': 'KernelLinear'})
@@ -328,16 +345,18 @@ def testMlpyKernelExponentialDisallowed():
     assert ret is not None
 
 @mlpySkipDec
+@logCountAssertionFactory(2)
 def testMlpyClusteringLearners():
     """ Test mlpy exposes appropriately wrapped clustering learners """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     nimble.trainAndApply("mlpy.MFastHCluster", trainingObj, output=None, arguments={'t': 1})
     nimble.trainAndApply("mlpy.kmeans", trainingObj, output=None, arguments={'k': 2})
 
 @mlpySkipDec
+@noLogEntryExpected
 def testMlpyListLearners():
     """ Test mlpy's listMlpyLearners() by checking the output for those learners we unit test """
 
@@ -362,10 +381,11 @@ def testMlpyListLearners():
                         assert key in pSet
 
 @mlpySkipDec
+@logCountAssertionFactory(8)
 def test_applier_acceptsNewArguments():
     """ Test an mlpy function that accept arguments for pred and transform """
     data = [[0, 1, 1], [0, 0, 1], [1, -300, 2]]
-    dataObj = nimble.createData('Matrix', data)
+    dataObj = nimble.createData('Matrix', data, useLog=False)
 
     # MFastHCluster.pred takes a 't' argument.
     expected = nimble.trainAndApply("mlpy.MFastHCluster", dataObj, arguments={'t': 1})

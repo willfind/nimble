@@ -15,6 +15,8 @@ from UML.randomness import numpyRandom
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from .skipTestDecorator import SkipMissing
+from ..assertionHelpers import logCountAssertionFactory
+from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 scipy = nimble.importModule('scipy.sparse')
 
@@ -68,17 +70,20 @@ def testShogun_multiClassDataToBinaryAlg():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunHandmadeBinaryClassification():
     """ Test shogun by calling a binary linear classifier """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 0], [-0, 0, 1], [1, 3, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables,
+                                 useLog=False)
 
     data2 = [[3, 3], [-1, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {}
-    ret = nimble.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+    ret = nimble.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y",
+                            testX=testObj, output=None, arguments=args)
 
     assert ret is not None
 
@@ -87,15 +92,16 @@ def testShogunHandmadeBinaryClassification():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunHandmadeBinaryClassificationWithKernel():
     """ Test shogun by calling a binary linear classifier with a kernel """
 
     variables = ["Y", "x1", "x2"]
     data = [[5, -11, -5], [1, 0, 1], [1, 3, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[5, 3], [-1, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'st': 1, 'kernel': 'GaussianKernel', 'w': 2, 'size': 10}
     ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -107,14 +113,15 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunKMeans():
     """ Test shogun by calling the Kmeans classifier, a distance based machine """
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, 8, 1], [1, 7, 1], [2, 1, 9], [2, 1, 8]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[0, -10], [10, 1], [1, 10]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'distance': 'ManhattanMetric'}
 
@@ -128,15 +135,16 @@ def testShogunKMeans():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunMulticlassSVM():
     """ Test shogun by calling a multilass classifier with a kernel """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, -118, 1], [1, -117, 1], [2, 1, 191], [2, 1, 118], [3, -1000, -500]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[0, 0], [-101, 1], [1, 101], [1, 1]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'C': .5, 'k': 'LinearKernel'}
 
@@ -152,6 +160,7 @@ def testShogunMulticlassSVM():
 
 
 @shogunSkipDec
+@oneLogEntryExpected
 def testShogunSparseRegression():
     """ Test shogun sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
     if not scipy:
@@ -162,10 +171,10 @@ def testShogunSparseRegression():
     cols = numpyRandom.randint(0, x, c)
     data = numpyRandom.rand(c)
     A = scipy.sparse.coo_matrix((data, (points, cols)), shape=(x, x))
-    obj = nimble.createData('Sparse', A)
+    obj = nimble.createData('Sparse', A, useLog=False)
 
     labelsData = numpyRandom.rand(x)
-    labels = nimble.createData('Matrix', labelsData.reshape((x, 1)))
+    labels = nimble.createData('Matrix', labelsData.reshape((x, 1)), useLog=False)
 
     ret = nimble.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj, max_train_time=10)
 
@@ -173,6 +182,7 @@ def testShogunSparseRegression():
 
 
 @shogunSkipDec
+@logCountAssertionFactory(4)
 def testShogunRossData():
     """ Test shogun by calling classifers using the problematic data from Ross """
 
@@ -187,10 +197,10 @@ def testShogunRossData():
 
     data = [p0, p1, p2, p3, p4, p5, p6, p7]
 
-    trainingObj = nimble.createData('Matrix', data)
+    trainingObj = nimble.createData('Matrix', data, useLog=False)
 
     data2 = [[0, 0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'C': 1.0}
     argsk = {'C': 1.0, 'k': "LinearKernel"}
@@ -212,6 +222,7 @@ def testShogunRossData():
 
 @shogunSkipDec
 @attr('slow')
+@oneLogEntryExpected
 def testShogunEmbeddedRossData():
     """ Test shogun by MulticlassOCAS with the ross data embedded in random data """
 
@@ -238,10 +249,10 @@ def testShogunEmbeddedRossData():
                 else:
                     numpyData[i, j] = numpyRandom.rand()
 
-    trainingObj = nimble.createData('Matrix', numpyData)
+    trainingObj = nimble.createData('Matrix', numpyData, useLog=False)
 
     data2 = [[0, 0, 0, 0, 0.33, 0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98, 0.55, 0, 0.67, 0.98, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'C': 1.0}
 
@@ -253,14 +264,15 @@ def testShogunEmbeddedRossData():
 
 
 @shogunSkipDec
+@logCountAssertionFactory(3)
 def testShogunScoreModeMulti():
     """ Test shogun returns the right dimensions when given different scoreMode flags, multi case"""
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 30, 20], [2, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -279,14 +291,15 @@ def testShogunScoreModeMulti():
 
 
 @shogunSkipDec
+@logCountAssertionFactory(3)
 def testShogunScoreModeBinary():
     """ Test shogun returns the right dimensions when given different scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
     data = [[-1, 1, 1], [-1, 0, 1], [1, 30, 2], [1, 30, 3]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 1], [25, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -303,28 +316,30 @@ def testShogunScoreModeBinary():
     assert len(ret.points) == 2
     assert len(ret.features) == 2
 
-
+@shogunSkipDec
+@logCountAssertionFactory(2)
 def TODO_onlineLearneres():
     """ Test shogun can call online learners """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [0, 3, 2], [1, -300, -25]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("shogun.OnlineLibLinear", trainingObj, trainY="Y", testX=testObj, arguments={})
     ret = nimble.trainAndApply("shogun.OnlineSVMSGD", trainingObj, trainY="Y", testX=testObj, arguments={})
 
-
+@shogunSkipDec
+@logCountAssertionFactory(1)
 def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
     """ Test shogun will correctly apply the provided strategies when given multiclass data and a binary learner """
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2]]
-    trainingObj = nimble.createData('Matrix', data, featureNames=variables)
+    trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.createData('Matrix', data2, useLog=False)
 
     ret = nimble.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={},
                             multiClassStrategy="OneVsOne")
@@ -332,6 +347,7 @@ def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
 
 @shogunSkipDec
 @attr('slow')
+@noLogEntryExpected
 def testShogunListLearners():
     """ Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 

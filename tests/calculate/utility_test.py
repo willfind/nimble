@@ -30,8 +30,8 @@ from ..assertionHelpers import noLogEntryExpected
 @raises(InvalidArgumentValue)
 def test_detectBestResult_labels_inconsistentForDifferentKnowns():
     def foo(knowns, predicted):
-        rawKnowns = knowns.copyAs("numpyarray")
-        rawPred = predicted.copyAs("numpy.array")
+        rawKnowns = knowns.copy(to="numpyarray")
+        rawPred = predicted.copy(to="numpy.array")
 
         # case: knowns all zeros
         if not numpy.any(rawKnowns):

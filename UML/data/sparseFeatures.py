@@ -149,7 +149,7 @@ class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
         return nzIt(self._source)
 
     def _unique_implementation(self):
-        unique = self._source.copyAs('Sparse')
+        unique = self._source.copy(to='Sparse')
         return unique.features._unique_implementation()
 
 class nzIt(object):

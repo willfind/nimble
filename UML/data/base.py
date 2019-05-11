@@ -432,6 +432,13 @@ class Base(object):
         ----------
         featureToReplace : int or str
             The index or name of the feature being replaced.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -503,6 +510,13 @@ class Base(object):
         ----------
         featureToConvert : int or str
             The index or name of the feature being replaced.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -567,6 +581,13 @@ class Base(object):
             * list - indices or names of features to group by
         countUniqueValueOnly : bool
             Return only the count of points in the group
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -664,7 +685,7 @@ class Base(object):
             return 0
         valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
                                            outputType='Matrix', useLog=False)
-        valueList = valueObj.copyAs(format="python list")
+        valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
                / float(self._pointCount * self._featureCount))
         bigNum = 1000000000
@@ -703,43 +724,6 @@ class Base(object):
             return False
         return True
 
-    def copy(self):
-        """
-        Return a new object which has the same data.
-
-        The copy will be in the same nimble format as this object and in
-        addition to copying this objects data, the name and path
-        metadata will by copied as well.
-
-        Returns
-        -------
-        nimble Base object
-            A copy of this object
-
-        Examples
-        --------
-        >>> raw = [[1, 3, 5], [2, 4, 6]]
-        >>> ptNames = ['odd', 'even']
-        >>> data = nimble.createData('List', raw, pointNames=ptNames,
-        ...                          name="odd&even")
-        >>> data
-        List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
-            pointNames={'odd':0, 'even':1}
-            name="odd&even"
-            )
-        >>> dataCopy = data.copy()
-        >>> dataCopy
-        List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
-            pointNames={'odd':0, 'even':1}
-            name="odd&even"
-            )
-        """
-        return self.copyAs(self.getTypeString())
-
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
@@ -768,6 +752,13 @@ class Base(object):
             Control whether the order of the points in the returns sets
             matches that of the original object, or if their order is
             randomized.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -901,6 +892,22 @@ class Base(object):
         data set, up to 50 features.  If there are more than 50
         features, only information about 50 of those features will be
         reported.
+
+        Parameters
+        ----------
+        maxFeaturesToCover : int
+            The maximum number of features to include in the report.
+            Default is 50, which is the maximum allowed for this value.
+        displayDigits : int
+            The number of digits to display after a decimal point.
+            Default is 2.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
         ret = produceFeaturewiseReport(
             self, maxFeaturesToCover=maxFeaturesToCover,
@@ -917,6 +924,17 @@ class Base(object):
         summary information about the data set contained in this object.
         Includes proportion of missing values, proportion of zero
         values, total # of points, and number of features.
+
+        displayDigits : int
+            The number of digits to display after a decimal point.
+            Default is 2.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
         ret = produceAggregateReport(self, displayDigits=displayDigits)
         handleLogging(useLog, 'data', "summary", ret)
@@ -942,7 +960,7 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
-    def writeFile(self, outPath, format=None, includeNames=True):
+    def writeFile(self, outPath, fileFormat=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
 
@@ -951,7 +969,7 @@ class Base(object):
         outPath : str
             The location (including file name and extension) where
             we want to write the output file.
-        format : str
+        fileFormat : str
             The formating of the file we write. May be None, 'csv', or
             'mtx'; if None, we use the extension of outPath to determine
             the format.
@@ -967,13 +985,13 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         # if format is not specified, we fall back on the extension in outPath
-        if format is None:
+        if fileFormat is None:
             split = outPath.rsplit('.', 1)
-            format = None
+            fileFormat = None
             if len(split) > 1:
-                format = split[1].lower()
+                fileFormat = split[1].lower()
 
-        if format not in ['csv', 'mtx']:
+        if fileFormat not in ['csv', 'mtx']:
             msg = "Unrecognized file format. Accepted types are 'csv' and "
             msg += "'mtx'. They may either be input as the format parameter, "
             msg += "or as the extension in the outPath"
@@ -999,17 +1017,17 @@ class Base(object):
 
         try:
             self._writeFile_implementation(
-                outPath, format, includePointNames, includeFeatureNames)
+                outPath, fileFormat, includePointNames, includeFeatureNames)
         except Exception:
-            if format.lower() == "csv":
-                toOut = self.copyAs("Matrix")
+            if fileFormat.lower() == "csv":
+                toOut = self.copy(to="Matrix")
                 toOut._writeFile_implementation(
-                    outPath, format, includePointNames, includeFeatureNames)
+                    outPath, fileFormat, includePointNames, includeFeatureNames)
                 return
-            if format.lower() == "mtx":
-                toOut = self.copyAs('Sparse')
+            if fileFormat.lower() == "mtx":
+                toOut = self.copy(to='Sparse')
                 toOut._writeFile_implementation(
-                    outPath, format, includePointNames, includeFeatureNames)
+                    outPath, fileFormat, includePointNames, includeFeatureNames)
                 return
 
     def save(self, outputPath):
@@ -1790,7 +1808,7 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        # toPlot = self.copyAs('numpyarray')
+        # toPlot = self.copy(to='numpyarray')
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
@@ -1989,7 +2007,7 @@ class Base(object):
                 copied = self.points.copy(index, useLog=False)
             else:
                 copied = self.features.copy(index, useLog=False)
-            return copied.copyAs('numpyarray', outputAs1D=True)
+            return copied.copy(to='numpyarray', outputAs1D=True)
 
         def pGetter(index):
             return customGetter(index, 'point')
@@ -2092,6 +2110,16 @@ class Base(object):
         feature and point indices. This operations also includes
         inverting the point and feature names.
 
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
         Examples
         --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
@@ -2138,6 +2166,13 @@ class Base(object):
             Must be of the same type as the calling object. Also, the
             shape of other should be consistent with the shape of this
             object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -2185,35 +2220,70 @@ class Base(object):
                       self.getTypeString(), Base.referenceDataFrom, other)
 
 
-    def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
+    def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
-        Duplicate an object in another format.
+        Duplicate an object. Optionally, to another nimble or raw format.
 
-        Return a new object which has the same data (and names,
-        depending on the return type) as this object.
+        Return a new object containing the same data as this object.
+        When copying to a UML format, the pointNames and featureNames
+        will also be copied, as well as any name and path metadata.
 
         Parameters
         ----------
-        format : str
-            To return a specific kind of nimble Base object, one may
-            specify the format parameter to be 'List', 'Matrix',
-            'Sparse' or 'DataFrame', To specify a raw return type (which
-            will not include point or feature names), one may specify:
-            'python list', 'numpy array', 'numpy matrix', 'scipy csr',
-            'scipy csc', 'list of dict' or 'dict of list'.
+        to : str, None
+            If None, will return a copy of this object. To return a
+            different type of nimble Base object, specify to: 'List',
+            'Matrix', 'Sparse' or 'DataFrame'. To specify a raw return
+            type (which will not include point or feature names),
+            specify to: 'python list', 'numpy array', 'numpy matrix',
+            'scipy csr', 'scipy csc', 'list of dict' or 'dict of list'.
+        rowsArePoints : bool
+            Define whether the rows of the output object correspond to
+            the points in this object. Default is True, if False the
+            returned copy will transpose the data filling each row with
+            feature data.
+        outputAs1D : bool
+            Return a one-dimensional object. Default is False, True is
+            only a valid input for 'python list' and 'numpy array', all
+            other formats must be two-dimensional.
 
         Returns
         -------
         object
-            A copy of this object in the provided format.
+            A copy of this object.  If ``to`` is not None, the copy will
+            be in the specified format.
 
         Examples
         --------
+        Copy this object in the same format.
+
+        >>> raw = [[1, 3, 5], [2, 4, 6]]
+        >>> ptNames = ['odd', 'even']
+        >>> data = nimble.createData('List', raw, pointNames=ptNames,
+        ...                          name="odd&even")
+        >>> data
+        List(
+            [[1.000 3.000 5.000]
+             [2.000 4.000 6.000]]
+            pointNames={'odd':0, 'even':1}
+            name="odd&even"
+            )
+        >>> dataCopy = data.copy()
+        >>> dataCopy
+        List(
+            [[1.000 3.000 5.000]
+             [2.000 4.000 6.000]]
+            pointNames={'odd':0, 'even':1}
+            name="odd&even"
+            )
+
+        Copy to other formats.
+
         >>> ptNames = ['0', '1']
         >>> ftNames = ['a', 'b']
         >>> data = nimble.identity('Matrix', 2, pointNames=ptNames,
         ...                        featureNames=ftNames)
-        >>> asDataFrame = data.copyAs('DataFrame')
+        >>> asDataFrame = data.copy(to='DataFrame')
         >>> asDataFrame
         DataFrame(
             [[1.000 0.000]
@@ -2221,29 +2291,31 @@ class Base(object):
             pointNames={'0':0, '1':1}
             featureNames={'a':0, 'b':1}
             )
-        >>> asNumpyArray = data.copyAs('numpy array')
+        >>> asNumpyArray = data.copy(to='numpy array')
         >>> asNumpyArray
         array([[1., 0.],
                [0., 1.]])
-        >>> asListOfDict = data.copyAs('list of dict')
+        >>> asListOfDict = data.copy(to='list of dict')
         >>> asListOfDict
         [{'a': 1.0, 'b': 0.0}, {'a': 0.0, 'b': 1.0}]
         """
-        #make lower case, strip out all white space and periods, except if
+        # make lower case, strip out all white space and periods, except if
         # format is one of the accepted nimble data types
-        if not isinstance(format, six.string_types):
-            raise InvalidArgumentType("format must be a string")
-        if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
-            format = format.lower()
-            format = format.strip()
-            tokens = format.split(' ')
-            format = ''.join(tokens)
-            tokens = format.split('.')
-            format = ''.join(tokens)
-            if format not in ['pythonlist', 'numpyarray', 'numpymatrix',
-                              'scipycsr', 'scipycsc', 'listofdict',
-                              'dictoflist']:
-                msg = "The only accepted asTypes are: 'List', 'Matrix', "
+        if to is None:
+            to = self.getTypeString()
+        if not isinstance(to, six.string_types):
+            raise InvalidArgumentType("'to' must be a string")
+        if to not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
+            to = to.lower()
+            to = to.strip()
+            tokens = to.split(' ')
+            to = ''.join(tokens)
+            tokens = to.split('.')
+            to = ''.join(tokens)
+            if to not in ['pythonlist', 'numpyarray', 'numpymatrix',
+                          'scipycsr', 'scipycsc', 'listofdict',
+                          'dictoflist']:
+                msg = "The only accepted 'to' types are: 'List', 'Matrix', "
                 msg += "'Sparse', 'DataFrame', 'python list', 'numpy array', "
                 msg += "'numpy matrix', 'scipy csr', 'scipy csc', "
                 msg += "'list of dict', and 'dict of list'"
@@ -2251,30 +2323,30 @@ class Base(object):
 
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
-            if format != 'numpyarray' and format != 'pythonlist':
+            if to != 'numpyarray' and to != 'pythonlist':
                 msg = "Only 'numpy array' or 'python list' can output 1D"
                 raise InvalidArgumentValueCombination(msg)
             if self._pointCount != 1 and self._featureCount != 1:
                 msg = "To output as 1D there may either be only one point or "
-                msg += " one feature"
+                msg += "one feature"
                 raise ImproperObjectAction(msg)
-            return self._copyAs_outputAs1D(format)
-        if format == 'pythonlist':
-            return self._copyAs_pythonList(rowsArePoints)
-        if format in ['listofdict', 'dictoflist']:
-            return self._copyAs_nestedPythonTypes(format, rowsArePoints)
+            return self._copy_outputAs1D(to)
+        if to == 'pythonlist':
+            return self._copy_pythonList(rowsArePoints)
+        if to in ['listofdict', 'dictoflist']:
+            return self._copy_nestedPythonTypes(to, rowsArePoints)
 
         # certain shapes and formats are incompatible
-        if format.startswith('scipy'):
+        if to.startswith('scipy'):
             if self._pointCount == 0 or self._featureCount == 0:
                 msg = "scipy formats cannot output point or feature empty "
                 msg += "objects"
                 raise InvalidArgumentValue(msg)
         # nimble, numpy and scipy types
-        ret = self._copyAs_implementation(format)
+        ret = self._copy_implementation(to)
         if isinstance(ret, nimble.data.Base):
             if not rowsArePoints:
-                ret.transpose()
+                ret.transpose(useLog=False)
             ret._name = self.name
             ret._relPath = self.relativePath
             ret._absPath = self.absolutePath
@@ -2283,18 +2355,18 @@ class Base(object):
 
         return ret
 
-    def _copyAs_outputAs1D(self, format):
+    def _copy_outputAs1D(self, to):
         if self._pointCount == 0 or self._featureCount == 0:
-            if format == 'numpyarray':
+            if to == 'numpyarray':
                 return numpy.array([])
-            if format == 'pythonlist':
+            if to == 'pythonlist':
                 return []
-        raw = self._copyAs_implementation('numpyarray').flatten()
-        if format != 'numpyarray':
+        raw = self._copy_implementation('numpyarray').flatten()
+        if to != 'numpyarray':
             raw = raw.tolist()
         return raw
 
-    def _copyAs_pythonList(self, rowsArePoints):
+    def _copy_pythonList(self, rowsArePoints):
         if self._pointCount == 0:
             return []
         if self._featureCount == 0:
@@ -2302,24 +2374,30 @@ class Base(object):
             for _ in range(self._pointCount):
                 ret.append([])
             return ret
-        ret = self._copyAs_implementation('pythonlist')
+        ret = self._copy_implementation('pythonlist')
         if not rowsArePoints:
             ret = numpy.transpose(ret).tolist()
         return ret
 
-    def _copyAs_nestedPythonTypes(self, format, rowsArePoints):
-        data = self._copyAs_implementation('numpyarray')
+    def _copy_nestedPythonTypes(self, to, rowsArePoints):
+        data = self._copy_implementation('numpyarray')
         if rowsArePoints:
             featureNames = self.features.getNames()
-            if format == 'listofdict':
+            if to == 'listofdict':
                 return createListOfDict(data, featureNames)
             return createDictOfList(data, featureNames, self._featureCount)
         else:
             data = data.transpose()
             featureNames = self.points.getNames()
-            if format == 'listofdict':
+            if to == 'listofdict':
                 return createListOfDict(data, featureNames)
             return createDictOfList(data, featureNames, self._pointCount)
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
 
 
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
@@ -2349,6 +2427,13 @@ class Base(object):
         featureEnd : int or str
             The inclusive index or name of the last feature in the
             calling object whose contents will be modified.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
 
         See Also
@@ -2405,7 +2490,7 @@ class Base(object):
                 msg += "range of length " + str(frange)
                 raise InvalidArgumentValueCombination(msg)
             if values.getTypeString() != self.getTypeString():
-                values = values.copyAs(self.getTypeString())
+                values = values.copy(to=self.getTypeString())
 
         elif (dataHelpers._looksNumeric(values)
               or isinstance(values, six.string_types)):
@@ -2455,6 +2540,13 @@ class Base(object):
         returnModified : return an object containing True for the
             modified values in each feature and False for unmodified
             values.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         kwarguments
             Any additional arguments being passed to the fill function.
 
@@ -2556,6 +2648,16 @@ class Base(object):
         point will have a name of "Flattened". This is an inplace
         operation.
 
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
         See Also
         --------
         unflattenFromOnePoint
@@ -2618,6 +2720,16 @@ class Base(object):
         object will have a point name of "pn_i | fn_j". The single
         feature will have a name of "Flattened". This is an inplace
         operation.
+
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -2795,6 +2907,13 @@ class Base(object):
         ----------
         numPoints : int
             The number of points in the modified object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -2886,6 +3005,13 @@ class Base(object):
         ----------
         numFeatures : int
             The number of features in the modified object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -2998,6 +3124,13 @@ class Base(object):
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -3293,7 +3426,7 @@ class Base(object):
             matchingFtIdx[1].append(idxR)
 
         if self.getTypeString() != other.getTypeString():
-            other = other.copyAs(self.getTypeString())
+            other = other.copy(to=self.getTypeString())
         self._merge_implementation(other, point, feature, onFeature,
                                    matchingFtIdx)
 
@@ -3708,13 +3841,10 @@ class Base(object):
 
         # exact conditions in which we need to instantiate this object
         if other == 0 or other % 2 == 0:
-            identityPNames = 'automatic' if retPNames is None else retPNames
-            identityFNames = 'automatic' if retFNames is None else retFNames
             identity = nimble.createData(self.getTypeString(),
                                          numpy.eye(self._pointCount),
-                                         pointNames=identityPNames,
-                                         featureNames=identityFNames,
-                                         useLog=False)
+                                         pointNames=retPNames,
+                                         featureNames=retFNames, useLog=False)
         if other == 0:
             return identity
 
@@ -3914,11 +4044,11 @@ class Base(object):
             toCall = getattr(self, implName)
             ret = toCall(other)
         else:
-            selfConv = self.copyAs("Matrix")
+            selfConv = self.copy(to="Matrix")
             toCall = getattr(selfConv, implName)
             ret = toCall(other)
             if opName.startswith('__i'):
-                ret = ret.copyAs(startType)
+                ret = ret.copy(to=startType)
                 self.referenceDataFrom(ret, useLog=False)
                 ret = self
             else:
@@ -4517,7 +4647,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         pass
 
@@ -4551,7 +4681,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _copyAs_implementation(self, format):
+    def _copy_implementation(self, to):
         pass
 
     @abstractmethod

@@ -60,7 +60,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     for func in funcsToApply:
         oneFuncResults = dataContainer.features.calculate(func, useLog=False)
         oneFuncResults.transpose(useLog=False)
-        oneFuncResultsList = oneFuncResults.copyAs(format="python list")
+        oneFuncResultsList = oneFuncResults.copy(to="python list")
         appendColumns(resultsTable, oneFuncResultsList)
 
     #add Function names as the first row in the results table
@@ -158,7 +158,7 @@ def produceAggregateTable(dataContainer):
         funcResults.transpose(useLog=False)
         aggregateResults = funcResults.features.calculate(
             nimble.calculate.mean, useLog=False)
-        aggregateResults = aggregateResults.copyAs(format="python list")[0][0]
+        aggregateResults = aggregateResults.copy(to="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Values'] = shape[0] * shape[1]

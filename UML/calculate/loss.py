@@ -65,10 +65,10 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
         raise InvalidArgumentValueCombination(msg)
 
     if not isinstance(knownValues, Matrix):
-        knownValues = knownValues.copyAs(format="Matrix")
+        knownValues = knownValues.copy(to="Matrix")
 
     if not isinstance(predictedValues, Matrix):
-        predictedValues = predictedValues.copyAs(format="Matrix")
+        predictedValues = predictedValues.copy(to="Matrix")
 
     n = 0.0
     runningTotal = 0.0
@@ -164,8 +164,8 @@ def varianceFractionRemaining(knownValues, predictedValues):
         "Objects had different numbers of features. Known values had " + str(
             len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
     diffObject = predictedValues - knownValues
-    rawDiff = diffObject.copyAs("numpy array")
-    rawKnowns = knownValues.copyAs("numpy array")
+    rawDiff = diffObject.copy(to="numpy array")
+    rawKnowns = knownValues.copy(to="numpy array")
     assert rawDiff.shape[1] == 1
     avgSqDif = numpy.dot(rawDiff.T, rawDiff)[0, 0] / float(len(rawDiff))
     return avgSqDif / float(numpy.var(rawKnowns))
