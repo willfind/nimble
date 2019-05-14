@@ -107,6 +107,12 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
+            testObject.fillUsingAllData(0, UML.fill.kNeighborsClassifier)
+            assert False # expected TypeError
+        except TypeError as e:
+            assert "disallowed for View objects" in str(e)
+
+        try:
             testObject.flattenToOnePoint()
             assert False # expected TypeError
         except TypeError as e:

@@ -199,6 +199,11 @@ class BaseView(Base):
         readOnlyException("fillWith")
 
     @exceptionDocstring
+    def fillUsingAllData(self, match, fill, points=None, features=None,
+                         returnModified=False, useLog=None, **kwarguments):
+        readOnlyException("fillUsingAllData")
+
+    @exceptionDocstring
     def flattenToOnePoint(self, useLog=None):
         readOnlyException("flattenToOnePoint")
 
