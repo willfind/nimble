@@ -214,6 +214,11 @@ class BaseView(Base):
     def unflattenFromOneFeature(self, numFeatures, useLog=None):
         readOnlyException("unflattenFromOneFeature")
 
+    @exceptionDocstring
+    def merge(self, other, point='strict', feature='union', onFeature=None,
+              useLog=None):
+        readOnlyException('merge')
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
