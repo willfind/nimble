@@ -116,6 +116,12 @@ class List(Base):
         self._numFeatures = shape[1]
         self.data = data
         self._elementType = elementType
+        if self._elementType is None:
+            arr = numpy.array(self.data)
+            if issubclass(arr.dtype.type, numpy.number):
+                self._elementType = arr.dtype
+            else:
+                self._elementType = numpy.object_
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -283,7 +289,7 @@ class List(Base):
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = numpy.matrix(self.data)
+                data = numpy.matrix(self.data, dtype=self._elementType)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -296,17 +302,16 @@ class List(Base):
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
-            return numpy.matrix(self.data)
-        if to == 'scipycsc':
+            return numpy.matrix(self.data, dtype=self._elementType)
+        if to in ['scipycsc', 'scipycsr']:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csc_matrix(numpy.array(self.data))
-        if to == 'scipycsr':
-            if not scipy:
-                msg = "scipy is not available"
-                raise PackageException(msg)
-            return scipy.sparse.csr_matrix(numpy.array(self.data))
+            asArray = numpy.array(self.data, dtype=self._elementType)
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(asArray)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(asArray)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
