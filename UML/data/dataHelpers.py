@@ -691,20 +691,44 @@ def createDataNoValidation(returnType, data, pointNames=None,
             pass
     initMethod = getattr(UML.data, returnType)
     if returnType == 'List':
-        return initMethod(data, pointNames=pointNames, featureNames=featureNames,
-                          reuseData=reuseData, checkAll=False)
+        return initMethod(data, pointNames=pointNames,
+                          featureNames=featureNames, reuseData=reuseData,
+                          checkAll=False)
     return initMethod(data, pointNames=pointNames, featureNames=featureNames,
                       reuseData=reuseData)
 
 
 def denseCountUnique(obj, points, features):
+    """
+    Return dictionary of the unique elements and their values for dense
+    data representations.
+
+    numpy.unique is most efficient but needs data to be numeric, when
+    non-numeric data is present we replace every unique value with a
+    unique integer and the generated mapping is used to return the
+    unique values from the original data.
+    """
     if points is not None:
         obj = obj[points, :]
     if features is not None:
         obj = obj[:, features]
-    uniqueCounts = {}
-    for i in range(len(obj.points)):
-        for j in range(len(obj.features)):
-            currCount = uniqueCounts.get(obj[i, j], 0)
-            uniqueCounts[obj[i, j]] = currCount + 1
-    return uniqueCounts
+    arr = numpy.array(obj.data, dtype=numpy.object_)
+    try:
+        vals, counts =numpy.unique(arr, return_counts=True)
+        return {val: count for val, count in zip(vals, counts)}
+    except TypeError:
+        mapping = {}
+        nextIdx = [0]
+        def mapper(val):
+            if val in mapping:
+                return mapping[val]
+            else:
+                mapping[val] = nextIdx[0]
+                nextIdx[0] += 1
+                return mapping[val]
+        vectorMap = numpy.vectorize(mapper)
+        for i, row in enumerate(arr):
+            arr[i] = vectorMap(row)
+        intMap = {v: k for k, v in mapping.items()}
+        vals, counts =numpy.unique(arr, return_counts=True)
+        return {intMap[val]: count for val, count in zip(vals, counts)}
