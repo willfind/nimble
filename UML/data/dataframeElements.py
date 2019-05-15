@@ -11,6 +11,7 @@ import numpy as np
 import UML
 from .elements import Elements
 from .elements_view import ElementsView
+from .dataHelpers import denseCountUnique
 
 pd = UML.importModule('pandas')
 if pd:
@@ -76,6 +77,14 @@ class DataFrameElements(Elements):
                                   preserveZeros, outputType):
         return self._calculate_genericVectorized(
             function, points, features, outputType)
+
+
+    #########################
+    # Query implementations #
+    #########################
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self._source, points, features)
 
     #############################
     # Numerical implementations #

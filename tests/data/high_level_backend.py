@@ -1390,6 +1390,9 @@ class HighLevelDataSafe(DataTestObject):
         assert unique['a'] == 1
         assert unique['b'] == 1
         assert unique['c'] == 1
+        # for Sparse, 0 is added to returned dictionary manually
+        # want to test 0 is not added if the data doesn't contain zeros
+        assert 0 not in unique
         assertNoNamesGenerated(toTest)
 
     def test_elements_countUnique_limitPoints(self):
@@ -1455,6 +1458,15 @@ class HighLevelDataSafe(DataTestObject):
         assert len(unique) == 2
         assert unique[1] == 2
         assert unique[3] == 2
+
+    def test_elements_countUnique_zeroCount(self):
+        data = [[0, 0, 0, 0, 1], [2, 0, 0, 0, 0], [0, 0, 3, 0, 0]]
+        toTest = self.constructor(data)
+        unique = toTest.elements.countUnique()
+
+        assert 0 in unique
+        assert unique[0] == 12
+
 
 class HighLevelModifying(DataTestObject):
 

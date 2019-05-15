@@ -94,6 +94,27 @@ class SparseElements(Elements):
         return self._calculate_genericVectorized(
             function, points, features, outputType)
 
+    #########################
+    # Query implementations #
+    #########################
+
+    def _countUnique_implementation(self, points, features):
+        uniqueCount = {}
+        source = self._source[:, :]
+        if points is not None:
+            source = source[points, :]
+        if features is not None:
+            source = source[:, features]
+        source._sortInternal('feature')
+        for val in source.data.data:
+            currentCount = uniqueCount.get(val, 0)
+            uniqueCount[val] = currentCount + 1
+        totalValues = (len(source.points) * len(source.features))
+        numZeros = totalValues - len(source.data.data)
+        if numZeros > 0:
+            uniqueCount[0] = numZeros
+        return uniqueCount
+
     #############################
     # Numerical implementations #
     #############################

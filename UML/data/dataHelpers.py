@@ -695,3 +695,16 @@ def createDataNoValidation(returnType, data, pointNames=None,
                           reuseData=reuseData, checkAll=False)
     return initMethod(data, pointNames=pointNames, featureNames=featureNames,
                       reuseData=reuseData)
+
+
+def denseCountUnique(obj, points, features):
+    if points is not None:
+        obj = obj[points, :]
+    if features is not None:
+        obj = obj[:, features]
+    uniqueCounts = {}
+    for i in range(len(obj.points)):
+        for j in range(len(obj.features)):
+            currCount = uniqueCounts.get(obj[i, j], 0)
+            uniqueCounts[obj[i, j]] = currCount + 1
+    return uniqueCounts
