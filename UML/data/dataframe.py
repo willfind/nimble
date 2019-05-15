@@ -137,7 +137,7 @@ class DataFrame(Base):
             if includeFeatureNames:
                 self.data.columns = self.features.getNames()
                 if includePointNames:
-                    outFile.write('point_names')
+                    outFile.write('pointNames')
 
             if includePointNames:
                 self.data.index = self.points.getNames()
