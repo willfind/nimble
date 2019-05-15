@@ -713,21 +713,22 @@ def denseCountUnique(obj, points, features):
     if features is not None:
         obj = obj[:, features]
     array = obj.copy(to='numpy array')
+
     if issubclass(array.dtype.type, numpy.number):
         vals, counts = numpy.unique(array, return_counts=True)
         return {val: count for val, count in zip(vals, counts)}
-    else:
-        mapping = {}
-        nextIdx = [0]
-        def mapper(val):
-            if val in mapping:
-                return mapping[val]
-            else:
-                mapping[val] = nextIdx[0]
-                nextIdx[0] += 1
-                return mapping[val]
-        vectorMap = numpy.vectorize(mapper)
-        array = vectorMap(array)
-        intMap = {v: k for k, v in mapping.items()}
-        vals, counts =numpy.unique(array, return_counts=True)
-        return {intMap[val]: count for val, count in zip(vals, counts)}
+
+    mapping = {}
+    nextIdx = [0]
+    def mapper(val):
+        if val in mapping:
+            return mapping[val]
+        else:
+            mapping[val] = nextIdx[0]
+            nextIdx[0] += 1
+            return mapping[val]
+    vectorMap = numpy.vectorize(mapper)
+    array = vectorMap(array)
+    intMap = {v: k for k, v in mapping.items()}
+    vals, counts =numpy.unique(array, return_counts=True)
+    return {intMap[val]: count for val, count in zip(vals, counts)}
