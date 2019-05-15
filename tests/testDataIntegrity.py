@@ -94,14 +94,6 @@ def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
     return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
 
 
-def wrappedCrossValidateReturnBest(learnerName, trainX, trainY, testX, testY):
-    return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
-
-
-def wrappedCrossValidateReturnAll(learnerName, trainX, trainY, testX, testY):
-    return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
-
-
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
     tl = UML.train(learnerName, trainX, trainY)
     tl.incrementalTrain(trainX.points.copy([0]), trainY.points.copy([0]))
@@ -233,8 +225,6 @@ def testDataIntegrityTrainAndTestMulticlassStrategies():
 @attr('slow')
 def testDataIntegrityCrossValidate():
     backend(wrappedCrossValidate, 1)
-    backend(wrappedCrossValidateReturnAll, 1)
-    backend(wrappedCrossValidateReturnBest, 1)
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.

@@ -255,17 +255,6 @@ def testRunTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'learner': 'custom.KNNClassifier'" in logInfo
 
-    # crossValidateReturnAll
-    all = UML.crossValidateReturnAll('custom.KNNClassifier', trainXObj,
-                                     trainYObj, performanceFunction=RMSE)
-    logInfo = getLastLogData()
-    assert "'learner': 'custom.KNNClassifier'" in logInfo
-
-    # crossValidateReturnBest
-    best = UML.crossValidateReturnBest('custom.KNNClassifier', trainXObj,
-                                       trainYObj, performanceFunction=RMSE)
-    logInfo = getLastLogData()
-    assert "'learner': 'custom.KNNClassifier'" in logInfo
 
 @configSafetyWrapper
 def testPrepTypeFunctionsUseLog():

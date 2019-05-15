@@ -44,8 +44,7 @@ def prefixAdder(prefix):
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
 uml_logged = [
-    'createData', 'createRandomData', 'crossValidate',
-    'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
+    'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
