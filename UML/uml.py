@@ -1923,19 +1923,19 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     return performance
 
 
-def log(logType, logInfo):
+def log(heading, logInfo):
     """
     Enter an entry into active logger's database file.
 
     The log entry will include a timestamp and a run number in addition
-    to the ``logType`` and ``logInfo``.
+    to the ``heading`` and ``logInfo``.
 
     Parameters
     ----------
-    logType : str
-        A string of the type of log entered. "load", "prep", "run", and
-        "crossVal" types have builtin processing for logInfo. A default
-        processing of logInfo will be used for unrecognized types.
+    heading : str
+        A string to be placed at the head of the log entry. The string
+        "User - " will be prepended to identify custom user entries to
+        the log.
     logInfo : str, list, dict
         Contains any information to be logged.
 
@@ -1943,13 +1943,14 @@ def log(logType, logInfo):
     --------
     showLog
     """
-    if not isinstance(logType, six.string_types):
-        msg = "logType must be a string"
+    if not isinstance(heading, six.string_types):
+        msg = "heading must be a string"
         raise InvalidArgumentType(msg)
     elif not isinstance(logInfo, (six.string_types, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
         raise InvalidArgumentType(msg)
-    UML.logger.active.log(logType, logInfo)
+    heading = "User - " + heading
+    UML.logger.active.log(heading, logInfo)
 
 
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
