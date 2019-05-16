@@ -238,8 +238,12 @@ class Shogun(UniversalInterface):
 
         return ret
 
-    def _getScores(self, learner, testX, arguments, customDict):
-        predObj = self._applier(learner, testX, arguments, customDict)
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
+        # TODO deal with merging stored vs new arguments
+        # is this even a thing for shogun?
+        predObj = self._applier(learnerName, learner, testX, newArguments,
+                                storedArguments, customDict)
         predLabels = predObj.get_labels()
         numLabels = customDict['numLabels']
         if hasattr(predObj, 'get_multiclass_confidences'):
@@ -431,7 +435,9 @@ class Shogun(UniversalInterface):
         raise NotImplementedError
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        # TODO does shogun allow apply time arguments?
         try:
             ptVal = learner.get_machine_problem_type()
             if ptVal == self._access('Classifier', 'PT_BINARY'):
@@ -776,7 +782,7 @@ def _remapLabelsRange(toRemap):
             ret.append(mapping[value])
         return ret
 
-    toRemap.features.transform(remap)
+    toRemap.features.transform(remap, useLog=False)
 
     return inverse
 
@@ -826,6 +832,6 @@ def _remapLabelsSpecific(toRemap, space):
             ret.append(space[mapping[value]])
         return ret
 
-    toRemap.features.transform(remap)
+    toRemap.features.transform(remap, useLog=False)
 
     return inverse
