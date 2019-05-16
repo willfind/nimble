@@ -2719,25 +2719,43 @@ class CrossValidationResults():
     """
     Container for cross-validation results.
     """
-    def __init__(self, results, performanceFunction, numFolds):
-        self.results = results
+    def __init__(self, performanceFunction, numFolds):
         self.performanceFunction = performanceFunction
         self.numFolds = numFolds
+        self._results = []
         self._bestArguments = None
         self._bestScore = None
+        self._errorsByFold = []
 
     def __str__(self):
         return str(self.results)
 
     def __repr__(self):
-        ret = "CrossValidationResults({}, {}, {})"
-        ret = ret.format(self.results, self.performanceFunction, self.numFolds)
+        ret = "CrossValidationResults({}, {})"
+        ret = ret.format(self.performanceFunction, self.numFolds)
         return ret
+
+    @property
+    def results(self):
+        """
+        The total error scores for each argument set.
+
+        Returns
+        -------
+        list
+            List of tuples in the form (argumentSet, totalError)
+        """
+        return self._results
 
     @property
     def bestArguments(self):
         """
         The best argument based on the performanceFunction.
+
+        Returns
+        -------
+        dict
+            Dictionary of arguments resulting in the best error score.
         """
         if self._bestArguments is not None:
             return self._bestArguments
@@ -2750,6 +2768,11 @@ class CrossValidationResults():
     def bestScore(self):
         """
         The best score based on the performanceFunction.
+
+        Returns
+        -------
+        float
+            The calculated error value for the best set of arguments.
         """
         if self._bestScore is not None:
             return self._bestScore
@@ -2757,6 +2780,99 @@ class CrossValidationResults():
         self._bestArguments = bestResults[0]
         self._bestScore = bestResults[1]
         return self._bestScore
+
+    def getArgumentsFoldErrors(self, arguments):
+        """
+        The error from each fold for a given set of arguments.
+
+        Parameters
+        ----------
+        arguments : dict
+            The dictionary of the arguments. Must match an argument set
+            generated during cross-validation.
+
+        Returns
+        -------
+        list
+
+        Examples
+        --------
+        >>> UML.setRandomSeed(42)
+        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...        [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...        [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+        >>> yRaw = [[1], [2], [3],
+        ...        [1], [2], [3],
+        ...        [1], [2], [3]]
+        >>> X = UML.createData('Matrix', xRaw)
+        >>> Y = UML.createData('Matrix', yRaw)
+        >>> kValues = UML.CV([1, 3])
+        >>> cvResults = UML.crossValidate(
+        ...    'Custom.KNNClassifier', X, Y,
+        ...    performanceFunction=UML.calculate.fractionIncorrect,
+        ...    numFolds=3, k=kValues)
+        >>> cvResults.getArgumentsFoldErrors({'k': 1})
+        [0.3333333333333333, 0.0, 0.0]
+        >>> cvResults.getArgumentsFoldErrors({'k': 3})
+        [0.3333333333333333, 0.6666666666666666, 0.0]
+        """
+        foldErrors = []
+        # self._errorsByFold is a list of tuples (argumentSet, foldScore)
+        for argSet, score in self._errorsByFold:
+            if argSet == arguments:
+                foldErrors.append(score)
+        if not foldErrors:
+            msg = "arguments did not match any argument sets. Available "
+            msg += "argument sets are:\n"
+            # self._results contains each argument set only once.
+            msg += ",".join(str(arg) for arg, _ in self._results)
+            raise InvalidArgumentValue(msg)
+        return foldErrors
+
+    def getArgumentsTotalError(self, arguments):
+        """
+        The error over all folds for a given set of arguments.
+
+        Parameters
+        ----------
+        arguments : dict
+            The dictionary of the arguments. Must match an argument set
+            generated during cross-validation.
+
+        Returns
+        -------
+        list
+
+        Examples
+        --------
+        >>> UML.setRandomSeed(42)
+        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...        [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...        [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+        >>> yRaw = [[1], [2], [3],
+        ...        [1], [2], [3],
+        ...        [1], [2], [3]]
+        >>> X = UML.createData('Matrix', xRaw)
+        >>> Y = UML.createData('Matrix', yRaw)
+        >>> kValues = UML.CV([1, 3])
+        >>> cvResults = UML.crossValidate(
+        ...    'Custom.KNNClassifier', X, Y,
+        ...    performanceFunction=UML.calculate.fractionIncorrect,
+        ...    numFolds=3, k=kValues)
+        >>> cvResults.getArgumentsTotalError({'k': 1})
+        0.1111111111111111
+        >>> cvResults.getArgumentsTotalError({'k': 3})
+        0.3333333333333333
+        """
+        # self._results is a list of tuples (argumentSet, totalScore)
+        for argSet, score in self._results:
+            if argSet == arguments:
+                return score
+
+        msg = "arguments did not match any argument sets. Available "
+        msg += "argument sets are:\n"
+        msg += ",".join(str(arg) for arg, _ in self._results)
+        raise InvalidArgumentValue(msg)
 
     def _bestArgumentsAndScore(self):
         """
@@ -2829,6 +2945,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
 
     merged = _mergeArguments(arguments, kwarguments)
 
+    # instantiate object for storing the results
+    cvResults = CrossValidationResults(performanceFunction, folds)
+
     #get an iterator for the argument combinations- iterator
     #handles case of merged arguments being {}
     argumentCombinationIterator = ArgumentIterator(merged)
@@ -2874,12 +2993,15 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
             performanceOfEachCombination[argSetIndex][0] = (
                 curArgumentCombination)
 
-            if canAvgFolds:
-                # calculate error of prediction, using performanceFunction
-                curPerformance = computeMetrics(curTestingY, None,
-                                                curRunResult,
-                                                performanceFunction)
+            # calculate error of prediction, using performanceFunction
+            # store fold error to CrossValidationResults
+            curPerformance = computeMetrics(curTestingY, None,
+                                            curRunResult,
+                                            performanceFunction)
+            cvResults._errorsByFold.append((curArgumentCombination,
+                                            curPerformance))
 
+            if canAvgFolds:
                 performanceOfEachCombination[argSetIndex][1].append(
                     curPerformance)
             else:
@@ -2917,11 +3039,14 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
+    # store results to CrossValidationResults object
+    cvResults._results = performanceOfEachCombination
+
     handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
                   performanceFunction, performanceOfEachCombination, folds)
-    #return the list of tuples - tracking the performance of each argument
-    return CrossValidationResults(performanceOfEachCombination,
-                                  performanceFunction, folds)
+
+    # return the CrossValidationResults object
+    return cvResults
 
 
 def makeFoldIterator(dataList, folds):
