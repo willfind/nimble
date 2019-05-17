@@ -679,6 +679,11 @@ def testLogUnacceptedlogInfo():
     dataObj = UML.createData("Matrix", [[1]], useLog=False)
     UML.log("acceptable", dataObj)
 
+@raises(InvalidArgumentValue)
+def testLogHeadingTooLong():
+    heading = "#" * 51
+    UML.log(heading, 'foo')
+
 ##############
 ### OUTPUT ###
 ##############
