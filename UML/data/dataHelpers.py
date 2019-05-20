@@ -189,7 +189,7 @@ def reorderToMatchList(dataObject, matchList, axis):
         index = indexGetter(viewObj)
         return mappedOrig[sortedList[index]]
 
-    sortFunc(sortHelper=scorer)
+    sortFunc(sortHelper=scorer, useLog=False)
 
     return dataObject
 
@@ -257,8 +257,12 @@ def hasNonDefault(obj, axis):
     Determine if an axis has non default names.
     """
     if axis == 'point':
+        if not obj.points._namesCreated():
+            return False
         possibleIndices = range(len(obj.points))
     else:
+        if not obj.features._namesCreated():
+            return False
         possibleIndices = range(len(obj.features))
 
     getter = obj.points.getName if axis == 'point' else obj.features.getName
@@ -682,13 +686,6 @@ def createDataNoValidation(returnType, data, pointNames=None,
     if hasattr(data, 'dtype'):
         if not issubclass(data.dtype.type, (numpy.number, numpy.object_)):
             raise InvalidArgumentType("data must have numeric or object dtype")
-        # this could be a numeric subsection from a UML object with an 'object'
-        # dtype. We optimize the dtype here to support operations requiring a
-        # numeric dtype.
-        try:
-            data = data.astype(numpy.float)
-        except ValueError:
-            pass
     initMethod = getattr(UML.data, returnType)
     if returnType == 'List':
         return initMethod(data, pointNames=pointNames,
@@ -698,7 +695,16 @@ def createDataNoValidation(returnType, data, pointNames=None,
                       reuseData=reuseData)
 
 
-def denseCountUnique(obj, points, features):
+def limitAndConvertToArray(obj, points, features):
+    if points is None and features is None:
+        return obj.copy(to='numpyarray')
+    pWanted = points if points is not None else slice(None)
+    fWanted = features if features is not None else slice(None)
+    limited = obj[pWanted, fWanted]
+    return limited.copy(to='numpyarray')
+
+
+def denseCountUnique(obj, points=None, features=None):
     """
     Return dictionary of the unique elements and their values for dense
     data representations.
@@ -708,12 +714,12 @@ def denseCountUnique(obj, points, features):
     unique integer and the generated mapping is used to return the
     unique values from the original data.
     """
-    if points is not None:
-        obj = obj[points, :]
-    if features is not None:
-        obj = obj[:, features]
-    array = obj.copy(to='numpy array')
-
+    if isinstance(obj, UML.data.Base):
+        array = limitAndConvertToArray(obj, points, features)
+    elif isinstance(obj, numpy.ndarray):
+        array = obj
+    else:
+        raise InvalidArgumentValue("obj must be UML object or numpy array")
     if issubclass(array.dtype.type, numpy.number):
         vals, counts = numpy.unique(array, return_counts=True)
         return {val: count for val, count in zip(vals, counts)}
@@ -730,5 +736,5 @@ def denseCountUnique(obj, points, features):
     vectorMap = numpy.vectorize(mapper)
     array = vectorMap(array)
     intMap = {v: k for k, v in mapping.items()}
-    vals, counts =numpy.unique(array, return_counts=True)
+    vals, counts = numpy.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}

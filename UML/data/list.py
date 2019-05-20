@@ -610,6 +610,8 @@ class List(Base):
                 return self.fRange
 
             def __eq__(self, other):
+                if len(self) != len(other):
+                    return False
                 for i, sVal in enumerate(self):
                     oVal = other[i]
                     # check element equality - which is only relevant if one

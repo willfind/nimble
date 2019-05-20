@@ -10,6 +10,7 @@ import numpy
 import UML
 from .elements import Elements
 from .elements_view import ElementsView
+from .dataHelpers import denseCountUnique
 
 scipy = UML.importModule('scipy')
 if scipy is not None:
@@ -100,15 +101,14 @@ class SparseElements(Elements):
 
     def _countUnique_implementation(self, points, features):
         uniqueCount = {}
-        source = self._source[:, :]
-        if points is not None:
-            source = source[points, :]
-        if features is not None:
-            source = source[:, features]
-        source._sortInternal('feature')
-        for val in source.data.data:
-            currentCount = uniqueCount.get(val, 0)
-            uniqueCount[val] = currentCount + 1
+        isView = self._source.data.data is None
+        if points is None and features is None and not isView:
+            source = self._source
+        else:
+            pWanted = points if points is not None else slice(None)
+            fWanted = features if features is not None else slice(None)
+            source = self._source[pWanted, fWanted]
+        uniqueCount = denseCountUnique(source.data.data)
         totalValues = (len(source.points) * len(source.features))
         numZeros = totalValues - len(source.data.data)
         if numZeros > 0:
