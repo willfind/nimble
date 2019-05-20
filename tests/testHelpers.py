@@ -13,6 +13,7 @@ from UML import learnerType
 from UML import createData
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
+from UML.exceptions import ImproperObjectAction
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
@@ -25,6 +26,8 @@ from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import _mergeArguments
 from UML.helpers import computeMetrics
 from UML.helpers import inspectArguments
+from UML.helpers import CrossValidationResults
+from UML.helpers import CV
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
@@ -431,10 +434,10 @@ def testtrainAndApplyOneVsAll():
     print("Results 2 output: " + str(results2.data))
     print("Results 3 output: " + str(results3.data))
 
-    assert results1.copyAs(format="python list")[0][0] >= 0.0
-    assert results1.copyAs(format="python list")[0][0] <= 3.0
+    assert results1.copy(to="python list")[0][0] >= 0.0
+    assert results1.copy(to="python list")[0][0] <= 3.0
 
-    assert results2.copyAs(format="python list")[0][0]
+    assert results2.copy(to="python list")[0][0]
 
 
 def testtrainAndApplyOneVsOne():
@@ -602,7 +605,7 @@ def testExtractWinningPredictionLabel():
     BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
     predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
-    listPredictions = predictions.copyAs(format="python list")
+    listPredictions = predictions.copy(to="python list")
 
     assert listPredictions[0][0] - 3 == 0.0
     assert listPredictions[0][1] - 2 == 0.0
@@ -647,3 +650,36 @@ def test_inspectArguments():
     assert v == 'sigArgs'
     assert k == 'sigKwargs'
     assert d == (False, True, None)
+
+def test_CrossValidationResults():
+    results = [({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
+               ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)]
+    performanceFunction = rootMeanSquareError
+    numFolds = 10
+    cvResults = CrossValidationResults(results, performanceFunction, numFolds)
+    assert str(cvResults) == str(results)
+    expRepr = "CrossValidationResults({}, {}, {})"
+    expRepr = expRepr.format(results, performanceFunction, numFolds)
+    assert repr(cvResults) == expRepr
+    assert cvResults.results == results
+    assert cvResults.performanceFunction == performanceFunction
+    assert cvResults.numFolds == numFolds
+    # best arguments/score should not be calculated until requested
+    assert cvResults._bestArguments is None
+    assert cvResults._bestScore is None
+    assert cvResults.bestArguments == {'a': 1, 'b': 1}
+    # accessing bestArguments property will also set bestScore
+    assert cvResults._bestScore is not None
+    assert cvResults.bestScore == .25
+
+def test_CV():
+    crossVal = CV([1, 2, 3])
+    assert len(crossVal) == 3
+    assert crossVal[1] == 2
+    assert str(crossVal) == "(1, 2, 3)"
+    assert repr(crossVal) == "CV([1, 2, 3])"
+
+@raises(ImproperObjectAction)
+def test_CV_immutable():
+    crossVal = CV([1, 2, 3])
+    crossVal[1] = 0

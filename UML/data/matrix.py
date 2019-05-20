@@ -104,7 +104,7 @@ class Matrix(Base):
 
         return allDataIdentical(self.data, other.data)
 
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         """
         Function to write the data in this object to a file using the
@@ -120,10 +120,10 @@ class Matrix(Base):
         #     msg += "or as the extension in the outPath"
         #     raise InvalidArgumentValue(msg)
 
-        if format == 'csv':
+        if fileFormat == 'csv':
             return self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        if format == 'mtx':
+        if fileFormat == 'mtx':
             return self._writeFileMTX_implementation(
                 outPath, includePointNames, includeFeatureNames)
 
@@ -143,7 +143,7 @@ class Matrix(Base):
                 fnamesLine = reduce(combine, fnames)
                 fnamesLine += '\n'
                 if includePointNames:
-                    outFile.write('point_names,')
+                    outFile.write('pointNames,')
 
                 outFile.write(fnamesLine)
 
@@ -196,26 +196,24 @@ class Matrix(Base):
 
         self.data = other.data
 
-    def _copyAs_implementation(self, format):
-        if format is None:
-            format = 'Matrix'
-        if format in UML.data.available:
+    def _copy_implementation(self, to):
+        if to in UML.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             # reuseData=False since using original data
-            return createDataNoValidation(format, self.data, ptNames, ftNames)
-        if format == 'pythonlist':
+            return createDataNoValidation(to, self.data, ptNames, ftNames)
+        if to == 'pythonlist':
             return self.data.tolist()
-        if format == 'numpyarray':
+        if to == 'numpyarray':
             return numpy.array(self.data)
-        if format == 'numpymatrix':
+        if to == 'numpymatrix':
             return self.data.copy()
-        if format == 'scipycsc':
+        if to == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(self.data)
-        if format == 'scipycsr':
+        if to == 'scipycsr':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
@@ -469,7 +467,7 @@ class Matrix(Base):
         if isinstance(other, Matrix) or isinstance(other, UML.data.Sparse):
             return Matrix(self.data * other.data)
         else:
-            return Matrix(self.data * other.copyAs("numpyarray"))
+            return Matrix(self.data * other.copy(to="numpyarray"))
 
     def _scalarMultiply_implementation(self, scalar):
         """

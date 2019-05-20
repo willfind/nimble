@@ -181,7 +181,7 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
         return nzIt(self._source)
 
     def _unique_implementation(self):
-        unique = self._source.copyAs('Sparse')
+        unique = self._source.copy(to='Sparse')
         return unique.points._unique_implementation()
 
 class nzIt(object):

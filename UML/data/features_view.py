@@ -31,11 +31,11 @@ class FeaturesView(Features):
     ####################################
 
     @exceptionDocstring
-    def setName(self, oldIdentifier, newName):
+    def setName(self, oldIdentifier, newName, useLog=None):
         readOnlyException('setName')
 
     @exceptionDocstring
-    def setNames(self, assignments=None):
+    def setNames(self, assignments=None, useLog=None):
         readOnlyException('setNames')
 
     #####################################
@@ -88,5 +88,5 @@ class FeaturesView(Features):
         readOnlyException('normalize')
 
     @exceptionDocstring
-    def splitByParsing(self, feature, rule, resultingNames):
+    def splitByParsing(self, feature, rule, resultingNames, useLog=None):
         readOnlyException('splitByParsing')

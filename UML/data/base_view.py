@@ -199,6 +199,11 @@ class BaseView(Base):
         readOnlyException("fillWith")
 
     @exceptionDocstring
+    def fillUsingAllData(self, match, fill, points=None, features=None,
+                         returnModified=False, useLog=None, **kwarguments):
+        readOnlyException("fillUsingAllData")
+
+    @exceptionDocstring
     def flattenToOnePoint(self, useLog=None):
         readOnlyException("flattenToOnePoint")
 
@@ -213,6 +218,11 @@ class BaseView(Base):
     @exceptionDocstring
     def unflattenFromOneFeature(self, numFeatures, useLog=None):
         readOnlyException("unflattenFromOneFeature")
+
+    @exceptionDocstring
+    def merge(self, other, point='strict', feature='union', onFeature=None,
+              useLog=None):
+        readOnlyException('merge')
 
     ###############################################################
     ###############################################################

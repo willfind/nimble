@@ -442,7 +442,7 @@ def test_names_AutoDetectedBlankLines_CSV():
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
-        tmpCSV.write("point_names,one,two,three\n")
+        tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
@@ -479,7 +479,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
-        tmpCSV.write("point_names,one,two,three\n")
+        tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
         fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=True)
@@ -527,7 +527,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
             npRaw = numpy.array(lolFromRaw, dtype=object)
             finalRaw = scipy.sparse.coo_matrix(npRaw)
         else:
-            finalRaw = baseObj.copyAs(rawType)
+            finalRaw = baseObj.copy(to=rawType)
 
         ret = UML.createData(returnType=returnType, data=finalRaw,
                              pointNames=pointNames, featureNames=featureNames)
@@ -564,8 +564,10 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
         # example where user provided False overides automatic detection
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
-        overide1 = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1.features.getNames()))
+        overide1a = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
+        overide1b = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=None)
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1a.features.getNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1b.features.getNames()))
 
         # example where user provided True extracts non-detectable first line
         nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
@@ -588,40 +590,81 @@ def test_automaticByType_pname_interaction_with_fname():
 #        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert testObj.features.getNames() == ['fname0','fname1','fname2']
         assert testObj.points.getNames() == ['pname0']
 
         # pnames auto triggereed with explicit fnames
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=True)
         assert testObj.features.getNames() == ['fname0','fname1','fname2']
         assert testObj.points.getNames() == ['pname0']
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE1
-        raw = "point_names,fname0,1.0,fname2\npname0,1,2,3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE1
+        raw = "pointNames,fname0,1.0,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE2
-        raw = "point_names,fname0,fname1,fname2\npname0,data1,data2,data3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE2
+        raw = "pointNames,fname0,fname1,fname2\npname0,data1,data2,data3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames explicit False
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames explicit False
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames explicit False given 'point_names' at [0,0] and fname auto extraction
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        #pnames explicit False given 'pointNames' at [0,0] and fname auto extraction
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
-        assert testObj.features.getNames() == ['point_names', 'fname0', 'fname1', 'fname2']
+        assert testObj.features.getNames() == ['pointNames', 'fname0', 'fname1', 'fname2']
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
+
+
+def test_names_AutomaticVsTrueVsFalseVsNone():
+    """ Test createData() accepted inputs for pointNames and featureNames """
+    for t in returnTypes:
+        # pNames and fNames triggered for automatic
+        raw1 = [['pointNames', 'fname0','fname1','fname2'],
+                ['pname0', 0, 1, 2]]
+        testAuto = UML.createData(t, raw1, pointNames='automatic', featureNames='automatic')
+        testTrue = UML.createData(t, raw1, pointNames=True, featureNames=True)
+        testFalse = UML.createData(t, raw1, pointNames=False, featureNames=False)
+        testNone = UML.createData(t, raw1, pointNames=None, featureNames=None)
+
+        assert testAuto == testTrue
+        assert testAuto != testFalse
+        assert testFalse == testNone
+
+        # pNames not triggered, fNames triggered for automatic
+        raw2 = [['either', 'fname0','fname1','fname2'],
+                [99, 0, 1, 2]]
+        testAuto = UML.createData(t, raw2, pointNames='automatic', featureNames='automatic')
+        testTrue = UML.createData(t, raw2, pointNames=True, featureNames=True)
+        testFalse = UML.createData(t, raw2, pointNames=False, featureNames=False)
+        testNone = UML.createData(t, raw2, pointNames=None, featureNames=None)
+
+        assert testAuto != testTrue
+        assert testAuto != testFalse
+        assert testTrue != testFalse
+        assert testFalse == testNone
+
+        # no names triggered for automatic
+        raw3 = [[-1, 9, 8, 7],
+                [99, 0, 1, 2]]
+        testAuto = UML.createData(t, raw3, pointNames='automatic', featureNames='automatic')
+        testTrue = UML.createData(t, raw3, pointNames=True, featureNames=True)
+        testFalse = UML.createData(t, raw3, pointNames=False, featureNames=False)
+        testNone = UML.createData(t, raw3, pointNames=None, featureNames=None)
+
+        assert testAuto != testTrue
+        assert testAuto == testFalse
+        assert testFalse == testNone
 
 
 def test_namesInComment_MTXArr():
@@ -871,6 +914,59 @@ def test_extractNames_CscSparse():
         specified = UML.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
+
+
+def test_extractNames_pandasDataFrame():
+    pNames = ['11']
+    fNames = ['21', '22', '23']
+
+    for t in returnTypes:
+        inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
+        specRaw = pd.DataFrame([[1, -1, -3]])
+
+        inData = UML.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = UML.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        assert inData == specified
+
+
+def test_names_dataUnmodified():
+    """ Test original data unmodifed when names set to 'automatic' or True """
+    autoData = [['pointNames', 'fname0', 'fname1', 'fname2'], ['pt', 1, -1, -3]]
+    autoArray = numpy.array(autoData, dtype=numpy.object_)
+    trueData = [[-111, 21, 22, 23], [11, 1, -1, -3]]
+
+    def assertUnmodified(rawData, names):
+        if isinstance(rawData, list):
+            rawDataCopy = [lst.copy() for lst in rawData]
+        else:
+            rawDataCopy = rawData.copy()
+        inData = UML.createData(
+            returnType=t, data=rawData, pointNames=names, featureNames=names)
+
+        if isinstance(rawData, list):
+            rawData == rawDataCopy
+        elif scipy.sparse.isspmatrix(rawData):
+            numpy.testing.assert_array_equal(rawData.todense(), rawDataCopy.todense())
+        else:
+            numpy.testing.assert_array_equal(rawData, rawDataCopy)
+
+
+    for t in returnTypes:
+        assertUnmodified(autoData, 'automatic')
+        assertUnmodified(trueData, True)
+        assertUnmodified(autoArray, 'automatic')
+        assertUnmodified(numpy.array(trueData), True)
+        assertUnmodified(numpy.matrix(autoArray), 'automatic')
+        assertUnmodified(numpy.matrix(trueData), True)
+        assertUnmodified(scipy.sparse.coo_matrix(autoArray), 'automatic')
+        assertUnmodified(scipy.sparse.coo_matrix(trueData), True)
+        assertUnmodified(pd.DataFrame([[1, -1, -3]], index=['pt'],
+                                      columns=['fname0', 'fname1', 'fname2']),
+                         'automatic')
+        assertUnmodified(pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23]),
+                         True)
 
 
 ###############################
@@ -1375,7 +1471,7 @@ def test_createData_keepPF_AllPossibleNatOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2], 'all']
@@ -1394,7 +1490,7 @@ def test_createData_keepPF_AllPossibleReverseOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = UML.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2], [0, 1, 2]]
@@ -1427,13 +1523,12 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUse = orig.copyAs("pythonlist")
+                toUse = orig.copy(to="pythonlist")
                 fromOrig = UML.createData(
                     t, toUse, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
@@ -1471,13 +1566,12 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
@@ -1516,13 +1610,12 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(
-                tmpF.name, format=f, includeNames=False)
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                toUseData = orig.copyAs("pythonlist")
+                toUseData = orig.copy(to="pythonlist")
 
                 fromOrig = UML.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,

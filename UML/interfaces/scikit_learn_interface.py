@@ -238,13 +238,13 @@ class SciKitLearn(UniversalInterface):
             elif trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copy().data
             else:
-                trainX = trainX.copyAs('numpy matrix')
+                trainX = trainX.copy(to='numpy matrix')
 
         if trainY is not None:
             if len(trainY.features) > 1:
-                trainY = (trainY.copyAs('numpy array'))
+                trainY = (trainY.copy(to='numpy array'))
             else:
-                trainY = trainY.copyAs('numpy array', outputAs1D=True)
+                trainY = trainY.copy(to='numpy array', outputAs1D=True)
             if trainY.dtype == numpy.object_:
                 try:
                     trainY = trainY.astype(numpy.float)
@@ -259,7 +259,7 @@ class SciKitLearn(UniversalInterface):
             elif testX.getTypeString() == 'Sparse':
                 testX = testX.copy().data
             else:
-                testX = testX.copyAs('numpy matrix')
+                testX = testX.copy(to='numpy matrix')
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':

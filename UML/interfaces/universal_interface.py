@@ -277,8 +277,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @captureOutput
-    def train(self, learnerName, trainX, trainY=None,
-              multiClassStrategy='default', arguments=None):
+    def train(self, learnerName, trainX, trainY=None, arguments=None,
+              multiClassStrategy='default', crossValidationResults=None):
         """
         Fit the learner model using training data.
 
@@ -322,7 +322,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # Get set of unique class labels
                 labelVector = trainY.copy()
                 labelVector.transpose(useLog=False)
-                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelVectorToList = labelVector.copy(to="python list")[0]
                 labelSet = list(set(labelVectorToList))
 
                 # For each class label in the set of labels:  convert the true
@@ -353,7 +353,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # 2-combinations of class labels
                 labelVector = trainX.features.copy([trainY])
                 labelVector.transpose(useLog=False)
-                labelVectorToList = labelVector.copyAs(format="python list")[0]
+                labelVectorToList = labelVector.copy(to="python list")[0]
                 labelSet = list(set(labelVectorToList))
                 labelPairs = generateAllPairs(labelSet)
 
@@ -378,11 +378,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
-        return self._train(learnerName, trainX, trainY, arguments=arguments)
+        return self._train(learnerName, trainX, trainY, arguments,
+                           crossValidationResults)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None):
+    def _train(self, learnerName, trainX, trainY=None, arguments=None,
+               crossValidationResults=None):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
                                            arguments)
         trainedBackend, transformedInputs, customDict = packedBackend
@@ -396,7 +398,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedInputs,
-                              customDict, trainedBackend, self, has2dOutput)
+                              customDict, trainedBackend, self, has2dOutput,
+                              crossValidationResults)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -863,15 +866,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             # valid argument change
             if arg in argNames and arg in storedArguments :
                 applyArgs[arg] = value
-            # not a valid argument for apply
+            # not a valid argument for method
             else:
                 invalidArguments.append(arg)
         if invalidArguments:
             msg = "EXTRA PARAMETER! "
-            msg += "The following parameter names cannot be applied: "
-            msg += prettyListString(invalidArguments, useAnd=True)
-            msg += ". The allowed parameters are: "
-            msg += prettyListString(argNames, useAnd=True)
+            if argNames:
+                msg += "The following parameter names cannot be applied: "
+                msg += prettyListString(invalidArguments, useAnd=True)
+                msg += ". The allowed parameters are: "
+                msg += prettyListString(argNames, useAnd=True)
+            else:
+                msg += "No parameters are accepted for this operation"
             raise InvalidArgumentValue(msg)
 
         # use stored values for any remaining arguments
@@ -1273,7 +1279,8 @@ class TrainedLearner(object):
         will be 1-dimensional.
     """
     def __init__(self, learnerName, arguments, transformedInputs, customDict,
-                 backend, interfaceObject, has2dOutput):
+                 backend, interfaceObject, has2dOutput,
+                 crossValidationResults):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -1289,6 +1296,7 @@ class TrainedLearner(object):
         self.backend = backend
         self.interface = interfaceObject
         self.has2dOutput = has2dOutput
+        self.crossValidation = crossValidationResults
 
         exposedFunctions = self.interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1431,14 +1439,6 @@ class TrainedLearner(object):
             Data set on which the trained learner will be applied (i.e.
             performing prediction, transformation, etc. as appropriate
             to the learner).
-        performanceFunction : function
-            If cross validation is triggered to select from the given
-            argument set, then this function will be used to generate a
-            performance score for the run. Function is of the form:
-            def func(knownValues, predictedValues).
-            Look in UML.calculate for pre-made options. Default is None,
-            since if there is no parameter selection to be done, it is
-            not used.
         arguments : dict
             Mapping argument names (strings) to their values, to be used
             during training and application. eg. {'dimensions':5, 'k':5}
@@ -1528,8 +1528,8 @@ class TrainedLearner(object):
                 rowIndex = scoreOrder.index(labels[pointIndex, 0])
                 return row[rowIndex]
 
-            scoreVector = scores.points.calculate(grabValue)
-            labels.features.add(scoreVector)
+            scoreVector = scores.points.calculate(grabValue, useLog=False)
+            labels.features.add(scoreVector, useLog=False)
 
             ret = labels
 
@@ -1581,12 +1581,17 @@ class TrainedLearner(object):
         # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
-    def retrain(self, trainX, trainY=None, useLog=None):
+    def retrain(self, trainX, trainY=None, arguments=None, useLog=None,
+                **kwarguments):
         """
         Train the model on new data.
 
-        Adjust the learner model by training it on new data, discarding
-        the data used previously.
+        Adjust the learner model by providing new training data and/or
+        changing the learner's argument values. Previously set argument
+        values for this learner model will remain the same, unless
+        overridden by new arguments or kwarguments. If new data is
+        provided, the learner will be trained on that data only,
+        discarding the previous data.
 
         Parameters
         ----------
@@ -1597,6 +1602,23 @@ class TrainedLearner(object):
               ``trainX`` containing the labels.
             * UML Base object - contains the labels that correspond to
               ``trainX``.
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training.  These must be singular values, retrain
+            does not implement cross-validation for multiple argument
+            sets. Will be merged with kwarguments.
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. Must be singular values, retrain does not implement
+            cross-validation for multiple arguments sets.
+            Will be merged with ``arguments``.
 
         See Also
         --------
@@ -1604,7 +1626,43 @@ class TrainedLearner(object):
 
         Examples
         --------
-        TODO
+        Changing the training data.
+
+        >>> trainX1 = UML.createData('Matrix', [[1, 1], [2, 2], [3, 3]])
+        >>> trainY1 = UML.createData('Matrix', [[1], [2], [3]]) # mean=2
+        >>> testX = UML.createData('Matrix', [[8, 8], [-3, -3]])
+        >>> tl = UML.train('Custom.MeanConstant', trainX1, trainY1)
+        >>> tl.apply(testX)
+        Matrix(
+            [[2.000]
+             [2.000]]
+            )
+        >>> trainX2 = UML.createData('Matrix', [[4, 4], [5, 5], [6, 6]])
+        >>> trainY2 = UML.createData('Matrix', [[4], [5], [6]]) # mean=5
+        >>> tl.retrain(trainX2, trainY2)
+        >>> tl.apply(testX)
+        Matrix(
+            [[5.000]
+             [5.000]]
+            )
+
+        Changing the learner arguments.
+
+        >>> trainX = UML.createData('Matrix', [[1, 1], [3, 3], [3, 3]])
+        >>> trainY = UML.createData('Matrix', [[1], [3], [3]])
+        >>> testX = UML.createData('Matrix', [[1, 1], [3, 3]])
+        >>> tl = UML.train('Custom.KNNClassifier', trainX, trainY, k=1)
+        >>> tl.apply(testX)
+        Matrix(
+            [[1.000]
+             [3.000]]
+            )
+        >>> tl.retrain(trainX, trainY, k=3)
+        >>> tl.apply(testX)
+        Matrix(
+            [[3.000]
+             [3.000]]
+            )
         """
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
@@ -1613,16 +1671,41 @@ class TrainedLearner(object):
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
-        trainedBackend = self.interface._trainBackend(self.learnerName, trainX,
-                                                      trainY, self.arguments)
+        merged = _mergeArguments(arguments, kwarguments)
+        for arg, value in merged.items():
+            if isinstance(value, UML.CV):
+                msg = "Cannot provide a cross-validation arguments "
+                msg += "for parameters to retrain a TrainedLearner. "
+                msg += "If wanting to perform cross-validation, use "
+                msg += "UML.train()"
+                raise InvalidArgumentValue(msg)
+            if arg not in self.transformedArguments:
+                validArgs = list(self.transformedArguments.keys())
+                msg = "The argument '" + arg + "' is not valid. "
+                if validArgs:
+                    msg += "Valid arguments for retrain are: "
+                    msg += prettyListString(validArgs)
+                else:
+                    msg += "There are no valid arguments to retrain "
+                    msg += "this learner"
+                raise InvalidArgumentValue(msg)
+            self.arguments[arg] = value
+            self.transformedArguments[arg] = value
+
+        trainedBackend = self.interface._trainBackend(
+            self.learnerName, trainX, trainY, self.transformedArguments)
+
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
         customDict = trainedBackend[2]
 
         self.backend = newBackend
-        self.transformedInputs = transformedInputs
+        self.transformedTrainX = transformedInputs[0]
+        self.transformedTrainY = transformedInputs[1]
+        self.transformedArguments = transformedInputs[3]
         self.customDict = customDict
         self.has2dOutput = has2dOutput
+        self.crossValidation = None
 
         handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
                       None, None, self.learnerName, self.arguments, None)
@@ -1645,13 +1728,23 @@ class TrainedLearner(object):
             ``trainX`` containing the labels.
             * UML Base object - contains the labels that correspond to
               ``trainX``.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
         """
-        (trainX, trainY, _, arguments) = self.interface._inputTransformation(
+        transformed = self.interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self.customDict)
-        self.backend = self.interface._incrementalTrainer(self.backend, trainX,
-                                                          trainY, arguments,
-                                                          self.customDict)
+        transformedTrainX = transformed[0]
+        transformedTrainY = transformed[1]
+        transformedArguments = transformed[3]
+        self.backend = self.interface._incrementalTrainer(
+            self.backend, transformedTrainX, transformedTrainY,
+            transformedArguments, self.customDict)
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
@@ -1699,7 +1792,7 @@ class TrainedLearner(object):
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return UML.createData("Matrix", ret)
+            return UML.createData("Matrix", ret, useLog=False)
 
         if applyResults is None:
             applyResults = self.interface._applier(
@@ -1722,7 +1815,7 @@ class TrainedLearner(object):
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
-            return UML.createData("Matrix", scores)
+            return UML.createData("Matrix", scores, useLog=False)
         else:
             return rawScores
 
@@ -1793,8 +1886,81 @@ class TrainedLearners(TrainedLearner):
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
+        """
+        Apply the learner to the test data.
+
+        Return the application of this learner to the given test data
+        (i.e. performing prediction, transformation, etc. as appropriate
+        to the learner). Equivalent to having called ``trainAndApply``,
+        as long as the data and parameter setup for training was the
+        same.
+
+        Parameters
+        ----------
+        testX : UML Base object
+            Data set on which the trained learner will be applied (i.e.
+            performing prediction, transformation, etc. as appropriate
+            to the learner).
+        performanceFunction : function
+            If cross validation is triggered to select from the given
+            argument set, then this function will be used to generate a
+            performance score for the run. Function is of the form:
+            def func(knownValues, predictedValues).
+            Look in UML.calculate for pre-made options. Default is None,
+            since if there is no parameter selection to be done, it is
+            not used.
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To make use of multiple permutations, specify different
+            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately. These will
+            be merged with kwarguments for the learner.
+        output : str
+            The kind of UML Base object that the output of this function
+            should be in. Any of the normal string inputs to the
+            createData ``returnType`` parameter are accepted here.
+            Alternatively, the value 'match' will indicate to use the
+            type of the ``trainX`` parameter.
+        scoreMode : str
+            In the case of a classifying learner, this specifies the
+            type of output wanted: 'label' if we class labels are
+            desired, 'bestScore' if both the class label and the score
+            associated with that class are desired, or 'allScores' if a
+            matrix containing the scores for every class label are
+            desired.
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. To make use of multiple permutations, specify
+            different values for parameters as a tuple.
+            eg. arg1=(1,2,3), arg2=(4,5,6) which correspond to
+            permutations/argument states with one element from arg1 and
+            one element from arg2, such that an example generated
+            permutation/argument state would be ``arg1=2, arg2=4``.
+            Will be merged with ``arguments``.
+
+        Returns
+        -------
+        results
+            The resulting output of applying learner.
+
+        See Also
+        --------
+        UML.trainAndApply, test
+
+        Examples
+        --------
+        TODO
+        """
         rawPredictions = None
-        # import pdb; pdb.set_trace()
         #1 VS All
         if self.method == 'OneVsAll':
             for trainedLearner in self.trainedLearnersList:
@@ -1807,31 +1973,32 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = oneLabelResults
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    rawPredictions.features.setName(0, str(label))
+                    rawPredictions.features.setName(0, str(label), useLog=False)
                 else:
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    oneLabelResults.features.setName(0, str(label))
-                    rawPredictions.features.add(oneLabelResults)
+                    oneLabelResults.features.setName(0, str(label), useLog=False)
+                    rawPredictions.features.add(oneLabelResults, useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
                 getWinningPredictionIndices = rawPredictions.points.calculate(
-                    extractWinningPredictionIndex)
-                winningPredictionIndices = getWinningPredictionIndices.copyAs(
-                    format="python list")
+                    extractWinningPredictionIndex, useLog=False)
+                winningPredictionIndices = getWinningPredictionIndices.copy(
+                    to="python list")
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
                     winningLabels.append([self.labelSet[int(winningIndex)]])
                 return UML.createData(rawPredictions.getTypeString(),
                                       winningLabels,
-                                      featureNames=['winningLabel'])
+                                      featureNames=['winningLabel'],
+                                      useLog=False)
 
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 indexToLabel = rawPredictions.features.getNames()
                 tempResultsList = []
                 for row in predictionMatrix:
@@ -1842,7 +2009,8 @@ class TrainedLearners(TrainedLearner):
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
                 resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                                                  featureNames=featureNames,
+                                                  useLog=False)
                 return resultsContainer
 
             elif scoreMode.lower() == 'allScores'.lower():
@@ -1854,7 +2022,7 @@ class TrainedLearners(TrainedLearner):
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
                 featureNamesItoN = rawPredictions.features.getNames()
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)
@@ -1869,7 +2037,7 @@ class TrainedLearners(TrainedLearner):
                 #wrap data in Base container
                 return UML.createData(rawPredictions.getTypeString(),
                                       resultsContainer,
-                                      featureNames=colHeaders)
+                                      featureNames=colHeaders, useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)
@@ -1883,23 +2051,23 @@ class TrainedLearners(TrainedLearner):
                                                       'label', useLog)
                 # put predictions into table of predictions
                 if rawPredictions is None:
-                    rawPredictions = partialResults.copyAs(format="List")
+                    rawPredictions = partialResults.copy(to="List")
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
-                    partialResults.features.setName(0, predictionName)
-                    rawPredictions.features.add(partialResults)
+                    partialResults.features.setName(0, predictionName, useLog=False)
+                    rawPredictions.features.add(partialResults, useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
                 ret = rawPredictions.points.calculate(
-                    extractWinningPredictionLabel)
-                ret.features.setName(0, "winningLabel")
+                    extractWinningPredictionLabel, useLog=False)
+                ret.features.setName(0, "winningLabel", useLog=False)
                 return ret
             elif scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 tempResultsList = []
                 for row in predictionMatrix:
                     scores = countWins(row)
@@ -1910,13 +2078,14 @@ class TrainedLearners(TrainedLearner):
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
                 resultsContainer = UML.createData("List", tempResultsList,
-                                                  featureNames=featureNames)
+                                                  featureNames=featureNames,
+                                                  useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(i) for i in self.labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
-                predictionMatrix = rawPredictions.copyAs(format="python list")
+                predictionMatrix = rawPredictions.copy(to="python list")
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)
@@ -1928,7 +2097,7 @@ class TrainedLearners(TrainedLearner):
 
                 return UML.createData(rawPredictions.getTypeString(),
                                       resultsContainer,
-                                      featureNames=colHeaders)
+                                      featureNames=colHeaders, useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)

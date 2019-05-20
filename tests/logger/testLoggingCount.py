@@ -41,11 +41,8 @@ def prefixAdder(prefix):
         return prefix + '.' + value
     return addPrefix
 
-# NOTES:
-#  setRandomSeed logged?
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
-#  LogCount Testing Below: log, showLog, importModule
 
+#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
 uml_logged = [
     'createData', 'createRandomData', 'crossValidate',
     'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
@@ -53,16 +50,14 @@ uml_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 uml_notLogged = [
-    'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault', 'identity',
-    'importModule', 'listLearners', 'learnerParameters',
+    'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 uml_funcs = uml_logged + uml_notLogged
 uml_tested = list(map(prefixAdder('UML'), uml_funcs))
 
-# NOTES:
-#  Untested functions:
 # no calculate functions should be logged.
 calculate_funcs = [
     'confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
@@ -99,14 +94,14 @@ match_tested = list(map(prefixAdder('UML.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'copy', 'fillUsingAllData', 'featureReport', 'fillWith',
-    'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature', 'merge',
+    'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
+    'flattenToOnePoint', 'groupByFeature', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copyAs', 'featureView', 'getTypeString', 'hashCode',
+    'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
     'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
     'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
     'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',
@@ -211,6 +206,10 @@ def test_showLog_logCount():
 @noLogEntryExpected
 def test_importModule_logCount():
     pd = UML.importModule('pandas')
+
+@noLogEntryExpected
+def test_CV_logCount():
+    k = UML.CV([1, 3, 5])
 
 ########
 # Base #
@@ -323,7 +322,7 @@ baseDunder_tested = [
     'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
     'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__',
+    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__', 
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
 pointsDunder_tested = []

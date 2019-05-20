@@ -82,6 +82,12 @@ def createRandomData(
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
 
     Returns
     -------
@@ -468,6 +474,12 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         Mapping argument names (strings) to their values, to be used
         during training and application.
         Example: {'dimensions':5, 'k':5}
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
         learner. Same format as the arguments parameter.
@@ -514,12 +526,12 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
-        normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
+        normalizedTrain = normalizedTrain.copy(to=trainX.getTypeString())
 
     if testX is not None:
         normalizedTest = tl.apply(testX, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
-            normalizedTest = normalizedTest.copyAs(testX.getTypeString())
+            normalizedTest = normalizedTest.copy(to=testX.getTypeString())
 
     # modify references and names for trainX and testX
     trainX.referenceDataFrom(normalizedTrain, useLog=False)
@@ -833,12 +845,6 @@ def createData(
         point or feature selection occurring, then only those values
         within selected points and features are considered when
         determining whether to apply this operation.
-    useLog : bool, None
-        Local control for whether to send object creation to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
     inputSeparator : str
         The character that is used to separate fields in the input file,
         if necessary. By default, a value of 'automatic' will attempt to
@@ -853,6 +859,12 @@ def createData(
     replaceMissingWith
         A single value with which to replace any value in
         treatAsMissing. By default this value is numpy.nan.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
 
     Returns
     -------
@@ -975,9 +987,14 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
-        Mapping argument names (strings) to their values. The parameter
-        is sent to trainAndApply() through its arguments parameter.
-        example: {'dimensions':5, 'k':5}
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -990,11 +1007,14 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         logger regardless of the global option. If False, do **NOT**
         send to the logger, regardless of the global option.
     kwarguments
-        Keyword argument specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for a parameter as a tuple. eg. a=(1,2,3) will generate
-        an error score for the learner when the learner was passed all
-        three values of a, separately.
+        Keyword arguments specified variables that are passed to the
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1004,12 +1024,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     --------
     TODO
     """
-    bestResult = crossValidateReturnBest(learnerName, X, Y,
-                                         performanceFunction, arguments,
-                                         numFolds, scoreMode, useLog,
-                                         **kwarguments)
-
-    return bestResult[1]
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.bestScore
 
 #return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments,
 #                            numFolds, scoreMode, useLog, **kwarguments)
@@ -1052,9 +1070,14 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
-        Mapping argument names (strings) to their values. The parameter
-        is sent to trainAndApply() through its arguments parameter.
-        example: {'dimensions':5, 'k':5}
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1067,11 +1090,14 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
         logger regardless of the global option. If False, do **NOT**
         send to the logger, regardless of the global option.
     kwarguments
-        Keyword argument specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for a parameter as a tuple. eg. a=(1,2,3) will generate
-        an error score for the learner when the learner was passed all
-        three values of a, separately.
+        Keyword arguments specified variables that are passed to the
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1081,11 +1107,10 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    ret = crossValidateBackend(learnerName, X, Y, performanceFunction,
-                               arguments, numFolds, scoreMode, useLog,
-                               **kwarguments)
-
-    return ret
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.results
 
 
 def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
@@ -1114,9 +1139,14 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
         computeMetrics to generate a performance score for the run.
         function is of the form: def func(knownValues, predictedValues).
     arguments : dict
-        Mapping argument names (strings) to their values. The parameter
-        is sent to trainAndApply() through its arguments parameter.
-        example: {'dimensions':5, 'k':5}
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     numFolds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1129,11 +1159,14 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
         logger regardless of the global option. If False, do **NOT**
         send to the logger, regardless of the global option.
     kwarguments
-        Keyword argument specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for a parameter as a tuple. eg. a=(1,2,3) will generate
-        an error score for the learner when the learner was passed all
-        three values of a, separately.
+        Keyword arguments specified variables that are passed to the
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
 
     Returns
     -------
@@ -1143,40 +1176,10 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction,
     --------
     TODO
     """
-    resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction,
-                                        arguments, numFolds, scoreMode, useLog,
-                                        **kwarguments)
-
-    bestArgumentAndScoreTuple = None
-
-    detected = detectBestResult(performanceFunction)
-    if detected == 'max':
-        maximumIsBest = True
-    elif detected == 'min':
-        maximumIsBest = False
-    else:
-        msg = "Unable to automatically determine whether maximal or "
-        msg += "minimal scores are considered optimal for the the "
-        msg += "given performanceFunction. "
-        msg += "By adding an attribute named 'optimal' to "
-        msg += "performanceFunction with either the value 'min' or 'max' "
-        msg += "depending on whether minimum or maximum returned values "
-        msg += "are associated with correctness, this error should be "
-        msg += "avoided."
-
-    for curResultTuple in resultsAll:
-        _, curScore = curResultTuple
-        #if curArgument is the first or best we've seen:
-        #store its details in bestArgumentAndScoreTuple
-        if bestArgumentAndScoreTuple is None:
-            bestArgumentAndScoreTuple = curResultTuple
-        else:
-            if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
-                bestArgumentAndScoreTuple = curResultTuple
-            if not maximumIsBest and curScore < bestArgumentAndScoreTuple[1]:
-                bestArgumentAndScoreTuple = curResultTuple
-
-    return bestArgumentAndScoreTuple
+    results = crossValidateBackend(learnerName, X, Y, performanceFunction,
+                                   arguments, numFolds, scoreMode, useLog,
+                                   **kwarguments)
+    return results.bestArguments, results.bestScore
 
 
 def learnerType(learnerNames):
@@ -1273,11 +1276,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
         output wanted: 'label' if we class labels are desired,
@@ -1297,8 +1301,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
@@ -1388,25 +1393,25 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
-        results = UML.crossValidateReturnBest(learnerName, trainX, trainY,
-                                              performanceFunction, merged,
-                                              numFolds=numFolds,
-                                              scoreMode=scoreMode,
-                                              useLog=storeLog)
-        bestArgument, _ = results
-
+        crossValidationResults = crossValidateBackend(
+            learnerName, trainX, trainY, performanceFunction, merged,
+            folds=numFolds, scoreMode=scoreMode, useLog=storeLog)
+        bestArguments = crossValidationResults.bestArguments
     else:
-        bestArgument = merged
+        crossValidationResults = None
+        bestArguments = merged
+
 
     interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     multiClassStrategy, bestArgument)
+                                     bestArguments, multiClassStrategy,
+                                     crossValidationResults)
     time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,
-                  funcString, bestArgument, time=time)
+                  funcString, bestArguments, time=time)
 
     return trainedLearner
 
@@ -1447,11 +1452,12 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     output : str
         The kind of UML Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1477,8 +1483,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
@@ -1622,11 +1629,12 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     output : str
         The kind of UML Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1652,8 +1660,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
@@ -1809,11 +1818,12 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a UML.CV
+        object. eg. {'k': UML.CV([1,3,5])} will generate an error score
+        for  the learner when the learner was passed all three values of
+        ``k``, separately. These will be merged any kwarguments for the
+        learner.
     output : str
         The kind of UML Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1836,8 +1846,9 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        UML.CV object. eg. arg1=UML.CV([1,2,3]), arg2=UML.CV([4,5,6])
         which correspond to permutations/argument states with one
         element from arg1 and one element from arg2, such that an
         example generated permutation/argument state would be
@@ -2030,6 +2041,12 @@ def loadData(inputPath, useLog=None):
         The location (including file name and extension) to find a file
         previously generated by UML.data .save(). Expected file
         extension '.umld'.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
 
     Returns
     -------
@@ -2063,6 +2080,12 @@ def loadTrainedLearner(inputPath, useLog=None):
         The location (including file name and extension) to find a file
         previously generated for a trainedLearner object. Expected file
         extension '.umlm'.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
 
     Returns
     -------

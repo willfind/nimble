@@ -92,7 +92,7 @@ def testSparsityReturnedPlausible():
 
                     assert (difference < .01)
                 else:
-                    nonZerosCount = numpy.count_nonzero(returned.copyAs('numpyarray'))
+                    nonZerosCount = numpy.count_nonzero(returned.copy(to='numpyarray'))
                     actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
                     difference = abs(actualSparsity - curSparsity)
 
@@ -229,7 +229,7 @@ def back_constant_conversionEqualityBetweenTypes(toTest):
         ret = toTest(makeT, p, f)
 
         for matchT in returnTypes:
-            convertedRet = ret.copyAs(matchT)
+            convertedRet = ret.copy(to=matchT)
             toMatch = toTest(matchT, p, f)
 
             assert convertedRet == toMatch
@@ -376,7 +376,7 @@ def test_identity_conversionEqualityBetweenTypes():
         ret = UML.identity(makeT, size)
 
         for matchT in returnTypes:
-            convertedRet = ret.copyAs(matchT)
+            convertedRet = ret.copy(to=matchT)
             toMatch = UML.identity(matchT, size)
 
             assert convertedRet == toMatch

@@ -104,7 +104,7 @@ class DataFrame(Base):
 
         return allDataIdentical(self.data.values, other.data.values)
 
-    def _writeFile_implementation(self, outPath, format, includePointNames,
+    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
         """
         Function to write the data in this object to a file using the
@@ -120,10 +120,10 @@ class DataFrame(Base):
         #     msg += "or as the extension in the outPath"
         #     raise InvalidArgumentValue(msg)
 
-        if format == 'csv':
+        if fileFormat == 'csv':
             return self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        if format == 'mtx':
+        if fileFormat == 'mtx':
             return self._writeFileMTX_implementation(
                 outPath, includePointNames, includeFeatureNames)
 
@@ -137,7 +137,7 @@ class DataFrame(Base):
             if includeFeatureNames:
                 self.data.columns = self.features.getNames()
                 if includePointNames:
-                    outFile.write('point_names')
+                    outFile.write('pointNames')
 
             if includePointNames:
                 self.data.index = self.points.getNames()
@@ -176,21 +176,18 @@ class DataFrame(Base):
 
         self.data = other.data
 
-    def _copyAs_implementation(self, format):
+    def _copy_implementation(self, to):
         """
-        Copy the current DataFrame object to another one in the format.
+        Copy the current DataFrame object to one in a specified format.
 
-        format: string.
+        to : string
             Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix,
-            scipycsc, scipycsr or None. If format is None, a new
-            DataFrame will be created.
+            scipycsc, scipycsr.
         """
-        if format is None:
-            format = 'DataFrame'
-        if format in UML.data.available:
+        if to in UML.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
-            if format == 'DataFrame':
+            if to == 'DataFrame':
                 data = self.data.copy()
                 # instantiation expects index and columns to be pandas defaults
                 data.reset_index(drop=True, inplace=True)
@@ -198,20 +195,20 @@ class DataFrame(Base):
             else:
                 data = np.matrix(self.data.values)
             # reuseData=True since we already made copies here
-            return createDataNoValidation(format, data, ptNames, ftNames,
+            return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if format == 'pythonlist':
+        if to == 'pythonlist':
             return self.data.values.tolist()
-        if format == 'numpyarray':
+        if to == 'numpyarray':
             return self.data.values.copy()
-        if format == 'numpymatrix':
+        if to == 'numpymatrix':
             return np.matrix(self.data.values)
-        if format == 'scipycsc':
+        if to == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(self.data.values)
-        if format == 'scipycsr':
+        if to == 'scipycsr':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)

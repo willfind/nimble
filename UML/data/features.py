@@ -93,6 +93,13 @@ class Features(object):
             May be either a string not currently in the featureName set,
             or None for an default featureName. newName cannot begin
             with the default prefix.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -124,6 +131,13 @@ class Features(object):
               feature names.
             * dict - The mapping for each feature name in the format
               {name:index}
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -261,6 +275,13 @@ class Features(object):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -268,7 +289,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy, Base.copyAs
+        Base.copy
 
         Examples
         --------
@@ -391,6 +412,13 @@ class Features(object):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -579,6 +607,13 @@ class Features(object):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -713,6 +748,13 @@ class Features(object):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -865,6 +907,13 @@ class Features(object):
             Either an iterable, list-like object of identifiers (names
             and/or indices), a comparator or a scoring function, or None
             to indicate the natural ordering.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -963,11 +1012,17 @@ class Features(object):
         ----------
         function
             Must accept the view of a feature as an argument.
-
         features : identifier, list of identifiers
             May be a single feature name or index, an iterable,
             container of feature names and/or indices. None indicates
             application to all features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -991,7 +1046,7 @@ class Features(object):
         to make a copy in order to modify any specific data.
 
         >>> def transformMiddlePoint(ft):
-        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
         >>> data = UML.ones('Matrix', 3, 5)
@@ -1036,6 +1091,13 @@ class Features(object):
         features : feature, list of features
             The subset of features to limit the calculation to. If None,
             the calculation will apply to all features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -1063,7 +1125,7 @@ class Features(object):
         a copy is necessary to modify any specific data.
 
         >>> def changeMiddlePoint(ft):
-        ...     ftList = ft.copyAs('python list', outputAs1D=True)
+        ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
         >>> data = UML.ones('Matrix', 3, 5)
@@ -1115,6 +1177,13 @@ class Features(object):
             that the data will be inserted to the right of all features
             in this object, or in other words: appended to the end of
             the current features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1179,6 +1248,13 @@ class Features(object):
         reducer : function
             Input the ``mapper`` output and output a two-tuple
             containing the identifier and the reduced value.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1207,6 +1283,16 @@ class Features(object):
     def shuffle(self, useLog=None):
         """
         Permute the indexing of the features to a random order.
+
+        Parameters
+        ----------
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Notes
         -----
@@ -1269,6 +1355,13 @@ class Features(object):
         returnModified : return an object containing True for the
             modified values in each feature and False for unmodified
             values.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         See Also
         --------
@@ -1353,6 +1446,13 @@ class Features(object):
             querying the calling object, and the operation is performed
             on applyResultTo using the results; as if a UML Base object
             was given for the subtract or divide arguments.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Examples
         --------
@@ -1424,6 +1524,13 @@ class Features(object):
               values.
         resultingNames : list
             Strings defining the names of the split features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Notes
         -----

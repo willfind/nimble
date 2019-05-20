@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # Using cross validation to explicitly determine a winning argument set
     results = UML.crossValidateReturnBest("custom.RidgeRegression", trainX, trainY, RMSE,
-                                          lamb=(0, .5, 1))
+                                          lamb=UML.CV([0, .5, 1]))
     bestArgument, bestScore = results
 
     print("Best argument set: " + str(bestArgument))

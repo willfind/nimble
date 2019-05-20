@@ -115,7 +115,7 @@ class SparseElements(Elements):
         if directMul and notView:
             toMul = other.data
         else:
-            toMul = other.copyAs('numpyarray')
+            toMul = other.copy(to='numpyarray')
         raw = self._source.data.multiply(coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
             self._source.data = raw.tocoo()

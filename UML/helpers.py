@@ -29,6 +29,7 @@ import UML
 from UML.logger import handleLogging
 from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
 from UML.exceptions import InvalidArgumentValueCombination, PackageException
+from UML.exceptions import ImproperObjectAction
 from UML.exceptions import FileFormatException
 from UML.data import Base
 from UML.data.dataHelpers import isAllowedSingleElement
@@ -150,6 +151,13 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         msg += "the only accepted list formats, yet the (0,0)th element was "
         msg += str(type(rawData[0][0]))
         raise TypeError(msg)
+    mustCopy = ['automatic', True]
+    if pnamesID in mustCopy or fnamesID is mustCopy:
+        # copy rawData to avoid modifying the original user data
+        if isinstance(rawData[0], tuple):
+            rawData = [list(row) for row in rawData]
+        else:
+            rawData = [row.copy() for row in rawData]
 
     firstRow = rawData[0] if len(rawData) > 0 else None
     secondRow = rawData[1] if len(rawData) > 1 else None
@@ -382,11 +390,11 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                                                          featureNames)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
-        # pointNames and featureNames may be True, False, 'automatic', or
-        # explicit names
+        # pointNames and featureNames may be True, False, None, 'automatic', or
+        # explicit names. False and None have the same behavior.
 
         # User explicitly did not want names extracted
-        if pointNames is False:
+        if pointNames is False or pointNames is None:
             # assert that data was not accidentally removed
             assert tempPointNames is None
             pointNames = None
@@ -405,7 +413,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
             pointNames = pointNames
 
         # User explicitly did not want names extracted
-        if featureNames is False:
+        if featureNames is False or featureNames is None:
             # assert that data was not accidentally removed
             assert tempFeatureNames is None
             featureNames = None
@@ -418,7 +426,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
         # We could have extracted name and did
         elif featureNames == 'automatic' and tempFeatureNames is not None:
             featureNames = tempFeatureNames
-        # Point names were provided by user
+        # Feature names were provided by user
         else:
             assert tempFeatureNames is None
             featureNames = featureNames
@@ -437,8 +445,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                 isAllowedSingleElement(rawData[0])
                 or isinstance(rawData[0], list)
                 or hasattr(rawData[0], 'setLimit'))):
-       # attempt to convert the list to floats to remain consistent with other
-       # UML types if unsuccessful we will keep the list as is
+        # attempt to convert the list to floats to remain consistent with other
+        # UML types if unsuccessful we will keep the list as is
         try:
             # 1D list
             rawData = list(map(numpy.float, rawData))
@@ -654,7 +662,7 @@ def initDataObject(
                              featureNames=featureNames, name=name,
                              paths=pathsToPass, elementType=elementType,
                              reuseData=reuseData)
-            ret = ret.copyAs(returnType)
+            ret = ret.copy(to=returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except Exception:
@@ -729,7 +737,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
             # discard the point of feature names that pulled along since we
             # extracted these first
             pnames.points.extract(featureNamesID)
-        praw = pnames.copyAs('numpyarray', outputAs1D=True)
+        praw = pnames.copy(to='numpyarray', outputAs1D=True)
         praw = numpy.vectorize(str)(praw)
 
     fraw = None
@@ -738,7 +746,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
         fnames = ret.points.extract(featureNamesID)
         # extracted point names first, so if they existed, they aren't in
         # ret anymore. So we DON'T need to extract them from this object
-        fraw = fnames.copyAs('numpyarray', outputAs1D=True)
+        fraw = fnames.copy(to='numpyarray', outputAs1D=True)
         fraw = numpy.vectorize(str)(fraw)
 
     # have to wait for everything to be extracted before we add the names,
@@ -1253,7 +1261,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         return not isinstance(x, type(y))
 
     if ((pointNames is True or pointNames == 'automatic')
-            and firstValues[0] == 'point_names'):
+            and firstValues[0] == 'pointNames'):
         allText = all(map(lambda x: isinstance(x, six.string_types),
                           firstValues[1:]))
         allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
@@ -1269,7 +1277,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         featureNames = False
 
     if featureNames is True and pointNames == 'automatic':
-        if firstValues[0] == 'point_names':
+        if firstValues[0] == 'pointNames':
             pointNames = True
     # At this point, there is no chance to resolve 'automatic' to True
     if pointNames == 'automatic':
@@ -1284,7 +1292,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
     user. For feature names the trigger is two empty lines prior to
     the first line of data. For point names the trigger is the first
     line of data contains the feature names, and the first value of that
-    line is 'point_names'
+    line is 'pointNames'
     """
     startPosition = openFile.tell()
 
@@ -2186,8 +2194,8 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # check if new option names introduced, call sync if needed
     if learnerClassObject.options() != []:
-        UML.configuration.syncWithInterfaces(UML.settings, [currInterface],
-                                             save=save)
+        UML.configuration.setInterfaceOptions(UML.settings, currInterface,
+                                              save=save)
 
 
 def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
@@ -2707,6 +2715,85 @@ def generateAllPairs(items):
     return pairs
 
 
+class CrossValidationResults():
+    """
+    Container for cross-validation results.
+    """
+    def __init__(self, results, performanceFunction, numFolds):
+        self.results = results
+        self.performanceFunction = performanceFunction
+        self.numFolds = numFolds
+        self._bestArguments = None
+        self._bestScore = None
+
+    def __str__(self):
+        return str(self.results)
+
+    def __repr__(self):
+        ret = "CrossValidationResults({}, {}, {})"
+        ret = ret.format(self.results, self.performanceFunction, self.numFolds)
+        return ret
+
+    @property
+    def bestArguments(self):
+        """
+        The best argument based on the performanceFunction.
+        """
+        if self._bestArguments is not None:
+            return self._bestArguments
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestArguments
+
+    @property
+    def bestScore(self):
+        """
+        The best score based on the performanceFunction.
+        """
+        if self._bestScore is not None:
+            return self._bestScore
+        bestResults = self._bestArgumentsAndScore()
+        self._bestArguments = bestResults[0]
+        self._bestScore = bestResults[1]
+        return self._bestScore
+
+    def _bestArgumentsAndScore(self):
+        """
+        The best argument and score based on the performanceFunction.
+        """
+        detected = UML.calculate.detectBestResult(self.performanceFunction)
+        if detected == 'max':
+            maximumIsBest = True
+        elif detected == 'min':
+            maximumIsBest = False
+        else:
+            msg = "Unable to automatically determine whether maximal or "
+            msg += "minimal scores are considered optimal for the the "
+            msg += "given performanceFunction. "
+            msg += "By adding an attribute named 'optimal' to "
+            msg += "performanceFunction with either the value 'min' or 'max' "
+            msg += "depending on whether minimum or maximum returned values "
+            msg += "are associated with correctness, this error should be "
+            msg += "avoided."
+
+        bestArgumentAndScoreTuple = None
+        for curResultTuple in self.results:
+            _, curScore = curResultTuple
+            #if curArgument is the first or best we've seen:
+            #store its details in bestArgumentAndScoreTuple
+            if bestArgumentAndScoreTuple is None:
+                bestArgumentAndScoreTuple = curResultTuple
+            else:
+                if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+                if (not maximumIsBest
+                        and curScore < bestArgumentAndScoreTuple[1]):
+                    bestArgumentAndScoreTuple = curResultTuple
+
+        return bestArgumentAndScoreTuple
+
+
 def crossValidateBackend(learnerName, X, Y, performanceFunction,
                          arguments=None, folds=10, scoreMode='label',
                          useLog=None, **kwarguments):
@@ -2833,7 +2920,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction,
     handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
                   performanceFunction, performanceOfEachCombination, folds)
     #return the list of tuples - tracking the performance of each argument
-    return performanceOfEachCombination
+    return CrossValidationResults(performanceOfEachCombination,
+                                  performanceFunction, folds)
 
 
 def makeFoldIterator(dataList, folds):
@@ -2936,6 +3024,28 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
+class CV(object):
+    def __init__(self, argumentList):
+        try:
+            self.argumentTuple = tuple(argumentList)
+        except TypeError:
+            msg = "argumentList must be iterable."
+
+    def __getitem__(self, key):
+        return self.argumentTuple[key]
+
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
+    def __len__(self):
+        return len(self.argumentTuple)
+
+    def __str__(self):
+        return str(self.argumentTuple)
+
+    def __repr__(self):
+        return "CV(" + str(list(self.argumentTuple)) + ")"
+
 class ArgumentIterator:
     """
     Constructor takes a dict mapping strings to tuples.
@@ -2968,9 +3078,9 @@ class ArgumentIterator:
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
                 try:
-                    if isinstance(rawArgumentInput[key], tuple):
+                    if isinstance(rawArgumentInput[key], CV):
                         self.numPermutations *= len(rawArgumentInput[key])
-                except TypeError: # taking len of non tuple
+                except TypeError: # taking len of non CV object
                     pass #numPermutations not increased
             self.permutationsList = _buildArgPermutationsList([], {}, 0,
                                                               rawArgumentInput)
@@ -3036,7 +3146,7 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
         curValues = rawArgInput[curKey]
 
         try:
-            if not isinstance(curValues, tuple):
+            if not isinstance(curValues, CV):
                 raise TypeError()
             # if there are multiple values, add one key-value pair to the
             # the current dict, make recursive call to build the rest of the
@@ -3173,9 +3283,9 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
 
     # convert datatype if not matrix
     if returnType.lower() != 'matrix':
-        pointsObj = pointsObj.copyAs(returnType)
-        labelsObj = labelsObj.copyAs(returnType)
-        noiselessLabelsObj = noiselessLabelsObj.copyAs(returnType)
+        pointsObj = pointsObj.copy(to=returnType)
+        labelsObj = labelsObj.copy(to=returnType)
+        noiselessLabelsObj = noiselessLabelsObj.copy(to=returnType)
 
     return (pointsObj, labelsObj, noiselessLabelsObj)
 
@@ -3205,8 +3315,8 @@ def sumAbsoluteDifference(dataOne, dataTwo):
         msg += "numbers of points."
         raise InvalidArgumentValueCombination(msg)
 
-    numpyOne = dataOne.copyAs('numpyarray')
-    numpyTwo = dataTwo.copyAs('numpyarray')
+    numpyOne = dataOne.copy(to='numpyarray')
+    numpyTwo = dataTwo.copy(to='numpyarray')
 
     differences = numpyOne - numpyTwo
 
@@ -3663,7 +3773,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     # of class labels
     labelVector = trainX.features.copy([trainY])
     labelVector.transpose()
-    labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+    labelSet = list(set(labelVector.copy(to="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
     # For each pair of class labels: remove all points with one of those
@@ -3683,11 +3793,11 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
                                            arguments=merged, useLog=useLog)
         #put predictions into table of predictions
         if rawPredictions is None:
-            rawPredictions = partialResults.copyAs(format="List")
+            rawPredictions = partialResults.copy(to="List")
         else:
             predName = 'predictions-' + str(predictionFeatureID)
             partialResults.features.setName(0, predName)
-            rawPredictions.features.add(partialResults.copyAs(format="List"))
+            rawPredictions.features.add(partialResults.copy(to="List"))
         pairData.features.add(pairTrueLabels)
         trainX.points.add(pairData)
         predictionFeatureID += 1
@@ -3701,7 +3811,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         # construct a list of lists, with each row in the list containing the
         # predicted label and score of that label for the corresponding row in
         # rawPredictions
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         tempResultsList = []
         for row in predictionMatrix:
             scores = countWins(row)
@@ -3712,13 +3822,14 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+                                          featureNames=featureNames,
+                                          useLog=False)
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
         zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
         labelIndexDict = {str(v): k for k, v in zipIndexLabel}
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         resultsContainer = []
         for row in predictionMatrix:
             finalRow = [0] * len(columnHeaders)
@@ -3729,7 +3840,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
             resultsContainer.append(finalRow)
 
         return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+                              featureNames=columnHeaders, useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)
@@ -3798,7 +3909,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
     # Get set of unique class labels
     labelVector = trainY.copy()
     labelVector.transpose()
-    labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+    labelSet = list(set(labelVector.copy(to="python list")[0]))
 
     # For each class label in the set of labels:  convert the true
     # labels in trainY into boolean labels (1 if the point
@@ -3832,18 +3943,18 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.points.calculate(
-            extractWinningPredictionIndex).copyAs(format="python list")
+            extractWinningPredictionIndex).copy(to="python list")
         winningLabels = []
         for [winningIndex] in winningPredictionIndices:
             winningLabels.append([labelSet[int(winningIndex)]])
         return UML.createData(rawPredictions.getTypeString(), winningLabels,
-                              featureNames=['winningLabel'])
+                              featureNames=['winningLabel'], useLog=False)
 
     elif scoreMode.lower() == 'bestScore'.lower():
         # construct a list of lists, with each row in the list containing the
         # predicted label and score of that label for the corresponding row in
         # rawPredictions
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         indexToLabel = rawPredictions.features.getNames()
         tempResultsList = []
         for row in predictionMatrix:
@@ -3854,7 +3965,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         #wrap the results data in a List container
         featureNames = ['PredictedClassLabel', 'LabelScore']
         resultsContainer = UML.createData("List", tempResultsList,
-                                          featureNames=featureNames)
+                                          featureNames=featureNames,
+                                          useLog=False)
         return resultsContainer
 
     elif scoreMode.lower() == 'allScores'.lower():
@@ -3865,7 +3977,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
         labelIndexDict = {v: k for k, v in zipIndexLabel}
         featureNamesItoN = rawPredictions.features.getNames()
-        predictionMatrix = rawPredictions.copyAs(format="python list")
+        predictionMatrix = rawPredictions.copy(to="python list")
         resultsContainer = []
         for row in predictionMatrix:
             finalRow = [0] * len(columnHeaders)
@@ -3878,7 +3990,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
             resultsContainer.append(finalRow)
         #wrap data in Base container
         return UML.createData(rawPredictions.getTypeString(), resultsContainer,
-                              featureNames=columnHeaders)
+                              featureNames=columnHeaders, useLog=False)
     else:
         msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
         raise InvalidArgumentValue(msg)

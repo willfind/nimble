@@ -52,6 +52,7 @@ from .uml import showLog
 from .uml import learnerType
 from .uml import loadData
 from .uml import loadTrainedLearner
+from .helpers import CV
 
 capturedErr = tempfile.NamedTemporaryFile()
 
@@ -78,8 +79,8 @@ UML.helpers.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.
-UML.configuration.syncWithInterfaces(UML.settings, UML.interfaces.available,
-                                     save=True)
+for interface in UML.interfaces.available:
+    UML.configuration.setInterfaceOptions(UML.settings, interface, save=True)
 
 # initialize the logging file
 UML.logger.active = UML.logger.initLoggerAndLogConfig()
