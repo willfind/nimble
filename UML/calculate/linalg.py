@@ -230,37 +230,6 @@ def solve(aObj, bObj):
     """
     return _backendSolvers(aObj, bObj, solve)
 
-    if len(aObj.points) != len(aObj.features):
-        msg = 'Object A has to be square \
-        (Number of features and points needs to be equal).'
-        raise InvalidArgumentValue(msg)
-
-    aOriginalType = aObj.getTypeString()
-    if aObj.getTypeString() in ['DataFrame', 'List']:
-        aObj = aObj.copyAs('Matrix')
-    if bObj.getTypeString() in ['DataFrame', 'List', 'Sparse']:
-        bObj = bObj.copyAs('Matrix')
-
-    if aObj.getTypeString() == 'Matrix':
-        solution = scipy.linalg.solve(aObj.data, bObj.data)
-        solution = solution.T
-
-    elif isinstance(aObj, UML.data.sparse.SparseView):
-        aCopy = aObj.copy()
-        solution = scipy.sparse.linalg.spsolve(aCopy.data,
-                                               numpy.asarray(bObj.data))
-        solution = numpy.asmatrix(solution)
-
-    elif aObj.getTypeString() == 'Sparse':
-        solution = scipy.sparse.linalg.spsolve(aObj.data,
-                                               numpy.asarray(bObj.data))
-        solution = numpy.asmatrix(solution)
-
-    sol = UML.createData(aOriginalType, solution,
-                             featureNames=aObj.features.getNames())
-
-    return sol
-
 
 def leastSquaresSolution(aObj, bObj):
     """
@@ -300,7 +269,7 @@ def leastSquaresSolution(aObj, bObj):
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
 
 def _backendSolvers(aObj, bObj, solverFunction):
-    bObj = _backendsolversValidation(aObj, bObj, solverFunction)
+    bObj = _backendSolversValidation(aObj, bObj, solverFunction)
 
     aOriginalType = aObj.getTypeString()
     if aObj.getTypeString() in ['DataFrame', 'List']:
@@ -340,7 +309,7 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
 
 
-def _backendsolversValidation(aObj, bObj):
+def _backendSolversValidation(aObj, bObj, solverFunction):
     if not isinstance(aObj, UML.data.Base):
         raise InvalidArgumentType(
             "Left hand side object must be derived class of UML.data.Base.")
