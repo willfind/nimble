@@ -28,7 +28,7 @@ from UML.helpers import _2dOutputFlagCheck
 from UML.helpers import LearnerInspector
 from UML.helpers import ArgumentIterator
 from UML.helpers import _mergeArguments
-from UML.helpers import crossValidateBackend
+from UML.helpers import KFoldCrossValidator
 from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
@@ -1024,9 +1024,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     --------
     TODO
     """
-    return crossValidateBackend(learnerName, X, Y, performanceFunction,
-                                   arguments, numFolds, scoreMode, useLog,
-                                   **kwarguments)
+    crossValidator = KFoldCrossValidator(numFolds, performanceFunction)
+    crossValidator.crossValidate(learnerName, X, Y,  arguments, scoreMode,
+                                 useLog, **kwarguments)
+    return crossValidator
 
 
 def learnerType(learnerNames):
@@ -1240,9 +1241,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
-        crossValidationResults = crossValidateBackend(
+        crossValidationResults = crossValidate(
             learnerName, trainX, trainY, performanceFunction, merged,
-            folds=numFolds, scoreMode=scoreMode, useLog=storeLog)
+            numFolds=numFolds, scoreMode=scoreMode, useLog=storeLog)
         bestArguments = crossValidationResults.bestArguments
     else:
         crossValidationResults = None
@@ -1754,7 +1755,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         results = crossValidate(learnerName, trainX, trainY,
                                 performanceFunction, merged, numFolds,
                                 scoreMode, useLog)
-        performance = results.bestScore
+        performance = results.bestResult
         metrics = {}
         for key, value in zip([performanceFunction], [performance]):
             metrics[key.__name__] = value

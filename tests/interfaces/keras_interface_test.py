@@ -70,7 +70,7 @@ def testKerasAPI():
         lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
         performanceFunction=UML.calculate.loss.rootMeanSquareError)
     bestArguments = results.bestArguments
-    bestScore = results.bestScore
+    bestScore = results.bestResult
 
 @keraSkipDec
 @logCountAssertionFactory(3)

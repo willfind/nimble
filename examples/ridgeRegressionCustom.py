@@ -40,7 +40,7 @@ if __name__ == "__main__":
     results = UML.crossValidate("custom.RidgeRegression", trainX, trainY, RMSE,
                                 lamb=UML.CV([0, .5, 1]))
     bestArguments = results.bestArguments
-    bestScore = results.bestScore
+    bestScore = results.bestResult
 
     print("Best argument set: " + str(bestArguments))
     print("Best score: " + str(bestScore))

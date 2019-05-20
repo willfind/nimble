@@ -17,7 +17,7 @@ from UML.exceptions import ImproperObjectAction
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
-from UML.helpers import makeFoldIterator
+from UML.helpers import FoldIterator
 from UML.helpers import sumAbsoluteDifference
 from UML.helpers import generateClusteredPoints
 from UML.helpers import trainAndTestOneVsOne
@@ -26,12 +26,13 @@ from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import _mergeArguments
 from UML.helpers import computeMetrics
 from UML.helpers import inspectArguments
-from UML.helpers import CrossValidationResults
+from UML.helpers import KFoldCrossValidator
 from UML.helpers import CV
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
+from UML.exceptions import ImproperObjectAction
 
 ##########
 # TESTER #
@@ -47,7 +48,7 @@ class FoldIteratorTester(object):
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        makeFoldIterator([toTest], 2)
+        FoldIterator([toTest], 2)
 
     #	@raises(ImproperActionException)
     #	def test_makeFoldIterator_exceptionFEmpty(self):
@@ -64,7 +65,7 @@ class FoldIteratorTester(object):
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
-        makeFoldIterator([toTest, toTest], 6)
+        FoldIterator([toTest, toTest], 6)
 
 
     def test_makeFoldIterator_verifyPartitions(self):
@@ -72,7 +73,7 @@ class FoldIteratorTester(object):
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
-        folds = makeFoldIterator([toTest], 2)
+        folds = FoldIterator([toTest], 2)
 
         [(fold1Train, fold1Test)] = next(folds)
         [(fold2Train, fold2Test)] = next(folds)
@@ -94,7 +95,7 @@ class FoldIteratorTester(object):
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
-        folds = makeFoldIterator([toTest, None], 2)
+        folds = FoldIterator([toTest, None], 2)
 
         [(fold1Train, fold1Test), (fold1NoneTrain, fold1NoneTest)] = next(folds)
         [(fold2Train, fold2Test), (fold2NoneTrain, fold2NoneTest)] = next(folds)
@@ -128,7 +129,7 @@ class FoldIteratorTester(object):
         data2 = [[-1], [-2], [-3], [-4], [-5], [-6], [-7]]
         toTest2 = self.constructor(data2)
 
-        folds = makeFoldIterator([toTest0, toTest1, toTest2], 2)
+        folds = FoldIterator([toTest0, toTest1, toTest2], 2)
 
         fold0 = next(folds)
         fold1 = next(folds)
@@ -651,26 +652,55 @@ def test_inspectArguments():
     assert k == 'sigKwargs'
     assert d == (False, True, None)
 
-def test_CrossValidationResults():
+def test_KFoldCrossValidator():
+    # dummy results
     results = [({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
                ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)]
+    numFolds = 3
     performanceFunction = rootMeanSquareError
-    numFolds = 10
-    cvResults = CrossValidationResults(results, performanceFunction, numFolds)
-    assert str(cvResults) == str(results)
-    expRepr = "CrossValidationResults({}, {}, {})"
-    expRepr = expRepr.format(results, performanceFunction, numFolds)
-    assert repr(cvResults) == expRepr
-    assert cvResults.results == results
-    assert cvResults.performanceFunction == performanceFunction
-    assert cvResults.numFolds == numFolds
+    crossValidator = KFoldCrossValidator(numFolds, performanceFunction)
+    assert crossValidator.numFolds == numFolds
+    assert crossValidator.performanceFunction == performanceFunction
+
+    # cannot get results until crossValidation has occurred (_allResults is not None)
+    try:
+        crossValidator.allResults
+        assert False # expected ImproperObjectAction
+    except ImproperObjectAction:
+        pass
+    try:
+        crossValidator.bestArguments
+        assert False # expected ImproperObjectAction
+    except ImproperObjectAction:
+        pass
+    try:
+        crossValidator.bestResult
+        assert False # expected ImproperObjectAction
+    except ImproperObjectAction:
+        pass
+
+    # add dummy results
+    crossValidator._allResults = results
+    assert crossValidator.allResults == results
     # best arguments/score should not be calculated until requested
-    assert cvResults._bestArguments is None
-    assert cvResults._bestScore is None
-    assert cvResults.bestArguments == {'a': 1, 'b': 1}
+    assert crossValidator._bestArguments is None
+    assert crossValidator._bestResult is None
+    assert crossValidator.bestArguments == {'a': 1, 'b': 1}
     # accessing bestArguments property will also set bestScore
-    assert cvResults._bestScore is not None
-    assert cvResults.bestScore == .25
+    assert crossValidator._bestResult is not None
+    assert crossValidator.bestResult == .25
+    assert crossValidator.getResult(crossValidator.bestArguments) == .25
+    assert crossValidator.getResult(a=2, b=1) == .75
+    assert crossValidator.getResult({'a': 1}, b=2) == .5
+
+    # add some dummy fold results
+    fold_results = ([({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
+                     ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)] * numFolds)
+    crossValidator._resultsByFold = fold_results
+    assert crossValidator.getFoldResults({'a': 1, 'b': 1}) == [.25] * numFolds
+    assert crossValidator.getFoldResults(a=2, b=2) == [1.0] * numFolds
+    assert crossValidator.getFoldResults({'a': 1}, b=2) == [.5] * numFolds
+
 
 def test_CV():
     crossVal = CV([1, 2, 3])
