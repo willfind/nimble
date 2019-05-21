@@ -61,7 +61,8 @@ class UmlLogger(object):
         self.isAvailable = False
         self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
                          'run': self.logRun, 'data': self.logData,
-                         'crossVal': self.logCrossValidation}
+                         'crossVal': self.logCrossValidation,
+                         'setRandomSeed': self.logRandomSeed}
 
 
     def setup(self, newFileName=None):
@@ -147,16 +148,16 @@ class UmlLogger(object):
         """
         if not self.isAvailable:
             self.setup(self.logFileName)
-        if logType or logInfo:
-            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-            runNum = self.runNumber
-            logInfo = str(logInfo)
-            statement = "INSERT INTO logger "
-            statement += "(timestamp,runNumber,logType,logInfo) "
-            statement += "VALUES (?,?,?,?);"
-            self.cursor.execute(statement, (timestamp, runNum, logType,
-                                            logInfo))
-            self.connection.commit()
+
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        runNum = self.runNumber
+        logInfo = str(logInfo)
+        statement = "INSERT INTO logger "
+        statement += "(timestamp,runNumber,logType,logInfo) "
+        statement += "VALUES (?,?,?,?);"
+        self.cursor.execute(statement, (timestamp, runNum, logType,
+                                        logInfo))
+        self.connection.commit()
 
 
     def extractFromLog(self, query, values=None):
@@ -417,6 +418,11 @@ class UmlLogger(object):
 
             self.log(logType, logInfo)
 
+    def logRandomSeed(self, useLog, seed):
+        if enableLogging(useLog):
+            logType = 'setRandomSeed'
+            logInfo = {'seed': seed}
+            self.log(logType, logInfo)
 
     ###################
     ### LOG OUTPUT ###
@@ -524,14 +530,8 @@ def handleLogging(useLog, logType, *args, **kwargs):
     Store information to be logged in the logger.
     """
     if enableLogging(useLog):
-        if logType in UML.logger.active.logTypes:
-            logFunc = UML.logger.active.logTypes[logType]
-            logFunc(useLog, *args, **kwargs)
-        else:
-            if args:
-                UML.log(logType, args)
-            if kwargs:
-                UML.log(logType, kwargs)
+        logFunc = UML.logger.active.logTypes[logType]
+        logFunc(useLog, *args, **kwargs)
 
 def stringToDatetime(string):
     """

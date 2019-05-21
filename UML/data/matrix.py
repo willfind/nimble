@@ -143,7 +143,7 @@ class Matrix(Base):
                 fnamesLine = reduce(combine, fnames)
                 fnamesLine += '\n'
                 if includePointNames:
-                    outFile.write('point_names,')
+                    outFile.write('pointNames,')
 
                 outFile.write(fnamesLine)
 
