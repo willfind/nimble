@@ -983,9 +983,12 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     Y : UML Base object
         labels/data about points in X
     performanceFunction : function
-        Look in UML.calculate for premade options. Function used by
-        computeMetrics to generate a performance score for the run.
+        Premade options are available in UML.calculate.
+        Function used to evaluate the performance score for each run.
         function is of the form: def func(knownValues, predictedValues).
+        This function should have an 'optimal' attribute equal 'min' or
+        'max' defining whether a minimum or maximum value,
+        respectively, should be considered optimal.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -1018,16 +1021,44 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
     Returns
     -------
-    TODO
+    KFoldCrossValidator
+        Object which performs the cross-validation and provides access
+        to the results which can be accessed through the the object's
+        attributes and methods.
 
     Examples
     --------
-    TODO
+    >>> UML.setRandomSeed(42)
+    >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+    ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
+    ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+    >>> yRaw = [[1], [2], [3],
+    ...         [1], [2], [3],
+    ...         [1], [2], [3]]
+    >>> X = UML.createData('Matrix', xRaw)
+    >>> Y = UML.createData('Matrix', yRaw)
+    >>> crossValidator = UML.crossValidate(
+    ...    'Custom.KNNClassifier', X, Y,
+    ...    performanceFunction=UML.calculate.fractionIncorrect,
+    ...    numFolds=3, k=3)
+    >>> type(crossValidator)
+    <class 'UML.helpers.KFoldCrossValidator'>
+    >>> crossValidator.learnerName
+    'Custom.KNNClassifier'
+    >>> crossValidator.numFolds
+    3
+    >>> crossValidator.bestArguments
+    {'k': 3}
+    >>> crossValidator.bestResult
+    0.3333333333333333
+    >>> crossValidator.getFoldResults(crossValidator.bestArguments)
+    [0.3333333333333333, 0.6666666666666666, 0.0]
+    >>> crossValidator.allResults
+    [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
     """
-    crossValidator = KFoldCrossValidator(numFolds, performanceFunction)
-    crossValidator.crossValidate(learnerName, X, Y,  arguments, scoreMode,
-                                 useLog, **kwarguments)
-    return crossValidator
+    return KFoldCrossValidator(learnerName, X, Y, performanceFunction,
+                               arguments, numFolds, scoreMode, useLog,
+                               **kwarguments)
 
 
 def learnerType(learnerNames):

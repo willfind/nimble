@@ -7,25 +7,27 @@ from __future__ import absolute_import
 from __future__ import print_function
 import math
 import sys
-import numpy
+from unittest import mock
 
+import numpy
 import nose
 from nose.tools import *
 from nose.plugins.attrib import attr
+from six.moves import range
 
 import UML
-
 from UML import crossValidate
 from UML import createData
-
 from UML.exceptions import InvalidArgumentValueCombination
+from UML.exceptions import ImproperObjectAction
 from UML.calculate import *
 from UML.randomness import pythonRandom
 from UML.helpers import computeMetrics
 from UML.helpers import generateClassificationData
+from UML.helpers import KFoldCrossValidator
+from UML.helpers import CV
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
-from six.moves import range
 from .assertionHelpers import oneLogEntryExpected
 
 
@@ -186,16 +188,20 @@ def test_crossValidate_2d_api_check():
 
     # repeat for crossValidate.allResults
     resultsObj = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
-    assert len(resultsObj.allResults) == 1
-    assert len(resultsObj.allResults[0]) == 2
-    assert isinstance(resultsObj.allResults[0][0], dict) and resultsObj.allResults[0][0] == {}
-    assert isinstance(resultsObj.allResults[0][1], float) and resultsObj.allResults[0][1] < .001
+    resultsList = resultsObj.allResults
+    assert len(resultsList) == 1
+    assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
+    assert metric.__name__ in resultsList[0]
+    performance = resultsList[0][metric.__name__]
+    assert isinstance(performance, float) and performance < .001
 
     resultsObj = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
-    assert len(resultsObj.allResults) == 1
-    assert len(resultsObj.allResults[0]) == 2
-    assert isinstance(resultsObj.allResults[0][0], dict) and resultsObj.allResults[0][0] == {}
-    assert isinstance(resultsObj.allResults[0][1], float) and resultsObj.allResults[0][1] < .001
+    resultsList = resultsObj.allResults
+    assert len(resultsList) == 1
+    assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
+    assert metric.__name__ in resultsList[0]
+    performance = resultsList[0][metric.__name__]
+    assert isinstance(performance, float) and performance < .001
 
     # repeat for crossValidate.bestArgument
     resultsObj = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
@@ -267,13 +273,15 @@ def test_crossValidateResults():
     X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
     #try with no extra arguments at all; yet we know an argument exists (k):
     resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
-    assert resultsObj.allResults
-    assert 1 == len(resultsObj.allResults)
-    assert resultsObj.allResults[0][0] == {}
+    resultsList = resultsObj.allResults
+    assert resultsList
+    assert 1 == len(resultsList)
+    assert len(resultsList[0]) == 1 and 'fractionIncorrect' in resultsList[0]
     #try with some extra elements, including the default
     resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3]))
-    assert resultsObj.allResults
-    assert 3 == len(resultsObj.allResults)
+    resultsList = resultsObj.allResults
+    assert resultsList
+    assert 3 == len(resultsList)
 
     # since the same seed is used, and these calls are effectively building the
     # same arguments, the scores in results list should be the same, though
@@ -285,8 +293,8 @@ def test_crossValidateResults():
     result2 = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
-    resultOneScores = [curEntry[1] for curEntry in result1.allResults]
-    resultTwoScores = [curEntry[1] for curEntry in result2.allResults]
+    resultOneScores = [curEntry['fractionIncorrect'] for curEntry in result1.allResults]
+    resultTwoScores = [curEntry['fractionIncorrect'] for curEntry in result2.allResults]
     resultsOneSet = set(resultOneScores)
     resultsTwoSet = set(resultTwoScores)
     assert resultsOneSet == resultsTwoSet
@@ -296,9 +304,8 @@ def test_crossValidateResults():
     #and second entry is the score (float)
     assert isinstance(result1.allResults, list)
     for curResult in result1.allResults:
-        assert isinstance(curResult, tuple)
-        assert isinstance(curResult[0], dict)
-        assert isinstance(curResult[1], float)
+        assert isinstance(curResult, dict)
+        assert isinstance(curResult['fractionIncorrect'], float)
 
 
 @attr('slow')
@@ -355,8 +362,12 @@ def test_crossValidateReturnBest():
                                    wrapped="custom.KNNClassifier")
         allResultsList = resultsObj.allResults
         #since same args were used, the best tuple should be in allResultsList
-        allArguments = [curResult[0] for curResult in allResultsList]
-        allScores = [curResult[1] for curResult in allResultsList]
+        allArguments = []
+        allScores = []
+        for result in allResultsList:
+            score = result.pop(metric.__name__)
+            allArguments.append(result)
+            allScores.append(score)
         assert resultTuple[0] in allArguments
         assert resultTuple[1] in allScores
 
@@ -397,7 +408,7 @@ def test_crossValidateReturnEtc_withDefaultArgs():
     allResultsList = resultsObj.allResults
     assert allResultsList
     assert 1 == len(allResultsList)
-    assert allResultsList[0][0] == {}
+    assert len(allResultsList[0]) == 1 and 'fractionIncorrect' in allResultsList[0]
 
 
 @attr('slow')
@@ -495,6 +506,85 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     # should have 100 percent accuracy, so these results should be the same
     assert nonAvgResult == avgResult
+
+class MockedKFoldCrossValidator(KFoldCrossValidator):
+    def _crossValidate(self, X, Y, useLog):
+        pass
+
+@mock.patch('tests.testCrossValidate.KFoldCrossValidator', MockedKFoldCrossValidator)
+def test_KFoldCrossValidator():
+    # we have mocked the object so it will not actually perform crossValidation
+    # instead we will pass our own dummy data to the backend so we can check
+    # the outputs match our expectations
+    learnerName = 'Dummy.learner'
+    X, Y = None, None # not actually used when not crossValidating
+    performanceFunction = rootMeanSquareError
+    aVals = UML.CV([1, 2])
+    arguments = {'a': aVals}
+    bVals = UML.CV([1, 2]) # will be passed as kwarguments
+    numFolds = 3
+    scoreMode = 'label'
+
+    crossValidator = KFoldCrossValidator(
+        learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode,
+        useLog=False, b=bVals)
+    assert crossValidator.learnerName == learnerName
+    assert crossValidator.numFolds == numFolds
+    assert crossValidator.performanceFunction == performanceFunction
+    assert crossValidator.arguments == {'a': aVals, 'b': bVals}
+    assert crossValidator.scoreMode == 'label'
+
+    # add dummy results
+    results = [({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
+               ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)]
+    crossValidator._allResults = results
+    assert crossValidator.allResults != results
+    retResults = [{'a': 1, 'b': 1, 'rootMeanSquareError': .25},
+                  {'a': 1, 'b': 2, 'rootMeanSquareError': .5},
+                  {'a': 2, 'b': 1, 'rootMeanSquareError': .75},
+                  {'a': 2, 'b': 2, 'rootMeanSquareError': 1.0}]
+    assert crossValidator.allResults == retResults
+    # best arguments/score should not be calculated until requested
+    assert crossValidator._bestArguments is None
+    assert crossValidator._bestResult is None
+    assert crossValidator.bestArguments == {'a': 1, 'b': 1}
+    # accessing bestArguments property will also set bestScore
+    assert crossValidator._bestResult is not None
+    assert crossValidator.bestResult == .25
+    assert crossValidator.getResult(crossValidator.bestArguments) == .25
+    assert crossValidator.getResult(a=2, b=1) == .75
+    assert crossValidator.getResult({'a': 1}, b=2) == .5
+
+    # add some dummy fold results
+    fold_results = ([({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
+                     ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)] * numFolds)
+    crossValidator._resultsByFold = fold_results
+    assert crossValidator.getFoldResults({'a': 1, 'b': 1}) == [.25] * numFolds
+    assert crossValidator.getFoldResults(a=2, b=2) == [1.0] * numFolds
+    assert crossValidator.getFoldResults({'a': 1}, b=2) == [.5] * numFolds
+
+    # test allResults for lambda or unnamed function
+    retResults = [{'a': 1, 'b': 1, 'performance': .25},
+                  {'a': 1, 'b': 2, 'performance': .5},
+                  {'a': 2, 'b': 1, 'performance': .75},
+                  {'a': 2, 'b': 2, 'performance': 1.0}]
+    crossValidator.performanceFunction = None
+    assert crossValidator.allResults == retResults
+    crossValidator.performanceFunction = lambda y, yPred: None
+    assert crossValidator.allResults == retResults
+
+
+def test_CV():
+    crossVal = CV([1, 2, 3])
+    assert len(crossVal) == 3
+    assert crossVal[1] == 2
+    assert str(crossVal) == "(1, 2, 3)"
+    assert repr(crossVal) == "CV([1, 2, 3])"
+
+@raises(ImproperObjectAction)
+def test_CV_immutable():
+    crossVal = CV([1, 2, 3])
+    crossVal[1] = 0
 
 @oneLogEntryExpected
 def back_crossValidate_logCount(toCall):

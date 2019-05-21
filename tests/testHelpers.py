@@ -26,13 +26,10 @@ from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import _mergeArguments
 from UML.helpers import computeMetrics
 from UML.helpers import inspectArguments
-from UML.helpers import KFoldCrossValidator
-from UML.helpers import CV
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
-from UML.exceptions import ImproperObjectAction
 
 ##########
 # TESTER #
@@ -651,65 +648,3 @@ def test_inspectArguments():
     assert v == 'sigArgs'
     assert k == 'sigKwargs'
     assert d == (False, True, None)
-
-def test_KFoldCrossValidator():
-    # dummy results
-    results = [({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
-               ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)]
-    numFolds = 3
-    performanceFunction = rootMeanSquareError
-    crossValidator = KFoldCrossValidator(numFolds, performanceFunction)
-    assert crossValidator.numFolds == numFolds
-    assert crossValidator.performanceFunction == performanceFunction
-
-    # cannot get results until crossValidation has occurred (_allResults is not None)
-    try:
-        crossValidator.allResults
-        assert False # expected ImproperObjectAction
-    except ImproperObjectAction:
-        pass
-    try:
-        crossValidator.bestArguments
-        assert False # expected ImproperObjectAction
-    except ImproperObjectAction:
-        pass
-    try:
-        crossValidator.bestResult
-        assert False # expected ImproperObjectAction
-    except ImproperObjectAction:
-        pass
-
-    # add dummy results
-    crossValidator._allResults = results
-    assert crossValidator.allResults == results
-    # best arguments/score should not be calculated until requested
-    assert crossValidator._bestArguments is None
-    assert crossValidator._bestResult is None
-    assert crossValidator.bestArguments == {'a': 1, 'b': 1}
-    # accessing bestArguments property will also set bestScore
-    assert crossValidator._bestResult is not None
-    assert crossValidator.bestResult == .25
-    assert crossValidator.getResult(crossValidator.bestArguments) == .25
-    assert crossValidator.getResult(a=2, b=1) == .75
-    assert crossValidator.getResult({'a': 1}, b=2) == .5
-
-    # add some dummy fold results
-    fold_results = ([({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
-                     ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)] * numFolds)
-    crossValidator._resultsByFold = fold_results
-    assert crossValidator.getFoldResults({'a': 1, 'b': 1}) == [.25] * numFolds
-    assert crossValidator.getFoldResults(a=2, b=2) == [1.0] * numFolds
-    assert crossValidator.getFoldResults({'a': 1}, b=2) == [.5] * numFolds
-
-
-def test_CV():
-    crossVal = CV([1, 2, 3])
-    assert len(crossVal) == 3
-    assert crossVal[1] == 2
-    assert str(crossVal) == "(1, 2, 3)"
-    assert repr(crossVal) == "CV([1, 2, 3])"
-
-@raises(ImproperObjectAction)
-def test_CV_immutable():
-    crossVal = CV([1, 2, 3])
-    crossVal[1] = 0
