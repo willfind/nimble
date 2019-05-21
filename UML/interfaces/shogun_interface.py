@@ -488,15 +488,15 @@ class Shogun(UniversalInterface):
     def loadParameterManifest(self):
         """
         Load manifest containing parameter names and defaults for all relevant objects
-        in shogun. If manifest is missing, empty, or outdated then run the discovery code.
-        The discovery code attempts to parse header and source files in the directory
-        associated with the 'location' option.
+        in shogun. If no manifest is available, then instantiate to an empty object.
 
         """
         # find most likely manifest file
         metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
         best, exact = self._findBestManifest(metadataPath)
         exists = os.path.exists(best) if best is not None else False
+        # default to empty if no best manifest exists
+        self._paramsManifest = {}
         if exists:
             with open(best, 'r') as fp:
                 self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
