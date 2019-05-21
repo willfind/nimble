@@ -100,7 +100,7 @@ def test_trainAndTest_dataInputs():
     assert out4 == exp
 
 #todo set seed and verify that you can regenerate error several times with
-#crossValidateReturnBest, trainAndApply, and your own computeMetrics
+#crossValidate.bestArguments, trainAndApply, and your own computeMetrics
 def test_trainAndTest():
     """Assert valid results returned for different arguments to the algorithm:
     with default ie no args

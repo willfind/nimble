@@ -2724,8 +2724,6 @@ class KFoldCrossValidator():
 
     Parameters
     ----------
-    Parameters
-    ----------
     learnerName : str
         UML compliant algorithm name in the form 'package.algorithm'
         e.g. 'sciKitLearn.KNeighborsClassifier'
@@ -2736,10 +2734,7 @@ class KFoldCrossValidator():
     performanceFunction : function
         Premade options are available in UML.calculate.
         Function used to evaluate the performance score for each run.
-        function is of the form: def func(knownValues, predictedValues).
-        This function should have an 'optimal' attribute set to 'min' or
-        'max' defining whether the minimum or maximum value,
-        respectively, should be considered optimal.
+        Function is of the form: def func(knownValues, predictedValues).
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -2797,13 +2792,17 @@ class KFoldCrossValidator():
         The argument permutation names and values which provided the
         optimal result according to the ``performanceFunction``.
     bestResult
-        The optimal output value from the ``performanceFunction``
-        according to ``performanceFunction.optimal``.
+        The optimal output value from the ``performanceFunction``.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
                  numFolds=10, scoreMode='label', useLog=None, **kwarguments):
         self.learnerName = learnerName
+        # detectBestResult will raise exception for invalid performanceFunction
+        detected = UML.calculate.detectBestResult(performanceFunction)
+        self.maximumIsOptimal = detected == 'max'
         self.performanceFunction = performanceFunction
+        if numFolds == 0:
+            raise InvalidArgumentValue("Cannot cross-validate over 0 folds")
         self.numFolds = numFolds
         self.scoreMode = scoreMode
         self.arguments = _mergeArguments(arguments, kwarguments)
@@ -2855,9 +2854,6 @@ class KFoldCrossValidator():
                 #todo support indexing if Y is an index for X instead
                 msg = "X and Y must contain the same number of points"
                 raise InvalidArgumentValueCombination(msg)
-
-        if self.numFolds == 0:
-            raise InvalidArgumentValue("Tried to cross validate over 0 folds")
 
         #get an iterator for the argument combinations- iterator
         #handles case of merged arguments being {}
@@ -3149,21 +3145,6 @@ class KFoldCrossValidator():
         """
         The best argument and result based on the performanceFunction.
         """
-        detected = UML.calculate.detectBestResult(self.performanceFunction)
-        if detected == 'max':
-            maximumIsBest = True
-        elif detected == 'min':
-            maximumIsBest = False
-        else:
-            msg = "Unable to automatically determine whether maximal or "
-            msg += "minimal scores are considered optimal for the the "
-            msg += "given performanceFunction. "
-            msg += "By adding an attribute named 'optimal' to "
-            msg += "performanceFunction with either the value 'min' or 'max' "
-            msg += "depending on whether minimum or maximum returned values "
-            msg += "are associated with correctness, this error should be "
-            msg += "avoided."
-
         bestArgumentAndScoreTuple = None
         for curResultTuple in self._allResults:
             _, curScore = curResultTuple
@@ -3172,9 +3153,10 @@ class KFoldCrossValidator():
             if bestArgumentAndScoreTuple is None:
                 bestArgumentAndScoreTuple = curResultTuple
             else:
-                if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
+                if (self.maximumIsOptimal
+                        and curScore > bestArgumentAndScoreTuple[1]):
                     bestArgumentAndScoreTuple = curResultTuple
-                if (not maximumIsBest
+                if (not self.maximumIsOptimal
                         and curScore < bestArgumentAndScoreTuple[1]):
                     bestArgumentAndScoreTuple = curResultTuple
 
@@ -3189,7 +3171,17 @@ class KFoldCrossValidator():
         raise InvalidArgumentValue(msg)
 
 
-class FoldIterator():
+class FoldIterator(object):
+    """
+    Create and iterate through folds.
+
+    Parameters
+    ----------
+    dataList : list
+        A list of data objects to divide into folds.
+    folds : int
+        The number of folds to create.
+    """
     def __init__(self, dataList, folds):
         self.dataList = dataList
         self.folds = folds
@@ -3283,11 +3275,13 @@ class FoldIterator():
 
 class ArgumentIterator(object):
     """
-    Constructor takes a dict mapping strings to tuples.
-    e.g. {'a':(1,2,3), 'b':(4,5)}
+    Create and iterate through argument permutations.
 
-    Convenience methods:
-    reset() - reset object so pop() again returns first permutation.
+    Parameters
+    ----------
+    rawArgumentInput : dict
+        Mapping of argument names (strings) to values.
+        e.g. {'a': CV([1, 2, 3]), 'b': UML.CV([4,5]), 'c': 6}
     """
 
     def __init__(self, rawArgumentInput):
@@ -3311,7 +3305,9 @@ class ArgumentIterator(object):
                     self.numPermutations *= len(rawArgumentInput[key])
                     iterableArgDict[key] = rawArgumentInput[key]
                 else: # numPermutations not increased
-                    # wrap in iterable for itertools.product
+                    # wrap in iterable so that itertools.product will treat
+                    # whatever this value is as a single argument value even
+                    # if the value itself is an iterable
                     iterableArgDict[key] = (rawArgumentInput[key],)
 
             # note: calls to keys() and values() will directly correspond as

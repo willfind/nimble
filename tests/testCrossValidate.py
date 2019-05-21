@@ -18,6 +18,7 @@ from six.moves import range
 import UML
 from UML import crossValidate
 from UML import createData
+from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import ImproperObjectAction
 from UML.calculate import *
@@ -55,7 +56,7 @@ def test_crossValidate_XY_unchanged():
     X, Y = _randomLabeledDataSet(numLabels=5)
     copyX = X.copy()
     copyY = Y.copy()
-    resultsObj = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
+    crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
     assert X == copyX
     assert Y == copyY
 
@@ -74,15 +75,15 @@ def test_crossValidate_callable():
 
         classifierAlgos = ['Custom.KNNClassifier']
         for curAlgo in classifierAlgos:
-            resultsObj = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3)
-            assert isinstance(resultsObj.bestResult, float)
+            crossValidator = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3)
+            assert isinstance(crossValidator.bestResult, float)
 
             #With regression dataset (no repeated labels)
             X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=None, dataType=dType)
             classifierAlgos = ['Custom.RidgeRegression']
             for curAlgo in classifierAlgos:
-                resultsObj = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, numFolds=3)
-                assert isinstance(resultsObj.bestResult, float)
+                crossValidator = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, numFolds=3)
+                assert isinstance(crossValidator.bestResult, float)
 
 
 def _assertClassifierErrorOnRandomDataPlausible(actualError, numLabels, tolerance=.1):
@@ -109,16 +110,16 @@ def test_crossValidate_reasonable_results():
     #assert that when whole dataset has the same label, crossValidated score
     #reflects 100% accruacy (with a classifier)
     X, Y = _randomLabeledDataSet(numLabels=1)
-    resultsObj = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
-    assert resultsObj.bestResult < 0.000001  # 0 incorrect ever
+    crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
+    assert crossValidator.bestResult < 0.000001  # 0 incorrect ever
 
     #assert that a random dataset will have accuracy roughly equal to 1/numLabels
     numLabelsList = [2, 3, 5]
     for curNumLabels in numLabelsList:
         X, Y = _randomLabeledDataSet(numPoints=50, numLabels=curNumLabels)
-        resultsObj = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
+        crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
         _assertClassifierErrorOnRandomDataPlausible(
-            resultsObj.bestResult, curNumLabels, tolerance=(1.0 / curNumLabels))
+            crossValidator.bestResult, curNumLabels, tolerance=(1.0 / curNumLabels))
 
     #assert that for an easy dataset (no noise, overdetermined linear hyperplane!),
     #crossValidated error is perfect
@@ -134,23 +135,23 @@ def test_crossValidate_reasonable_results():
     Y = createData('Matrix', labels)
 
     #run in crossValidate
-    resultsObj = crossValidate(regressionAlgo, X, Y, meanAbsoluteError, {}, numFolds=5)
+    crossValidator = crossValidate(regressionAlgo, X, Y, meanAbsoluteError, {}, numFolds=5)
     #assert error essentially zero since there's no noise
-    assert resultsObj.bestResult < .001
+    assert crossValidator.bestResult < .001
 
     index = len(X.features)
     X.features.add(Y)
-    resultsObj = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, numFolds=5)
+    crossValidator = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, numFolds=5)
     #assert error essentially zero since there's no noise
-    assert resultsObj.bestResult < .001
+    assert crossValidator.bestResult < .001
 
     # ensures nonmodification of X data object when getting Y data
     assert len(X.features) == 4
     X.features.setNames(['X1', 'X2', 'X3', 'Y'])
-    resultsObj = crossValidate(regressionAlgo, X, 'Y', meanAbsoluteError, {}, numFolds=5)
+    crossValidator = crossValidate(regressionAlgo, X, 'Y', meanAbsoluteError, {}, numFolds=5)
     assert len(X.features) == 4
     #assert error essentially zero since there's no noise
-    assert resultsObj.bestResult < .001
+    assert crossValidator.bestResult < .001
 
 
 def test_crossValidate_2d_api_check():
@@ -172,31 +173,31 @@ def test_crossValidate_2d_api_check():
 
     # crossValidate.bestResult
     metric = meanFeaturewiseRootMeanSquareError
-    resultsObj = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
+    crossValidator = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
     #assert error essentially zero since there's no noise
-    assert isinstance(resultsObj.bestResult, float)
-    assert resultsObj.bestResult < .001
+    assert isinstance(crossValidator.bestResult, float)
+    assert crossValidator.bestResult < .001
 
     index = len(X.features)
     combined = X.copy()
     combined.features.add(Y)
     combined.features.setNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
-    resultsObj = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
+    crossValidator = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
     #assert error essentially zero since there's no noise
-    assert isinstance(resultsObj.bestResult, float)
-    assert resultsObj.bestResult < .001
+    assert isinstance(crossValidator.bestResult, float)
+    assert crossValidator.bestResult < .001
 
     # repeat for crossValidate.allResults
-    resultsObj = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
-    resultsList = resultsObj.allResults
+    crossValidator = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
+    resultsList = crossValidator.allResults
     assert len(resultsList) == 1
     assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
     assert metric.__name__ in resultsList[0]
     performance = resultsList[0][metric.__name__]
     assert isinstance(performance, float) and performance < .001
 
-    resultsObj = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
-    resultsList = resultsObj.allResults
+    crossValidator = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
+    resultsList = crossValidator.allResults
     assert len(resultsList) == 1
     assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
     assert metric.__name__ in resultsList[0]
@@ -204,8 +205,8 @@ def test_crossValidate_2d_api_check():
     assert isinstance(performance, float) and performance < .001
 
     # repeat for crossValidate.bestArgument
-    resultsObj = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
-    assert isinstance(resultsObj.bestArguments, dict) and resultsObj.bestArguments == {}
+    crossValidator = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
+    assert isinstance(crossValidator.bestArguments, dict) and crossValidator.bestArguments == {}
 
 
 def test_crossValidate_2d_Non_label_scoremodes_disallowed():
@@ -263,7 +264,7 @@ def test_crossValidate_foldingRandomness():
 @attr('slow')
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateResults():
-    """Check basic properties of crossValidateReturnAll
+    """Check basic properties of crossValidate.allResults
 
     assert that default arguments will be filled in by the function
     assert that having the same function arguments yields the same results.
@@ -272,14 +273,14 @@ def test_crossValidateResults():
     """
     X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
     #try with no extra arguments at all; yet we know an argument exists (k):
-    resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
-    resultsList = resultsObj.allResults
+    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    resultsList = crossValidator.allResults
     assert resultsList
     assert 1 == len(resultsList)
     assert len(resultsList[0]) == 1 and 'fractionIncorrect' in resultsList[0]
     #try with some extra elements, including the default
-    resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3]))
-    resultsList = resultsObj.allResults
+    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=UML.CV([1, 2, 3]))
+    resultsList = crossValidator.allResults
     assert resultsList
     assert 3 == len(resultsList)
 
@@ -311,7 +312,7 @@ def test_crossValidateResults():
 @attr('slow')
 @configSafetyWrapper
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
-def test_crossValidateReturnBest():
+def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
 
     """
@@ -349,18 +350,18 @@ def test_crossValidateReturnBest():
     def trial(metric, maximize):
         # get a baseline result
         UML.setRandomSeed(seed)
-        resultsObj = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
                                    metric, flip=UML.CV([0, .5, .9]),
                                    wrapped="custom.KNNClassifier")
-        resultTuple = (resultsObj.bestArguments, resultsObj.bestResult)
+        resultTuple = (crossValidator.bestArguments, crossValidator.bestResult)
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
         UML.setRandomSeed(seed)
-        resultsObj = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
                                    metric, flip=UML.CV([0, .5, .9]),
                                    wrapped="custom.KNNClassifier")
-        allResultsList = resultsObj.allResults
+        allResultsList = crossValidator.allResults
         #since same args were used, the best tuple should be in allResultsList
         allArguments = []
         allScores = []
@@ -392,20 +393,20 @@ def test_crossValidateReturnBest():
     UML.deregisterCustomLearner('custom', 'FlipWrapper')
 
 
-def test_crossValidateReturnEtc_withDefaultArgs():
+def test_crossValidate_attributes_withDefaultArgs():
     """Assert that return best and return all work with default arguments as predicted
     ie generating scores for '{}' as the arguments
     """
     X, Y = _randomLabeledDataSet(numPoints=20, numFeatures=5, numLabels=5)
     #run with default arguments
-    resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
-    bestTuple = (resultsObj.bestArguments, resultsObj.bestResult)
+    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    bestTuple = (crossValidator.bestArguments, crossValidator.bestResult)
     assert bestTuple
     assert isinstance(bestTuple, tuple)
     assert bestTuple[0] == {}
     #run return all with default arguments
-    resultsObj = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
-    allResultsList = resultsObj.allResults
+    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    allResultsList = crossValidator.allResults
     assert allResultsList
     assert 1 == len(allResultsList)
     assert len(allResultsList[0]) == 1 and 'fractionIncorrect' in allResultsList[0]
@@ -424,12 +425,12 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
     copiedPerfFunc.avgFolds = False
-    resultsObj = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
-    nonAvgResult = resultsObj.bestResult
+    crossValidator = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+    nonAvgResult = crossValidator.bestResult
 
     copiedPerfFunc.avgFolds = True
-    resultsObj = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
-    avgResult = resultsObj.bestResult
+    crossValidator = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+    avgResult = crossValidator.bestResult
 
     # 0 incorrect ever
     assert nonAvgResult < 0.000001
@@ -455,12 +456,12 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
     copiedPerfFunc.avgFolds = False
-    resultsObj = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
-    nonAvgResult = resultsObj.bestResult
+    crossValidator = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+    nonAvgResult = crossValidator.bestResult
 
     copiedPerfFunc.avgFolds = True
-    resultsObj = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
-    avgResult = resultsObj.bestResult
+    crossValidator = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+    avgResult = crossValidator.bestResult
 
     #assert error essentially zero since there's no noise
     assert nonAvgResult < .0000001
@@ -497,12 +498,12 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False
-    resultsObj = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, numFolds=5)
-    nonAvgResult = resultsObj.bestResult
+    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, numFolds=5)
+    nonAvgResult = crossValidator.bestResult
 
     copiedPerfFunc.avgFolds = True
-    resultsObj = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, numFolds=5)
-    avgResult = resultsObj.bestResult
+    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, numFolds=5)
+    avgResult = crossValidator.bestResult
 
     # should have 100 percent accuracy, so these results should be the same
     assert nonAvgResult == avgResult
@@ -568,11 +569,44 @@ def test_KFoldCrossValidator():
                   {'a': 1, 'b': 2, 'performance': .5},
                   {'a': 2, 'b': 1, 'performance': .75},
                   {'a': 2, 'b': 2, 'performance': 1.0}]
+    # these performanceFunction are invalid, but since we have already
+    # instantiated this object this is acceptable because allResults only
+    # attempts to access the __name__ attribute of a performanceFunction
     crossValidator.performanceFunction = None
     assert crossValidator.allResults == retResults
     crossValidator.performanceFunction = lambda y, yPred: None
     assert crossValidator.allResults == retResults
 
+@raises(InvalidArgumentValue)
+def test_KFoldCrossValidator_invalidPerformanceFunction():
+    def noOptimal(yActual, yPred):
+        return 100
+
+    xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+            [1, 0, 0], [0, 1, 0], [0, 0, 1],
+            [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+    yRaw = [[1], [2], [3],
+            [1], [2], [3],
+            [1], [2], [3]]
+    X = UML.createData('Matrix', xRaw)
+    Y = UML.createData('Matrix', yRaw)
+    crossValidator = KFoldCrossValidator(
+        'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        performanceFunction=noOptimal, numFolds=3)
+
+@raises(InvalidArgumentValue)
+def test_KFoldCrossValidator_zeroFolds():
+    xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+            [1, 0, 0], [0, 1, 0], [0, 0, 1],
+            [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+    yRaw = [[1], [2], [3],
+            [1], [2], [3],
+            [1], [2], [3]]
+    X = UML.createData('Matrix', xRaw)
+    Y = UML.createData('Matrix', yRaw)
+    crossValidator = KFoldCrossValidator(
+        'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        performanceFunction=UML.calculate.fractionIncorrect, numFolds=0)
 
 def test_CV():
     crossVal = CV([1, 2, 3])
@@ -584,6 +618,9 @@ def test_CV():
 @raises(ImproperObjectAction)
 def test_CV_immutable():
     crossVal = CV([1, 2, 3])
+    # can get
+    assert crossVal[1] == 2
+    # cannot set
     crossVal[1] = 0
 
 @oneLogEntryExpected

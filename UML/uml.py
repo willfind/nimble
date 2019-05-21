@@ -985,10 +985,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     performanceFunction : function
         Premade options are available in UML.calculate.
         Function used to evaluate the performance score for each run.
-        function is of the form: def func(knownValues, predictedValues).
-        This function should have an 'optimal' attribute equal 'min' or
-        'max' defining whether a minimum or maximum value,
-        respectively, should be considered optimal.
+        Function is of the form: def func(knownValues, predictedValues).
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application. eg. {'dimensions':5, 'k':5}
@@ -1022,9 +1019,9 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     Returns
     -------
     KFoldCrossValidator
-        Object which performs the cross-validation and provides access
-        to the results which can be accessed through the the object's
-        attributes and methods.
+        Object which performs the cross-validation and provides the
+        results which can be accessed through the object's attributes
+        and methods.
 
     Examples
     --------

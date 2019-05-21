@@ -1,8 +1,7 @@
-#tests for functions relating to ArgumentIterator class
-#which is used by
-#crossValidateReturnBest
-#crossValidateReturnAll
-#trainAndTest
+"""
+tests for functions relating to ArgumentIterator class
+"""
+
 from __future__ import absolute_import
 import sys
 import copy
@@ -68,7 +67,7 @@ def test_ArgumentIterator():
         assert set(argumentDict.keys()) == set(curArgumentCombo.keys())
         assert len(list(argumentDict.keys())) == len(list(curArgumentCombo.keys()))
 
-    # assert iterationCount == len(_buildArgPermutationsList([], {}, 0, argumentDict))
+    assert iterationCount == len(argIter.permutationsList)
 
 
 def test_ArgumentIterator_stringsAndTuples():
@@ -83,7 +82,7 @@ def test_ArgumentIterator_stringsAndTuples():
         assert len(list(curr.keys())) == 2
 
 
-def test_ArgumentIterator_seperateResults():
+def test_ArgumentIterator_separateResults():
     arguments = {'a': 'hello', 'b': CV([1, 2, 5])}
 
     argIter = ArgumentIterator(arguments)

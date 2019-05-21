@@ -84,7 +84,6 @@ for interface in UML.interfaces.available:
 UML.logger.active = UML.logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
-           'crossValidateReturnAll', 'crossValidateReturnBest',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
