@@ -101,7 +101,7 @@ def inverse(aObj):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
 
-    return UML.createData(aObj.getTypeString(), invData)
+    return UML.createData(aObj.getTypeString(), invData, useLog=False)
 
 
 def pseudoInverse(aObj, method='svd'):
@@ -188,7 +188,7 @@ def pseudoInverse(aObj, method='svd'):
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
 
-    return UML.createData(aObj.getTypeString(), pinvData)
+    return UML.createData(aObj.getTypeString(), pinvData, useLog=False)
 
 
 def solve(aObj, bObj):
@@ -319,7 +319,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
                 solution = numpy.asmatrix(solution[0])
 
     sol = UML.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames())
+                         featureNames=aObj.features.getNames(),
+                         useLog=False)
     return sol
 
 
