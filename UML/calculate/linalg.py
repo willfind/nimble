@@ -81,9 +81,15 @@ def inverse(aObj):
         except scipy.linalg.LinAlgError as exception:
             _handleSingularCase(exception)
         except ValueError as exception:
-            if re.match('.*object arrays*', str(exception), re.I):
+            if re.match('.*object arrays.*', str(exception), re.I):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
+            elif re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
+                msg = 'Infs or NaNs values are not supported.'
+                raise InvalidArgumentValue(msg)
+            else:
+                raise exception
+
     else:
         invObj = aObj.copy(to='Sparse')
         try:
@@ -164,6 +170,11 @@ def pseudoInverse(aObj, method='svd'):
         if re.match('.*object arrays*', str(exception), re.I):
             msg = 'Elements types in object data are not supported.'
             raise InvalidArgumentType(msg)
+        elif re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
+            msg = 'Infs or NaNs values are not supported.'
+            raise InvalidArgumentValue(msg)
+        else:
+            raise exception
 
     pinvObj = aObj.copy(to='Matrix')
     if method == 'svd':
@@ -172,7 +183,11 @@ def pseudoInverse(aObj, method='svd'):
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
     else:
-        pinvData = scipy.linalg.pinv(pinvObj.data)
+        try:
+            pinvData = scipy.linalg.pinv(pinvObj.data)
+        except ValueError as exception:
+            _handleNonSupportedTypes(exception)
+
     return UML.createData(aObj.getTypeString(), pinvData)
 
 
