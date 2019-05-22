@@ -447,8 +447,6 @@ class Base(object):
 
         Examples
         --------
-        TODO - outstanding PR, will need an update.
-
         >>> raw = [['a'], ['b'], ['c']]
         >>> data = UML.createData('Matrix', raw,
         ...                       featureNames=['replace'])

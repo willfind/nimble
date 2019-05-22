@@ -442,7 +442,7 @@ def test_names_AutoDetectedBlankLines_CSV():
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
-        tmpCSV.write("point_names,one,two,three\n")
+        tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
@@ -479,7 +479,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
-        tmpCSV.write("point_names,one,two,three\n")
+        tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
         fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=True)
@@ -590,39 +590,39 @@ def test_automaticByType_pname_interaction_with_fname():
 #        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert testObj.features.getNames() == ['fname0','fname1','fname2']
         assert testObj.points.getNames() == ['pname0']
 
         # pnames auto triggereed with explicit fnames
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=True)
         assert testObj.features.getNames() == ['fname0','fname1','fname2']
         assert testObj.points.getNames() == ['pname0']
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE1
-        raw = "point_names,fname0,1.0,fname2\npname0,1,2,3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE1
+        raw = "pointNames,fname0,1.0,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE2
-        raw = "point_names,fname0,fname1,fname2\npname0,data1,data2,data3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE2
+        raw = "pointNames,fname0,fname1,fname2\npname0,data1,data2,data3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames not triggered given 'point_names' at [0,0] when fnames explicit False
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        #pnames not triggered given 'pointNames' at [0,0] when fnames explicit False
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
-        #pnames explicit False given 'point_names' at [0,0] and fname auto extraction
-        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        #pnames explicit False given 'pointNames' at [0,0] and fname auto extraction
+        raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
-        assert testObj.features.getNames() == ['point_names', 'fname0', 'fname1', 'fname2']
+        assert testObj.features.getNames() == ['pointNames', 'fname0', 'fname1', 'fname2']
         assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
 
 
@@ -630,7 +630,7 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
     """ Test createData() accepted inputs for pointNames and featureNames """
     for t in returnTypes:
         # pNames and fNames triggered for automatic
-        raw1 = [['point_names', 'fname0','fname1','fname2'],
+        raw1 = [['pointNames', 'fname0','fname1','fname2'],
                 ['pname0', 0, 1, 2]]
         testAuto = UML.createData(t, raw1, pointNames='automatic', featureNames='automatic')
         testTrue = UML.createData(t, raw1, pointNames=True, featureNames=True)
@@ -933,7 +933,7 @@ def test_extractNames_pandasDataFrame():
 
 def test_names_dataUnmodified():
     """ Test original data unmodifed when names set to 'automatic' or True """
-    autoData = [['point_names', 'fname0', 'fname1', 'fname2'], ['pt', 1, -1, -3]]
+    autoData = [['pointNames', 'fname0', 'fname1', 'fname2'], ['pt', 1, -1, -3]]
     autoArray = numpy.array(autoData, dtype=numpy.object_)
     trueData = [[-111, 21, 22, 23], [11, 1, -1, -3]]
 

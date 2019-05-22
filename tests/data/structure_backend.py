@@ -2233,7 +2233,7 @@ class StructureModifying(StructureShared):
         tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
         tmpCSV.write("\n")
         tmpCSV.write("\n")
-        tmpCSV.write("point_names,one,two,three\n")
+        tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("1P,1,2,3\n")
         tmpCSV.flush()
         fromCSV = self.constructor(data=tmpCSV.name)

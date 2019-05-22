@@ -88,10 +88,39 @@ class Shogun(UniversalInterface):
 
             return True
 
-        self._searcher = PythonSearcher(self.shogun, self.shogun.__all__, {}, isLearner, 2)
+        self.hasAll = hasattr(self.shogun, '__all__')
+        contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
+        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
 
-        self.setupParameterManifest()
+        self.loadParameterManifest()
 
+    def _access(self, module, target):
+        """
+        Helper to automatically search the correct locations for target objects
+        in different historical versions of shogun that have different module
+        structures. Due to the automated component that attempts to smooth
+        over multiple competing versions of the package, this should be
+        used with caution.
+
+        """
+        # If shogun has an __all__ attribute, it is in the old style of organization,
+        # where things are separated into submodules. They need to be loaded before
+        # access.
+        if self.hasAll:
+            if hasattr(self.shogun, module):
+                submod = getattr(self.shogun, module)
+            else:
+                submod = importlib.import_module('shogun.' + module)
+        # If there is no __all__ attribute, we're in the newer, flatter style of module
+        # organization. Some things will still be in the submodule they were previously,
+        # others will up at the top level. This will check both locations
+        else:
+            if hasattr(self.shogun, target):
+                submod = self.shogun
+            else:
+                submod = getattr(self.shogun, module)
+
+        return getattr(submod, target)
 
     def accessible(self):
         try:
@@ -126,13 +155,13 @@ class Shogun(UniversalInterface):
         except SystemError:
             return 'UNKNOWN'
 
-        if ptVal == self.shogun.Classifier.PT_BINARY or ptVal == self.shogun.Classifier.PT_MULTICLASS:
+        if ptVal == self._access('Classifier', 'PT_BINARY') or ptVal == self._access('Classifier', 'PT_MULTICLASS'):
             return 'classification'
-        if ptVal == self.shogun.Classifier.PT_REGRESSION:
+        if ptVal == self._access('Classifier', 'PT_REGRESSION'):
             return 'regression'
-        if ptVal == self.shogun.Classifier.PT_STRUCTURED:
+        if ptVal == self._access('Classifier', 'PT_STRUCTURED'):
             return 'UNKNOWN'
-        if ptVal == self.shogun.Classifier.PT_LATENT:
+        if ptVal == self._access('Classifier', 'PT_LATENT'):
             return 'UNKNOWN'
 
         # TODO warning, unknown problem type code
@@ -209,8 +238,12 @@ class Shogun(UniversalInterface):
 
         return ret
 
-    def _getScores(self, learner, testX, arguments, customDict):
-        predObj = self._applier(learner, testX, arguments, customDict)
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
+        # TODO deal with merging stored vs new arguments
+        # is this even a thing for shogun?
+        predObj = self._applier(learnerName, learner, testX, newArguments,
+                                storedArguments, customDict)
         predLabels = predObj.get_labels()
         numLabels = customDict['numLabels']
         if hasattr(predObj, 'get_multiclass_confidences'):
@@ -288,7 +321,7 @@ class Shogun(UniversalInterface):
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
         # often, but not always, we have to unpack a Labels object
-        if isinstance(outputValue, self.shogun.Classifier.Labels):
+        if isinstance(outputValue, self._access('Classifier', 'Labels')):
             # outputValue is a labels object, have to pull out the raw values with a function call
             retRaw = outputValue.get_labels()
             # prep for next call
@@ -343,7 +376,7 @@ class Shogun(UniversalInterface):
             else:
                 initArgs[name] = arguments[name]
 
-            if isinstance(arguments[name], self.shogun.Classifier.Kernel):
+            if isinstance(arguments[name], self._access('Classifier', 'Kernel')):
                 kernels.append(name)
 
         # if we've ignored aliased names (as demonstrated by the difference between
@@ -402,18 +435,20 @@ class Shogun(UniversalInterface):
         raise NotImplementedError
 
 
-    def _applier(self, learner, testX, arguments, customDict):
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        # TODO does shogun allow apply time arguments?
         try:
             ptVal = learner.get_machine_problem_type()
-            if ptVal == self.shogun.Classifier.PT_BINARY:
+            if ptVal == self._access('Classifier', 'PT_BINARY'):
                 retLabels = learner.apply_binary(testX)
-            elif ptVal == self.shogun.Classifier.PT_MULTICLASS:
+            elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
                 retLabels = learner.apply_multiclass(testX)
-            elif ptVal == self.shogun.Classifier.PT_REGRESSION:
+            elif ptVal == self._access('Classifier', 'PT_REGRESSION'):
                 retLabels = learner.apply_regression(testX)
-            elif ptVal == self.shogun.Classifier.PT_STRUCTURED:
+            elif ptVal == self._access('Classifier', 'PT_STRUCTURED'):
                 retLabels = learner.apply_structured(testX)
-            elif ptVal == self.shogun.Classifier.PT_LATENT:
+            elif ptVal == self._access('Classifier', 'PT_LATENT'):
                 retLabels = learner.apply_latent(testX)
             else:
                 retLabels = learner.apply(testX)
@@ -442,8 +477,7 @@ class Shogun(UniversalInterface):
 
     def version(self):
         if self.versionString is None:
-            shogunLib = importlib.import_module('shogun.Library')
-            self.versionString = shogunLib.Version_get_version_release()
+            self.versionString = self._access('Version', 'get_version_release')()
 
         return self.versionString
 
@@ -451,59 +485,22 @@ class Shogun(UniversalInterface):
     ### METHOD HELPERS ###
     ######################
 
-    def setupParameterManifest(self):
+    def loadParameterManifest(self):
         """
         Load manifest containing parameter names and defaults for all relevant objects
-        in shogun. If manifest is missing, empty, or outdated then run the discovery code.
-        The discovery code attempts to parse header and source files in the directory
-        associated with the 'location' option.
+        in shogun. If no manifest is available, then instantiate to an empty object.
 
         """
-        # Attempt setup for clang. If successful, we will consider
-        # allowing discovery of parameters
-        try:
-            location = self.getOption('libclangLocation')
-            clang.cindex.Config.set_library_file(location)
-            clang.cindex.Index.create()
-            allowDiscovery = True
-        except Exception:
-            allowDiscovery = False
-
-        # TODO For now, discovery is intentionally disabled until clang
-        # issues have been resolved.
-        allowDiscovery = False
-
-        self._paramsManifest = {}
-        ranDiscovery = False
-
         # find most likely manifest file
         metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
         best, exact = self._findBestManifest(metadataPath)
         exists = os.path.exists(best) if best is not None else False
+        # default to empty if no best manifest exists
+        self._paramsManifest = {}
         if exists:
             with open(best, 'r') as fp:
                 self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
 
-        # if empty or different version:
-        if (self._paramsManifest == {}) or (not exact):
-            # If we can, try to load the exact correct information
-            if allowDiscovery:
-                shogunSourcePath = self.getOption('sourceLocation')
-                self._paramsManifest = discoverConstructors(shogunSourcePath)
-                ranDiscovery = True
-
-        modified = False
-        # check params for each learner in listLearner
-        # if no params:
-        # modify manifest to have empty param name list for that learner
-        # but wait, do we really want this ???
-
-        # has it been written to a file? did we modify the manifest in memory?
-        if ranDiscovery or modified:
-            selfVersion = self.version().split('_')[0]
-            writePath = os.path.join(metadataPath, ('shogunParameterManifest_%s' % selfVersion))
-            with open(writePath, 'w') as fp:
-                json.dump(self._paramsManifest, fp, indent=4)
 
     def _findBestManifest(self, metadataPath):
         """
@@ -574,23 +571,23 @@ class Shogun(UniversalInterface):
             #if labelsObj.getTypeString() != 'Matrix':
             labelsObj = labelsObj.copy(to='Matrix')
             problemType = self._getMachineProblemType(learnerName)
-            if problemType == self.shogun.Classifier.PT_MULTICLASS:
+            if problemType == self._access('Classifier', 'PT_MULTICLASS'):
                 inverseMapping = _remapLabelsRange(labelsObj)
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.MulticlassLabels(flattened.astype(float))
-            elif problemType == self.shogun.Classifier.PT_BINARY:
+                labels = self._access('Features', 'MulticlassLabels')(flattened.astype(float))
+            elif problemType == self._access('Classifier', 'PT_BINARY'):
                 inverseMapping = _remapLabelsSpecific(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.BinaryLabels(flattened.astype(float))
-            elif problemType == self.shogun.Classifier.PT_REGRESSION:
+                labels = self._access('Features', 'BinaryLabels')(flattened.astype(float))
+            elif problemType == self._access('Classifier', 'PT_REGRESSION'):
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.RegressionLabels(flattened.astype(float))
+                labels = self._access('Features', 'RegressionLabels')(flattened.astype(float))
             else:
                 raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
         except ImportError:
@@ -607,18 +604,18 @@ class Shogun(UniversalInterface):
             #raw = dataObj.data.tocsc().astype(numpy.float)
             #raw = raw.transpose()
             raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
-            trans = self.shogun.Features.SparseRealFeatures()
+            trans = self._access('Features', 'SparseRealFeatures')()
             trans.set_sparse_feature_matrix(raw)
             if 'Online' in learnerName:
-                trans = self.shogun.Features.StreamingSparseRealFeatures(trans)
+                trans = self._access('Features', 'StreamingSparseRealFeatures')(trans)
         else:
             #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
             #raw = raw.transpose()
             raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
-            trans = self.shogun.Features.RealFeatures()
+            trans = self._access('Features', 'RealFeatures')()
             trans.set_feature_matrix(raw)
             if 'Online' in learnerName:
-                trans = self.shogun.Features.StreamingRealFeatures()
+                trans = self._access('Features', 'StreamingRealFeatures')()
         return trans
 
     def _queryParamManifest(self, name):
@@ -785,7 +782,7 @@ def _remapLabelsRange(toRemap):
             ret.append(mapping[value])
         return ret
 
-    toRemap.features.transform(remap)
+    toRemap.features.transform(remap, useLog=False)
 
     return inverse
 
@@ -835,57 +832,6 @@ def _remapLabelsSpecific(toRemap, space):
             ret.append(space[mapping[value]])
         return ret
 
-    toRemap.features.transform(remap)
+    toRemap.features.transform(remap, useLog=False)
 
     return inverse
-
-
-def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
-    """
-    Recursively visit all directories in the given path, calling
-    findConstructors for each cpp source file
-
-    """
-    results = {}
-    contents = []
-    for (folderPath, subFolders, contents) in os.walk(path):
-        for fileName in contents:
-            filePath = os.path.join(folderPath, fileName)
-            (rootName, ext) = os.path.splitext(fileName)
-            (rootPath, ext) = os.path.splitext(filePath)
-            if desiredFile is None or rootName in desiredFile:
-                if ext in desiredExt:
-                    findConstructors(filePath, results, rootPath)
-
-    return results
-
-
-def findConstructors(fileName, results, targetDirectory):
-    """ Find all constructors and list their params in the given file """
-    index = clang.cindex.Index.create()
-    tuNode = index.parse(fileName).cursor
-    findConstructorsBackend(tuNode, results, targetDirectory)
-
-
-def findConstructorsBackend(node, results, targetDirectory):
-    """ Recursively visit all nodes, checking if it is a constructor """
-    if node.location.file is not None:
-        if not node.location.file.name.startswith(targetDirectory):
-            return
-
-    if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
-        constructorName = node.spelling
-        args = []
-        for value in node.get_arguments():
-            args.append(value.spelling)
-        # TODO value.type.spelling
-
-#        print "%s%s" % (constructorName, str(args))
-        if not constructorName in results:
-            results[constructorName] = []
-        if args not in results[constructorName]:
-            results[constructorName].append(args)
-    # Recurse for children of this node if it isn't a constructor
-    else:
-        for child in node.get_children():
-            findConstructorsBackend(child, results, targetDirectory)
