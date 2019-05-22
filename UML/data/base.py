@@ -4031,12 +4031,9 @@ class Base(object):
                 names.append(rowHolder)
 
             for i in source:
-                if self.points._namesCreated():
-                    pname = self.points.getName(i)
-                    # omit default valued names
-                    if pname[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                        pname = ""
-                else:
+                pname = self.points.getName(i)
+                # omit default valued names
+                if pname[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     pname = ""
 
                 # truncate names which extend past the given length
@@ -4127,7 +4124,7 @@ class Base(object):
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
             currWidth = 0
-            if includeFNames and self.features._namesCreated():
+            if includeFNames:
                 currFName = self.features.getName(currIndex)
                 fNameLen = len(currFName)
                 if fNameLen > maxStrLength:
