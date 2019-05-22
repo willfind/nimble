@@ -9,6 +9,9 @@ import UML as nimble
 from UML.docHelpers import inheritDocstringsFactory
 from .elements import Elements
 from .dataHelpers import readOnlyException
+from .dataHelpers import exceptionDocstringFactory
+
+exceptionDocstring = exceptionDocstringFactory(Elements)
 
 @inheritDocstringsFactory(Elements)
 class ElementsView(Elements):
@@ -23,13 +26,16 @@ class ElementsView(Elements):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
+    @exceptionDocstring
     def transform(self, toTransform, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   useLog=None):
         readOnlyException("transform")
 
+    @exceptionDocstring
     def multiply(self, other, useLog=None):
         readOnlyException("multiply")
 
+    @exceptionDocstring
     def power(self, other, useLog=None):
         readOnlyException("power")

@@ -31,11 +31,11 @@ class PointsView(Points):
     ####################################
 
     @exceptionDocstring
-    def setName(self, oldIdentifier, newName):
+    def setName(self, oldIdentifier, newName, useLog=None):
         readOnlyException('setName')
 
     @exceptionDocstring
-    def setNames(self, assignments=None):
+    def setNames(self, assignments=None, useLog=None):
         readOnlyException('setNames')
 
     #####################################
@@ -89,10 +89,10 @@ class PointsView(Points):
 
     @exceptionDocstring
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
-                                  featureForValues):
+                                  featureForValues, useLog=None):
         readOnlyException('splitByCollapsingFeatures')
 
     @exceptionDocstring
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featureWithValues):
+                                   featureWithValues, useLog=None):
         readOnlyException('combineByExpandingFeatures')

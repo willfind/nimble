@@ -447,8 +447,6 @@ class Base(object):
 
         Examples
         --------
-        TODO - outstanding PR, will need an update.
-
         >>> raw = [['a'], ['b'], ['c']]
         >>> data = nimble.createData('Matrix', raw,
         ...                          featureNames=['replace'])
@@ -2222,10 +2220,10 @@ class Base(object):
 
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
-        Duplicate an object. Optionally, to another nimble or raw format.
+        Duplicate an object. Optionally to another nimble or raw format.
 
         Return a new object containing the same data as this object.
-        When copying to a UML format, the pointNames and featureNames
+        When copying to a nimble format, the pointNames and featureNames
         will also be copied, as well as any name and path metadata.
 
         Parameters

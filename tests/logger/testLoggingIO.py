@@ -72,9 +72,9 @@ def testLogDirectoryAndFileSetup():
 def testTopLevelInputFunction():
     removeLogFile()
     """assert the nimble.log function correctly inserts data into the log"""
-    logType = "input"
+    header = "input"
     logInfo = {"test": "testInput"}
-    nimble.log(logType, logInfo)
+    nimble.log(header, logInfo)
     # select all columns from the last entry into the logger
     query = "SELECT * FROM logger"
     lastLog = nimble.logger.active.extractFromLog(query)
@@ -82,7 +82,7 @@ def testTopLevelInputFunction():
 
     assert lastLog[0] == 1
     assert lastLog[2] == 0
-    assert lastLog[3] == logType
+    assert lastLog[3] == "User - " + header
     assert lastLog[4] == str(logInfo)
 
 @configSafetyWrapper
@@ -631,30 +631,44 @@ def testDataTypeFunctionsUseLog():
 
 @configSafetyWrapper
 def testHandmadeLogEntriesInput():
+    typeQuery = "SELECT logType FROM logger ORDER BY entry DESC LIMIT 1"
     # custom string
     customString = "enter this string into the log"
     nimble.log("customString", customString)
 
+    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
+    assert logType == "User - customString"
     assert customString in logInfo
 
-    #custom list
+    # custom list
     customList = ["this", "custom", "list", 1, 2, 3, {"list":"tested"}]
     nimble.log("customList", customList)
 
+    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
+    assert logType == "User - customList"
     for value in customList:
         assert str(value) in logInfo
 
-    #custom dict
+    # custom dict
     customDict = {"custom":"dict", "log":"testing", 1:2, 3:"four"}
     nimble.log("customDict", customDict)
 
+    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
+    assert logType == "User - customDict"
     for key in customDict.keys():
         assert str(key) in logInfo
     for value in customDict.values():
         assert str(value) in logInfo
+
+    # heading matches nimble logType
+    nimble.log('run', "User log with heading that matches a logType")
+    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
+    logInfo = getLastLogData()
+    assert logType == "User - run"
+    assert "User log with heading that matches a logType" in logInfo
 
 @raises(InvalidArgumentType)
 def testLogUnacceptedlogType():
@@ -664,6 +678,11 @@ def testLogUnacceptedlogType():
 def testLogUnacceptedlogInfo():
     dataObj = nimble.createData("Matrix", [[1]], useLog=False)
     nimble.log("acceptable", dataObj)
+
+@raises(InvalidArgumentValue)
+def testLogHeadingTooLong():
+    heading = "#" * 51
+    nimble.log(heading, 'foo')
 
 ##############
 ### OUTPUT ###
@@ -932,3 +951,12 @@ def testLeastRunsAgoNegative():
 @raises(InvalidArgumentValueCombination)
 def testMostRunsLessThanLeastRuns():
     nimble.showLog(leastRunsAgo=2, mostRunsAgo=1)
+
+def testShowLogSuccessWithUserLog():
+    """ Test user headings that match defined logTypes are successfully rendered """
+    for lType in nimble.logger.active.logTypes:
+        nimble.log(lType, "foo")
+    # defined logTypes require specific input to render correctly, if these
+    # headings are stored as a defined logType, the log would not render
+    # nimble.log should prepend "User - " to the heading to avoid this conflict.
+    nimble.showLog()

@@ -1261,7 +1261,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         return not isinstance(x, type(y))
 
     if ((pointNames is True or pointNames == 'automatic')
-            and firstValues[0] == 'point_names'):
+            and firstValues[0] == 'pointNames'):
         allText = all(map(lambda x: isinstance(x, six.string_types),
                           firstValues[1:]))
         allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
@@ -1277,7 +1277,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         featureNames = False
 
     if featureNames is True and pointNames == 'automatic':
-        if firstValues[0] == 'point_names':
+        if firstValues[0] == 'pointNames':
             pointNames = True
     # At this point, there is no chance to resolve 'automatic' to True
     if pointNames == 'automatic':
@@ -1292,7 +1292,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
     user. For feature names the trigger is two empty lines prior to
     the first line of data. For point names the trigger is the first
     line of data contains the feature names, and the first value of that
-    line is 'point_names'
+    line is 'pointNames'
     """
     startPosition = openFile.tell()
 

@@ -117,7 +117,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     def getLearnerParameterNames(cls):
         """
         Class method used by the a custom learner interface to supply
-        learner parameters to the user through the standard UML
+        learner parameters to the user through the standard nimble
         functions.
         """
         return cls.getTrainParameters() + cls.getApplyParameters()
@@ -127,7 +127,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         """
         Class method used by the a custom learner interface to supply
         learner parameter default values to the user through the
-        standard UML functions.
+        standard nimble functions.
         """
         trainDefaults = cls.getTrainDefaults().items()
         applyDefaults = cls.getApplyDefaults().items()

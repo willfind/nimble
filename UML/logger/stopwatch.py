@@ -1,6 +1,6 @@
 """
 The Stopwatch class is used for timing various tasks (training
-classifiers, testing classifiers) within the UML code.  Can time any
+classifiers, testing classifiers) within the nimble code.  Can time any
 generic task based on task name.
 """
 
@@ -10,8 +10,8 @@ import time
 class Stopwatch(object):
     """
     The Stopwatch class is used for timing various tasks (training
-    classifiers, testing classifiers) within the UML code.  Can time any
-    generic task based on task name.
+    classifiers, testing classifiers) within the nimble code.  Can time
+    any generic task based on task name.
     """
     def __init__(self):
         self.startTimes = dict()

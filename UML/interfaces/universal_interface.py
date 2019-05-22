@@ -1908,7 +1908,7 @@ class TrainedLearners(TrainedLearner):
 
         Parameters
         ----------
-        testX : UML Base object
+        testX : nimble Base object
             Data set on which the trained learner will be applied (i.e.
             performing prediction, transformation, etc. as appropriate
             to the learner).
@@ -1929,9 +1929,9 @@ class TrainedLearners(TrainedLearner):
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
         output : str
-            The kind of UML Base object that the output of this function
-            should be in. Any of the normal string inputs to the
-            createData ``returnType`` parameter are accepted here.
+            The kind of nimble Base object that the output of this
+            function should be in. Any of the normal string inputs to
+            the createData ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str

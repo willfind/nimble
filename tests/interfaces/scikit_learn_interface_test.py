@@ -374,7 +374,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         sciKitLearnObj = sklObj()
         sciKitLearnObj.fit(trainX, trainY)
         predictionSciKit = sciKitLearnObj.predict(testX)
-        # convert to UML Base object for comparison
+        # convert to nimble Base object for comparison
         predictionSciKit = nimble.createData('Matrix', predictionSciKit, useLog=False)
 
         TL = nimble.train(toCall(learner), trainXObj, trainYObj)
@@ -746,7 +746,7 @@ def testConvertYTrainDType():
     assert trainObj[:,0].data.dtype == numpy.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
 
-    #case2 trainY passed as UML object
+    #case2 trainY passed as nimble object
     trainY = trainObj.features.extract(0, useLog=False)
     assert trainY.data.dtype == numpy.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
