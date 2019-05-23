@@ -34,20 +34,20 @@ class ListFeatures(ListAxis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        insert = toAdd.view().copy('pythonlist')
-        if insertBefore == 0:
-            start = [[] for _ in range(len(self._source.points))]
-            end = self._source.view().copy('pythonlist')
-        elif insertBefore == len(self):
-            start = self._source.view().copy('pythonlist')
-            end = [[] for _ in range(len(self._source.points))]
-        else:
+        insert = toAdd.copy('pythonlist')
+        if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore
             start = self._source.view(featureEnd=breakIdx).copy('pythonlist')
             end = self._source.view(featureStart=restartIdx).copy('pythonlist')
-        zipPoints = zip(start,insert,end)
-        allData = list(map(lambda pt: pt[0] + pt[1] + pt[2], zipPoints))
+            zipChunks = zip(start, insert, end)
+            allData = list(map(lambda pt: pt[0] + pt[1] + pt[2], zipChunks))
+        elif insertBefore == 0:
+            end = self._source.copy('pythonlist')
+            allData = list(map(lambda pt: pt[0] + pt[1], zip(insert, end)))
+        else:
+            start = self._source.copy('pythonlist')
+            allData = list(map(lambda pt: pt[0] + pt[1], zip(start, insert)))
 
         self._source.data = allData
         self._source._numFeatures += len(toAdd.features)

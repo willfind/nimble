@@ -36,20 +36,18 @@ class ListPoints(ListAxis, Points):
         in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        insert = toAdd.view().copy('pythonlist')
-        if insertBefore == 0:
-            start = []
-            end = self._source.view().copy('pythonlist')
-        elif insertBefore == len(self):
-            start = self._source.view().copy('pythonlist')
-            end = []
-        else:
+        insert = toAdd.copy('pythonlist')
+        if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore
             start = self._source.view(pointEnd=breakIdx).copy('pythonlist')
             end = self._source.view(pointStart=restartIdx).copy('pythonlist')
-
-        allData = start + insert + end
+            allData = start + insert + end
+        elif insertBefore == 0:
+            allData = insert + self._source.copy('pythonlist')
+        else:
+            allData = self._source.copy('pythonlist') + insert
+        
         self._source.data = allData
 
     def _transform_implementation(self, function, limitTo):
