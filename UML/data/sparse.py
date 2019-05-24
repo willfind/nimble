@@ -243,7 +243,10 @@ class Sparse(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if to == 'Sparse':
-                data = self.data.copy()
+                try:
+                    data = self.data.copy().astype(numpy.float)
+                except ValueError:
+                    data = self.data.copy()
             else:
                 data = self.data.todense()
             # reuseData=True since we already made copies here
