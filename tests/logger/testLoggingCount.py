@@ -44,8 +44,7 @@ def prefixAdder(prefix):
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
 nimble_logged = [
-    'createData', 'createRandomData', 'crossValidate',
-    'crossValidateReturnAll', 'crossValidateReturnBest', 'log', 'loadData',
+    'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
@@ -322,7 +321,7 @@ baseDunder_tested = [
     'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
     'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__', 
+    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
 pointsDunder_tested = []

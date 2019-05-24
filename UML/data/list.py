@@ -561,9 +561,7 @@ class List(Base):
                                                      useLog=False)
                     return intermediate.copy(to=to)
 
-                listForm = [[self._source.data[pID][fID] for fID
-                             in range(self._fStart, self._fEnd)]
-                            for pID in range(self._pStart, self._pEnd)]
+                listForm = [list(pt) for pt in self.points]
 
                 if to not in ['List', 'pythonlist']:
                     origData = self.data

@@ -45,8 +45,6 @@ from .uml import listLearners
 from .uml import learnerParameters
 from .uml import learnerDefaultValues
 from .uml import crossValidate
-from .uml import crossValidateReturnAll
-from .uml import crossValidateReturnBest
 from .uml import log
 from .uml import showLog
 from .uml import learnerType
@@ -86,7 +84,6 @@ for interface in interfaces.available:
 logger.active = logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
-           'crossValidateReturnAll', 'crossValidateReturnBest',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',

@@ -116,6 +116,45 @@ class SparseAxis(Axis):
         ret = None
         return ret
 
+    def _add_implementation(self, toAdd, insertBefore):
+        """
+        Insert the points/features from the toAdd object below the
+        provided index in this object, the remaining points/features
+        from this object will continue below the inserted
+        points/features.
+        """
+        selfData = self._source.data.data
+        addData = toAdd.data.data
+        newData = numpy.concatenate((selfData, addData))
+        if isinstance(self, Points):
+            selfAxis = self._source.data.row.copy()
+            selfOffAxis = self._source.data.col
+            addAxis = toAdd.data.row.copy()
+            addOffAxis = toAdd.data.col
+            addLength = len(toAdd.points)
+            shape = (len(self) + addLength, len(self._source.features))
+        else:
+            selfAxis = self._source.data.col.copy()
+            selfOffAxis = self._source.data.row
+            addAxis = toAdd.data.col.copy()
+            addOffAxis = toAdd.data.row
+            addLength = len(toAdd.features)
+            shape = (len(self._source.points), len(self) + addLength)
+
+        selfAxis[selfAxis >= insertBefore] += addLength
+        addAxis += insertBefore
+
+        newAxis = numpy.concatenate((selfAxis, addAxis))
+        newOffAxis = numpy.concatenate((selfOffAxis, addOffAxis))
+
+        if isinstance(self, Points):
+            rowColTuple = (newAxis, newOffAxis)
+        else:
+            rowColTuple = (newOffAxis, newAxis)
+
+        self._source.data = coo_matrix((newData, rowColTuple), shape=shape)
+        self._source._sorted = None
+
     #########################
     # Query implementations #
     #########################
@@ -288,10 +327,6 @@ class SparseAxis(Axis):
     ####################
     # Abstract Methods #
     ####################
-
-    @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
-        pass
 
     # @abstractmethod
     # def _flattenToOne_implementation(self):

@@ -1,8 +1,7 @@
-#tests for functions relating to ArgumentIterator class
-#which is used by
-#crossValidateReturnBest
-#crossValidateReturnAll
-#trainAndTest
+"""
+tests for functions relating to ArgumentIterator class
+"""
+
 from __future__ import absolute_import
 import sys
 import copy
@@ -12,7 +11,6 @@ from functools import reduce
 sys.path.append('../..')
 
 from UML.helpers import ArgumentIterator
-from UML.helpers import _buildArgPermutationsList
 from UML.helpers import CV
 
 # example call to _buildArgPermutationsList:
@@ -20,11 +18,12 @@ from UML.helpers import CV
 # then _buildArgPermutationsList([],{},0,rawArgInput)
 # returns [{'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5}, {'a':2, 'b':5}, {'a':3, 'b':5},]
 
-def test_buildArgPermutationsList():
+def test_argPermutationsList():
     """Assert that the permutations are exhaustive"""
 
     argumentDict = {'a': CV([1, 2, 3]), 'b': CV([4, 5])}
-    returned = _buildArgPermutationsList([], {}, 0, argumentDict)
+    argIter = ArgumentIterator(argumentDict)
+    returned = argIter.permutationsList
     assert returned
     tupleLengthsList = []
     for curTuple in argumentDict.values():
@@ -38,7 +37,6 @@ def test_buildArgPermutationsList():
 
 
     #do a hardcorded example
-    returned = _buildArgPermutationsList([], {}, 0, {'a': CV([1, 2, 3]), 'b': CV([4, 5])})
     shouldBeList = [{'a': 1, 'b': 4}, {'a': 2, 'b': 4}, {'a': 3, 'b': 4}, {'a': 1, 'b': 5}, {'a': 2, 'b': 5},
                     {'a': 3, 'b': 5}]
     shouldBeListOfStrings = [str(curHash) for curHash in shouldBeList]
@@ -48,7 +46,7 @@ def test_buildArgPermutationsList():
 
 def test_ArgumentIterator():
     """Assert that argument iterator can handle empty arguments and
-    iterates as otherwise expected via _buildArgPermutationsList"""
+    iterates as otherwise expected """
     #assert works with empty dict
     returned = ArgumentIterator({})
     assert {} == next(returned)
@@ -61,15 +59,15 @@ def test_ArgumentIterator():
         pass
 
     argumentDict = {'a': CV([1, 2, 3]), 'b': CV([4, 5])}
-    returned = ArgumentIterator(argumentDict)
+    argIter = ArgumentIterator(argumentDict)
 
     iterationCount = 0
-    for curArgumentCombo in returned:
+    for curArgumentCombo in argIter:
         iterationCount += 1
         assert set(argumentDict.keys()) == set(curArgumentCombo.keys())
         assert len(list(argumentDict.keys())) == len(list(curArgumentCombo.keys()))
 
-    assert iterationCount == len(_buildArgPermutationsList([], {}, 0, argumentDict))
+    assert iterationCount == len(argIter.permutationsList)
 
 
 def test_ArgumentIterator_stringsAndTuples():
@@ -84,7 +82,7 @@ def test_ArgumentIterator_stringsAndTuples():
         assert len(list(curr.keys())) == 2
 
 
-def test_ArgumentIterator_seperateResults():
+def test_ArgumentIterator_separateResults():
     arguments = {'a': 'hello', 'b': CV([1, 2, 5])}
 
     argIter = ArgumentIterator(arguments)

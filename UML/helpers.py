@@ -2688,266 +2688,479 @@ def generateAllPairs(items):
     return pairs
 
 
-class CrossValidationResults():
+class KFoldCrossValidator():
     """
-    Container for cross-validation results.
+    Perform k-fold cross-validation and store the results.
+
+    On instantiation, cross-validation will be performed.  The results
+    can be accessed through the object's attributes and methods.
+
+    Parameters
+    ----------
+    learnerName : str
+        nimble compliant algorithm name in the form 'package.algorithm'
+        e.g. 'sciKitLearn.KNeighborsClassifier'
+    X : nimble Base object
+        points/features data
+    Y : nimble Base object
+        labels/data about points in X
+    performanceFunction : function
+        Premade options are available in nimble.calculate.
+        Function used to evaluate the performance score for each run.
+        Function is of the form: def func(knownValues, predictedValues).
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application. eg. {'dimensions':5, 'k':5}
+        To trigger cross-validation using multiple values for arguments,
+        specify different values for each parameter using a nimble.CV
+        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. These will be merged any
+        kwarguments for the learner.
+    numFolds : int
+        The number of folds used in the cross validation. Can't exceed
+        the number of points in X, Y.
+    scoreMode : str
+        Used by computeMetrics.
+    useLog : bool, None
+        Local control for whether to send results/timing to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. To trigger cross-validation using multiple values for
+        arguments, specify different values for each parameter using a
+        nimble.CV object.
+        eg. arg1=nimble.CV([1,2,3]), arg2=nimble.CV([4,5,6])
+        which correspond to permutations/argument states with one
+        element from arg1 and one element from arg2, such that an
+        example generated permutation/argument state would be
+        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+
+    Attributes
+    ----------
+    learnerName : str
+        The learner used for training.
+    performanceFunction : function
+        The performance function that will or has been used during
+        cross-validation.
+    numFolds : int
+        The number of folds that will or has been used during
+        cross-validation.
+    scoreMode : str
+        The scoreMode set for training.
+    arguments : dict
+        A dictionary of the merged arguments and kwarguments.
+    allResults : list
+        Each dictionary in the returned list will contain a permutation
+        of the arguments and the performance of that permutation. A list
+        of dictionaries containing each argument permutation and its
+        performance based on the ``performanceFunction``.  The key to
+        access the performance value will be the __name__ attribute of
+        the ``performanceFunction``. If the ``performanceFunction`` has
+        no __name__ attribute or is a lambda function the key will be
+        set to 'performance'.
+    bestArguments : dict
+        The argument permutation names and values which provided the
+        optimal result according to the ``performanceFunction``.
+    bestResult
+        The optimal output value from the ``performanceFunction``.
     """
-    def __init__(self, results, performanceFunction, numFolds):
-        self.results = results
+    def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
+                 numFolds=10, scoreMode='label', useLog=None, **kwarguments):
+        self.learnerName = learnerName
+        # detectBestResult will raise exception for invalid performanceFunction
+        detected = nimble.calculate.detectBestResult(performanceFunction)
+        self.maximumIsOptimal = detected == 'max'
         self.performanceFunction = performanceFunction
+        if numFolds == 0:
+            raise InvalidArgumentValue("Cannot cross-validate over 0 folds")
         self.numFolds = numFolds
+        self.scoreMode = scoreMode
+        self.arguments = _mergeArguments(arguments, kwarguments)
+        self._allResults = None
         self._bestArguments = None
-        self._bestScore = None
+        self._bestResult = None
+        self._resultsByFold = []
+        self._crossValidate(X, Y, useLog)
 
-    def __str__(self):
-        return str(self.results)
+    def _crossValidate(self, X, Y, useLog):
+        """
+        Perform K-fold cross-validation on the data.
 
-    def __repr__(self):
-        ret = "CrossValidationResults({}, {}, {})"
-        ret = ret.format(self.results, self.performanceFunction, self.numFolds)
-        return ret
+        Cross-validation will be performed based on the instantiation
+        parameters for this instance.
+
+        Parameters
+        ----------
+        X : nimble Base object
+            points/features data
+        Y : nimble Base object
+            labels/data about points in X
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        """
+        if not isinstance(X, Base):
+            raise InvalidArgumentType("X must be a Base object")
+        if Y is not None:
+            if not isinstance(Y, (Base, int, six.string_types, list)):
+                msg = "Y must be a Base object or an index (int) from X where "
+                msg += "Y's data can be found"
+                raise InvalidArgumentType(msg)
+            if isinstance(Y, (int, six.string_types, list)):
+                X = X.copy()
+                Y = X.features.extract(Y, useLog=False)
+
+            if len(Y.features) > 1 and self.scoreMode != 'label':
+                msg = "When dealing with multi dimensional outputs / "
+                msg += "predictions, then the scoreMode flag is required to "
+                msg += "be set to 'label'"
+                raise InvalidArgumentValueCombination(msg)
+
+            if not len(X.points) == len(Y.points):
+                #todo support indexing if Y is an index for X instead
+                msg = "X and Y must contain the same number of points"
+                raise InvalidArgumentValueCombination(msg)
+
+        #get an iterator for the argument combinations- iterator
+        #handles case of merged arguments being {}
+        argumentCombinationIterator = ArgumentIterator(self.arguments)
+
+        # we want the folds for each argument combination to be the same
+        foldIter = FoldIterator([X, Y], self.numFolds)
+
+        # setup container for outputs, a tuple entry for each arg set,
+        # containing a list for the results of those args on each fold
+        numArgSets = argumentCombinationIterator.numPermutations
+        performanceOfEachCombination = []
+        for i in range(numArgSets):
+            performanceOfEachCombination.append([None, []])
+
+        # control variables determining if we save all results before
+        # calculating performance or if we can calculate for each fold and
+        # then avg the results
+        canAvgFolds = (hasattr(self.performanceFunction, 'avgFolds')
+                       and self.performanceFunction.avgFolds)
+
+        # folditerator randomized the point order, so if we are collecting all
+        # the results, we also have to collect the correct order of the known
+        # values
+        if not canAvgFolds:
+            collectedY = None
+
+        # Folding should be the same for each argset (and is expensive) so
+        # iterate over folds first
+        for fold in foldIter:
+            [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
+            argSetIndex = 0
+
+            # given this fold, do a run for each argument combination
+            for curArgumentCombination in argumentCombinationIterator:
+                #run algorithm on the folds' training and testing sets
+                curRunResult = nimble.trainAndApply(
+                    learnerName=self.learnerName, trainX=curTrainX,
+                    trainY=curTrainY, testX=curTestingX,
+                    arguments=curArgumentCombination, scoreMode=self.scoreMode,
+                    useLog=False)
+
+                performanceOfEachCombination[argSetIndex][0] = (
+                    curArgumentCombination)
+
+                # calculate error of prediction, using performanceFunction
+                # store fold error to CrossValidationResults
+                curPerformance = computeMetrics(curTestingY, None,
+                                                curRunResult,
+                                                self.performanceFunction)
+                self._resultsByFold.append((curArgumentCombination,
+                                                 curPerformance))
+
+                if canAvgFolds:
+                    performanceOfEachCombination[argSetIndex][1].append(
+                        curPerformance)
+                else:
+                    performanceOfEachCombination[argSetIndex][1].append(
+                        curRunResult)
+
+                argSetIndex += 1
+
+            if not canAvgFolds:
+                if collectedY is None:
+                    collectedY = curTestingY
+                else:
+                    collectedY.points.add(curTestingY, useLog=False)
+
+            # setup for next iteration
+            argumentCombinationIterator.reset()
+
+        # We consume the saved results, either by averaging the individual
+        # results calculations for each fold, or combining the saved
+        # predictions and calculating performance of the entire set.
+        for i, (curArgSet, results) in enumerate(performanceOfEachCombination):
+            # average score from each fold (works for one fold as well)
+            if canAvgFolds:
+                finalPerformance = sum(results) / float(len(results))
+            # combine the results objects into one, and then calc performance
+            else:
+                for resultIndex in range(1, len(results)):
+                    results[0].points.add(results[resultIndex], useLog=False)
+
+                # TODO raise RuntimeError(
+                #     "How do we guarantee Y and results are in same order?")
+                finalPerformance = computeMetrics(collectedY, None, results[0],
+                                                  self.performanceFunction)
+
+            # we use the current results container to be the return value
+            performanceOfEachCombination[i] = (curArgSet, finalPerformance)
+
+        # store results
+        self._allResults = performanceOfEachCombination
+
+        handleLogging(useLog, 'crossVal', X, Y, self.learnerName,
+                      self.arguments, self.performanceFunction,
+                      performanceOfEachCombination, self.numFolds)
+
+    @property
+    def allResults(self):
+        """
+        Each argument permutation and its performance.
+
+        Each dictionary in the returned list will contain a permutation
+        of the arguments and the performance of that permutation. A list
+        of dictionaries containing each argument permutation and its
+        performance based on the ``performanceFunction``.  The key to
+        access the performance value will be the __name__ attribute of
+        the ``performanceFunction``. If the ``performanceFunction`` has
+        no __name__ attribute or is a lambda function the key will be
+        set to 'performance'.
+
+        Returns
+        -------
+        list
+            List of dictionaries.
+
+        Examples
+        --------
+        >>> nimble.setRandomSeed(42)
+        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+        >>> yRaw = [[1], [2], [3],
+        ...         [1], [2], [3],
+        ...         [1], [2], [3]]
+        >>> X = nimble.createData('Matrix', xRaw)
+        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> crossValidator = KFoldCrossValidator(
+        ...    'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        ...    performanceFunction=nimble.calculate.fractionIncorrect,
+        ...    numFolds=3)
+        >>> crossValidator.allResults
+        [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
+        """
+        resultsList = []
+        for argSet, result in self._allResults:
+            resultDict = argSet.copy()
+            if (hasattr(self.performanceFunction, '__name__')
+                    and self.performanceFunction.__name__ != '<lambda>'):
+                resultDict[self.performanceFunction.__name__] = result
+            else:
+                resultDict['performance'] = result
+            resultsList.append(resultDict)
+        return resultsList
 
     @property
     def bestArguments(self):
         """
-        The best argument based on the performanceFunction.
+        The arguments permutation with the most optimal performance.
+
+        Returns
+        -------
+        dict
+            The argument permutation names and values which provided the
+            optimal result according to the ``performanceFunction``.
         """
         if self._bestArguments is not None:
             return self._bestArguments
-        bestResults = self._bestArgumentsAndScore()
+        bestResults = self._bestArgumentsAndResult()
         self._bestArguments = bestResults[0]
-        self._bestScore = bestResults[1]
+        self._bestResult = bestResults[1]
         return self._bestArguments
 
     @property
-    def bestScore(self):
+    def bestResult(self):
         """
-        The best score based on the performanceFunction.
+        The performance value for the best argument permutation.
+
+        Returns
+        -------
+        value
+            The optimal output value from the ``performanceFunction``
+            according to ``performanceFunction.optimal``.
         """
-        if self._bestScore is not None:
-            return self._bestScore
-        bestResults = self._bestArgumentsAndScore()
+        if self._bestResult is not None:
+            return self._bestResult
+        bestResults = self._bestArgumentsAndResult()
         self._bestArguments = bestResults[0]
-        self._bestScore = bestResults[1]
-        return self._bestScore
+        self._bestResult = bestResults[1]
+        return self._bestResult
 
-    def _bestArgumentsAndScore(self):
+    def getFoldResults(self, arguments=None, **kwarguments):
         """
-        The best argument and score based on the performanceFunction.
-        """
-        detected = nimble.calculate.detectBestResult(self.performanceFunction)
-        if detected == 'max':
-            maximumIsBest = True
-        elif detected == 'min':
-            maximumIsBest = False
-        else:
-            msg = "Unable to automatically determine whether maximal or "
-            msg += "minimal scores are considered optimal for the the "
-            msg += "given performanceFunction. "
-            msg += "By adding an attribute named 'optimal' to "
-            msg += "performanceFunction with either the value 'min' or 'max' "
-            msg += "depending on whether minimum or maximum returned values "
-            msg += "are associated with correctness, this error should be "
-            msg += "avoided."
+        The result from each fold for a given permutation of arguments.
 
+        Parameters
+        ----------
+        arguments : dict
+            Dictionary of learner argument names and values. Will be
+            merged with any kwarguments. After merge, must match an
+            argument permutation generated during cross-validation.
+        kwarguments
+            Learner argument names and values as keywords. Will be
+            merged with ``arguments``. After merge, must match an
+            argument permutation generated during cross-validation.
+
+        Returns
+        -------
+        list
+            The ``performanceFunction`` results from each fold for this
+            argument permutation.
+
+        Examples
+        --------
+        >>> nimble.setRandomSeed(42)
+        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+        >>> yRaw = [[1], [2], [3],
+        ...         [1], [2], [3],
+        ...         [1], [2], [3]]
+        >>> X = nimble.createData('Matrix', xRaw)
+        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> kValues = nimble.CV([1, 3])
+        >>> crossValidator = KFoldCrossValidator(
+        ...    'Custom.KNNClassifier', X, Y, arguments={},
+        ...    performanceFunction=nimble.calculate.fractionIncorrect,
+        ...    numFolds=3, k=kValues)
+        >>> crossValidator.getFoldResults(arguments={'k': 1})
+        [0.3333333333333333, 0.0, 0.0]
+        >>> crossValidator.getFoldResults(k=1)
+        [0.3333333333333333, 0.0, 0.0]
+        >>> crossValidator.getFoldResults({'k': 3})
+        [0.3333333333333333, 0.6666666666666666, 0.0]
+        """
+        merged = _mergeArguments(arguments, kwarguments)
+        foldErrors = []
+        # self._resultsByFold is a list of two-tuples (argumentSet, foldScore)
+        for argSet, score in self._resultsByFold:
+            if argSet == merged:
+                foldErrors.append(score)
+        if not foldErrors:
+            self._noMatchingArguments()
+        return foldErrors
+
+    def getResult(self, arguments=None, **kwarguments):
+        """
+        The result over all folds for a given permutation of arguments.
+
+        Parameters
+        ----------
+        arguments : dict
+            Dictionary of learner argument names and values. Will be
+            merged with any kwarguments. After merge, must match an
+            argument permutation generated during cross-validation.
+        kwarguments
+            Learner argument names and values as keywords. Will be
+            merged with ``arguments``. After merge, must match an
+            argument permutation generated during cross-validation.
+
+        Returns
+        -------
+        value
+            The output value of the ``performanceFunction`` for this
+            argument permutation.
+
+        Examples
+        --------
+        >>> nimble.setRandomSeed(42)
+        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
+        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
+        >>> yRaw = [[1], [2], [3],
+        ...         [1], [2], [3],
+        ...         [1], [2], [3]]
+        >>> X = nimble.createData('Matrix', xRaw)
+        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> kValues = nimble.CV([1, 3])
+        >>> crossValidator = KFoldCrossValidator(
+        ...    'Custom.KNNClassifier', X, Y, arguments={},
+        ...    performanceFunction=nimble.calculate.fractionIncorrect,
+        ...    numFolds=3, k=kValues)
+        >>> crossValidator.getResult(arguments={'k': 1})
+        0.1111111111111111
+        >>> crossValidator.getResult(k=1)
+        0.1111111111111111
+        >>> crossValidator.getResult({'k': 3})
+        0.3333333333333333
+        """
+        merged = _mergeArguments(arguments, kwarguments)
+        # self._allResults is a list of two-tuples (argumentSet, totalScore)
+        for argSet, result in self._allResults:
+            if argSet == merged:
+                return result
+        self._noMatchingArguments()
+
+    def _bestArgumentsAndResult(self):
+        """
+        The best argument and result based on the performanceFunction.
+        """
         bestArgumentAndScoreTuple = None
-        for curResultTuple in self.results:
+        for curResultTuple in self._allResults:
             _, curScore = curResultTuple
             #if curArgument is the first or best we've seen:
             #store its details in bestArgumentAndScoreTuple
             if bestArgumentAndScoreTuple is None:
                 bestArgumentAndScoreTuple = curResultTuple
             else:
-                if (maximumIsBest and curScore > bestArgumentAndScoreTuple[1]):
+                if (self.maximumIsOptimal
+                        and curScore > bestArgumentAndScoreTuple[1]):
                     bestArgumentAndScoreTuple = curResultTuple
-                if (not maximumIsBest
+                if (not self.maximumIsOptimal
                         and curScore < bestArgumentAndScoreTuple[1]):
                     bestArgumentAndScoreTuple = curResultTuple
 
         return bestArgumentAndScoreTuple
 
-
-def crossValidateBackend(learnerName, X, Y, performanceFunction,
-                         arguments=None, folds=10, scoreMode='label',
-                         useLog=None, **kwarguments):
-    """
-    Same signature as nimble.crossValidate, except that the argument
-    'numFolds' is replaced with 'folds' which is allowed to be either an
-    int indicating the number of folds to use, or a foldIterator object
-    to use explicitly.
-    """
-    if not isinstance(X, Base):
-        raise InvalidArgumentType("X must be a Base object")
-    if Y is not None:
-        if not isinstance(Y, (Base, int, six.string_types, list)):
-            msg = "Y must be a Base object or an index (int) from X where "
-            msg += "Y's data can be found"
-            raise InvalidArgumentType(msg)
-        if isinstance(Y, (int, six.string_types, list)):
-            X = X.copy()
-            Y = X.features.extract(Y, useLog=False)
-
-        if len(Y.features) > 1 and scoreMode != 'label':
-            msg = "When dealing with multi dimensional outputs / predictions, "
-            msg += "then the scoreMode flag is required to be set to 'label'"
-            raise InvalidArgumentValueCombination(msg)
-
-        if not len(X.points) == len(Y.points):
-            #todo support indexing if Y is an index for X instead
-            msg = "X and Y must contain the same number of points"
-            raise InvalidArgumentValueCombination(msg)
-
-    if folds == 0:
-        raise InvalidArgumentValue("Tried to cross validate over 0 folds")
-
-    merged = _mergeArguments(arguments, kwarguments)
-
-    #get an iterator for the argument combinations- iterator
-    #handles case of merged arguments being {}
-    argumentCombinationIterator = ArgumentIterator(merged)
-
-    # we want the folds for each argument combination to be the same
-    foldIter = makeFoldIterator([X, Y], folds)
-
-    # setup container for outputs, a tuple entry for each arg set, containing
-    # a list for the results of those args on each fold
-    numArgSets = argumentCombinationIterator.numPermutations
-    performanceOfEachCombination = []
-    for i in range(numArgSets):
-        performanceOfEachCombination.append([None, []])
-
-    # control variables determining if we save all results before calculating
-    # performance or if we can calculate for each fold and then avg the results
-    perfNone = performanceFunction is None
-    if not perfNone:
-        canAvgFolds = (hasattr(performanceFunction, 'avgFolds')
-                       and performanceFunction.avgFolds)
-    else:
-        canAvgFolds = False
-
-    # folditerator randomized the point order, so if we are collecting all the
-    # results, we also have to collect the correct order of the known values
-    if not canAvgFolds:
-        collectedY = None
-
-    # Folding should be the same for each argset (and is expensive) so
-    # iterate over folds first
-    for fold in foldIter:
-        [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
-        argSetIndex = 0
-
-        # given this fold, do a run for each argument combination
-        for curArgumentCombination in argumentCombinationIterator:
-            #run algorithm on the folds' training and testing sets
-            curRunResult = nimble.trainAndApply(
-                learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
-                testX=curTestingX, arguments=curArgumentCombination,
-                scoreMode=scoreMode, useLog=False)
-
-            performanceOfEachCombination[argSetIndex][0] = (
-                curArgumentCombination)
-
-            if canAvgFolds:
-                # calculate error of prediction, using performanceFunction
-                curPerformance = computeMetrics(curTestingY, None,
-                                                curRunResult,
-                                                performanceFunction)
-
-                performanceOfEachCombination[argSetIndex][1].append(
-                    curPerformance)
-            else:
-                performanceOfEachCombination[argSetIndex][1].append(
-                    curRunResult)
-
-            argSetIndex += 1
-
-        if not canAvgFolds:
-            if collectedY is None:
-                collectedY = curTestingY
-            else:
-                collectedY.points.add(curTestingY, useLog=False)
-
-        # setup for next iteration
-        argumentCombinationIterator.reset()
-
-    # We consume the saved results, either by averaging the individual results
-    # calculations for each fold, or combining the saved predictions and
-    # calculating performance of the entire set.
-    for i, (curArgSet, results) in enumerate(performanceOfEachCombination):
-        # average score from each fold (works for one fold as well)
-        if canAvgFolds:
-            finalPerformance = sum(results) / float(len(results))
-        # we combine the results objects into one, and then calc performance
-        else:
-            for resultIndex in range(1, len(results)):
-                results[0].points.add(results[resultIndex], useLog=False)
-
-            # TODO raise RuntimeError(
-            #     "How do we guarantee Y and results are in same order?")
-            finalPerformance = computeMetrics(collectedY, None, results[0],
-                                              performanceFunction)
-
-        # we use the current results container to be the return value
-        performanceOfEachCombination[i] = (curArgSet, finalPerformance)
-
-    handleLogging(useLog, 'crossVal', X, Y, learnerName, merged,
-                  performanceFunction, performanceOfEachCombination, folds)
-    #return the list of tuples - tracking the performance of each argument
-    return CrossValidationResults(performanceOfEachCombination,
-                                  performanceFunction, folds)
-
-
-def makeFoldIterator(dataList, folds):
-    """
-    Takes a list of data objects and a number of folds, returns an
-    iterator which will return a list containing the folds for each
-    object, where the list has as many (training, testing) tuples as the
-    length of the input list.
-    """
-    if dataList is None:
-        raise InvalidArgumentType('dataList may not be None')
-    if len(dataList) == 0:
-        raise InvalidArgumentValue("dataList may not be or empty")
-
-    points = len(dataList[0].points)
-    for data in dataList:
-        if data is not None:
-            if len(data.points) == 0:
-                msg = "One of the objects has 0 points, it is impossible to "
-                msg += "specify a valid number of folds"
-                raise InvalidArgumentValueCombination(msg)
-            if len(data.points) != len(dataList[0].points):
-                msg = "All data objects in the list must have the same number "
-                msg += "of points and features"
-                raise InvalidArgumentValueCombination(msg)
-
-    # note: we want truncation here
-    numInFold = int(points / folds)
-    if numInFold == 0:
-        msg = "Must specify few enough folds so there is a point in each"
+    def _noMatchingArguments(self):
+        """
+        Raise exception when passed arguments are not valid.
+        """
+        msg = "No matching argument sets found. Available argument sets are: "
+        msg += ",".join(str(arg) for arg, _ in self._allResults)
         raise InvalidArgumentValue(msg)
 
-    # randomly select the folded portions
-    indices = list(range(points))
-    pythonRandom.shuffle(indices)
-    foldList = []
-    for fold in range(folds):
-        start = fold * numInFold
-        if fold == folds - 1:
-            end = points
-        else:
-            end = (fold + 1) * numInFold
-        foldList.append(indices[start:end])
 
-    # return that lists iterator as the fold iterator
-    return _foldIteratorClass(dataList, foldList, )
+class FoldIterator(object):
+    """
+    Create and iterate through folds.
 
-
-class _foldIteratorClass():
-    def __init__(self, dataList, foldList):
-        self.foldList = foldList
-        self.index = 0
+    Parameters
+    ----------
+    dataList : list
+        A list of data objects to divide into folds.
+    folds : int
+        The number of folds to create.
+    """
+    def __init__(self, dataList, folds):
         self.dataList = dataList
+        self.folds = folds
+        self.foldList = self._makeFoldList()
+        self.index = 0
         for dat in self.dataList:
             if dat is not None and dat.getTypeString() == 'Sparse':
                 dat._sortInternal('point')
@@ -2997,41 +3210,52 @@ class _foldIteratorClass():
     def __next__(self):
         return self.next()
 
-class CV(object):
-    def __init__(self, argumentList):
-        try:
-            self.argumentTuple = tuple(argumentList)
-        except TypeError:
-            msg = "argumentList must be iterable."
+    def _makeFoldList(self):
+        if self.dataList is None:
+            raise InvalidArgumentType('dataList may not be None')
+        if len(self.dataList) == 0:
+            raise InvalidArgumentValue("dataList may not be or empty")
 
-    def __getitem__(self, key):
-        return self.argumentTuple[key]
+        points = len(self.dataList[0].points)
+        for data in self.dataList:
+            if data is not None:
+                if len(data.points) == 0:
+                    msg = "One of the objects has 0 points, it is impossible to "
+                    msg += "specify a valid number of folds"
+                    raise InvalidArgumentValueCombination(msg)
+                if len(data.points) != len(self.dataList[0].points):
+                    msg = "All data objects in the list must have the same number "
+                    msg += "of points and features"
+                    raise InvalidArgumentValueCombination(msg)
 
-    def __setitem__(self, key, value):
-        raise ImproperObjectAction("CV objects are immutable")
+        # note: we want truncation here
+        numInFold = int(points / self.folds)
+        if numInFold == 0:
+            msg = "Must specify few enough folds so there is a point in each"
+            raise InvalidArgumentValue(msg)
 
-    def __len__(self):
-        return len(self.argumentTuple)
+        # randomly select the folded portions
+        indices = list(range(points))
+        pythonRandom.shuffle(indices)
+        foldList = []
+        for fold in range(self.folds):
+            start = fold * numInFold
+            if fold == self.folds - 1:
+                end = points
+            else:
+                end = (fold + 1) * numInFold
+            foldList.append(indices[start:end])
+        return foldList
 
-    def __str__(self):
-        return str(self.argumentTuple)
-
-    def __repr__(self):
-        return "CV(" + str(list(self.argumentTuple)) + ")"
-
-class ArgumentIterator:
+class ArgumentIterator(object):
     """
-    Constructor takes a dict mapping strings to tuples.
-    e.g. {'a':(1,2,3), 'b':(4,5)}
+    Create and iterate through argument permutations.
 
-    ArgumentBuilder generates permutations of dict in the format:
-    {'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4}, {'a':1, 'b':5},
-    {'a':2, 'b':5}, {'a':3, 'b':5}
-    and supports popping one such permutation at a time via pop().
-
-    Convenience methods:
-    hasNext() - Boolean check if all permutations have been popped.
-    reset() - reset object so pop() again returns first permutation.
+    Parameters
+    ----------
+    rawArgumentInput : dict
+        Mapping of argument names (strings) to values.
+        e.g. {'a': CV([1, 2, 3]), 'b': nimble.CV([4,5]), 'c': 6}
     """
 
     def __init__(self, rawArgumentInput):
@@ -3039,8 +3263,8 @@ class ArgumentIterator:
         self.index = 0
         if not isinstance(rawArgumentInput, dict):
             msg = "ArgumentIterator objects require dictionary's to "
-            msg += "initialize- e.g. {'a':(1,2,3), 'b':(4,5)} This is the "
-            msg += "form default generated by **args in a function argument."
+            msg += "initialize- e.g. {'a':CV([1,2,3]), 'b':CV([4,5])} This "
+            msg += "is the form generated by **args in a function argument."
             raise InvalidArgumentType(msg)
 
         # i.e. if rawArgumentInput == {}
@@ -3048,15 +3272,26 @@ class ArgumentIterator:
             self.numPermutations = 1
             self.permutationsList = [{}]
         else:
+            iterableArgDict = {}
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
-                try:
-                    if isinstance(rawArgumentInput[key], CV):
-                        self.numPermutations *= len(rawArgumentInput[key])
-                except TypeError: # taking len of non CV object
-                    pass #numPermutations not increased
-            self.permutationsList = _buildArgPermutationsList([], {}, 0,
-                                                              rawArgumentInput)
+                if isinstance(rawArgumentInput[key], CV):
+                    self.numPermutations *= len(rawArgumentInput[key])
+                    iterableArgDict[key] = rawArgumentInput[key]
+                else: # numPermutations not increased
+                    # wrap in iterable so that itertools.product will treat
+                    # whatever this value is as a single argument value even
+                    # if the value itself is an iterable
+                    iterableArgDict[key] = (rawArgumentInput[key],)
+
+            # note: calls to keys() and values() will directly correspond as
+            # since no modification is made to iterableArgDict between calls.
+            self.permutationsList = []
+            for permutation in itertools.product(*iterableArgDict.values()):
+                permutationDict = {}
+                for i, argument in enumerate(iterableArgDict.keys()):
+                    permutationDict[argument] = permutation[i]
+                self.permutationsList.append(permutationDict)
 
             assert len(self.permutationsList) == self.numPermutations
 
@@ -3084,64 +3319,27 @@ class ArgumentIterator:
         """
         self.index = 0
 
-#example call: _buildArgPermutationsList([],{},0,arg)
-def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex,
-                              rawArgInput):
-    """
-    Recursive function that generates a list of dicts, where each dict
-    is a permutation of rawArgInput's values.
-
-    Should be called externally with:
-    listOfDicts = []
-    curCompoundArg = {}
-    curKeyIndex = 0
-
-    and rawArgInput as a dict mapping variables to tuples.
-
-    example:
-    if rawArgInput is {'a':(1,2,3), 'b':(4,5)}
-    then _buildArgPermutationsList([],{},0,rawArgInput)
-    returns [{'a':1, 'b':4}, {'a':2, 'b':4}, {'a':3, 'b':4},
-             {'a':1, 'b':5}, {'a':2, 'b':5}, {'a':3, 'b':5},]
-    """
-
-    # stop condition: if current dict has a value for every key
-    # append a DEEP COPY of the dict to the listOfDicts. Copy is deep
-    # because dict entries will be changed when recursive stack is popped.
-    # Only complete, and distict dicts are appended to listOfDicts
-    if curKeyIndex >= len(list(rawArgInput.keys())):
-        listOfDicts.append(copy.deepcopy(curCompoundArg))
-        return listOfDicts
-
-    else:
-        # retrieve all values for the current key being populated
-        curKey = list(rawArgInput.keys())[curKeyIndex]
-        curValues = rawArgInput[curKey]
-
+class CV(object):
+    def __init__(self, argumentList):
         try:
-            if not isinstance(curValues, CV):
-                raise TypeError()
-            # if there are multiple values, add one key-value pair to the
-            # the current dict, make recursive call to build the rest of the
-            # dict then after it returns, remove current key-value pair and add
-            # the next pair.
-            valueIterator = iter(curValues)
-            for value in valueIterator:
-                curCompoundArg[curKey] = value
-                listOfDicts = _buildArgPermutationsList(
-                    listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
-                del curCompoundArg[curKey]
-        #if there is only one value, curValues is not iterable, so add
-        #curKey[value] to the dict and make recursive call.
+            self.argumentTuple = tuple(argumentList)
         except TypeError:
-            value = curValues
-            curCompoundArg[curKey] = value
-            listOfDicts = _buildArgPermutationsList(
-                listOfDicts, curCompoundArg, curKeyIndex + 1, rawArgInput)
-            del curCompoundArg[curKey]
+            msg = "argumentList must be iterable."
 
-        return listOfDicts
+    def __getitem__(self, key):
+        return self.argumentTuple[key]
 
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
+    def __len__(self):
+        return len(self.argumentTuple)
+
+    def __str__(self):
+        return str(self.argumentTuple)
+
+    def __repr__(self):
+        return "CV(" + str(list(self.argumentTuple)) + ")"
 
 def generateClassificationData(labels, pointsPer, featuresPer):
     """

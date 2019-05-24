@@ -64,11 +64,13 @@ def testKerasAPI():
                             performanceFunction=nimble.calculate.loss.rootMeanSquareError)
 
     #########test CV
-    bestArgument, bestScore = nimble.crossValidateReturnBest(
+    results = nimble.crossValidate(
         "keras.Sequential", X=x_train, Y=y_train, optimizer='sgd', layers=layers,
         loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128,
         lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
         performanceFunction=nimble.calculate.loss.rootMeanSquareError)
+    bestArguments = results.bestArguments
+    bestScore = results.bestResult
 
 @keraSkipDec
 @logCountAssertionFactory(3)

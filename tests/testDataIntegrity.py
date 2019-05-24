@@ -92,14 +92,6 @@ def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
     return nimble.crossValidate(learnerName, trainX, trainY, performanceFunction=nimble.calculate.fractionIncorrect)
 
 
-def wrappedCrossValidateReturnBest(learnerName, trainX, trainY, testX, testY):
-    return nimble.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=nimble.calculate.fractionIncorrect)
-
-
-def wrappedCrossValidateReturnAll(learnerName, trainX, trainY, testX, testY):
-    return nimble.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=nimble.calculate.fractionIncorrect)
-
-
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
     tl = nimble.train(learnerName, trainX, trainY)
     tl.incrementalTrain(trainX.points.copy([0]), trainY.points.copy([0]))
@@ -231,8 +223,6 @@ def testDataIntegrityTrainAndTestMulticlassStrategies():
 @attr('slow')
 def testDataIntegrityCrossValidate():
     backend(wrappedCrossValidate, 1)
-    backend(wrappedCrossValidateReturnAll, 1)
-    backend(wrappedCrossValidateReturnBest, 1)
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.

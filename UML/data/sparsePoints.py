@@ -31,46 +31,6 @@ class SparsePoints(SparseAxis, Points):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
-        """
-        Insert the points from the toAdd object below the provided index
-        in this object, the remaining points from this object will
-        continue below the inserted points.
-        """
-        self._source._sortInternal('point')
-        newData = []
-        newRow = []
-        newCol = []
-        # add original data until insert location
-        for i, row in enumerate(self._source.data.row):
-            if row < insertBefore:
-                newRow.append(row)
-                newCol.append(self._source.data.col[i])
-                newData.append(self._source.data.data[i])
-            else:
-                break
-        splitLength = len(newRow)
-        # add inserted data with adjusted row
-        for i, row in enumerate(toAdd.data.row):
-            newRow.append(row + insertBefore)
-            newCol.append(toAdd.data.col[i])
-            newData.append(toAdd.data.data[i])
-        # add remaining original data with adjusted row
-        for i, row in enumerate(self._source.data.row[splitLength:]):
-            newRow.append(row + len(toAdd.points))
-            newCol.append(self._source.data.col[splitLength:][i])
-            newData.append(self._source.data.data[splitLength:][i])
-        # handle conflicts between original dtype and inserted data
-        try:
-            newData = numpy.array(newData, dtype=self._source.data.dtype)
-        except ValueError:
-            newData = numpy.array(newData, dtype=numpy.object_)
-        numNewRows = len(self._source.points) + len(toAdd.points)
-        shape = (numNewRows, len(self._source.features))
-        self._source.data = coo_matrix((newData, (newRow, newCol)),
-                                       shape=shape)
-        self._source._sorted = None
-
     # def _flattenToOne_implementation(self):
     #     self._source._sortInternal('point')
     #     pLen = len(self._source.features)

@@ -268,22 +268,6 @@ def test_Deep_crossValidate():
     wrapped.__name__ = 'crossValidate'
     backendDeep(wrapped, runAndCheck)
 
-def test_Deep_crossValidateReturnAll():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return nimble.crossValidateReturnAll(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            useLog=useLog)
-    wrapped.__name__ = 'crossValidateReturnAll'
-    backendDeep(wrapped, runAndCheck)
-
-def test_Deep_crossValidateReturnBest():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return nimble.crossValidateReturnBest(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            useLog=useLog)
-    wrapped.__name__ = 'crossValidateReturnBest'
-    backendDeep(wrapped, runAndCheck)
-
 def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
         k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
