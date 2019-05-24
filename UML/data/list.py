@@ -5,11 +5,9 @@ Class extending Base, using a list of lists to store data.
 from __future__ import division
 from __future__ import absolute_import
 import copy
-import numbers
 from functools import reduce
 
 import numpy
-import six
 from six.moves import range
 from six.moves import zip
 
@@ -284,7 +282,6 @@ class List(Base):
         if to in UML.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
-            reuseData = True
             if isEmpty:
                 data = numpy.matrix(emptyData)
             elif to == 'List':

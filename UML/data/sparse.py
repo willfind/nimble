@@ -42,7 +42,7 @@ class Sparse(Base):
     Parameters
     ----------
     data : object
-        A scipy sparse matrix, numpy matrix, CooWithEmpty or CooDummy.
+        A scipy sparse matrix, numpy matrix.
     reuseData : bool
     elementType : type
         The scipy or numpy dtype of the data.
@@ -50,8 +50,7 @@ class Sparse(Base):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, data, pointNames=None, featureNames=None,
-                 reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, elementType=None, **kwds):
         if not scipy:
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
@@ -59,7 +58,7 @@ class Sparse(Base):
         if ((not isinstance(data, numpy.matrix))
                 and (not scipy.sparse.isspmatrix(data))):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "numpy matrix or CooWithEmpty or CooDummy."
+            msg += "numpy matrix"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -75,8 +74,6 @@ class Sparse(Base):
 
         self._sorted = None
         kwds['shape'] = self.data.shape
-        kwds['pointNames'] = pointNames
-        kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
