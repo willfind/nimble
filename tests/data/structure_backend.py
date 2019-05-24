@@ -342,9 +342,9 @@ class StructureDataSafe(StructureShared):
     def test_copy_rightTypeTrueCopy(self):
         """ Test copy() will return all of the right type and do not show each other's modifications"""
 
-        data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
+        data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0], ['a', 'b', 'c']]
         featureNames = ['one', 'two', 'three']
-        pointNames = ['1', 'one', '2', '0']
+        pointNames = ['1', 'one', '2', '0', 'str']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames,
                                featureNames=featureNames, useLog=False)
@@ -356,7 +356,7 @@ class StructureDataSafe(StructureShared):
                                   pointNames=pointNames, featureNames=featureNames,
                                   useLog=False)
 
-        pointsShuffleIndices = [3, 1, 2, 0]
+        pointsShuffleIndices = [4, 3, 1, 2, 0]
         featuresShuffleIndices = [1, 2, 0]
 
         copySparse = orig.copy(to='Sparse')
@@ -424,15 +424,18 @@ class StructureDataSafe(StructureShared):
         assert orig[0, 0] == 1
 
         if scipy:
-            spcsc = orig.copy(to='scipy csc')
+            # copying to scipy requires numeric values only
+            numeric = self.constructor(data[:4], pointNames=pointNames[:4],
+                                       featureNames=featureNames)
+            spcsc = numeric.copy(to='scipy csc')
             assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
             spcsc[0, 0] = 5
-            assert orig[0, 0] == 1
+            assert numeric[0, 0] == 1
 
-            spcsr = orig.copy(to='scipy csr')
+            spcsr = numeric.copy(to='scipy csr')
             assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
             spcsr[0, 0] = 5
-            assert orig[0, 0] == 1
+            assert numeric[0, 0] == 1
 
         listOfDict = orig.copy(to='list of dict')
         assert type(listOfDict) == list

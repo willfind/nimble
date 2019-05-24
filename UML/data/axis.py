@@ -1130,6 +1130,68 @@ class Axis(object):
             self._source.featureNames = copy.deepcopy(assignments)
             self._source.featureNamesInverse = reverseMap
 
+    def _processSingle(self, key):
+        """
+        Helper for Base.__getitem__ when given a single value.
+        """
+        length = len(self)
+        if key.__class__ is str or key.__class__ is six.text_type:
+            return self.getIndex(key)
+
+        if key.__class__ is float:
+            if key % 1: # x!=int(x)
+                msg = "A float valued key of value x is only accepted if x == "
+                msg += "int(x). The given value was " + str(key) + " yet int("
+                msg += str(key) + ") = " + str(int(key))
+                raise InvalidArgumentValue(msg)
+            key = int(key)
+
+        if key < -length or key >= length:
+            msg = "The given index " + str(key) + " is outside of the "
+            msg += "range of possible indices in the point axis (0 to "
+            msg += str(length - 1) + ")."
+            raise IndexError(msg)
+        if key >= 0:
+            return key
+        else:
+            return key + length
+
+    def _processMultiple(self, key):
+        """
+        Helper for Base.__getitem__ when given multiple values.
+
+        If the input is a full slice, copying for __getitem__ can be
+        ignored so None is returned. Otherwise the input will be
+        transformed to a list.
+
+        Returns
+        -------
+        list, None
+        """
+        length = len(self)
+        if key.__class__ is slice:
+            if key == slice(None): # full slice
+                return None
+            start = key.start if key.start is not None else 0
+            stop = key.stop if key.stop is not None else length - 1
+            step = key.step if key.step is not None else 1
+
+            start = self._processSingle(start)
+            stop = self._processSingle(stop)
+            if start == 0 and stop == length - 1 and step == 1: # full slice
+                return None
+            # our stop is inclusive need to adjust for builtin range below
+            if step > 0:
+                stop += 1
+            else:
+                stop -= 1
+            return [i for i in range(start, stop, step)]
+        else:
+            key = [self._processSingle(i) for i in key]
+            if key == list(range(length)):  # full slice
+                return None
+            return key
+
     ########################
     #  Structural Helpers  #
     ########################

@@ -1074,80 +1074,6 @@ class Base(object):
         """
         return self._getTypeString_implementation()
 
-    def _processSingleX(self, x):
-        """
-        Helper for __getitem__ when given a single value for x.
-        """
-        length = self._pointCount
-        if x.__class__ is int or x.__class__ is numpy.integer:
-            if x < -length or x >= length:
-                msg = "The given index " + str(x) + " is outside of the range "
-                msg += "of possible indices in the point axis (0 to "
-                msg += str(length - 1) + ")."
-                raise IndexError(msg)
-            if x >= 0:
-                return x
-            else:
-                return x + length
-
-        if x.__class__ is str or x.__class__ is six.text_type:
-            return self.points.getIndex(x)
-
-        if x.__class__ is float:
-            if x % 1: # x!=int(x)
-                msg = "A float valued key of value x is only accepted if x == "
-                msg += "int(x). The given value was " + str(x) + " yet int("
-                msg += str(x) + ") = " + str(int(x))
-                raise InvalidArgumentValue(msg)
-            else:
-                x = int(x)
-                if x < -length or x >= length:
-                    msg = "The given index " + str(x) + " is outside of the "
-                    msg += "range of possible indices in the point axis (0 to "
-                    msg += str(length - 1) + ")."
-                    raise IndexError(msg)
-                if x >= 0:
-                    return x
-                else:
-                    return x + length
-
-    def _processSingleY(self, y):
-        """
-        Helper for __getitem__ when given a single value for y.
-        """
-        length = self._featureCount
-        if y.__class__ is int or y.__class__ is numpy.integer:
-            if y < -length or y >= length:
-                msg = "The given index " + str(y) + " is outside of the range "
-                msg += "of possible indices in the feature axis (0 to "
-                msg += str(length - 1) + ")."
-                raise IndexError(msg)
-            if y >= 0:
-                return y
-            else:
-                return y + length
-
-        if y.__class__ is str or y.__class__ is six.text_type:
-            return self.features.getIndex(y)
-
-        if y.__class__ is float:
-            if y % 1: # y!=int(y)
-                msg = "A float valued key of value y is only accepted if y == "
-                msg += "int(y). The given value was " + str(y) + " yet int("
-                msg += str(y) + ") = " + str(int(y))
-                raise InvalidArgumentValue(msg)
-            else:
-                y = int(y)
-                if y < -length or y >= length:
-                    msg = "The given index " + str(y) + " is outside of the "
-                    msg += "range of possible indices in the point axis (0 to "
-                    msg += str(length - 1) + ")."
-                    raise IndexError(msg)
-                if y >= 0:
-                    return y
-                else:
-                    return y + length
-
     def __getitem__(self, key):
         """
         Return a copy of a subset of the data.
@@ -1295,12 +1221,12 @@ class Base(object):
         #process x
         singleX = False
         if isinstance(x, (int, float, str, numpy.integer)):
-            x = self._processSingleX(x)
+            x = self.points._processSingle(x)
             singleX = True
         #process y
         singleY = False
         if isinstance(y, (int, float, str, numpy.integer)):
-            y = self._processSingleY(y)
+            y = self.features._processSingle(y)
             singleY = True
         #if it is the simplest data retrieval such as X[1,2],
         # we'd like to return it back in the fastest way.
@@ -1309,42 +1235,26 @@ class Base(object):
         # if not convert x and y to lists of indices
         if singleX:
             x = [x]
-        elif x.__class__ is slice:
-            start = x.start if x.start is not None else 0
-            stop = x.stop if x.stop is not None else self._pointCount - 1
-            step = x.step if x.step is not None else 1
-
-            start = self._processSingleX(start)
-            stop = self._processSingleX(stop)
-            # our stop is inclusive need to adjust for builtin range below
-            if step > 0:
-                stop += 1
-            else:
-                stop -= 1
-            x = [xi for xi in range(start, stop, step)]
         else:
-            x = [self._processSingleX(xi) for xi in x]
+            x = self.points._processMultiple(x)
+
         if singleY:
             y = [y]
-        elif y.__class__ is slice:
-            start = y.start if y.start is not None else 0
-            stop = y.stop if y.stop is not None else self._featureCount - 1
-            step = y.step if y.step is not None else 1
-
-            start = self._processSingleY(start)
-            stop = self._processSingleY(stop)
-            # our stop is inclusive need to adjust for builtin range below
-            if step > 0:
-                stop += 1
-            else:
-                stop -= 1
-            y = [yi for yi in range(start, stop, step)]
         else:
-            y = [self._processSingleY(yi) for yi in y]
+            y = self.features._processMultiple(y)
 
+        # None is returned by _processMultiple if the axis is a full slice
+        # since copying of an axis which is a full slice is unnecessary.
+        if x is None and y is None:
+            ret = self.copy()
         # use backend directly since values have already been validated
-        ret = self.points._structuralBackend_implementation('copy', x)
-        ret = ret.features._structuralBackend_implementation('copy', y)
+        elif y is None:
+            ret = self.points._structuralBackend_implementation('copy', x)
+        elif x is None:
+            ret = self.features._structuralBackend_implementation('copy', y)
+        else:
+            ret = self.points._structuralBackend_implementation('copy', x)
+            ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
 
     def pointView(self, ID):

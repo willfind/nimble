@@ -484,20 +484,7 @@ class Elements(object):
         >>> unique
         {1.0: 1, 0.0: 2}
         """
-        uniqueCount = {}
-        if points is None:
-            points = [i for i in range(len(self._source.points))]
-        if features is None:
-            features = [i for i in range(len(self._source.features))]
-        points = valuesToPythonList(points, 'points')
-        features = valuesToPythonList(features, 'features')
-        for i in points:
-            for j in features:
-                val = self._source[i, j]
-                temp = uniqueCount.get(val, 0)
-                uniqueCount[val] = temp + 1
-
-        return uniqueCount
+        return self._countUnique_implementation(points, features)
 
     ########################
     # Numerical Operations #
