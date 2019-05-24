@@ -1,20 +1,20 @@
 from __future__ import absolute_import
-from nose.tools import raises
 import sys
+from unittest import mock
+
+import six
+from six.moves import range
+from nose.tools import raises
 
 import UML
-
 from UML import createData
 from UML import train
 from UML import trainAndApply
 from UML import trainAndTest
-
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
-import six
-from six.moves import range
 from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
 
 def test_trainAndApply_dataInputs():
@@ -100,7 +100,7 @@ def test_trainAndTest_dataInputs():
     assert out4 == exp
 
 #todo set seed and verify that you can regenerate error several times with
-#crossValidateReturnBest, trainAndApply, and your own computeMetrics
+#crossValidate.bestArguments, trainAndApply, and your own computeMetrics
 def test_trainAndTest():
     """Assert valid results returned for different arguments to the algorithm:
     with default ie no args
@@ -454,7 +454,13 @@ def test_trainFunctions_cv_triggered_errors():
         # different exception since this triggers crossValidation directly
         assert "folds" in str(iavc)
 
+class CVWasCalledException(Exception):
+    pass
 
+def cvBackgroundCheck(*args, **kwargs):
+    raise CVWasCalledException()
+
+@mock.patch('UML.uml.crossValidate', cvBackgroundCheck)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -463,20 +469,12 @@ def test_frontend_CV_triggering():
     trainObj = createData('Matrix', data=data, featureNames=variables)
     labelsObj = createData("Matrix", data=labels)
 
-    class CVWasCalledException(Exception):
-        pass
-
-    def cvBackgroundCheck():
-        raise CVWasCalledException()
-
-    temp = UML.helpers.crossValidateBackend
-    UML.helpers.crossValidateBackend = cvBackgroundCheck
-
     # confirm that the calls are being made
     try:
         try:
             train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                   performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), numFolds=5)
+            assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
 
@@ -484,6 +482,7 @@ def test_frontend_CV_triggering():
             trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                           performanceFunction=fractionIncorrect, testX=trainObj, k=UML.CV([1, 2]),
                           numFolds=5)
+            assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
 
@@ -491,15 +490,21 @@ def test_frontend_CV_triggering():
             trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
                          k=UML.CV([1, 2]), numFolds=5)
+            assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
     except Exception:
         einfo = sys.exc_info()
         six.reraise(*einfo)
-    finally:
-        UML.helpers.crossValidateBackend = temp
 
-    # demonstrate some succesful calls
+def test_frontend_CV_triggering_success():
+    #with small data set
+    variables = ["x1", "x2", "x3"]
+    data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
+    labels = [[1], [2], [3], [1], [2]]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    labelsObj = createData("Matrix", data=labels)
+
     tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), numFolds=5)
     assert hasattr(tl, 'apply')
