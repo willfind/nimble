@@ -183,6 +183,7 @@ class SciKitLearn(UniversalInterface):
         for stage in toProcess:
             currNames = stage[0]
             currDefaults = stage[1]
+
             if stage[1] is not None:
                 for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
@@ -444,10 +445,18 @@ class SciKitLearn(UniversalInterface):
             initDefaults = obj.get_params()
             initParams = list(initDefaults.keys())
             initValues = list(initDefaults.values())
+            if 'random_state' in initParams:
+                index = initParams.index('random_state')
+                negdex = index - len(initParams)
+                initValues[negdex] = UML.randomness.generateSubsidiarySeed()
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
             return None
         else:
             (args, _, _, d) = inspectArguments(getattr(namedModule, name))
+            if 'random_state' in args:
+                index = args.index('random_state')
+                negdex = index - len(args)
+                d[negdex] = UML.randomness.generateSubsidiarySeed()
             (args, d) = removeFromTailMatchedLists(args, d, ignore)
             return (args, d)

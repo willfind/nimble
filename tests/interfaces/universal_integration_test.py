@@ -166,11 +166,6 @@ def testRandomnessControl():
                 UML.setRandomSeed(13)
                 result4 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-            #				print interfaceName + '.' + learner
-            #				if interfaceName == 'sciKitLearn':
-            #					args = UML.learnerParameters(interfaceName + '.' + learner)
-            #					if 'random_state' in args[0]:
-            #						print "   ^^^^"
             except Exception as e:
                 print(interfaceName + '.' + learner + ' BANG: ' + str(e))
                 continue
