@@ -284,8 +284,11 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     (posL, posR) = indicesSplit(numDisplayNames, count)
     possibleIndices = posL + posR
 
-    allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
-                      for i in possibleIndices])
+    if namesList is None:
+        allDefault = True
+    else:
+        allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
+                          for i in possibleIndices])
 
     if allDefault:
         return ""
