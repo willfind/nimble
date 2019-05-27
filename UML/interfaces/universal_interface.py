@@ -1413,7 +1413,7 @@ class TrainedLearner(object):
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
         # (umlFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None)
+        # learnerFunction, arguments, metrics, extraInfo=None, folds=None)
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
@@ -1538,7 +1538,7 @@ class TrainedLearner(object):
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
         # (self, umlFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None
+        # learnerFunction, arguments, metrics, extraInfo=None, folds=None
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
