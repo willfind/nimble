@@ -1562,8 +1562,8 @@ class Base(object):
         numRows = min(self._pointCount, maxH)
         # if non default point names, print all (truncated) point names
         ret += dataHelpers.makeNamesLines(
-            indent, maxW, numRows, self._pointCount, self.points.getNames(),
-            'pointNames')
+            indent, maxW, numRows, self._pointCount,
+            self.points._getNamesNoGeneration(), 'pointNames')
         # if non default feature names, print all (truncated) feature names
         numCols = 0
         if byLine:
@@ -1574,7 +1574,11 @@ class Base(object):
         elif self._featureCount > 0:
             # if the container is empty, then roughly compute length of
             # the string of feature names, and then calculate numCols
-            strLength = (len("___".join(self.features.getNames()))
+            ftNames = self.features._getNamesNoGeneration()
+            if ftNames is None:
+                # mock up default looking names to avoid name generation
+                ftNames = [DEFAULT_PREFIX + '#'] * len(self.features)
+            strLength = (len("___".join(ftNames))
                          + len(''.join([str(i) for i
                                         in range(self._featureCount)])))
             numCols = int(min(1, maxW / float(strLength)) * self._featureCount)
@@ -1587,7 +1591,7 @@ class Base(object):
             numCols = self._featureCount
         ret += dataHelpers.makeNamesLines(
             indent, maxW, numCols, self._featureCount,
-            self.features.getNames(), 'featureNames')
+            self.features._getNamesNoGeneration(), 'featureNames')
 
         # if name not None, print
         if not self.name.startswith(DEFAULT_NAME_PREFIX):
