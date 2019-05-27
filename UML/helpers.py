@@ -2744,7 +2744,7 @@ class KFoldCrossValidator():
         for  the learner when the learner was passed all three values of
         ``k``, separately. These will be merged any kwarguments for the
         learner.
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
     scoreMode : str
@@ -2772,7 +2772,7 @@ class KFoldCrossValidator():
     performanceFunction : function
         The performance function that will or has been used during
         cross-validation.
-    numFolds : int
+    folds : int
         The number of folds that will or has been used during
         cross-validation.
     scoreMode : str
@@ -2795,15 +2795,13 @@ class KFoldCrossValidator():
         The optimal output value from the ``performanceFunction``.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
-                 numFolds=10, scoreMode='label', useLog=None, **kwarguments):
+                 folds=10, scoreMode='label', useLog=None, **kwarguments):
         self.learnerName = learnerName
         # detectBestResult will raise exception for invalid performanceFunction
         detected = UML.calculate.detectBestResult(performanceFunction)
         self.maximumIsOptimal = detected == 'max'
         self.performanceFunction = performanceFunction
-        if numFolds == 0:
-            raise InvalidArgumentValue("Cannot cross-validate over 0 folds")
-        self.numFolds = numFolds
+        self.folds = folds
         self.scoreMode = scoreMode
         self.arguments = _mergeArguments(arguments, kwarguments)
         self._allResults = None
@@ -2860,7 +2858,7 @@ class KFoldCrossValidator():
         argumentCombinationIterator = ArgumentIterator(self.arguments)
 
         # we want the folds for each argument combination to be the same
-        foldIter = FoldIterator([X, Y], self.numFolds)
+        foldIter = FoldIterator([X, Y], self.folds)
 
         # setup container for outputs, a tuple entry for each arg set,
         # containing a list for the results of those args on each fold
@@ -2950,7 +2948,7 @@ class KFoldCrossValidator():
 
         handleLogging(useLog, 'crossVal', X, Y, self.learnerName,
                       self.arguments, self.performanceFunction,
-                      performanceOfEachCombination, self.numFolds)
+                      performanceOfEachCombination, self.folds)
 
     @property
     def allResults(self):
@@ -2985,7 +2983,7 @@ class KFoldCrossValidator():
         >>> crossValidator = KFoldCrossValidator(
         ...    'Custom.KNNClassifier', X, Y, arguments={'k': 3},
         ...    performanceFunction=UML.calculate.fractionIncorrect,
-        ...    numFolds=3)
+        ...    folds=3)
         >>> crossValidator.allResults
         [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
         """
@@ -3072,7 +3070,7 @@ class KFoldCrossValidator():
         >>> crossValidator = KFoldCrossValidator(
         ...    'Custom.KNNClassifier', X, Y, arguments={},
         ...    performanceFunction=UML.calculate.fractionIncorrect,
-        ...    numFolds=3, k=kValues)
+        ...    folds=3, k=kValues)
         >>> crossValidator.getFoldResults(arguments={'k': 1})
         [0.3333333333333333, 0.0, 0.0]
         >>> crossValidator.getFoldResults(k=1)
@@ -3126,7 +3124,7 @@ class KFoldCrossValidator():
         >>> crossValidator = KFoldCrossValidator(
         ...    'Custom.KNNClassifier', X, Y, arguments={},
         ...    performanceFunction=UML.calculate.fractionIncorrect,
-        ...    numFolds=3, k=kValues)
+        ...    folds=3, k=kValues)
         >>> crossValidator.getResult(arguments={'k': 1})
         0.1111111111111111
         >>> crossValidator.getResult(k=1)
@@ -3184,6 +3182,9 @@ class FoldIterator(object):
     """
     def __init__(self, dataList, folds):
         self.dataList = dataList
+        if folds <= 0:
+            msg = "Number of folds must be greater than 0"
+            raise InvalidArgumentValue(msg)
         self.folds = folds
         self.foldList = self._makeFoldList()
         self.index = 0
