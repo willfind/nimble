@@ -205,8 +205,9 @@ def createRandomData(
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=seed)
 
-    return createData(returnType, data=randData, pointNames=pointNames,
-                      featureNames=featureNames, name=name, useLog=False)
+    return initDataObject(returnType, rawData=randData, pointNames=pointNames,
+                          featureNames=featureNames, name=name,
+                          skipDataProcessing=True)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
