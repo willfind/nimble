@@ -143,21 +143,19 @@ def createRandomData(
     seed = generateSubsidiarySeed()
     startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
-    if returnType.lower() == 'sparse':
+    if returnType == 'Sparse':
         if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
         density = 1.0 - float(sparsity)
         numNonZeroValues = int(numPoints * numFeatures * density)
-
         # We want to sample over positions, not point/feature indices, so
-        # we consider the possible possitions as numbered in a row-major
+        # we consider the possible positions as numbered in a row-major
         # order on a grid, and sample that without replacement
         gridSize = numPoints * numFeatures
         nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
                                         replace=False)
-
         # The point value is determined by counting how many groups of
         # numFeatures fit into the position number
         pointIndices = numpy.floor(nzLocation / numFeatures)
@@ -181,25 +179,16 @@ def createRandomData(
     else:
         size = (numPoints, numFeatures)
         if elementType == 'int':
-            filledIntMatrix = numpyRandom.randint(1, 100, size=size)
+            randData = numpyRandom.randint(1, 100, size=size)
         else:
-            filledFloatMatrix = numpyRandom.normal(loc=0.0, scale=1.0,
+            randData = numpyRandom.normal(loc=0.0, scale=1.0,
                                                    size=size)
 
         #if sparsity is zero
-        if abs(float(sparsity) - 0.0) < 0.0000000001:
-            if elementType == 'int':
-                randData = filledIntMatrix
-            else:
-                randData = filledFloatMatrix
-        else:
+        if sparsity > 0:
             binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity,
                                                         size=size)
-
-            if elementType == 'int':
-                randData = binarySparsityMatrix * filledIntMatrix
-            else:
-                randData = binarySparsityMatrix * filledFloatMatrix
+            randData = binarySparsityMatrix * randData
     endAlternateControl()
 
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
