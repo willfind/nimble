@@ -849,7 +849,7 @@ def _apply_saveLoad(trainerLearnerObj, givenTestX):
     Given a TrainedLearner object, return the results of apply after having
     saved then loaded the learner from a file.
     """
-    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".nimm") as tmpFile:
         trainerLearnerObj.save(tmpFile.name)
         trainer_ret_l = loadTrainedLearner(tmpFile.name)
         return trainer_ret_l.apply(givenTestX, useLog=False)
@@ -863,7 +863,7 @@ def test_saveLoadTrainedLearner_logCount():
     trainObj = nimble.createData('Matrix', train, useLog=False)
 
     tl = nimble.train('SciKitLearn.LogisticRegression', trainObj, 0, useLog=False)
-    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".nimm") as tmpFile:
         tl.save(tmpFile.name)
         load = loadTrainedLearner(tmpFile.name)
 

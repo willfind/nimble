@@ -166,11 +166,6 @@ def testRandomnessControl():
                 nimble.setRandomSeed(13)
                 result4 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-            #				print interfaceName + '.' + learner
-            #				if interfaceName == 'sciKitLearn':
-            #					args = nimble.learnerParameters(interfaceName + '.' + learner)
-            #					if 'random_state' in args[0]:
-            #						print "   ^^^^"
             except Exception as e:
                 print(interfaceName + '.' + learner + ' BANG: ' + str(e))
                 continue

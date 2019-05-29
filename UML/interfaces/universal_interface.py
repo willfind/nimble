@@ -1413,8 +1413,8 @@ class TrainedLearner(object):
 
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
-        # (umlFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None)
+        # (nimbleFunction, trainData, trainLabels, testData, testLabels,
+        # learnerFunction, arguments, metrics, extraInfo=None, folds=None)
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
@@ -1539,8 +1539,8 @@ class TrainedLearner(object):
 
         fullName = self.interface.getCanonicalName() + self.learnerName
         # Signature:
-        # (self, umlFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, numFolds=None
+        # (self, nimbleFunction, trainData, trainLabels, testData, testLabels,
+        # learnerFunction, arguments, metrics, extraInfo=None, folds=None
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
@@ -1559,7 +1559,7 @@ class TrainedLearner(object):
         outputPath : str
             The location (including file name and extension) where
             we want to write the output file. If filename extension
-            .umlm is not included in file name it would be added to the
+            .nimm is not included in file name it would be added to the
             output file.
 
         Examples
@@ -1569,7 +1569,7 @@ class TrainedLearner(object):
         if not cloudpickle:
             msg = "To save nimble models, cloudpickle must be installed"
             raise PackageException(msg)
-        extension = '.umlm'
+        extension = '.nimm'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
 
@@ -1853,11 +1853,11 @@ class TrainedLearner(object):
                                               testX, usedArguments,
                                               self.transformedArguments,
                                               self.customDict)
-        umlTypeRawScores = self.interface._outputTransformation(
+        nimbleTypeRawScores = self.interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self.customDict)
         formatedRawOrder = self._formatScoresToOvA(
-            testX, None, umlTypeRawScores, usedArguments)
+            testX, None, nimbleTypeRawScores, usedArguments)
         internalOrder = self.interface._getScoresOrder(self.backend)
         naturalOrder = sorted(internalOrder)
         if numpy.array_equal(naturalOrder, internalOrder):

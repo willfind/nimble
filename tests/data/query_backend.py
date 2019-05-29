@@ -363,7 +363,7 @@ class QueryBackend(DataTestObject):
     #################
 
     def test_save(self):
-        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".nimd")
 
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -377,7 +377,7 @@ class QueryBackend(DataTestObject):
         assert LoadObj.isIdentical(toSave)
 
     def test_save_lazyNameGeneration(self):
-        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".nimd")
 
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         toSave = self.constructor(data)
@@ -394,7 +394,7 @@ class QueryBackend(DataTestObject):
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         toSave.save(tmpFile.name)
-        LoadObj = loadData(tmpFile.name + '.umld')
+        LoadObj = loadData(tmpFile.name + '.nimd')
         assert isinstance(LoadObj, nimble.data.Base)
 
         try:
@@ -406,7 +406,7 @@ class QueryBackend(DataTestObject):
 
     @oneLogEntryExpected
     def test_saveAndLoad_logCount(self):
-        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".nimd")
 
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -902,6 +902,17 @@ class QueryBackend(DataTestObject):
                             ret = data.toString(includeNames=inc, maxWidth=mw, maxHeight=mh)
                             checkToStringRet(ret, data, inc, mw, mh)
 
+    def test_toString_lazyNameGeneration(self):
+        data = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        ret = data.toString(includeNames=False)
+        assertNoNamesGenerated(data)
+        ret = data.toString(includeNames=True)
+        assertNoNamesGenerated(data)
+
+        empty = self.constructor([])
+        ret = empty.toString()
+        assertNoNamesGenerated(empty)
+
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
         randGen = nimble.createRandomData("List", 9, 9, 0)
@@ -1221,6 +1232,21 @@ class QueryBackend(DataTestObject):
     def test_repr_truncated(self):
         self.back_reprOutput(40, 20, truncated=True)
 
+    def test_repr_lazyNameGeneration(self):
+        data = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        repr(data)
+        assertNoNamesGenerated(data)
+
+        # test an empty object w/ more than 0 features and names reset to None
+        empty = self.constructor([], featureNames=['a', 'b', 'c'])
+        try:
+            empty.features.setNames(None)
+        except TypeError:
+            # need to change names in views manually
+            empty._source.featureNames = None
+            empty._source.featureNamesInverse = None
+        repr(data)
+        assertNoNamesGenerated(empty)
 
     ###############################################
     # points.similarities / features.similarities #

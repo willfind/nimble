@@ -974,11 +974,14 @@ def createData(
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
-                  numFolds=10, scoreMode='label', useLog=None, **kwarguments):
+                  folds=10, scoreMode='label', useLog=None, **kwarguments):
     """
     Perform K-fold cross validation.
 
-    Returns mean performance (float) across numFolds folds on a X Y.
+    The object returned provides access to the results. All results, the
+    best set of arguments and the best result can be accessed through
+    its ``allResults``, ``bestArguments`` and ``bestResult`` attributes,
+    respectively.
 
     Parameters
     ----------
@@ -1002,7 +1005,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         score for  the learner when the learner was passed all three
         values of ``k``, separately. These will be merged any
         kwarguments for the learner.
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
     scoreMode : str
@@ -1044,12 +1047,12 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     >>> crossValidator = nimble.crossValidate(
     ...    'Custom.KNNClassifier', X, Y,
     ...    performanceFunction=nimble.calculate.fractionIncorrect,
-    ...    numFolds=3, k=3)
+    ...    folds=3, k=3)
     >>> type(crossValidator)
     <class 'nimble.helpers.KFoldCrossValidator'>
     >>> crossValidator.learnerName
     'Custom.KNNClassifier'
-    >>> crossValidator.numFolds
+    >>> crossValidator.folds
     3
     >>> crossValidator.bestArguments
     {'k': 3}
@@ -1061,7 +1064,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
     """
     return KFoldCrossValidator(learnerName, X, Y, performanceFunction,
-                               arguments, numFolds, scoreMode, useLog,
+                               arguments, folds, scoreMode, useLog,
                                **kwarguments)
 
 
@@ -1131,7 +1134,7 @@ def learnerType(learnerNames):
 
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          numFolds=10, doneValidData=False, doneValidArguments1=False,
+          folds=10, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
           done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
           **kwarguments):
@@ -1173,7 +1176,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     useLog : bool, None
@@ -1264,22 +1267,22 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += "out-of-the-box options) or there must be no choices in "
             msg += "the parameters."
             raise InvalidArgumentValueCombination(msg)
-        if numFolds > len(trainX.points):
+        if folds > len(trainX.points):
             msg = "There must be a minimum of one fold per point in the data."
             msg += "Cross validation was triggered to select the best "
-            msg += "parameter set but the 'numFolds' parameter was set to "
-            msg += str(numFolds) + " and trainX only contains "
+            msg += "parameter set but the 'folds' parameter was set to "
+            msg += str(folds) + " and trainX only contains "
             msg += str(len(trainX.points)) + " points."
             raise InvalidArgumentValueCombination(msg)
         # useLog value stored if call to train is from another function
         if storeLog == 'unset':
             storeLog = useLog
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
-        #      numFolds=10, scoreMode='label', useLog=None, maximize=False,
+        #      folds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
         crossValidationResults = crossValidate(
             learnerName, trainX, trainY, performanceFunction, merged,
-            numFolds=numFolds, scoreMode=scoreMode, useLog=storeLog)
+            folds=folds, scoreMode=scoreMode, useLog=storeLog)
         bestArguments = crossValidationResults.bestArguments
     else:
         crossValidationResults = None
@@ -1303,7 +1306,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default',
-                  numFolds=10, useLog=None, **kwarguments):
+                  folds=10, useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -1356,7 +1359,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     useLog : bool, None
@@ -1442,7 +1445,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  numFolds=numFolds, useLog=False,
+                                  folds=folds, useLog=False,
                                   storeLog=useLog, doneValidData=True,
                                   done2dOutputFlagCheck=True, **kwarguments)
 
@@ -1468,7 +1471,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
-                 numFolds=10, useLog=None, **kwarguments):
+                 folds=10, useLog=None, **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -1533,7 +1536,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default' 'OneVsAll' or 'OneVsOne'
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     useLog : bool, None
@@ -1620,7 +1623,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  numFolds=numFolds, useLog=False,
+                                  folds=folds, useLog=False,
                                   storeLog=useLog, doneValidData=True,
                                   done2dOutputFlagCheck=True)
 
@@ -1652,7 +1655,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
-                               numFolds=10, arguments=None, output=None,
+                               folds=10, arguments=None, output=None,
                                scoreMode='label', multiClassStrategy='default',
                                useLog=None, **kwarguments):
     """
@@ -1689,14 +1692,14 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     crossValidationError: bool
         Whether we will calculate cross validation error or training
         error. In True case, the training data is split in the
-        ``numFolds`` number of partitions. Each of those is iteratively
+        ``folds`` number of partitions. Each of those is iteratively
         withheld and used as the testing set for a learner trained on
         the combination of all of the non-withheld data. The performance
         results for each of those tests are then averaged together to
         act as the return value. In the False case, we train on the
         training data, and then use the same data as the withheld
         testing data. By default, this flag is set to False.
-    numFolds : int
+    folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     arguments : dict
@@ -1789,7 +1792,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     if crossValidationError:
         merged = _mergeArguments(arguments, kwarguments)
         results = crossValidate(learnerName, trainX, trainY,
-                                performanceFunction, merged, numFolds,
+                                performanceFunction, merged, folds,
                                 scoreMode, useLog)
         performance = results.bestResult
         metrics = {}
@@ -1802,7 +1805,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     else:
         performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                    performanceFunction, arguments, output,
-                                   scoreMode, multiClassStrategy, numFolds,
+                                   scoreMode, multiClassStrategy, folds,
                                    useLog, **kwarguments)
     return performance
 
@@ -1928,7 +1931,7 @@ def loadData(inputPath, useLog=None):
     inputPath : str
         The location (including file name and extension) to find a file
         previously generated by nimble.data .save(). Expected file
-        extension '.umld'.
+        extension '.nimd'.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1944,8 +1947,8 @@ def loadData(inputPath, useLog=None):
     if not cloudpickle:
         msg = "To load nimble objects, cloudpickle must be installed"
         raise PackageException(msg)
-    if not inputPath.endswith('.umld'):
-        msg = 'file extension for a saved nimble data object should be .umld'
+    if not inputPath.endswith('.nimd'):
+        msg = 'file extension for a saved nimble data object should be .nimd'
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
@@ -1967,7 +1970,7 @@ def loadTrainedLearner(inputPath, useLog=None):
     inputPath : str
         The location (including file name and extension) to find a file
         previously generated for a trainedLearner object. Expected file
-        extension '.umlm'.
+        extension '.nimm'.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1982,8 +1985,8 @@ def loadTrainedLearner(inputPath, useLog=None):
     if not cloudpickle:
         msg = "To load nimble models, cloudpickle must be installed"
         raise PackageException(msg)
-    if not inputPath.endswith('.umlm'):
-        msg = 'File extension for a saved nimble model should be .umlm'
+    if not inputPath.endswith('.nimm'):
+        msg = 'File extension for a saved nimble model should be .nimm'
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)

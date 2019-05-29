@@ -66,7 +66,7 @@ def test_createRandomData():
 
 def test_loadData():
     obj = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]], useLog=False)
-    with tempfile.NamedTemporaryFile(suffix='.umld') as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix='.nimd') as tmpFile:
         obj.save(tmpFile.name)
         back_load(nimble.loadData, tmpFile.name)
 
@@ -74,7 +74,7 @@ def test_loadTrainedLearner():
     train = nimble.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
     test = nimble.createData('Matrix', [[3], [2], [1]], useLog=False)
     tl = nimble.train('custom.KNNClassifier', train, test)
-    with tempfile.NamedTemporaryFile(suffix='.umlm') as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix='.nimm') as tmpFile:
         tl.save(tmpFile.name)
         back_load(nimble.loadTrainedLearner, tmpFile.name)
 

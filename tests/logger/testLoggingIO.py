@@ -147,7 +147,7 @@ def testLoadTypeFunctionsUseLog():
 
     # loadTrainedLearner
     tl = nimble.train('custom.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
-    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".nimm") as tmpFile:
         tl.save(tmpFile.name)
         load = nimble.loadTrainedLearner(tmpFile.name)
     logInfo = getLastLogData()
@@ -156,7 +156,7 @@ def testLoadTypeFunctionsUseLog():
     assert "'learnerArgs': {'k': 1}" in logInfo
 
     # loadData
-    with tempfile.NamedTemporaryFile(suffix=".umld") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
         randomObj.save(tmpFile.name)
         load = nimble.loadData(tmpFile.name)
     logInfo = getLastLogData()
