@@ -125,6 +125,14 @@ def isAllowedRaw(data, allowLPT=False):
     return False
 
 
+def validateReturnType(returnType):
+    retAllowed = copy.copy(UML.data.available)
+    retAllowed.append(None)
+    if returnType not in retAllowed:
+        msg = "returnType must be a value in " + str(retAllowed)
+        raise InvalidArgumentValue(msg)
+
+
 def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     """
     Remove name data from a python list.
@@ -245,11 +253,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
     Use numpy.ones or numpy.zeros to create constant UML objects of the
     designated returnType.
     """
-    retAllowed = copy.copy(UML.data.available)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
-
+    validateReturnType(returnType)
     if numPoints < 0:
         msg = "numPoints must be 0 or greater, yet " + str(numPoints)
         msg += " was given."
@@ -631,7 +635,10 @@ def initDataObject(
 
     # If skipping data processing, no modification needs to be made
     # to the data, so we can skip name extraction and missing replacement.
+    kwargs = {}
     if skipDataProcessing:
+        if returnType == 'List':
+            kwargs['checkAll'] = False
         pointNames = pointNames if pointNames != 'automatic' else None
         featureNames = featureNames if featureNames != 'automatic' else None
     else:
@@ -666,7 +673,7 @@ def initDataObject(
         ret = initMethod(rawData, pointNames=pointNames,
                          featureNames=featureNames, name=name,
                          paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData)
+                         reuseData=reuseData, **kwargs)
     except Exception:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
@@ -675,7 +682,7 @@ def initDataObject(
             ret = autoMethod(rawData, pointNames=pointNames,
                              featureNames=featureNames, name=name,
                              paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData)
+                             reuseData=reuseData, **kwargs)
             ret = ret.copy(to=returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted

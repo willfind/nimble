@@ -19,6 +19,7 @@ from UML.logger import handleLogging, startTimer, stopTimer
 from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
+from UML.helpers import validateReturnType
 from UML.helpers import _validScoreMode
 from UML.helpers import _validMultiClassStrategy
 from UML.helpers import _unpackLearnerName
@@ -128,6 +129,7 @@ def createRandomData(
          [  0    0 0   0   0]]
         )
     """
+    validateReturnType(returnType)
     if numPoints < 1:
         msg = "must specify a positive nonzero number of points"
         raise InvalidArgumentValue(msg)
@@ -411,11 +413,7 @@ def identity(returnType, size, pointNames='automatic',
         name="identity matrix list"
         )
     """
-    retAllowed = copy.copy(UML.data.available)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
-
+    validateReturnType(returnType)
     if size <= 0:
         msg = "size must be 0 or greater, yet " + str(size)
         msg += " was given."
@@ -917,11 +915,7 @@ def createData(
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """
-    retAllowed = copy.copy(UML.data.available)
-    retAllowed.append(None)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
+    validateReturnType(returnType)
 
     def looksFileLike(toCheck):
         hasRead = hasattr(toCheck, 'read')
