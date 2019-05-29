@@ -293,6 +293,7 @@ def transposeMatrix(matrixObj):
     """
     return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
+
 def extractNames(rawData, pointNames, featureNames):
     """
     Extract the point and feature names from the raw data, if necessary.
@@ -512,220 +513,6 @@ def convertData(returnType, rawData, pointNames, featureNames,
     return rawData
 
 
-# def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
-#                                elementType):
-#     """
-#     1. If rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix
-#     and extract featureNames from keys
-#     2. If rawData is like [{'a':1, 'b':3}, {'a':2, 'b':4}]
-#     3. If pointNames is True, then extract point names from the 1st column in
-#     rawData if featureNames is True, then extract feature names from the 1st
-#     row in rawData
-#     4. Convert data to np matrix
-#     """
-#     acceptedNameTypes = (str, bool, type(None), list, dict)
-#     if not isinstance(pointNames, acceptedNameTypes):
-    #     try:
-    #         pointNames = [val for val in pointNames]
-    #     except TypeError:
-    #         msg = "if pointNames are not 'bool' or a 'str', "
-    #         msg += "they should be other 'iterable' object"
-    #         raise InvalidArgumentType(msg)
-    # if not isinstance(featureNames, acceptedNameTypes):
-    #     try:
-    #         featureNames = [val for val in featureNames]
-    #     except TypeError:
-    #         msg = "if featureNames are not 'bool' or a 'str', "
-    #         msg += "they should be other 'iterable' object"
-    #         raise InvalidArgumentType(msg)
-    # # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
-    # # featureNames must be those keys
-    # # pointNames must be False or automatic
-    # if isinstance(rawData, dict):
-    #     if rawData:
-    #         featureNames = list(rawData.keys())
-    #         rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
-    #         if len(featureNames) == len(rawData):
-    #             # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
-    #             # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
-    #             # thus transpose is needed
-    #             # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
-    #             # np.matrix(values()) = [[1,3,2]]
-    #             # transpose is not needed
-    #             rawData = transposeMatrix(rawData)
-    #         pointNames = None
-    #
-    #     else: # rawData={}
-    #         featureNames = None
-    #         rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
-    #         pointNames = None
-    #
-    # # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
-    # # featureNames must be those keys
-    # # pointNames must be False or automatic
-    # elif (isinstance(rawData, list)
-    #       and len(rawData) > 0
-    #       and isinstance(rawData[0], dict)):
-    #     # double nested list contained list-type forced values from first row
-    #     values = [list(rawData[0].values())]
-    #     # in py3 keys() returns a dict_keys object comparing equality of these
-    #     # objects is valid, but converting to lists for comparison can fail
-    #     keys = rawData[0].keys()
-    #     for i, row in enumerate(rawData[1:]):
-    #         if row.keys() != keys:
-    #             msg = "The keys at index {i} do not match ".format(i=i)
-    #             msg += "the keys at index 0. Each dictionary in the list must "
-    #             msg += "contain the same key values."
-    #             raise InvalidArgumentValue(msg)
-    #         values.append(list(row.values()))
-    #     rawData = numpy.matrix(values, dtype=elementType)
-    #     featureNames = keys
-    #     pointNames = None
-    #
-    # else:
-    #     # 3. for rawData of other data types
-    #     # check if we need to do name extraction, setup new variables,
-    #     # or modify values for subsequent call to data init method.
-    #     if isinstance(rawData, list):
-    #         func = extractNamesFromRawList
-    #     elif isinstance(rawData, tuple):
-    #         rawData = list(rawData)
-    #         func = extractNamesFromRawList
-    #     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-    #         func = extractNamesFromNumpy
-    #     elif scipy and scipy.sparse.issparse(rawData):
-    #         # all input coo_matrices must have their duplicates removed; all
-    #         # helpers past this point rely on there being single entires only.
-    #         if isinstance(rawData, scipy.sparse.coo_matrix):
-    #             rawData = removeDuplicatesNative(rawData)
-    #         func = extractNamesFromScipySparse
-    #     elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
-    #         func = extractNamesFromPdDataFrame
-    #     elif pd and isinstance(rawData, pd.Series):
-    #         func = extractNamesFromPdSeries
-    #
-    #     rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
-    #                                                      featureNames)
-    #
-    #     # tempPointNames and tempFeatures may either be None or explicit names.
-    #     # pointNames and featureNames may be True, False, None, 'automatic', or
-    #     # explicit names. False and None have the same behavior.
-    #
-    #     # User explicitly did not want names extracted
-    #     if pointNames is False or pointNames is None:
-    #         # assert that data was not accidentally removed
-    #         assert tempPointNames is None
-    #         pointNames = None
-    #     # User explicitly wanted us to extract names
-    #     elif pointNames is True:
-    #         pointNames = tempPointNames
-    #     # We could have extracted names but didn't
-    #     elif pointNames == 'automatic' and tempPointNames is None:
-    #         pointNames = None
-    #     # We could have extracted name and did
-    #     elif pointNames == 'automatic' and tempPointNames is not None:
-    #         pointNames = tempPointNames
-    #     # Point names were provided by user
-    #     else:
-    #         assert tempPointNames is None
-    #         pointNames = pointNames
-    #
-    #     # User explicitly did not want names extracted
-    #     if featureNames is False or featureNames is None:
-    #         # assert that data was not accidentally removed
-    #         assert tempFeatureNames is None
-    #         featureNames = None
-    #     # User explicitly wanted us to extract names
-    #     elif featureNames is True:
-    #         featureNames = tempFeatureNames
-    #     # We could have extracted names but didn't
-    #     elif featureNames == 'automatic' and tempFeatureNames is None:
-    #         featureNames = None
-    #     # We could have extracted name and did
-    #     elif featureNames == 'automatic' and tempFeatureNames is not None:
-    #         featureNames = tempFeatureNames
-    #     # Feature names were provided by user
-    #     else:
-    #         assert tempFeatureNames is None
-    #         featureNames = featureNames
-    #
-    # # 4. if type(data) doesn't match returnType, then convert data to numpy
-    # # matrix or coo_matrix. If elementType is not None, then convert each
-    # # element in data to elementType.
-    # if (elementType is None
-    #         and isinstance(rawData, list)
-    #         and returnType == 'List'
-    #         and len(rawData) != 0
-    #         and (
-    #             # this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'],
-    #             # [4,5,'b']] otherwise, we need to covert the list to matrix,
-    #             # such [np.array([1,2]), np.array(3,4)]
-    #             isAllowedSingleElement(rawData[0])
-    #             or isinstance(rawData[0], list)
-    #             or hasattr(rawData[0], 'setLimit'))):
-    #     # attempt to convert the list to floats to remain consistent with other
-    #     # UML types if unsuccessful we will keep the list as is
-    #     try:
-    #         # 1D list
-    #         rawData = list(map(numpy.float, rawData))
-    #     except (TypeError, ValueError):
-    #         try:
-    #             #2D list
-    #             convertedData = []
-    #             for point in rawData:
-    #                 convertedData.append(list(map(numpy.float, point)))
-    #             rawData = convertedData
-    #         except (ValueError, TypeError):
-    #             pass
-    # elif (elementType is None and
-    #       pd and isinstance(rawData, pd.DataFrame) and
-    #       not isinstance(rawData, pd.SparseDataFrame) and
-    #       returnType == 'DataFrame'):
-    #     pass
-    # elif (elementType is None and
-    #       scipy and scipy.sparse.isspmatrix(rawData) and
-    #       returnType == 'Sparse'):
-    #     pass
-    # elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
-    #     # if the input data is a np matrix, then convert it anyway to make sure
-    #     # try dtype=float 1st.
-    #     rawData = elementTypeConvert(rawData, elementType)
-    # elif pd and isinstance(rawData, pd.SparseDataFrame):
-    #     #from sparse to sparse, instead of via np matrix
-    #     rawData = elementTypeConvert(rawData, elementType)
-    #     rawData = scipy.sparse.coo_matrix(rawData)
-    #
-    # elif isinstance(rawData, (list, tuple)):
-    #     # when rawData = [], or feature empty [[]], we need to use pointNames
-    #     # and featureNamesto determine its shape
-    #     lenFts = len(featureNames) if featureNames else 0
-    #     if len(rawData) == 0:
-    #         lenPts = len(pointNames) if pointNames else 0
-    #         rawData = numpy.matrix(numpy.empty([lenPts, lenFts]),
-    #                                dtype=elementType)
-    #     elif isinstance(rawData[0], list) and len(rawData[0]) == 0:
-    #         rawData = numpy.matrix(numpy.empty([len(rawData), lenFts]),
-    #                                dtype=elementType)
-    #     # if there are actually elements, we attempt to convert them
-    #     else:
-    #         rawData = elementTypeConvert(rawData, elementType)
-    #
-    # elif pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
-    #     rawData = elementTypeConvert(rawData, elementType)
-    #
-    # elif scipy and scipy.sparse.isspmatrix(rawData):
-    #     rawData = elementTypeConvert(rawData.todense(), elementType)
-    #
-    # if (returnType == 'Sparse'
-    #         and isinstance(rawData, numpy.matrix)
-    #         and rawData.shape[0]*rawData.shape[1] > 0):
-    # #replace None to np.NaN, o.w. coo_matrix will convert None to 0
-    #     numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
-    #                 numpy.NaN)
-    #
-    # return rawData, pointNames, featureNames
-
-
 def elementTypeConvert(rawData, elementType):
     """
     Convert rawData to numpy matrix with dtype = elementType, or try
@@ -747,6 +534,7 @@ def elementTypeConvert(rawData, elementType):
         except ValueError:
             data = numpy.matrix(rawData, dtype=object)
         return data
+
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
@@ -785,6 +573,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
             data[data != data] = replaceWith
     return data
 
+
 def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     """
     Convert any values in rawData found in treatAsMissing with
@@ -817,6 +606,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                     replaceMissingWith)
 
     return rawData
+
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
