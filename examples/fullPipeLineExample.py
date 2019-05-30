@@ -6,6 +6,8 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 from __future__ import absolute_import
 from __future__ import print_function
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 from UML import createData
 from UML import trainAndTest
@@ -41,7 +43,7 @@ if __name__ == "__main__":
     resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsOne")
-    print('One vs One, best score format:') 
+    print('One vs One, best score format:')
     print(resultsBestScoreOvO)
 
     resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
@@ -59,11 +61,11 @@ if __name__ == "__main__":
     resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsAll")
-    print('One vs All, best score format:') 
+    print('One vs All, best score format:')
     print(resultsBestScoreOvA)
 
     resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
                                      multiClassStrategy="OneVsAll")
     print('One vs All, all scores format:')
-    print(resultsAllScoresOvA) 
+    print(resultsAllScoresOvA)
