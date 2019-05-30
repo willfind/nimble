@@ -29,6 +29,41 @@ sciKitLearnDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
+# The following lists were taken from sklearn.utils.testing version 19.2
+# Generally, these estimators behave differently or do not follow sklearn's
+# standard API so we will not make them available
+SKL_DONT_TEST = [
+    'SparseCoder', 'EllipticEnvelope', 'DictVectorizer', 'LabelBinarizer',
+    'LabelEncoder', 'MultiLabelBinarizer', 'TfidfTransformer',
+    'TfidfVectorizer', 'IsotonicRegression', 'OneHotEncoder',
+    'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
+    'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures',
+    'GaussianRandomProjectionHash', 'HashingVectorizer', 'CheckingClassifier',
+    'PatchExtractor', 'CountVectorizer', 'ZeroEstimator',
+    'ScaledLogOddsEstimator', 'QuantileEstimator', 'MeanEstimator',
+    'LogOddsEstimator', 'PriorProbabilityEstimator', '_SigmoidCalibration',
+    'VotingClassifier'
+    ]
+SKL_META_ESTIMATORS = [
+    'OneVsOneClassifier', 'MultiOutputEstimator', 'MultiOutputRegressor',
+    'MultiOutputClassifier', 'OutputCodeClassifier', 'OneVsRestClassifier',
+    'RFE', 'RFECV', 'BaseEnsemble', 'ClassifierChain'
+    ]
+SKL_OTHER = [
+    'Pipeline', 'FeatureUnion', 'GridSearchCV', 'RandomizedSearchCV',
+    'SelectFromModel',
+    ]
+
+IGNORE = SKL_DONT_TEST + SKL_META_ESTIMATORS + SKL_OTHER
+
+
+def isAbstractClass(cls):
+    if not(hasattr(cls, '__abstractmethods__')):
+        return False
+    if not len(cls.__abstractmethods__):
+        return False
+    return True
+
 
 @inheritDocstringsFactory(UniversalInterface)
 class SciKitLearn(UniversalInterface):
@@ -51,19 +86,32 @@ class SciKitLearn(UniversalInterface):
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
 
-        from sklearn.utils.testing import all_estimators
-        all_estimators = all_estimators()
         self.allEstimators = {}
-        for name, obj in all_estimators:
-            # all_estimators includes some without predict, transform,
-            # fit_predict or fit_transform, all have fit attribute
-            hasPred = hasattr(obj, 'predict')
-            hasTrans = hasattr(obj, 'transform')
-            hasFitPred = hasattr(obj, 'fit_predict')
-            hasFitTrans = hasattr(obj, 'fit_transform')
-
-            if hasPred or hasTrans or hasFitPred or hasFitTrans:
-                self.allEstimators[name] = obj
+        for directory in self.skl.__all__:
+            try:
+                imported = importlib.import_module('sklearn.' + directory)
+            except ImportError:
+                continue
+            for attrName in dir(imported):
+                if attrName in IGNORE:
+                    continue
+                try:
+                    obj = getattr(imported, attrName)
+                    if (issubclass(obj, self.skl.base.BaseEstimator)
+                            and not isAbstractClass(obj)):
+                        # if object cannot be instantiated without additional
+                        # arguments, we cannot support it at this time
+                        init = obj()
+                        # only support learners with a predict, transform,
+                        # fit_predict or fit_transform, all have fit attribute
+                        hasPred = hasattr(obj, 'predict')
+                        hasTrans = hasattr(obj, 'transform')
+                        hasFitPred = hasattr(obj, 'fit_predict')
+                        hasFitTrans = hasattr(obj, 'fit_transform')
+                        if hasPred or hasTrans or hasFitPred or hasFitTrans:
+                            self.allEstimators[attrName] = obj
+                except TypeError:
+                    pass
 
         super(SciKitLearn, self).__init__()
 
@@ -80,8 +128,10 @@ class SciKitLearn(UniversalInterface):
 
     def _listLearnersBackend(self):
         possibilities = []
-        exclude = ['FeatureAgglomeration', 'LocalOutlierFactor',
-                   'KernelCenterer',]
+        exclude = [
+            'FeatureAgglomeration', 'LocalOutlierFactor', 'KernelCenterer',
+            'LassoLarsIC' # modifies original data
+            ]
 
         for name in self.allEstimators.keys():
             if name not in exclude:
