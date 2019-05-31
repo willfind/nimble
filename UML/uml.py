@@ -19,6 +19,7 @@ from UML.logger import handleLogging, startTimer, stopTimer
 from UML.logger import stringToDatetime
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
+from UML.helpers import validateReturnType
 from UML.helpers import _validScoreMode
 from UML.helpers import _validMultiClassStrategy
 from UML.helpers import _unpackLearnerName
@@ -128,6 +129,7 @@ def createRandomData(
          [  0    0 0   0   0]]
         )
     """
+    validateReturnType(returnType)
     if numPoints < 1:
         msg = "must specify a positive nonzero number of points"
         raise InvalidArgumentValue(msg)
@@ -143,21 +145,19 @@ def createRandomData(
     seed = generateSubsidiarySeed()
     startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
-    if returnType.lower() == 'sparse':
+    if returnType == 'Sparse':
         if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
         density = 1.0 - float(sparsity)
         numNonZeroValues = int(numPoints * numFeatures * density)
-
         # We want to sample over positions, not point/feature indices, so
-        # we consider the possible possitions as numbered in a row-major
+        # we consider the possible positions as numbered in a row-major
         # order on a grid, and sample that without replacement
         gridSize = numPoints * numFeatures
         nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
                                         replace=False)
-
         # The point value is determined by counting how many groups of
         # numFeatures fit into the position number
         pointIndices = numpy.floor(nzLocation / numFeatures)
@@ -181,32 +181,24 @@ def createRandomData(
     else:
         size = (numPoints, numFeatures)
         if elementType == 'int':
-            filledIntMatrix = numpyRandom.randint(1, 100, size=size)
+            randData = numpyRandom.randint(1, 100, size=size)
         else:
-            filledFloatMatrix = numpyRandom.normal(loc=0.0, scale=1.0,
+            randData = numpyRandom.normal(loc=0.0, scale=1.0,
                                                    size=size)
 
         #if sparsity is zero
-        if abs(float(sparsity) - 0.0) < 0.0000000001:
-            if elementType == 'int':
-                randData = filledIntMatrix
-            else:
-                randData = filledFloatMatrix
-        else:
+        if sparsity > 0:
             binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity,
                                                         size=size)
-
-            if elementType == 'int':
-                randData = binarySparsityMatrix * filledIntMatrix
-            else:
-                randData = binarySparsityMatrix * filledFloatMatrix
+            randData = binarySparsityMatrix * randData
     endAlternateControl()
 
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=seed)
 
-    return createData(returnType, data=randData, pointNames=pointNames,
-                      featureNames=featureNames, name=name, useLog=False)
+    return initDataObject(returnType, rawData=randData, pointNames=pointNames,
+                          featureNames=featureNames, name=name,
+                          skipDataProcessing=True)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
@@ -421,11 +413,7 @@ def identity(returnType, size, pointNames='automatic',
         name="identity matrix list"
         )
     """
-    retAllowed = copy.copy(UML.data.available)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
-
+    validateReturnType(returnType)
     if size <= 0:
         msg = "size must be 0 or greater, yet " + str(size)
         msg += " was given."
@@ -927,11 +915,7 @@ def createData(
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """
-    retAllowed = copy.copy(UML.data.available)
-    retAllowed.append(None)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
+    validateReturnType(returnType)
 
     def looksFileLike(toCheck):
         hasRead = hasattr(toCheck, 'read')

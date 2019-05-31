@@ -125,6 +125,14 @@ def isAllowedRaw(data, allowLPT=False):
     return False
 
 
+def validateReturnType(returnType):
+    retAllowed = copy.copy(UML.data.available)
+    retAllowed.append(None)
+    if returnType not in retAllowed:
+        msg = "returnType must be a value in " + str(retAllowed)
+        raise InvalidArgumentValue(msg)
+
+
 def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     """
     Remove name data from a python list.
@@ -245,11 +253,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
     Use numpy.ones or numpy.zeros to create constant UML objects of the
     designated returnType.
     """
-    retAllowed = copy.copy(UML.data.available)
-    if returnType not in retAllowed:
-        msg = "returnType must be a value in " + str(retAllowed)
-        raise InvalidArgumentValue(msg)
-
+    validateReturnType(returnType)
     if numPoints < 0:
         msg = "numPoints must be 0 or greater, yet " + str(numPoints)
         msg += " was given."
@@ -294,16 +298,9 @@ def transposeMatrix(matrixObj):
     return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
 
-def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
-                               elementType):
+def extractNames(rawData, pointNames, featureNames):
     """
-    1. If rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix
-    and extract featureNames from keys
-    2. If rawData is like [{'a':1, 'b':3}, {'a':2, 'b':4}]
-    3. If pointNames is True, then extract point names from the 1st column in
-    rawData if featureNames is True, then extract feature names from the 1st
-    row in rawData
-    4. Convert data to np matrix
+    Extract the point and feature names from the raw data, if necessary.
     """
     acceptedNameTypes = (str, bool, type(None), list, dict)
     if not isinstance(pointNames, acceptedNameTypes):
@@ -326,7 +323,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
     if isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
-            rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
+            rawData = numpy.matrix(list(rawData.values()), dtype=numpy.object_)
             if len(featureNames) == len(rawData):
                 # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
                 # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
@@ -339,7 +336,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
 
         else: # rawData={}
             featureNames = None
-            rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
+            rawData = numpy.empty([0, 0])
             pointNames = None
 
     # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
@@ -360,7 +357,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
                 msg += "contain the same key values."
                 raise InvalidArgumentValue(msg)
             values.append(list(row.values()))
-        rawData = numpy.matrix(values, dtype=elementType)
+        rawData = values
         featureNames = keys
         pointNames = None
 
@@ -431,7 +428,19 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
             assert tempFeatureNames is None
             featureNames = featureNames
 
-    # 4. if type(data) doesn't match returnType, then convert data to numpy
+    return rawData, pointNames, featureNames
+
+
+def convertData(returnType, rawData, pointNames, featureNames,
+                elementType):
+    """
+    Convert data to an object type which is compliant with the
+    initializion for the given returnType. Additionally, ensure the data
+    is converted to the elementType. If elementType is None an attempt
+    will be made to convert all the data to floats, if unsuccessful, the
+    data will remain the same object type.
+    """
+    # If type(data) doesn't match returnType, then convert data to numpy
     # matrix or coo_matrix. If elementType is not None, then convert each
     # element in data to elementType.
     if (elementType is None
@@ -505,7 +514,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames,
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
 
-    return rawData, pointNames, featureNames
+    return rawData
 
 
 def elementTypeConvert(rawData, elementType):
@@ -529,6 +538,7 @@ def elementTypeConvert(rawData, elementType):
         except ValueError:
             data = numpy.matrix(rawData, dtype=object)
         return data
+
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
@@ -567,12 +577,16 @@ def replaceNumpyValues(data, toReplace, replaceWith):
             data[data != data] = replaceWith
     return data
 
-def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
-                       elementType=None):
+
+def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     """
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
+    # need to convert SparseDataFrame to coo matrix before handling missing
+    if isinstance(rawData, pd.SparseDataFrame):
+        rawData = scipy.sparse.coo_matrix(rawData)
+
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
         handleMissing = replaceNumpyValues(handleMissing, treatAsMissing,
@@ -580,16 +594,12 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
         rawData = handleMissing.tolist()
 
     elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-        handleMissing = replaceNumpyValues(rawData, treatAsMissing,
+        rawData = replaceNumpyValues(rawData, treatAsMissing,
                                            replaceMissingWith)
-        rawData = elementTypeConvert(handleMissing, elementType)
 
     elif scipy.sparse.issparse(rawData):
         handleMissing = replaceNumpyValues(rawData.data, treatAsMissing,
                                            replaceMissingWith)
-        handleMissing = elementTypeConvert(handleMissing, elementType)
-        # elementTypeConvert returns matrix, need a 1D array
-        handleMissing = handleMissing.A1
         rawData.data = handleMissing
 
     elif isinstance(rawData, (pd.DataFrame, pd.Series)):
@@ -601,16 +611,18 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith,
 
     return rawData
 
+
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name, path, keepPoints,
-        keepFeatures, elementType=None, reuseData=False,
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
-                        'NULL', 'NA'),
-        replaceMissingWith=numpy.nan):
+        returnType, rawData, pointNames, featureNames, name=None, path=None,
+        keepPoints='all', keepFeatures='all', elementType=None,
+        reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
+                                         'None', 'nan', 'NULL', 'NA'),
+        replaceMissingWith=numpy.nan, skipDataProcessing=False):
     """
     1. Set up autoType
-    2. Extract names and convert data if necessary
-    3. Handle missing values
+    2. Extract names
+    3. Handle missing data
+    4. Convert data if necessary
     """
     if (scipy and scipy.sparse.issparse(rawData)) or \
             (pd and isinstance(rawData, pd.SparseDataFrame)):
@@ -621,14 +633,23 @@ def initDataObject(
     if returnType is None:
         returnType = autoType
 
-    #may need to extract names and may need to convert data to matrix
-    rawData, pointNames, featureNames = extractNamesAndConvertData(
-        returnType, rawData, pointNames, featureNames, elementType)
-
-    # handle missing values
-    if treatAsMissing is not None:
+    # If skipping data processing, no modification needs to be made
+    # to the data, so we can skip name extraction and missing replacement.
+    kwargs = {}
+    if skipDataProcessing:
+        if returnType == 'List':
+            kwargs['checkAll'] = False
+        pointNames = pointNames if pointNames != 'automatic' else None
+        featureNames = featureNames if featureNames != 'automatic' else None
+    else:
+        rawData, pointNames, featureNames = extractNames(rawData, pointNames,
+                                                         featureNames)
+    if treatAsMissing is not None and not skipDataProcessing:
         rawData = replaceMissingData(rawData, treatAsMissing,
-                                     replaceMissingWith, elementType)
+                                     replaceMissingWith)
+    # convert to elementType, if None convert to best possible
+    rawData = convertData(returnType, rawData, pointNames, featureNames,
+                          elementType)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -652,7 +673,7 @@ def initDataObject(
         ret = initMethod(rawData, pointNames=pointNames,
                          featureNames=featureNames, name=name,
                          paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData)
+                         reuseData=reuseData, **kwargs)
     except Exception:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
@@ -661,7 +682,7 @@ def initDataObject(
             ret = autoMethod(rawData, pointNames=pointNames,
                              featureNames=featureNames, name=name,
                              paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData)
+                             reuseData=reuseData, **kwargs)
             ret = ret.copy(to=returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
