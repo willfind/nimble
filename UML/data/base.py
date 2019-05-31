@@ -3907,7 +3907,8 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-
+            if other.getTypeString() != "Matrix":
+                other = other.copy(to="Matrix")
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)

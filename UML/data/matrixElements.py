@@ -98,9 +98,13 @@ class MatrixElements(Elements):
             result = other.data.multiply(self._source.data)
             if hasattr(result, 'todense'):
                 result = result.todense()
-            self._source.data = numpy.matrix(result)
         else:
-            self._source.data = numpy.multiply(self._source.data, other.data)
+            result = numpy.multiply(self._source.data, other.data)
+        if isinstance(result, numpy.matrix):
+            self._source.data = result
+        else:
+            self._source.data = numpy.matrix(result)
+
 
 class MatrixElementsView(ElementsView, MatrixElements):
     """
