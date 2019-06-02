@@ -9,6 +9,7 @@ import importlib
 import copy
 import sys
 import warnings
+from unittest import mock
 
 import numpy
 from six.moves import range
@@ -28,34 +29,6 @@ sciKitLearnDir = None
 # a dictionary mapping names to learners, or modules
 # containing learners. To be used by findInPackage
 locationCache = {}
-
-# The following lists were taken from sklearn.utils.testing version 19.2
-# Generally, these estimators behave differently or do not follow sklearn's
-# standard API so we will not make them available
-SKL_DONT_TEST = [
-    'SparseCoder', 'EllipticEnvelope', 'DictVectorizer', 'LabelBinarizer',
-    'LabelEncoder', 'MultiLabelBinarizer', 'TfidfTransformer',
-    'TfidfVectorizer', 'IsotonicRegression', 'OneHotEncoder',
-    'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-    'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures',
-    'GaussianRandomProjectionHash', 'HashingVectorizer', 'CheckingClassifier',
-    'PatchExtractor', 'CountVectorizer', 'ZeroEstimator',
-    'ScaledLogOddsEstimator', 'QuantileEstimator', 'MeanEstimator',
-    'LogOddsEstimator', 'PriorProbabilityEstimator', '_SigmoidCalibration',
-    'VotingClassifier'
-    ]
-SKL_META_ESTIMATORS = [
-    'OneVsOneClassifier', 'MultiOutputEstimator', 'MultiOutputRegressor',
-    'MultiOutputClassifier', 'OutputCodeClassifier', 'OneVsRestClassifier',
-    'RFE', 'RFECV', 'BaseEnsemble', 'ClassifierChain'
-    ]
-SKL_OTHER = [
-    'Pipeline', 'FeatureUnion', 'GridSearchCV', 'RandomizedSearchCV',
-    'SelectFromModel',
-    ]
-
-IGNORE = SKL_DONT_TEST + SKL_META_ESTIMATORS + SKL_OTHER
-
 
 def isAbstractClass(cls):
     if not(hasattr(cls, '__abstractmethods__')):
@@ -86,32 +59,35 @@ class SciKitLearn(UniversalInterface):
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
 
+        from sklearn.utils.testing import all_estimators
+        import pkgutil
+        pkgutil.walk_packages_ = pkgutil.walk_packages
+        def mockWalkPackages(*args, **kwargs):
+            packages = pkgutil.walk_packages_(*args, **kwargs)
+            return [pkg for pkg in packages if not 'conftest' in pkg[1]]
+
+        with mock.patch('pkgutil.walk_packages', mockWalkPackages):
+            all_estimators = all_estimators()
+
         self.allEstimators = {}
-        for directory in self.skl.__all__:
-            try:
-                imported = importlib.import_module('sklearn.' + directory)
-            except ImportError:
+        for name, obj in all_estimators:
+            if name.startswith('_'):
                 continue
-            for attrName in dir(imported):
-                if attrName in IGNORE:
-                    continue
-                try:
-                    obj = getattr(imported, attrName)
-                    if (issubclass(obj, self.skl.base.BaseEstimator)
-                            and not isAbstractClass(obj)):
-                        # if object cannot be instantiated without additional
-                        # arguments, we cannot support it at this time
-                        init = obj()
-                        # only support learners with a predict, transform,
-                        # fit_predict or fit_transform, all have fit attribute
-                        hasPred = hasattr(obj, 'predict')
-                        hasTrans = hasattr(obj, 'transform')
-                        hasFitPred = hasattr(obj, 'fit_predict')
-                        hasFitTrans = hasattr(obj, 'fit_transform')
-                        if hasPred or hasTrans or hasFitPred or hasFitTrans:
-                            self.allEstimators[attrName] = obj
-                except TypeError:
-                    pass
+            try:
+                # if object cannot be instantiated without additional
+                # arguments, we cannot support it at this time
+                init = obj()
+            except TypeError:
+                continue
+            # only support learners with a predict, transform,
+            # fit_predict or fit_transform, all have fit attribute
+            hasPred = hasattr(obj, 'predict')
+            hasTrans = hasattr(obj, 'transform')
+            hasFitPred = hasattr(obj, 'fit_predict')
+            hasFitTrans = hasattr(obj, 'fit_transform')
+
+            if hasPred or hasTrans or hasFitPred or hasFitTrans:
+                self.allEstimators[name] = obj
 
         super(SciKitLearn, self).__init__()
 
@@ -129,8 +105,14 @@ class SciKitLearn(UniversalInterface):
     def _listLearnersBackend(self):
         possibilities = []
         exclude = [
-            'FeatureAgglomeration', 'LocalOutlierFactor', 'KernelCenterer',
-            'LassoLarsIC' # modifies original data
+            'CountVectorizer', 'PatchExtractor', 'TfidfVectorizer',
+            'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',
+            'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+            'FeatureAgglomeration', 'LocalOutlierFactor',
+            # the above do not take the standard X, [y] inputs
+            'KernelCenterer', # fit takes K param not X
+            'LassoLarsIC', # modifies original data
+            'IsotonicRegression', # requires 1D input data
             ]
 
         for name in self.allEstimators.keys():
