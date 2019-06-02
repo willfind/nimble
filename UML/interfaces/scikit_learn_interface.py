@@ -30,13 +30,6 @@ sciKitLearnDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
-def isAbstractClass(cls):
-    if not(hasattr(cls, '__abstractmethods__')):
-        return False
-    if not len(cls.__abstractmethods__):
-        return False
-    return True
-
 
 @inheritDocstringsFactory(UniversalInterface)
 class SciKitLearn(UniversalInterface):
