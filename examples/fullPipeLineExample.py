@@ -6,8 +6,6 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 from __future__ import absolute_import
 from __future__ import print_function
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 from UML import createData
 from UML import trainAndTest
