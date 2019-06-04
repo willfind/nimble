@@ -42,6 +42,7 @@ from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
+from .dataHelpers import createDataNoValidation
 
 cython = UML.importModule('cython')
 
@@ -3622,29 +3623,6 @@ class Base(object):
         """
         return self._genericNumericBinary('__isub__', other)
 
-    def __div__(self, other):
-        """
-        Perform division using this object as the numerator, elementwise
-        if ``other`` is a UML Base object, or element wise by a scalar
-        if other is some kind of numeric value.
-        """
-        return self._genericNumericBinary('__div__', other)
-
-    def __rdiv__(self, other):
-        """
-        Perform element wise division using this object as the
-        denominator, and the given scalar value as the numerator.
-        """
-        return self._genericNumericBinary('__rdiv__', other)
-
-    def __idiv__(self, other):
-        """
-        Perform division (in place) using this object as the numerator,
-        elementwise if ``other`` is a UML Base object, or elementwise by
-        a scalar if ``other`` is some kind of numeric value.
-        """
-        return self._genericNumericBinary('__idiv__', other)
-
     def __truediv__(self, other):
         """
         Perform true division using this object as the numerator,
@@ -3880,10 +3858,9 @@ class Base(object):
         if isUML:
             other._numericValidation(right=True)
 
-        divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__',
-                    '__rtruediv__', '__itruediv__', '__floordiv__',
-                    '__rfloordiv__', '__ifloordiv__', '__mod__', '__rmod__',
-                    '__imod__', ]
+        divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
+                    '__floordiv__', '__rfloordiv__', '__ifloordiv__',
+                    '__mod__', '__rmod__', '__imod__', ]
         if isUML and opName in divNames:
             if other.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
@@ -3901,47 +3878,30 @@ class Base(object):
                 raise ZeroDivisionError(msg)
 
     def _genericNumericBinary(self, opName, other):
-
         isUML = isinstance(other, UML.data.Base)
 
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            if other.getTypeString() != "Matrix":
-                other = other.copy(to="Matrix")
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
-
         # figure out return obj's point / feature names
         # if unary:
-        (retPNames, retFNames) = (None, None)
-
-        if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
-            if self._pointNamesCreated():
-                retPNames = self.points.getNames()
-            if self._featureNamesCreated():
-                retFNames = self.features.getNames()
-        # else (everything else that uses this helper is a binary scalar op)
-        else:
-            (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self,
-                                                                      other)
+        retPNames = self.points._getNamesNoGeneration()
+        retFNames = self.features._getNamesNoGeneration()
+        if opName not in ['__pos__', '__neg__', '__abs__'] and isUML:
+            # everything else that uses this helper is a binary scalar op
+            retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
+                                                                    other)
         try:
             ret = self._genericNumericBinary_implementation(opName, other)
         except Exception as e:
             self._genericNumericBinary_validation(opName, other)
             raise e
 
-
-        if retPNames is not None:
-            ret.points.setNames(retPNames, useLog=False)
-        else:
-            ret.points.setNames(None, useLog=False)
-
-        if retFNames is not None:
-            ret.features.setNames(retFNames, useLog=False)
-        else:
-            ret.features.setNames(None, useLog=False)
+        ret.points.setNames(retPNames, useLog=False)
+        ret.features.setNames(retFNames, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
@@ -3950,23 +3910,54 @@ class Base(object):
         return ret
 
     def _genericNumericBinary_implementation(self, opName, other):
-        startType = self.getTypeString()
-        implName = opName[1:] + 'implementation'
-        if startType == 'Matrix' or startType == 'DataFrame':
-            toCall = getattr(self, implName)
-            ret = toCall(other)
-        else:
-            selfConv = self.copy(to="Matrix")
-            toCall = getattr(selfConv, implName)
-            ret = toCall(other)
-            if opName.startswith('__i'):
-                ret = ret.copy(to=startType)
-                self.referenceDataFrom(ret, useLog=False)
-                ret = self
-            else:
-                ret = UML.createData(startType, ret.data, useLog=False)
+        selfData, otherData = self.getDataForBinaryOp(opName, other)
+        ret = getattr(selfData, opName)(otherData)
+        if ret is NotImplemented:
+            # some sparse to sparse operations return NotImplemented
+            selfData = self.copy('numpymatrix')
+            otherData = other.copy('numpymatrix')
+            ret = getattr(selfData, opName)(otherData)
 
+        ret = createDataNoValidation(self.getTypeString(), ret)
+        if opName.startswith('__i'):
+            absPath, relPath = self._absPath, self._relPath
+            self.referenceDataFrom(ret, useLog=False)
+            self._absPath, self._relPath = absPath, relPath
+            ret = self
         return ret
+
+    def getDataForBinaryOp(self, opName, other):
+        selfSparse = False
+        if not isinstance(self, UML.data.Sparse):
+            selfData = self.copy('numpymatrix')
+        else:
+            if self.data.data is None:
+                selfData = self.copy().data
+            else:
+                selfData = self.data
+            # if sparse has attr to perform operation use sparse data
+            if hasattr(selfData, opName):
+                selfSparse = True
+            # otherwise convert to dense representation
+            else:
+                selfData = self.copy('numpymatrix')
+
+        # sparse can only handle 0 as scalar value
+        if selfSparse and not isinstance(other, UML.data.Base):
+            if other != 0:
+                selfData = self.copy('numpymatrix')
+            return selfData, other
+        if not isinstance(other, UML.data.Base):
+            return selfData, other
+        # use sparse to sparse operations, when possible
+        if selfSparse and isinstance(other, UML.data.Sparse):
+            if other.data.data is None:
+                otherData = other.copy().data
+            else:
+                otherData = other.data
+            return selfData, otherData
+        return selfData, other.copy('numpymatrix')
+
 
     ############################
     ############################

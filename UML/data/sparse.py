@@ -1296,25 +1296,3 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._mul__implementation(other)
-
-    def _genericNumericBinary_implementation(self, opName, other):
-        if isinstance(other, BaseView):
-            other = other.copy(to=other.getTypeString())
-
-        implName = opName[1:] + 'implementation'
-        opType = opName[-5:-2]
-
-        if opType in ['add', 'sub', 'div', 'truediv', 'floordiv']:
-            selfConv = self.copy(to="Matrix")
-            toCall = getattr(selfConv, implName)
-            ret = toCall(other)
-            ret = UML.createData("Sparse", ret.data, useLog=False)
-            return ret
-
-        selfConv = self.copy(to="Sparse")
-
-        toCall = getattr(selfConv, implName)
-        ret = toCall(other)
-        ret = UML.createData(self.getTypeString(), ret.data, useLog=False)
-
-        return ret

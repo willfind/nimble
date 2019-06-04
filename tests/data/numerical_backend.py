@@ -870,52 +870,6 @@ class NumericalDataSafe(DataTestObject):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rsub__', False)
 
 
-    ############
-    # __div__ #
-    ############
-    @noLogEntryExpected
-    def test_div_fullSuite(self):
-        """ __div__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
-
-    def test_div_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __div__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__div__', False)
-
-    def test_div_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__div__')
-
-    def test_div_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __div__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__div__', False)
-
-    def test_div_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__div__', False)
-
-
-    ############
-    # __rdiv__ #
-    ############
-    @noLogEntryExpected
-    def test_rdiv_fullSuite(self):
-        """ __rdiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
-
-    def test_rdiv_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __rdiv__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__rdiv__', False)
-
-    def test_rdiv_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__rdiv__')
-
-    def test_rdiv_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __rdiv__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__rdiv__', False)
-
-    def test_rdiv_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__rdiv__', False)
-
-
     ###############
     # __truediv__ #
     ###############
@@ -1561,27 +1515,27 @@ class NumericalModifying(DataTestObject):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__isub__', True)
 
 
-    ############
-    # __idiv__ #
-    ############
-    @noLogEntryExpected
-    def test_idiv_fullSuite(self):
-        """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
-
-    def test_idiv_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __idiv__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
-
-    def test_idiv_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
-
-    def test_idiv_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __idiv__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
-
-    def test_idiv_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
+    # ############
+    # # __idiv__ #
+    # ############
+    # @noLogEntryExpected
+    # def test_idiv_fullSuite(self):
+    #     """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
+    #     run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
+    #
+    # def test_idiv_binaryscalar_pfname_preservations(self):
+    #     """ Test p/f names are preserved when calling __idiv__ with scalar arg"""
+    #     back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
+    #
+    # def test_idiv_binaryscalar_NamePath_preservations(self):
+    #     back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
+    #
+    # def test_idiv_binaryelementwise_pfname_preservations(self):
+    #     """ Test p/f names are preserved when calling elementwise __idiv__"""
+    #     back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
+    #
+    # def test_idiv_binaryelementwise_NamePath_preservations(self):
+    #     back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
 
 
     ################
