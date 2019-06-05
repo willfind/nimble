@@ -5,7 +5,7 @@ from functools import wraps
 import six
 import numpy
 
-import UML
+import nimble
 
 def objConstructorMaker(returnType):
     """
@@ -20,18 +20,21 @@ def objConstructorMaker(returnType):
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, six.string_types):
-            return UML.createData(
+            return nimble.createData(
                 returnType, data=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
+                featureNames=featureNames, name=name,
+                treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, elementType=elementType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
-            return UML.createData(returnType, data=data, pointNames=pointNames,
-                featureNames=featureNames, elementType=elementType, name=name, path=path,
-                keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
+            return nimble.createData(
+                returnType, data=data, pointNames=pointNames,
+                featureNames=featureNames, elementType=elementType, name=name,
+                path=path, keepPoints='all', keepFeatures='all',
+                treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, useLog=False)
 
     return constructor
@@ -52,19 +55,21 @@ def viewConstructorMaker(concreteType):
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, six.string_types):
-            orig = UML.createData(
+            orig = nimble.createData(
                 concreteType, data=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
+                featureNames=featureNames, name=name,
+                treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, elementType=elementType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
-            orig = UML.helpers.initDataObject(
+            orig = nimble.helpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, path=path, elementType=elementType,
-                keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
+                featureNames=featureNames, name=name, path=path,
+                elementType=elementType, keepPoints='all', keepFeatures='all',
+                treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith)
         origHasPts = orig.points._namesCreated()
         origHasFts = orig.features._namesCreated()
@@ -73,16 +78,16 @@ def viewConstructorMaker(concreteType):
         if len(orig.points) != 0:
             firstPRaw = [[0] * len(orig.features)]
             fNamesParam = orig.features._getNamesNoGeneration()
-            firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=fNamesParam,
-                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
-                                                    elementType=elementType)
+            firstPoint = nimble.helpers.initDataObject(
+                concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
+                featureNames=fNamesParam, name=name, path=orig.path,
+                keepPoints='all', keepFeatures='all', elementType=elementType)
 
             lastPRaw = [[3] * len(orig.features)]
-            lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=fNamesParam,
-                                                   name=name, path=orig.path, keepPoints='all', keepFeatures='all',
-                                                   elementType=elementType)
+            lastPoint = nimble.helpers.initDataObject(
+                concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
+                featureNames=fNamesParam, name=name, path=orig.path,
+                keepPoints='all', keepFeatures='all', elementType=elementType)
 
             firstPoint.points.add(orig, useLog=False)
             full = firstPoint
@@ -100,10 +105,10 @@ def viewConstructorMaker(concreteType):
         if len(orig.features) != 0:
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
-            lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=fNames, pointNames=['lastFNonView'],
-                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
-                                                     elementType=elementType)
+            lastFeature = nimble.helpers.initDataObject(
+                concreteType, rawData=lastFRaw, featureNames=fNames,
+                pointNames=['lastFNonView'], name=name, path=orig.path,
+                keepPoints='all', keepFeatures='all', elementType=elementType)
 
             lastFeature.transpose(useLog=False)
 
@@ -146,7 +151,7 @@ class DataTestObject(object):
 
 def getOtherPaths(argList, kwargDict):
     # other object for these functions will always be first positional
-    # arg or in kwargs; numeric binary other is not always a UML object
+    # arg or in kwargs; numeric binary other is not always a nimble object
     if argList and hasattr(argList[0], '_absPath'):
         otherAbsPath = argList[0]._absPath
     elif 'other' in kwargDict and hasattr(kwargDict['other'], '_absPath'):
@@ -171,11 +176,11 @@ def methodObjectValidation(func):
             source = self._source
         else:
             source = self
-        assert isinstance(source, UML.data.Base)
+        assert isinstance(source, nimble.data.Base)
         # store Base arguments for validation after function call
         baseArgs = []
         for argVal in (list(args) + list(kwargs.values())):
-            if isinstance(argVal, UML.data.Base):
+            if isinstance(argVal, nimble.data.Base):
                 baseArgs.append(argVal)
         # name and path preservation
         startName = source._name
@@ -185,7 +190,7 @@ def methodObjectValidation(func):
         ret = func(self, *args, **kwargs)
 
         source.validate()
-        if isinstance(ret, UML.data.Base):
+        if isinstance(ret, nimble.data.Base):
             ret.validate()
         for arg in baseArgs:
             arg.validate()
@@ -237,10 +242,10 @@ def objectValidationMethods(cls):
 
 
 objectValidationDict = {}
-objectValidationDict['Base'] = objectValidationMethods(UML.data.base.Base)
-objectValidationDict['Elements'] = objectValidationMethods(UML.data.elements.Elements)
-objectValidationDict['Features'] = objectValidationMethods(UML.data.features.Features)
-objectValidationDict['Points'] = objectValidationMethods(UML.data.points.Points)
+objectValidationDict['Base'] = objectValidationMethods(nimble.data.base.Base)
+objectValidationDict['Elements'] = objectValidationMethods(nimble.data.elements.Elements)
+objectValidationDict['Features'] = objectValidationMethods(nimble.data.features.Features)
+objectValidationDict['Points'] = objectValidationMethods(nimble.data.points.Points)
 
 
 def setClassAttributes(classes, wrapper=None):

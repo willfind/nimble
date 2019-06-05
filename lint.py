@@ -1,6 +1,6 @@
 """
 Analyse pylint output to locate code improvements and determine if
-code meets the minimum linter requirements for UML.
+code meets the minimum linter requirements for nimble.
 Run as main to execute.
 
 By default this script uses the .pylintrc config file in this directory
@@ -156,7 +156,7 @@ def printWarningSummary(warnings):
         print('{} are errors which must be corrected.'.format(len(errors)))
         print('    See ERRORS section above.')
     if not reqOnly and not errors:
-        msg = '* This code satisfies the UML minimum linter requirements *'
+        msg = '* This code satisfies the nimble minimum linter requirements *'
         print('*' * len(msg))
         print(msg)
         print('*' * len(msg))

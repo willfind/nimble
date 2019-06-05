@@ -5,14 +5,14 @@ expected.
 
 from __future__ import absolute_import
 
-from UML.docHelpers import inheritDocstringsFactory
-from UML.data import Base, Matrix, List, Sparse, DataFrame
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.keras_interface import Keras
-from UML.interfaces.mlpy_interface import Mlpy
-from UML.interfaces.scikit_learn_interface import SciKitLearn
-from UML.interfaces.shogun_interface import Shogun
-from UML.interfaces import CustomLearnerInterface
+from nimble.docHelpers import inheritDocstringsFactory
+from nimble.data import Base, Matrix, List, Sparse, DataFrame
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.keras_interface import Keras
+from nimble.interfaces.mlpy_interface import Mlpy
+from nimble.interfaces.scikit_learn_interface import SciKitLearn
+from nimble.interfaces.shogun_interface import Shogun
+from nimble.interfaces import CustomLearnerInterface
 
 ############################
 # inheritDocstringsFactory #

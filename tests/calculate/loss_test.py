@@ -3,17 +3,17 @@ from __future__ import absolute_import
 import numpy
 from nose.tools import *
 
-import UML
-from UML import createData
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.calculate import meanAbsoluteError
-from UML.calculate import rootMeanSquareError
-from UML.calculate import meanFeaturewiseRootMeanSquareError
-from UML.calculate import fractionCorrect
-from UML.calculate import fractionIncorrect
-from UML.calculate import rSquared
-from UML.calculate import varianceFractionRemaining
+import nimble
+from nimble import createData
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.calculate import meanAbsoluteError
+from nimble.calculate import rootMeanSquareError
+from nimble.calculate import meanFeaturewiseRootMeanSquareError
+from nimble.calculate import fractionCorrect
+from nimble.calculate import fractionIncorrect
+from nimble.calculate import rSquared
+from nimble.calculate import varianceFractionRemaining
 from ..assertionHelpers import noLogEntryExpected
 
 #################
@@ -31,7 +31,7 @@ def testGenericErrorCalculatorEmptyKnownInput():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
+    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
 
 
 @raises(InvalidArgumentValue)
@@ -45,7 +45,7 @@ def testGenericErrorCalculatorEmptyPredictedInput():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
+    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
 
 
 @raises(ZeroDivisionError)
@@ -60,7 +60,7 @@ def testGenericErrorCalculatorDivideByZero():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: y / x)
+    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: y / x)
 
 
 def testGenericErrorCalculator():
@@ -70,8 +70,8 @@ def testGenericErrorCalculator():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    sameRate = UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z,
-                                                lambda x, y: x)
+    sameRate = nimble.calculate.loss._computeError(
+        knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
     assert sameRate == 0.0
 
 

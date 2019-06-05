@@ -1,5 +1,5 @@
 """
-Module demonstrating the UML-forced One vs One and One vs All multi-class classification
+Module demonstrating the nimble-forced One vs One and One vs All multi-class classification
 strategies. Also demonstrates the possible output formats allowed when calling learners.
 
 """
@@ -7,10 +7,10 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 from __future__ import absolute_import
 from __future__ import print_function
 
-from UML import createData
-from UML import trainAndTest
-from UML import trainAndApply
-from UML.calculate import fractionIncorrect
+from nimble import createData
+from nimble import trainAndTest
+from nimble import trainAndApply
+from nimble.calculate import fractionIncorrect
 
 if __name__ == "__main__":
     variables = ["x1", "x2", "x3", "label"]

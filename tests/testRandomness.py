@@ -1,37 +1,38 @@
 """
-Tests for the UML.randUML submodule
+Tests for the nimble.randomness submodule
 
 """
 
 from __future__ import absolute_import
-import UML
 import random
+
+from six.moves import range
 import numpy
 import nose
 
-import UML.randomness
-from UML.randomness import pythonRandom
-from UML.randomness import numpyRandom
-from six.moves import range
+import nimble
+import nimble.randomness
+from nimble.randomness import pythonRandom
+from nimble.randomness import numpyRandom
 from .assertionHelpers import logCountAssertionFactory
 
 
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def testSetRandomSeedExplicit():
-    """ Test UML.setRandomSeed yields uml accessible random objects with the correct random behavior """
+    """ Test nimble.setRandomSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
     expNp = numpy.random.RandomState(1333)
-    UML.setRandomSeed(1333)
+    nimble.setRandomSeed(1333)
 
     for i in range(50):
         assert pythonRandom.random() == expPy.random()
         assert numpyRandom.rand() == expNp.rand()
 
 
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def testSetRandomSeedNone():
-    """ Test UML.setRandomSeed operates as expected when passed None (-- use system time as seed) """
-    UML.setRandomSeed(None)
+    """ Test nimble.setRandomSeed operates as expected when passed None (-- use system time as seed) """
+    nimble.setRandomSeed(None)
     pyState = pythonRandom.getstate()
     npState = numpyRandom.get_state()
 
@@ -40,30 +41,30 @@ def testSetRandomSeedNone():
     origNp = numpy.random.RandomState()
     origNp.set_state(npState)
 
-    UML.setRandomSeed(None)
+    nimble.setRandomSeed(None)
 
     assert origPy.random() != pythonRandom.random()
     assert origNp.rand() != numpyRandom.rand()
 
 
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 @logCountAssertionFactory(3)
 def testSetRandomSeedPropagate():
-    """ Test that UML.setRandomSeed will correctly control how randomized methods in UML perform """
+    """ Test that nimble.setRandomSeed will correctly control how randomized methods in nimble perform """
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [17, 18, 19], [2, 2, 2], [3, 3, 3], [4, 4, 4],
             [5, 5, 5]]
     featureNames = ['1', '2', '3']
-    toTest1 = UML.createData("List", data, featureNames=featureNames, useLog=False)
+    toTest1 = nimble.createData("List", data, featureNames=featureNames, useLog=False)
     toTest2 = toTest1.copy()
     toTest3 = toTest1.copy()
 
-    UML.setRandomSeed(1337)
+    nimble.setRandomSeed(1337)
     toTest1.points.shuffle(useLog=False)
 
-    UML.setRandomSeed(1336)
+    nimble.setRandomSeed(1336)
     toTest2.points.shuffle(useLog=False)
 
-    UML.setRandomSeed(1337)
+    nimble.setRandomSeed(1337)
     toTest3.points.shuffle(useLog=False)
 
     assert toTest1 == toTest3

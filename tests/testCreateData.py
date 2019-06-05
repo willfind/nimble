@@ -1,6 +1,3 @@
-from nose.tools import *
-from nose.plugins.attrib import attr
-
 import tempfile
 import numpy
 import os
@@ -12,18 +9,21 @@ try:
 except:
     import mock
 
-import UML
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import FileFormatException
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.helpers import _intFloatOrString
+from nose.tools import *
+from nose.plugins.attrib import attr
+
+import nimble
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import FileFormatException
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.helpers import _intFloatOrString
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 
-scipy = UML.importModule('scipy.sparse')
-pd = UML.importModule('pandas')
+scipy = nimble.importModule('scipy.sparse')
+pd = nimble.importModule('pandas')
 
-returnTypes = copy.copy(UML.data.available)
+returnTypes = copy.copy(nimble.data.available)
 returnTypes.append(None)
 
 class NoIter(object):
@@ -64,7 +64,7 @@ def test_createData_raw_stringConversion():
     """
     for t in returnTypes:
         values = []
-        toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
@@ -75,7 +75,7 @@ def test_createData_raw_noStringConversion():
     """
     for t in returnTypes:
         values = []
-        toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']], elementType=object)
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']], elementType=object)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
@@ -85,14 +85,14 @@ def test_createData_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
         try:
             pNames = NoIter(['1', '4'])
-            toTest = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames)
+            toTest = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames)
             assert False # expected InvalidArgumentType
         except InvalidArgumentType:
             pass
 
         try:
             fNames = NoIter(['a', 'b', 'c'])
-            toTest = UML.createData(t, [[1,2,3], [4,5,6]], featureNames=fNames)
+            toTest = nimble.createData(t, [[1,2,3], [4,5,6]], featureNames=fNames)
             assert False # expected InvalidArgumentType
         except InvalidArgumentType:
             pass
@@ -101,15 +101,15 @@ def test_createData_raw_pointAndFeatureIterators():
     for t in returnTypes:
         pNames = IterNext(['1', '4'])
         fNames = IterNext(['a', 'b', 'c'])
-        toTest1 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
-                                featureNames=fNames)
+        toTest1 = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                    featureNames=fNames)
         assert toTest1.points.getNames() == ['1', '4']
         assert toTest1.features.getNames() == ['a', 'b', 'c']
 
         pNames = GetItemOnly(['1', '4'])
         fNames = GetItemOnly(['a', 'b', 'c'])
-        toTest2 = UML.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
-                                featureNames=fNames)
+        toTest2 = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
+                                    featureNames=fNames)
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
 
@@ -117,14 +117,14 @@ def test_createData_raw_pointAndFeatureIterators():
 def test_createData_CSV_data():
     """ Test of createData() loading a csv file, default params """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
@@ -132,21 +132,21 @@ def test_createData_CSV_data():
 def test_createData_CSV_dataRandomExtension():
     """ Test of createData() loading a csv file without csv extension """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
 
 def test_createData_CSV_data_noComment():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2], [1, 2]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2], [1, 2]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -154,13 +154,13 @@ def test_createData_CSV_data_noComment():
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName, ignoreNonNumericalFeatures=True)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
 
 def test_createData_CSV_data_ListOnly():
-    fromList = UML.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, 'six']])
+    fromList = nimble.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, 'six']])
 
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -168,13 +168,13 @@ def test_createData_CSV_data_ListOnly():
         tmpCSV.write("4,5,six\n")
         tmpCSV.flush()
         objName = 'fromCSV'
-        fromCSV = UML.createData(returnType="List", data=tmpCSV.name, name=objName)
+        fromCSV = nimble.createData(returnType="List", data=tmpCSV.name, name=objName)
 
         assert fromList == fromCSV
 
 
 def test_createData_CSV_data_ListOnly_noComment():
-    fromList = UML.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, '#six']])
+    fromList = nimble.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, '#six']])
 
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -182,7 +182,7 @@ def test_createData_CSV_data_ListOnly_noComment():
         tmpCSV.write("4,5,#six\n")
         tmpCSV.flush()
         objName = 'fromCSV'
-        fromCSV = UML.createData(returnType="List", data=tmpCSV.name, name=objName)
+        fromCSV = nimble.createData(returnType="List", data=tmpCSV.name, name=objName)
 
         assert fromList == fromCSV
 
@@ -190,7 +190,7 @@ def test_createData_CSV_data_ListOnly_noComment():
 def test_createData_MTXArr_data():
     """ Test of createData() loading a mtx (arr format) file, default params """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -201,7 +201,7 @@ def test_createData_MTXArr_data():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            fromMTXArr = UML.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -211,7 +211,7 @@ def test_createData_MTXArr_data():
 def test_createData_MTXArr_dataRandomExtension():
     """ Test of createData() loading a mtx (arr format) file without mtx extension """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXArr:
@@ -222,7 +222,7 @@ def test_createData_MTXArr_dataRandomExtension():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            fromMTXArr = UML.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -233,7 +233,7 @@ def test_createData_MTXArr_dataRandomExtension():
 def test_createData_MTXCoo_data():
     """ Test of createData() loading a mtx (coo format) file, default params """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -244,7 +244,7 @@ def test_createData_MTXCoo_data():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            fromMTXCoo = UML.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -254,7 +254,7 @@ def test_createData_MTXCoo_data():
 def test_createData_MTXCoo_dataRandomExtension():
     """ Test of createData() loading a mtx (coo format) file without mtx extension """
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXCoo:
@@ -265,7 +265,7 @@ def test_createData_MTXCoo_dataRandomExtension():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            fromMTXCoo = UML.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -280,7 +280,7 @@ def test_createData_CSV_unequalRowLength_short():
         tmpCSV.write('4,5,6\n')
         tmpCSV.flush()
 
-        UML.createData(returnType="List", data=tmpCSV.name)
+        nimble.createData(returnType="List", data=tmpCSV.name)
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_long():
@@ -290,7 +290,7 @@ def test_createData_CSV_unequalRowLength_long():
         tmpCSV.write("4,5,6,7\n")
         tmpCSV.flush()
 
-        UML.createData(returnType="List", data=tmpCSV.name)
+        nimble.createData(returnType="List", data=tmpCSV.name)
 
 
 @raises(FileFormatException)
@@ -301,7 +301,7 @@ def test_createData_CSV_unequalRowLength_definedByNames():
         tmpCSV.write("4,5,6,7\n")
         tmpCSV.flush()
 
-        UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+        nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
 
 
 def test_createData_CSV_unequalRowLength_position():
@@ -314,7 +314,7 @@ def test_createData_CSV_unequalRowLength_position():
         tmpCSV.flush()
 
         try:
-            UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+            nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
             assert False  # the previous call should have raised an exception
         except FileFormatException as ffe:
             print(ffe.value)
@@ -344,7 +344,7 @@ def test_createData_objName_and_path_CSV():
             tmpCSV.flush()
 
             objName = 'fromCSV'
-            ret = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+            ret = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpCSV.name
             assert ret.absolutePath == tmpCSV.name
@@ -352,7 +352,7 @@ def test_createData_objName_and_path_CSV():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = UML.createData(returnType=t, data=tmpCSV.name)
+            retDefName = nimble.createData(returnType=t, data=tmpCSV.name)
             tokens = tmpCSV.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
@@ -369,7 +369,7 @@ def test_createData_objName_and_path_MTXArr():
             tmpMTXArr.flush()
 
             objName = 'fromMTXArr'
-            ret = UML.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            ret = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpMTXArr.name
             assert ret.absolutePath == tmpMTXArr.name
@@ -377,7 +377,7 @@ def test_createData_objName_and_path_MTXArr():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = UML.createData(returnType=t, data=tmpMTXArr.name)
+            retDefName = nimble.createData(returnType=t, data=tmpMTXArr.name)
             tokens = tmpMTXArr.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
@@ -394,7 +394,7 @@ def test_createData_objName_and_path_MTXCoo():
             tmpMTXCoo.flush()
 
             objName = 'fromMTXCoo'
-            ret = UML.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            ret = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpMTXCoo.name
             assert ret.absolutePath == tmpMTXCoo.name
@@ -402,7 +402,7 @@ def test_createData_objName_and_path_MTXCoo():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = UML.createData(returnType=t, data=tmpMTXCoo.name)
+            retDefName = nimble.createData(returnType=t, data=tmpMTXCoo.name)
             tokens = tmpMTXCoo.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
@@ -416,7 +416,7 @@ def test_extractNames_CSV():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -425,7 +425,7 @@ def test_extractNames_CSV():
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData(
+        fromCSV = nimble.createData(
             returnType=t, data=tmpCSV.name, pointNames=True, featureNames=True)
         tmpCSV.close()
         assert fromList == fromCSV
@@ -435,7 +435,7 @@ def test_names_AutoDetectedBlankLines_CSV():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -446,7 +446,7 @@ def test_names_AutoDetectedBlankLines_CSV():
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -454,7 +454,7 @@ def test_names_AutoDetectedBlankLines_CSV():
 def test_featNamesOnly_AutoDetectedBlankLines_CSV():
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
 
         # instantiate from csv file
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
@@ -464,7 +464,7 @@ def test_featNamesOnly_AutoDetectedBlankLines_CSV():
         tmpCSV.write("1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -472,7 +472,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
     pNames = ['pn1']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -482,7 +482,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
-        fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=True)
+        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, featureNames=True)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -490,7 +490,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
 def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
     for t in returnTypes:
         data = [[0, 1, 2, 3], [10, 11, 12, 13]]
-        fromList = UML.createData(returnType=t, data=data)
+        fromList = nimble.createData(returnType=t, data=data)
 
         # instantiate from csv file
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
@@ -499,7 +499,7 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
         tmpCSV.write('0,1,2,3\n')
         tmpCSV.write("10,11,12,13\n")
         tmpCSV.flush()
-        fromCSV = UML.createData(
+        fromCSV = nimble.createData(
             returnType=t, data=tmpCSV.name, pointNames=False, featureNames=False)
         tmpCSV.close()
         assert fromList == fromCSV
@@ -507,7 +507,7 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
 
 def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
     """
-    Writes a CSV and reads it in using UML.createData, fixing in place the given arguments,
+    Writes a CSV and reads it in using nimble.createData, fixing in place the given arguments,
     returning the resultant object
 
     """
@@ -515,22 +515,22 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write(rawStr)
         tmpCSV.flush()
-        ret = UML.createData(returnType=returnType, data=tmpCSV.name,
-                             pointNames=pointNames, featureNames=featureNames)
+        ret = nimble.createData(returnType=returnType, data=tmpCSV.name,
+                                pointNames=pointNames, featureNames=featureNames)
         tmpCSV.close()
     else:
         fnameRow = list(map(_intFloatOrString, rawStr.split('\n')[0].split(',')))
         dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
         lolFromRaw = [fnameRow, dataRow]
-        baseObj = UML.createData("List", lolFromRaw, pointNames=False, featureNames=False)
+        baseObj = nimble.createData("List", lolFromRaw, pointNames=False, featureNames=False)
         if rawType == 'scipycoo':
             npRaw = numpy.array(lolFromRaw, dtype=object)
             finalRaw = scipy.sparse.coo_matrix(npRaw)
         else:
             finalRaw = baseObj.copy(to=rawType)
 
-        ret = UML.createData(returnType=returnType, data=finalRaw,
-                             pointNames=pointNames, featureNames=featureNames)
+        ret = nimble.createData(returnType=returnType, data=finalRaw,
+                                pointNames=pointNames, featureNames=featureNames)
 
     return ret
 
@@ -632,10 +632,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # pNames and fNames triggered for automatic
         raw1 = [['pointNames', 'fname0','fname1','fname2'],
                 ['pname0', 0, 1, 2]]
-        testAuto = UML.createData(t, raw1, pointNames='automatic', featureNames='automatic')
-        testTrue = UML.createData(t, raw1, pointNames=True, featureNames=True)
-        testFalse = UML.createData(t, raw1, pointNames=False, featureNames=False)
-        testNone = UML.createData(t, raw1, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw1, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw1, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw1, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw1, pointNames=None, featureNames=None)
 
         assert testAuto == testTrue
         assert testAuto != testFalse
@@ -644,10 +644,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # pNames not triggered, fNames triggered for automatic
         raw2 = [['either', 'fname0','fname1','fname2'],
                 [99, 0, 1, 2]]
-        testAuto = UML.createData(t, raw2, pointNames='automatic', featureNames='automatic')
-        testTrue = UML.createData(t, raw2, pointNames=True, featureNames=True)
-        testFalse = UML.createData(t, raw2, pointNames=False, featureNames=False)
-        testNone = UML.createData(t, raw2, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw2, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw2, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw2, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw2, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto != testFalse
@@ -657,10 +657,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # no names triggered for automatic
         raw3 = [[-1, 9, 8, 7],
                 [99, 0, 1, 2]]
-        testAuto = UML.createData(t, raw3, pointNames='automatic', featureNames='automatic')
-        testTrue = UML.createData(t, raw3, pointNames=True, featureNames=True)
-        testFalse = UML.createData(t, raw3, pointNames=False, featureNames=False)
-        testNone = UML.createData(t, raw3, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw3, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw3, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw3, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw3, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto == testFalse
@@ -672,7 +672,7 @@ def test_namesInComment_MTXArr():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
         tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
@@ -684,7 +684,7 @@ def test_namesInComment_MTXArr():
         tmpMTXArr.write("2\n")
         tmpMTXArr.write("3\n")
         tmpMTXArr.flush()
-        fromMTXArr = UML.createData(returnType=t, data=tmpMTXArr.name)
+        fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name)
         tmpMTXArr.close()
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -697,7 +697,7 @@ def test_namesInComment_MTXCoo():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
@@ -710,7 +710,7 @@ def test_namesInComment_MTXCoo():
         tmpMTXCoo.write("1 2 2\n")
         tmpMTXCoo.write("1 3 3\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = UML.createData(returnType=t, data=tmpMTXCoo.name)
+        fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name)
         tmpMTXCoo.close()
         if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -723,7 +723,7 @@ def test_extractNames_MTXArr():
     pNames = ['11']
     fNames = ['1', '2', '3']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[21, 22, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
@@ -740,7 +740,7 @@ def test_extractNames_MTXArr():
         tmpMTXArr.write("23\n")
         tmpMTXArr.flush()
 
-        fromMTXArr = UML.createData(
+        fromMTXArr = nimble.createData(
             returnType=t, data=tmpMTXArr.name, pointNames=True, featureNames=True)
         tmpMTXArr.close()
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
@@ -754,7 +754,7 @@ def test_extractNames_MTXCoo():
     pNames = ['21']
     fNames = ['1', '2', '3']
     for t in returnTypes:
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=[[22, -5, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
@@ -770,7 +770,7 @@ def test_extractNames_MTXCoo():
         tmpMTXCoo.write("2 3 -5\n")
         tmpMTXCoo.write("2 4 23\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = UML.createData(
+        fromMTXCoo = nimble.createData(
             returnType=t, data=tmpMTXCoo.name, pointNames=True, featureNames=True)
         tmpMTXCoo.close()
         if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
@@ -788,7 +788,7 @@ def test_csv_extractNames_duplicatePointName():
         tmpCSV.write("pn1,11,22,33\n")
         tmpCSV.flush()
 
-        UML.createData(returnType="List", data=tmpCSV.name, pointNames=True)
+        nimble.createData(returnType="List", data=tmpCSV.name, pointNames=True)
 
 
 @raises(InvalidArgumentValue)
@@ -800,7 +800,7 @@ def test_csv_extractNames_duplicateFeatureName():
         tmpCSV.write("11,22,33\n")
         tmpCSV.flush()
 
-        UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+        nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
 
 
 def test_csv_roundtrip_autonames():
@@ -809,17 +809,17 @@ def test_csv_roundtrip_autonames():
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
 
-        withFnames = UML.createData(retType, data, featureNames=fnames)
-        withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
+        withFnames = nimble.createData(retType, data, featureNames=fnames)
+        withBoth = nimble.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
             withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
-            fromFileFnames = UML.createData(returnType=retType, data=tmpCSVFnames.name)
+            fromFileFnames = nimble.createData(returnType=retType, data=tmpCSVFnames.name)
             assert fromFileFnames == withFnames
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
             withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
-            fromFileBoth = UML.createData(returnType=retType, data=tmpCSVBoth.name)
+            fromFileBoth = nimble.createData(returnType=retType, data=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
 
 
@@ -837,9 +837,9 @@ def test_extractNames_pythonList():
         inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
         specRaw = [[1, -1, -3]]
 
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -852,9 +852,9 @@ def test_extractNames_NPArray():
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.array([[1, -1, -3]])
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -867,9 +867,9 @@ def test_extractNames_NPMatrix():
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.matrix([[1, -1, -3]])
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -888,9 +888,9 @@ def test_extractNames_CooSparse():
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.coo_matrix(specRaw)
 
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -909,9 +909,9 @@ def test_extractNames_CscSparse():
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
 
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -924,9 +924,9 @@ def test_extractNames_pandasDataFrame():
         inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
         specRaw = pd.DataFrame([[1, -1, -3]])
 
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = UML.createData(
+        specified = nimble.createData(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -942,7 +942,7 @@ def test_names_dataUnmodified():
             rawDataCopy = [lst.copy() for lst in rawData]
         else:
             rawDataCopy = rawData.copy()
-        inData = UML.createData(
+        inData = nimble.createData(
             returnType=t, data=rawData, pointNames=names, featureNames=names)
 
         if isinstance(rawData, list):
@@ -989,7 +989,7 @@ class NamelessFile(object):
 
 def test_createData_CSV_passedOpen():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -997,7 +997,7 @@ def test_createData_CSV_passedOpen():
             tmpCSV.flush()
             objName = 'fromCSV'
             openFile = open(tmpCSV.name, 'rU')
-            fromCSV = UML.createData(returnType=t, data=openFile, name=objName)
+            fromCSV = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             assert fromList == fromCSV
@@ -1008,9 +1008,9 @@ def test_createData_CSV_passedOpen():
 
             openFile = open(openFile.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=namelessOpenFile)
-            assert fromCSV.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+            assert fromCSV.name.startswith(nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
             assert fromCSV.relativePath is None
@@ -1018,7 +1018,7 @@ def test_createData_CSV_passedOpen():
 
 def test_createData_MTXArr_passedOpen():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -1030,7 +1030,7 @@ def test_createData_MTXArr_passedOpen():
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
             openFile = open(tmpMTXArr.name, 'rU')
-            fromMTXArr = UML.createData(returnType=t, data=openFile, name=objName)
+            fromMTXArr = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
@@ -1044,10 +1044,10 @@ def test_createData_MTXArr_passedOpen():
 
             openFile = open(tmpMTXArr.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
-            fromMTXArr = UML.createData(
+            fromMTXArr = nimble.createData(
                 returnType=t, data=namelessOpenFile)
             assert fromMTXArr.name.startswith(
-                UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+                nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
             assert fromMTXArr.absolutePath is None
             assert fromMTXArr.relativePath is None
@@ -1055,7 +1055,7 @@ def test_createData_MTXArr_passedOpen():
 
 def test_createData_MTXCoo_passedOpen():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -1067,7 +1067,7 @@ def test_createData_MTXCoo_passedOpen():
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
             openFile = open(tmpMTXCoo.name, 'rU')
-            fromMTXCoo = UML.createData(returnType=t, data=openFile, name=objName)
+            fromMTXCoo = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
@@ -1081,10 +1081,10 @@ def test_createData_MTXCoo_passedOpen():
 
             openFile = open(tmpMTXCoo.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
-            fromMTXCoo = UML.createData(
+            fromMTXCoo = nimble.createData(
                 returnType=t, data=namelessOpenFile)
             assert fromMTXCoo.name.startswith(
-                UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+                nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
@@ -1107,22 +1107,22 @@ def mocked_requests_get(*args, **kwargs):
             self.reason = reason
             self.apparent_encoding = encoding
 
-    if args[0] == 'http://mockrequests.uml/CSVNoExtension':
+    if args[0] == 'http://mockrequests.nimble/CSVNoExtension':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVAmbiguousExtension.data':
+    elif args[0] == 'http://mockrequests.nimble/CSVAmbiguousExtension.data':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSV.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSV.csv':
         return MockResponse('1,2,3\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVcarriagereturn.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVcarriagereturn.csv':
         return MockResponse('1,2,3\r4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVunicodetest.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVunicodetest.csv':
         return MockResponse('1,2,\xc2\xa1\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/CSVquotednewline.csv':
+    elif args[0] == 'http://mockrequests.nimble/CSVquotednewline.csv':
         # csv allows for newline characters in field values within double quotes
         return MockResponse('1,2,"a/nb"\n4,5,6', 200)
-    elif (args[0] == 'http://mockrequests.uml/MTXNoExtension' or
-          args[0] == 'http://mockrequests.uml/MTXAmbiguousExtension.data' or
-          args[0] == 'http://mockrequests.uml/MTX.mtx'):
+    elif (args[0] == 'http://mockrequests.nimble/MTXNoExtension' or
+          args[0] == 'http://mockrequests.nimble/MTXAmbiguousExtension.data' or
+          args[0] == 'http://mockrequests.nimble/MTX.mtx'):
         mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
         return MockResponse(mtx, 200)
 
@@ -1131,57 +1131,57 @@ def mocked_requests_get(*args, **kwargs):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVNoExtension(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVNoExtension'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVAmbiguousExtension(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVAmbiguousExtension.data'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVAmbiguousExtension.data'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVFileOK(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSV.csv'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSV.csv'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVCarriageReturn(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVcarriagereturn.csv'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVcarriagereturn.csv'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVunicodetest.csv'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVunicodetest.csv'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVQuotedNewLine(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVquotednewline.csv'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVquotednewline.csv'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVPathsEqualUrl(mock_get):
     for t in returnTypes:
-        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
-        url = 'http://mockrequests.uml/CSVNoExtension'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.nimble/CSVNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
@@ -1190,9 +1190,9 @@ def test_createData_http_MTXNoExtension(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = UML.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXNoExtension'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/MTXNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1200,9 +1200,9 @@ def test_createData_http_MTXAmbiguousExtension(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = UML.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXAmbiguousExtension.data'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/MTXAmbiguousExtension.data'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1210,9 +1210,9 @@ def test_createData_http_MTXFileOK(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = UML.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTX.mtx'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/MTX.mtx'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1220,9 +1220,9 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = UML.createData(returnType=t, data=data)
-        url = 'http://mockrequests.uml/MTXNoExtension'
-        fromWeb = UML.createData(returnType=t, data=url)
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/MTXNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
@@ -1230,8 +1230,8 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_linkError(mock_get):
     for t in returnTypes:
-        url = 'http://mockrequests.uml/linknotfound.csv'
-        fromWeb = UML.createData(returnType=t, data=url)
+        url = 'http://mockrequests.nimble/linknotfound.csv'
+        fromWeb = nimble.createData(returnType=t, data=url)
 
 ###################################
 # ignoreNonNumericalFeatures flag #
@@ -1239,7 +1239,7 @@ def test_createData_http_linkError(mock_get):
 
 def test_createData_ignoreNonNumericalFeaturesCSV():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7]])
+        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1247,19 +1247,19 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
             tmpCSV.write("5,six,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 4
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
+        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1269,19 +1269,19 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
             tmpCSV.write("13,one,14,9,who?\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 5
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
+        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1291,19 +1291,19 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
             tmpCSV.write("13,1,14,9,2\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 5
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1311,19 +1311,19 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
     for t in returnTypes:
         fnames = ['1', '2', '3', 'four']
-        fromList = UML.createData(returnType=t, featureNames=fnames, data=[[5, 6, 7, 8]])
+        fromList = nimble.createData(returnType=t, featureNames=fnames, data=[[5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1331,7 +1331,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
@@ -1342,7 +1342,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
     for t in returnTypes:
         fNames = ["1", "2", "3"]
         data = [[1, 2, 3], [5, 6, 7]]
-        fromList = UML.createData(returnType=t, featureNames=fNames, data=data)
+        fromList = nimble.createData(returnType=t, featureNames=fNames, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1351,7 +1351,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
             tmpCSV.write("5,6,7,H8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
@@ -1361,7 +1361,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
 def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
     for t in returnTypes:
         pNames = ['single', 'dubs', 'trips']
-        fromList = UML.createData(returnType=t, pointNames=pNames, data=[[], [], []])
+        fromList = nimble.createData(returnType=t, pointNames=pNames, data=[[], [], []])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1371,7 +1371,7 @@ def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
             tmpCSV.write("trips,111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, pointNames=True,
                 featureNames=True, ignoreNonNumericalFeatures=True)
 
@@ -1384,7 +1384,7 @@ def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
 
 def test_CSVformatting_simpleQuotedValues():
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1392,7 +1392,7 @@ def test_CSVformatting_simpleQuotedValues():
             tmpCSV.write("5,\"6\",\"7\",8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
 
             assert fromList == fromCSV
 
@@ -1402,7 +1402,7 @@ def test_CSVformatting_specialCharsInQuotes():
         fNames = ["1,ONE", "2;TWO", "3\t'EE'"]
         data = [[1, 2, 3], [5, 6, 7]]
         dataAll = [[1, 2, 3, 4], [5, 6, 7, 8]]
-        fromList = UML.createData(returnType=t, featureNames=fNames[:3], data=data)
+        fromList = nimble.createData(returnType=t, featureNames=fNames[:3], data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1411,7 +1411,7 @@ def test_CSVformatting_specialCharsInQuotes():
             tmpCSV.write("5,6,7,H8\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
@@ -1422,7 +1422,7 @@ def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
         data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
 
-        fromList = UML.createData(returnType=t, data=data)
+        fromList = nimble.createData(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1438,7 +1438,7 @@ def test_CSVformatting_emptyAndCommentLines():
             tmpCSV.write("\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, featureNames=False)
 
             assert fromList == fromCSV
@@ -1447,7 +1447,7 @@ def test_CSVformatting_emptyAndCommentLines():
 def test_CSVformatting_scientificNotation():
     for t in returnTypes:
         data = [[1., 2., 3.], [11., 22., 33.], [111., 222., 333.]]
-        fromRaw = UML.createData(returnType=t, data=data)
+        fromRaw = nimble.createData(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1456,7 +1456,7 @@ def test_CSVformatting_scientificNotation():
             tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
 
             assert fromRaw == fromCSV
 
@@ -1469,16 +1469,16 @@ def test_createData_keepPF_AllPossibleNatOrder():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        orig = UML.createData(returnType=t, data=data)
+        orig = nimble.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                ret = UML.createData(
+                ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
-                fromOrig = UML.createData(
+                fromOrig = nimble.createData(
                     t, orig.data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
@@ -1488,16 +1488,16 @@ def test_createData_keepPF_AllPossibleReverseOrder():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        orig = UML.createData(returnType=t, data=data)
+        orig = nimble.createData(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2], [0, 1, 2]]
             for (pSel, fSel) in itertools.product(poss, poss):
-                ret = UML.createData(
+                ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
-                fromOrig = UML.createData(
+                fromOrig = nimble.createData(
                     t, orig.data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
@@ -1507,9 +1507,9 @@ def test_createData_keepPF_AllPossibleReverseOrder():
                 fSelR = copy.copy(fSel)
                 fSelR.reverse()
 
-                retT = UML.createData(
+                retT = nimble.createData(
                     t, tmpF.name, keepPoints=pSelR, keepFeatures=fSelR)
-                fromOrigT = UML.createData(
+                fromOrigT = nimble.createData(
                     t, orig.data, keepPoints=pSelR, keepFeatures=fSelR)
 
                 assert retT != ret
@@ -1519,7 +1519,7 @@ def test_createData_keepPF_AllPossibleReverseOrder():
 
 def test_createData_keepPF_AllPossibleWithNames_extracted():
     data = [[1., 2., 3.], [11., 22., 33.], [111., 222., 333.]]
-    orig = UML.createData(returnType="List", data=data)
+    orig = nimble.createData(returnType="List", data=data)
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
@@ -1529,11 +1529,11 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUse = orig.copy(to="pythonlist")
-                fromOrig = UML.createData(
+                fromOrig = nimble.createData(
                     t, toUse, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
 
-                ret = UML.createData(
+                ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
 
@@ -1547,7 +1547,7 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = UML.createData(
+                retN = nimble.createData(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=True,
                     featureNames=True)
@@ -1560,7 +1560,7 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
     pnames = ["11.", "111."]
     fnames = ["2.", "3."]
     data = [[22., 33.], [222., 333.]]
-    orig = UML.createData(
+    orig = nimble.createData(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
     filesForms = ['csv', 'mtx']
@@ -1573,11 +1573,11 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
-                fromOrig = UML.createData(
+                fromOrig = nimble.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
-                ret = UML.createData(
+                ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
@@ -1591,7 +1591,7 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = UML.createData(
+                retN = nimble.createData(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=pnames,
                     featureNames=fnames)
@@ -1604,7 +1604,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
     pnames = {"11.": 0, "111.": 1}
     fnames = {"2.": 0, "3.": 1}
     data = [[22., 33.], [222., 333.]]
-    orig = UML.createData(
+    orig = nimble.createData(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
     filesForms = ['csv', 'mtx']
@@ -1617,11 +1617,11 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
-                fromOrig = UML.createData(
+                fromOrig = nimble.createData(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
-                ret = UML.createData(
+                ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
@@ -1635,7 +1635,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = UML.createData(
+                retN = nimble.createData(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=pnames,
                     featureNames=fnames)
@@ -1647,7 +1647,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
 def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
     data = [[111, 222, 333]]
     fnames = ['1', '2', '3']
-    wanted = UML.createData("Matrix", data=data, featureNames=fnames)
+    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -1655,11 +1655,11 @@ def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData(
+        fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, keepPoints=[1], featureNames=True)
 
         raw = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        fromRaw = UML.createData(
+        fromRaw = nimble.createData(
             "Matrix", data=raw, keepPoints=[1], featureNames=True)
 
         assert fromRaw == wanted
@@ -1674,8 +1674,8 @@ def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
 # that mistake to the file input helpers only.
 
 def test_createData_keepPF_csv_noUncessaryStorage():
-    wanted = UML.createData("List", data=[[22], [222]])
-    backup = UML.helpers.initDataObject
+    wanted = nimble.createData("List", data=[[22], [222]])
+    backup = nimble.helpers.initDataObject
 
     try:
         def fakeinitDataObject(
@@ -1684,9 +1684,9 @@ def test_createData_keepPF_csv_noUncessaryStorage():
                 reuseData=False):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
-            return UML.data.List(rawData)
+            return nimble.data.List(rawData)
 
-        UML.helpers.initDataObject = fakeinitDataObject
+        nimble.helpers.initDataObject = fakeinitDataObject
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1695,15 +1695,15 @@ def test_createData_keepPF_csv_noUncessaryStorage():
             tmpCSV.write("111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 "List", data=tmpCSV.name, keepPoints=[1, 2], keepFeatures=[1])
             assert fromCSV == wanted
     finally:
-        UML.helpers.initDataObject = backup
+        nimble.helpers.initDataObject = backup
 
 #def TODOtest_createData_keepPF_mtxArr_noUncessaryStorage():
-#	fromList = UML.createData(returnType='Matrix', data=[[2]])
-#	backup = UML.helpers.initDataObject
+#	fromList = nimble.createData(returnType='Matrix', data=[[2]])
+#	backup = nimble.helpers.initDataObject
 #
 #	try:
 #		def fakeinitDataObject(
@@ -1711,9 +1711,9 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #				keepPoints, keepFeatures):
 #			assert len(rawData) == 1
 #			assert len(rawData[0]) == 1
-#			return UML.data.List(rawData)
+#			return nimble.data.List(rawData)
 #
-#		UML.helpers.initDataObject = fakeinitDataObject
+#		nimble.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx array file
 #		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -1723,27 +1723,27 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #			tmpMTXArr.write("2\n")
 #			tmpMTXArr.write("3\n")
 #			tmpMTXArr.flush()
-#			fromMTXArr = UML.createData(
+#			fromMTXArr = nimble.createData(
 #				returnType='Matrix', data=tmpMTXArr.name, keepPoints=[0],
 #				keepFeatures=[1])
 #
 #			assert fromList == fromMTXArr
 #	finally:
-#		UML.helpers.initDataObject = backup
+#		nimble.helpers.initDataObject = backup
 
 
 #def TODOtest_createData_keepPF_mtxCoo_noUncessaryStorage():
-#	fromList = UML.createData(returnType='Matrix', data=[[2]])
-#	backup = UML.helpers.initDataObject
+#	fromList = nimble.createData(returnType='Matrix', data=[[2]])
+#	backup = nimble.helpers.initDataObject
 #
 #	try:
 #		def fakeinitDataObject(
 #				returnType, rawData, pointNames, featureNames, name, path,
 #				keepPoints, keepFeatures):
 #			assert rawData.shape == (1,1)
-#			return UML.data.List(rawData)
+#			return nimble.data.List(rawData)
 #
-#		UML.helpers.initDataObject = fakeinitDataObject
+#		nimble.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx coordinate file
 #		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -1753,18 +1753,18 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #			tmpMTXCoo.write("1 2 2\n")
 #			tmpMTXCoo.write("1 3 3\n")
 #			tmpMTXCoo.flush()
-#			fromMTXCoo = UML.createData(
+#			fromMTXCoo = nimble.createData(
 #				returnType='Matrix', data=tmpMTXCoo.name, keepPoints=[0],
 #				keepFeatures=[1])
 #
 #			assert fromList == fromMTXCoo
 #
 #	finally:
-#		UML.helpers.initDataObject = backup
+#		nimble.helpers.initDataObject = backup
 
 
 def test_createData_keepPF_csv_simple():
-    wanted = UML.createData("Matrix", data=[[222], [22]])
+    wanted = nimble.createData("Matrix", data=[[222], [22]])
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -1772,13 +1772,13 @@ def test_createData_keepPF_csv_simple():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData(
+        fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, keepPoints=[2, 1], keepFeatures=[1])
         assert fromCSV == wanted
 
 
 def test_createData_keepPF_mtxArr_simple():
-    fromList = UML.createData(returnType='Matrix', data=[[2]])
+    fromList = nimble.createData(returnType='Matrix', data=[[2]])
 
     # instantiate from mtx array file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -1788,7 +1788,7 @@ def test_createData_keepPF_mtxArr_simple():
         tmpMTXArr.write("2\n")
         tmpMTXArr.write("3\n")
         tmpMTXArr.flush()
-        fromMTXArr = UML.createData(
+        fromMTXArr = nimble.createData(
             returnType='Matrix', data=tmpMTXArr.name, keepPoints=[0],
             keepFeatures=[1])
 
@@ -1796,7 +1796,7 @@ def test_createData_keepPF_mtxArr_simple():
 
 
 def test_createData_keepPF_mtxCoo_simple():
-    fromList = UML.createData(returnType='Matrix', data=[[2]])
+    fromList = nimble.createData(returnType='Matrix', data=[[2]])
 
     # instantiate from mtx coordinate file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -1806,7 +1806,7 @@ def test_createData_keepPF_mtxCoo_simple():
         tmpMTXCoo.write("1 2 2\n")
         tmpMTXCoo.write("1 3 3\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = UML.createData(
+        fromMTXCoo = nimble.createData(
             returnType='Matrix', data=tmpMTXCoo.name, keepPoints=[0],
             keepFeatures=[1])
 
@@ -1814,45 +1814,45 @@ def test_createData_keepPF_mtxCoo_simple():
 
 
 def test_createData_keepPF_pythonList_simple():
-    wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
+    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     raw = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
 
-    fromList = UML.createData(
+    fromList = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromList == wanted
 
-    wanted = UML.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromList = UML.createData(
+    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
+    fromList = nimble.createData(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromList == wanted
 
 
 def test_createData_keepPF_npArray_simple():
-    wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
+    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = numpy.array(rawList)
 
-    fromNPArr = UML.createData(
+    fromNPArr = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromNPArr == wanted
 
-    wanted = UML.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromNPArr = UML.createData(
+    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
+    fromNPArr = nimble.createData(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromNPArr == wanted
 
 
 def test_createData_keepPF_npMatrix_simple():
-    wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
+    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = numpy.matrix(rawList)
 
-    fromList = UML.createData(
+    fromList = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromList == wanted
 
-    wanted = UML.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromList = UML.createData(
+    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
+    fromList = nimble.createData(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromList == wanted
 
@@ -1860,17 +1860,17 @@ def test_createData_keepPF_npMatrix_simple():
 def test_createData_keepPF_spCoo_simple():
     if not scipy:
         return
-    wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
+    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     rawMat = numpy.matrix(rawList)
     raw = scipy.sparse.coo_matrix(rawMat)
 
-    fromCOO = UML.createData(
+    fromCOO = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromCOO == wanted
 
-    wanted = UML.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromCOO = UML.createData(
+    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
+    fromCOO = nimble.createData(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromCOO == wanted
 
@@ -1878,17 +1878,17 @@ def test_createData_keepPF_spCoo_simple():
 def test_createData_keepPF_spCsc_simple():
     if not scipy:
         return
-    wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
+    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     rawMat = numpy.matrix(rawList)
     raw = scipy.sparse.csc_matrix(rawMat)
 
-    fromCSC = UML.createData(
+    fromCSC = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromCSC == wanted
 
-    wanted = UML.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromCSC = UML.createData(
+    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
+    fromCSC = nimble.createData(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromCSC == wanted
 
@@ -1903,7 +1903,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=True,
             featureNames=True, keepFeatures=[0, "fours"])
 
@@ -1917,7 +1917,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name,
             featureNames=['ones', 'twos', 'threes'], keepFeatures=[0, "fours"])
 
@@ -1931,7 +1931,7 @@ def test_csv_keepFeatures_indexNotInFile():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=[1, 2], keepFeatures=[1, 42])
 
@@ -1945,7 +1945,7 @@ def test_csv_keepPoints_indexNotInFile():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=[12, 2, 3], keepFeatures=[1, 2])
 
@@ -1960,7 +1960,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_extracted():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=True,
             featureNames=True, keepPoints=[1, "quads"])
 
@@ -1974,7 +1974,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_provided():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name,
             pointNames=['single', 'dubs', 'trips'], keepPoints=[1, "quads"])
 
@@ -1988,7 +1988,7 @@ def test_csv_keepPoints_noNamesButNameSpecified():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=['dubs', 1], keepFeatures=[2])
 
@@ -2002,7 +2002,7 @@ def test_csv_keepFeatures_noNamesButNameSpecified():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        UML.createData(
+        nimble.createData(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepFeatures=["threes"])
 
@@ -2016,35 +2016,35 @@ def test_csv_keepFeatures_duplicatesInList():
         tmpCSV.flush()
 
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 1])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 'twos'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=['threes', 'threes'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'], keepFeatures=[1, 'twos'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'],
                 keepFeatures=['threes', 'threes'])
@@ -2062,28 +2062,28 @@ def test_csv_keepPoints_duplicatesInList():
         tmpCSV.flush()
 
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 1])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 'dubs'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=['trips', 'trips'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=[1, 'dubs'])
@@ -2091,7 +2091,7 @@ def test_csv_keepPoints_duplicatesInList():
         except InvalidArgumentValue:
             pass
         try:
-            UML.createData(
+            nimble.createData(
                 returnType='List', data=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=['trips', 'trips'])
@@ -2105,7 +2105,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
         fnames = ['threes']
         pnames = ['dubs', 'trips']
         data = [[33], [333]]
-        fromList = UML.createData(
+        fromList = nimble.createData(
             returnType=t, data=data, pointNames=pnames, featureNames=fnames)
 
         # instantiate from csv file
@@ -2116,7 +2116,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
             tmpCSV.write("trips,111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = UML.createData(
+            fromCSV = nimble.createData(
                 returnType=t, data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[2, 'dubs'],
                 keepFeatures=[1, 'threes'], ignoreNonNumericalFeatures=True)
@@ -2125,7 +2125,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
 
 
 def test_createData_keepPoints_csv_endAfterAllFound():
-    wanted = UML.createData("Matrix", data=[[11, 22, 33], [1, 2, 3]])
+    wanted = nimble.createData("Matrix", data=[[11, 22, 33], [1, 2, 3]])
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2135,7 +2135,7 @@ def test_createData_keepPoints_csv_endAfterAllFound():
         tmpCSV.write("111,222,333,444\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
+        fromCSV = nimble.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
         assert fromCSV == wanted
 
 ######################
@@ -2143,7 +2143,7 @@ def test_createData_keepPoints_csv_endAfterAllFound():
 ######################
 
 def test_createData_csv_inputSeparatorAutomatic():
-    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    wanted = nimble.createData("Matrix", data=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
         with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
@@ -2151,11 +2151,11 @@ def test_createData_csv_inputSeparatorAutomatic():
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
 
-            fromCSV = UML.createData("Matrix", data=tmpCSV.name)
+            fromCSV = nimble.createData("Matrix", data=tmpCSV.name)
             assert fromCSV == wanted
 
 def test_createData_csv_inputSeparatorSpecified():
-    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    wanted = nimble.createData("Matrix", data=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
         with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
@@ -2163,7 +2163,7 @@ def test_createData_csv_inputSeparatorSpecified():
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
 
-            fromCSV = UML.createData("Matrix", data=tmpCSV.name, inputSeparator=delimiter)
+            fromCSV = nimble.createData("Matrix", data=tmpCSV.name, inputSeparator=delimiter)
             assert fromCSV == wanted
 
 @raises(FileFormatException)
@@ -2173,7 +2173,7 @@ def test_createData_csv_inputSeparatorConfusion():
         tmpCSV.write("4,5,6\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData("Matrix", data=tmpCSV.name)
+        fromCSV = nimble.createData("Matrix", data=tmpCSV.name)
 
 @raises(InvalidArgumentValue)
 def test_createData_csv_inputSeparatorNot1Character():
@@ -2182,7 +2182,7 @@ def test_createData_csv_inputSeparatorNot1Character():
         tmpCSV.write("4,,5,,6\n")
         tmpCSV.flush()
 
-        fromCSV = UML.createData("Matrix", data=tmpCSV.name, inputSeparator=',,')
+        fromCSV = nimble.createData("Matrix", data=tmpCSV.name, inputSeparator=',,')
 
 
 #########################################
@@ -2193,68 +2193,68 @@ def test_missingDefaults():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = UML.createData(t, data)
+        toTest = nimble.createData(t, data)
         expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
-        expRet = UML.createData(t, expData)
+        expRet = nimble.createData(t, expData)
         assert toTest == expRet
 
 def test_handmadeReplaceMissingWith():
     for t in returnTypes:
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = UML.createData(t, data, replaceMissingWith=0)
+        toTest = nimble.createData(t, data, replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
-        expRet = UML.createData(t, expData)
+        expRet = nimble.createData(t, expData)
         assert toTest == expRet
 
 def test_numericalReplaceMissingWithNonNumeric():
     for t in returnTypes:
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], [None, None, None]]
-        toTest = UML.createData(t, data, replaceMissingWith="Missing")
+        toTest = nimble.createData(t, data, replaceMissingWith="Missing")
         expData = [[1, 2, "Missing"], ["Missing", 5, 6], [7, "Missing", 9], ["Missing", "Missing", "Missing"]]
-        expRet = UML.createData(t, expData)
+        expRet = nimble.createData(t, expData)
         assert toTest == expRet
 
 def test_handmadeTreatAsMissing():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, ""], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = UML.createData(t, data, treatAsMissing=[numpy.nan, None, ""])
+        toTest = nimble.createData(t, data, treatAsMissing=[numpy.nan, None, ""])
         expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, "nan", "None"]]
-        expRet = UML.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.createData(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_handmadeConsiderAndReplaceMissingWith():
     for t in returnTypes:
         data = [[1, 2, "NA"], ["NA", 5, 6], [7, "NA", 9], ["NA", "NA", "NA"]]
-        toTest = UML.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=0)
+        toTest = nimble.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
-        expRet = UML.createData(t, expData)
+        expRet = nimble.createData(t, expData)
         assert toTest == expRet
 
 def test_replaceDataTypeMismatch():
     for t in returnTypes:
         data = [[1, 2, 99], [99, 5, 6], [7, 99, 9], [99, 99, 99]]
-        toTest = UML.createData(t, data, treatAsMissing=[99], replaceMissingWith="")
+        toTest = nimble.createData(t, data, treatAsMissing=[99], replaceMissingWith="")
         expData = [[1, 2, ""], ["", 5, 6], [7, "", 9], ["", "", ""]]
-        expRet = UML.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.createData(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_keepNanAndReplaceAlternateMissing():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, "NA"], [numpy.nan, 5, 6], [7, "NA", 9], ["NA", numpy.nan, "NA"]]
-        toTest = UML.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=-1)
+        toTest = nimble.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=-1)
         expData = [[1, 2, -1], [nan, 5, 6], [7, -1, 9], [-1, nan, -1]]
-        expRet = UML.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.createData(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_treatAsMissingIsNone():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", numpy.nan, ""]]
-        toTest = UML.createData(t, data, treatAsMissing=None)
+        toTest = nimble.createData(t, data, treatAsMissing=None)
         notExpData = [[1,2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
-        notExpRet = UML.createData(t, notExpData, treatAsMissing=None, elementType=object)
+        notExpRet = nimble.createData(t, notExpData, treatAsMissing=None, elementType=object)
         assert toTest != notExpRet
 
 def test_DataOutputWithMissingDataTypes1D():
@@ -2265,22 +2265,22 @@ def test_DataOutputWithMissingDataTypes1D():
         expDataFrameOutput = pd.DataFrame(expListOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expListOutput)
 
-        orig1 = UML.createData(t, [1,2,"None"])
-        orig2 = UML.createData(t, (1,2,"None"))
-        orig3 = UML.createData(t, {'a':1, 'b':2, 'c':"None"})
+        orig1 = nimble.createData(t, [1,2,"None"])
+        orig2 = nimble.createData(t, (1,2,"None"))
+        orig3 = nimble.createData(t, {'a':1, 'b':2, 'c':"None"})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':"None"}])
+        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = UML.createData(t, numpy.array([1,2,"None"]))
-        orig6 = UML.createData(t, numpy.matrix([1,2,"None"]))
+        orig5 = nimble.createData(t, numpy.array([1,2,"None"]))
+        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"]))
         if pd:
-            orig7 = UML.createData(t, pd.DataFrame([[1,2,"None"]]))
-            orig8 = UML.createData(t, pd.Series([1,2,"None"]))
-            orig9 = UML.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
+            orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
+            orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
+            orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
         if scipy:
-            orig10 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-            orig11 = UML.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-            orig12 = UML.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+            orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+            orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+            orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
@@ -2308,19 +2308,19 @@ def test_DataOutputWithMissingDataTypes2D():
         expDataFrameOutput = pd.DataFrame(expMatrixOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expMatrixOutput)
 
-        orig1 = UML.createData(t, [[1,2,'None'], [3,4,'b']])
-        orig2 = UML.createData(t, ((1,2,'None'), (3,4,'b')))
-        orig3 = UML.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
+        orig1 = nimble.createData(t, [[1,2,'None'], [3,4,'b']])
+        orig2 = nimble.createData(t, ((1,2,'None'), (3,4,'b')))
+        orig3 = nimble.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig4 = UML.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = UML.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig6 = UML.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig5 = nimble.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig6 = nimble.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:
-            orig7 = UML.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-            orig8 = UML.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
+            orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+            orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
         if scipy:
-            orig9 = UML.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+            orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:
@@ -2356,7 +2356,7 @@ def test_createData_csv_nonremoval_efficiency():
         assert False  # the function we didn't want to be called was called
 
     for t in returnTypes:
-        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -2365,12 +2365,12 @@ def test_createData_csv_nonremoval_efficiency():
             objName = 'fromCSV'
 
             try:
-                backup = UML.helpers._removalCleanupAndSelectionOrdering
-                UML.helpers._removalCleanupAndSelectionOrdering = failFunction
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+                backup = nimble.helpers._removalCleanupAndSelectionOrdering
+                nimble.helpers._removalCleanupAndSelectionOrdering = failFunction
+                fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
                 assert fromList == fromCSV
             finally:
-                UML.helpers._removalCleanupAndSelectionOrdering = backup
+                nimble.helpers._removalCleanupAndSelectionOrdering = backup
 
 
 #################
@@ -2381,7 +2381,7 @@ def test_createData_logCount():
 
     @oneLogEntryExpected
     def byType(rType):
-        toTest = UML.createData(rType, [[1,2,3], [4,5,6], [7,8,9]])
+        toTest = nimble.createData(rType, [[1,2,3], [4,5,6], [7,8,9]])
 
     for t in returnTypes:
         byType(t)

@@ -13,21 +13,21 @@ count should make use of the wrappers in tests/assertionHelpers.py
 import sys
 import tempfile
 
-import UML
-import UML.calculate as calculate
-import UML.fill as fill
-import UML.match as match
-from UML.data import Base
-from UML.data import Axis
-from UML.data import Points
-from UML.data import Features
-from UML.data import Elements
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.universal_interface import TrainedLearner
+import nimble
+import nimble.calculate as calculate
+import nimble.fill as fill
+import nimble.match as match
+from nimble.data import Base
+from nimble.data import Axis
+from nimble.data import Points
+from nimble.data import Features
+from nimble.data import Elements
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
-modules = [UML, calculate, fill, match]
+modules = [nimble, calculate, fill, match]
 classes = [Base, Axis, Points, Features, Elements, UniversalInterface,
            TrainedLearner]
 modulesAndClasses = modules + classes
@@ -43,19 +43,19 @@ def prefixAdder(prefix):
 
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
-uml_logged = [
+nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
-uml_notLogged = [
+nimble_notLogged = [
     'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
     'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
-uml_funcs = uml_logged + uml_notLogged
-uml_tested = list(map(prefixAdder('UML'), uml_funcs))
+nimble_funcs = nimble_logged + nimble_notLogged
+nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
@@ -68,14 +68,14 @@ calculate_funcs = [
     'residuals', 'rootMeanSquareError', 'rSquared', 'solve',
     'standardDeviation', 'uniqueCount', 'varianceFractionRemaining',
     ]
-calculate_tested = list(map(prefixAdder('UML.calculate'), calculate_funcs))
+calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
 # no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
     'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
     ]
-fill_tested = list(map(prefixAdder('UML.fill'), fill_funcs))
+fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
 # no match functions should not be logged.
 match_funcs = [
@@ -85,7 +85,7 @@ match_funcs = [
     'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
     'nonZero', 'numeric', 'positive', 'zero',
     ]
-match_tested = list(map(prefixAdder('UML.match'), match_funcs))
+match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
@@ -162,7 +162,7 @@ tl_notLogged = [
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
-USER_FACING_TESTED = (uml_tested + calculate_tested + fill_tested
+USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
                       + match_tested + base_tested + features_tested
                       + points_tested + elements_tested + ui_tested
                       + tl_tested)
@@ -188,27 +188,27 @@ def testAllUserFacingLoggingTested():
             print(removed)
         assert False
 
-#######
-# UML #
-#######
+##########
+# nimble #
+##########
 @oneLogEntryExpected
 def test_log_logCount():
     customString = "enter this string into the log"
-    UML.log("customString", customString)
+    nimble.log("customString", customString)
 
 @noLogEntryExpected
 def test_showLog_logCount():
     def wrapped(obj):
-        return UML.showLog()
+        return nimble.showLog()
     captureOutput(wrapped)
 
 @noLogEntryExpected
 def test_importModule_logCount():
-    pd = UML.importModule('pandas')
+    pd = nimble.importModule('pandas')
 
 @noLogEntryExpected
 def test_CV_logCount():
-    k = UML.CV([1, 3, 5])
+    k = nimble.CV([1, 3, 5])
 
 ########
 # Base #
@@ -216,8 +216,8 @@ def test_CV_logCount():
 
 @noLogEntryExpected
 def test_copy_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
 def test_featureReport_logCount():
@@ -236,27 +236,27 @@ def test_groupByFeature_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.groupByFeature(0)
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         ts = obj.getTypeString()
 
 @noLogEntryExpected
 def test_hashCode_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
 
 @noLogEntryExpected
 def test_nameIsDefault_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.nameIsDefault()
 
 @noLogEntryExpected
@@ -273,8 +273,8 @@ def test_toString_logCount():
 
 @noLogEntryExpected
 def test_validate_logCount():
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
 
 ############################
@@ -285,8 +285,8 @@ def test_points_shuffle_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.points.shuffle()
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -294,8 +294,8 @@ def test_features_shuffle_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.features.shuffle()
-    for rType in UML.data.available:
-        obj = UML.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for rType in nimble.data.available:
+        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -321,7 +321,7 @@ baseDunder_tested = [
     'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
     'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__', 
+    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
 pointsDunder_tested = []
@@ -347,8 +347,8 @@ def captureOutput(toCall):
     backupOut = sys.stdout
     sys.stdout = tmpFile
     try:
-        for rType in UML.data.available:
-            obj = UML.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+        for rType in nimble.data.available:
+            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
             ret = toCall(obj)
     finally:
         sys.stdout = backupOut
