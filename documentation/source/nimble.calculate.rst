@@ -1,7 +1,7 @@
-UML.calculate
+nimble.calculate
 =============
 
-.. automodule:: UML.calculate
+.. automodule:: nimble.calculate
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-UML.exceptions
+nimble.exceptions
 ==============
 
-.. automodule:: UML.exceptions
+.. automodule:: nimble.exceptions
     :members:
     :undoc-members:
     :show-inheritance:

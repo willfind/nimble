@@ -1,7 +1,7 @@
-UML.customLearners
+nimble.customLearners
 ==================
 
-.. automodule:: UML.customLearners
+.. automodule:: nimble.customLearners
     :members:
     :undoc-members:
     :show-inheritance:

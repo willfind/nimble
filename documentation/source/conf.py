@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# UML documentation build configuration file, created by
+# Nimble documentation build configuration file, created by
 # sphinx-quickstart on Wed Nov 11 14:47:51 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -22,9 +22,8 @@ import inspect
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 confFilePath = os.path.abspath(inspect.getfile(inspect.currentframe()))
-UMLParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePath)))
-#sys.path.insert(0, UMLParentDirPath)
-sys.path.insert(0, "/Users/devin/Dropbox/Devin_S_+_Spark_Wave")
+NimbleParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePath)))
+sys.path.insert(0, NimbleParentDirPath)
 
 # -- General configuration ------------------------------------------------
 
@@ -56,9 +55,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'UML'
-copyright = u'2015, Gimbel Technologies'
-author = u'Gimbel Technologies'
+project = u'Nimble'
+copyright = u'2019, Spark Wave'
+author = u'Spark Wave'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -210,7 +209,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'UMLdoc'
+htmlhelp_basename = 'Nimbledoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -232,8 +231,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'UML.tex', u'UML Documentation',
-     u'Gimbel Technologies', 'manual'),
+    (master_doc, 'nimble.tex', u'Nimble Documentation',
+     u'Spark Wave', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -262,7 +261,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'uml', u'UML Documentation',
+    (master_doc, 'nimble', u'Nimble Documentation',
      [author], 1)
 ]
 
@@ -276,8 +275,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'UML', u'UML Documentation',
-     author, 'UML', 'One line description of project.',
+    (master_doc, 'nimble', u'Nimble Documentation',
+     author, 'nimble', 'One line description of project.',
      'Miscellaneous'),
 ]
 

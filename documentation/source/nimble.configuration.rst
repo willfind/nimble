@@ -1,7 +1,7 @@
-UML.configuration
+nimble.configuration
 =================
 
-.. automodule:: UML.configuration
+.. automodule:: nimble.configuration
     :members:
     :undoc-members:
     :show-inheritance:

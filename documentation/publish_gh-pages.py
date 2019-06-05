@@ -20,7 +20,7 @@ asking for your github credentials, or any queries for guidance by
 a pre-commit script.
 
 See published docs at:
-willfind.github.io/UML
+willfind.github.io/Nimble
 
 Further reading for some of the techniques used in this script:
 http://stackoverflow.com/questions/3258243/check-if-pull-needed-in-git
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         printAndCall("git add ../*.js")
         printAndCall("git add ../_static/")
         printAndCall("git add ../_sources")
-        printAndCall("git commit -m 'Publish html documentation for UML to gh-pages'")
+        printAndCall("git commit -m 'Publish html documentation for Nimble to gh-pages'")
 
         printAndCall("git push origin HEAD --force")
 
