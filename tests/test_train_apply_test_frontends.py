@@ -460,7 +460,7 @@ class CVWasCalledException(Exception):
 def cvBackgroundCheck(*args, **kwargs):
     raise CVWasCalledException()
 
-@mock.patch('nimble.crossValidate', cvBackgroundCheck)
+@mock.patch('nimble.core.crossValidate', cvBackgroundCheck)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
