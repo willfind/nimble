@@ -6,7 +6,7 @@ from unittest.case import SkipTest
 from functools import wraps
 
 import UML
-from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import PackageException
 
 class SkipMissing(object):
     """
@@ -23,7 +23,7 @@ class SkipMissing(object):
         self.missing = False
         try:
             UML.helpers.findBestInterface(interfaceName)
-        except InvalidArgumentValue:
+        except PackageException:
             self.missing = True
 
     def __call__(self, toWrap):

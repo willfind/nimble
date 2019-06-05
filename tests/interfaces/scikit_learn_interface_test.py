@@ -23,7 +23,6 @@ from UML.helpers import generateClusteredPoints
 from UML.helpers import inspectArguments
 from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
-from UML.interfaces.universal_interface import UniversalInterface
 
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
@@ -47,7 +46,7 @@ def toCall(learner):
     return packageName + '.' + learner
 
 @sklSkipDec
-@logCountAssertionFactory(4)
+@logCountAssertionFactory(5)
 def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
@@ -63,6 +62,7 @@ def testScikitLearnAliases():
     UML.trainAndApply("SKL.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     UML.trainAndApply("skl.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     UML.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+    UML.trainAndApply("sklearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 
 @sklSkipDec

@@ -17,7 +17,7 @@ from six.moves import range
 
 import UML
 from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
@@ -32,7 +32,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Mlpy(UniversalInterface):
+class Mlpy(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to mlpy.
     """
@@ -71,6 +71,11 @@ class Mlpy(UniversalInterface):
         except ImportError:
             return False
         return True
+
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'mlpy'
 
 
     def _listLearnersBackend(self):
@@ -192,14 +197,6 @@ class Mlpy(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.labels()
-
-
-    def isAlias(self, name):
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'mlpy'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

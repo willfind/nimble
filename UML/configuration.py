@@ -34,6 +34,7 @@ import six.moves.configparser
 import UML
 from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
 from UML.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
+from UML.exceptions import PackageException
 
 currentFile = inspect.getfile(inspect.currentframe())
 UMLPath = os.path.dirname(os.path.abspath(currentFile))
@@ -433,6 +434,14 @@ class SessionConfiguration(object):
             einfo = sys.exc_info()
             if not ignore:
                 six.reraise(einfo[0], einfo[1], einfo[2])
+        # a PackageException is the result of a possible interface being
+        # unavailable, we will allow setting a location for possible interfaces
+        # as this may aid in loading them in the future.
+        except PackageException:
+            if option != 'location':
+                msg = section + "is an interface which is not currently "
+                msg += "available. Only a 'location' option is permitted "
+                msg += "for unavailable interfaces."
 
         if (not section in self.changes
                 or isinstance(self.changes[section], ToDelete)):

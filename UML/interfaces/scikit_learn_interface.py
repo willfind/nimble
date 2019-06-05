@@ -14,7 +14,7 @@ import numpy
 from six.moves import range
 
 import UML
-from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
@@ -31,7 +31,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class SciKitLearn(UniversalInterface):
+class SciKitLearn(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to scikit-learn.
     """
@@ -77,6 +77,17 @@ class SciKitLearn(UniversalInterface):
         except ImportError:
             return False
         return True
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'sciKitLearn'
+
+
+    @classmethod
+    def isAlias(cls, name):
+        if name.lower() in ['skl', 'sklearn']:
+            return True
+        return name.lower() == cls.getCanonicalName().lower()
 
     def _listLearnersBackend(self):
         possibilities = []
@@ -216,16 +227,6 @@ class SciKitLearn(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder()
-
-
-    def isAlias(self, name):
-        if name.lower() == 'skl':
-            return True
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'sciKitLearn'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

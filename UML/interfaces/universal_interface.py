@@ -125,6 +125,23 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         return copy.copy(self._configurableOptionNames())
 
 
+    def isAlias(self, name):
+        """
+        Determine if the name is an accepted alias for this interface.
+
+        Parameters
+        ----------
+        name : str
+            An interface name as a string
+
+        Returns
+        -------
+        bool
+            True if the name is a accepted alias, False otherwise.
+        """
+        return name.lower() == self.getCanonicalName().lower()
+
+
     @captureOutput
     def trainAndApply(self, learnerName, trainX, trainY=None, testX=None,
                       arguments=None, output=None, scoreMode='label'):
@@ -1006,6 +1023,18 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         pass
 
     @abc.abstractmethod
+    def getCanonicalName(self):
+        """
+        The string name that will uniquely identify this interface.
+
+        Returns
+        -------
+        str
+            The canonical name for this interface.
+        """
+        pass
+
+    @abc.abstractmethod
     def _listLearnersBackend(self):
         pass
 
@@ -1055,36 +1084,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         If the learner is a classifier, then return a list of the the
         labels corresponding to each column of the return from
         getScores.
-        """
-        pass
-
-    @abc.abstractmethod
-    def isAlias(self, name):
-        """
-        Determine if the name is an accepted alias for this interface.
-
-        Parameters
-        ----------
-        name : str
-            An interface name as a string
-
-        Returns
-        -------
-        bool
-            True if the name is a accepted alias, False otherwise.
-        """
-        pass
-
-
-    @abc.abstractmethod
-    def getCanonicalName(self):
-        """
-        The string name that will uniquely identify this interface.
-
-        Returns
-        -------
-        str
-            The canonical name for this interface.
         """
         pass
 
@@ -2122,3 +2121,82 @@ def relabeler(point, label=None):
         return 0
     else:
         return 1
+
+
+pathMessage = """
+If package installed
+--------------------
+    Make sure the package is installed in the current environment, append the
+    path to the package to sys.path prior to importing UML, or provide the path
+    location in configuration.ini. The path can be set manually or call:
+        UML.settings.setDefault('{name}', 'location', '/path/to/package/')
+    replacing '/path/to/package/' with the actual path to the directory
+    containing the package."""
+
+def formatPathMessage(name):
+    return pathMessage.format(name=name)
+
+errorMessage = """
+Exception information
+---------------------
+    The traceback can be found above and the original exception was:
+    {exception}: {message}"""
+
+installHeader = """
+To install {name}
+-----------------"""
+
+def formatInstallHeader(name):
+    return installHeader.format(name=name)
+
+def formatErrorMessage(exception, message):
+    return errorMessage.format(exception=exception, message=message)
+
+
+class BuiltinInterface(abc.ABC):
+    """
+    Abstract base class of classmethods for interfaces builtin by UML.
+
+    For builtin interfaces, we need class methods to access certain
+    information about the class and provide a detailed exception if the
+    user attempts to use the interface, but it failed instantiation.
+    """
+    @classmethod
+    @abc.abstractmethod
+    def getCanonicalName(cls):
+        pass
+
+    @classmethod
+    def isAlias(cls, name):
+        return name.lower() == cls.getCanonicalName().lower()
+
+    @classmethod
+    def provideInitExceptionInfo(cls):
+        """
+        Provide traceback and reason the interface is not available.
+        """
+        name = cls.getCanonicalName()
+        try:
+            cls()
+        except Exception as e:
+            origType = e.__class__.__name__
+            origMsg = str(e)
+            origTraceback = e.__traceback__
+            msg = "The " + name + " interface is not available because "
+            msg += "the interface object could not be instantiated. "
+            # could not import package, provide information to help with import
+            if isinstance(e, ImportError):
+                # optional additional instructions for package install
+                if cls._installInstructions():
+                    msg += formatInstallHeader(name)
+                    msg += cls._installInstructions()
+                # instructions for providing path to package
+                msg += formatPathMessage(name)
+            # the original exception
+            msg += formatErrorMessage(origType, origMsg)
+            raise PackageException(msg).with_traceback(origTraceback)
+
+
+    @classmethod
+    def _installInstructions(cls):
+        return ""

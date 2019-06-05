@@ -76,11 +76,13 @@ def findBestInterface(package):
     any available interfaces, then an exception is thrown.
     """
     for interface in UML.interfaces.available:
-        if package == interface.getCanonicalName():
-            return interface
-    for interface in UML.interfaces.available:
         if interface.isAlias(package):
             return interface
+    for interface in UML.interfaces.builtin:
+        if interface.isAlias(package):
+            # interface is a builtin one, but instantiation failed
+            interface.provideInitExceptionInfo()
+    # if package is not recognized, provide generic exception information
     msg = "package '" + package
     msg += "' was not associated with any of the available package interfaces"
     raise InvalidArgumentValue(msg)

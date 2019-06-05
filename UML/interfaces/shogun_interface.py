@@ -30,7 +30,7 @@ import distutils.version
 
 import UML
 
-from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
@@ -47,7 +47,7 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
 # distance : d
 
 @inheritDocstringsFactory(UniversalInterface)
-class Shogun(UniversalInterface):
+class Shogun(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to shogun.
     """
@@ -122,12 +122,35 @@ class Shogun(UniversalInterface):
 
         return getattr(submod, target)
 
+
+    #########################
+    # REIMPLEMENTED METHODS #
+    #########################
+
+    @classmethod
+    def _installInstructions(cls):
+        msg = """
+    shogun for Python can be built from source or installed through the conda
+    package manager. conda requires installing Anaconda or Miniconda. Once
+    conda is available, shogun can be installed by running the command:"
+        conda install -c conda-forge shogun"""
+        return msg
+
+    #######################################
+    ### ABSTRACT METHOD IMPLEMENTATIONS ###
+    #######################################
+
     def accessible(self):
         try:
             import shogun
         except ImportError:
             return False
         return True
+
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'shogun'
 
 
     def _listLearnersBackend(self):
@@ -266,14 +289,6 @@ class Shogun(UniversalInterface):
     def _getScoresOrder(self, learner):
         return learner.get_unique_labels
 
-    def isAlias(self, name):
-        if name.lower() in ['shogun']:
-            return True
-        else:
-            return False
-
-    def getCanonicalName(self):
-        return "shogun"
 
     def _findCallableBackend(self, name):
         return self._searcher.findInPackage(None, name)

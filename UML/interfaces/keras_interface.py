@@ -12,7 +12,7 @@ import numpy
 from six.moves import range
 
 import UML
-from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
@@ -30,7 +30,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Keras(UniversalInterface):
+class Keras(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to keras.
     """
@@ -90,6 +90,10 @@ class Keras(UniversalInterface):
         except ImportError:
             return False
         return True
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'keras'
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
@@ -184,16 +188,6 @@ class Keras(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder()
-
-
-    def isAlias(self, name):
-        if name.lower() == 'keras':
-            return True
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'keras'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

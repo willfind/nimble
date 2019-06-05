@@ -14,7 +14,7 @@ from nose.plugins.attrib import attr
 
 import UML
 
-from UML.exceptions import InvalidArgumentValue
+from UML.exceptions import InvalidArgumentValue, PackageException
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.helpers import generateClusteredPoints
 from UML.helpers import generateClassificationData
@@ -177,8 +177,78 @@ def testRandomnessControl():
                     assert result3 != result4
 
 
-#	assert False
+def getCanonicalNameAndPossibleAliases(interface):
+    if interface.__name__ == 'SciKitLearn':
+        canonicalName = 'sciKitLearn'
+        aliases = ['scikitlearn', 'skl', 'sklearn', 'sKLeARN', 'SKL']
+    elif interface.__name__ == 'Mlpy':
+        canonicalName = 'mlpy'
+        aliases = ['mlpy', 'MLPY', 'mLpY']
+    elif interface.__name__ == 'Keras':
+        canonicalName = 'keras'
+        aliases = ['keras', 'KERAS', 'KeRaS']
+    elif interface.__name__ == 'Shogun':
+        canonicalName = 'shogun'
+        aliases = ['shogun', 'SHOGUN', 'ShOGUn']
+    else:
+        msg = "the canonical name and aliases are not defined for this interface"
+        raise ValueError(msg)
+    return canonicalName, aliases
 
+def test_classmethods():
+    for interface in UML.interfaces.builtin:
+        canonicalName, aliases = getCanonicalNameAndPossibleAliases(interface)
+        assert interface.getCanonicalName() == canonicalName
+        for alias in aliases:
+            assert interface.isAlias(alias)
+        assert not interface.isAlias('foo')
+
+
+def test_failedInit():
+    availableBackup = UML.interfaces.available
+    builtinBackup = UML.interfaces.builtin
+    for interface in UML.interfaces.builtin:
+        class MockInterface(interface):
+            pass
+
+        # override interfaces.available so findBestInterface will check builtin
+        # and use mock object as the builtin so we can raise different errors
+        UML.interfaces.available = []
+        UML.interfaces.builtin = [MockInterface]
+
+        # the learner must start with package and the data must be UML objects but
+        # the learner name and data values are irrelevant since a PackageException
+        # should occur
+        learner = interface.__name__ + '.Foo'
+        X = UML.createData('Matrix', [])
+        y = X.copy()
+        def raiseError(error):
+            raise error
+        try:
+            MockInterface.__init__ = lambda self: raiseError(ImportError)
+            UML.train(learner, X, y)
+            assert False # expected PackageException
+        except PackageException as e:
+            assert "ImportError" in str(e)
+            # path message included for ImportErrors
+            assert "If package installed" in str(e)
+            # interface may have install instructions
+            if interface._installInstructions():
+                assert "To install" in str(e)
+            assert "Exception information" in str(e)
+
+        try:
+            MockInterface.__init__ = lambda self: raiseError(ValueError)
+            UML.train(learner, X, y)
+            assert False # expected PackageException
+        except PackageException as e:
+            assert "ValueError" in str(e)
+            # path message not included for other error types
+            assert not "If package installed" in str(e)
+            assert "Exception information" in str(e)
+
+        UML.interfaces.available = availableBackup
+        UML.interfaces.builtin = builtinBackup
 
 
 # TODO

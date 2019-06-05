@@ -14,6 +14,7 @@ from UML import createData
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.exceptions import ImproperObjectAction
+from UML.exceptions import PackageException
 from UML.helpers import extractWinningPredictionLabel
 from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
@@ -216,19 +217,19 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
         findBestInterface('sciKitLearn')
         knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsClassifier'] = 'classification'
         knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsRegressor'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
     try:
         findBestInterface('mlpy')
         knownAlgorithmToTypeHash['mlpy.LDAC'] = 'classification'
         knownAlgorithmToTypeHash['mlpy.Ridge'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
     try:
         findBestInterface('shogun')
         knownAlgorithmToTypeHash['shogun.MulticlassOCAS'] = 'classification'
         knownAlgorithmToTypeHash['shogun.LibSVR'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
 
     for curAlgorithm in knownAlgorithmToTypeHash.keys():

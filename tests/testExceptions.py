@@ -28,7 +28,7 @@ def test_UMLException_strOutput():
         raise UMLException('message')
         assert False
     except UMLException as e:
-        assert str(e) == "'message'"
+        assert str(e) == 'message'
 
 def test_UMLException_reprOutput():
     try:
@@ -45,7 +45,7 @@ def test_UMLException_customSubClassInheritance():
         raise CustomException('custom message')
         assert False
     except CustomException as e:
-        assert str(e) == "'custom message'"
+        assert str(e) == 'custom message'
         assert repr(e) == "CustomException('custom message')"
 
     try:
