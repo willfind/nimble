@@ -12,10 +12,10 @@ import copy
 from nose.tools import *
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML import createRandomData
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble import createRandomData
 from .assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 

@@ -13,7 +13,7 @@ defined in this file.
 
 from __future__ import absolute_import
 
-import UML as nimble
+import nimble
 
 from .baseObject import startObjectValidation
 from .baseObject import stopObjectValidation

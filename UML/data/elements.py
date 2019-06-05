@@ -16,10 +16,10 @@ from abc import abstractmethod
 import numpy
 import six
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction
-from UML.logger import handleLogging
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
+from nimble.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
 

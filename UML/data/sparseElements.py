@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
+import nimble
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique

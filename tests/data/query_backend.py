@@ -27,13 +27,13 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML import loadData
-from UML.data import BaseView
-from UML.data.dataHelpers import formatIfNeeded
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
+import nimble
+from nimble import loadData
+from nimble.data import BaseView
+from nimble.data.dataHelpers import formatIfNeeded
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -1272,7 +1272,7 @@ class QueryBackend(DataTestObject):
 
     @raises(CalledFunctionException)
     def backend_sim_callsFunctions(self, objFunc, calcFunc, axis):
-        toPatch = 'UML.calculate.' + calcFunc
+        toPatch = 'nimble.calculate.' + calcFunc
         with patch(toPatch, side_effect=calledException):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
@@ -1669,7 +1669,7 @@ class QueryBackend(DataTestObject):
 
     @raises(CalledFunctionException)
     def backend_stat_callsFunctions(self, objFunc, calcFunc, axis):
-        toPatch = 'UML.calculate.' + calcFunc
+        toPatch = 'nimble.calculate.' + calcFunc
         with patch(toPatch, side_effect=calledException):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]

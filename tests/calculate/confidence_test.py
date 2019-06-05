@@ -7,9 +7,9 @@ except:
 import numpy
 from nose.tools import *
 
-import UML as nimble
-from UML.calculate import confidenceIntervalHelper
-from UML.exceptions import PackageException, ImproperObjectAction
+import nimble
+from nimble.calculate import confidenceIntervalHelper
+from nimble.exceptions import PackageException, ImproperObjectAction
 from ..assertionHelpers import noLogEntryExpected
 
 def getPredictions():
@@ -40,7 +40,7 @@ def testSimpleConfidenceInverval():
     numpy.testing.assert_approx_equal(high, 251.18)
 
 @raises(PackageException)
-@mock.patch('UML.calculate.confidence.scipy', new=None)
+@mock.patch('nimble.calculate.confidence.scipy', new=None)
 def testCannotImportSciPy():
     pred = getPredictions()
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)

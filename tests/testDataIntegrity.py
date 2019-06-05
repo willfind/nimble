@@ -9,11 +9,11 @@ as possible
 from __future__ import absolute_import
 from nose.plugins.attrib import attr
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.helpers import generateClassificationData
-from UML.helpers import generateRegressionData
-from UML.randomness import pythonRandom
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
+from nimble.randomness import pythonRandom
 
 
 def assertUnchanged4Obj(learnerName, passed, trainX, trainY, testX, testY):

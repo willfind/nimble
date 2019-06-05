@@ -8,9 +8,9 @@ from __future__ import absolute_import
 from nose.tools import *
 import numpy.testing
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.mlpy_interface import Mlpy
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.mlpy_interface import Mlpy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

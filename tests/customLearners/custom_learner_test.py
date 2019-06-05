@@ -4,10 +4,10 @@ from nose.tools import *
 import numpy.testing
 from six.moves import range
 
-import UML as nimble
-from UML.customLearners import CustomLearner
-from UML.configuration import configSafetyWrapper
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.customLearners import CustomLearner
+from nimble.configuration import configSafetyWrapper
+from nimble.exceptions import InvalidArgumentValue
 
 
 @raises(TypeError)

@@ -28,12 +28,12 @@ import os
 import json
 import distutils.version
 
-import UML as nimble
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.interface_helpers import PythonSearcher
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.docHelpers import inheritDocstringsFactory
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine

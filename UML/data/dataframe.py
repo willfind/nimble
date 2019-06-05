@@ -9,10 +9,10 @@ import numpy as np
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import PackageException
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import PackageException
+from nimble.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView

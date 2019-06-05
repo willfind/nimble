@@ -3,7 +3,7 @@ from __future__ import print_function
 
 from nose.tools import *
 
-import UML as nimble
+import nimble
 
 
 def testKNNClassificationSimple():

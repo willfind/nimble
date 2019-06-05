@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 import numpy
 
-from UML.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue
 
 from .axis_view import AxisView
 from .listAxis import ListAxis

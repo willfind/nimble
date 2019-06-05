@@ -1,8 +1,8 @@
 """
-Helper functions for any functions defined in uml.py
+Helper functions for any functions defined in core.py
 
 They are separated here so that that (most) top level
-user facing functions are contained in uml.py without
+user facing functions are contained in core.py without
 the distraction of helpers
 
 """
@@ -25,17 +25,17 @@ import six
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML.logger import handleLogging
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.exceptions import ImproperObjectAction
-from UML.exceptions import FileFormatException
-from UML.data import Base
-from UML.data.dataHelpers import isAllowedSingleElement
-from UML.data.sparse import removeDuplicatesNative
-from UML.randomness import pythonRandom
-from UML.randomness import numpyRandom
+import nimble
+from nimble.logger import handleLogging
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import FileFormatException
+from nimble.data import Base
+from nimble.data.dataHelpers import isAllowedSingleElement
+from nimble.data.sparse import removeDuplicatesNative
+from nimble.randomness import pythonRandom
+from nimble.randomness import numpyRandom
 
 scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')

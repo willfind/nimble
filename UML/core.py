@@ -12,31 +12,31 @@ import six
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.logger import handleLogging, startTimer, stopTimer
-from UML.logger import stringToDatetime
-from UML.helpers import findBestInterface
-from UML.helpers import _learnerQuery
-from UML.helpers import validateReturnType
-from UML.helpers import _validScoreMode
-from UML.helpers import _validMultiClassStrategy
-from UML.helpers import _unpackLearnerName
-from UML.helpers import _validArguments
-from UML.helpers import _validData
-from UML.helpers import _2dOutputFlagCheck
-from UML.helpers import LearnerInspector
-from UML.helpers import ArgumentIterator
-from UML.helpers import _mergeArguments
-from UML.helpers import KFoldCrossValidator
-from UML.helpers import isAllowedRaw
-from UML.helpers import initDataObject
-from UML.helpers import createDataFromFile
-from UML.helpers import createConstantHelper
-from UML.helpers import computeMetrics
-from UML.randomness import numpyRandom, generateSubsidiarySeed
-from UML.randomness import startAlternateControl, endAlternateControl
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.logger import handleLogging, startTimer, stopTimer
+from nimble.logger import stringToDatetime
+from nimble.helpers import findBestInterface
+from nimble.helpers import _learnerQuery
+from nimble.helpers import validateReturnType
+from nimble.helpers import _validScoreMode
+from nimble.helpers import _validMultiClassStrategy
+from nimble.helpers import _unpackLearnerName
+from nimble.helpers import _validArguments
+from nimble.helpers import _validData
+from nimble.helpers import _2dOutputFlagCheck
+from nimble.helpers import LearnerInspector
+from nimble.helpers import ArgumentIterator
+from nimble.helpers import _mergeArguments
+from nimble.helpers import KFoldCrossValidator
+from nimble.helpers import isAllowedRaw
+from nimble.helpers import initDataObject
+from nimble.helpers import createDataFromFile
+from nimble.helpers import createConstantHelper
+from nimble.helpers import computeMetrics
+from nimble.randomness import numpyRandom, generateSubsidiarySeed
+from nimble.randomness import startAlternateControl, endAlternateControl
 
 cloudpickle = nimble.importModule('cloudpickle')
 scipy = nimble.importModule('scipy.sparse')

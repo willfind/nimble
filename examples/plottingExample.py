@@ -13,7 +13,7 @@ import numpy
 import os
 import sys
 
-import UML as nimble
+import nimble
 
 if __name__ == "__main__":
 

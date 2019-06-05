@@ -33,11 +33,11 @@ import six
 from six import reraise
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.exceptions import InvalidArgumentValue
 from .stopwatch import Stopwatch
 
-class NimbleLogger(object):
+class SessionLogger(object):
     """
     Handle logging of nimble functions and generating the log output.
 
@@ -1007,7 +1007,7 @@ def initLoggerAndLogConfig():
         def cleanThenReInit_Loc(newLocation):
             nimble.logger.active.cleanup()
             currName = nimble.settings.get("logger", 'name')
-            nimble.logger.active = NimbleLogger(newLocation, currName)
+            nimble.logger.active = SessionLogger(newLocation, currName)
         nimble.settings.hook("logger", "location", cleanThenReInit_Loc)
 
     try:
@@ -1020,7 +1020,7 @@ def initLoggerAndLogConfig():
         def cleanThenReInit_Name(newName):
             nimble.logger.active.cleanup()
             currLoc = nimble.settings.get("logger", 'location')
-            nimble.logger.active = NimbleLogger(currLoc, newName)
+            nimble.logger.active = SessionLogger(currLoc, newName)
 
         nimble.settings.hook("logger", "name", cleanThenReInit_Name)
 
@@ -1038,4 +1038,4 @@ def initLoggerAndLogConfig():
         nimble.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
         nimble.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
-    return NimbleLogger(location, name)
+    return SessionLogger(location, name)

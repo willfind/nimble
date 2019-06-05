@@ -5,9 +5,9 @@ Custom assertion types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
 
-import UML as nimble
-from UML.configuration import configSafetyWrapper
-from UML.data import BaseView
+import nimble
+from nimble.configuration import configSafetyWrapper
+from nimble.data import BaseView
 
 
 class LogCountAssertionError(AssertionError):

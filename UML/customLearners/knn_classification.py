@@ -10,9 +10,9 @@ If there is a tie, use k=1
 
 from __future__ import absolute_import
 
-import UML as nimble
-from UML.customLearners import CustomLearner
-from UML.exceptions import PackageException
+import nimble
+from nimble.customLearners import CustomLearner
+from nimble.exceptions import PackageException
 
 scipy = nimble.importModule('scipy.spatial')
 

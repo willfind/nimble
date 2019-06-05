@@ -1,5 +1,5 @@
 """
-Unit tests for functionality of the NimbleLogger
+Unit tests for functionality of the SessionLogger
 """
 
 from __future__ import absolute_import
@@ -18,13 +18,13 @@ import six
 from six import StringIO
 import numpy
 
-import UML as nimble
-from UML.helpers import generateClassificationData
-from UML.calculate import rootMeanSquareError as RMSE
-from UML.configuration import configSafetyWrapper
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import InvalidArgumentType
+import nimble
+from nimble.helpers import generateClassificationData
+from nimble.calculate import rootMeanSquareError as RMSE
+from nimble.configuration import configSafetyWrapper
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import InvalidArgumentType
 
 #####################
 # Helpers for tests #

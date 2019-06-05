@@ -10,10 +10,10 @@ from __future__ import absolute_import
 
 import numpy
 from nose.tools import raises
-import UML as nimble
-from UML import createData
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
+import nimble
+from nimble import createData
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
 
 
 ###########

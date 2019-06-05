@@ -11,10 +11,10 @@ import numpy
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import PackageException, ImproperObjectAction
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import PackageException, ImproperObjectAction
+from nimble.docHelpers import inheritDocstringsFactory
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView

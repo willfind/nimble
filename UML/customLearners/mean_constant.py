@@ -6,8 +6,8 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
-from UML.customLearners import CustomLearner
+import nimble
+from nimble.customLearners import CustomLearner
 
 
 class MeanConstant(CustomLearner):

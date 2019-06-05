@@ -5,8 +5,8 @@ base class for read only axis views of data objects.
 
 from __future__ import absolute_import
 
-import UML as nimble
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.docHelpers import inheritDocstringsFactory
 from .points import Points
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory

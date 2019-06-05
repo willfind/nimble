@@ -23,14 +23,14 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction, PackageException
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.logger import handleLogging
-from UML.logger import produceFeaturewiseReport
-from UML.logger import produceAggregateReport
-from UML.randomness import numpyRandom
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.logger import handleLogging
+from nimble.logger import produceFeaturewiseReport
+from nimble.logger import produceAggregateReport
+from nimble.randomness import numpyRandom
 from .points import Points
 from .features import Features
 from .axis import Axis

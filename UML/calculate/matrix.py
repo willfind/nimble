@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from UML.data import Base
-from UML.exceptions import InvalidArgumentType
+from nimble.data import Base
+from nimble.exceptions import InvalidArgumentType
 
 def elementwiseMultiply(left, right):
     """

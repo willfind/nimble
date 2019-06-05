@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
-from UML import match
+import nimble
+from nimble import match
 from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected

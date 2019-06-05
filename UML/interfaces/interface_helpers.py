@@ -10,9 +10,9 @@ import numpy
 import six
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.randomness import pythonRandom
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.randomness import pythonRandom
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):

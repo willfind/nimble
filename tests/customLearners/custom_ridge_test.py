@@ -3,8 +3,8 @@ from __future__ import absolute_import
 from nose.tools import *
 import numpy.testing
 
-import UML as nimble
-from UML.data import Matrix
+import nimble
+from nimble.data import Matrix
 
 
 def testRidgeRegressionShapes():

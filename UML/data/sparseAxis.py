@@ -8,8 +8,8 @@ from abc import abstractmethod
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition

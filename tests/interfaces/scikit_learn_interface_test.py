@@ -12,18 +12,18 @@ import numpy.testing
 from nose.plugins.attrib import attr
 from nose.tools import raises
 
-import UML as nimble
-from UML import loadTrainedLearner
-from UML.randomness import numpyRandom
-from UML.randomness import generateSubsidiarySeed
-from UML.exceptions import InvalidArgumentValue
-from UML.helpers import generateClassificationData
-from UML.helpers import generateRegressionData
-from UML.helpers import generateClusteredPoints
-from UML.helpers import inspectArguments
-from UML.calculate.loss import rootMeanSquareError
-from UML.interfaces.scikit_learn_interface import SciKitLearn
-from UML.interfaces.universal_interface import UniversalInterface
+import nimble
+from nimble import loadTrainedLearner
+from nimble.randomness import numpyRandom
+from nimble.randomness import generateSubsidiarySeed
+from nimble.exceptions import InvalidArgumentValue
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
+from nimble.helpers import generateClusteredPoints
+from nimble.helpers import inspectArguments
+from nimble.calculate.loss import rootMeanSquareError
+from nimble.interfaces.scikit_learn_interface import SciKitLearn
+from nimble.interfaces.universal_interface import UniversalInterface
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

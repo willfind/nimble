@@ -5,9 +5,9 @@ Tests for the top level function nimble.normalizeData
 
 from __future__ import absolute_import
 
-import UML as nimble
-from UML.customLearners import CustomLearner
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.customLearners import CustomLearner
+from nimble.configuration import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 
 # successful run no testX

@@ -5,10 +5,10 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
-from UML.match import convertMatchToFunction
-from UML.match import anyValues
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.match import convertMatchToFunction
+from nimble.match import anyValues
+from nimble.exceptions import InvalidArgumentValue
 
 def factory(match, fill, **kwarguments):
     """

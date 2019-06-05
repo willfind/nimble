@@ -13,17 +13,17 @@ count should make use of the wrappers in tests/assertionHelpers.py
 import sys
 import tempfile
 
-import UML as nimble
-import UML.calculate as calculate
-import UML.fill as fill
-import UML.match as match
-from UML.data import Base
-from UML.data import Axis
-from UML.data import Points
-from UML.data import Features
-from UML.data import Elements
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.universal_interface import TrainedLearner
+import nimble
+import nimble.calculate as calculate
+import nimble.fill as fill
+import nimble.match as match
+from nimble.data import Base
+from nimble.data import Axis
+from nimble.data import Points
+from nimble.data import Features
+from nimble.data import Elements
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
@@ -55,7 +55,7 @@ nimble_notLogged = [
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
-nimble_tested = list(map(prefixAdder('UML'), nimble_funcs))
+nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
@@ -68,14 +68,14 @@ calculate_funcs = [
     'residuals', 'rootMeanSquareError', 'rSquared', 'solve',
     'standardDeviation', 'uniqueCount', 'varianceFractionRemaining',
     ]
-calculate_tested = list(map(prefixAdder('UML.calculate'), calculate_funcs))
+calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
 # no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
     'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
     ]
-fill_tested = list(map(prefixAdder('UML.fill'), fill_funcs))
+fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
 # no match functions should not be logged.
 match_funcs = [
@@ -85,7 +85,7 @@ match_funcs = [
     'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
     'nonZero', 'numeric', 'positive', 'zero',
     ]
-match_tested = list(map(prefixAdder('UML.match'), match_funcs))
+match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 # NOTES:
 #  The functionality of these functions is untested, but a test of their

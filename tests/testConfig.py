@@ -11,10 +11,10 @@ import os
 from nose.tools import raises
 import six.moves.configparser
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
+from nimble.configuration import configSafetyWrapper
 
 
 def fileEqualObjOutput(fp, obj):

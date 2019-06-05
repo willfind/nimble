@@ -22,14 +22,14 @@ import operator
 import six
 import numpy
 
-import UML as nimble
-from UML import fill
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import ImproperObjectAction
-from UML.exceptions import InvalidArgumentTypeCombination
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.randomness import pythonRandom
-from UML.logger import handleLogging
+import nimble
+from nimble import fill
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import InvalidArgumentTypeCombination
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.randomness import pythonRandom
+from nimble.logger import handleLogging
 from .points import Points
 from .features import Features
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH

@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 import numpy
 
-import UML as nimble
+import nimble
 from .axis import Axis
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter

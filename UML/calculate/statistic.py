@@ -4,9 +4,9 @@ import math
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination, PackageException
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 
 scipy = nimble.importModule('scipy')
 

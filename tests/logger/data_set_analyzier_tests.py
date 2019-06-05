@@ -12,8 +12,8 @@ import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal
 
-from UML import createData
-from UML.logger.data_set_analyzer import *
+from nimble import createData
+from nimble.logger.data_set_analyzer import *
 
 
 def testMatrix():

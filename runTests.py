@@ -28,7 +28,7 @@ except:
 nimblePath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.append(os.path.dirname(nimblePath))
 
-import UML as nimble
+import nimble
 
 available = nimble.interfaces.available
 

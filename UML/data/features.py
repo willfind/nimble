@@ -16,8 +16,8 @@ from abc import abstractmethod
 import numpy
 import six
 
-from UML.logger import handleLogging
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
+from nimble.logger import handleLogging
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 
 class Features(object):
     """

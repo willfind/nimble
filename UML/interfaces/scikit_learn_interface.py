@@ -14,13 +14,13 @@ from unittest import mock
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.interface_helpers import collectAttributes
-from UML.interfaces.interface_helpers import removeFromTailMatchedLists
-from UML.helpers import inspectArguments
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.interface_helpers import collectAttributes
+from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
+from nimble.helpers import inspectArguments
+from nimble.docHelpers import inheritDocstringsFactory
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'

@@ -5,12 +5,12 @@ from __future__ import absolute_import
 
 from nose.tools import raises
 
-from UML.exceptions import nimbleException
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentTypeCombination
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction, PackageException
-from UML.exceptions import FileFormatException
+from nimble.exceptions import nimbleException
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentTypeCombination
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.exceptions import FileFormatException
 
 @raises(TypeError)
 def test_nimbleException_noMessage():

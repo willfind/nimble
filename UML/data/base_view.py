@@ -7,8 +7,8 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 
-import UML as nimble
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.docHelpers import inheritDocstringsFactory
 from .base import Base
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory

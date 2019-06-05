@@ -6,10 +6,10 @@ from unittest.mock import patch
 
 from nose.tools import raises
 
-import UML as nimble
-from UML.calculate import elementwiseMultiply
-from UML.calculate import elementwisePower
-from UML.exceptions import InvalidArgumentType
+import nimble
+from nimble.calculate import elementwiseMultiply
+from nimble.calculate import elementwisePower
+from nimble.exceptions import InvalidArgumentType
 from ..assertionHelpers import noLogEntryExpected
 
 class CalledFunctionException(Exception):
@@ -18,7 +18,7 @@ class CalledFunctionException(Exception):
 def functionCalled(*args, **kwargs):
     raise CalledFunctionException()
 
-@patch('UML.data.Elements.multiply', side_effect=functionCalled)
+@patch('nimble.data.Elements.multiply', side_effect=functionCalled)
 def test_elementwiseMultiply_callsObjElementsMultiply(mockObj):
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
@@ -57,7 +57,7 @@ def test_elementwiseMultiply_logCount():
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
-@patch('UML.data.Elements.power', side_effect=functionCalled)
+@patch('nimble.data.Elements.power', side_effect=functionCalled)
 def test_elementwisePower_callsObjElementsMultiply(mockObj):
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]

@@ -14,8 +14,8 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
-from UML.logger import handleLogging
-from UML.exceptions import ImproperObjectAction
+from nimble.logger import handleLogging
+from nimble.exceptions import ImproperObjectAction
 
 class Points(object):
     """

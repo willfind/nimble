@@ -6,15 +6,15 @@ import six
 from six.moves import range
 from nose.tools import raises
 
-import UML as nimble
-from UML import createData
-from UML import train
-from UML import trainAndApply
-from UML import trainAndTest
-from UML.calculate import fractionIncorrect
-from UML.randomness import pythonRandom
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
+import nimble
+from nimble import createData
+from nimble import train
+from nimble import trainAndApply
+from nimble import trainAndTest
+from nimble.calculate import fractionIncorrect
+from nimble.randomness import pythonRandom
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
 
 def test_trainAndApply_dataInputs():
@@ -460,7 +460,7 @@ class CVWasCalledException(Exception):
 def cvBackgroundCheck(*args, **kwargs):
     raise CVWasCalledException()
 
-@mock.patch('UML.uml.crossValidate', cvBackgroundCheck)
+@mock.patch('nimble.crossValidate', cvBackgroundCheck)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]

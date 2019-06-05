@@ -11,9 +11,9 @@ import math
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.randomness import numpyRandom
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.randomness import numpyRandom
 
 
 def detectBestResult(functionToCheck):

@@ -5,7 +5,7 @@ from functools import wraps
 import six
 import numpy
 
-import UML as nimble
+import nimble
 
 def objConstructorMaker(returnType):
     """

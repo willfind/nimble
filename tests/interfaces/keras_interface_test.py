@@ -10,10 +10,10 @@ from __future__ import absolute_import
 import numpy as np
 from nose.tools import raises
 
-import UML as nimble
-from UML import createData
-from UML.interfaces.keras_interface import Keras
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble import createData
+from nimble.interfaces.keras_interface import Keras
+from nimble.exceptions import InvalidArgumentValue
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 

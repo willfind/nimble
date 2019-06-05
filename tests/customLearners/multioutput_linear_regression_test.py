@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-import UML as nimble
-from UML.customLearners.multioutput_linear_regression import MultiOutputLinearRegression
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.customLearners.multioutput_linear_regression import MultiOutputLinearRegression
+from nimble.configuration import configSafetyWrapper
 
 # test for failure to import?
 

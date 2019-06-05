@@ -29,20 +29,20 @@ import numpy
 from nose.tools import *
 from six.moves import map
 
-import UML as nimble
-from UML import match
-from UML import createData
-from UML.data import List
-from UML.data import Matrix
-from UML.data import DataFrame
-from UML.data import Sparse
-from UML.data import BaseView
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentTypeCombination
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction
-from UML.randomness import numpyRandom
+import nimble
+from nimble import match
+from nimble import createData
+from nimble.data import List
+from nimble.data import Matrix
+from nimble.data import DataFrame
+from nimble.data import Sparse
+from nimble.data import BaseView
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentTypeCombination
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
+from nimble.randomness import numpyRandom
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
@@ -619,13 +619,13 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.Base.copy', calledException)
+    @mock.patch('nimble.data.Base.copy', calledException)
     def test_copy__copy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.copy(toTest)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.Base.copy', calledException)
+    @mock.patch('nimble.data.Base.copy', calledException)
     def test_copy__deepcopy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.deepcopy(toTest)
@@ -635,7 +635,7 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -1403,7 +1403,7 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_copy_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -2349,12 +2349,12 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
     def test_init_pointNames_calls_valuesToPythonList(self, mockFunc):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
     def test_init_featureNames_calls_valuesToPythonList(self, mockFunc):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -3471,7 +3471,7 @@ class StructureModifying(StructureShared):
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -4255,7 +4255,7 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_extract_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -4929,7 +4929,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -5569,7 +5569,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_delete_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -6117,7 +6117,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_retain_calls_constructIndicesList(self, mockFunc):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
@@ -6803,7 +6803,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_retain_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7515,7 +7515,7 @@ class StructureModifying(StructureShared):
         origObj.points.transform(emitLower)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -7652,7 +7652,7 @@ class StructureModifying(StructureShared):
         origObj.features.transform(None)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_transform_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7762,7 +7762,7 @@ class StructureModifying(StructureShared):
     ##########################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_transform_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -7772,7 +7772,7 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_transform_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 

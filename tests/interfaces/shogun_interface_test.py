@@ -15,11 +15,11 @@ import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
 
-import UML as nimble
-from UML.randomness import numpyRandom
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.interfaces.interface_helpers import PythonSearcher
+import nimble
+from nimble.randomness import numpyRandom
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.interfaces.interface_helpers import PythonSearcher
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

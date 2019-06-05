@@ -15,20 +15,20 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 from six.moves import range
 
-import UML as nimble
-from UML import crossValidate
-from UML import createData
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction
-from UML.calculate import *
-from UML.randomness import pythonRandom
-from UML.helpers import computeMetrics
-from UML.helpers import generateClassificationData
-from UML.helpers import KFoldCrossValidator
-from UML.helpers import CV
-from UML.customLearners import CustomLearner
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble import crossValidate
+from nimble import createData
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
+from nimble.calculate import *
+from nimble.randomness import pythonRandom
+from nimble.helpers import computeMetrics
+from nimble.helpers import generateClassificationData
+from nimble.helpers import KFoldCrossValidator
+from nimble.helpers import CV
+from nimble.customLearners import CustomLearner
+from nimble.configuration import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 
 

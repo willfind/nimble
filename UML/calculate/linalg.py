@@ -7,8 +7,8 @@ import re
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, \
+import nimble
+from nimble.exceptions import InvalidArgumentType, \
     InvalidArgumentValue, \
     InvalidArgumentValueCombination
 

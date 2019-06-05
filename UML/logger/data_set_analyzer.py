@@ -13,8 +13,8 @@ import math
 import six
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValueCombination
+import nimble
+from nimble.exceptions import InvalidArgumentValueCombination
 from .tableString import tableString
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):

@@ -12,11 +12,11 @@ except:
 from nose.tools import *
 from nose.plugins.attrib import attr
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue, InvalidArgumentType
-from UML.exceptions import FileFormatException
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.helpers import _intFloatOrString
+import nimble
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import FileFormatException
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.helpers import _intFloatOrString
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 

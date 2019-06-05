@@ -29,9 +29,9 @@ import importlib
 import six
 from six.moves import configparser
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
 
 currentFile = inspect.getfile(inspect.currentframe())
 nimblePath = os.path.dirname(os.path.abspath(currentFile))

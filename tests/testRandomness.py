@@ -10,16 +10,16 @@ from six.moves import range
 import numpy
 import nose
 
-import UML as nimble
-import UML.randomness
-from UML.randomness import pythonRandom
-from UML.randomness import numpyRandom
+import nimble
+import nimble.randomness
+from nimble.randomness import pythonRandom
+from nimble.randomness import numpyRandom
 from .assertionHelpers import logCountAssertionFactory
 
 
 @nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def testSetRandomSeedExplicit():
-    """ Test nimble.setRandomSeed yields uml accessible random objects with the correct random behavior """
+    """ Test nimble.setRandomSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
     expNp = numpy.random.RandomState(1333)
     nimble.setRandomSeed(1333)

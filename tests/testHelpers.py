@@ -8,28 +8,28 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 from six.moves import range
 
-import UML as nimble
-from UML import learnerType
-from UML import createData
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction
-from UML.helpers import extractWinningPredictionLabel
-from UML.helpers import generateAllPairs
-from UML.helpers import findBestInterface
-from UML.helpers import FoldIterator
-from UML.helpers import sumAbsoluteDifference
-from UML.helpers import generateClusteredPoints
-from UML.helpers import trainAndTestOneVsOne
-from UML.helpers import trainAndApplyOneVsOne
-from UML.helpers import trainAndApplyOneVsAll
-from UML.helpers import _mergeArguments
-from UML.helpers import computeMetrics
-from UML.helpers import inspectArguments
-from UML.calculate import rootMeanSquareError
-from UML.calculate import meanAbsoluteError
-from UML.calculate import fractionIncorrect
-from UML.randomness import pythonRandom
+import nimble
+from nimble import learnerType
+from nimble import createData
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
+from nimble.helpers import extractWinningPredictionLabel
+from nimble.helpers import generateAllPairs
+from nimble.helpers import findBestInterface
+from nimble.helpers import FoldIterator
+from nimble.helpers import sumAbsoluteDifference
+from nimble.helpers import generateClusteredPoints
+from nimble.helpers import trainAndTestOneVsOne
+from nimble.helpers import trainAndApplyOneVsOne
+from nimble.helpers import trainAndApplyOneVsAll
+from nimble.helpers import _mergeArguments
+from nimble.helpers import computeMetrics
+from nimble.helpers import inspectArguments
+from nimble.calculate import rootMeanSquareError
+from nimble.calculate import meanAbsoluteError
+from nimble.calculate import fractionIncorrect
+from nimble.randomness import pythonRandom
 
 ##########
 # TESTER #

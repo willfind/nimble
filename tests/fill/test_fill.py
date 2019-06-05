@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
-import UML as nimble
-from UML import fill
-from UML import match
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+import nimble
+from nimble import fill
+from nimble import match
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected

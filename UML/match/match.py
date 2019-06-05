@@ -6,8 +6,8 @@ from __future__ import absolute_import
 import numpy
 import six
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.exceptions import InvalidArgumentValue
 
 def missing(value):
     """

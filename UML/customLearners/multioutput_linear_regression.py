@@ -12,8 +12,8 @@ try:
 except ImportError:
     imported = False
 
-import UML as nimble
-from UML.customLearners import CustomLearner
+import nimble
+from nimble.customLearners import CustomLearner
 
 
 class MultiOutputLinearRegression(CustomLearner):

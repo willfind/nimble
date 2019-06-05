@@ -15,13 +15,13 @@ import sys
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.interface_helpers import PythonSearcher
-from UML.interfaces.interface_helpers import removeFromTailMatchedLists
-from UML.helpers import inspectArguments
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
+from nimble.helpers import inspectArguments
+from nimble.docHelpers import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -292,7 +292,7 @@ class Mlpy(UniversalInterface):
         # use patch if necessary
         patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
         if learnerName in patchedLearners:
-            patchModule = importlib.import_module("UML.interfaces.mlpy_patches")
+            patchModule = importlib.import_module("nimble.interfaces.mlpy_patches")
             initLearner = getattr(patchModule, learnerName)
         else:
             initLearner = self.findCallable(learnerName)

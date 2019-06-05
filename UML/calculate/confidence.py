@@ -3,8 +3,8 @@ import math
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import ImproperObjectAction, PackageException
+import nimble
+from nimble.exceptions import ImproperObjectAction, PackageException
 
 scipy = nimble.importModule('scipy.stats')
 

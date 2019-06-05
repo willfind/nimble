@@ -6,9 +6,9 @@ datasets.
 
 from __future__ import absolute_import
 
-from UML import trainAndApply
-from UML import normalizeData
-from UML import createData
+from nimble import trainAndApply
+from nimble import normalizeData
+from nimble import createData
 
 if __name__ == "__main__":
 

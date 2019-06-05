@@ -20,13 +20,13 @@ from six.moves import range
 from nose.tools import raises
 from nose.tools import assert_almost_equal
 
-import UML as nimble
-from UML import createData
-from UML.calculate import standardDeviation
-from UML.calculate import quartiles
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination, PackageException
-from UML.helpers import generateRegressionData
+import nimble
+from nimble import createData
+from nimble.calculate import standardDeviation
+from nimble.calculate import quartiles
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.helpers import generateRegressionData
 from ..assertionHelpers import noLogEntryExpected
 
 def testStDev():
@@ -260,7 +260,7 @@ def testIsNumericalPoint():
 # residuals #
 #############
 @raises(PackageException)
-@mock.patch('UML.calculate.statistic.scipy', new=None)
+@mock.patch('nimble.calculate.statistic.scipy', new=None)
 def test_residuals_exception_sciPyNotInstalled():
     pred = nimble.createData("Matrix", [[2],[3],[4]])
     control = nimble.createData("Matrix", [[2],[3],[4]])

@@ -2,10 +2,10 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.calculate import fractionIncorrect
-from UML.calculate import varianceFractionRemaining
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.calculate import fractionIncorrect
+from nimble.calculate import varianceFractionRemaining
 
 
 def _validatePredictedAsLabels(predictedValues):

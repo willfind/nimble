@@ -8,16 +8,16 @@ from __future__ import absolute_import
 import numpy
 from nose.tools import *
 
-import UML as nimble
-from UML.calculate import cosineSimilarity
-from UML.calculate import detectBestResult
-from UML.calculate import fractionCorrect
-from UML.calculate import fractionIncorrect
-from UML.calculate import meanAbsoluteError
-from UML.calculate import rootMeanSquareError
-from UML.calculate import rSquared
-from UML.calculate import varianceFractionRemaining
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.calculate import cosineSimilarity
+from nimble.calculate import detectBestResult
+from nimble.calculate import fractionCorrect
+from nimble.calculate import fractionIncorrect
+from nimble.calculate import meanAbsoluteError
+from nimble.calculate import rootMeanSquareError
+from nimble.calculate import rSquared
+from nimble.calculate import varianceFractionRemaining
+from nimble.exceptions import InvalidArgumentValue
 from ..assertionHelpers import noLogEntryExpected
 
 ####################

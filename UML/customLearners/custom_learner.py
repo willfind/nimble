@@ -10,7 +10,7 @@ import numpy
 import six
 from six.moves import range
 
-from UML.helpers import inspectArguments
+from nimble.helpers import inspectArguments
 
 
 class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):

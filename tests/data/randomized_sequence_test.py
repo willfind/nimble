@@ -20,11 +20,11 @@ import random
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.data import Base
-from UML.data import BaseView
-from UML.helpers import inspectArguments
-from UML.randomness import pythonRandom
+import nimble
+from nimble.data import Base
+from nimble.data import BaseView
+from nimble.helpers import inspectArguments
+from nimble.randomness import pythonRandom
 
 numberOperations = 100
 numPoints = 4

@@ -13,12 +13,12 @@ from nose.tools import raises
 from nose.plugins.attrib import attr
 #@attr('slow')
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.helpers import generateClusteredPoints
-from UML.helpers import generateClassificationData
-from UML.helpers import generateRegressionData
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.helpers import generateClusteredPoints
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
 
 
 def checkFormat(scores, numLabels):

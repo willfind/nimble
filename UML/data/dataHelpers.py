@@ -15,9 +15,9 @@ import six
 from six.moves import range
 import numpy
 
-import UML as nimble
-from UML import importModule
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+import nimble
+from nimble import importModule
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 
 pd = importModule('pandas')
 

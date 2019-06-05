@@ -5,11 +5,11 @@ Base class for a CustomLearner.
 from __future__ import absolute_import
 import copy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.customLearners import CustomLearner
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.customLearners import CustomLearner
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.docHelpers import inheritDocstringsFactory
 
 
 @inheritDocstringsFactory(UniversalInterface)

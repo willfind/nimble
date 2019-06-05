@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML as nimble
+import nimble
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features

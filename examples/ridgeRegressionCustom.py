@@ -4,9 +4,9 @@ out-of-the-box, custom learner.
 
 """
 
-import UML as nimble
-from UML.calculate import rootMeanSquareError as RMSE
-from UML.randomness import numpyRandom
+import nimble
+from nimble.calculate import rootMeanSquareError as RMSE
+from nimble.randomness import numpyRandom
 
 if __name__ == "__main__":
     # produce some simple linear data

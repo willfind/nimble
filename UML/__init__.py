@@ -30,29 +30,29 @@ from . import logger
 # Import those functions that we want to be accessible in the
 # top level
 from .randomness import setRandomSeed
-from .uml import train
-from .uml import trainAndApply
-from .uml import trainAndTest
-from .uml import trainAndTestOnTrainingData
-from .uml import createData
-from .uml import createRandomData
-from .uml import ones
-from .uml import zeros
-from .uml import identity
-from .uml import normalizeData
-from .uml import registerCustomLearner
-from .uml import registerCustomLearnerAsDefault
-from .uml import deregisterCustomLearner
-from .uml import deregisterCustomLearnerAsDefault
-from .uml import listLearners
-from .uml import learnerParameters
-from .uml import learnerDefaultValues
-from .uml import crossValidate
-from .uml import log
-from .uml import showLog
-from .uml import learnerType
-from .uml import loadData
-from .uml import loadTrainedLearner
+from .core import train
+from .core import trainAndApply
+from .core import trainAndTest
+from .core import trainAndTestOnTrainingData
+from .core import createData
+from .core import createRandomData
+from .core import ones
+from .core import zeros
+from .core import identity
+from .core import normalizeData
+from .core import registerCustomLearner
+from .core import registerCustomLearnerAsDefault
+from .core import deregisterCustomLearner
+from .core import deregisterCustomLearnerAsDefault
+from .core import listLearners
+from .core import learnerParameters
+from .core import learnerDefaultValues
+from .core import crossValidate
+from .core import log
+from .core import showLog
+from .core import learnerType
+from .core import loadData
+from .core import loadTrainedLearner
 from .helpers import CV
 
 capturedErr = tempfile.NamedTemporaryFile()
@@ -66,13 +66,13 @@ settings = configuration.loadSettings()
 # be automatically registered by making surey they have entries in
 # nimble.settings.
 settings.set("RegisteredLearners", "Custom.RidgeRegression",
-             'UML.customLearners.RidgeRegression')
+             'nimble.customLearners.RidgeRegression')
 settings.set("RegisteredLearners", "Custom.KNNClassifier",
-             'UML.customLearners.KNNClassifier')
+             'nimble.customLearners.KNNClassifier')
 settings.set("RegisteredLearners", "Custom.MeanConstant",
-             'UML.customLearners.MeanConstant')
+             'nimble.customLearners.MeanConstant')
 settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
-             'UML.customLearners.MultiOutputRidgeRegression')
+             'nimble.customLearners.MultiOutputRidgeRegression')
 settings.saveChanges("RegisteredLearners")
 
 # register those custom learners listed in nimble.settings

@@ -10,10 +10,10 @@ import os
 
 from nose.tools import raises
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.helpers import generateClassificationData
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.helpers import generateClassificationData
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 

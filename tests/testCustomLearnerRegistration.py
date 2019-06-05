@@ -7,11 +7,11 @@ import numpy
 import copy
 from nose.tools import raises
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.customLearners import CustomLearner
-from UML.customLearners.ridge_regression import RidgeRegression
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.customLearners import CustomLearner
+from nimble.customLearners.ridge_regression import RidgeRegression
+from nimble.configuration import configSafetyWrapper
 from .assertionHelpers import noLogEntryExpected
 
 
@@ -318,8 +318,8 @@ def test_registerCustomLearnerNotWrittenToConfig():
     origConfigSize = os.path.getsize(nimble.settings.path)
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearner("Bar", RidgeRegression)
                 nimble.registerCustomLearner("Baz", UncallableLearner)
@@ -374,8 +374,8 @@ def test_registerCustomLearnerAsDefaultWrittenToConfig():
     origConfigSize = os.path.getsize(nimble.settings.path)
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
@@ -387,7 +387,7 @@ def test_registerCustomLearnerAsDefaultWrittenToConfig():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
@@ -427,8 +427,8 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
     origConfigSize = os.path.getsize(nimble.settings.path)
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
@@ -440,7 +440,7 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
@@ -489,8 +489,8 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
         tmpConfig.close()
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearner("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
@@ -510,7 +510,7 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
         fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
         assert fooLine not in testLines and fooLine not in origLines
         barLine = 'Bar.RidgeRegression = '
-        barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+        barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
         assert barLine not in testLines and barLine not in origLines
         bazLine = 'Baz.UncallableLearner = '
         bazLine += testLoc + '.UncallableLearner\n'

@@ -8,8 +8,8 @@ from __future__ import division
 
 import numpy
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.exceptions import InvalidArgumentValue
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features

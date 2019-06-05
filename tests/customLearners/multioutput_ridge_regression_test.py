@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import UML as nimble
+import nimble
 
 # test for failure to import?
 

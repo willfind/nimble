@@ -16,22 +16,22 @@ import numpy
 import six
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue, ImproperObjectAction
-from UML.exceptions import PackageException
-from UML.docHelpers import inheritDocstringsFactory
-from UML.exceptions import prettyListString
-from UML.exceptions import prettyDictString
-from UML.interfaces.interface_helpers import (
+import nimble
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import PackageException
+from nimble.docHelpers import inheritDocstringsFactory
+from nimble.exceptions import prettyListString
+from nimble.exceptions import prettyDictString
+from nimble.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
-from UML.logger import handleLogging, startTimer, stopTimer
-from UML.helpers import _mergeArguments
-from UML.helpers import generateAllPairs, countWins, inspectArguments
-from UML.helpers import extractWinningPredictionIndex
-from UML.helpers import extractWinningPredictionLabel
-from UML.helpers import extractWinningPredictionIndexAndScore
+from nimble.logger import handleLogging, startTimer, stopTimer
+from nimble.helpers import _mergeArguments
+from nimble.helpers import generateAllPairs, countWins, inspectArguments
+from nimble.helpers import extractWinningPredictionIndex
+from nimble.helpers import extractWinningPredictionLabel
+from nimble.helpers import extractWinningPredictionIndexAndScore
 
 cloudpickle = nimble.importModule('cloudpickle')
 

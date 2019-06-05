@@ -36,13 +36,13 @@ try:
 except:
     import mock
 
-import UML as nimble
-from UML import match
-from UML import fill
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.randomness import numpyRandom
+import nimble
+from nimble import match
+from nimble import fill
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.randomness import numpyRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -166,7 +166,7 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.points.calculate(returnInvalidObj)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_points_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -366,7 +366,7 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.features.calculate(returnInvalidObj)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.axis.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
     def test_features_calculate_calls_constructIndicesList(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -515,7 +515,7 @@ class HighLevelDataSafe(DataTestObject):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_calculate_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -525,7 +525,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.elements.calculate(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.elements.constructIndicesList', side_effect=calledException)
+    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
     def test_elements_calculate_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 

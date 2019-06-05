@@ -11,13 +11,13 @@ import logging
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.interfaces.interface_helpers import PythonSearcher
-from UML.interfaces.interface_helpers import collectAttributes
-from UML.interfaces.interface_helpers import removeFromTailMatchedLists
-from UML.helpers import inspectArguments
-from UML.docHelpers import inheritDocstringsFactory
+import nimble
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.interfaces.interface_helpers import collectAttributes
+from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
+from nimble.helpers import inspectArguments
+from nimble.docHelpers import inheritDocstringsFactory
 
 
 # Contains path to keras root directory

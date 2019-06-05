@@ -12,11 +12,11 @@ from math import sqrt
 import numpy
 from six.moves import range
 
-import UML as nimble
-from UML.data import Base
-from UML.data import Matrix
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
+import nimble
+from nimble.data import Base
+from nimble.data import Matrix
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 
 def _validatePredictedAsLabels(predictedValues):
     if not isinstance(predictedValues, nimble.data.Base):

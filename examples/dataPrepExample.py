@@ -7,9 +7,9 @@ set (aka Adult).
 import sys
 import os.path
 
-import UML as nimble
-from UML import createData
-from UML import match
+import nimble
+from nimble import createData
+from nimble import match
 
 if __name__ == "__main__":
     # string manipulation to get and make paths

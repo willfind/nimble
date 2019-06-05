@@ -5,8 +5,8 @@ Defines a decorator object to help skip tests of missing interfaces
 from unittest.case import SkipTest
 from functools import wraps
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.exceptions import InvalidArgumentValue
 
 class SkipMissing(object):
     """

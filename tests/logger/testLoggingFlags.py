@@ -10,10 +10,10 @@ import tempfile
 from nose.plugins.attrib import attr
 import numpy
 
-import UML as nimble
-from UML.helpers import generateClassificationData
-from UML.calculate import fractionIncorrect
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.helpers import generateClassificationData
+from nimble.calculate import fractionIncorrect
+from nimble.configuration import configSafetyWrapper
 
 learnerName = 'custom.KNNClassifier'
 

@@ -22,11 +22,11 @@ from nose.tools import *
 import six
 from six.moves import range
 
-import UML as nimble
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction
-from UML.randomness import numpyRandom
-from UML.randomness import pythonRandom
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
+from nimble.randomness import numpyRandom
+from nimble.randomness import pythonRandom
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
