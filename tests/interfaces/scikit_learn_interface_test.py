@@ -271,6 +271,7 @@ def getLearnersByType(lType, ignore=[]):
         learnerType = UML.learnerType(toCall(learner))
         if lType == learnerType and learner not in ignore:
             typeMatch.append(learner)
+    assert typeMatch # check not returning an empty list
     return typeMatch
 
 
@@ -282,9 +283,9 @@ def testSciKitLearnClassificationLearners():
     trainX = abs(data[0][0])
     trainY = abs(data[0][1])
     testX = abs(data[1][0])
-    Xtrain = trainX.data
-    Ytrain = trainY.data
-    Xtest = testX.data
+    Xtrain = trainX.copy('numpy array')
+    Ytrain = trainY.copy('numpy array')
+    Xtest = testX.copy('numpy array')
 
     learners = getLearnersByType('classification')
 
@@ -323,9 +324,9 @@ def testSciKitLearnRegressionLearners():
     Ytrain = trainY.data
     Xtest = testX.data
 
-    ignore = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV',   # special cases, tested elsewhere
-              'MultiTaskLasso', 'MultiTaskLassoCV',]
-    learners = getLearnersByType('regression', ignore)
+    regressors = getLearnersByType('regression')
+    learners = [r for r in regressors if 'MultiTask' not in r]
+    assert learners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
@@ -367,7 +368,9 @@ def testSciKitLearnMultiTaskRegressionLearners():
     trainYObj = UML.createData('Matrix', trainY, useLog=False)
     testXObj = UML.createData('Matrix', testX, useLog=False)
 
-    multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV']
+    regressors = getLearnersByType('regression')
+    multiTaskLearners = [r for r in regressors if 'MultiTask' in r]
+    assert multiTaskLearners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
@@ -439,12 +442,13 @@ def testSciKitLearnOtherPredictLearners():
     Ytrain = trainY.data
     Xtest = testX.data
 
-    ignore = ['TSNE', 'MDS', 'SpectralEmbedding',] # special cases, tested elsewhere
-    learners = getLearnersByType('other', ignore)
+    skl = SciKitLearn()
+    predictors = getLearnersByType('other')
+    learners = [p for p in predictors if hasattr(skl.findCallable(p), 'predict')]
+    assert learners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = UML.randomness.generateSubsidiarySeed()
@@ -470,19 +474,11 @@ def testSciKitLearnOtherPredictLearners():
 @sklSkipDec
 @attr('slow')
 def testSciKitLearnTransformationLearners():
-
-    data = generateClassificationData(2, 20, 10)
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    Xtrain = trainX.data
-    Ytrain = trainY.data
-
-    ignore = ['GaussianRandomProjection', 'SparseRandomProjection',   # special cases, tested elsewhere
-              'MiniBatchSparsePCA', 'SparsePCA', 'NMF', 'FastICA', 'Isomap', 'VarianceThreshold']
+    ignore = ['MiniBatchSparsePCA', 'SparsePCA'] # tested elsewhere
     learners = getLearnersByType('transformation', ignore)
 
     @logCountAssertionFactory(3)
-    def compareOutputs(learner):
+    def compareDualInputOutputs(learner):
         skl = SciKitLearn()
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
@@ -502,19 +498,8 @@ def testSciKitLearnTransformationLearners():
 
         equalityAssertHelper(transSKL, transUML, transSL)
 
-    for learner in learners:
-        compareOutputs(learner)
-
-@sklSkipDec
-@attr('slow')
-def testSciKitLearnRandomProjectionTransformation():
-    trainX = UML.createRandomData('Matrix', 10, 5000, 0.98)
-    Xtrain = trainX.data
-
-    learners = ['GaussianRandomProjection', 'SparseRandomProjection',]
-
     @logCountAssertionFactory(3)
-    def compareOutputs(learner):
+    def compareSingleInputOutputs(learner):
         skl = SciKitLearn()
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
@@ -533,8 +518,25 @@ def testSciKitLearnRandomProjectionTransformation():
 
         equalityAssertHelper(transSKL, transUML, transSL)
 
+    data = generateClassificationData(2, 20, 10)
     for learner in learners:
-        compareOutputs(learner)
+        trainX = abs(data[0][0])
+        trainY = abs(data[0][1])
+        Xtrain = trainX.data
+        Ytrain = trainY.data
+        try:
+            # fit(X, y)
+            compareDualInputOutputs(learner)
+        except (TypeError, ValueError):
+            try:
+                # fit(X)
+                compareSingleInputOutputs(learner)
+            except ValueError:
+                # GaussianRandomProjection, SparseRandomProjection,
+                trainX = UML.createRandomData('Matrix', 10, 5000, 0.98)
+                Xtrain = trainX.data
+                compareSingleInputOutputs(learner)
+
 
 @sklSkipDec
 @attr('slow')
@@ -573,17 +575,19 @@ def testSciKitLearnSparsePCATransformation():
 
 @sklSkipDec
 @attr('slow')
-def testSciKitLearnEmbeddingLearners():
+def testSciKitLearnOtherFitTransformLearners():
     data = generateClassificationData(2, 20, 10)
     trainX = abs(data[0][0])
     Xtrain = trainX.data
 
-    learners = ['TSNE', 'MDS', 'SpectralEmbedding',]
 
+    skl = SciKitLearn()
+    transform = getLearnersByType('other')
+    learners = [t for t in transform if hasattr(skl.findCallable(t), 'fit_transform')]
+    assert learners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = UML.randomness.generateSubsidiarySeed()
@@ -593,38 +597,6 @@ def testSciKitLearnEmbeddingLearners():
             sciKitLearnObj.set_params(**arguments)
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
-        transSKL = UML.createData('Matrix', transSKL, useLog=False)
-
-        TL = UML.train(toCall(learner), trainX, arguments=arguments)
-        transUML = TL.apply(trainX)
-        transSL = _apply_saveLoad(TL, trainX)
-
-        equalityAssertHelper(transSKL, transUML, transSL)
-
-    for learner in learners:
-        compareOutputs(learner)
-
-
-@sklSkipDec
-def testSciKitLearnTransformationDataInputIssues():
-    # must be non-negative matrix
-    Xtrain = [[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]]
-    trainX = UML.createData('Matrix', Xtrain)
-
-    learners = ['NMF', 'FastICA', 'Isomap', 'VarianceThreshold',]
-
-    @logCountAssertionFactory(3)
-    def compareOutputs(learner):
-        skl = SciKitLearn()
-        sklObj = skl.findCallable(learner)
-        sciKitLearnObj = sklObj()
-        seed = UML.randomness.generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
-        sciKitLearnObj.fit(Xtrain)
-        transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL, useLog=False)
 
         TL = UML.train(toCall(learner), trainX, arguments=arguments)
@@ -697,7 +669,7 @@ def testCustomKNNClassficationCompareRandomized():
 @sklSkipDec
 @attr('slow')
 def testGetAttributesCallable():
-    """ Demonstrate getAttribtues will work for each learner (with default params) """
+    """ Demonstrate getAttributes will work for each learner (with default params) """
     cData = generateClassificationData(2, 10, 5)
     ((cTrainX, cTrainY), (cTestX, cTestY)) = cData
     rData = generateRegressionData(2, 10, 5)

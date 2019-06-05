@@ -12,6 +12,9 @@ from __future__ import absolute_import
 import os
 import inspect
 import tempfile
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import UML.configuration
 from UML.configuration import UMLPath

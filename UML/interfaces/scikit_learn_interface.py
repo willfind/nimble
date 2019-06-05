@@ -9,6 +9,7 @@ import importlib
 import copy
 import sys
 import warnings
+from unittest import mock
 
 import numpy
 from six.moves import range
@@ -52,10 +53,26 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
         self._versionSplit = list(map(int, version.split('.')))
 
         from sklearn.utils.testing import all_estimators
-        all_estimators = all_estimators()
+        import pkgutil
+        pkgutil.walk_packages_ = pkgutil.walk_packages
+        def mockWalkPackages(*args, **kwargs):
+            packages = pkgutil.walk_packages_(*args, **kwargs)
+            return [pkg for pkg in packages if not 'conftest' in pkg[1]]
+
+        with mock.patch('pkgutil.walk_packages', mockWalkPackages):
+            all_estimators = all_estimators()
+
         self.allEstimators = {}
         for name, obj in all_estimators:
-            # all_estimators includes some without predict, transform,
+            if name.startswith('_'):
+                continue
+            try:
+                # if object cannot be instantiated without additional
+                # arguments, we cannot support it at this time
+                init = obj()
+            except TypeError:
+                continue
+            # only support learners with a predict, transform,
             # fit_predict or fit_transform, all have fit attribute
             hasPred = hasattr(obj, 'predict')
             hasTrans = hasattr(obj, 'transform')
@@ -91,8 +108,16 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
 
     def _listLearnersBackend(self):
         possibilities = []
-        exclude = ['FeatureAgglomeration', 'LocalOutlierFactor',
-                   'KernelCenterer',]
+        exclude = [
+            'CountVectorizer', 'PatchExtractor', 'TfidfVectorizer',
+            'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',
+            'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+            'FeatureAgglomeration', 'LocalOutlierFactor',
+            # the above do not take the standard X, [y] inputs
+            'KernelCenterer', # fit takes K param not X
+            'LassoLarsIC', # modifies original data
+            'IsotonicRegression', # requires 1D input data
+            ]
 
         for name in self.allEstimators.keys():
             if name not in exclude:
