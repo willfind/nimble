@@ -4,14 +4,14 @@ Tests functionality that is limited only to View objects.
 
 from __future__ import absolute_import
 
-import UML
-from UML.data import Base, BaseView
-from UML.data.points import Points
-from UML.data.points_view import PointsView
-from UML.data.features import Features
-from UML.data.features_view import FeaturesView
-from UML.data.elements import Elements
-from UML.data.elements_view import ElementsView
+import nimble
+from nimble.data import Base, BaseView
+from nimble.data.points import Points
+from nimble.data.points_view import PointsView
+from nimble.data.features import Features
+from nimble.data.features_view import FeaturesView
+from nimble.data.elements import Elements
+from nimble.data.elements_view import ElementsView
 from .baseObject import DataTestObject
 
 
@@ -107,7 +107,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.fillUsingAllData(0, UML.fill.kNeighborsClassifier)
+            testObject.fillUsingAllData(0, nimble.fill.kNeighborsClassifier)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

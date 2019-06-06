@@ -7,11 +7,11 @@ import numpy
 import copy
 from nose.tools import raises
 
-import UML
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.customLearners import CustomLearner
-from UML.customLearners.ridge_regression import RidgeRegression
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.customLearners import CustomLearner
+from nimble.customLearners.ridge_regression import RidgeRegression
+from nimble.configuration import configSafetyWrapper
 from .assertionHelpers import noLogEntryExpected
 
 
@@ -30,7 +30,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
         ret = []
         for point in testX.points:
             ret.append([self.prediction])
-        return UML.createData("Matrix", ret)
+        return nimble.createData("Matrix", ret)
 
     def getScores(self, testX):
         ret = []
@@ -42,7 +42,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
                 else:
                     currScores.append(0)
             ret.append(currScores)
-        return UML.createData("Matrix", ret)
+        return nimble.createData("Matrix", ret)
 
     @classmethod
     def options(cls):
@@ -67,14 +67,14 @@ class UncallableLearner(CustomLearner):
 @configSafetyWrapper
 def testCustomPackageNameCollision():
     """ Test registerCustomLearner raises an exception when the given name collides with a real package """
-    avail = UML.interfaces.available
+    avail = nimble.interfaces.available
     nonCustom = None
     for inter in avail:
-        if not isinstance(inter, UML.interfaces.CustomLearnerInterface):
+        if not isinstance(inter, nimble.interfaces.CustomLearnerInterface):
             nonCustom = inter
             break
     if nonCustom is not None:
-        UML.registerCustomLearner(nonCustom.getCanonicalName(), LoveAtFirstSightClassifier)
+        nimble.registerCustomLearner(nonCustom.getCanonicalName(), LoveAtFirstSightClassifier)
     else:
         raise InvalidArgumentValue("Can't test, just pass")
 
@@ -83,14 +83,14 @@ def testCustomPackageNameCollision():
 @configSafetyWrapper
 def testDeregisterBogusPackageName():
     """ Test deregisterCustomLearner raises an exception when passed a bogus customPackageName """
-    UML.deregisterCustomLearner("BozoPackage", 'ClownClassifier')
+    nimble.deregisterCustomLearner("BozoPackage", 'ClownClassifier')
 
 
 @raises(InvalidArgumentType)
 @configSafetyWrapper
 def testDeregisterFromNonCustom():
     """ Test deregisterCustomLearner raises an exception when trying to deregister from a non-custom interface """
-    UML.deregisterCustomLearner("Mlpy", 'KNN')
+    nimble.deregisterCustomLearner("Mlpy", 'KNN')
 
 
 @raises(InvalidArgumentValue)
@@ -98,15 +98,15 @@ def testDeregisterFromNonCustom():
 def testDeregisterBogusLearnerName():
     """ Test deregisterCustomLearner raises an exception when passed a bogus learnerName """
     #save state before registration, to check against final state
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
     try:
-        UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-        UML.deregisterCustomLearner("Foo", 'BogusNameLearner')
+        nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+        nimble.deregisterCustomLearner("Foo", 'BogusNameLearner')
         # should never get to here
         assert False
     finally:
-        UML.deregisterCustomLearner("Foo", "LoveAtFirstSightClassifier")
-        assert saved == UML.interfaces.available
+        nimble.deregisterCustomLearner("Foo", "LoveAtFirstSightClassifier")
+        assert saved == nimble.interfaces.available
 
 
 @configSafetyWrapper
@@ -114,25 +114,25 @@ def testMultipleCustomPackages():
     """ Test registerCustomLearner correctly instantiates multiple custom packages """
 
     #save state before registration, to check against final state
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
 
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-    UML.registerCustomLearner("Bar", RidgeRegression)
-    UML.registerCustomLearner("Baz", UncallableLearner)
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Bar", RidgeRegression)
+    nimble.registerCustomLearner("Baz", UncallableLearner)
 
-    assert UML.listLearners("Foo") == ["LoveAtFirstSightClassifier"]
-    assert UML.listLearners("Bar") == ["RidgeRegression"]
-    assert UML.listLearners("Baz") == ["UncallableLearner"]
+    assert nimble.listLearners("Foo") == ["LoveAtFirstSightClassifier"]
+    assert nimble.listLearners("Bar") == ["RidgeRegression"]
+    assert nimble.listLearners("Baz") == ["UncallableLearner"]
 
-    assert UML.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
-    assert UML.learnerParameters("Bar.RidgeRegression") == [['lamb']]
-    assert UML.learnerParameters("Baz.UncallableLearner") == [['foo']]
+    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
+    assert nimble.learnerParameters("Bar.RidgeRegression") == [['lamb']]
+    assert nimble.learnerParameters("Baz.UncallableLearner") == [['foo']]
 
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
-    UML.deregisterCustomLearner("Bar", 'RidgeRegression')
-    UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.deregisterCustomLearner("Bar", 'RidgeRegression')
+    nimble.deregisterCustomLearner("Baz", 'UncallableLearner')
 
-    assert saved == UML.interfaces.available
+    assert saved == nimble.interfaces.available
 
 
 @configSafetyWrapper
@@ -141,109 +141,109 @@ def testMultipleLearnersSinglePackage():
     #TODO test is not isolated from above.
 
     #save state before registration, to check against final state
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
 
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-    UML.registerCustomLearner("Foo", RidgeRegression)
-    UML.registerCustomLearner("Foo", UncallableLearner)
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Foo", RidgeRegression)
+    nimble.registerCustomLearner("Foo", UncallableLearner)
 
-    learners = UML.listLearners("Foo")
+    learners = nimble.listLearners("Foo")
     assert len(learners) == 3
     assert "LoveAtFirstSightClassifier" in learners
     assert "RidgeRegression" in learners
     assert "UncallableLearner" in learners
 
-    assert UML.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
-    assert UML.learnerParameters("Foo.RidgeRegression") == [['lamb']]
-    assert UML.learnerParameters("Foo.UncallableLearner") == [['foo']]
+    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
+    assert nimble.learnerParameters("Foo.RidgeRegression") == [['lamb']]
+    assert nimble.learnerParameters("Foo.UncallableLearner") == [['foo']]
 
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
-    learners = UML.listLearners("Foo")
+    learners = nimble.listLearners("Foo")
     assert len(learners) == 2
     assert "RidgeRegression" in learners
     assert "UncallableLearner" in learners
 
-    UML.deregisterCustomLearner("Foo", 'RidgeRegression')
-    UML.deregisterCustomLearner("Foo", 'UncallableLearner')
+    nimble.deregisterCustomLearner("Foo", 'RidgeRegression')
+    nimble.deregisterCustomLearner("Foo", 'UncallableLearner')
 
-    assert saved == UML.interfaces.available
+    assert saved == nimble.interfaces.available
 
 
 @configSafetyWrapper
 def testEffectToSettings():
-    """ Test that (de)registering is correctly recorded by UML.settings """
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    """ Test that (de)registering is correctly recorded by nimble.settings """
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     regSec = 'RegisteredLearners'
     opName = 'Foo.LoveAtFirstSightClassifier'
     opValue = 'tests.testCustomLearnerRegistration.'
     opValue += 'LoveAtFirstSightClassifier'
 
     # check that it is listed immediately
-    assert UML.settings.get(regSec, opName) == opValue
+    assert nimble.settings.get(regSec, opName) == opValue
 
     # check that it is *not* recorded to file
-    tempSettings = UML.configuration.loadSettings()
+    tempSettings = nimble.configuration.loadSettings()
     try:
         assert tempSettings.get(regSec, opName) == opValue
         assert False  # expected NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
 
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
     # check that deregistration removed the entry in the
     # RegisteredLearners section
     try:
-        assert UML.settings.get(regSec, opName) == opValue
+        assert nimble.settings.get(regSec, opName) == opValue
         assert False
     except six.moves.configparser.NoOptionError:
         pass
 
 # test that registering a sample custom learner with option names
-# will affect UML.settings but not the config file
+# will affect nimble.settings but not the config file
 @configSafetyWrapper
 def testRegisterLearnerWithOptionNames():
     """ Test the availability of a custom learner's options """
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
     learnerName = 'LoveAtFirstSightClassifier'
 
-    assert UML.settings.get('Foo', learnerName + '.option') == ""
-    with open(UML.settings.path) as config:
+    assert nimble.settings.get('Foo', learnerName + '.option') == ""
+    with open(nimble.settings.path) as config:
         for line in config.readlines():
             assert 'Foo' not in line
 
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
 
 # test what happens when you deregister a custom learner that has
-# in memory changes to its options in UML.settings
+# in memory changes to its options in nimble.settings
 @configSafetyWrapper
 def testDeregisterWithSettingsChanges():
     """ Safety check: unsaved options discarded after deregistration """
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-    UML.registerCustomLearner("Foo", UncallableLearner)
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Foo", UncallableLearner)
 
     loveName = 'LoveAtFirstSightClassifier'
     uncallName = 'UncallableLearner'
-    UML.settings.set('Foo', loveName + '.option', "hello")
-    UML.settings.set('Foo', uncallName + '.option', "goodbye")
-    assert UML.settings.get('Foo', loveName + '.option') == "hello"
+    nimble.settings.set('Foo', loveName + '.option', "hello")
+    nimble.settings.set('Foo', uncallName + '.option', "goodbye")
+    assert nimble.settings.get('Foo', loveName + '.option') == "hello"
 
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
     # should no longer have options for that learner in foo
     try:
-        UML.settings.get('Foo', loveName + '.option')
+        nimble.settings.get('Foo', loveName + '.option')
         assert False
     except six.moves.configparser.NoOptionError:
         pass
 
-    UML.deregisterCustomLearner("Foo", 'UncallableLearner')
+    nimble.deregisterCustomLearner("Foo", 'UncallableLearner')
 
     # should no longer have a section for foo
     try:
-        UML.settings.get('Foo', loveName + '.option')
+        nimble.settings.get('Foo', loveName + '.option')
         assert False
     except six.moves.configparser.NoSectionError:
         pass
@@ -254,21 +254,21 @@ def test_settings_autoRegister():
     """ Test that the auto registration helper correctly registers learners """
     # establish that this custom package does not currently exist
     try:
-        fooInt = UML.helpers.findBestInterface('Foo')
+        fooInt = nimble.helpers.findBestInterface('Foo')
         assert False
     except InvalidArgumentValue:
         pass
 
-    # make changes to UML.settings
+    # make changes to nimble.settings
     name = 'Foo.LoveAtFirstSightClassifier'
     value = LoveAtFirstSightClassifier.__module__ + '.' + 'LoveAtFirstSightClassifier'
-    UML.settings.set("RegisteredLearners", name, value)
+    nimble.settings.set("RegisteredLearners", name, value)
 
     # call helper
-    UML.helpers.autoRegisterFromSettings()
+    nimble.configuration.autoRegisterFromSettings()
 
-    # check that correct learners are available through UML.interfaces.available
-    assert 'LoveAtFirstSightClassifier' in UML.listLearners('Foo')
+    # check that correct learners are available through nimble.interfaces.available
+    assert 'LoveAtFirstSightClassifier' in nimble.listLearners('Foo')
 
 
 @configSafetyWrapper
@@ -277,52 +277,52 @@ def test_settings_autoRegister_safety():
 
     name = "Foo.Bar"
     value = "Bogus.Attribute"
-    UML.settings.set("RegisteredLearners", name, value)
+    nimble.settings.set("RegisteredLearners", name, value)
 
     # should throw warning, not exception
-    UML.helpers.autoRegisterFromSettings()
+    nimble.configuration.autoRegisterFromSettings()
 
 @configSafetyWrapper
 @noLogEntryExpected
 def test_logCount():
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
 
-    UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-    lst = UML.listLearners("Foo")
-    params = UML.learnerParameters("Foo.LoveAtFirstSightClassifier")
-    defaults = UML.learnerDefaultValues("Foo.LoveAtFirstSightClassifier")
-    lType = UML.learnerType("Foo.LoveAtFirstSightClassifier")
-    UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+    nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+    lst = nimble.listLearners("Foo")
+    params = nimble.learnerParameters("Foo.LoveAtFirstSightClassifier")
+    defaults = nimble.learnerDefaultValues("Foo.LoveAtFirstSightClassifier")
+    lType = nimble.learnerType("Foo.LoveAtFirstSightClassifier")
+    nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 
-    UML.registerCustomLearnerAsDefault("Bar", UncallableLearner)
-    lst = UML.listLearners("Bar")
-    params = UML.learnerParameters("Bar.UncallableLearner")
-    defaults = UML.learnerDefaultValues("Bar.UncallableLearner")
-    lType = UML.learnerType("Bar.UncallableLearner")
-    UML.deregisterCustomLearnerAsDefault("Bar", 'UncallableLearner')
+    nimble.registerCustomLearnerAsDefault("Bar", UncallableLearner)
+    lst = nimble.listLearners("Bar")
+    params = nimble.learnerParameters("Bar.UncallableLearner")
+    defaults = nimble.learnerDefaultValues("Bar.UncallableLearner")
+    lType = nimble.learnerType("Bar.UncallableLearner")
+    nimble.deregisterCustomLearnerAsDefault("Bar", 'UncallableLearner')
 
-    assert saved == UML.interfaces.available
+    assert saved == nimble.interfaces.available
 
 
 # case 1: register new learner NOT as default
 @configSafetyWrapper
 def test_registerCustomLearnerNotWrittenToConfig():
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
     tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
     # copy current config to tmpConfig
-    with open(UML.settings.path, 'r') as config:
+    with open(nimble.settings.path, 'r') as config:
         origLines = config.readlines()
         for line in origLines:
             tmpConfig.write(line)
         tmpConfig.close()
-    origConfigSize = os.path.getsize(UML.settings.path)
+    origConfigSize = os.path.getsize(nimble.settings.path)
     try:
-        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
-                UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-                UML.registerCustomLearner("Bar", RidgeRegression)
-                UML.registerCustomLearner("Baz", UncallableLearner)
+        newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
+                nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+                nimble.registerCustomLearner("Bar", RidgeRegression)
+                nimble.registerCustomLearner("Baz", UncallableLearner)
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     registeredLines = testConfig.readlines()
@@ -331,54 +331,54 @@ def test_registerCustomLearnerNotWrittenToConfig():
                 regLearners = ['Foo.LoveAtFirstSightClassifier', 'Bar.RidgeRegression',
                                'Baz.UncallableLearner']
                 for learner in regLearners:
-                    assert learner in UML.settings.changes['RegisteredLearners']
+                    assert learner in nimble.settings.changes['RegisteredLearners']
 
                 # these two also have configurable options that should be
                 # reflected in the settings
                 opt1 = "LoveAtFirstSightClassifier.option"
                 opt2 = "UncallableLearner.option"
-                assert UML.settings.get("Foo", opt1) == ""
-                assert UML.settings.get("Baz", opt2) == ""
+                assert nimble.settings.get("Foo", opt1) == ""
+                assert nimble.settings.get("Baz", opt2) == ""
 
                 assert os.path.getsize(tmpConfig.name) == origConfigSize
                 assert registeredLines == origLines
 
-                UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
-                UML.deregisterCustomLearner("Bar", 'RidgeRegression')
-                UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+                nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+                nimble.deregisterCustomLearner("Bar", 'RidgeRegression')
+                nimble.deregisterCustomLearner("Baz", 'UncallableLearner')
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     deregisteredLines = testConfig.readlines()
 
                 # learners ToDelete in changes and removed from config
                 for learner in regLearners:
-                    learnerObj = UML.settings.changes['RegisteredLearners'][learner]
-                    assert isinstance(learnerObj, UML.configuration.ToDelete)
+                    learnerObj = nimble.settings.changes['RegisteredLearners'][learner]
+                    assert isinstance(learnerObj, nimble.configuration.ToDelete)
                 assert os.path.getsize(tmpConfig.name) == origConfigSize
                 assert deregisteredLines == origLines
     finally:
         os.unlink(tmpConfig.name)
-        assert saved == UML.interfaces.available
+        assert saved == nimble.interfaces.available
 
 
 # case 2: register new learner as default
 @configSafetyWrapper
 def test_registerCustomLearnerAsDefaultWrittenToConfig():
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
     tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
-    with open(UML.settings.path, 'r') as config:
+    with open(nimble.settings.path, 'r') as config:
         origLines = config.readlines()
         for line in origLines:
             tmpConfig.write(line)
         tmpConfig.close()
-    origConfigSize = os.path.getsize(UML.settings.path)
+    origConfigSize = os.path.getsize(nimble.settings.path)
     try:
-        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
-                UML.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
-                UML.registerCustomLearnerAsDefault("Bar", RidgeRegression)
-                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+        newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
+                nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
+                nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
+                nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     registeredLines = testConfig.readlines()
@@ -387,51 +387,51 @@ def test_registerCustomLearnerAsDefaultWrittenToConfig():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
                 # changes should be empty; all learners should be written to config
-                assert UML.settings.changes == {}
+                assert nimble.settings.changes == {}
                 assert registeredLines != origLines
                 for line in [fooLine, barLine, bazLine]:
                     assert line in registeredLines and line not in origLines
 
-                UML.deregisterCustomLearnerAsDefault("Foo", 'LoveAtFirstSightClassifier')
-                UML.deregisterCustomLearnerAsDefault("Bar", 'RidgeRegression')
-                UML.deregisterCustomLearnerAsDefault("Baz", 'UncallableLearner')
+                nimble.deregisterCustomLearnerAsDefault("Foo", 'LoveAtFirstSightClassifier')
+                nimble.deregisterCustomLearnerAsDefault("Bar", 'RidgeRegression')
+                nimble.deregisterCustomLearnerAsDefault("Baz", 'UncallableLearner')
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     deregisteredLines = testConfig.readlines()
 
                 # changes should be empty; all learners removed from config
-                assert UML.settings.changes == {}
+                assert nimble.settings.changes == {}
                 assert deregisteredLines == origLines
                 for line in [fooLine, barLine, bazLine]:
                     assert line not in deregisteredLines and line not in origLines
     finally:
         os.unlink(tmpConfig.name)
-        assert saved == UML.interfaces.available
+        assert saved == nimble.interfaces.available
 
 
 # case 3: register new learner as default and deregister NOT as default
 @configSafetyWrapper
 def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
     tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
-    with open(UML.settings.path, 'r') as config:
+    with open(nimble.settings.path, 'r') as config:
         origLines = config.readlines()
         for line in origLines:
             tmpConfig.write(line)
         tmpConfig.close()
-    origConfigSize = os.path.getsize(UML.settings.path)
+    origConfigSize = os.path.getsize(nimble.settings.path)
     try:
-        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
-                UML.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
-                UML.registerCustomLearnerAsDefault("Bar", RidgeRegression)
-                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+        newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
+                nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
+                nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
+                nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     registeredLines = testConfig.readlines()
@@ -440,19 +440,19 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
                 # changes should be empty; all learners should be written to config
-                assert UML.settings.changes == {}
+                assert nimble.settings.changes == {}
                 assert registeredLines != origLines
                 for line in [fooLine, barLine, bazLine]:
                     assert line in registeredLines and line not in origLines
 
-                UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
-                UML.deregisterCustomLearner("Bar", 'RidgeRegression')
-                UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+                nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+                nimble.deregisterCustomLearner("Bar", 'RidgeRegression')
+                nimble.deregisterCustomLearner("Baz", 'UncallableLearner')
 
                 with open(tmpConfig.name, 'r') as testConfig:
                     deregisteredLines = testConfig.readlines()
@@ -461,8 +461,8 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
                 regLearners = ['Foo.LoveAtFirstSightClassifier', 'Bar.RidgeRegression',
                                'Baz.UncallableLearner']
                 for learner in regLearners:
-                    learnerObj = UML.settings.changes['RegisteredLearners'][learner]
-                    assert isinstance(learnerObj, UML.configuration.ToDelete)
+                    learnerObj = nimble.settings.changes['RegisteredLearners'][learner]
+                    assert isinstance(learnerObj, nimble.configuration.ToDelete)
                 assert os.path.getsize(tmpConfig.name) > origConfigSize
                 assert deregisteredLines == registeredLines
 
@@ -470,38 +470,38 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
                 # even though they are still present in the config file
                 for interface in ['Foo', 'Bar', 'Baz']:
                     try:
-                        UML.listLearners(interface)
+                        nimble.listLearners(interface)
                         assert False # expecting InvalidArgumentValue
                     except InvalidArgumentValue:
                         pass
     finally:
         os.unlink(tmpConfig.name)
-        assert saved == UML.interfaces.available
+        assert saved == nimble.interfaces.available
 
 
 @configSafetyWrapper
 def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
-    saved = copy.copy(UML.interfaces.available)
+    saved = copy.copy(nimble.interfaces.available)
     tmpConfig = tempfile.NamedTemporaryFile('w', suffix='.ini', delete=False)
-    with open(UML.settings.path, 'r') as config:
+    with open(nimble.settings.path, 'r') as config:
         for line in config.readlines():
             tmpConfig.write(line)
         tmpConfig.close()
     try:
-        newSession = UML.configuration.SessionConfiguration(tmpConfig.name)
-        with mock.patch('UML.settings', new=newSession):
-            with mock.patch('UML.interfaces.available', new=[]):
-                UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
-                UML.registerCustomLearner("Bar", RidgeRegression)
-                UML.registerCustomLearnerAsDefault("Baz", UncallableLearner)
+        newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
+        with mock.patch('nimble.settings', new=newSession):
+            with mock.patch('nimble.interfaces.available', new=[]):
+                nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+                nimble.registerCustomLearner("Bar", RidgeRegression)
+                nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
 
-                assert 'Foo.LoveAtFirstSightClassifier' in UML.settings.changes['RegisteredLearners']
-                assert 'Bar.RidgeRegression' in UML.settings.changes['RegisteredLearners']
-                assert 'Baz.UncallableLearner' not in UML.settings.changes['RegisteredLearners']
+                assert 'Foo.LoveAtFirstSightClassifier' in nimble.settings.changes['RegisteredLearners']
+                assert 'Bar.RidgeRegression' in nimble.settings.changes['RegisteredLearners']
+                assert 'Baz.UncallableLearner' not in nimble.settings.changes['RegisteredLearners']
 
         with open(tmpConfig.name, 'r') as testConfig:
             testLines = testConfig.readlines()
-        with open(UML.settings.path, 'r') as origConfig:
+        with open(nimble.settings.path, 'r') as origConfig:
             origLines = origConfig.readlines()
 
         assert testLines != origLines
@@ -510,7 +510,7 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
         fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
         assert fooLine not in testLines and fooLine not in origLines
         barLine = 'Bar.RidgeRegression = '
-        barLine += 'UML.customLearners.ridge_regression.RidgeRegression\n'
+        barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
         assert barLine not in testLines and barLine not in origLines
         bazLine = 'Baz.UncallableLearner = '
         bazLine += testLoc + '.UncallableLearner\n'
@@ -518,4 +518,4 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
 
     finally:
         os.unlink(tmpConfig.name)
-        assert saved == UML.interfaces.available
+        assert saved == nimble.interfaces.available

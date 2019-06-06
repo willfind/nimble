@@ -1,5 +1,5 @@
 """
-Tests to check the loading, writing, and usage of UML.settings, along
+Tests to check the loading, writing, and usage of nimble.settings, along
 with the undlying structures being used.
 """
 
@@ -11,10 +11,10 @@ import os
 from nose.tools import raises
 import six.moves.configparser
 
-import UML
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction
-from UML.configuration import configSafetyWrapper
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
+from nimble.configuration import configSafetyWrapper
 
 
 def fileEqualObjOutput(fp, obj):
@@ -61,7 +61,7 @@ def testSCPCP_simple():
         fp.write(line)
     fp.seek(0)
 
-    obj = UML.configuration.SortedCommentPreservingConfigParser()
+    obj = nimble.configuration.SortedCommentPreservingConfigParser()
     fp = open(fp.name, 'r')
     obj.readfp(fp)
 
@@ -77,7 +77,7 @@ def testSCPCP_newOption():
         fp.write(line)
     fp.seek(0)
 
-    obj = UML.configuration.SortedCommentPreservingConfigParser()
+    obj = nimble.configuration.SortedCommentPreservingConfigParser()
     fp = open(fp.name, 'r')
     obj.readfp(fp)
 
@@ -105,7 +105,7 @@ def testSCPCP_multilineComments():
         fp.write(line)
     fp.seek(0)
 
-    obj = UML.configuration.SortedCommentPreservingConfigParser()
+    obj = nimble.configuration.SortedCommentPreservingConfigParser()
     fp = open(fp.name, 'r')
     obj.readfp(fp)
 
@@ -135,7 +135,7 @@ def testSCPCP_whitespaceIgnored():
         fpSpaced.write(line)
     fpSpaced.seek(0)
 
-    obj = UML.configuration.SortedCommentPreservingConfigParser()
+    obj = nimble.configuration.SortedCommentPreservingConfigParser()
     fpSpaced = open(fpSpaced.name, 'r')
     obj.readfp(fpSpaced)
     fpSpaced.seek(0)
@@ -152,50 +152,50 @@ def testSCPCP_whitespaceIgnored():
 
 
 def test_settings_GetSet():
-    """ Test UML.settings getters and setters """
+    """ Test nimble.settings getters and setters """
     #orig changes
-    origChangeSet = copy.deepcopy(UML.settings.changes)
+    origChangeSet = copy.deepcopy(nimble.settings.changes)
 
     # for available interfaces
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         name = interface.getCanonicalName()
         for option in interface.optionNames:
             # get values of options
-            origValue = UML.settings.get(name, option)
+            origValue = nimble.settings.get(name, option)
 
             temp = "TEMPVALUE:" + name + option
-            # change those values via UML.settings -
-            UML.settings.set(name, option, temp)
+            # change those values via nimble.settings -
+            nimble.settings.set(name, option, temp)
             # check the change is reflected by all getters
             assert interface.getOption(option) == temp
-            assert UML.settings.get(name, option) == temp
+            assert nimble.settings.get(name, option) == temp
 
             # change it back
             interface.setOption(option, origValue)
             # check again
-            assert UML.settings.get(name, option) == origValue
+            assert nimble.settings.get(name, option) == origValue
 
     # confirm that changes is the same
-    assert UML.settings.changes == origChangeSet
+    assert nimble.settings.changes == origChangeSet
 
 
 @raises(InvalidArgumentType)
 @configSafetyWrapper
 def test_settings_HooksException_unCallable():
     """ Test SessionConfiguration.hook() throws exception on bad input """
-    UML.settings.hook("TestS", "TestOp", 5)
+    nimble.settings.hook("TestS", "TestOp", 5)
 
 
 @raises(ImproperObjectAction)
 @configSafetyWrapper
 def test_settings_HooksException_unHookable():
     """ Test SessionConfiguration.hook() throws exception for unhookable combo """
-    UML.settings.hook("TestS", "TestOp", None)
+    nimble.settings.hook("TestS", "TestOp", None)
 
     def nothing(value):
         pass
 
-    UML.settings.hook("TestS", "TestOp", nothing)
+    nimble.settings.hook("TestS", "TestOp", nothing)
 
 
 @raises(InvalidArgumentValue)
@@ -205,7 +205,7 @@ def test_settings_HooksException_wrongSig():
     def twoArg(value, value2):
         pass
 
-    UML.settings.hook("TestS", "TestOp", twoArg)
+    nimble.settings.hook("TestS", "TestOp", twoArg)
 
 
 @configSafetyWrapper
@@ -216,23 +216,23 @@ def test_settings_Hooks():
     def appendToHistory(newValue):
         history.append(newValue)
 
-    UML.settings.hook("TestS", "TestOp", appendToHistory)
+    nimble.settings.hook("TestS", "TestOp", appendToHistory)
 
-    UML.settings.set("TestS", "TestOp", 5)
-    UML.settings.set("TestS", "TestOp", 4)
-    UML.settings.set("TestS", "TestOp", 1)
-    UML.settings.set("TestS", "TestOp", "Bang")
+    nimble.settings.set("TestS", "TestOp", 5)
+    nimble.settings.set("TestS", "TestOp", 4)
+    nimble.settings.set("TestS", "TestOp", 1)
+    nimble.settings.set("TestS", "TestOp", "Bang")
 
     assert history == [5, 4, 1, "Bang"]
 
 
 @configSafetyWrapper
 def test_settings_GetSectionOnly():
-    """ Test UML.settings.get when only specifying a section """
-    UML.settings.set("TestSec1", "op1", '1')
-    UML.settings.set("TestSec1", "op2", '2')
+    """ Test nimble.settings.get when only specifying a section """
+    nimble.settings.set("TestSec1", "op1", '1')
+    nimble.settings.set("TestSec1", "op2", '2')
 
-    allSec1 = UML.settings.get("TestSec1", None)
+    allSec1 = nimble.settings.get("TestSec1", None)
     assert allSec1["op1"] == '1'
     assert allSec1['op2'] == '2'
 
@@ -240,9 +240,9 @@ def test_settings_GetSectionOnly():
 #@configSafetyWrapper
 #def test_settings_getFormatting():
 #	""" Test the format flags  """
-#	UML.settings.set("FormatTest", "numOp", 1)
-#	asInt = UML.settings.get("FormatTest", "numOp", asFormat='int')
-#	asFloat = UML.settings.get("FormatTest", "numOp", asFormat='float')
+#	nimble.settings.set("FormatTest", "numOp", 1)
+#	asInt = nimble.settings.get("FormatTest", "numOp", asFormat='int')
+#	asFloat = nimble.settings.get("FormatTest", "numOp", asFormat='float')
 
 #	assert asInt == 1
 #	assert asFloat == 1.0
@@ -250,30 +250,30 @@ def test_settings_GetSectionOnly():
 
 @configSafetyWrapper
 def test_settings_saving():
-    """ Test UML.settings will save its in memory changes """
-    # make some change via UML.settings. save it,
-    UML.settings.set("newSectionName", "new.Option.Name", '1')
-    UML.settings.saveChanges()
+    """ Test nimble.settings will save its in memory changes """
+    # make some change via nimble.settings. save it,
+    nimble.settings.set("newSectionName", "new.Option.Name", '1')
+    nimble.settings.saveChanges()
 
     # reload it with the starup function, make sure settings saved.
-    UML.settings = UML.configuration.loadSettings()
-    assert UML.settings.get("newSectionName", 'new.Option.Name') == '1'
+    nimble.settings = nimble.configuration.loadSettings()
+    assert nimble.settings.get("newSectionName", 'new.Option.Name') == '1'
 
 
 @configSafetyWrapper
 def test_settings_savingSection():
-    """ Test UML.settings.saveChanges when specifying a section """
-    UML.settings.set("TestSec1", "op1", '1')
-    UML.settings.set("TestSec1", "op2", '2')
-    UML.settings.set("TestSec2", "op1", '1')
-    UML.settings.saveChanges("TestSec1")
+    """ Test nimble.settings.saveChanges when specifying a section """
+    nimble.settings.set("TestSec1", "op1", '1')
+    nimble.settings.set("TestSec1", "op2", '2')
+    nimble.settings.set("TestSec2", "op1", '1')
+    nimble.settings.saveChanges("TestSec1")
 
     # assert that other changes are still in effect
-    assert len(UML.settings.changes) == 1
-    assert UML.settings.get("TestSec2", "op1") == '1'
+    assert len(nimble.settings.changes) == 1
+    assert nimble.settings.get("TestSec2", "op1") == '1'
 
     # reload it with the starup function, make sure settings saved.
-    temp = UML.configuration.loadSettings()
+    temp = nimble.configuration.loadSettings()
     assert temp.get('TestSec1', "op1") == '1'
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the change outside the section was not saved
@@ -286,21 +286,21 @@ def test_settings_savingSection():
 
 @configSafetyWrapper
 def test_settings_savingOption():
-    """ Test UML.settings.saveChanges when specifying a section and option """
-    UML.settings.set("TestSec1", "op1", '1')
-    UML.settings.set("TestSec1", "op2", '2')
-    UML.settings.set("TestSec2", "op1", '1')
-    UML.settings.saveChanges("TestSec1", "op2")
+    """ Test nimble.settings.saveChanges when specifying a section and option """
+    nimble.settings.set("TestSec1", "op1", '1')
+    nimble.settings.set("TestSec1", "op2", '2')
+    nimble.settings.set("TestSec2", "op1", '1')
+    nimble.settings.saveChanges("TestSec1", "op2")
 
     # assert that other changes are still in effect
-    assert len(UML.settings.changes["TestSec1"]) == 1
-    assert len(UML.settings.changes["TestSec2"]) == 1
-    assert len(UML.settings.changes) == 2
-    assert UML.settings.get("TestSec2", "op1") == '1'
-    assert UML.settings.get("TestSec1", "op1") == '1'
+    assert len(nimble.settings.changes["TestSec1"]) == 1
+    assert len(nimble.settings.changes["TestSec2"]) == 1
+    assert len(nimble.settings.changes) == 2
+    assert nimble.settings.get("TestSec2", "op1") == '1'
+    assert nimble.settings.get("TestSec1", "op1") == '1'
 
     # reload it with the starup function, make that option was saved.
-    temp = UML.configuration.loadSettings()
+    temp = nimble.configuration.loadSettings()
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the other changes were not saved
     try:
@@ -317,55 +317,55 @@ def test_settings_savingOption():
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():
-    """ Test UML.configuration.setInterfaceOptions correctly modifies file """
+    """ Test nimble.configuration.setInterfaceOptions correctly modifies file """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    UML.interfaces.available.append(tempInterface)
+    nimble.interfaces.available.append(tempInterface)
     ignoreInterface = OptionNamedLookalike("ig", [])
-    UML.interfaces.available.append(ignoreInterface)
+    nimble.interfaces.available.append(ignoreInterface)
 
     # set options for all interfaces
-    for interface in UML.interfaces.available:
-        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
+    for interface in nimble.interfaces.available:
+        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
 
     # reload settings - to make sure the options setting was recorded
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
 
     # make sure there is no section associated with the optionless
     # interface
-    assert not UML.settings.cp.has_section('ig')
+    assert not nimble.settings.cp.has_section('ig')
 
     # make sure new section and name was correctly added
     # '' is default value when adding options from interfaces
-    assert UML.settings.get('Test', 'Temp0') == ''
-    assert UML.settings.get('Test', 'Temp1') == ''
+    assert nimble.settings.get('Test', 'Temp0') == ''
+    assert nimble.settings.get('Test', 'Temp1') == ''
 
 
 @configSafetyWrapper
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    UML.interfaces.available.append(tempInterface1)
+    nimble.interfaces.available.append(tempInterface1)
 
     # set options for all interfaces, then reload
-    for interface in UML.interfaces.available:
-        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
-    UML.settings = UML.configuration.loadSettings()
+    for interface in nimble.interfaces.available:
+        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    nimble.settings = nimble.configuration.loadSettings()
 
-    UML.settings.set('Test', 'Temp0', '0')
-    UML.settings.set('Test', 'Temp1', '1')
-    UML.settings.saveChanges()
+    nimble.settings.set('Test', 'Temp0', '0')
+    nimble.settings.set('Test', 'Temp1', '1')
+    nimble.settings.saveChanges()
 
     # now set up another trigger to set options for
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    UML.interfaces.available.append(tempInterface2)
+    nimble.interfaces.available.append(tempInterface2)
 
     # set options for all interfaces, then reload
-    for interface in UML.interfaces.available:
-        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
-    UML.settings = UML.configuration.loadSettings()
+    for interface in nimble.interfaces.available:
+        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    nimble.settings = nimble.configuration.loadSettings()
 
-    assert UML.settings.get("Test", 'Temp0') == '0'
-    assert UML.settings.get("Test", 'Temp1') == '1'
+    assert nimble.settings.get("Test", 'Temp0') == '0'
+    assert nimble.settings.get("Test", 'Temp1') == '1'
 
 
 @configSafetyWrapper
@@ -373,153 +373,153 @@ def test_settings_setInterfaceOptionsChanges():
     """ Test that setting interface options properly saves current changes """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    UML.interfaces.available.append(tempInterface1)
-    UML.interfaces.available.append(tempInterface2)
+    nimble.interfaces.available.append(tempInterface1)
+    nimble.interfaces.available.append(tempInterface2)
 
     # set options for all interfaces, then reload
-    for interface in UML.interfaces.available:
-        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
-    UML.settings = UML.configuration.loadSettings()
+    for interface in nimble.interfaces.available:
+        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    nimble.settings = nimble.configuration.loadSettings()
 
-    UML.settings.set('Test', 'Temp0', '0')
-    UML.settings.set('Test', 'Temp1', '1')
-    UML.settings.set('TestOther', 'Temp0', 'unchanged')
+    nimble.settings.set('Test', 'Temp0', '0')
+    nimble.settings.set('Test', 'Temp1', '1')
+    nimble.settings.set('TestOther', 'Temp0', 'unchanged')
 
-    assert UML.settings.get('Test', 'Temp0') == '0'
+    assert nimble.settings.get('Test', 'Temp0') == '0'
 
     # change Test option names and reset options for all interfaces
     tempInterface1.optionNames[1] = 'NotTemp1'
-    for interface in UML.interfaces.available:
-        UML.configuration.setInterfaceOptions(UML.settings, interface, True)
+    for interface in nimble.interfaces.available:
+        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
 
     # check values of both changed and unchanged names
-    assert UML.settings.get('Test', 'Temp0') == '0'
+    assert nimble.settings.get('Test', 'Temp0') == '0'
     try:
-        UML.settings.get('Test', 'Temp1')
+        nimble.settings.get('Test', 'Temp1')
     except six.moves.configparser.NoOptionError:
         pass
-    assert UML.settings.get('Test', 'NotTemp1') == ''
+    assert nimble.settings.get('Test', 'NotTemp1') == ''
 
     # check that the temp value for testOther is unaffected
-    assert UML.settings.get('TestOther', 'Temp0') == 'unchanged'
+    assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
 
 
 @raises(InvalidArgumentValue)
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
 
-    assert UML.settings.changes == {}
-    UML.settings.set('Custom', 'Hello', "Goodbye")
-    UML.settings.changes = {}
+    assert nimble.settings.changes == {}
+    nimble.settings.set('Custom', 'Hello', "Goodbye")
+    nimble.settings.changes = {}
 
 
 @configSafetyWrapper
 @raises(six.moves.configparser.NoSectionError)
 # test that set without save is temporary
 def test_settings_set_without_save():
-    # make some change via UML.settings.
-    UML.settings.set("tempSectionName", "temp.Option.Name", '1')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
+    # make some change via nimble.settings.
+    nimble.settings.set("tempSectionName", "temp.Option.Name", '1')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name') == '1'
 
     # reload it with the startup function, try to load something which
     # shouldn't be there
-    UML.settings = UML.configuration.loadSettings()
-    UML.settings.get("tempSectionName", 'temp.Option.Name')
+    nimble.settings = nimble.configuration.loadSettings()
+    nimble.settings.get("tempSectionName", 'temp.Option.Name')
 
 
 @configSafetyWrapper
 # test that delete then save will change file - value
 def test_settings_deleteThenSaveAValue():
-    UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
-    UML.settings.saveChanges()
+    nimble.settings.saveChanges()
 
     # change reflected in memory
-    UML.settings.delete("tempSectionName", "temp.Option.Name1")
+    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
     # change isn't reflected in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     # previous delete wasn't saved, so this should still work
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    UML.settings.delete("tempSectionName", "temp.Option.Name1")
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
 
-    UML.settings.saveChanges()
+    nimble.settings.saveChanges()
 
     # change should now be reflected in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
 
 @configSafetyWrapper
 # test that delete then save will change file - section
 def test_settings_deleteThenSaveASection():
-    UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    UML.settings.saveChanges()
+    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.saveChanges()
 
     # change reflected in memory
-    UML.settings.delete("tempSectionName", None)
+    nimble.settings.delete("tempSectionName", None)
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name2')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
 
     # change isn't reflected in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     # previous delete wasn't saved, so this should still work
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    UML.settings.delete("tempSectionName", None)
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.delete("tempSectionName", None)
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name2')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
 
-    UML.settings.saveChanges()
+    nimble.settings.saveChanges()
 
     # change should now be reflected in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name2')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
@@ -528,24 +528,24 @@ def test_settings_deleteThenSaveASection():
 @configSafetyWrapper
 # test that deleteing an unsaved set is a cycle - value
 def test_settings_setThenDeleteCycle_value():
-    UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
     # change reflected in memory
-    UML.settings.delete("tempSectionName", "temp.Option.Name1")
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
 
     # change should now be reflected in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
@@ -554,22 +554,22 @@ def test_settings_setThenDeleteCycle_value():
 @configSafetyWrapper
 # test that deleteing an unsaved set is a cycle - section
 def test_settings_setThenDeleteCycle_section():
-    UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
 
     # change reflected in memory
-    UML.settings.delete("tempSectionName", None)
+    nimble.settings.delete("tempSectionName", None)
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
 
     # change never saved, shouldn't be in file
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
@@ -578,63 +578,63 @@ def test_settings_setThenDeleteCycle_section():
 @configSafetyWrapper
 def test_settings_setDefault():
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name2')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
 
-    UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
     # Name2 should be reflected in file, but not Name1
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
 
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
 
 @configSafetyWrapper
 def test_settings_deleteDefault():
-    UML.settings.setDefault("tempSectionName", "temp.Option.Name1", '1')
-    UML.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings.setDefault("tempSectionName", "temp.Option.Name1", '1')
+    nimble.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
     # Establish a baseline
-    UML.settings = UML.configuration.loadSettings()
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    nimble.settings = nimble.configuration.loadSettings()
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
-    UML.settings.deleteDefault("tempSectionName", 'temp.Option.Name1')
+    nimble.settings.deleteDefault("tempSectionName", 'temp.Option.Name1')
 
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
     except six.moves.configparser.NoOptionError:
         pass
 
-    assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
-    UML.settings.deleteDefault("tempSectionName", None)
-    UML.settings = UML.configuration.loadSettings()
+    nimble.settings.deleteDefault("tempSectionName", None)
+    nimble.settings = nimble.configuration.loadSettings()
     try:
-        UML.settings.get("tempSectionName", 'temp.Option.Name1')
+        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
     except six.moves.configparser.NoSectionError:
         pass
 
 
 def testToDeleteSentinalObject():
-    val = UML.configuration.ToDelete()
+    val = nimble.configuration.ToDelete()
 
-    assert isinstance(val, UML.configuration.ToDelete)
+    assert isinstance(val, nimble.configuration.ToDelete)
 
 
 ###############

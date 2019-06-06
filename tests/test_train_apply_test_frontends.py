@@ -6,15 +6,15 @@ import six
 from six.moves import range
 from nose.tools import raises
 
-import UML
-from UML import createData
-from UML import train
-from UML import trainAndApply
-from UML import trainAndTest
-from UML.calculate import fractionIncorrect
-from UML.randomness import pythonRandom
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
+import nimble
+from nimble import createData
+from nimble import train
+from nimble import trainAndApply
+from nimble import trainAndTest
+from nimble.calculate import fractionIncorrect
+from nimble.randomness import pythonRandom
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
 
 def test_trainAndApply_dataInputs():
@@ -32,40 +32,40 @@ def test_trainAndApply_dataInputs():
 
     learner = 'Custom.KNNClassifier'
     # Expected outcomes
-    exp = UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjNoLabels)
-    expSelf = UML.trainAndApply(learner, trainObjData, trainObjLabels, trainObjData)
+    exp = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjNoLabels)
+    expSelf = nimble.trainAndApply(learner, trainObjData, trainObjLabels, trainObjData)
     # trainY is ID, testX does not contain labels; test int
-    out = UML.trainAndApply(learner, trainObj, 3, testObjNoLabels)
+    out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
     assert out == exp
     # trainY is ID, testX does not contain labels; test string
-    out = UML.trainAndApply(learner, trainObj, 'label', testObjNoLabels)
+    out = nimble.trainAndApply(learner, trainObj, 'label', testObjNoLabels)
     assert out == exp
     # trainY is Base; testX None
-    out = UML.trainAndApply(learner, trainObjData, trainObjLabels, None)
+    out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, None)
     assert out == expSelf
     # trainY is ID; testX None
-    out = UML.trainAndApply(learner, trainObj, 3, None)
+    out = nimble.trainAndApply(learner, trainObj, 3, None)
     assert out == expSelf
     # Exception trainY is ID; testX contains labels
     try:
-        out = UML.trainAndApply(learner, trainObj, 3, testObj)
+        out = nimble.trainAndApply(learner, trainObj, 3, testObj)
         assert False # expected ValueError
     except ValueError:
         pass
     try:
-        out = UML.trainAndApply(learner, trainObj, 'label', testObj)
+        out = nimble.trainAndApply(learner, trainObj, 'label', testObj)
         assert False # expected ValueError
     except ValueError:
         pass
     # Exception trainY is Base; testX contains labels
     try:
-        out = UML.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
+        out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
         assert False # expected ValueError
     except ValueError:
         pass
     # Exception trainY is ID; testX bad shape
     try:
-        out = UML.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
+        out = nimble.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
         assert False # expected ValueError
     except ValueError:
         pass
@@ -86,17 +86,17 @@ def test_trainAndTest_dataInputs():
 
     learner = 'Custom.KNNClassifier'
     # Expected outcomes
-    exp = UML.trainAndTest(learner, trainObjData, trainObjLabels, testObjData, testObjLabels, fractionIncorrect)
+    exp = nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData, testObjLabels, fractionIncorrect)
     # trainX and testX contain labels
-    out1 = UML.trainAndTest(learner, trainObj, 3, testObj, 3, fractionIncorrect)
-    out2 = UML.trainAndTest(learner, trainObj, 'label', testObj, 'label', fractionIncorrect)
+    out1 = nimble.trainAndTest(learner, trainObj, 3, testObj, 3, fractionIncorrect)
+    out2 = nimble.trainAndTest(learner, trainObj, 'label', testObj, 'label', fractionIncorrect)
     assert out1 == exp
     assert out2 == exp
     # trainX contains labels
-    out3 = UML.trainAndTest(learner, trainObj, 3, testObjData, testObjLabels, fractionIncorrect)
+    out3 = nimble.trainAndTest(learner, trainObj, 3, testObjData, testObjLabels, fractionIncorrect)
     assert out3 == exp
     # testX contains labels
-    out4 = UML.trainAndTest(learner, trainObjData, trainObjLabels, testObj, 3, fractionIncorrect)
+    out4 = nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObj, 3, fractionIncorrect)
     assert out4 == exp
 
 #todo set seed and verify that you can regenerate error several times with
@@ -128,34 +128,34 @@ def test_trainAndTest():
 
     #with multiple values for one argument for the algorithm
     runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=UML.CV([1, 2]), folds=3)
+                            fractionIncorrect, k=nimble.CV([1, 2]), folds=3)
     assert isinstance(runError, float)
 
     #with small data set
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2]]
     trainObj1 = createData('Matrix', data=data1, featureNames=variables)
     runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=UML.CV([1, 2]), folds=3)
+                            fractionIncorrect, k=nimble.CV([1, 2]), folds=3)
     assert isinstance(runError, float)
 
 
 def test_multioutput_learners_callable_from_all():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     trainY0 = trainY.features.copy(0)
     trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = UML.createData('Matrix', data)
+    testX = nimble.createData('Matrix', data)
 
     data = [[555, -555], [1, -1]]
-    testY = UML.createData('Matrix', data)
+    testY = nimble.createData('Matrix', data)
 
     testY0 = testY.features.copy(0)
     testY1 = testY.features.copy(1)
@@ -163,17 +163,17 @@ def test_multioutput_learners_callable_from_all():
     testName = 'Custom.MultiOutputRidgeRegression'
     wrappedName = 'Custom.RidgeRegression'
 
-    metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
 
     # trainAndApply()
-    ret_TA_multi = UML.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, lamb=1)
-    ret_TA_0 = UML.trainAndApply(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, lamb=1)
-    ret_TA_1 = UML.trainAndApply(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, lamb=1)
+    ret_TA_multi = nimble.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, lamb=1)
+    ret_TA_0 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, lamb=1)
+    ret_TA_1 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, lamb=1)
 
     #train, then
-    TLmulti = UML.train(testName, trainX=trainX, trainY=trainY, lamb=1)
-    TL0 = UML.train(wrappedName, trainX=trainX, trainY=trainY0, lamb=1)
-    TL1 = UML.train(wrappedName, trainX=trainX, trainY=trainY1, lamb=1)
+    TLmulti = nimble.train(testName, trainX=trainX, trainY=trainY, lamb=1)
+    TL0 = nimble.train(wrappedName, trainX=trainX, trainY=trainY0, lamb=1)
+    TL1 = nimble.train(wrappedName, trainX=trainX, trainY=trainY1, lamb=1)
 
     # tl.apply()
     ret_TLA_multi = TLmulti.apply(testX)
@@ -181,32 +181,32 @@ def test_multioutput_learners_callable_from_all():
     ret_TLA_1 = TL1.apply(testX)
 
     # trainAndTest()
-    ret_TT_multi = UML.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY,
+    ret_TT_multi = nimble.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY,
                                     performanceFunction=metric, lamb=1)
-    ret_TT_0 = UML.trainAndTest(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, testY=testY0,
+    ret_TT_0 = nimble.trainAndTest(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, testY=testY0,
                                 performanceFunction=metric, lamb=1)
-    ret_TT_1 = UML.trainAndTest(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, testY=testY1,
+    ret_TT_1 = nimble.trainAndTest(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, testY=testY1,
                                 performanceFunction=metric, lamb=1)
 
     # trainAndTestOnTrainingData()
-    ret_TTTD_multi = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+    ret_TTTD_multi = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
                                                     lamb=1)
-    ret_TTTD_0 = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
+    ret_TTTD_0 = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
                                                 lamb=1)
-    ret_TTTD_1 = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
+    ret_TTTD_1 = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
                                                 lamb=1)
 
     # Control randomness for each cross-validation so folds are consistent
-    UML.randomness.startAlternateControl(seed=0)
-    ret_TTTD_multi_cv = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+    nimble.randomness.startAlternateControl(seed=0)
+    ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
                                                        lamb=1, crossValidationError=True)
-    UML.randomness.setRandomSeed(0)
-    ret_TTTD_0_cv = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
+    nimble.randomness.setRandomSeed(0)
+    ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
                                                    lamb=1, crossValidationError=True)
-    UML.randomness.setRandomSeed(0)
-    ret_TTTD_1_cv = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
+    nimble.randomness.setRandomSeed(0)
+    ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
                                                    lamb=1, crossValidationError=True)
-    UML.randomness.endAlternateControl()
+    nimble.randomness.endAlternateControl()
 
     # tl.test()
     ret_TLT_multi = TLmulti.test(testX, testY, metric)
@@ -261,73 +261,73 @@ def test_multioutput_learners_callable_from_all():
 def test_train_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
 
-    TLmulti = UML.train(testName, trainX=trainX, trainY=trainY, multiClassStrategy='OneVsOne', lamb=1)
+    TLmulti = nimble.train(testName, trainX=trainX, trainY=trainY, multiClassStrategy='OneVsOne', lamb=1)
 
 
 @raises(InvalidArgumentValueCombination)
 def test_trainAndApply_scoreMode_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = UML.createData('Matrix', data)
+    testX = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
 
-    UML.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, scoreMode="allScores", lamb=1)
+    nimble.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, scoreMode="allScores", lamb=1)
 
 
 @raises(InvalidArgumentValueCombination)
 def test_trainAndApply_multiClassStrat_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = UML.createData('Matrix', data)
+    testX = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
 
-    UML.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, multiClassStrategy="OneVsOne", lamb=1)
+    nimble.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, multiClassStrategy="OneVsOne", lamb=1)
 
 
 @raises(InvalidArgumentValueCombination)
 def test_trainAndTest_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = UML.createData('Matrix', data)
+    testX = nimble.createData('Matrix', data)
 
     data = [[555, -555], [1, -1]]
-    testY = UML.createData('Matrix', data)
+    testY = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
-    metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
 
-    UML.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, performanceFunction=metric,
+    nimble.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, performanceFunction=metric,
                      scoreMode="allScores", lamb=1)
 
 
@@ -335,16 +335,16 @@ def test_trainAndTest_scoreMode_disallowed_multioutput():
 def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
-    metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
 
-    UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+    nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
                                    scoreMode="allScores", lamb=1)
 
 
@@ -352,22 +352,22 @@ def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
 def test_trainAndTest_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = UML.createData('Matrix', data)
+    testX = nimble.createData('Matrix', data)
 
     data = [[555, -555], [1, -1]]
-    testY = UML.createData('Matrix', data)
+    testY = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
-    metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
 
-    UML.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, performanceFunction=metric,
+    nimble.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, performanceFunction=metric,
                      multiClassStrategy="OneVsOne", lamb=1)
 
 
@@ -375,16 +375,16 @@ def test_trainAndTest_multiclassStrat_disallowed_multioutput():
 def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = UML.createData('Matrix', data)
+    trainX = nimble.createData('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = UML.createData('Matrix', data)
+    trainY = nimble.createData('Matrix', data)
 
     testName = 'Custom.MultiOutputRidgeRegression'
-    metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
 
-    UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+    nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
                                    multiClassStrategy="OneVsOne", lamb=1)
 
 
@@ -405,50 +405,50 @@ def test_trainFunctions_cv_triggered_errors():
     learner = 'Custom.KNNClassifier'
     # no performanceFunction (only train and trainAndApply; required in Test functions)
     try:
-        UML.train(learner, trainObjData, trainObjLabels, k=UML.CV([1, 3]))
+        nimble.train(learner, trainObjData, trainObjLabels, k=nimble.CV([1, 3]))
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "performanceFunction" in str(iavc)
     try:
-        UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                          k=UML.CV([1, 3]))
+        nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
+                             k=nimble.CV([1, 3]))
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "performanceFunction" in str(iavc)
 
     # folds too large
     try:
-        UML.train(learner, trainObjData, trainObjLabels,
-                  performanceFunction=fractionIncorrect, k=UML.CV([1, 3]), folds=11)
+        nimble.train(learner, trainObjData, trainObjLabels,
+                     performanceFunction=fractionIncorrect, k=nimble.CV([1, 3]), folds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "folds" in str(iavc)
     try:
-        UML.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                          performanceFunction=fractionIncorrect, k=UML.CV([1, 3]), folds=11)
+        nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
+                             performanceFunction=fractionIncorrect, k=nimble.CV([1, 3]), folds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "folds" in str(iavc)
     try:
-        UML.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
-                         testObjLabels, performanceFunction=fractionIncorrect,
-                         k=UML.CV([1, 3]), folds=11)
+        nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
+                            testObjLabels, performanceFunction=fractionIncorrect,
+                            k=nimble.CV([1, 3]), folds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "folds" in str(iavc)
     try:
         # training error
-        UML.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
-                                       performanceFunction=fractionIncorrect,
-                                       k=UML.CV([1, 3]), folds=11)
+        nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
+                                          performanceFunction=fractionIncorrect,
+                                          k=nimble.CV([1, 3]), folds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValueCombination as iavc:
         assert "folds" in str(iavc)
     try:
         # cross-validation error
-        UML.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
-                                       performanceFunction=fractionIncorrect,
-                                       crossValidationError=True, folds=11)
+        nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
+                                          performanceFunction=fractionIncorrect,
+                                          crossValidationError=True, folds=11)
         assert False # expect InvalidArgumentValueCombination
     except InvalidArgumentValue as iavc:
         # different exception since this triggers crossValidation directly
@@ -460,7 +460,7 @@ class CVWasCalledException(Exception):
 def cvBackgroundCheck(*args, **kwargs):
     raise CVWasCalledException()
 
-@mock.patch('UML.uml.crossValidate', cvBackgroundCheck)
+@mock.patch('nimble.core.crossValidate', cvBackgroundCheck)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -473,15 +473,15 @@ def test_frontend_CV_triggering():
     try:
         try:
             train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                  performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), folds=5)
+                  performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
 
         try:
             trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                          performanceFunction=fractionIncorrect, testX=trainObj, k=UML.CV([1, 2]),
-                          folds=5)
+                          performanceFunction=fractionIncorrect, testX=trainObj,
+                          k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
@@ -489,7 +489,7 @@ def test_frontend_CV_triggering():
         try:
             trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=UML.CV([1, 2]), folds=5)
+                         k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
         except CVWasCalledException:
             pass
@@ -506,20 +506,20 @@ def test_frontend_CV_triggering_success():
     labelsObj = createData("Matrix", data=labels)
 
     tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-               performanceFunction=fractionIncorrect, k=UML.CV([1, 2]), folds=5)
+               performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
     assert hasattr(tl, 'apply')
     assert tl.crossValidation is not None
     assert tl.crossValidation.performanceFunction == fractionIncorrect
     assert tl.crossValidation.folds == 5
 
     result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                           testX=trainObj, performanceFunction=fractionIncorrect, k=UML.CV([1, 2]),
-                           folds=5)
-    assert isinstance(result, UML.data.Matrix)
+                           testX=trainObj, performanceFunction=fractionIncorrect,
+                           k=nimble.CV([1, 2]), folds=5)
+    assert isinstance(result, nimble.data.Matrix)
 
     error = trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=UML.CV([1, 2]), folds=5)
+                         k=nimble.CV([1, 2]), folds=5)
     assert isinstance(error, float)
 
 
@@ -534,14 +534,14 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     # Default value of performanceFunction is None, which since we're doing
     # CV should fail
     try:
-        tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=UML.CV([1, 2]))
+        tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=nimble.CV([1, 2]))
         assert False
     except InvalidArgumentValueCombination:
         pass
 
     try:
         result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                               testX=trainObj, k=UML.CV([1, 2]))
+                               testX=trainObj, k=nimble.CV([1, 2]))
         assert False
     except InvalidArgumentValueCombination:
         pass
@@ -566,48 +566,48 @@ def back_logCount(toCall):
 @oneLogEntryExpected
 def test_train_logCount_noCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.train(learner, trainX, trainY)
+        return nimble.train(learner, trainX, trainY)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
 def test_trainAndApply_logCount_noCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction)
+        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
 def test_trainAndTest_logCount_noCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction)
+        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
 def test_trainAndTestOnTrainingData_logCount_noCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
+        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_train_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=UML.CV([1, 2]))
+        return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndApply_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=UML.CV([1, 2]))
+        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndTest_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=UML.CV([1, 2]))
+        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndTestOnTrainingData_logCount_withCV():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return UML.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=UML.CV([1, 2]))
+        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 

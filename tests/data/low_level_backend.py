@@ -30,16 +30,16 @@ except:
 from six.moves import range
 from nose.tools import *
 
-from UML import createData
-from UML.data import Base
-from UML.data import available
-from UML.docHelpers import inheritDocstringsFactory
-from UML.data.dataHelpers import DEFAULT_PREFIX
-from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
-from UML.data.dataHelpers import constructIndicesList
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from UML.randomness import pythonRandom
+from nimble import createData
+from nimble.data import Base
+from nimble.data import available
+from nimble.docHelpers import inheritDocstringsFactory
+from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.data.dataHelpers import DEFAULT_NAME_PREFIX
+from nimble.data.dataHelpers import constructIndicesList
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
+from nimble.randomness import pythonRandom
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
@@ -486,7 +486,7 @@ class LowLevelBackend(object):
         toTest.points.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
     def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         toTest.points.setNames(['a', 'b', 'c'])
@@ -616,7 +616,7 @@ class LowLevelBackend(object):
         toTest.features.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
     def test_features_setNames_calls_valuesToPythonList(self, mockFunc):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         toTest.features.setNames(['a', 'b', 'c'])
@@ -1132,7 +1132,7 @@ class LowLevelBackend(object):
         assert constructIndicesList(toTest, 'feature', mixFts1D) == expected
 
     @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
     def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
@@ -1147,7 +1147,7 @@ class LowLevelBackend(object):
     def testconstructIndicesList_pythonGenerator(self):
         self.constructIndicesList_backend(lambda lst: (val for val in lst))
 
-    def testconstructIndicesList_UMLObjects(self):
+    def testconstructIndicesList_NimbleObjects(self):
         for retType in available:
             self.constructIndicesList_backend(
                 lambda lst: createData(retType, lst, elementType=object))

@@ -7,15 +7,15 @@ except:
 import numpy
 from nose.tools import *
 
-import UML
-from UML.calculate import confidenceIntervalHelper
-from UML.exceptions import PackageException, ImproperObjectAction
+import nimble
+from nimble.calculate import confidenceIntervalHelper
+from nimble.exceptions import PackageException, ImproperObjectAction
 from ..assertionHelpers import noLogEntryExpected
 
 def getPredictions():
     predRaw = [252.7, 247.7] * 12
     predRaw.append(250.2)
-    pred = UML.createData("Matrix", predRaw, useLog=False)
+    pred = nimble.createData("Matrix", predRaw, useLog=False)
     pred.transpose(useLog=False)
 
     assert len(pred.points) == 25
@@ -40,7 +40,7 @@ def testSimpleConfidenceInverval():
     numpy.testing.assert_approx_equal(high, 251.18)
 
 @raises(PackageException)
-@mock.patch('UML.calculate.confidence.scipy', new=None)
+@mock.patch('nimble.calculate.confidence.scipy', new=None)
 def testCannotImportSciPy():
     pred = getPredictions()
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)
@@ -48,7 +48,7 @@ def testCannotImportSciPy():
 @raises(ImproperObjectAction)
 def testPredictionsInvalidShape():
     pred = getPredictions()
-    toAdd = UML.createData('Matrix', numpy.ones((len(pred.points), 1)))
+    toAdd = nimble.createData('Matrix', numpy.ones((len(pred.points), 1)))
     pred.features.add(toAdd)
     assert len(pred.features) == 2
 

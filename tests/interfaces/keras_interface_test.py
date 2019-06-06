@@ -10,14 +10,14 @@ from __future__ import absolute_import
 import numpy as np
 from nose.tools import raises
 
-import UML
-from UML import createData
-from UML.interfaces.keras_interface import Keras
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble import createData
+from nimble.interfaces.keras_interface import Keras
+from nimble.exceptions import InvalidArgumentValue
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
-keras = UML.importExternalLibraries.importModule("keras")
+keras = nimble.importExternalLibraries.importModule("keras")
 
 keraSkipDec = SkipMissing('Keras')
 
@@ -42,33 +42,33 @@ def testKerasAPI():
     layers = [layer0, layer1, layer2]
 
     #####test fit
-    mym = UML.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
-                    layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                    epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
-                    nesterov=True)
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                       epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
+                       nesterov=True)
 
     #######test apply
     x = mym.apply(testX=x_train)
 
     #########test trainAndApply
-    x = UML.trainAndApply('keras.Sequential', trainX=x_train, trainY=y_train, testX=x_train,
-                          optimizer='sgd', layers=layers, loss='binary_crossentropy',
-                          metrics=['accuracy'], epochs=20, batch_size=128, lr=0.1,
-                          decay=1e-6, momentum=0.9, nesterov=True)
+    x = nimble.trainAndApply('keras.Sequential', trainX=x_train, trainY=y_train, testX=x_train,
+                             optimizer='sgd', layers=layers, loss='binary_crossentropy',
+                             metrics=['accuracy'], epochs=20, batch_size=128, lr=0.1,
+                            decay=1e-6, momentum=0.9, nesterov=True)
 
     #########test trainAndTest
-    x = UML.trainAndTest('keras.Sequential', trainX=x_train, testX=x_train, trainY=y_train,
-                         testY=y_train, optimizer='sgd', layers=layers,
-                         loss='binary_crossentropy', metrics=['accuracy'], epochs=20,
-                         batch_size=128, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
-                         performanceFunction=UML.calculate.loss.rootMeanSquareError)
+    x = nimble.trainAndTest('keras.Sequential', trainX=x_train, testX=x_train, trainY=y_train,
+                            testY=y_train, optimizer='sgd', layers=layers,
+                            loss='binary_crossentropy', metrics=['accuracy'], epochs=20,
+                            batch_size=128, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
+                            performanceFunction=nimble.calculate.loss.rootMeanSquareError)
 
     #########test CV
-    results = UML.crossValidate(
+    results = nimble.crossValidate(
         "keras.Sequential", X=x_train, Y=y_train, optimizer='sgd', layers=layers,
         loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128,
         lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
-        performanceFunction=UML.calculate.loss.rootMeanSquareError)
+        performanceFunction=nimble.calculate.loss.rootMeanSquareError)
     bestArguments = results.bestArguments
     bestScore = results.bestResult
 
@@ -87,10 +87,10 @@ def testKerasIncremental():
     layers = [layer0, layer1, layer2]
 
     #####test fit
-    mym = UML.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
-                    layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                    epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
-                    nesterov=True)
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                       epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
+                       nesterov=True)
 
     #####test incrementalTrain
     mym.incrementalTrain(x_train, y_train)
@@ -115,10 +115,10 @@ def testKeras_Sparse_FitGenerator():
     layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
     layers = [layer0, layer1, layer2]
 
-    mym = UML.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
-                    layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                    epochs=2, batch_size=1, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
-                    steps_per_epoch=20, max_queue_size=1, shuffle=False, steps=20)
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                       epochs=2, batch_size=1, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
+                       steps_per_epoch=20, max_queue_size=1, shuffle=False, steps=20)
 
     x = mym.apply(testX=x_train)
     assert len(x.points) == len(x_train.points)
@@ -136,7 +136,7 @@ def test_TrainedLearnerApplyArguments():
     layers = [layer0, layer1, layer2]
 
     # Sequential.predict takes a 'steps' argument. Default is 20
-    mym = UML.train(
+    mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
         optimizer='sgd', layers=layers, loss='binary_crossentropy',
         metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,
@@ -159,7 +159,7 @@ def test_TrainedLearnerApplyArguments_exception():
     layers = [layer0, layer1, layer2]
 
     # Sequential.predict does not take a 'foo' argument.
-    mym = UML.train(
+    mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
         optimizer='sgd', layers=layers, loss='binary_crossentropy',
         metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,

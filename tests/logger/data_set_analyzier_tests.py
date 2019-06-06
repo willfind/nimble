@@ -12,13 +12,13 @@ import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal
 
-from UML import createData
-from UML.logger.data_set_analyzer import *
+from nimble import createData
+from nimble.logger.data_set_analyzer import *
 
 
 def testMatrix():
     """
-        Test the functionality of calculating statistical/informational 
+        Test the functionality of calculating statistical/informational
         funcs on a Matrix object using the produceInfoTable.
     """
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
@@ -64,7 +64,7 @@ def testMatrix():
 
 def testSparse():
     """
-        Test the functionality of calculating statistical/informational 
+        Test the functionality of calculating statistical/informational
         funcs on a Matrix object using the produceInfoTable.
 
         Testing matrix is 6 x 6, with 11 non-zero values, 1 None/Missing value,

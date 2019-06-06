@@ -19,18 +19,18 @@ from nose.tools import raises
 from nose.plugins.attrib import attr
 #@attr('slow')
 
-import UML
-from UML.configuration import configSafetyWrapper
-from UML.exceptions import InvalidArgumentValue, PackageException
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.helpers import generateClusteredPoints
-from UML.helpers import generateClassificationData
-from UML.helpers import generateRegressionData
+import nimble
+from nimble.configuration import configSafetyWrapper
+from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.helpers import generateClusteredPoints
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
 
 
 def checkFormat(scores, numLabels):
     """
-    Check that the provided UML data typed scores structurally match either a one vs
+    Check that the provided nimble data typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
 
     """
@@ -58,15 +58,15 @@ def test__getScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
         for lName in learners:
             fullName = interfaceName + '.' + lName
-            if UML.learnerType(fullName) == 'classifier':
+            if nimble.learnerType(fullName) == 'classifier':
                 try:
-                    tl2 = UML.train(fullName, trainX2, trainY2)
+                    tl2 = nimble.train(fullName, trainX2, trainY2)
                 except InvalidArgumentValue:
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
@@ -81,7 +81,7 @@ def test__getScoresFormat():
                 checkFormatRaw(scores2, 2)
 
                 try:
-                    tl4 = UML.train(fullName, trainX4, trainY4)
+                    tl4 = nimble.train(fullName, trainX4, trainY4)
                 except:
                     # some classifiers are binary only
                     continue
@@ -102,7 +102,7 @@ def testGetScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
@@ -111,9 +111,9 @@ def testGetScoresFormat():
                 print(lName)
 
             fullName = interfaceName + '.' + lName
-            if UML.learnerType(fullName) == 'classifier':
+            if nimble.learnerType(fullName) == 'classifier':
                 try:
-                    tl2 = UML.train(fullName, trainX2, trainY2)
+                    tl2 = nimble.train(fullName, trainX2, trainY2)
                 except InvalidArgumentValue:
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
@@ -126,7 +126,7 @@ def testGetScoresFormat():
                 checkFormat(scores2, 2)
 
                 try:
-                    tl4 = UML.train(fullName, trainX4, trainY4)
+                    tl4 = nimble.train(fullName, trainX4, trainY4)
                 except:
                     # some classifiers are binary only
                     continue
@@ -135,23 +135,23 @@ def testGetScoresFormat():
 
 
 @attr('slow')
-@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
 def testRandomnessControl():
-    """ Test that UML takes over the control of randomness of each interface """
+    """ Test that nimble takes over the control of randomness of each interface """
 
-    #	assert 'RanomizedLogisticRegression' in UML.listLearners('sciKitLearn')
+    #	assert 'RanomizedLogisticRegression' in nimble.listLearners('sciKitLearn')
 
-    for interface in UML.interfaces.available:
+    for interface in nimble.interfaces.available:
         interfaceName = interface.getCanonicalName()
         #		if interfaceName != 'shogun':
         #			continue
 
-        listOf = UML.listLearners(interfaceName)
+        listOf = nimble.listLearners(interfaceName)
 
         for learner in listOf:
             if interfaceName == 'shogun':
                 print(learner)
-            currType = UML.learnerType(interfaceName + '.' + learner)
+            currType = nimble.learnerType(interfaceName + '.' + learner)
             if currType == 'regression':
                 ((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)
             elif currType == 'classification':
@@ -161,17 +161,17 @@ def testRandomnessControl():
 
             result1 = None
             try:
-                UML.setRandomSeed(50)
-                result1 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                nimble.setRandomSeed(50)
+                result1 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                UML.setRandomSeed(50)
-                result2 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                nimble.setRandomSeed(50)
+                result2 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                UML.setRandomSeed(None)
-                result3 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                nimble.setRandomSeed(None)
+                result3 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                UML.setRandomSeed(13)
-                result4 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                nimble.setRandomSeed(13)
+                result4 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
             except Exception as e:
                 print(interfaceName + '.' + learner + ' BANG: ' + str(e))
@@ -203,7 +203,7 @@ def getCanonicalNameAndPossibleAliases(interface):
     return canonicalName, aliases
 
 def test_classmethods():
-    for interface in UML.interfaces.builtin:
+    for interface in nimble.interfaces.builtin:
         canonicalName, aliases = getCanonicalNameAndPossibleAliases(interface)
         assert interface.getCanonicalName() == canonicalName
         for alias in aliases:
@@ -212,29 +212,30 @@ def test_classmethods():
 
 
 def test_failedInit():
-    availableBackup = UML.interfaces.available
-    builtinBackup = UML.interfaces.builtin
+    availableBackup = nimble.interfaces.available
+    builtinBackup = nimble.interfaces.builtin
     try:
-        for interface in UML.interfaces.builtin:
+        for interface in nimble.interfaces.builtin:
             class MockInterface(interface):
                 pass
 
-            # override interfaces.available so findBestInterface will check builtin
-            # and use mock object as the builtin so we can raise different errors
-            UML.interfaces.available = []
-            UML.interfaces.builtin = [MockInterface]
+            # override interfaces.available so findBestInterface will check
+            # builtin and use mock object as the builtin so we can raise
+            # different errors
+            nimble.interfaces.available = []
+            nimble.interfaces.builtin = [MockInterface]
 
-            # the learner must start with package and the data must be UML objects but
-            # the learner name and data values are irrelevant since a PackageException
-            # should occur
+            # the learner must start with package and the data must be nimble
+            # objects but the learner name and data values are irrelevant
+            # since a PackageException should occur
             learner = interface.__name__ + '.Foo'
-            X = UML.createData('Matrix', [])
+            X = nimble.createData('Matrix', [])
             y = X.copy()
             def raiseError(error):
                 raise error
             try:
                 MockInterface.__init__ = lambda self: raiseError(ImportError)
-                UML.train(learner, X, y)
+                nimble.train(learner, X, y)
                 assert False # expected PackageException
             except PackageException as e:
                 assert "ImportError" in str(e)
@@ -247,7 +248,7 @@ def test_failedInit():
 
             try:
                 MockInterface.__init__ = lambda self: raiseError(ValueError)
-                UML.train(learner, X, y)
+                nimble.train(learner, X, y)
                 assert False # expected PackageException
             except PackageException as e:
                 assert "ValueError" in str(e)
@@ -255,8 +256,8 @@ def test_failedInit():
                 assert not "If package installed" in str(e)
                 assert "Exception information" in str(e)
     finally:
-        UML.interfaces.available = availableBackup
-        UML.interfaces.builtin = builtinBackup
+        nimble.interfaces.available = availableBackup
+        nimble.interfaces.builtin = builtinBackup
 
 
 ## Helpers for test_loadModulesFromConfigLocation ##
@@ -286,7 +287,7 @@ def reload(module):
 
 @configSafetyWrapper
 def test_loadModulesFromConfigLocation():
-    for interface in UML.interfaces.builtin:
+    for interface in nimble.interfaces.builtin:
         sysPathBackup = sys.path.copy()
         canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
         packageName = canonicalName
@@ -299,7 +300,7 @@ def test_loadModulesFromConfigLocation():
             with open(initPath, 'w+') as initFile:
                 initFile.write(mockedInit)
 
-            UML.settings.set(canonicalName, 'location', mockDirectory)
+            nimble.settings.set(canonicalName, 'location', mockDirectory)
             try:
                 # patch import_module so it reloads from settings location
                 with mock.patch('importlib.import_module', reload):
@@ -316,4 +317,4 @@ def test_loadModulesFromConfigLocation():
 #def testGetParamDefaultsOverListLearners():
 
 
-# comparison between UML.learnerType and interface learnerType
+# comparison between nimble.learnerType and interface learnerType

@@ -4,10 +4,10 @@ from nose.tools import *
 import numpy.testing
 from six.moves import range
 
-import UML
-from UML.customLearners import CustomLearner
-from UML.configuration import configSafetyWrapper
-from UML.exceptions import InvalidArgumentValue
+import nimble
+from nimble.customLearners import CustomLearner
+from nimble.configuration import configSafetyWrapper
+from nimble.exceptions import InvalidArgumentValue
 
 
 @raises(TypeError)
@@ -222,7 +222,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
         ret = []
         for point in testX.points:
             ret.append([self.prediction])
-        return UML.createData("Matrix", ret)
+        return nimble.createData("Matrix", ret)
 
     def getScores(self, testX):
         ret = []
@@ -234,7 +234,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
                 else:
                     currScores.append(0)
             ret.append(currScores)
-        return UML.createData("Matrix", ret)
+        return nimble.createData("Matrix", ret)
 
 
 @configSafetyWrapper
@@ -243,22 +243,22 @@ def testCustomLearnerGetScores():
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
 
-    trainObj = UML.createData('Matrix', data)
-    labelsObj = UML.createData('Matrix', labels)
+    trainObj = nimble.createData('Matrix', data)
+    labelsObj = nimble.createData('Matrix', labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = UML.createData('Matrix', tdata)
+    testObj = nimble.createData('Matrix', tdata)
 
-    UML.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
 
     name = 'Custom.LoveAtFirstSightClassifier'
-    preds = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
+    preds = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
     assert len(preds.points) == 3
     assert len(preds.features) == 1
-    best = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='bestScore')
+    best = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='bestScore')
     assert len(best.points) == 3
     assert len(best.features) == 2
-    allScores = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='allScores')
+    allScores = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='allScores')
     assert len(allScores.points) == 3
     assert len(allScores.features) == 3
 
@@ -268,13 +268,13 @@ def testCustomLearnerIncTrainCheck():
     """ Test that a CustomLearner with incrementalTrain() but no train() works as expected """
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
-    trainObj = UML.createData('Matrix', data)
-    labelsObj = UML.createData('Matrix', labels)
+    trainObj = nimble.createData('Matrix', data)
+    labelsObj = nimble.createData('Matrix', labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = UML.createData('Matrix', tdata)
+    testObj = nimble.createData('Matrix', tdata)
 
-    UML.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
+    nimble.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
 
     def verifyScores(scores, currPredIndex):
         for rowNum in range(len(scores.points)):
@@ -286,7 +286,7 @@ def testCustomLearnerIncTrainCheck():
                     assert value == 0
 
     name = 'Custom.LoveAtFirstSightClassifier'
-    tlObj = UML.train(name, trainX=trainObj, trainY=labelsObj)
+    tlObj = nimble.train(name, trainX=trainObj, trainY=labelsObj)
 
     origAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
     # label set [0,1,2] with 0 as constant prediction value
@@ -294,8 +294,8 @@ def testCustomLearnerIncTrainCheck():
 
     extendData = [[-343, -23]]
     extendLabels = [[3]]
-    extTrainObj = UML.createData("Matrix", extendData)
-    extLabelsObj = UML.createData("Matrix", extendLabels)
+    extTrainObj = nimble.createData("Matrix", extendData)
+    extLabelsObj = nimble.createData("Matrix", extendLabels)
 
     tlObj.incrementalTrain(extTrainObj, extLabelsObj)
 
@@ -305,8 +305,8 @@ def testCustomLearnerIncTrainCheck():
 
     reData = [[11, 12], [13, 14], [-22, -48]]
     reLabels = [[-1], [-1], [-2]]
-    reTrainObj = UML.createData("Matrix", reData)
-    reLabelsObj = UML.createData('Matrix', reLabels)
+    reTrainObj = nimble.createData("Matrix", reData)
+    reLabelsObj = nimble.createData('Matrix', reLabels)
 
     tlObj.retrain(reTrainObj, reLabelsObj)
     reAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
@@ -325,18 +325,18 @@ class OneOrZeroClassifier(CustomLearner):
 
     def apply(self, testX):
         preds = [[self.prediction] for _ in range(len(testX.points))]
-        return UML.createData("Matrix", preds)
+        return nimble.createData("Matrix", preds)
 
 @configSafetyWrapper
 def test_retrain_withArg():
-    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+    nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
-    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
-    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
-    expZeros = UML.zeros('Matrix', 2, 1)
-    expOnes = UML.ones('Matrix', 2, 1)
+    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = nimble.zeros('Matrix', 2, 1)
+    expOnes = nimble.ones('Matrix', 2, 1)
 
-    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    tl = nimble.train('Custom.OneOrZeroClassifier', trainObj, 0)
     predOnes1 = tl.apply(testObj)
     assert predOnes1 == expOnes
 
@@ -347,14 +347,14 @@ def test_retrain_withArg():
 @raises(InvalidArgumentValue)
 @configSafetyWrapper
 def test_retrain_invalidArg():
-    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+    nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
-    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
-    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
-    expZeros = UML.zeros('Matrix', 2, 1)
-    expOnes = UML.ones('Matrix', 2, 1)
+    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = nimble.zeros('Matrix', 2, 1)
+    expOnes = nimble.ones('Matrix', 2, 1)
 
-    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    tl = nimble.train('Custom.OneOrZeroClassifier', trainObj, 0)
     predOnes1 = tl.apply(testObj)
     assert predOnes1 == expOnes
 
@@ -365,17 +365,17 @@ def test_retrain_invalidArg():
 @raises(InvalidArgumentValue)
 @configSafetyWrapper
 def test_retrain_CVArg():
-    UML.registerCustomLearner("Custom", OneOrZeroClassifier)
+    nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
-    trainObj = UML.createRandomData('Matrix', 4, 3, 0)
-    testObj = UML.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
-    expZeros = UML.zeros('Matrix', 2, 1)
-    expOnes = UML.ones('Matrix', 2, 1)
+    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    expZeros = nimble.zeros('Matrix', 2, 1)
+    expOnes = nimble.ones('Matrix', 2, 1)
 
-    tl = UML.train('Custom.OneOrZeroClassifier', trainObj, 0)
+    tl = nimble.train('Custom.OneOrZeroClassifier', trainObj, 0)
     predOnes1 = tl.apply(testObj)
     assert predOnes1 == expOnes
 
-    tl.retrain(trainObj, 0, predictZero=UML.CV([True, False]))
+    tl.retrain(trainObj, 0, predictZero=nimble.CV([True, False]))
     predZeros1 = tl.apply(testObj)
     assert predZeros1 == expZeros

@@ -8,29 +8,29 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 from six.moves import range
 
-import UML
-from UML import learnerType
-from UML import createData
-from UML.exceptions import InvalidArgumentValue
-from UML.exceptions import InvalidArgumentValueCombination
-from UML.exceptions import ImproperObjectAction
-from UML.exceptions import PackageException
-from UML.helpers import extractWinningPredictionLabel
-from UML.helpers import generateAllPairs
-from UML.helpers import findBestInterface
-from UML.helpers import FoldIterator
-from UML.helpers import sumAbsoluteDifference
-from UML.helpers import generateClusteredPoints
-from UML.helpers import trainAndTestOneVsOne
-from UML.helpers import trainAndApplyOneVsOne
-from UML.helpers import trainAndApplyOneVsAll
-from UML.helpers import _mergeArguments
-from UML.helpers import computeMetrics
-from UML.helpers import inspectArguments
-from UML.calculate import rootMeanSquareError
-from UML.calculate import meanAbsoluteError
-from UML.calculate import fractionIncorrect
-from UML.randomness import pythonRandom
+import nimble
+from nimble import learnerType
+from nimble import createData
+from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import PackageException
+from nimble.helpers import extractWinningPredictionLabel
+from nimble.helpers import generateAllPairs
+from nimble.helpers import findBestInterface
+from nimble.helpers import FoldIterator
+from nimble.helpers import sumAbsoluteDifference
+from nimble.helpers import generateClusteredPoints
+from nimble.helpers import trainAndTestOneVsOne
+from nimble.helpers import trainAndApplyOneVsOne
+from nimble.helpers import trainAndApplyOneVsAll
+from nimble.helpers import _mergeArguments
+from nimble.helpers import computeMetrics
+from nimble.helpers import inspectArguments
+from nimble.calculate import rootMeanSquareError
+from nimble.calculate import meanAbsoluteError
+from nimble.calculate import fractionIncorrect
+from nimble.randomness import pythonRandom
 
 ##########
 # TESTER #
@@ -173,7 +173,7 @@ class FoldIteratorTester(object):
 class TestList(FoldIteratorTester):
     def __init__(self):
         def maker(data=None, featureNames=False):
-            return UML.createData("List", data=data, featureNames=featureNames)
+            return nimble.createData("List", data=data, featureNames=featureNames)
 
         super(TestList, self).__init__(maker)
 
@@ -181,7 +181,7 @@ class TestList(FoldIteratorTester):
 class TestMatrix(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return UML.createData("Matrix", data=data, featureNames=featureNames)
+            return nimble.createData("Matrix", data=data, featureNames=featureNames)
 
         super(TestMatrix, self).__init__(maker)
 
@@ -189,7 +189,7 @@ class TestMatrix(FoldIteratorTester):
 class TestSparse(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return UML.createData("Sparse", data=data, featureNames=featureNames)
+            return nimble.createData("Sparse", data=data, featureNames=featureNames)
 
         super(TestSparse, self).__init__(maker)
 
@@ -199,7 +199,7 @@ class TestRand(FoldIteratorTester):
         def maker(data, featureNames=False):
             possible = ['List', 'Matrix', 'Sparse']
             returnType = possible[pythonRandom.randint(0, 2)]
-            return UML.createData(returnType=returnType, data=data, featureNames=featureNames)
+            return nimble.createData(returnType=returnType, data=data, featureNames=featureNames)
 
         super(TestRand, self).__init__(maker)
 
@@ -234,7 +234,7 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 
     for curAlgorithm in knownAlgorithmToTypeHash.keys():
         actualType = knownAlgorithmToTypeHash[curAlgorithm]
-        predictedType = UML.learnerType(curAlgorithm)
+        predictedType = nimble.learnerType(curAlgorithm)
         try:
             assert (actualType in predictedType)
         except AssertionError:
@@ -551,7 +551,7 @@ def test_computeMetrics_2d_2arg():
     knownLabelsMatrix = createData('Matrix', data=knownLabels)
     predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-    metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
     assert isinstance(result, float)
     assert result == 0.0
@@ -564,7 +564,7 @@ def test_computeMetrics_2d_labelsInData():
     trainingObj = createData('Matrix', data=training)
     predictedObj = createData('Matrix', data=predictedLabels)
 
-    metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+    metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics([0, 2], trainingObj, predictedObj, metricFunctions)
     assert result == 0.0
 
@@ -579,7 +579,7 @@ def test_computeMetrics_1d_2d_symmetric():
     origObj = createData('Matrix', data=origData)
     outObj = createData('Matrix', data=outputData)
 
-    metricFunctions = UML.calculate.cosineSimilarity
+    metricFunctions = nimble.calculate.cosineSimilarity
     result = computeMetrics(origObj, None, outObj, metricFunctions)
     assert result == 1.0
 
@@ -592,7 +592,7 @@ def test_computeMetrics_multiple_metrics_disallowed():
     origObj = createData('Matrix', data=origData)
     outObj = createData('Matrix', data=outputData)
 
-    metricFunctions = [UML.calculate.cosineSimilarity, rootMeanSquareError]
+    metricFunctions = [nimble.calculate.cosineSimilarity, rootMeanSquareError]
     computeMetrics(origObj, None, outObj, metricFunctions)
 
 

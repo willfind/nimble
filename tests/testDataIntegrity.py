@@ -9,18 +9,16 @@ as possible
 from __future__ import absolute_import
 from nose.plugins.attrib import attr
 
-import UML
-
-from UML.exceptions import InvalidArgumentValue
-
-from UML.helpers import generateClassificationData
-from UML.helpers import generateRegressionData
-from UML.randomness import pythonRandom
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
+from nimble.randomness import pythonRandom
 
 
 def assertUnchanged4Obj(learnerName, passed, trainX, trainY, testX, testY):
     """
-    When labels are separate UML objects, assert that all 4 objects
+    When labels are separate nimble objects, assert that all 4 objects
     passed down into a function are identical to copies made before the
     call.
     """
@@ -56,56 +54,56 @@ def handleApplyTestLabels(testX, testY):
     return testX
 
 def wrappedTrain(learnerName, trainX, trainY, testX, testY):
-    return UML.train(learnerName, trainX, trainY)
+    return nimble.train(learnerName, trainX, trainY)
 
 
 def wrappedTrainAndApply(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return UML.trainAndApply(learnerName, trainX, trainY, testX)
+    return nimble.trainAndApply(learnerName, trainX, trainY, testX)
 
 
 def wrappedTrainAndApplyOvO(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return UML.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
+    return nimble.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
 
 
 def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return UML.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
+    return nimble.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
 
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
     # our performance function doesn't actually matter, we're just checking the data
-    return UML.trainAndTest(learnerName, trainX, trainY, testX, testY,
-                            performanceFunction=UML.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                               performanceFunction=nimble.calculate.fractionIncorrect)
 
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-    return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
-                                            performanceFunction=UML.calculate.fractionIncorrect)
+    return nimble.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
+                                               performanceFunction=nimble.calculate.fractionIncorrect)
 
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-    return UML.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
-                                            performanceFunction=UML.calculate.fractionIncorrect)
+    return nimble.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
+                                               performanceFunction=nimble.calculate.fractionIncorrect)
 
 
 def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
-    return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
+    return nimble.crossValidate(learnerName, trainX, trainY, performanceFunction=nimble.calculate.fractionIncorrect)
 
 
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
-    tl = UML.train(learnerName, trainX, trainY)
+    tl = nimble.train(learnerName, trainX, trainY)
     tl.incrementalTrain(trainX.points.copy([0]), trainY.points.copy([0]))
 
 
 def setupAndCallRetrain(learnerName, trainX, trainY, testX, testY):
-    tl = UML.train(learnerName, trainX, trainY)
+    tl = nimble.train(learnerName, trainX, trainY)
     tl.retrain(trainX, trainY)
 
 
 def setupAndCallGetScores(learnerName, trainX, trainY, testX, testY):
-    tl = UML.train(learnerName, trainX, trainY)
+    tl = nimble.train(learnerName, trainX, trainY)
     testX = handleApplyTestLabels(testX, testY)
     tl.getScores(testX)
 
@@ -141,14 +139,14 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     backRTrainCombined = rTrainCombined.copy()
     backRTestCombined = rTestCombined.copy()
 
-    allLearners = UML.listLearners()
+    allLearners = nimble.listLearners()
     numSamples = int(len(allLearners) * portionToTest)
     toTest = pythonRandom.sample(allLearners, numSamples)
 
 #    toTest = filter(lambda x: x[:6] == 'shogun', allLearners)
     for learner in toTest:
         package = learner.split('.', 1)[0].lower()
-        lType = UML.learnerType(learner)
+        lType = nimble.learnerType(learner)
         if lType == 'classification':
             try:
                 toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
