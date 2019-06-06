@@ -17,6 +17,7 @@ from six.moves import range
 import UML
 from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.exceptions import InvalidArgumentValue
+from UML.interfaces.interface_helpers import modifyImportPath
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
@@ -41,9 +42,8 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
         """
 
         """
-        if sciKitLearnDir is not None:
-            sys.path.insert(0, sciKitLearnDir)
-
+        # modify path if another directory provided
+        modifyImportPath(sciKitLearnDir, 'sciKitLearn')
         # suppress DeprecationWarnings
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)

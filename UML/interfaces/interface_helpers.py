@@ -5,6 +5,7 @@ Utility functions that could be useful in multiple interfaces
 from __future__ import absolute_import
 import sys
 import importlib
+import configparser
 
 import numpy
 import six
@@ -594,3 +595,15 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
                 retMatched.append(temp[name])
 
     return (retFull, retMatched)
+
+
+def modifyImportPath(altDirectory, configSection):
+    if altDirectory is not None:
+        sys.path.insert(0, altDirectory)
+    try:
+        location = UML.settings.get(configSection, 'location')
+        if location:
+            if location not in sys.path:
+                sys.path.insert(0, location)
+    except configparser.Error:
+        pass

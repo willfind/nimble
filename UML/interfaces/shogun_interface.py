@@ -32,13 +32,14 @@ import UML
 
 from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import modifyImportPath
 from UML.exceptions import InvalidArgumentValue
 from UML.exceptions import InvalidArgumentValueCombination
 from UML.docHelpers import inheritDocstringsFactory
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
-
+shogunDir = None
 
 trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data', 'train_features', 'data']
 trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
@@ -53,7 +54,8 @@ class Shogun(BuiltinInterface, UniversalInterface):
     """
 
     def __init__(self):
-        super(Shogun, self).__init__()
+        # modify path if another directory provided
+        modifyImportPath(shogunDir, 'shogun')
 
         self.shogun = importlib.import_module('shogun')
         self.versionString = None
@@ -93,6 +95,8 @@ class Shogun(BuiltinInterface, UniversalInterface):
         self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
 
         self.loadParameterManifest()
+
+        super(Shogun, self).__init__()
 
     def _access(self, module, target):
         """
@@ -145,7 +149,7 @@ class Shogun(BuiltinInterface, UniversalInterface):
             import shogun
         except ImportError:
             return False
-        return True
+        return False # currently disable shogun
 
 
     @classmethod

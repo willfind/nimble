@@ -19,6 +19,7 @@ import UML
 from UML.exceptions import InvalidArgumentValue
 from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import modifyImportPath
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
 from UML.docHelpers import inheritDocstringsFactory
@@ -42,8 +43,8 @@ class Mlpy(BuiltinInterface, UniversalInterface):
     _DataAliases = _XDataAliases + _YDataAliases
 
     def __init__(self):
-        if mlpyDir is not None:
-            sys.path.insert(0, mlpyDir)
+        # modify path if another directory provided
+        modifyImportPath(mlpyDir, 'mlpy')
 
         self.mlpy = importlib.import_module('mlpy')
 

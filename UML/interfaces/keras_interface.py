@@ -7,6 +7,7 @@ import copy
 import os
 import sys
 import logging
+import importlib
 
 import numpy
 from six.moves import range
@@ -14,6 +15,7 @@ from six.moves import range
 import UML
 from UML.interfaces.universal_interface import UniversalInterface, BuiltinInterface
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import modifyImportPath
 from UML.interfaces.interface_helpers import collectAttributes
 from UML.interfaces.interface_helpers import removeFromTailMatchedLists
 from UML.helpers import inspectArguments
@@ -35,10 +37,10 @@ class Keras(BuiltinInterface, UniversalInterface):
     This class is an interface to keras.
     """
     def __init__(self):
-        if kerasDir is not None:
-            sys.path.insert(0, kerasDir)
+        # modify path if another directory provided
+        modifyImportPath(kerasDir, 'keras')
 
-        self.keras = UML.importModule('keras')
+        self.keras = importlib.import_module('keras')
 
         backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
