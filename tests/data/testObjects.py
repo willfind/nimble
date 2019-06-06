@@ -13,7 +13,7 @@ defined in this file.
 
 from __future__ import absolute_import
 
-import UML
+import nimble
 
 from .baseObject import startObjectValidation
 from .baseObject import stopObjectValidation
@@ -91,7 +91,7 @@ class TestBaseOnly(LowLevelBackend):
             even though it has no actual data """
             rows = psize if pointNames is None else len(pointNames)
             cols = fsize if featureNames is None else len(featureNames)
-            ret = UML.data.Base((rows, cols), pointNames=pointNames, featureNames=featureNames)
+            ret = nimble.data.Base((rows, cols), pointNames=pointNames, featureNames=featureNames)
             return ret
 
         self.constructor = makeAndDefine

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import numpy
 
-import UML
-from UML import match
+import nimble
+from nimble import match
 from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected
@@ -60,8 +60,8 @@ def test_match_negative():
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
     data = numpy.array(data, dtype=numpy.object_)
-    for t in UML.data.available:
-        toTest = UML.createData(t, data, useLog=False)
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, data, useLog=False)
         # test whole matrix
         if anyOrAll == 'any':
             assert func(toTest)
@@ -83,7 +83,7 @@ def backend_match_anyAll(anyOrAll, func, data):
             else:
                 assert func(feature)
         # test by point
-        toTest = UML.createData(t, data.T, useLog=False)
+        toTest = nimble.createData(t, data.T, useLog=False)
         for i, point in enumerate(toTest.points):
             # index 0 never contains any matching values
             if i == 0:

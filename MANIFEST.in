@@ -1,8 +1,8 @@
 # Include the configuration file
-include UML/configuration.ini
+include nimble/configuration.ini
 
 # Include interface metadata files
-recursive-include UML/interfaces/metadata *
+recursive-include nimble/interfaces/metadata *
 
 # Exclude tests
 prune tests

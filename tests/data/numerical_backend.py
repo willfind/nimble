@@ -22,11 +22,11 @@ from nose.tools import *
 import six
 from six.moves import range
 
-import UML
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
-from UML.exceptions import ImproperObjectAction
-from UML.randomness import numpyRandom
-from UML.randomness import pythonRandom
+import nimble
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
+from nimble.randomness import numpyRandom
+from nimble.randomness import pythonRandom
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
@@ -388,7 +388,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
 
 
 def back_otherObjectExceptions(callerCon, attr1, attr2=None):
-    """ Test operation raises exception when param is not a UML Base object """
+    """ Test operation raises exception when param is not a nimble Base object """
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     caller = callerCon(data)
     toCall = getattr(caller, attr1)
@@ -417,7 +417,7 @@ def back_otherNotNumericException(callerCon, calleeCon, attr1, attr2=None):
     data1 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     data2 = [['one', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
     caller = callerCon(data1)
-    callee = calleeConstructor(data2, UML.data.List)  # need to use UML.data.List for string valued element
+    callee = calleeConstructor(data2, nimble.data.List)  # need to use nimble.data.List for string valued element
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
@@ -502,8 +502,8 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
 
 
 def makeAllData(constructor, rhsCons, n, sparsity):
-    randomlf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
-    randomrf = UML.createRandomData('Matrix', n, n, sparsity, useLog=False)
+    randomlf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
+    randomrf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpymatrix")
     rhsf = randomrf.copy(to="numpymatrix")
     lhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
@@ -520,7 +520,7 @@ def makeAllData(constructor, rhsCons, n, sparsity):
     return (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj)
 
 
-def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
+def back_autoVsNumpyObjCallee(constructor, npOp, nimbleOp, nimbleinplace, sparsity):
     """ Test operation of automated data against numpy operations """
     trials = 1
     for t in range(trials):
@@ -530,13 +530,13 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
         resultf = npOp(lhsf, rhsf)
         resulti = npOp(lhsi, rhsi)
-        resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
-        resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
+        resfObj = getattr(lhsfObj, nimbleOp)(rhsfObj)
+        resiObj = getattr(lhsiObj, nimbleOp)(rhsiObj)
 
         expfObj = constructor(resultf)
         expiObj = constructor(resulti)
 
-        if UMLinplace:
+        if nimbleinplace:
             assert expfObj.isApproximatelyEqual(lhsfObj)
             assert expiObj.isIdentical(lhsiObj)
         else:
@@ -550,9 +550,9 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
         assertNoNamesGenerated(resiObj)
 
 
-def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
+def back_autoVsNumpyScalar(constructor, npOp, nimbleOp, nimbleinplace, sparsity):
     """ Test operation of automated data with a scalar argument, against numpy operations """
-    lside = UMLOp.startswith('__r')
+    lside = nimbleOp.startswith('__r')
     trials = 5
     for t in range(trials):
         n = pythonRandom.randint(1, 10)
@@ -565,18 +565,18 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
         if lside:
             resultf = npOp(scalar, lhsf)
             resulti = npOp(scalar, lhsi)
-            resfObj = getattr(lhsfObj, UMLOp)(scalar)
-            resiObj = getattr(lhsiObj, UMLOp)(scalar)
+            resfObj = getattr(lhsfObj, nimbleOp)(scalar)
+            resiObj = getattr(lhsiObj, nimbleOp)(scalar)
         else:
             resultf = npOp(lhsf, scalar)
             resulti = npOp(lhsi, scalar)
-            resfObj = getattr(lhsfObj, UMLOp)(scalar)
-            resiObj = getattr(lhsiObj, UMLOp)(scalar)
+            resfObj = getattr(lhsfObj, nimbleOp)(scalar)
+            resiObj = getattr(lhsiObj, nimbleOp)(scalar)
 
         expfObj = constructor(resultf)
         expiObj = constructor(resulti)
 
-        if UMLinplace:
+        if nimbleinplace:
             assert expfObj.isApproximatelyEqual(lhsfObj)
             assert expiObj.isIdentical(lhsiObj)
         else:
@@ -588,9 +588,9 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
         assertNoNamesGenerated(resiObj)
 
 
-def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, sparsity):
+def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, nimbleOp, nimbleinplace, sparsity):
     """ Test operation on handmade data with different types of data objects"""
-    makers = [getattr(UML.data, retType) for retType in UML.data.available]
+    makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
 
     for i in range(len(makers)):
         maker = makers[i]
@@ -601,12 +601,12 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
 
         resultf = npOp(lhsf, rhsf)
         resulti = npOp(lhsi, rhsi)
-        resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
-        resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
+        resfObj = getattr(lhsfObj, nimbleOp)(rhsfObj)
+        resiObj = getattr(lhsiObj, nimbleOp)(rhsiObj)
         expfObj = constructor(resultf)
         expiObj = constructor(resulti)
 
-        if UMLinplace:
+        if nimbleinplace:
             assert expfObj.isApproximatelyEqual(lhsfObj)
             assert expiObj.isIdentical(lhsiObj)
         else:
@@ -614,9 +614,9 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
             assert expiObj.isIdentical(resiObj)
 
             if type(resfObj) != type(lhsfObj):
-                assert isinstance(resfObj, UML.data.Base)
+                assert isinstance(resfObj, nimble.data.Base)
             if type(resiObj) != type(lhsiObj):
-                assert isinstance(resiObj, UML.data.Base)
+                assert isinstance(resiObj, nimble.data.Base)
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
@@ -634,49 +634,49 @@ def wrapAndCall(toWrap, expected, *args):
         raise
 
 
-def run_full_backendDivMod(constructor, npEquiv, UMLOp, inplace, sparsity):
-    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, UMLOp))
-    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
+def run_full_backendDivMod(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
 
-    run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity)
-
-
-def run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity):
-    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, UMLOp))
-
-    wrapAndCall(back_selfNotNumericException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
-
-    wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
-
-    wrapAndCall(back_pShapeException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
-
-    wrapAndCall(back_fShapeException, InvalidArgumentValue, *(constructor, constructor, UMLOp))
-
-    wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, UMLOp))
-
-    wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, UMLOp))
-
-    back_autoVsNumpyObjCallee(constructor, npEquiv, UMLOp, inplace, sparsity)
-
-    back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
-
-    back_autoVsNumpyObjCalleeDiffTypes(constructor, npEquiv, UMLOp, inplace, sparsity)
+    run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
-def run_full_backendDivMod_rop(constructor, npEquiv, UMLOp, inplace, sparsity):
-    run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity)
+def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
+
+    wrapAndCall(back_selfNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_pShapeException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_fShapeException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
+
+    back_autoVsNumpyObjCallee(constructor, npEquiv, nimbleOp, inplace, sparsity)
+
+    back_autoVsNumpyScalar(constructor, npEquiv, nimbleOp, inplace, sparsity)
+
+    back_autoVsNumpyObjCalleeDiffTypes(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
-def run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity):
-    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, UMLOp))
+def run_full_backendDivMod_rop(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
-    wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, UMLOp))
 
-    wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, UMLOp))
+def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
 
-    wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
 
-    back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
+    wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
+
+    wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
+
+    back_autoVsNumpyScalar(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
 class NumericalDataSafe(DataTestObject):
@@ -738,7 +738,7 @@ class NumericalDataSafe(DataTestObject):
         back_autoVsNumpyScalar(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
     def test_autoVsNumpyObjCalleeDiffTypes(self):
-        """ Test __mul__ against generated data with different UML types of objects """
+        """ Test __mul__ against generated data with different nimble types of objects """
         back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
     def test_mul_binaryscalar_pfname_preservations(self):
@@ -1015,17 +1015,17 @@ class NumericalDataSafe(DataTestObject):
     def test_pow_exceptions(self):
         """ __pow__ Run the full standardized suite of tests for a binary numeric op """
         constructor = self.constructor
-        UMLOp = '__pow__'
-        inputs = (constructor, UMLOp)
+        nimbleOp = '__pow__'
+        inputs = (constructor, nimbleOp)
         wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
 
-        inputs = (constructor, int, UMLOp)
+        inputs = (constructor, int, nimbleOp)
         wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
 
-        inputs = (constructor, constructor, UMLOp)
+        inputs = (constructor, constructor, nimbleOp)
         wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
 
-        inputs = (constructor, constructor, UMLOp)
+        inputs = (constructor, constructor, nimbleOp)
         wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
 
     @noLogEntryExpected
@@ -1138,7 +1138,7 @@ class NumericalModifying(DataTestObject):
 
     @raises(InvalidArgumentType)
     def test_elements_power_otherObjectExceptions(self):
-        """ Test elements.power raises exception when param is not a UML Base object """
+        """ Test elements.power raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
     @raises(InvalidArgumentValue)
@@ -1171,7 +1171,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.power raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
-    @logCountAssertionFactory(len(UML.data.available))
+    @logCountAssertionFactory(len(nimble.data.available))
     def test_elements_power_handmade(self):
         """ Test elements.power on handmade data """
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1182,10 +1182,10 @@ class NumericalModifying(DataTestObject):
         calleepnames = ['I', 'dont', 'match']
         calleefnames = ['one', 'two']
 
-        for retType in UML.data.available:
+        for retType in nimble.data.available:
             caller = self.constructor(data, pointNames=callerpnames)
-            exponentsObj = UML.createData(retType, exponents, pointNames=calleepnames,
-                                          featureNames=calleefnames, useLog=False)
+            exponentsObj = nimble.createData(retType, exponents, pointNames=calleepnames,
+                                             featureNames=calleefnames, useLog=False)
             caller.elements.power(exponentsObj)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
@@ -1198,14 +1198,14 @@ class NumericalModifying(DataTestObject):
         exponents = [[0, -1], [-.5, 2], [2, .5]]
         exp1 = [[1, .5], [.5, 25], [49, 2]]
 
-        for retType in UML.data.available:
+        for retType in nimble.data.available:
             caller = self.constructor(data)
-            exponentsObj = UML.createData(retType, exponents)
+            exponentsObj = nimble.createData(retType, exponents)
             caller.elements.power(exponentsObj)
 
             assertNoNamesGenerated(caller)
 
-    @logCountAssertionFactory(len([getattr(UML.data, retType) for retType in UML.data.available]))
+    @logCountAssertionFactory(len([getattr(nimble.data, retType) for retType in nimble.data.available]))
     def test_elements_power_handmadeScalar(self):
         """ Test elements.power on handmade data with scalar parameter"""
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1213,7 +1213,7 @@ class NumericalModifying(DataTestObject):
         exp1 = [[1, 4], [16, 25], [49, 16]]
         callerpnames = ['1', '2', '3']
 
-        makers = [getattr(UML.data, retType) for retType in UML.data.available]
+        makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
 
         for maker in makers:
             caller = self.constructor(data, pointNames=callerpnames)
@@ -1232,7 +1232,7 @@ class NumericalModifying(DataTestObject):
 
     @raises(InvalidArgumentType)
     def test_elements_multiply_otherObjectExceptions(self):
-        """ Test elements.multiply raises exception when param is not a UML Base object """
+        """ Test elements.multiply raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
     @raises(InvalidArgumentValue)
@@ -1290,7 +1290,7 @@ class NumericalModifying(DataTestObject):
         assert caller.isIdentical(exp2Obj)
         assertNoNamesGenerated(caller)
 
-    @logCountAssertionFactory(len(UML.data.available) * 2)
+    @logCountAssertionFactory(len(nimble.data.available) * 2)
     def test_elements_multiply_handmadeDifInputs(self):
         """ Test elements.multiply on handmade data with different input object types"""
         data = [[1, 2], [4, 5], [7, 8]]
@@ -1298,9 +1298,9 @@ class NumericalModifying(DataTestObject):
         exp1 = [[2, 4], [8, 10], [14, 16]]
         halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
 
-        for retType in UML.data.available:
+        for retType in nimble.data.available:
             caller = self.constructor(data)
-            twosObj = UML.createData(retType, twos, useLog=False)
+            twosObj = nimble.createData(retType, twos, useLog=False)
             caller.elements.multiply(twosObj)
 
             exp1Obj = self.constructor(exp1)
@@ -1308,7 +1308,7 @@ class NumericalModifying(DataTestObject):
             assert exp1Obj.isIdentical(caller)
             assertNoNamesGenerated(caller)
 
-            halvesObj = UML.createData(retType, halves, useLog=False)
+            halvesObj = nimble.createData(retType, halves, useLog=False)
             caller.elements.multiply(halvesObj)
 
             exp2Obj = self.constructor(data)
@@ -1318,14 +1318,14 @@ class NumericalModifying(DataTestObject):
 
     def test_elementwiseMultipy_auto(self):
         """ Test elements.multiply on generated data against the numpy op """
-        makers = [getattr(UML.data, retType) for retType in UML.data.available]
+        makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
 
         for i in range(len(makers)):
             maker = makers[i]
             n = pythonRandom.randint(1, 10)
 
-            randomlf = UML.createRandomData('Matrix', n, n, .2)
-            randomrf = UML.createRandomData('Matrix', n, n, .2)
+            randomlf = nimble.createRandomData('Matrix', n, n, .2)
+            randomrf = nimble.createRandomData('Matrix', n, n, .2)
             lhsf = randomlf.copy(to="numpymatrix")
             rhsf = randomrf.copy(to="numpymatrix")
             lhsi = numpy.matrix(numpy.ones((n, n)))
@@ -1451,7 +1451,7 @@ class NumericalModifying(DataTestObject):
         back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imul__', True, 0.2)
 
     def test_imul__autoVsNumpyObjCalleeDiffTypes(self):
-        """ Test __mul__ against generated data with different UML types of objects """
+        """ Test __mul__ against generated data with different nimble types of objects """
         back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
     def test_imul_binaryscalar_pfname_preservations(self):
@@ -1615,17 +1615,17 @@ class NumericalModifying(DataTestObject):
     def test_ipow_exceptions(self):
         """ __ipow__ Run the full standardized suite of tests for a binary numeric op """
         constructor = self.constructor
-        UMLOp = '__ipow__'
-        inputs = (constructor, UMLOp)
+        nimbleOp = '__ipow__'
+        inputs = (constructor, nimbleOp)
         wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
 
-        inputs = (constructor, int, UMLOp)
+        inputs = (constructor, int, nimbleOp)
         wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
 
-        inputs = (constructor, constructor, UMLOp)
+        inputs = (constructor, constructor, nimbleOp)
         wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
 
-        inputs = (constructor, constructor, UMLOp)
+        inputs = (constructor, constructor, nimbleOp)
         wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
 
     def test_ipow_autoVsNumpyScalar(self):

@@ -9,8 +9,8 @@ import numpy
 from six.moves import range
 
 
-from UML.data import Base
-from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from nimble.data import Base
+from nimble.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 
 
 def test_OvOTournament():

@@ -4,16 +4,16 @@ Unit tests for the universal interface object.
 """
 
 from __future__ import absolute_import
-from nose.tools import raises
 import sys
 import tempfile
 import os
 
-import UML
+from nose.tools import raises
 
-from UML.exceptions import InvalidArgumentValue
-from UML.interfaces.universal_interface import UniversalInterface
-from UML.helpers import generateClassificationData
+import nimble
+from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.helpers import generateClassificationData
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
@@ -254,8 +254,8 @@ def test_setOptionGetOption():
 #########################
 
 def test_eachExposedPresent():
-    dummyUML = UML.createData('Matrix', [[1, 1], [2, 2]])
-    tl = TestObject.train('exposeTest', dummyUML, dummyUML)
+    dummyNimble = nimble.createData('Matrix', [[1, 1], [2, 2]])
+    tl = TestObject.train('exposeTest', dummyNimble, dummyNimble)
     assert hasattr(tl, 'exposedOne')
     assert tl.exposedOne() == 1
     assert hasattr(tl, 'exposedTwo')
@@ -318,7 +318,7 @@ class AlwaysWarnInterface(UniversalInterface):
         sys.stderr.flush()
         num = len(testX.points)
         raw = [0] * num
-        return UML.createData("Matrix", raw, useLog=False)
+        return nimble.createData("Matrix", raw, useLog=False)
 
     def _getScoresOrder(self, learner):
         self.writeWarningToStdErr()
@@ -395,12 +395,12 @@ def backend_warningscapture(toCall, prepCall=None):
             arg = AlwaysWarnInterface()
 
         startSizeErr = os.path.getsize(tempErr.name)
-        startSizeCap = os.path.getsize(UML.capturedErr.name)
+        startSizeCap = os.path.getsize(nimble.capturedErr.name)
 
         toCall(arg)
 
         endSizeErr = os.path.getsize(tempErr.name)
-        endSizeCap = os.path.getsize(UML.capturedErr.name)
+        endSizeCap = os.path.getsize(nimble.capturedErr.name)
 
         assert startSizeErr == endSizeErr
         assert startSizeCap != endSizeCap

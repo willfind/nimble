@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from six.moves import range
 from nose.tools import *
 
-from UML.logger.stopwatch import Stopwatch
+from nimble.logger.stopwatch import Stopwatch
 
 def testBasicFuncs():
     watch = Stopwatch()

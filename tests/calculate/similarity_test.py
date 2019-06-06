@@ -4,10 +4,10 @@ import math
 import numpy
 from nose.tools import raises
 
-from UML import createData
-from UML.calculate import cosineSimilarity
-from UML.calculate import rSquared
-from UML.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble import createData
+from nimble.calculate import cosineSimilarity
+from nimble.calculate import rSquared
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from ..assertionHelpers import noLogEntryExpected
 
 ####################
