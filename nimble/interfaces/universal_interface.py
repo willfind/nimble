@@ -2133,6 +2133,14 @@ def relabeler(point, label=None):
     else:
         return 1
 
+## Helpers for BuiltinInterface.provideInitExceptionInfo ##
+
+installHeader = """
+To install {name}
+-----------------"""
+
+def formatInstallHeader(name):
+    return installHeader.format(name=name)
 
 pathMessage = """
 If package installed
@@ -2152,13 +2160,6 @@ Exception information
 ---------------------
     The traceback can be found above and the original exception was:
     {exception}: {message}"""
-
-installHeader = """
-To install {name}
------------------"""
-
-def formatInstallHeader(name):
-    return installHeader.format(name=name)
 
 def formatErrorMessage(exception, message):
     return errorMessage.format(exception=exception, message=message)
@@ -2188,7 +2189,7 @@ class BuiltinInterface(abc.ABC):
         """
         name = cls.getCanonicalName()
         try:
-            cls()
+            return cls()
         except Exception as e:
             origType = e.__class__.__name__
             origMsg = str(e)
@@ -2206,7 +2207,6 @@ class BuiltinInterface(abc.ABC):
             # the original exception
             msg += formatErrorMessage(origType, origMsg)
             raise PackageException(msg).with_traceback(origTraceback)
-
 
     @classmethod
     def _installInstructions(cls):

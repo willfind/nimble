@@ -83,7 +83,7 @@ def findBestInterface(package):
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
             # interface is a builtin one, but instantiation failed
-            interface.provideInitExceptionInfo()
+            return interface.provideInitExceptionInfo()
     # if package is not recognized, provide generic exception information
     msg = "package '" + package
     msg += "' was not associated with any of the available package interfaces"

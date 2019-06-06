@@ -145,11 +145,7 @@ class Shogun(BuiltinInterface, UniversalInterface):
     #######################################
 
     def accessible(self):
-        try:
-            import shogun
-        except ImportError:
-            return False
-        return False # currently disable shogun
+        return True
 
 
     @classmethod

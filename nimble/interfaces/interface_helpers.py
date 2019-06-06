@@ -602,8 +602,7 @@ def modifyImportPath(altDirectory, configSection):
         sys.path.insert(0, altDirectory)
     try:
         location = nimble.settings.get(configSection, 'location')
-        if location:
-            if location not in sys.path:
-                sys.path.insert(0, location)
+        if location and location not in sys.path:
+            sys.path.insert(0, location)
     except configparser.Error:
         pass
