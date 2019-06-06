@@ -3912,13 +3912,17 @@ class Base(object):
         return ret
 
     def _genericNumericBinary_implementation(self, opName, other):
-        selfData, otherData = self.getDataForBinaryOp(opName, other)
+        selfData, otherData = self._getDataForBinaryOp(opName, other)
         ret = getattr(selfData, opName)(otherData)
         if ret is NotImplemented:
             # some sparse to sparse operations return NotImplemented
-            selfData = self.copy('numpymatrix')
-            otherData = other.copy('numpymatrix')
-            ret = getattr(selfData, opName)(otherData)
+            if opName.startswith('__i'):
+                notInplace = '__' + opName[3:]
+                ret = getattr(selfData, notInplace)(otherData)
+            else:
+                selfData = self.copy('numpymatrix')
+                otherData = other.copy('numpymatrix')
+                ret = getattr(selfData, opName)(otherData)
 
         ret = createDataNoValidation(self.getTypeString(), ret)
         if opName.startswith('__i'):
@@ -3928,7 +3932,7 @@ class Base(object):
             ret = self
         return ret
 
-    def getDataForBinaryOp(self, opName, other):
+    def _getDataForBinaryOp(self, opName, other):
         selfSparse = False
         if not isinstance(self, nimble.data.Sparse):
             selfData = self.copy('numpymatrix')
@@ -3944,12 +3948,10 @@ class Base(object):
             else:
                 selfData = self.copy('numpymatrix')
 
-        # sparse can only handle 0 as scalar value
-        if selfSparse and not isinstance(other, nimble.data.Base):
-            if other != 0:
-                selfData = self.copy('numpymatrix')
-            return selfData, other
         if not isinstance(other, nimble.data.Base):
+            # sparse can only handle 0 as scalar value
+            if selfSparse and other != 0:
+                selfData = self.copy('numpymatrix')
             return selfData, other
         # use sparse to sparse operations, when possible
         if selfSparse and isinstance(other, nimble.data.Sparse):
