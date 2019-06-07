@@ -7,13 +7,16 @@ import copy
 import os
 import sys
 import logging
+import importlib
 
 import numpy
 from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import BuiltinInterface
 from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.interfaces.interface_helpers import modifyImportPath
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
@@ -30,15 +33,15 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Keras(UniversalInterface):
+class Keras(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to keras.
     """
     def __init__(self):
-        if kerasDir is not None:
-            sys.path.insert(0, kerasDir)
+        # modify path if another directory provided
+        modifyImportPath(kerasDir, 'keras')
 
-        self.keras = nimble.importModule('keras')
+        self.keras = importlib.import_module('keras')
 
         backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
@@ -90,6 +93,10 @@ class Keras(UniversalInterface):
         except ImportError:
             return False
         return True
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'keras'
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
@@ -184,16 +191,6 @@ class Keras(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder()
-
-
-    def isAlias(self, name):
-        if name.lower() == 'keras':
-            return True
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'keras'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

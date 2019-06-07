@@ -23,7 +23,6 @@ from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
 from nimble.interfaces.scikit_learn_interface import SciKitLearn
-from nimble.interfaces.universal_interface import UniversalInterface
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -46,7 +45,7 @@ def toCall(learner):
     return packageName + '.' + learner
 
 @sklSkipDec
-@logCountAssertionFactory(4)
+@logCountAssertionFactory(5)
 def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
@@ -62,6 +61,7 @@ def testScikitLearnAliases():
     nimble.trainAndApply("SKL.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("skl.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+    nimble.trainAndApply("sklearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 
 @sklSkipDec

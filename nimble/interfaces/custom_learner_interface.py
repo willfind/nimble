@@ -87,6 +87,9 @@ class CustomLearnerInterface(UniversalInterface):
     def accessible(self):
         return True
 
+    def getCanonicalName(self):
+        return self.name
+
     def _listLearnersBackend(self):
         return list(self.registeredLearners.keys())
 
@@ -144,13 +147,6 @@ class CustomLearnerInterface(UniversalInterface):
         else:
             msg = "Can only get scores order for a classifying learner"
             raise InvalidArgumentValue(msg)
-
-    def isAlias(self, name):
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return self.name
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):

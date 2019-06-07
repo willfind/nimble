@@ -18,6 +18,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from . import configuration
 from .configuration import nimblePath
+# load settings from configuration file
+settings = configuration.loadSettings()
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
@@ -56,9 +58,6 @@ from .core import loadTrainedLearner
 from .helpers import CV
 
 capturedErr = tempfile.NamedTemporaryFile()
-
-# load settings from configuration file
-settings = configuration.loadSettings()
 
 # now finish out with any other configuration that needs to be done
 

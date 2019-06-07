@@ -10,12 +10,14 @@ class nimbleException(Exception):
     Override Python's Exception, requiring a value upon instantiation.
     """
     def __init__(self, value):
+        if not isinstance(value, str):
+            raise TypeError("value must be a string")
         self.value = value
         self.className = self.__class__.__name__
-        super(nimbleException, self).__init__()
+        super(nimbleException, self).__init__(value)
 
     def __str__(self):
-        return repr(self.value)
+        return self.value
 
     def __repr__(self):
         return "{cls}({val})".format(cls=self.className, val=repr(self.value))

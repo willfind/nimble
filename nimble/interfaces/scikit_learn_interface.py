@@ -16,7 +16,9 @@ from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import BuiltinInterface
 from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.interface_helpers import modifyImportPath
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
@@ -32,7 +34,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class SciKitLearn(UniversalInterface):
+class SciKitLearn(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to scikit-learn.
     """
@@ -41,9 +43,8 @@ class SciKitLearn(UniversalInterface):
         """
 
         """
-        if sciKitLearnDir is not None:
-            sys.path.insert(0, sciKitLearnDir)
-
+        # modify path if another directory provided
+        modifyImportPath(sciKitLearnDir, 'sciKitLearn')
         # suppress DeprecationWarnings
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -94,6 +95,17 @@ class SciKitLearn(UniversalInterface):
         except ImportError:
             return False
         return True
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'sciKitLearn'
+
+
+    @classmethod
+    def isAlias(cls, name):
+        if name.lower() in ['skl', 'sklearn']:
+            return True
+        return name.lower() == cls.getCanonicalName().lower()
 
     def _listLearnersBackend(self):
         possibilities = []
@@ -241,16 +253,6 @@ class SciKitLearn(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder()
-
-
-    def isAlias(self, name):
-        if name.lower() == 'skl':
-            return True
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'sciKitLearn'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

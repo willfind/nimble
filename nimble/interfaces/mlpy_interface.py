@@ -18,7 +18,9 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import BuiltinInterface
 from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.interfaces.interface_helpers import modifyImportPath
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.docHelpers import inheritDocstringsFactory
@@ -32,7 +34,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Mlpy(UniversalInterface):
+class Mlpy(BuiltinInterface, UniversalInterface):
     """
     This class is an interface to mlpy.
     """
@@ -42,8 +44,8 @@ class Mlpy(UniversalInterface):
     _DataAliases = _XDataAliases + _YDataAliases
 
     def __init__(self):
-        if mlpyDir is not None:
-            sys.path.insert(0, mlpyDir)
+        # modify path if another directory provided
+        modifyImportPath(mlpyDir, 'mlpy')
 
         self.mlpy = importlib.import_module('mlpy')
 
@@ -71,6 +73,11 @@ class Mlpy(UniversalInterface):
         except ImportError:
             return False
         return True
+
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'mlpy'
 
 
     def _listLearnersBackend(self):
@@ -192,14 +199,6 @@ class Mlpy(UniversalInterface):
 
     def _getScoresOrder(self, learner):
         return learner.labels()
-
-
-    def isAlias(self, name):
-        return name.lower() == self.getCanonicalName().lower()
-
-
-    def getCanonicalName(self):
-        return 'mlpy'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,

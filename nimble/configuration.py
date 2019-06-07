@@ -31,7 +31,8 @@ from six.moves import configparser
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentTypeCombination, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentTypeCombination
+from nimble.exceptions import ImproperObjectAction, PackageException
 
 currentFile = inspect.getfile(inspect.currentframe())
 nimblePath = os.path.dirname(os.path.abspath(currentFile))
@@ -432,6 +433,14 @@ class SessionConfiguration(object):
             einfo = sys.exc_info()
             if not ignore:
                 six.reraise(einfo[0], einfo[1], einfo[2])
+        # a PackageException is the result of a possible interface being
+        # unavailable, we will allow setting a location for possible interfaces
+        # as this may aid in loading them in the future.
+        except PackageException:
+            if option != 'location':
+                msg = section + "is an interface which is not currently "
+                msg += "available. Only a 'location' option is permitted "
+                msg += "for unavailable interfaces."
 
         if (not section in self.changes
                 or isinstance(self.changes[section], ToDelete)):

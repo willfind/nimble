@@ -28,7 +28,7 @@ def test_nimbleException_strOutput():
         raise nimbleException('message')
         assert False
     except nimbleException as e:
-        assert str(e) == "'message'"
+        assert str(e) == 'message'
 
 def test_nimbleException_reprOutput():
     try:
@@ -45,7 +45,7 @@ def test_nimbleException_customSubClassInheritance():
         raise CustomException('custom message')
         assert False
     except CustomException as e:
-        assert str(e) == "'custom message'"
+        assert str(e) == 'custom message'
         assert repr(e) == "CustomException('custom message')"
 
     try:

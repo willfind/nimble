@@ -14,6 +14,7 @@ from nimble import createData
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import generateAllPairs
 from nimble.helpers import findBestInterface
@@ -216,19 +217,19 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
         findBestInterface('sciKitLearn')
         knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsClassifier'] = 'classification'
         knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsRegressor'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
     try:
         findBestInterface('mlpy')
         knownAlgorithmToTypeHash['mlpy.LDAC'] = 'classification'
         knownAlgorithmToTypeHash['mlpy.Ridge'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
     try:
         findBestInterface('shogun')
         knownAlgorithmToTypeHash['shogun.MulticlassOCAS'] = 'classification'
         knownAlgorithmToTypeHash['shogun.LibSVR'] = 'regression'
-    except InvalidArgumentValue:
+    except PackageException:
         pass
 
     for curAlgorithm in knownAlgorithmToTypeHash.keys():

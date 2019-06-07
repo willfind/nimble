@@ -7,14 +7,14 @@ from __future__ import print_function
 import os
 import importlib
 import abc
-from .universal_interface import UniversalInterface
+from .universal_interface import BuiltinInterface
 
 displayErrors = False
 
 
-def collectVisiblePythonModules(modulePath):
+def collectBuiltinInterfaces(modulePath):
     """
-    Find files in this directory which could be python importable.
+    Import builtin modules and check for builtin interfaces.
     """
     possibleFiles = os.listdir(modulePath)
     pythonModules = []
@@ -24,42 +24,35 @@ def collectVisiblePythonModules(modulePath):
         (name, extension) = fileName.rsplit('.', 1)
         if extension == 'py' and not name.startswith('_'):
             pythonModules.append(name)
-    return pythonModules
-
-
-def collectUnexpectedInterfaces(pythonModules):
-    """
-    Import possible modules and check for possible interfaces.
-    """
-    possibleInterfaces = []
+    builtinInterfaces = []
     # setup seen with the interfaces we know we don't want to load/try to load
-    seen = set(["UniversalInterface", "CustomLearnerInterface"])
+    seen = set(["BuiltinInterface"])
     for toImport in pythonModules:
         importedModule = importlib.import_module('.' + toImport, __package__)
         contents = dir(importedModule)
 
         # for each attribute of the module, we will check to see if it is a
-        # subclass of the UniversalInterface
+        # subclass of the BuiltinInterface
         for valueName in contents:
             value = getattr(importedModule, valueName)
             if (isinstance(value, abc.ABCMeta)
-                    and issubclass(value, UniversalInterface)):
+                    and issubclass(value, BuiltinInterface)):
                 if not valueName in seen:
                     seen.add(valueName)
-                    possibleInterfaces.append(value)
-    return possibleInterfaces
+                    builtinInterfaces.append(value)
+
+    return builtinInterfaces
 
 
 def collect(modulePath):
     """
     Collect the interfaces which import properly.
     """
-    pythonModules = collectVisiblePythonModules(modulePath)
-    possibleInterfaces = collectUnexpectedInterfaces(pythonModules)
+    builtinInterfaces = collectBuiltinInterfaces(modulePath)
 
-    # now have a list of possible interfaces, which we will try to instantiate
+    # now have a list of builtin interfaces, which we will try to instantiate
     instantiated = []
-    for toInstantiate in possibleInterfaces:
+    for toInstantiate in builtinInterfaces:
         tempObj = None
         try:
             tempObj = toInstantiate()

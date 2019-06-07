@@ -649,3 +649,6 @@ class OptionNamedLookalike(object):
 
     def getCanonicalName(self):
         return self.name
+
+    def isAlias(self, name):
+        return name.lower() == self.getCanonicalName()

@@ -7,6 +7,12 @@ the UniversalInterface api.
 
 from __future__ import absolute_import
 from __future__ import print_function
+import os
+import sys
+import importlib
+import copy
+from unittest import mock
+import tempfile
 
 import nose
 from nose.tools import raises
@@ -14,7 +20,8 @@ from nose.plugins.attrib import attr
 #@attr('slow')
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.configuration import configSafetyWrapper
+from nimble.exceptions import InvalidArgumentValue, PackageException
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import generateClassificationData
@@ -177,8 +184,132 @@ def testRandomnessControl():
                     assert result3 != result4
 
 
-#	assert False
+def getCanonicalNameAndPossibleAliases(interface):
+    if interface.__name__ == 'SciKitLearn':
+        canonicalName = 'sciKitLearn'
+        aliases = ['scikitlearn', 'skl', 'sklearn', 'sKLeARN', 'SKL']
+    elif interface.__name__ == 'Mlpy':
+        canonicalName = 'mlpy'
+        aliases = ['mlpy', 'MLPY', 'mLpY']
+    elif interface.__name__ == 'Keras':
+        canonicalName = 'keras'
+        aliases = ['keras', 'KERAS', 'KeRaS']
+    elif interface.__name__ == 'Shogun':
+        canonicalName = 'shogun'
+        aliases = ['shogun', 'SHOGUN', 'ShOGUn']
+    else:
+        msg = "the canonical name and aliases are not defined for this interface"
+        raise ValueError(msg)
+    return canonicalName, aliases
 
+def test_classmethods():
+    for interface in nimble.interfaces.builtin:
+        canonicalName, aliases = getCanonicalNameAndPossibleAliases(interface)
+        assert interface.getCanonicalName() == canonicalName
+        for alias in aliases:
+            assert interface.isAlias(alias)
+        assert not interface.isAlias('foo')
+
+
+def test_failedInit():
+    availableBackup = nimble.interfaces.available
+    builtinBackup = nimble.interfaces.builtin
+    try:
+        for interface in nimble.interfaces.builtin:
+            class MockInterface(interface):
+                pass
+
+            # override interfaces.available so findBestInterface will check
+            # builtin and use mock object as the builtin so we can raise
+            # different errors
+            nimble.interfaces.available = []
+            nimble.interfaces.builtin = [MockInterface]
+
+            # the learner must start with package and the data must be nimble
+            # objects but the learner name and data values are irrelevant
+            # since a PackageException should occur
+            learner = interface.__name__ + '.Foo'
+            X = nimble.createData('Matrix', [])
+            y = X.copy()
+            def raiseError(error):
+                raise error
+            try:
+                MockInterface.__init__ = lambda self: raiseError(ImportError)
+                nimble.train(learner, X, y)
+                assert False # expected PackageException
+            except PackageException as e:
+                assert "ImportError" in str(e)
+                # path message included for ImportErrors
+                assert "If package installed" in str(e)
+                # interface may have install instructions
+                if interface._installInstructions():
+                    assert "To install" in str(e)
+                assert "Exception information" in str(e)
+
+            try:
+                MockInterface.__init__ = lambda self: raiseError(ValueError)
+                nimble.train(learner, X, y)
+                assert False # expected PackageException
+            except PackageException as e:
+                assert "ValueError" in str(e)
+                # path message not included for other error types
+                assert not "If package installed" in str(e)
+                assert "Exception information" in str(e)
+    finally:
+        nimble.interfaces.available = availableBackup
+        nimble.interfaces.builtin = builtinBackup
+
+
+## Helpers for test_loadModulesFromConfigLocation ##
+class ImportedMockModule(Exception):
+    pass
+
+mockedInit = """
+from tests.interfaces.universal_integration_test import ImportedMockModule
+raise ImportedMockModule
+"""
+
+importlib.import_module_ = importlib.import_module
+# need to reload module, since import_module will may return the
+# module loaded on init
+def reload(module):
+    """
+    One of the two importlib calls will access the modified sys.path
+    and throw an ImportedMockModuleException
+    """
+    # if the module did not load successfully on init, this will
+    # access the new sys.path and should raise exception here
+    mod = importlib.import_module_(module)
+    # if the module loaded successfully on init, need to reload so
+    # it checks the new sys.path and should raise exception here
+    mod = importlib.reload(mod)
+    return mod
+
+@configSafetyWrapper
+def test_loadModulesFromConfigLocation():
+    for interface in nimble.interfaces.builtin:
+        sysPathBackup = sys.path.copy()
+        canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
+        packageName = canonicalName
+        if packageName == 'sciKitLearn':
+            packageName = 'sklearn'
+        with tempfile.TemporaryDirectory() as mockDirectory:
+            packagePath = os.path.join(mockDirectory, packageName)
+            os.mkdir(packagePath)
+            initPath = os.path.join(packagePath, '__init__.py')
+            with open(initPath, 'w+') as initFile:
+                initFile.write(mockedInit)
+
+            nimble.settings.set(canonicalName, 'location', mockDirectory)
+            try:
+                # patch import_module so it reloads from settings location
+                with mock.patch('importlib.import_module', reload):
+                    interface()
+                assert False # expected ImportedMockModule
+            except ImportedMockModule:
+                pass
+            finally:
+                sys.path = sysPathBackup
 
 
 # TODO
