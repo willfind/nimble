@@ -554,7 +554,7 @@ class Elements(object):
         except Exception as e:
             #TODO: improve how the exception is catch
             self._source._numericValidation()
-            other._numericValidation()
+            other._numericValidation(right=True)
             raise e
 
         retNames = dataHelpers.mergeNonDefaultNames(self._source, other)

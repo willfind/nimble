@@ -628,6 +628,8 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, nimbleOp, nimbleinplac
 def wrapAndCall(toWrap, expected, *args):
     try:
         toWrap(*args)
+        if issubclass(expected, Exception):
+            assert False
     except expected:
         pass
     except:
@@ -644,7 +646,7 @@ def run_full_backendDivMod(constructor, npEquiv, nimbleOp, inplace, sparsity):
 def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
 
-    wrapAndCall(back_selfNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
 
     wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
 
@@ -685,7 +687,7 @@ class NumericalDataSafe(DataTestObject):
     # __mul__ #
     ###########
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_mul_selfNotNumericException(self):
         """ Test __mul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__mul__')
@@ -1141,7 +1143,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.power raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_elements_power_selfNotNumericException(self):
         """ Test elements.power raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'power')
@@ -1235,7 +1237,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.multiply raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_elements_multiply_selfNotNumericException(self):
         """ Test elements.multiply raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
@@ -1398,7 +1400,7 @@ class NumericalModifying(DataTestObject):
     # __imul__ #
     ############
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_imul_selfNotNumericException(self):
         """ Test __imul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__imul__')

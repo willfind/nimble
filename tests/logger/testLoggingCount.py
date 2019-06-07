@@ -314,12 +314,11 @@ for call in classes:
             ALL_DUNDER.append(call.__name__ + '.' + attribute)
 
 baseDunder_tested = [
-    'Base.__abs__', 'Base.__add__', 'Base.__div__', 'Base.__getitem__',
-    'Base.__floordiv__', 'Base.__iadd__', 'Base.__idiv__',
-    'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imul__', 'Base.__ipow__',
-    'Base.__isub__', 'Base.__itruediv__', 'Base.__len__', 'Base.__mod__',
-    'Base.__mul__', 'Base.__neg__', 'Base.__pos__', 'Base.__pow__',
-    'Base.__radd__', 'Base.__rdiv__', 'Base.__rfloordiv__', 'Base.__rmod__',
+    'Base.__abs__', 'Base.__add__', 'Base.__getitem__', 'Base.__floordiv__',
+    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imul__',
+    'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__', 'Base.__len__',
+    'Base.__mod__', 'Base.__mul__', 'Base.__neg__', 'Base.__pos__',
+    'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmod__',
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
     'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]

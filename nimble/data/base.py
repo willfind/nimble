@@ -3826,9 +3826,9 @@ class Base(object):
                 msg += "cannot do this operation"
                 if right:
                     msg = msg.format('right')
-                else:
-                    msg = msg.format('left')
-                raise InvalidArgumentValue(msg)
+                    raise InvalidArgumentValue(msg)
+                msg = msg.format('left')
+                raise ImproperObjectAction(msg)
 
     def _genericNumericBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
@@ -3867,11 +3867,11 @@ class Base(object):
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
                 raise ZeroDivisionError(msg)
-            if isinstance(other, nimble.data.Matrix):
-                if False in numpy.isfinite(other.data):
-                    msg = "Cannot perform " + opName + " when the second "
-                    msg += "argument contains any NaNs or Infs"
-                    raise InvalidArgumentValue(msg)
+            unique = other.elements.countUnique()
+            if any([val != val or numpy.isinf(val) for val in unique]):
+                msg = "Cannot perform " + opName + " when the second "
+                msg += "argument contains any NaNs or Infs"
+                raise InvalidArgumentValue(msg)
         if not isNimble and opName in divNames:
             if other == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
@@ -3883,11 +3883,12 @@ class Base(object):
         isNimble = isinstance(other, nimble.data.Base)
 
         if isNimble:
-            if opName.startswith('__r'):
-                return NotImplemented
+            # if opName.startswith('__r'):
+            #     return NotImplemented
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
+        self._genericNumericBinary_validation(opName, other)
         # figure out return obj's point / feature names
         # if unary:
         retPNames = self.points._getNamesNoGeneration()
@@ -3896,19 +3897,16 @@ class Base(object):
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
-        try:
-            ret = self._numericBinary_implementation(opName, other)
-            ret.points.setNames(retPNames, useLog=False)
-            ret.features.setNames(retFNames, useLog=False)
 
-            nameSource = 'self' if opName.startswith('__i') else None
-            pathSource = 'merge' if isNimble else 'self'
-            dataHelpers.binaryOpNamePathMerge(
-                self, other, ret, nameSource, pathSource)
-            return ret
-        except Exception as e:
-            self._genericNumericBinary_validation(opName, other)
-            raise e
+        ret = self._numericBinary_implementation(opName, other)
+        ret.points.setNames(retPNames, useLog=False)
+        ret.features.setNames(retFNames, useLog=False)
+
+        nameSource = 'self' if opName.startswith('__i') else None
+        pathSource = 'merge' if isNimble else 'self'
+        dataHelpers.binaryOpNamePathMerge(
+            self, other, ret, nameSource, pathSource)
+        return ret
 
 
     def _genericNumericBinary_implementation(self, opName, other):
