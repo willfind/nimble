@@ -451,6 +451,21 @@ class Matrix(Base):
         """
         return 0 in self.data
 
+
+    def _numericBinary_implementation(self, opName, other):
+        if isinstance(other, Matrix):
+            ret = getattr(self.data, opName)(other.data)
+        elif isinstance(other, nimble.data.Base):
+            otherConv = other.copy('Matrix')
+            ret = getattr(self.data, opName)(otherConv.data)
+        else:
+            ret = getattr(self.data, opName)(other)
+        if opName.startswith('__i'):
+            # data modified within object
+            return self
+        return Matrix(ret)
+
+
     def _matrixMultiply_implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided

@@ -388,6 +388,20 @@ class DataFrame(Base):
         """
         return 0 in self.data.values
 
+
+    def _numericBinary_implementation(self, opName, other):
+        if isinstance(other, DataFrame):
+            ret = getattr(self.data, opName)(other.data)
+        elif isinstance(other, nimble.data.Base):
+            otherConv = other.copy('DataFrame')
+            ret = getattr(self.data, opName)(otherConv.data)
+        else:
+            ret = getattr(self.data, opName)(other)
+        if opName.startswith('__i'):
+            # data modified within object
+            return self
+        return DataFrame(ret)
+
     def _matrixMultiply_implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided

@@ -3897,70 +3897,35 @@ class Base(object):
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
         try:
-            ret = self._genericNumericBinary_implementation(opName, other)
+            ret = self._numericBinary_implementation(opName, other)
+            ret.points.setNames(retPNames, useLog=False)
+            ret.features.setNames(retFNames, useLog=False)
+
+            nameSource = 'self' if opName.startswith('__i') else None
+            pathSource = 'merge' if isNimble else 'self'
+            dataHelpers.binaryOpNamePathMerge(
+                self, other, ret, nameSource, pathSource)
+            return ret
         except Exception as e:
             self._genericNumericBinary_validation(opName, other)
             raise e
 
-        ret.points.setNames(retPNames, useLog=False)
-        ret.features.setNames(retFNames, useLog=False)
-
-        nameSource = 'self' if opName.startswith('__i') else None
-        pathSource = 'merge' if isNimble else 'self'
-        dataHelpers.binaryOpNamePathMerge(
-            self, other, ret, nameSource, pathSource)
-        return ret
 
     def _genericNumericBinary_implementation(self, opName, other):
-        selfData, otherData = self._getDataForBinaryOp(opName, other)
+        selfData = self.copy('numpymatrix')
+        if isinstance(other, nimble.data.Base):
+            otherData = other.copy('numpymatrix')
+        else:
+            otherData = other
         ret = getattr(selfData, opName)(otherData)
-        if ret is NotImplemented:
-            # some sparse to sparse operations return NotImplemented
-            if opName.startswith('__i'):
-                notInplace = '__' + opName[3:]
-                ret = getattr(selfData, notInplace)(otherData)
-            else:
-                selfData = self.copy('numpymatrix')
-                otherData = other.copy('numpymatrix')
-                ret = getattr(selfData, opName)(otherData)
-
         ret = createDataNoValidation(self.getTypeString(), ret)
+
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
             self.referenceDataFrom(ret, useLog=False)
             self._absPath, self._relPath = absPath, relPath
             ret = self
         return ret
-
-    def _getDataForBinaryOp(self, opName, other):
-        selfSparse = False
-        if not isinstance(self, nimble.data.Sparse):
-            selfData = self.copy('numpymatrix')
-        else:
-            if self.data.data is None:
-                selfData = self.copy().data
-            else:
-                selfData = self.data
-            # if sparse has attr to perform operation use sparse data
-            if hasattr(selfData, opName):
-                selfSparse = True
-            # otherwise convert to dense representation
-            else:
-                selfData = self.copy('numpymatrix')
-
-        if not isinstance(other, nimble.data.Base):
-            # sparse can only handle 0 as scalar value
-            if selfSparse and other != 0:
-                selfData = self.copy('numpymatrix')
-            return selfData, other
-        # use sparse to sparse operations, when possible
-        if selfSparse and isinstance(other, nimble.data.Sparse):
-            if other.data.data is None:
-                otherData = other.copy().data
-            else:
-                otherData = other.data
-            return selfData, otherData
-        return selfData, other.copy('numpymatrix')
 
 
     ############################

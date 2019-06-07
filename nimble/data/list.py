@@ -692,6 +692,10 @@ class List(Base):
                     return True
         return False
 
+
+    def _numericBinary_implementation(self, opName, other):
+        return self._genericNumericBinary_implementation(opName, other)
+
     def _mul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
