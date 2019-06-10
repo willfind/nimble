@@ -840,7 +840,7 @@ class Sparse(Base):
                 # scalar instead, but in the future will perform
                 # elementwise comparison
             except Exception:
-                noZerosInData = all([i != 0 for i in self.data.data])
+                noZerosInData = all(i != 0 for i in self.data.data)
             assert noZerosInData
 
             assert self.data.dtype.type is not numpy.string_
@@ -863,11 +863,11 @@ class Sparse(Base):
 
 
     def _numericBinary_implementation(self, opName, other):
+        if self.data.data is None:
+            selfData = self.copy().data
+        else:
+            selfData = self.data
         try:
-            if self.data.data is None:
-                selfData = self.copy().data
-            else:
-                selfData = self.data
             if isinstance(other, Sparse):
                 if other.data.data is None:
                     otherData = other.copy().data
@@ -877,38 +877,32 @@ class Sparse(Base):
             elif isinstance(other, nimble.data.Base):
                 otherConv = other.copy('Matrix')
                 ret = getattr(selfData, opName)(otherConv.data)
-            # scalar must be 0 or cannot perform on sparse object
-            elif other != 0:
-                return self._genericNumericBinary_implementation(opName, other)
             else:
-                ret = getattr(selfData, opName)(other)
+                # scalar operations apply to all elements; use dense
+                return self._genericNumericBinary_implementation(opName, other)
+
             if ret is NotImplemented:
-                # most NotImplemented are inplace operations, but not inplace
-                # method exist, so recurse using not inplace operation and
-                # use data from return to make inplace.
+                # most NotImplemented are inplace operations
                 if opName.startswith('__i'):
-                    notInplace = '__' + opName[3:]
-                    ret = self._numericBinary_implementation(notInplace, other)
-                    absPath, relPath = self._absPath, self._relPath
-                    self.referenceDataFrom(ret, useLog=False)
-                    self._absPath, self._relPath = absPath, relPath
-                    return self
-                raise NotImplementedError()
+                    return self._inplaceBinary_implementation(opName, other)
+                elif opName == '__rsub__':
+                    return self._rsub__implementation(other)
+                else:
+                    return self._genericNumericBinary_implementation(opName,
+                                                                     other)
 
             if opName.startswith('__i'):
                 # data modified within object
                 return self
             return Sparse(ret)
 
-        except AttributeError:
+        except AttributeError as ae:
             if 'floordiv' in opName:
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
+            raise ae
 
-        except NotImplementedError:
-            # only right hand side division with scalar
-            return self._genericNumericBinary_implementation(opName, other)
 
     def _matrixMultiply_implementation(self, other):
         """
@@ -950,6 +944,18 @@ class Sparse(Base):
             ret._scalarMultiply_implementation(other)
             return ret
 
+    def _inplaceBinary_implementation(self, opName, other):
+        notInplace = '__' + opName[3:]
+        ret = self._numericBinary_implementation(notInplace, other)
+        absPath, relPath = self._absPath, self._relPath
+        self.referenceDataFrom(ret, useLog=False)
+        self._absPath, self._relPath = absPath, relPath
+        return self
+
+    def _rsub__implementation(self, other):
+        other = other * -1
+        return self._numericBinary_implementation('__add__', other)
+
     def _genericFloordiv_implementation(self, opName, other):
         """
         Perform floordiv by modifying the results of truediv.
@@ -961,6 +967,7 @@ class Sparse(Base):
         """
         opSplit = opName.split('floordiv')
         trueDiv = opSplit[0] + 'truediv__'
+        # ret is self for inplace operation
         ret = self._numericBinary_implementation(trueDiv, other)
         ret.data.data = numpy.floor(ret.data.data)
         ret.data.eliminate_zeros()
@@ -989,7 +996,7 @@ class Sparse(Base):
         ret = numpy.mod(selfData.data, otherData)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
-        coo.eliminate_zeros()
+        coo.eliminate_zeros() # remove any zeros introduced into data
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
             self.data = coo
@@ -997,129 +1004,6 @@ class Sparse(Base):
             return self
         return Sparse(coo)
 
-        #	def _div__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr() / other.copy(to="scipycsr")
-        #			ret = ret.tocoo()
-        #		else:
-        #			retData = self.data.data / other
-        #			retRow = numpy.array(self.data.row)
-        #			retCol = numpy.array(self.data.col)
-        #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-
-        #	def _rdiv__implementation(self, other):
-        #		retData = other / self.data
-        #		retRow = numpy.array(self.data.row)
-        #		retCol = numpy.array(self.data.col)
-        #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-        #	def _idiv__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr() / other.copy(to="scipycsr")
-        #			ret = ret.tocoo()
-        #		else:
-        #			ret = self.data.data / other
-        #		self.data = ret
-        #		return self
-
-        #	def _truediv__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr().__truediv__(other.copy(to="scipycsr"))
-        #			ret = ret.tocoo()
-        #		else:
-        #			retData = self.data.data.__truediv__(other)
-        #			retRow = numpy.array(self.data.row)
-        #			retCol = numpy.array(self.data.col)
-        #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-        #	def _rtruediv__implementation(self, other):
-        #		retData = self.data.data.__rtruediv__(other)
-        #		retRow = numpy.array(self.data.row)
-        #		retCol = numpy.array(self.data.col)
-        #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-        #	def _itruediv__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr().__itruediv__(other.copy(to="scipycsr"))
-        #			ret = ret.tocoo()
-        #		else:
-        #			retData = self.data.data.__itruediv__(other)
-        #			retRow = numpy.array(self.data.row)
-        #			retCol = numpy.array(self.data.col)
-        #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		self.data = ret
-        #		return self
-
-        #	def _floordiv__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr() // other.copy(to="scipycsr")
-        #			ret = ret.tocoo()
-        #		else:
-        #			retData = self.data.data // other
-        #			nzIDs = numpy.nonzero(retData)
-        #			retData = retData[nzIDs]
-        #			retRow = self.data.row[nzIDs]
-        #			retCol = self.data.col[nzIDs]
-        #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-
-        #	def _rfloordiv__implementation(self, other):
-        #		retData = other // self.data.data
-        #		nzIDs = numpy.nonzero(retData)
-        #		retData = retData[nzIDs]
-        #		retRow = self.data.row[nzIDs]
-        #		retCol = self.data.col[nzIDs]
-        #		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
-        #		return Sparse(ret, pointNames=self.points.getNames(), featureNames=self.features.getNames(), reuseData=True)
-
-        #	def _ifloordiv__implementation(self, other):
-        #		if isinstance(other, nimble.data.Base):
-        #			ret = self.data.tocsr() // other.copy(to="scipycsr")
-        #			ret = ret.tocoo()
-        #		else:
-        #			ret = self.data // other
-        #			nzIDs = numpy.nonzero(ret)
-        #			ret = ret[nzIDs]
-
-        #		self.data = ret
-        #		return self
-
-    # def _mod__implementation(self, other):
-    #     if isinstance(other, nimble.data.Base):
-    #         pass
-    #     else:
-    #         retData = self.data.data % other
-    #         retRow = numpy.array(self.data.row)
-    #         retCol = numpy.array(self.data.col)
-    #         ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
-    #     return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
-    #                   featureNames=self.features._getNamesNoGeneration(),
-    #                   reuseData=True)
-    #
-    # def _rmod__implementation(self, other):
-    #     retData = other % self.data.data
-    #     retRow = numpy.array(self.data.row)
-    #     retCol = numpy.array(self.data.col)
-    #     ret = scipy.sparse.coo_matrix((retData, (retRow, retCol)))
-    #
-    #     return Sparse(ret, pointNames=self.points._getNamesNoGeneration(),
-    #                   featureNames=self.features._getNamesNoGeneration(),
-    #                   reuseData=True)
-    #
-    # def _imod__implementation(self, other):
-    #     if isinstance(other, nimble.data.Base):
-    #         return super(Sparse, self).__imod__(other)
-    #     else:
-    #         ret = self.data.data % other
-    #     self.data.data = ret
-    #     return self
 
     ###########
     # Helpers #

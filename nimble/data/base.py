@@ -3700,7 +3700,7 @@ class Base(object):
     def __pow__(self, other, z):
         """
         Perform exponentiation (iterated __mul__) using the elements of
-        this object as the bases, elemen wise if ``other`` is a nimble
+        this object as the bases, elementwise if ``other`` is a nimble
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
@@ -3868,7 +3868,7 @@ class Base(object):
                 msg += "contains any zeros"
                 raise ZeroDivisionError(msg)
             unique = other.elements.countUnique()
-            if any([val != val or numpy.isinf(val) for val in unique]):
+            if any(val != val or numpy.isinf(val) for val in unique):
                 msg = "Cannot perform " + opName + " when the second "
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
@@ -3883,20 +3883,18 @@ class Base(object):
         isNimble = isinstance(other, nimble.data.Base)
 
         if isNimble:
-            # if opName.startswith('__r'):
-            #     return NotImplemented
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
         self._genericNumericBinary_validation(opName, other)
         # figure out return obj's point / feature names
-        # if unary:
-        retPNames = self.points._getNamesNoGeneration()
-        retFNames = self.features._getNamesNoGeneration()
         if opName not in ['__pos__', '__neg__', '__abs__'] and isNimble:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
+        else:
+            retPNames = self.points._getNamesNoGeneration()
+            retFNames = self.features._getNamesNoGeneration()
 
         ret = self._numericBinary_implementation(opName, other)
         ret.points.setNames(retPNames, useLog=False)

@@ -3,13 +3,13 @@
 Methods tested in this file:
 
 In object NumericalDataSafe:
-__mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__, __div__,
-__rdiv__,  __truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
+__mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__,
+__truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
 __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__
 
 In object NumericalModifying:
 elements.power, elements.multiply, __imul__, __iadd__, __isub__,
-__idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__,
+__itruediv__, __ifloordiv__,  __imod__, __ipow__,
 
 """
 from __future__ import absolute_import
@@ -628,8 +628,7 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, nimbleOp, nimbleinplac
 def wrapAndCall(toWrap, expected, *args):
     try:
         toWrap(*args)
-        if issubclass(expected, Exception):
-            assert False
+        assert False # expected exception was not raised
     except expected:
         pass
     except:
@@ -1515,29 +1514,6 @@ class NumericalModifying(DataTestObject):
 
     def test_isub_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__isub__', True)
-
-
-    # ############
-    # # __idiv__ #
-    # ############
-    # @noLogEntryExpected
-    # def test_idiv_fullSuite(self):
-    #     """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
-    #     run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
-    #
-    # def test_idiv_binaryscalar_pfname_preservations(self):
-    #     """ Test p/f names are preserved when calling __idiv__ with scalar arg"""
-    #     back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
-    #
-    # def test_idiv_binaryscalar_NamePath_preservations(self):
-    #     back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
-    #
-    # def test_idiv_binaryelementwise_pfname_preservations(self):
-    #     """ Test p/f names are preserved when calling elementwise __idiv__"""
-    #     back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
-    #
-    # def test_idiv_binaryelementwise_NamePath_preservations(self):
-    #     back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
 
 
     ################
