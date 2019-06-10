@@ -569,6 +569,14 @@ def setInterfaceOptions(settingsObj, interface, save):
             settingsObj.saveChanges(interfaceName, opName)
 
 
+def setAndSaveAvailableIterfaceOptions():
+    """
+    Set and save the options for each available interface.
+    """
+    for interface in nimble.interfaces.available:
+        setInterfaceOptions(nimble.settings, interface, save=True)
+
+
 def autoRegisterFromSettings():
     """
     Helper which looks at the learners listed in nimble.settings under
