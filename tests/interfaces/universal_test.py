@@ -387,7 +387,6 @@ def backend_warningscapture(toCall, prepCall=None):
     sys.stderr = tempErr
 
     try:
-
         if prepCall is not None:
             AWObject = AlwaysWarnInterface()
             arg = prepCall(AWObject)
@@ -409,9 +408,11 @@ def backend_warningscapture(toCall, prepCall=None):
 
 
 def test_warningscapture_trainAndApply():
+    cData = generateClassificationData(2, 10, 5)
+    ((trainX, trainY), (testX, testY)) = cData
     @noLogEntryExpected
     def wrapped(AWObject):
-        AWObject.trainAndApply('foo', None)
+        AWObject.trainAndApply('foo', trainX)
 
     backend_warningscapture(wrapped)
 
@@ -523,6 +524,42 @@ def test_warningscapture_TL_getScores():
         arg.getScores(testX)
 
     backend_warningscapture(wrapped, prep)
+
+
+def test_warningscapture_TL_exceptions_featureMismatch():
+    cData = generateClassificationData(2, 10, 5)
+    ((trainX, trainY), (testX, testY)) = cData
+    # add an extra testX feature to raise exception
+    testX.features.add(testX[:, -1])
+
+    def prep(AWObject):
+        return AWObject.train('foo', trainX, trainY)
+
+    try:
+        def wrapped(tl):
+            tl.apply(testX)
+        backend_warningscapture(wrapped, prep)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    try:
+        def metric(x, y):
+            pass
+        def wrapped(tl):
+            tl.test(testX, testY, metric)
+        backend_warningscapture(wrapped, prep)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    try:
+        def wrapped(tl):
+            tl.getScores(testX)
+        backend_warningscapture(wrapped, prep)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
 
 
 def test_warningscapture_listLearners():

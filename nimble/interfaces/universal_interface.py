@@ -194,6 +194,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         results
             The resulting output of applying learner.
         """
+        if testX is None:
+            if isinstance(trainY, (six.string_types, int, numpy.integer)):
+                testX = trainX.copy()
+                testX.features.delete(trainY, useLog=False)
+            else:
+                testX = trainX
         learner = self.train(learnerName, trainX, trainY, arguments=arguments)
         # call TrainedLearner's apply method
         # (which is already wrapped to perform transformation)
@@ -395,6 +401,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
+        # separate training data / labels if needed
+        if isinstance(trainY, (six.string_types, int, numpy.int64)):
+            trainX = trainX.copy()
+            trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
                            crossValidationResults)
 
@@ -412,9 +422,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
-
+        inputs = (trainX, trainY, arguments)
         # encapsulate into TrainedLearner object
-        return TrainedLearner(learnerName, arguments, transformedInputs,
+        return TrainedLearner(learnerName, inputs, transformedInputs,
                               customDict, trainedBackend, self, has2dOutput,
                               crossValidationResults)
 
@@ -450,11 +460,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # the scratch space dictionary that the package implementor may use to
         # pass information between I/O transformation, the trainer and applier
         customDict = {}
-
-        # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.int64)):
-            trainX = trainX.copy()
-            trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
@@ -1277,7 +1282,7 @@ class TrainedLearner(object):
         True if output will be 2-dimensional, False assumes the output
         will be 1-dimensional.
     """
-    def __init__(self, learnerName, arguments, transformedInputs, customDict,
+    def __init__(self, learnerName, inputs, transformedInputs, customDict,
                  backend, interfaceObject, has2dOutput,
                  crossValidationResults):
         """
@@ -1286,10 +1291,11 @@ class TrainedLearner(object):
         modify or query the backend trained learner.
         """
         self.learnerName = learnerName
-        self.arguments = arguments
+        self.trainX = inputs[0]
+        self.trainY = inputs[1]
+        self.arguments = inputs[2]
         self.transformedTrainX = transformedInputs[0]
         self.transformedTrainY = transformedInputs[1]
-        self.transformedTestX = transformedInputs[2]
         self.transformedArguments = transformedInputs[3]
         self.customDict = customDict
         self.backend = backend
@@ -1491,6 +1497,7 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
+        self._validTestData(testX)
         nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
                                           None)
 
@@ -1843,6 +1850,7 @@ class TrainedLearner(object):
         nimble.data.Matrix
             The label scores.
         """
+        self._validTestData(testX)
         usedArguments = _mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self.interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
@@ -1874,6 +1882,15 @@ class TrainedLearner(object):
 
         formatedRawOrder.features.sort(sortHelper=sortScorer, useLog=False)
         return formatedRawOrder
+
+    def _validTestData(self, testX):
+        trainFts = len(self.trainX.features)
+        testFts = len(testX.features)
+        if trainFts != testFts:
+            msg = "The number of features in testX ({0}) must be equal to the "
+            msg += "number of features in the training data ({1})"
+            msg = msg.format(testFts, trainFts)
+            raise InvalidArgumentValue(msg)
 
 
 @inheritDocstringsFactory(TrainedLearner)
