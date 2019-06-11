@@ -7,14 +7,14 @@ from __future__ import print_function
 import os
 import importlib
 import abc
-from .universal_interface import BuiltinInterface
+from .universal_interface import PredefinedInterface
 
 displayErrors = False
 
 
-def collectBuiltinInterfaces(modulePath):
+def collectPredefinedInterfaces(modulePath):
     """
-    Import builtin modules and check for builtin interfaces.
+    Import predefined modules and check for predefined interfaces.
     """
     possibleFiles = os.listdir(modulePath)
     pythonModules = []
@@ -24,35 +24,35 @@ def collectBuiltinInterfaces(modulePath):
         (name, extension) = fileName.rsplit('.', 1)
         if extension == 'py' and not name.startswith('_'):
             pythonModules.append(name)
-    builtinInterfaces = []
+    predefinedInterfaces = []
     # setup seen with the interfaces we know we don't want to load/try to load
-    seen = set(["BuiltinInterface"])
+    seen = set(["PredefinedInterface"])
     for toImport in pythonModules:
         importedModule = importlib.import_module('.' + toImport, __package__)
         contents = dir(importedModule)
 
         # for each attribute of the module, we will check to see if it is a
-        # subclass of the BuiltinInterface
+        # subclass of the PredefinedInterface
         for valueName in contents:
             value = getattr(importedModule, valueName)
             if (isinstance(value, abc.ABCMeta)
-                    and issubclass(value, BuiltinInterface)):
+                    and issubclass(value, PredefinedInterface)):
                 if not valueName in seen:
                     seen.add(valueName)
-                    builtinInterfaces.append(value)
+                    predefinedInterfaces.append(value)
 
-    return builtinInterfaces
+    return predefinedInterfaces
 
 
 def collect(modulePath):
     """
     Collect the interfaces which import properly.
     """
-    builtinInterfaces = collectBuiltinInterfaces(modulePath)
+    predefinedInterfaces = collectPredefinedInterfaces(modulePath)
 
-    # now have a list of builtin interfaces, which we will try to instantiate
+    # now have a list of predefined interfaces, which we try to instantiate
     instantiated = []
-    for toInstantiate in builtinInterfaces:
+    for toInstantiate in predefinedInterfaces:
         tempObj = None
         try:
             tempObj = toInstantiate()

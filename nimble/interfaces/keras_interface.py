@@ -7,16 +7,15 @@ import copy
 import os
 import sys
 import logging
-import importlib
 
 import numpy
 from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import BuiltinInterface
+from nimble.interfaces.universal_interface import PredefinedInterface
 from nimble.interfaces.interface_helpers import PythonSearcher
-from nimble.interfaces.interface_helpers import modifyImportPath
+from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
@@ -33,15 +32,14 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Keras(BuiltinInterface, UniversalInterface):
+class Keras(PredefinedInterface, UniversalInterface):
     """
     This class is an interface to keras.
     """
     def __init__(self):
         # modify path if another directory provided
-        modifyImportPath(kerasDir, 'keras')
 
-        self.keras = importlib.import_module('keras')
+        self.keras = modifyImportPathAndImport(kerasDir, 'keras')
 
         backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
@@ -97,6 +95,15 @@ class Keras(BuiltinInterface, UniversalInterface):
     @classmethod
     def getCanonicalName(cls):
         return 'keras'
+
+    @classmethod
+    def _installInstructions(cls):
+        msg = """
+To install keras
+----------------
+    Installation instructions for keras can be found at:
+    https://keras.io/#installation"""
+        return msg
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()

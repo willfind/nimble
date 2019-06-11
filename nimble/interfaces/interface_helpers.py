@@ -597,12 +597,21 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
     return (retFull, retMatched)
 
 
-def modifyImportPath(altDirectory, configSection):
-    if altDirectory is not None:
-        sys.path.insert(0, altDirectory)
+def modifyImportPathAndImport(directory, package):
+    sysPathBackup = sys.path.copy()
     try:
-        location = nimble.settings.get(configSection, 'location')
-        if location and location not in sys.path:
-            sys.path.insert(0, location)
-    except configparser.Error:
-        pass
+        if directory is not None:
+            sys.path.insert(0, directory)
+
+        try:
+            location = nimble.settings.get(package, 'location')
+            if location:
+                sys.path.insert(0, location)
+        except configparser.Error:
+            pass
+
+        if package == 'sciKitLearn':
+            package = 'sklearn'
+        return importlib.import_module(package)
+    finally:
+        sys.path = sysPathBackup

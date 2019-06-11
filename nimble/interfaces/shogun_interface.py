@@ -30,9 +30,9 @@ import distutils.version
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import BuiltinInterface
+from nimble.interfaces.universal_interface import PredefinedInterface
 from nimble.interfaces.interface_helpers import PythonSearcher
-from nimble.interfaces.interface_helpers import modifyImportPath
+from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.docHelpers import inheritDocstringsFactory
@@ -48,16 +48,14 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
 # distance : d
 
 @inheritDocstringsFactory(UniversalInterface)
-class Shogun(BuiltinInterface, UniversalInterface):
+class Shogun(PredefinedInterface, UniversalInterface):
     """
     This class is an interface to shogun.
     """
 
     def __init__(self):
-        # modify path if another directory provided
-        modifyImportPath(shogunDir, 'shogun')
 
-        self.shogun = importlib.import_module('shogun')
+        self.shogun = modifyImportPathAndImport(shogunDir, 'shogun')
         self.versionString = None
 
         def isLearner(obj):
@@ -127,19 +125,6 @@ class Shogun(BuiltinInterface, UniversalInterface):
         return getattr(submod, target)
 
 
-    #########################
-    # REIMPLEMENTED METHODS #
-    #########################
-
-    @classmethod
-    def _installInstructions(cls):
-        msg = """
-    shogun for Python can be built from source or installed through the conda
-    package manager. conda requires installing Anaconda or Miniconda. Once
-    conda is available, shogun can be installed by running the command:"
-        conda install -c conda-forge shogun"""
-        return msg
-
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
@@ -151,6 +136,20 @@ class Shogun(BuiltinInterface, UniversalInterface):
     @classmethod
     def getCanonicalName(cls):
         return 'shogun'
+
+
+    @classmethod
+    def _installInstructions(cls):
+        msg = """
+To install shogun
+-----------------
+    shogun for Python can be built from source or installed through the conda
+    package manager. conda requires installing Anaconda or Miniconda. Once
+    conda is available, shogun can be installed by running the command:"
+        conda install -c conda-forge shogun
+    Further installation instructions for shogun can be found at:
+    https://www.shogun-toolbox.org/install"""
+        return msg
 
 
     def _listLearnersBackend(self):
