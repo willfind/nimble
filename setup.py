@@ -1,5 +1,5 @@
 """
-Build a UML distribution or install UML.
+Build a nimble distribution or install nimble.
 
 Build source distribution with C extensions
     command line: python setup.py sdist
@@ -30,12 +30,12 @@ from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.sdist import sdist
 
-from distutils.errors import CCompilerError, DistutilsExecError, \
-    DistutilsPlatformError
+from distutils.errors import (CCompilerError, DistutilsExecError,
+                              DistutilsPlatformError)
 
 def getExtensions():
-    umlC = glob.glob(os.path.join('UML', 'helpers.c'))
-    dataC = glob.glob(os.path.join('UML', 'data', '*.c'))
+    umlC = glob.glob(os.path.join('nimble', 'helpers.c'))
+    dataC = glob.glob(os.path.join('nimble', 'data', '*.c'))
     allExtensions = umlC + dataC
     for extension in allExtensions:
         # name convention dir.subdir.filename
@@ -50,9 +50,9 @@ if '--universal' not in sys.argv:
     # Make sure the compiled Cython files in the distribution are up-to-date
     try:
         from Cython.Build import cythonize, build_ext
-        to_cythonize = [os.path.join('UML', 'helpers.py'),
-                        os.path.join('UML', 'data', '*.py'),]
-        exclude = [os.path.join('UML', 'data', '__init__.py'),]
+        to_cythonize = [os.path.join('nimble', 'helpers.py'),
+                        os.path.join('nimble', 'data', '*.py'),]
+        exclude = [os.path.join('nimble', 'data', '__init__.py'),]
         cythonize(to_cythonize, exclude=exclude,
                   compiler_directives={'always_allow_keywords': True,
                                        'language_level': 3,
@@ -63,14 +63,7 @@ if '--universal' not in sys.argv:
         pass
 
 # modified from Bob Ippolito's simplejson project
-if sys.platform == 'win32' and sys.version_info < (2, 7):
-   # 2.6's distutils.msvc9compiler can raise an IOError when failing to
-   # find the compiler
-   # It can also raise ValueError https://bugs.python.org/issue7511
-   ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError,
-                 IOError, ValueError)
-else:
-   ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
+ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 
 class BuildFailed(Exception):
     pass
@@ -94,12 +87,12 @@ class _build_ext(build_ext):
 
 def run_setup(extensions=None):
     setupKwargs = {}
-    setupKwargs['name'] = 'UML'
+    setupKwargs['name'] = 'nimble'
     setupKwargs['version'] = '0.0.0.dev1'
     setupKwargs['author'] = "Spark Wave"
     setupKwargs['author_email'] = "willfind@gmail.com"
-    setupKwargs['description'] = "Universal Machine Learning"
-    setupKwargs['url'] = "https://willfind.github.io/UML/"
+    setupKwargs['description'] = ""
+    setupKwargs['url'] = "https://willfind.github.io/nimble/"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
     setupKwargs['classifiers'] = (
         'Development Status :: 3 - Alpha',
@@ -110,7 +103,19 @@ def run_setup(extensions=None):
         'Operating System :: OS Independent',
         )
     setupKwargs['include_package_data'] = True
-    setupKwargs['install_requires'] = ['six>=1.5.1', 'numpy>=1.10.4']
+    setupKwargs['install_requires'] = ['six>=1.5.1', 'numpy>=1.10.4',]
+    functionality = ['matplotlib', 'cloudpickle', 'Cython',]
+    interfaces = ['pandas>=0.20', 'machine-learning-py>=3.5',
+                   'scikit-learn>=0.19', 'keras']
+    developer = ['nose', 'requests',]
+    all = functionality + interfaces + developer
+    print(all)
+    setupKwargs['extras_require'] = {
+        'functionality': functionality,
+        'interfaces': interfaces,
+        'developer': developer,
+        'all': all,
+        }
     if extensions is not None:
         setupKwargs['ext_modules'] = extensions
         cmdclass = {'build_ext': _build_ext}
@@ -122,7 +127,7 @@ if extensions:
     try:
         run_setup(extensions)
         print('*' * 79)
-        print("Successfully built UML with C extensions.")
+        print("Successfully built nimble with C extensions.")
         print('*' * 79)
     except BuildFailed:
         run_setup()
@@ -130,7 +135,7 @@ if extensions:
         print("WARNING: Failed to compile C extensions. This does NOT affect ")
         print("the functionality of the build, but this build will not ")
         print("benefit from the speed increases of the C extensions.")
-        print("Plain-Python build of UML succeeded.")
+        print("Plain-Python build of nimble succeeded.")
         print('*' * 79)
 else:
     run_setup()
@@ -138,7 +143,7 @@ else:
     print("WARNING: This build does not include the C extensions. ")
     print("This does NOT affect the functionality of the build, but it will ")
     print("not benefit from the speed increases of the C extensions.")
-    print("Plain-Python build of UML succeeded.")
+    print("Plain-Python build of nimble succeeded.")
     print('*' * 79)
 
 # TODO
