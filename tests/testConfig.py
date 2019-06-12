@@ -13,8 +13,10 @@ import six.moves.configparser
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.configuration import configSafetyWrapper
+from nimble.interfaces.universal_interface import UniversalInterface
+from nimble.interfaces.universal_interface import PredefinedInterface
 
 
 def fileEqualObjOutput(fp, obj):
@@ -637,10 +639,25 @@ def testToDeleteSentinalObject():
     assert isinstance(val, nimble.configuration.ToDelete)
 
 
+@configSafetyWrapper
+def testSetLocationForFailedPredefinedInterface():
+    predefinedBackup = nimble.interfaces.predefined.copy()
+    nimble.interfaces.predefined = [FailedPredefined]
+    nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
+    nimble.interfaces.predefined = predefinedBackup
+
+
+@configSafetyWrapper
+@raises(InvalidArgumentValue)
+def testExceptionSetOptionForFailedPredefinedInterface():
+    predefinedBackup = nimble.interfaces.predefined.copy()
+    nimble.interfaces.predefined = [FailedPredefined]
+    nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')
+    nimble.interfaces.predefined = predefinedBackup
+
 ###############
 ### Helpers ###
 ###############
-
 
 class OptionNamedLookalike(object):
     def __init__(self, name, optNames):
@@ -652,3 +669,20 @@ class OptionNamedLookalike(object):
 
     def isAlias(self, name):
         return name.lower() == self.getCanonicalName()
+
+
+class FailedPredefined(object):
+    def __init__(self):
+        raise RuntimeError()
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'FailedPredefined'
+
+    @classmethod
+    def isAlias(cls, name):
+        return name.lower() == cls.getCanonicalName()
+
+    @classmethod
+    def provideInitExceptionInfo(cls):
+        raise PackageException("failed to load interface")
