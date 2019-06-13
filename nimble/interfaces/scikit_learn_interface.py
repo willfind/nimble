@@ -58,7 +58,10 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
         pkgutil.walk_packages_ = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = pkgutil.walk_packages_(*args, **kwargs)
-            return [pkg for pkg in packages if not 'conftest' in pkg[1]]
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # ignoring everything that is not a package prevents trying
+            # to import libraries outside of scikit-learn dependencies
+            return [pkg for pkg in packages if pkg[2]]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             all_estimators = all_estimators()
