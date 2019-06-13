@@ -203,7 +203,7 @@ def getCanonicalNameAndPossibleAliases(interface):
     return canonicalName, aliases
 
 def test_classmethods():
-    for interface in nimble.interfaces.builtin:
+    for interface in nimble.interfaces.predefined:
         canonicalName, aliases = getCanonicalNameAndPossibleAliases(interface)
         assert interface.getCanonicalName() == canonicalName
         for alias in aliases:
@@ -213,17 +213,17 @@ def test_classmethods():
 
 def test_failedInit():
     availableBackup = nimble.interfaces.available
-    builtinBackup = nimble.interfaces.builtin
+    predefinedBackup = nimble.interfaces.predefined
     try:
-        for interface in nimble.interfaces.builtin:
+        for interface in nimble.interfaces.predefined:
             class MockInterface(interface):
                 pass
 
             # override interfaces.available so findBestInterface will check
-            # builtin and use mock object as the builtin so we can raise
+            # predefined and use mock object as the predefined so we can raise
             # different errors
             nimble.interfaces.available = []
-            nimble.interfaces.builtin = [MockInterface]
+            nimble.interfaces.predefined = [MockInterface]
 
             # the learner must start with package and the data must be nimble
             # objects but the learner name and data values are irrelevant
@@ -238,35 +238,38 @@ def test_failedInit():
                 nimble.train(learner, X, y)
                 assert False # expected PackageException
             except PackageException as e:
-                assert "ImportError" in str(e)
-                # path message included for ImportErrors
-                assert "If package installed" in str(e)
-                # interface may have install instructions
-                if interface._installInstructions():
-                    assert "To install" in str(e)
-                assert "Exception information" in str(e)
+                # install and path message included for ImportError
+                assert "To install" in str(e)
+                assert "If {0} installed".format(interface.getCanonicalName()) in str(e)
 
             try:
                 MockInterface.__init__ = lambda self: raiseError(ValueError)
                 nimble.train(learner, X, y)
                 assert False # expected PackageException
             except PackageException as e:
-                assert "ValueError" in str(e)
-                # path message not included for other error types
-                assert not "If package installed" in str(e)
-                assert "Exception information" in str(e)
+                # install and path message not included for other error types
+                assert not "To install" in str(e)
+                assert not "If {0} installed".format(interface.getCanonicalName()) in str(e)
     finally:
         nimble.interfaces.available = availableBackup
-        nimble.interfaces.builtin = builtinBackup
+        nimble.interfaces.predefined = predefinedBackup
 
 
 ## Helpers for test_loadModulesFromConfigLocation ##
-class ImportedMockModule(Exception):
+class FirstImportedModule(Exception):
     pass
 
-mockedInit = """
-from tests.interfaces.universal_integration_test import ImportedMockModule
-raise ImportedMockModule
+class SecondImportedModule(Exception):
+    pass
+
+mockedInit1 = """
+from tests.interfaces.universal_integration_test import FirstImportedModule
+raise FirstImportedModule
+"""
+
+mockedInit2 = """
+from tests.interfaces.universal_integration_test import SecondImportedModule
+raise SecondImportedModule
 """
 
 importlib.import_module_ = importlib.import_module
@@ -274,8 +277,8 @@ importlib.import_module_ = importlib.import_module
 # module loaded on init
 def reload(module):
     """
-    One of the two importlib calls will access the modified sys.path
-    and throw an ImportedMockModuleException
+    Reload the module so that the returned module is the one from the
+    first available location on sys.path.
     """
     # if the module did not load successfully on init, this will
     # access the new sys.path and should raise exception here
@@ -287,29 +290,56 @@ def reload(module):
 
 @configSafetyWrapper
 def test_loadModulesFromConfigLocation():
-    for interface in nimble.interfaces.builtin:
+    for interface in nimble.interfaces.predefined:
         sysPathBackup = sys.path.copy()
-        canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
-        packageName = canonicalName
-        if packageName == 'sciKitLearn':
-            packageName = 'sklearn'
-        with tempfile.TemporaryDirectory() as mockDirectory:
-            packagePath = os.path.join(mockDirectory, packageName)
-            os.mkdir(packagePath)
-            initPath = os.path.join(packagePath, '__init__.py')
-            with open(initPath, 'w+') as initFile:
-                initFile.write(mockedInit)
+        try:
+            canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
+            packageName = canonicalName
+            if packageName == 'sciKitLearn':
+                packageName = 'sklearn'
+            with tempfile.TemporaryDirectory() as mockDirectory1:
+                # first directory containing the package
+                packagePath1 = os.path.join(mockDirectory1, packageName)
+                os.mkdir(packagePath1)
+                initPath1 = os.path.join(packagePath1, '__init__.py')
+                with open(initPath1, 'w+') as initFile1:
+                    initFile1.write(mockedInit1) # raises FirstImportedModule
 
-            nimble.settings.set(canonicalName, 'location', mockDirectory)
-            try:
-                # patch import_module so it reloads from settings location
-                with mock.patch('importlib.import_module', reload):
-                    interface()
-                assert False # expected ImportedMockModule
-            except ImportedMockModule:
-                pass
-            finally:
-                sys.path = sysPathBackup
+                # second directory containing the same package
+                with tempfile.TemporaryDirectory() as mockDirectory2:
+                    packagePath2 = os.path.join(mockDirectory2, packageName)
+                    os.mkdir(packagePath2)
+                    initPath2 = os.path.join(packagePath2, '__init__.py')
+                    with open(initPath2, 'w+') as initFile2:
+                        initFile2.write(mockedInit2) # raises SecondImportedModule
+
+                    # manually add first directory to sys.path
+                    # first, check that it loads from the path of the first
+                    # directory which raises FirstImportedModule
+                    sys.path.insert(0, mockDirectory1)
+                    try:
+                        # patch import_module so it reloads from settings location
+                        with mock.patch('importlib.import_module', reload):
+                            interface()
+                        assert False # expected FirstImportedModule
+                    except FirstImportedModule as e:
+                        pass
+
+                    # next, set a location in settings to check that this
+                    # takes priority over mockDirectory1. Also check that
+                    # the change to the path is temporary
+                    nimble.settings.set(canonicalName, 'location', mockDirectory2)
+                    try:
+                        # patch import_module so it reloads from settings location
+                        with mock.patch('importlib.import_module', reload):
+                            interface()
+                        assert False # expected SecondImportedModule
+                    except SecondImportedModule:
+                        # check that the modifications made to the path during
+                        # __init__ are no longer present
+                        assert not mockDirectory2 in sys.path
+        finally:
+            sys.path = sysPathBackup
 
 
 # TODO

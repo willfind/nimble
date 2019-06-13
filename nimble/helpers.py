@@ -79,10 +79,10 @@ def findBestInterface(package):
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
             return interface
-    for interface in nimble.interfaces.builtin:
+    for interface in nimble.interfaces.predefined:
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
-            # interface is a builtin one, but instantiation failed
+            # interface is a predefined one, but instantiation failed
             return interface.provideInitExceptionInfo()
     # if package is not recognized, provide generic exception information
     msg = "package '" + package
