@@ -9,6 +9,7 @@ import copy
 import os
 
 from nose.tools import raises
+from unittest import mock
 import six.moves.configparser
 
 import nimble
@@ -17,6 +18,39 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.configuration import configSafetyWrapper
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.interfaces.universal_interface import PredefinedInterface
+
+
+###############
+### Helpers ###
+###############
+
+class OptionNamedLookalike(object):
+    def __init__(self, name, optNames):
+        self.name = name
+        self.optionNames = optNames
+
+    def getCanonicalName(self):
+        return self.name
+
+    def isAlias(self, name):
+        return name.lower() == self.getCanonicalName()
+
+
+class FailedPredefined(object):
+    def __init__(self):
+        raise RuntimeError()
+
+    @classmethod
+    def getCanonicalName(cls):
+        return 'FailedPredefined'
+
+    @classmethod
+    def isAlias(cls, name):
+        return name.lower() == cls.getCanonicalName()
+
+    @classmethod
+    def provideInitExceptionInfo(cls):
+        raise PackageException("failed to load interface")
 
 
 def fileEqualObjOutput(fp, obj):
@@ -53,6 +87,11 @@ def makeDefaultTemplate():
     lines[10] = "\n"  # ConfigParser always writes two newlines at the end
 
     return lines
+
+
+#############
+### Tests ###
+#############
 
 
 def testSCPCP_simple():
@@ -640,49 +679,13 @@ def testToDeleteSentinalObject():
 
 
 @configSafetyWrapper
+@mock.patch('nimble.interfaces.predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
-    predefinedBackup = nimble.interfaces.predefined.copy()
-    nimble.interfaces.predefined = [FailedPredefined]
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
-    nimble.interfaces.predefined = predefinedBackup
 
 
 @configSafetyWrapper
 @raises(InvalidArgumentValue)
+@mock.patch('nimble.interfaces.predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():
-    predefinedBackup = nimble.interfaces.predefined.copy()
-    nimble.interfaces.predefined = [FailedPredefined]
     nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')
-    nimble.interfaces.predefined = predefinedBackup
-
-###############
-### Helpers ###
-###############
-
-class OptionNamedLookalike(object):
-    def __init__(self, name, optNames):
-        self.name = name
-        self.optionNames = optNames
-
-    def getCanonicalName(self):
-        return self.name
-
-    def isAlias(self, name):
-        return name.lower() == self.getCanonicalName()
-
-
-class FailedPredefined(object):
-    def __init__(self):
-        raise RuntimeError()
-
-    @classmethod
-    def getCanonicalName(cls):
-        return 'FailedPredefined'
-
-    @classmethod
-    def isAlias(cls, name):
-        return name.lower() == cls.getCanonicalName()
-
-    @classmethod
-    def provideInitExceptionInfo(cls):
-        raise PackageException("failed to load interface")
