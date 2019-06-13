@@ -8,9 +8,8 @@ import re
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentType, \
-    InvalidArgumentValue, \
-    InvalidArgumentValueCombination
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 
 scipy = nimble.importModule('scipy')
 

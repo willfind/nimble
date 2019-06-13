@@ -1004,10 +1004,6 @@ def initLoggerAndLogConfig():
         nimble.settings.set("logger", "location", location)
         nimble.settings.saveChanges("logger", "location")
     finally:
-        def cleanThenReInit_Loc(newLocation):
-            nimble.logger.active.cleanup()
-            currName = nimble.settings.get("logger", 'name')
-            nimble.logger.active = SessionLogger(newLocation, currName)
         nimble.settings.hook("logger", "location", cleanThenReInit_Loc)
 
     try:
@@ -1017,11 +1013,6 @@ def initLoggerAndLogConfig():
         nimble.settings.set("logger", "name", name)
         nimble.settings.saveChanges("logger", "name")
     finally:
-        def cleanThenReInit_Name(newName):
-            nimble.logger.active.cleanup()
-            currLoc = nimble.settings.get("logger", 'location')
-            nimble.logger.active = SessionLogger(currLoc, newName)
-
         nimble.settings.hook("logger", "name", cleanThenReInit_Name)
 
     try:
@@ -1039,3 +1030,15 @@ def initLoggerAndLogConfig():
         nimble.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
     return SessionLogger(location, name)
+
+
+def cleanThenReInit_Loc(newLocation):
+    nimble.logger.active.cleanup()
+    currName = nimble.settings.get("logger", 'name')
+    nimble.logger.active = SessionLogger(newLocation, currName)
+
+
+def cleanThenReInit_Name(newName):
+    nimble.logger.active.cleanup()
+    currLoc = nimble.settings.get("logger", 'location')
+    nimble.logger.active = SessionLogger(currLoc, newName)

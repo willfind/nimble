@@ -34,9 +34,9 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
                               DistutilsPlatformError)
 
 def getExtensions():
-    umlC = glob.glob(os.path.join('nimble', 'helpers.c'))
-    dataC = glob.glob(os.path.join('nimble', 'data', '*.c'))
-    allExtensions = umlC + dataC
+    nimbleC = glob.glob(os.path.join('nimble', '*.c'))
+    dataC = glob.glob(os.path.join('nimble', '*', '*.c'))
+    allExtensions = nimbleC + dataC
     for extension in allExtensions:
         # name convention dir.subdir.filename
         name = ".".join(extension[:-2].split(os.path.sep))
@@ -50,9 +50,13 @@ if '--universal' not in sys.argv:
     # Make sure the compiled Cython files in the distribution are up-to-date
     try:
         from Cython.Build import cythonize, build_ext
-        to_cythonize = [os.path.join('nimble', 'helpers.py'),
-                        os.path.join('nimble', 'data', '*.py'),]
-        exclude = [os.path.join('nimble', 'data', '__init__.py'),]
+        to_cythonize = [os.path.join('nimble', 'core.py'),
+                        os.path.join('nimble', 'helpers.py'),
+                        os.path.join('nimble', 'data', '*.py'),
+                        os.path.join('nimble', 'calculate', '*.py'),
+                        os.path.join('nimble', 'match', '*.py'),
+                        os.path.join('nimble', 'fill', '*.py')]
+        exclude = [os.path.join('nimble', '*', '__init__.py')]
         cythonize(to_cythonize, exclude=exclude,
                   compiler_directives={'always_allow_keywords': True,
                                        'language_level': 3,
@@ -62,7 +66,6 @@ if '--universal' not in sys.argv:
     except ImportError:
         pass
 
-# modified from Bob Ippolito's simplejson project
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 
 class BuildFailed(Exception):
@@ -91,8 +94,8 @@ def run_setup(extensions=None):
     setupKwargs['version'] = '0.0.0.dev1'
     setupKwargs['author'] = "Spark Wave"
     setupKwargs['author_email'] = "willfind@gmail.com"
-    setupKwargs['description'] = ""
-    setupKwargs['url'] = "https://willfind.github.io/nimble/"
+    setupKwargs['description'] = "Interfaces and tools for data science."
+    setupKwargs['url'] = "https://nimbledata.org"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
     setupKwargs['classifiers'] = (
         'Development Status :: 3 - Alpha',
@@ -104,17 +107,25 @@ def run_setup(extensions=None):
         )
     setupKwargs['include_package_data'] = True
     setupKwargs['install_requires'] = ['six>=1.5.1', 'numpy>=1.10.4',]
-    functionality = ['matplotlib', 'cloudpickle', 'Cython',]
-    interfaces = ['pandas>=0.20', 'machine-learning-py>=3.5',
-                   'scikit-learn>=0.19', 'keras']
-    developer = ['nose', 'requests',]
-    all = functionality + interfaces + developer
-    print(all)
+    # extras
+    pandas = 'pandas>=0.20'
+    scipy = 'scipy>=1.0'
+    matplotlib = 'matplotlib>=3.0'
+    cloudpickle = 'cloudpickle>=1.0'
+    cython = 'cython>=0.29'
+    mlpy = 'machine-learning-py>=3.5'
+    scikitlearn = 'scikit-learn>=0.19'
+    keras = 'keras>=2.0'
+    nose = 'nose>=1.3'
+    requests = 'requests>2.12'
+    interfaces = [mlpy, scikitlearn, keras]
+    all = [pandas, scipy, matplotlib, cloudpickle, cython] + interfaces
+
     setupKwargs['extras_require'] = {
-        'functionality': functionality,
-        'interfaces': interfaces,
-        'developer': developer,
-        'all': all,
+        'all': all, 'interfaces': interfaces, 'pandas': pandas, 'scipy': scipy,
+        'matplotlib': matplotlib, 'cloudpickle': cloudpickle, 'cython': cython,
+        'mlpy': mlpy, 'scikit-learn': scikitlearn, 'keras': keras,
+        'nose': nose, 'requests': requests,
         }
     if extensions is not None:
         setupKwargs['ext_modules'] = extensions
@@ -123,36 +134,36 @@ def run_setup(extensions=None):
 
     setup(**setupKwargs)
 
+
+def plainPythonMessage():
+    print('*' * 66)
+    print("* WARNING: failed to build nimble with C extensions.             *")
+    print("* This does NOT affect the functionality of the build, but it    *")
+    print("* will not benefit from the speed increases of the C extensions. *")
+    print('*' * 66)
+    print("* nimble build in plain Python successful.                       *")
+    print('*' * 66)
+
+
 if extensions:
     try:
         run_setup(extensions)
-        print('*' * 79)
-        print("Successfully built nimble with C extensions.")
-        print('*' * 79)
+        print('*' * 46)
+        print("* nimble build with C extensions successful. *")
+        print('*' * 46)
     except BuildFailed:
         run_setup()
-        print('*' * 79)
-        print("WARNING: Failed to compile C extensions. This does NOT affect ")
-        print("the functionality of the build, but this build will not ")
-        print("benefit from the speed increases of the C extensions.")
-        print("Plain-Python build of nimble succeeded.")
-        print('*' * 79)
+        plainPythonMessage()
 else:
     run_setup()
-    print('*' * 79)
-    print("WARNING: This build does not include the C extensions. ")
-    print("This does NOT affect the functionality of the build, but it will ")
-    print("not benefit from the speed increases of the C extensions.")
-    print("Plain-Python build of nimble succeeded.")
-    print('*' * 79)
+    plainPythonMessage()
 
 # TODO
-    # determine which packages to exclude in distribution
-    # determine correct versions for install_requires
-    # make any changes to setup metadata (author, description, classifiers, etc.)
-    # additional setup metadata (see below)
-        # with open("README.md", "r") as fh:
-        #     long_description = fh.read()
+# determine best version requiremnts for install_requires, extras_require
+# make any changes to setup metadata (author, description, classifiers, etc.)
+# additional setup metadata (see below)
+    # with open("README.md", "r") as fh:
+    #     long_description = fh.read()
 
-        # long_description=long_description,
-        # long_description_content_type="text/markdown",
+    # long_description=long_description,
+    # long_description_content_type="text/markdown",
