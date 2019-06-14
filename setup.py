@@ -103,6 +103,7 @@ def run_setup(extensions=None):
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Operating System :: OS Independent',
         )
     setupKwargs['include_package_data'] = True
@@ -113,20 +114,20 @@ def run_setup(extensions=None):
     matplotlib = 'matplotlib>=3.0'
     cloudpickle = 'cloudpickle>=1.0'
     cython = 'cython>=0.29'
-    mlpy = 'machine-learning-py>=3.5'
+    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
     scikitlearn = 'scikit-learn>=0.19'
     keras = 'keras>=2.0'
     nose = 'nose>=1.3'
     requests = 'requests>2.12'
     interfaces = [mlpy, scikitlearn, keras]
     all = [pandas, scipy, matplotlib, cloudpickle, cython] + interfaces
-
     setupKwargs['extras_require'] = {
         'all': all, 'interfaces': interfaces, 'pandas': pandas, 'scipy': scipy,
         'matplotlib': matplotlib, 'cloudpickle': cloudpickle, 'cython': cython,
         'mlpy': mlpy, 'scikit-learn': scikitlearn, 'keras': keras,
         'nose': nose, 'requests': requests,
         }
+
     if extensions is not None:
         setupKwargs['ext_modules'] = extensions
         cmdclass = {'build_ext': _build_ext}
@@ -136,21 +137,21 @@ def run_setup(extensions=None):
 
 
 def plainPythonMessage():
-    print('*' * 66)
-    print("* WARNING: failed to build nimble with C extensions.             *")
-    print("* This does NOT affect the functionality of the build, but it    *")
-    print("* will not benefit from the speed increases of the C extensions. *")
-    print('*' * 66)
-    print("* nimble build in plain Python successful.                       *")
-    print('*' * 66)
+    print('*' * 65)
+    print("* WARNING: failed to build nimble with C extensions             *")
+    print("* This does NOT affect the functionality of the build, but it   *")
+    print("* will not benefit from the speed increases of the C extensions *")
+    print('*' * 65)
+    print("* nimble build in plain Python successful                       *")
+    print('*' * 65)
 
 
 if extensions:
     try:
         run_setup(extensions)
-        print('*' * 46)
-        print("* nimble build with C extensions successful. *")
-        print('*' * 46)
+        print('*' * 45)
+        print("* nimble build with C extensions successful *")
+        print('*' * 45)
     except BuildFailed:
         run_setup()
         plainPythonMessage()
