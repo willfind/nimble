@@ -441,6 +441,7 @@ class SessionConfiguration(object):
                 msg = section + "is an interface which is not currently "
                 msg += "available. Only a 'location' option is permitted "
                 msg += "for unavailable interfaces."
+                raise InvalidArgumentValue(msg)
 
         if (not section in self.changes
                 or isinstance(self.changes[section], ToDelete)):

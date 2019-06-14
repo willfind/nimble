@@ -18,9 +18,9 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import BuiltinInterface
+from nimble.interfaces.universal_interface import PredefinedInterface
 from nimble.interfaces.interface_helpers import PythonSearcher
-from nimble.interfaces.interface_helpers import modifyImportPath
+from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.docHelpers import inheritDocstringsFactory
@@ -34,7 +34,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class Mlpy(BuiltinInterface, UniversalInterface):
+class Mlpy(PredefinedInterface, UniversalInterface):
     """
     This class is an interface to mlpy.
     """
@@ -45,9 +45,9 @@ class Mlpy(BuiltinInterface, UniversalInterface):
 
     def __init__(self):
         # modify path if another directory provided
-        modifyImportPath(mlpyDir, 'mlpy')
 
-        self.mlpy = importlib.import_module('mlpy')
+
+        self.mlpy = modifyImportPathAndImport(mlpyDir, 'mlpy')
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -78,6 +78,16 @@ class Mlpy(BuiltinInterface, UniversalInterface):
     @classmethod
     def getCanonicalName(cls):
         return 'mlpy'
+
+
+    @classmethod
+    def _installInstructions(cls):
+        msg = """
+To install mlpy
+---------------
+    Installation instructions for mlpy can be found at:
+    https://github.com/richardARPANET/mlpy/blob/master/README.md"""
+        return msg
 
 
     def _listLearnersBackend(self):

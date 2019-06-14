@@ -10,5 +10,5 @@ from . import _collect_completed
 from .custom_learner_interface import CustomLearnerInterface
 
 interfacesPath = os.path.join(nimblePath, 'interfaces')
-builtin = _collect_completed.collectBuiltinInterfaces(interfacesPath)
+predefined = _collect_completed.collectPredefinedInterfaces(interfacesPath)
 available = _collect_completed.collect(interfacesPath)
