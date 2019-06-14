@@ -34,10 +34,8 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
                               DistutilsPlatformError)
 
 def getExtensions():
-    nimbleC = glob.glob(os.path.join('nimble', '*.c'))
-    dataC = glob.glob(os.path.join('nimble', '*', '*.c'))
-    allExtensions = nimbleC + dataC
-    for extension in allExtensions:
+    cFiles = glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
+    for extension in cFiles:
         # name convention dir.subdir.filename
         name = ".".join(extension[:-2].split(os.path.sep))
         extensions.append(Extension(name, [extension]))
