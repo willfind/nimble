@@ -118,12 +118,12 @@ def run_setup(extensions=None):
     nose = 'nose>=1.3'
     requests = 'requests>2.12'
     interfaces = [mlpy, scikitlearn, keras]
-    all = [pandas, scipy, matplotlib, cloudpickle, cython] + interfaces
+    userAll = [pandas, scipy, matplotlib, cloudpickle, cython] + interfaces
     setupKwargs['extras_require'] = {
-        'all': all, 'interfaces': interfaces, 'pandas': pandas, 'scipy': scipy,
-        'matplotlib': matplotlib, 'cloudpickle': cloudpickle, 'cython': cython,
-        'mlpy': mlpy, 'scikit-learn': scikitlearn, 'keras': keras,
-        'nose': nose, 'requests': requests,
+        'all': userAll, 'interfaces': interfaces, 'pandas': pandas,
+        'scipy': scipy, 'matplotlib': matplotlib, 'cloudpickle': cloudpickle,
+        'cython': cython, 'mlpy': mlpy, 'scikit-learn': scikitlearn,
+        'keras': keras, 'nose': nose, 'requests': requests,
         }
 
     if extensions is not None:
