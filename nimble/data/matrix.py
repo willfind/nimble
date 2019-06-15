@@ -411,22 +411,6 @@ class Matrix(Base):
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
-        class MatrixView(BaseView, Matrix):
-            """
-            Read only access to a Matrix object.
-            """
-            def __init__(self, **kwds):
-                super(MatrixView, self).__init__(**kwds)
-
-            def _getPoints(self):
-                return MatrixPointsView(self)
-
-            def _getFeatures(self):
-                return MatrixFeaturesView(self)
-
-            def _getElements(self):
-                return MatrixElementsView(self)
-
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
@@ -435,7 +419,6 @@ class Matrix(Base):
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
-
         return MatrixView(**kwds)
 
     def _validate_implementation(self, level):
@@ -702,3 +685,20 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
     ret = ret.astype(numpy.float).A1
 
     return ret
+
+
+class MatrixView(BaseView, Matrix):
+    """
+    Read only access to a Matrix object.
+    """
+    def __init__(self, **kwds):
+        super(MatrixView, self).__init__(**kwds)
+
+    def _getPoints(self):
+        return MatrixPointsView(self)
+
+    def _getFeatures(self):
+        return MatrixFeaturesView(self)
+
+    def _getElements(self):
+        return MatrixElementsView(self)

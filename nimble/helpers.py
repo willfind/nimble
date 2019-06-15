@@ -79,10 +79,10 @@ def findBestInterface(package):
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
             return interface
-    for interface in nimble.interfaces.builtin:
+    for interface in nimble.interfaces.predefined:
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
-            # interface is a builtin one, but instantiation failed
+            # interface is a predefined one, but instantiation failed
             return interface.provideInitExceptionInfo()
     # if package is not recognized, provide generic exception information
     msg = "package '" + package
@@ -4389,9 +4389,11 @@ def inspectArguments(func):
         sig = inspect.signature(func)
         a = []
         if inspect.isclass(func) or hasattr(func, '__self__'):
-            # add self to classes and bounded methods to align
-            # with output of getfullargspec
-            a.append('self')
+            # self included already for cython function signature
+            if not 'cython' in str(type(func)):
+                # add self to classes and bounded methods to align
+                # with output of getfullargspec
+                a.append('self')
         v = None
         k = None
         d = []

@@ -5,7 +5,6 @@ TODO: multinomialHMM requires special input processing for obs param
 """
 
 from __future__ import absolute_import
-import importlib
 import copy
 import sys
 import warnings
@@ -16,9 +15,9 @@ from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import BuiltinInterface
+from nimble.interfaces.universal_interface import PredefinedInterface
 from nimble.exceptions import InvalidArgumentValue
-from nimble.interfaces.interface_helpers import modifyImportPath
+from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
@@ -34,7 +33,7 @@ locationCache = {}
 
 
 @inheritDocstringsFactory(UniversalInterface)
-class SciKitLearn(BuiltinInterface, UniversalInterface):
+class SciKitLearn(PredefinedInterface, UniversalInterface):
     """
     This class is an interface to scikit-learn.
     """
@@ -43,12 +42,10 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
         """
 
         """
-        # modify path if another directory provided
-        modifyImportPath(sciKitLearnDir, 'sciKitLearn')
         # suppress DeprecationWarnings
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self.skl = importlib.import_module('sklearn')
+            self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sciKitLearn')
 
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
@@ -58,7 +55,10 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
         pkgutil.walk_packages_ = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = pkgutil.walk_packages_(*args, **kwargs)
-            return [pkg for pkg in packages if not 'conftest' in pkg[1]]
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # ignoring everything that is not a package prevents trying
+            # to import libraries outside of scikit-learn dependencies
+            return [pkg for pkg in packages if pkg[2]]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             all_estimators = all_estimators()
@@ -100,12 +100,20 @@ class SciKitLearn(BuiltinInterface, UniversalInterface):
     def getCanonicalName(cls):
         return 'sciKitLearn'
 
-
     @classmethod
     def isAlias(cls, name):
         if name.lower() in ['skl', 'sklearn']:
             return True
         return name.lower() == cls.getCanonicalName().lower()
+
+    @classmethod
+    def _installInstructions(cls):
+        msg = """
+To install scikit-learn
+-----------------------
+    Installation instructions for scikit-learn can be found at:
+    https://scikit-learn.org/stable/install.html"""
+        return msg
 
     def _listLearnersBackend(self):
         possibilities = []

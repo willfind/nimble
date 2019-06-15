@@ -530,133 +530,6 @@ class List(Base):
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
-        class ListView(BaseView, List):
-            """
-            Read only access to a List object.
-            """
-            def __init__(self, **kwds):
-                super(ListView, self).__init__(**kwds)
-
-            def _getPoints(self):
-                return ListPointsView(self)
-
-            def _getFeatures(self):
-                return ListFeaturesView(self)
-
-            def _getElements(self):
-                return ListElementsView(self)
-
-            def _copy_implementation(self, to):
-                # we only want to change how List and pythonlist copying is
-                # done we also temporarily convert self.data to a python list
-                # for copy
-                if ((len(self.points) == 0 or len(self.features) == 0)
-                        and to != 'List'):
-                    emptyStandin = numpy.empty((len(self.points),
-                                                len(self.features)))
-                    intermediate = nimble.createData('Matrix', emptyStandin,
-                                                     useLog=False)
-                    return intermediate.copy(to=to)
-
-                listForm = [list(pt) for pt in self.points]
-
-                if to not in ['List', 'pythonlist']:
-                    origData = self.data
-                    self.data = listForm
-                    res = super(ListView, self)._copy_implementation(
-                        to)
-                    self.data = origData
-                    return res
-
-                if to == 'List':
-                    ptNames = self.points._getNamesNoGeneration()
-                    ftNames = self.features._getNamesNoGeneration()
-                    return List(listForm, pointNames=ptNames,
-                                featureNames=ftNames, shape=self.shape)
-                else:
-                    return listForm
-
-        class FeatureViewer(object):
-            """
-            View by feature axis for list.
-            """
-            def __init__(self, source, fStart, fEnd):
-                self.source = source
-                self.fStart = fStart
-                self.fRange = fEnd - fStart
-                self.limit = None
-
-            def setLimit(self, pIndex):
-                """
-                Limit to a given point in the feature.
-                """
-                self.limit = pIndex
-
-            def __getitem__(self, key):
-                if key < 0 or key >= self.fRange:
-                    msg = "The given index " + str(key) + " is outside of the "
-                    msg += "range  of possible indices in the feature axis (0 "
-                    msg += "to " + str(self.fRange - 1) + ")."
-                    raise IndexError(msg)
-
-                return self.source.data[self.limit][key + self.fStart]
-
-            def __len__(self):
-                return self.fRange
-
-            def __eq__(self, other):
-                if len(self) != len(other):
-                    return False
-                for i, sVal in enumerate(self):
-                    oVal = other[i]
-                    # check element equality - which is only relevant if one
-                    # of the elements is non-NaN
-                    if sVal != oVal and (sVal == sVal or oVal == oVal):
-                        return False
-                return True
-
-            def __ne__(self, other):
-                return not self.__eq__(other)
-
-            def copy(self):
-                """
-                Create a copy of this FeatureViewer.
-                """
-                ret = FeatureViewer(self.source, self.fStart, self.fRange)
-                ret.setLimit(self.limit)
-                return ret
-
-        class ListPassThrough(object):
-            """
-            Pass through to support View.
-            """
-            def __init__(self, source, pStart, pEnd, fStart, fEnd):
-                self.source = source
-                self.pStart = pStart
-                self.pEnd = pEnd
-                self.pRange = pEnd - pStart
-                self.fStart = fStart
-                self.fEnd = fEnd
-
-            def __getitem__(self, key):
-                self.fviewer = FeatureViewer(self.source, self.fStart,
-                                             self.fEnd)
-                if key < 0 or key >= self.pRange:
-                    msg = "The given index " + str(key) + " is outside of the "
-                    msg += "range  of possible indices in the point axis (0 "
-                    msg += "to " + str(self.pRange - 1) + ")."
-                    raise IndexError(msg)
-
-                self.fviewer.setLimit(key + self.pStart)
-                return self.fviewer
-
-            def __len__(self):
-                return self.pRange
-
-            def __array__(self, dtype=None):
-                tmpArray = numpy.array(self.source.data, dtype=dtype)
-                return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
-
         kwds = {}
         kwds['data'] = ListPassThrough(self, pointStart, pointEnd,
                                        featureStart, featureEnd)
@@ -667,7 +540,6 @@ class List(Base):
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
         kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
-
         return ListView(**kwds)
 
     def _validate_implementation(self, level):
@@ -741,3 +613,130 @@ class List(Base):
                                              len(self.features.getNames())]))
 
         return numpy.matrix(self.data)
+
+class ListView(BaseView, List):
+    """
+    Read only access to a List object.
+    """
+    def __init__(self, **kwds):
+        super(ListView, self).__init__(**kwds)
+
+    def _getPoints(self):
+        return ListPointsView(self)
+
+    def _getFeatures(self):
+        return ListFeaturesView(self)
+
+    def _getElements(self):
+        return ListElementsView(self)
+
+    def _copy_implementation(self, to):
+        # we only want to change how List and pythonlist copying is
+        # done we also temporarily convert self.data to a python list
+        # for copy
+        if ((len(self.points) == 0 or len(self.features) == 0)
+                and to != 'List'):
+            emptyStandin = numpy.empty((len(self.points),
+                                        len(self.features)))
+            intermediate = nimble.createData('Matrix', emptyStandin,
+                                             useLog=False)
+            return intermediate.copy(to=to)
+
+        listForm = [list(pt) for pt in self.points]
+
+        if to not in ['List', 'pythonlist']:
+            origData = self.data
+            self.data = listForm
+            res = super(ListView, self)._copy_implementation(
+                to)
+            self.data = origData
+            return res
+
+        if to == 'List':
+            ptNames = self.points._getNamesNoGeneration()
+            ftNames = self.features._getNamesNoGeneration()
+            return List(listForm, pointNames=ptNames,
+                        featureNames=ftNames, shape=self.shape)
+        else:
+            return listForm
+
+class FeatureViewer(object):
+    """
+    View by feature axis for list.
+    """
+    def __init__(self, source, fStart, fEnd):
+        self.source = source
+        self.fStart = fStart
+        self.fRange = fEnd - fStart
+        self.limit = None
+
+    def setLimit(self, pIndex):
+        """
+        Limit to a given point in the feature.
+        """
+        self.limit = pIndex
+
+    def __getitem__(self, key):
+        if key < 0 or key >= self.fRange:
+            msg = "The given index " + str(key) + " is outside of the "
+            msg += "range  of possible indices in the feature axis (0 "
+            msg += "to " + str(self.fRange - 1) + ")."
+            raise IndexError(msg)
+
+        return self.source.data[self.limit][key + self.fStart]
+
+    def __len__(self):
+        return self.fRange
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+        for i, sVal in enumerate(self):
+            oVal = other[i]
+            # check element equality - which is only relevant if one
+            # of the elements is non-NaN
+            if sVal != oVal and (sVal == sVal or oVal == oVal):
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def copy(self):
+        """
+        Create a copy of this FeatureViewer.
+        """
+        ret = FeatureViewer(self.source, self.fStart, self.fRange)
+        ret.setLimit(self.limit)
+        return ret
+
+class ListPassThrough(object):
+    """
+    Pass through to support View.
+    """
+    def __init__(self, source, pStart, pEnd, fStart, fEnd):
+        self.source = source
+        self.pStart = pStart
+        self.pEnd = pEnd
+        self.pRange = pEnd - pStart
+        self.fStart = fStart
+        self.fEnd = fEnd
+
+    def __getitem__(self, key):
+        self.fviewer = FeatureViewer(self.source, self.fStart,
+                                     self.fEnd)
+        if key < 0 or key >= self.pRange:
+            msg = "The given index " + str(key) + " is outside of the "
+            msg += "range  of possible indices in the point axis (0 "
+            msg += "to " + str(self.pRange - 1) + ")."
+            raise IndexError(msg)
+
+        self.fviewer.setLimit(key + self.pStart)
+        return self.fviewer
+
+    def __len__(self):
+        return self.pRange
+
+    def __array__(self, dtype=None):
+        tmpArray = numpy.array(self.source.data, dtype=dtype)
+        return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]

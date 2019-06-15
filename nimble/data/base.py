@@ -43,8 +43,6 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 
-cython = nimble.importModule('cython')
-
 cloudpickle = nimble.importModule('cloudpickle')
 
 mplError = None

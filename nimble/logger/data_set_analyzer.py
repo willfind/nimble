@@ -14,6 +14,7 @@ import six
 from six.moves import range
 
 import nimble
+from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from .tableString import tableString
 
@@ -251,7 +252,7 @@ def appendColumns(appendTo, appendFrom):
     if len(appendTo) != len(appendFrom):
         msg = "Can't merge two matrices with different numbers of rows: "
         msg += str(len(appendTo)) + " != " + str(len(appendFrom))
-        raise c(msg)
+        raise InvalidArgumentValue(msg)
 
     for i in range(len(appendTo)):
         appendFromRow = appendFrom[i]

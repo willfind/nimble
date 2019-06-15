@@ -2171,18 +2171,13 @@ def relabeler(point, label=None):
 def isSquareData(data):
     return len(data.points) == len(data.features)
 
-## Helpers for BuiltinInterface.provideInitExceptionInfo ##
-
-installHeader = """
-To install {name}
------------------"""
-
-def formatInstallHeader(name):
-    return installHeader.format(name=name)
+#######################
+# PredefinedInterface #
+#######################
 
 pathMessage = """
-If package installed
---------------------
+If {name} installed
+{underline}
     Make sure the package is installed in the current environment, append the
     path to the package to sys.path prior to importing nimble, or provide the
     path location in configuration.ini. The path can be set manually or call:
@@ -2191,23 +2186,15 @@ If package installed
     containing the package."""
 
 def formatPathMessage(name):
-    return pathMessage.format(name=name)
-
-errorMessage = """
-Exception information
----------------------
-    The traceback can be found above and the original exception was:
-    {exception}: {message}"""
-
-def formatErrorMessage(exception, message):
-    return errorMessage.format(exception=exception, message=message)
+    underline = '-' * (len(name) + 13)
+    return pathMessage.format(name=name, underline=underline)
 
 
-class BuiltinInterface(abc.ABC):
+class PredefinedInterface(abc.ABC):
     """
-    Abstract base class of classmethods for nimble builtin interfaces.
+    Abstract base class of classmethods for predefined interfaces.
 
-    For builtin interfaces, we need class methods to access certain
+    For predefined interfaces, we need class methods to access certain
     information about the class and provide a detailed exception if the
     user attempts to use the interface, but it failed instantiation.
     """
@@ -2229,23 +2216,17 @@ class BuiltinInterface(abc.ABC):
         try:
             return cls()
         except Exception as e:
-            origType = e.__class__.__name__
-            origMsg = str(e)
             origTraceback = e.__traceback__
             msg = "The " + name + " interface is not available because "
             msg += "the interface object could not be instantiated. "
             # could not import package, provide information to help with import
             if isinstance(e, ImportError):
-                # optional additional instructions for package install
-                if cls._installInstructions():
-                    msg += formatInstallHeader(name)
-                    msg += cls._installInstructions()
+                msg += cls._installInstructions()
                 # instructions for providing path to package
                 msg += formatPathMessage(name)
-            # the original exception
-            msg += formatErrorMessage(origType, origMsg)
             raise PackageException(msg).with_traceback(origTraceback)
 
     @classmethod
+    @abc.abstractmethod
     def _installInstructions(cls):
-        return ""
+        pass

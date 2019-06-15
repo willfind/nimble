@@ -441,6 +441,7 @@ class SessionConfiguration(object):
                 msg = section + "is an interface which is not currently "
                 msg += "available. Only a 'location' option is permitted "
                 msg += "for unavailable interfaces."
+                raise InvalidArgumentValue(msg)
 
         if (not section in self.changes
                 or isinstance(self.changes[section], ToDelete)):
@@ -567,6 +568,14 @@ def setInterfaceOptions(settingsObj, interface, save):
             settingsObj.set(interfaceName, opName, "")
         if save:
             settingsObj.saveChanges(interfaceName, opName)
+
+
+def setAndSaveAvailableIterfaceOptions():
+    """
+    Set and save the options for each available interface.
+    """
+    for interface in nimble.interfaces.available:
+        setInterfaceOptions(nimble.settings, interface, save=True)
 
 
 def autoRegisterFromSettings():

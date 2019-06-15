@@ -340,26 +340,6 @@ class DataFrame(Base):
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd):
-
-        class DataFrameView(BaseView, DataFrame):
-            """
-            Read only access to a DataFrame object.
-            """
-            def __init__(self, **kwds):
-                super(DataFrameView, self).__init__(**kwds)
-
-            def _getPoints(self):
-                return DataFramePointsView(self)
-
-            def _getFeatures(self):
-                return DataFrameFeaturesView(self)
-
-            def _getElements(self):
-                return DataFrameElementsView(self)
-
-            def _setAllDefault(self, axis):
-                super(DataFrameView, self)._setAllDefault(axis)
-
         kwds = {}
         kwds['data'] = self.data.iloc[pointStart:pointEnd,
                                       featureStart:featureEnd]
@@ -602,4 +582,23 @@ class DataFrame(Base):
         else:
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
-        #----------------------------------------------------------------------
+
+
+class DataFrameView(BaseView, DataFrame):
+    """
+    Read only access to a DataFrame object.
+    """
+    def __init__(self, **kwds):
+        super(DataFrameView, self).__init__(**kwds)
+
+    def _getPoints(self):
+        return DataFramePointsView(self)
+
+    def _getFeatures(self):
+        return DataFrameFeaturesView(self)
+
+    def _getElements(self):
+        return DataFrameElementsView(self)
+
+    def _setAllDefault(self, axis):
+        super(DataFrameView, self)._setAllDefault(axis)
