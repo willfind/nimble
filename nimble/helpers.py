@@ -4389,9 +4389,11 @@ def inspectArguments(func):
         sig = inspect.signature(func)
         a = []
         if inspect.isclass(func) or hasattr(func, '__self__'):
-            # add self to classes and bounded methods to align
-            # with output of getfullargspec
-            a.append('self')
+            # self included already for cython function signature
+            if not 'cython' in str(type(func)):
+                # add self to classes and bounded methods to align
+                # with output of getfullargspec
+                a.append('self')
         v = None
         k = None
         d = []
