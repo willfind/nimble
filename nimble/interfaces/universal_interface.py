@@ -1709,6 +1709,11 @@ class TrainedLearner(object):
             self.arguments[arg] = value
             self.transformedArguments[arg] = value
 
+        # separate training data / labels if needed
+        if isinstance(trainY, (six.string_types, int, numpy.int64)):
+            trainX = trainX.copy()
+            trainY = trainX.features.extract(toExtract=trainY, useLog=False)
+
         trainedBackend = self.interface._trainBackend(
             self.learnerName, trainX, trainY, self.transformedArguments)
 
@@ -1717,6 +1722,9 @@ class TrainedLearner(object):
         customDict = trainedBackend[2]
 
         self.backend = newBackend
+        self.trainX = trainX
+        self.trainY = trainY
+        self.arguments = merged
         self.transformedTrainX = transformedInputs[0]
         self.transformedTrainY = transformedInputs[1]
         self.transformedArguments = transformedInputs[3]
@@ -1883,14 +1891,23 @@ class TrainedLearner(object):
         formatedRawOrder.features.sort(sortHelper=sortScorer, useLog=False)
         return formatedRawOrder
 
+
     def _validTestData(self, testX):
+        """
+        Validate testing data is compatible with the training data.
+        """
         trainFts = len(self.trainX.features)
         testFts = len(testX.features)
-        if trainFts != testFts:
-            msg = "The number of features in testX ({0}) must be equal to the "
-            msg += "number of features in the training data ({1})"
-            msg = msg.format(testFts, trainFts)
-            raise InvalidArgumentValue(msg)
+        if trainFts == testFts:
+            return
+        if isSquareData(self.trainX) and isSquareData(testX):
+            return
+        msg = "The number of features in testX ({0}) must be equal to the "
+        msg += "number of features in the training data ({1}) "
+        msg = msg.format(testFts, trainFts)
+        if isSquareData(self.trainX):
+            msg += "or the testing data must be square-shaped"
+        raise InvalidArgumentValue(msg)
 
 
 @inheritDocstringsFactory(TrainedLearner)
@@ -2149,6 +2166,10 @@ def relabeler(point, label=None):
         return 0
     else:
         return 1
+
+
+def isSquareData(data):
+    return len(data.points) == len(data.features)
 
 ## Helpers for BuiltinInterface.provideInitExceptionInfo ##
 
