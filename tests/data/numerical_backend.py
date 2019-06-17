@@ -3,13 +3,13 @@
 Methods tested in this file:
 
 In object NumericalDataSafe:
-__mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__, __div__,
-__rdiv__,  __truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
+__mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__,
+__truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
 __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__
 
 In object NumericalModifying:
 elements.power, elements.multiply, __imul__, __iadd__, __isub__,
-__idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__,
+__itruediv__, __ifloordiv__,  __imod__, __ipow__,
 
 """
 from __future__ import absolute_import
@@ -628,6 +628,7 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, nimbleOp, nimbleinplac
 def wrapAndCall(toWrap, expected, *args):
     try:
         toWrap(*args)
+        assert False # expected exception was not raised
     except expected:
         pass
     except:
@@ -644,7 +645,7 @@ def run_full_backendDivMod(constructor, npEquiv, nimbleOp, inplace, sparsity):
 def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
 
-    wrapAndCall(back_selfNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
 
     wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
 
@@ -685,7 +686,7 @@ class NumericalDataSafe(DataTestObject):
     # __mul__ #
     ###########
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_mul_selfNotNumericException(self):
         """ Test __mul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__mul__')
@@ -868,52 +869,6 @@ class NumericalDataSafe(DataTestObject):
 
     def test_rsub_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rsub__', False)
-
-
-    ############
-    # __div__ #
-    ############
-    @noLogEntryExpected
-    def test_div_fullSuite(self):
-        """ __div__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
-
-    def test_div_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __div__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__div__', False)
-
-    def test_div_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__div__')
-
-    def test_div_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __div__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__div__', False)
-
-    def test_div_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__div__', False)
-
-
-    ############
-    # __rdiv__ #
-    ############
-    @noLogEntryExpected
-    def test_rdiv_fullSuite(self):
-        """ __rdiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
-
-    def test_rdiv_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __rdiv__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__rdiv__', False)
-
-    def test_rdiv_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__rdiv__')
-
-    def test_rdiv_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __rdiv__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__rdiv__', False)
-
-    def test_rdiv_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__rdiv__', False)
 
 
     ###############
@@ -1187,7 +1142,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.power raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'power')
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_elements_power_selfNotNumericException(self):
         """ Test elements.power raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'power')
@@ -1281,7 +1236,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.multiply raises exception when param is not a nimble Base object """
         back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_elements_multiply_selfNotNumericException(self):
         """ Test elements.multiply raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
@@ -1444,7 +1399,7 @@ class NumericalModifying(DataTestObject):
     # __imul__ #
     ############
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_imul_selfNotNumericException(self):
         """ Test __imul__ raises exception if self has non numeric data """
         back_selfNotNumericException(self.constructor, self.constructor, '__imul__')
@@ -1559,29 +1514,6 @@ class NumericalModifying(DataTestObject):
 
     def test_isub_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__isub__', True)
-
-
-    ############
-    # __idiv__ #
-    ############
-    @noLogEntryExpected
-    def test_idiv_fullSuite(self):
-        """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
-
-    def test_idiv_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __idiv__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
-
-    def test_idiv_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
-
-    def test_idiv_binaryelementwise_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwise __idiv__"""
-        back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
-
-    def test_idiv_binaryelementwise_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
 
 
     ################
