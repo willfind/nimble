@@ -502,9 +502,9 @@ def testPrepTypeFunctionsUseLog():
     # elements.transform
     dataObj = nimble.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
-    calculated = dataCopy.elements.transform(lambda x: [val for val in x], features=0)
+    calculated = dataCopy.elements.transform(lambda x: x, features=0)
     checkLogContents('elements.transform', "Matrix",
-                     [('toTransform', 'lambda x: [val for val in x]'), ('features', [0])])
+                     [('toTransform', 'lambda x: x'), ('features', [0])])
 
     # points.add
     dataObj = nimble.createData("Matrix", data, useLog=False)

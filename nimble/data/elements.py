@@ -189,7 +189,12 @@ class Elements(object):
         if features is not None:
             features = constructIndicesList(self._source, 'feature', features)
 
-        self._transform_implementation(toTransform, points, features,
+        if isinstance(toTransform, dict):
+            transformer = toTransform
+        else:
+            transformer = validateToTransform(toTransform)
+
+        self._transform_implementation(transformer, points, features,
                                        preserveZeros, skipNoneReturnValues)
 
         handleLogging(useLog, 'prep', 'elements.transform',
@@ -699,3 +704,17 @@ class Elements(object):
     def _transform_implementation(self, toTransform, points, features,
                                   preserveZeros, skipNoneReturnValues):
         pass
+
+###########
+# Helpers #
+###########
+
+def validateToTransform(toTransform):
+    def toTransformWrapped(*args, **kwargs):
+        ret = toTransform(*args, **kwargs)
+        if not dataHelpers.isAllowedSingleElement(ret):
+            msg = "toTransform can only return numeric values or strings, but "
+            msg += "the returned value was " + str(type(ret))
+            raise InvalidArgumentValue(msg)
+        return ret
+    return toTransformWrapped
