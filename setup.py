@@ -118,7 +118,8 @@ def run_setup(extensions=None):
     nose = 'nose>=1.3'
     requests = 'requests>2.12'
     interfaces = [mlpy, scikitlearn, keras]
-    userAll = [pandas, scipy, matplotlib, cloudpickle, cython] + interfaces
+    userAll = [pandas, scipy, matplotlib, cloudpickle, cython, requests]
+    userAll.extend(interfaces)
     setupKwargs['extras_require'] = {
         'all': userAll, 'interfaces': interfaces, 'pandas': pandas,
         'scipy': scipy, 'matplotlib': matplotlib, 'cloudpickle': cloudpickle,
