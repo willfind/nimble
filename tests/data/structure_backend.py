@@ -7781,6 +7781,12 @@ class StructureModifying(StructureShared):
 
         toTest.elements.transform(noChange, features=['a', 'b'])
 
+    @raises(InvalidArgumentValue)
+    def test_elements_transform_invalidElementReturned(self):
+        data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
+        toTest = self.constructor(data)
+        toTest.elements.transform(lambda e: [e])
+
     @oneLogEntryExpected
     def test_elements_transform_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]

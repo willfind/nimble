@@ -534,6 +534,12 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.elements.calculate(noChange, features=['a', 'b'])
 
+    @raises(InvalidArgumentValue)
+    def test_elements_calculate_invalidElementReturned(self):
+        data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
+        toTest = self.constructor(data)
+        toTest.elements.calculate(lambda e: [e])
+
     def test_elements_calculate_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, name=preserveName, path=preservePair)
