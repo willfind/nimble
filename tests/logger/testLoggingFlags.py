@@ -629,21 +629,21 @@ def test_features_fill():
 
 def test_points_transform():
     def wrapped(obj, useLog):
-        return obj.points.transform(lambda x: [point for point in x], useLog=useLog)
+        return obj.points.transform(lambda pt: [val for val in pt], useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
 def test_features_transform():
     def wrapped(obj, useLog):
-        return obj.features.transform(lambda x: [feature for feature in x], features=0, useLog=useLog)
+        return obj.features.transform(lambda ft: [val for val in ft], features=0, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
 def test_elements_transform():
     def wrapped(obj, useLog):
-        ret = obj.elements.transform(lambda x: x, features=0, useLog=useLog)
+        ret = obj.elements.transform(lambda elm: elm, features=0, useLog=useLog)
         return ret
 
     for rType in nimble.data.available:
