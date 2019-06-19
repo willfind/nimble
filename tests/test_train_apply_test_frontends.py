@@ -454,13 +454,13 @@ def test_trainFunctions_cv_triggered_errors():
         # different exception since this triggers crossValidation directly
         assert "folds" in str(iavc)
 
-class CVWasCalledException(Exception):
+class CalledException(Exception):
     pass
 
-def cvBackgroundCheck(*args, **kwargs):
-    raise CVWasCalledException()
+def raiseCalledException(*args, **kwargs):
+    raise CalledException()
 
-@mock.patch('nimble.core.crossValidate', cvBackgroundCheck)
+@mock.patch('nimble.core.crossValidate', raiseCalledException)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -475,7 +475,7 @@ def test_frontend_CV_triggering():
             train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                   performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
-        except CVWasCalledException:
+        except CalledException:
             pass
 
         try:
@@ -483,7 +483,7 @@ def test_frontend_CV_triggering():
                           performanceFunction=fractionIncorrect, testX=trainObj,
                           k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
-        except CVWasCalledException:
+        except CalledException:
             pass
 
         try:
@@ -491,7 +491,7 @@ def test_frontend_CV_triggering():
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
                          k=nimble.CV([1, 2]), folds=5)
             assert False # expected CVWasCalledException
-        except CVWasCalledException:
+        except CalledException:
             pass
     except Exception:
         einfo = sys.exc_info()
@@ -611,3 +611,112 @@ def test_trainAndTestOnTrainingData_logCount_withCV():
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
+@raises(CalledException)
+@mock.patch('nimble.interfaces.universal_interface.TrainedLearner._validTestData', raiseCalledException)
+def test_trainAndApply_testXValidation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjNoLabels = testObj[:, :2]
+
+    learner = 'Custom.KNNClassifier'
+    # Expected outcomes
+    # trainY is ID, testX does not contain labels; test int
+    out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
+
+@raises(CalledException)
+@mock.patch('nimble.interfaces.universal_interface.TrainedLearner._validTestData', raiseCalledException)
+def test_trainAndTest_testXValidation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    perfFunc = nimble.calculate.fractionIncorrect
+    # Expected outcomes
+    # trainY is ID, testX does not contain labels; test int
+    out = nimble.trainAndTest(learner, trainObj, trainObjLabels, testObjData,
+                              testObjLabels, perfFunc)
+
+@raises(CalledException)
+@mock.patch('nimble.interfaces.universal_interface.TrainedLearner._validTestData', raiseCalledException)
+def test_TL_apply_testXValidation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjNoLabels = testObj[:, :2]
+
+    learner = 'Custom.KNNClassifier'
+    # Expected outcomes
+    # trainY is ID, testX does not contain labels; test int
+    tl = nimble.train(learner, trainObj, 3)
+    out = tl.apply(testObjNoLabels)
+
+@raises(CalledException)
+@mock.patch('nimble.interfaces.universal_interface.TrainedLearner._validTestData', raiseCalledException)
+def test_TL_test_testXValidation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    perfFunc = nimble.calculate.fractionIncorrect
+    # Expected outcomes
+    # trainY is ID, testX does not contain labels; test int
+    tl = nimble.train(learner, trainObj, trainObjLabels)
+    out = tl.test(testObjData, testObjLabels, perfFunc)
+
+@raises(CalledException)
+@mock.patch('nimble.interfaces.universal_interface.TrainedLearner._validTestData', raiseCalledException)
+def test_TL_getScores_testXValidation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _ in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    perfFunc = nimble.calculate.fractionIncorrect
+    # Expected outcomes
+    # trainY is ID, testX does not contain labels; test int
+    tl = nimble.train(learner, trainObj, trainObjLabels)
+    out = tl.getScores(testObjData, testObjLabels)

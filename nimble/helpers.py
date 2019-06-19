@@ -3850,7 +3850,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         #               msg = "If trainY is a Data object, then it may only "
         #               msg += "have one feature"
         #				raise ArgumentException(msg)
-            if not len(trainY.points) == len(trainX.points):
+            if len(trainY.points) != len(trainX.points):
                 msg = "If trainY is a Data object, then it must have the same "
                 msg += "number of points as trainX"
                 raise InvalidArgumentValueCombination(msg)
@@ -3872,14 +3872,14 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             msg = "testY may only be an object derived from Base, or an ID "
             msg += "of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
-        if isinstance(trainY, Base):
+        if isinstance(testY, Base):
         #			if not len(trainY.features) == 1:
         #               msg = "If trainY is a Data object, then it may only "
         #               msg += "have one feature"
         #				raise ArgumentException(msg)
-            if not len(trainY.points) == len(trainX.points):
-                msg = "If trainY is a Data object, then it must have the same "
-                msg += "number of points as trainX"
+            if len(testY.points) != len(testY.points):
+                msg = "If testY is a Data object, then it must have the same "
+                msg += "number of points as testX"
                 raise InvalidArgumentValueCombination(msg)
 
 

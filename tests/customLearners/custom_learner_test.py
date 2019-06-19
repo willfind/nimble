@@ -332,7 +332,7 @@ def test_retrain_withArg():
     nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
     trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 
