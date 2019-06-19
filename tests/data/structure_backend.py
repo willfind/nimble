@@ -7782,7 +7782,7 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(noChange, features=['a', 'b'])
 
     @raises(InvalidArgumentValue)
-    def test_elements_transform_invalidElementType(self):
+    def test_elements_transform_invalidElementReturned(self):
         data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
         toTest = self.constructor(data)
         toTest.elements.transform(lambda e: [e])

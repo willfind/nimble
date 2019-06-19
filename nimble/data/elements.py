@@ -192,7 +192,7 @@ class Elements(object):
         if isinstance(toTransform, dict):
             transformer = toTransform
         else:
-            transformer = validateToTransform(toTransform)
+            transformer = validateElementFunction(toTransform, 'toTransform')
 
         self._transform_implementation(transformer, points, features,
                                        preserveZeros, skipNoneReturnValues)
@@ -329,6 +329,8 @@ class Elements(object):
         except TypeError:
             oneArg = True
 
+        calculator = validateElementFunction(function, 'function')
+
         if points is not None:
             points = constructIndicesList(self._source, 'point', points)
         if features is not None:
@@ -350,7 +352,7 @@ class Elements(object):
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
-                currRet = function(value)
+                currRet = calculator(value)
                 if skipNoneReturnValues and currRet is None:
                     return value
 
@@ -376,9 +378,9 @@ class Elements(object):
                         valueArray[p, f] = 0
                     else:
                         if oneArg:
-                            currRet = function(value)
+                            currRet = calculator(value)
                         else:
-                            currRet = function(value, pi, fj)
+                            currRet = calculator(value, pi, fj)
                         if skipNoneReturnValues and currRet is None:
                             valueArray[p, f] = value
                         else:
@@ -709,12 +711,12 @@ class Elements(object):
 # Helpers #
 ###########
 
-def validateToTransform(toTransform):
-    def toTransformWrapped(*args, **kwargs):
-        ret = toTransform(*args, **kwargs)
+def validateElementFunction(func, funcName):
+    def wrappedElementFunction(*args, **kwargs):
+        ret = func(*args, **kwargs)
         if not dataHelpers.isAllowedSingleElement(ret):
-            msg = "toTransform can only return numeric values or strings, but "
+            msg = funcName + " can only return numeric values or strings, but "
             msg += "the returned value was " + str(type(ret))
             raise InvalidArgumentValue(msg)
         return ret
-    return toTransformWrapped
+    return wrappedElementFunction
