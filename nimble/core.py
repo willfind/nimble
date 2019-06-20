@@ -1798,7 +1798,7 @@ def log(heading, logInfo):
     """
     Enter an entry into the active logger's database file.
 
-    In addition to the provided ``heading`` and ``logInfo``, the run
+    In addition to the provided ``heading`` and ``logInfo``, the session
     number and timestamp will be automatically recorded for this log
     entry.
 
@@ -1827,9 +1827,10 @@ def log(heading, logInfo):
     nimble.logger.active.log(heading, logInfo)
 
 
-def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
-            endDate=None, maximumEntries=100, searchForText=None, regex=False,
-            saveToFileName=None, append=False):
+def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
+            startDate=None, endDate=None, maximumEntries=100,
+            searchForText=None, regex=False, saveToFileName=None,
+            append=False):
     """
     Output contents of the logger's database file.
 
@@ -1843,26 +1844,26 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
         to 3 (most detail). Default is 2.
         * Level 1 - Data loading, data preparation and
           preprocessing, custom user logs.
-        * Level 2 - Outputs basic information about each run.
-          Includes timestamp, run number, learner name, train and
+        * Level 2 - Outputs basic information about learner runs.
+          Includes timestamp, session number, learner name, train and
           test object details, parameter, metric, and timer data if
           available.
         * Level 3 - Include cross-validation data.
-    leastRunsAgo : int
-        The least number of runs since the most recent run to
+    leastSessionsAgo : int
+        The least number of sessions since the most recent session to
         include in the log. Default is 0.
-    mostRunsAgo : int
-        The most number of runs since the most recent run to
+    mostSessionsAgo : int
+        The most number of sessions since the most recent session to
         include in the log. Default is 2.
     startDate :  str, datetime
-        A string or datetime object of the date to begin adding runs
+        A string or datetime object of the date to begin adding sessions
         to the log.
         Acceptable formats:
         * "YYYY-MM-DD"
         * "YYYY-MM-DD HH:MM"
         * "YYYY-MM-DD HH:MM:SS"
     endDate : str, datetime
-        A string or datetime object of the date to stop adding runs
+        A string or datetime object of the date to stop adding sessions
         to the log.
         See ``startDate`` for formatting.
     maximumEntries : int
@@ -1893,17 +1894,18 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None,
         endDate = stringToDatetime(endDate)
         msg = "The startDate must be before the endDate"
         raise InvalidArgumentValueCombination(msg)
-    if leastRunsAgo is not None:
-        if leastRunsAgo < 0:
-            msg = "leastRunsAgo must be greater than zero"
+    if leastSessionsAgo is not None:
+        if leastSessionsAgo < 0:
+            msg = "leastSessionsAgo must be greater than zero"
             raise InvalidArgumentValue(msg)
-        if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
-            msg = "mostRunsAgo must be greater than or equal to "
-            msg += "leastRunsAgo"
+        if mostSessionsAgo is not None and mostSessionsAgo < leastSessionsAgo:
+            msg = "mostSessionsAgo must be greater than or equal to "
+            msg += "leastSessionsAgo"
             raise InvalidArgumentValueCombination(msg)
-    nimble.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo,
-                                 startDate, endDate, maximumEntries,
-                                 searchForText, regex, saveToFileName, append)
+    nimble.logger.active.showLog(levelOfDetail, leastSessionsAgo,
+                                 mostSessionsAgo, startDate, endDate,
+                                 maximumEntries, searchForText, regex,
+                                 saveToFileName, append)
 
 
 def loadData(inputPath, useLog=None):
