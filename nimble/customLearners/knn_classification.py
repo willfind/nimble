@@ -10,6 +10,8 @@ If there is a tie, use k=1
 
 from __future__ import absolute_import
 
+import numpy
+
 import nimble
 from nimble.customLearners import CustomLearner
 from nimble.exceptions import PackageException
@@ -26,27 +28,44 @@ class KNNClassifier(CustomLearner):
         self._trainY = trainY
 
     def apply(self, testX):
-        def foo(p):
-            nearestPoints = self._generatePointsSortedByDistance(p)
-            results = self._voteNearest(nearestPoints)
-            # sort according to number of votes received
-            def scoreHelperDecending(point):
-                return 0 - point[1]
+        trainArray = self._trainX.copy('numpy array')
+        testArray = testX.copy('numpy array')
 
-            results.points.sort(sortHelper=scoreHelperDecending, useLog=False)
-            # only one label received votes
-            if len(results.points) == 1:
-                prediction = results[0, 0]
-            # there is a tie between labels, fall back to k=1
-            elif results[0, 1] == results[1, 1]:
-                prediction = self._trainY[int(nearestPoints[0, 0]), 0]
-            # average case, top of the results has most number of votes
+        # euclidean distance for each point in test
+        dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
+                    + numpy.sum(trainArray**2,axis=1)
+                    + numpy.sum(testArray**2, axis=1)[:, numpy.newaxis])
+
+        predictions = []
+        for pt in dists:
+            neighborLabels = []
+            idxDists = [(i, d) for i, d in enumerate(pt)]
+            idxDists.sort(key = lambda x: x[1])
+            kNearest = idxDists[:self.k]
+            for i, _ in kNearest:
+                neighborLabels.append(self._trainY[i])
+            labelCounts = {}
+            for label in neighborLabels:
+                if label in labelCounts:
+                    labelCounts[label] += 1
+                else:
+                    labelCounts[label] = 1
+            highCount = 0
+            bestLabels = []
+            for label, count in labelCounts.items():
+                if count > highCount:
+                    bestLabels = [label]
+                    highCount = count
+                elif count == highCount:
+                    bestLabels.append(label)
+            if len(bestLabels) > 1 and neighborLabels[0] in bestLabels:
+                # if tied use the nearest neighbor (k=1) as tie breaker
+                predictions.append([neighborLabels[0]])
             else:
-                prediction = results[0, 0]
+                predictions.append([bestLabels[0]])
 
-            return prediction
-
-        return testX.points.calculate(foo, useLog=False)
+        return nimble.createData(testX.getTypeString(), predictions,
+                                 useLog=False)
 
 
     def getScores(self, testX):
