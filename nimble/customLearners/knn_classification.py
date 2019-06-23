@@ -12,14 +12,14 @@ from __future__ import absolute_import
 
 import numpy
 
-import nimble
 from nimble.customLearners import CustomLearner
-from nimble.exceptions import PackageException
-
-scipy = nimble.importModule('scipy.spatial')
+from nimble.helpers import initDataObject
 
 
 class KNNClassifier(CustomLearner):
+    """
+    K-Nearest Neighbors Classifier using euclidean distance.
+    """
     learnerType = 'classification'
 
     def train(self, trainX, trainY, k=5):
@@ -28,28 +28,12 @@ class KNNClassifier(CustomLearner):
         self._trainY = trainY
 
     def apply(self, testX):
-        trainArray = self._trainX.copy('numpy array')
-        testArray = testX.copy('numpy array')
-
-        # euclidean distance for each point in test
-        dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
-                    + numpy.sum(trainArray**2,axis=1)
-                    + numpy.sum(testArray**2, axis=1)[:, numpy.newaxis])
+        dists = self._getDistanceMatrix(testX)
 
         predictions = []
-        for pt in dists:
-            neighborLabels = []
-            idxDists = [(i, d) for i, d in enumerate(pt)]
-            idxDists.sort(key = lambda x: x[1])
-            kNearest = idxDists[:self.k]
-            for i, _ in kNearest:
-                neighborLabels.append(self._trainY[i])
-            labelCounts = {}
-            for label in neighborLabels:
-                if label in labelCounts:
-                    labelCounts[label] += 1
-                else:
-                    labelCounts[label] = 1
+        for point in dists:
+            labelCounts, nearestNeighbor = self._getNearestNeighborLabelCounts(
+                point, returnNearest=True)
             highCount = 0
             bestLabels = []
             for label, count in labelCounts.items():
@@ -58,14 +42,14 @@ class KNNClassifier(CustomLearner):
                     highCount = count
                 elif count == highCount:
                     bestLabels.append(label)
-            if len(bestLabels) > 1 and neighborLabels[0] in bestLabels:
-                # if tied use the nearest neighbor (k=1) as tie breaker
-                predictions.append([neighborLabels[0]])
+            # use the nearest neighbor (k=1) as tie breaker, if possible
+            if len(bestLabels) > 1 and nearestNeighbor in bestLabels:
+                predictions.append([nearestNeighbor])
             else:
                 predictions.append([bestLabels[0]])
 
-        return nimble.createData(testX.getTypeString(), predictions,
-                                 useLog=False)
+        return initDataObject(testX.getTypeString(), predictions, None, None,
+                              skipDataProcessing=True)
 
 
     def getScores(self, testX):
@@ -75,55 +59,53 @@ class KNNClassifier(CustomLearner):
         scores must be returned in the natural ordering of the classes.
         """
         ret = None
-        for p in testX.points:
-            nearestPoints = self._generatePointsSortedByDistance(p)
-            results = self._voteNearest(nearestPoints)
-            # sort ascending according to label ID
-            results.points.sort(0, useLog=False)
-
-            scores = results.features.extract(1, useLog=False)
-            scores.transpose(useLog=False)
-
+        dists = self._getDistanceMatrix(testX)
+        labelVals = list(self._trainY.elements.countUnique().keys())
+        labelVals.sort()
+        for point in dists:
+            labelCounts = self._getNearestNeighborLabelCounts(point)
+            scoreList = [labelCounts[val] if val in labelCounts else 0
+                         for val in labelVals]
+            scores = initDataObject(testX.getTypeString(), scoreList,
+                                    None, None, skipDataProcessing=True)
             if ret is None:
                 ret = scores
             else:
                 ret.points.add(scores, useLog=False)
-
         return ret
 
-    def _generatePointsSortedByDistance(self, test):
+
+    def _getDistanceMatrix(self, testX):
         """
-        Return a matrix where each row contains a point ID, and the
-        distance to the point test.
+        A matrix of the euclidean distances of each point in testX from
+        each point in trainX. The resulting matrix will be shape:
+        numTestPoints x numTrainPoints.
         """
-        if not scipy:
-            msg = "scipy is not available"
-            raise PackageException(msg)
-
-        def distanceFrom(point):
-            index = self._trainX.points.getIndex(point.points.getName(0))
-            return [index, scipy.spatial.distance.euclidean(test, point)]
-
-        distances = self._trainX.points.calculate(distanceFrom, useLog=False)
-        distances.points.sort(1, useLog=False)
-        return distances
+        trainArray = self._trainX.copy('numpy array')
+        testArray = testX.copy('numpy array')
+        # euclidean distance for each point in test
+        dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
+                           + numpy.sum(trainArray**2, axis=1)
+                           + numpy.sum(testArray**2, axis=1)[:, numpy.newaxis])
+        return dists
 
 
-    def _voteNearest(self, votes):
+    def _getNearestNeighborLabelCounts(self, point, returnNearest=False):
         """
-        Takes a data object where each row contains a point ID, and the
-        distance to the point we want to classify. Uses the point ID's
-        to find labels in self.trainY, letting those be the votes. In
-        case of a tie, we revert to k=1.
+        A dictionary mapping the labels for y to the number of times
+        that label occurred.
         """
-        topK = votes.points.copy(end=self.k - 1, useLog=False)
-
-        def mapper(point):
-            labelIndex = self._trainY[int(point[0]), 0]
-            return [(labelIndex, 1)]
-
-        def reducer(key, valList):
-            return (key, len(valList))
-
-        results = topK.points.mapReduce(mapper, reducer, useLog=False)
-        return results
+        labelCounts = {}
+        idxDists = [(i, d) for i, d in enumerate(point)]
+        idxDists.sort(key=lambda x: x[1])
+        kNearest = idxDists[:self.k]
+        for i, _ in kNearest:
+            label = self._trainY[i]
+            if label in labelCounts:
+                labelCounts[label] += 1
+            else:
+                labelCounts[label] = 1
+        if returnNearest:
+            nearestNeighbor = self._trainY[idxDists[0][0]]
+            return labelCounts, nearestNeighbor
+        return labelCounts
