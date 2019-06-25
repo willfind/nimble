@@ -11,9 +11,9 @@ logged only when necessary.
 
 Hierarchy
 Level 1: Data creation and preprocessing logs
-Level 2: Outputs basic information about the run, including timestamp,
-         run number, learner name, train and test object details,
-         parameter, metric and timer data if available
+Level 2: Outputs basic information about learner runs, including
+         timestamp, session number, learner name, train and test object
+         details, parameter, metric and timer data if available
 Level 3: Cross validation
 """
 from __future__ import absolute_import
@@ -55,7 +55,7 @@ class SessionLogger(object):
         self.logLocation = logLocation
         self.logName = logName
         self.logFileName = fullLogDesignator + ".mr"
-        self.runNumber = None
+        self.sessionNumber = None
         self.connection = None
         self.cursor = None
         self.isAvailable = False
@@ -96,20 +96,20 @@ class SessionLogger(object):
         CREATE TABLE IF NOT EXISTS logger (
         entry INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT,
-        runNumber INTEGER,
+        sessionNumber INTEGER,
         logType TEXT,
         logInfo TEXT);
         """
         self.cursor.execute(statement)
         self.connection.commit()
 
-        statement = "SELECT MAX(runNumber) FROM logger;"
+        statement = "SELECT MAX(sessionNumber) FROM logger;"
         self.cursor.execute(statement)
-        lastRun = self.cursor.fetchone()[0] #fetchone returns a tuple
-        if lastRun is not None:
-            self.runNumber = lastRun + 1
+        lastSession = self.cursor.fetchone()[0] #fetchone returns a tuple
+        if lastSession is not None:
+            self.sessionNumber = lastSession + 1
         else:
-            self.runNumber = 0
+            self.sessionNumber = 0
 
         self.isAvailable = True
 
@@ -128,9 +128,9 @@ class SessionLogger(object):
         """
         Add information into the log file.
 
-        Inserts timestamp, runNumber, ``logType`` in their respective
-        columns of the sqlite table. A string of ``logInfo`` will be
-        stored in the final column.
+        Inserts timestamp, sessionNumber, ``logType`` in their
+        respective columns of the sqlite table. A string of ``logInfo``
+        will be stored in the final column.
 
         Parameters
         ----------
@@ -150,12 +150,12 @@ class SessionLogger(object):
             self.setup(self.logFileName)
 
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-        runNum = self.runNumber
+        sessionNum = self.sessionNumber
         logInfo = str(logInfo)
         statement = "INSERT INTO logger "
-        statement += "(timestamp,runNumber,logType,logInfo) "
+        statement += "(timestamp,sessionNumber,logType,logInfo) "
         statement += "VALUES (?,?,?,?);"
-        self.cursor.execute(statement, (timestamp, runNum, logType,
+        self.cursor.execute(statement, (timestamp, sessionNum, logType,
                                         logInfo))
         self.connection.commit()
 
@@ -429,8 +429,8 @@ class SessionLogger(object):
     ### LOG OUTPUT ###
     ##################
 
-    def showLog(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
-                endDate, maximumEntries, searchForText, regex,
+    def showLog(self, levelOfDetail, leastSessionsAgo, mostSessionsAgo,
+                startDate, endDate, maximumEntries, searchForText, regex,
                 saveToFileName, append):
         """
         Output data from the logger.
@@ -445,27 +445,27 @@ class SessionLogger(object):
             to 3 (most detail). Default is 2.
             * Level 1 - Data loading, data preparation and
               preprocessing, custom user logs.
-            * Level 2 - Outputs basic information about each run.
-              Includes timestamp, run number, learner name, train and
-              test object details, parameter, metric, and timer data if
-              available.
+            * Level 2 - Outputs basic information about learner runs.
+              Includes timestamp, session number, learner name, train
+              and test object details, parameter, metric, and timer data
+              if available.
             * Level 3 - Include cross-validation data.
-        leastRunsAgo : int
-            The least number of runs since the most recent run to
-            include in the log. Default is 0.
-        mostRunsAgo : int
-            The most number of runs since the most recent run to
+        leastSessionsAgo : int
+            The least number of sessions since the most recent session
+            to include in the log. Default is 0.
+        mostSessionsAgo : int
+            The most number of sessions since the most recent session to
             include in the log. Default is 2.
         startDate :  str, datetime
-            A string or datetime object of the date to begin adding runs
-            to the log.
+            A string or datetime object of the date to begin adding
+            sessions from the log.
             Acceptable formats:
             * "YYYY-MM-DD"
             * "YYYY-MM-DD HH:MM"
             * "YYYY-MM-DD HH:MM:SS"
         endDate : str, datetime
-            A string or datetime object of the date to stop adding runs
-            to the log.
+            A string or datetime object of the date to stop adding
+            sessions from the log.
             See ``startDate`` for formatting.
         maximumEntries : int
             Maximum number of entries to allow before stopping the log.
@@ -485,13 +485,13 @@ class SessionLogger(object):
         if not self.isAvailable:
             self.setup()
 
-        query, values = _showLogQueryAndValues(leastRunsAgo, mostRunsAgo,
-                                               startDate, endDate,
-                                               maximumEntries, searchForText,
-                                               regex)
-        runLogs = self.extractFromLog(query, values)
+        query, values = _showLogQueryAndValues(leastSessionsAgo,
+                                               mostSessionsAgo, startDate,
+                                               endDate, maximumEntries,
+                                               searchForText, regex)
+        sessionLogs = self.extractFromLog(query, values)
 
-        logOutput = _showLogOutputString(runLogs, levelOfDetail)
+        logOutput = _showLogOutputString(sessionLogs, levelOfDetail)
 
         if saveToFileName is not None:
             filePath = os.path.join(self.logLocation, saveToFileName)
@@ -588,28 +588,29 @@ def stringToDatetime(string):
         msg += "'YYYY-MM-DD', 'YYYY-MM-DD HH:MM', or 'YYYY-MM-DD HH:MM:SS'"
         raise InvalidArgumentValue(msg)
 
-def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
+def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
                            endDate, maximumEntries, searchForText, regex):
     """
     Constructs the query string and stores the variables based on the
     arguments passed to the showLog function.
     """
-    selectQuery = "SELECT timestamp, runNumber, logType, logInfo "
+    selectQuery = "SELECT timestamp, sessionNumber, logType, logInfo "
     selectQuery += "FROM (SELECT * FROM logger"
     whereQueryList = []
     includedValues = []
-    if leastRunsAgo is not None:
-        # final run value
-        # difference between the next runNumber and leastRunsAgo
-        where = "runNumber <= ((SELECT MAX(runNumber) FROM logger) - ?)"
+    if leastSessionsAgo is not None:
+        # final session value
+        # difference between the next sessionNumber and leastSessionsAgo
+        where = "sessionNumber <= "
+        where += "((SELECT MAX(sessionNumber) FROM logger) - ?)"
         whereQueryList.append(where)
-        includedValues.append(leastRunsAgo)
-    if mostRunsAgo is not None:
-        # starting run value
-        # difference between the next runNumber and mostRunsAgo
-        where = "runNumber > ((SELECT MAX(runNumber) FROM logger) - ?)"
+        includedValues.append(leastSessionsAgo)
+    if mostSessionsAgo is not None:
+        # starting session value
+        # difference between the next sessionNumber and mostSessionsAgo
+        where = "sessionNumber > ((SELECT MAX(sessionNumber) FROM logger) - ?)"
         whereQueryList.append(where)
-        includedValues.append(mostRunsAgo)
+        includedValues.append(mostSessionsAgo)
     if startDate is not None:
         whereQueryList.append("timestamp >= ?")
         includedValues.append(stringToDatetime(startDate))
@@ -649,10 +650,10 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
     """
     fullLog = "{0:^79}\n".format("NIMBLE LOGS")
     fullLog += "." * 79
-    previousLogRunNumber = None
+    previousLogSessionNumber = None
     for log in listOfLogs:
         timestamp = log[0]
-        runNumber = log[1]
+        sessionNumber = log[1]
         logType = log[2]
         logString = log[3]
         try:
@@ -660,13 +661,13 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
         except (ValueError, SyntaxError):
             # logString is a string (cannot eval)
             logInfo = logString
-        if runNumber != previousLogRunNumber:
+        if sessionNumber != previousLogSessionNumber:
             fullLog += "\n"
-            logString = "RUN {0}".format(runNumber)
+            logString = "SESSION {0}".format(sessionNumber)
             fullLog += ".{0:^77}.".format(logString)
             fullLog += "\n"
             fullLog += "." * 79
-            previousLogRunNumber = runNumber
+            previousLogSessionNumber = sessionNumber
         try:
             if logType not in ["load", "data", "prep", "run", "crossVal"]:
                 fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
@@ -698,13 +699,13 @@ def _buildLoadLogString(timestamp, log):
     dataCol = "{0} Loaded".format(log["returnType"])
     fullLog = _logHeader(dataCol, timestamp)
     if log["returnType"] != "TrainedLearner":
-        fullLog += _formatRunLine("# of points", log["numPoints"])
-        fullLog += _formatRunLine("# of features", log["numFeatures"])
+        fullLog += _formatSessionLine("# of points", log["numPoints"])
+        fullLog += _formatSessionLine("# of features", log["numFeatures"])
         for title in ['sparsity', 'name', 'path', 'seed']:
             if log[title] is not None:
-                fullLog += _formatRunLine(title, log[title])
+                fullLog += _formatSessionLine(title, log[title])
     else:
-        fullLog += _formatRunLine("Learner name", log["learnerName"])
+        fullLog += _formatSessionLine("Learner name", log["learnerName"])
         if log['learnerArgs'] is not None and log['learnerArgs'] != {}:
             argString = "Arguments: "
             argString += _dictToKeywordString(log["learnerArgs"])
@@ -748,35 +749,37 @@ def _buildRunLogString(timestamp, log):
     fullLog = _logHeader(time, timestamp)
     fullLog += '\n{0}("{1}")\n'.format(log['function'], log["learner"])
     # train and test data
-    fullLog += _formatRunLine("Data", "# points", "# features")
+    fullLog += _formatSessionLine("Data", "# points", "# features")
     if log.get("trainData", False):
         if log["trainData"].startswith("OBJECT_#"):
-            fullLog += _formatRunLine("trainX", log["trainDataPoints"],
+            fullLog += _formatSessionLine("trainX", log["trainDataPoints"],
                                       log["trainDataFeatures"])
         else:
-            fullLog += _formatRunLine(log["trainData"], log["trainDataPoints"],
-                                      log["trainDataFeatures"])
+            fullLog += _formatSessionLine(log["trainData"],
+                                          log["trainDataPoints"],
+                                          log["trainDataFeatures"])
     if log.get("trainLabels", False):
         if log["trainLabels"].startswith("OBJECT_#"):
-            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"],
+            fullLog += _formatSessionLine("trainY", log["trainLabelsPoints"],
                                       log["trainLabelsFeatures"])
         else:
-            fullLog += _formatRunLine(log["trainLabels"],
+            fullLog += _formatSessionLine(log["trainLabels"],
                                       log["trainLabelsPoints"],
                                       log["trainLabelsFeatures"])
     if log.get("testData", False):
         if log["testData"].startswith("OBJECT_#"):
-            fullLog += _formatRunLine("testX", log["testDataPoints"],
+            fullLog += _formatSessionLine("testX", log["testDataPoints"],
                                       log["testDataFeatures"])
         else:
-            fullLog += _formatRunLine(log["testData"], log["testDataPoints"],
-                                      log["testDataFeatures"])
+            fullLog += _formatSessionLine(log["testData"],
+                                          log["testDataPoints"],
+                                          log["testDataFeatures"])
     if log.get("testLabels", False):
         if log["testLabels"].startswith("OBJECT_#"):
-            fullLog += _formatRunLine("testY", log["testLabelsPoints"],
+            fullLog += _formatSessionLine("testY", log["testLabelsPoints"],
                                       log["testLabelsFeatures"])
         else:
-            fullLog += _formatRunLine(log["testLabels"],
+            fullLog += _formatSessionLine(log["testLabels"],
                                       log["testLabelsPoints"],
                                       log["testLabelsFeatures"])
     fullLog += "\n"
@@ -834,7 +837,7 @@ def _buildDefaultLogString(timestamp, logType, log):
             fullLog += string
             fullLog += "\n"
     elif isinstance(log, list):
-        listString = _formatRunLine(log)
+        listString = _formatSessionLine(log)
         for string in wrap(listString, 79):
             fullLog += string
             fullLog += "\n"
@@ -855,7 +858,7 @@ def _dictToKeywordString(dictionary):
         kvStrings.append(string)
     return ", ".join(kvStrings)
 
-def _formatRunLine(*args):
+def _formatSessionLine(*args):
     """
     Formats equally spaced values for each column.
     """
@@ -1023,11 +1026,14 @@ def initLoggerAndLogConfig():
         nimble.settings.saveChanges("logger", "enabledByDefault")
 
     try:
-        deepCV = nimble.settings.get("logger", 'enableCrossValidationDeepLogging')
+        deepCV = nimble.settings.get("logger",
+                                     'enableCrossValidationDeepLogging')
     except Exception:
         deepCV = 'False'
-        nimble.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
-        nimble.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
+        nimble.settings.set("logger", 'enableCrossValidationDeepLogging',
+                            deepCV)
+        nimble.settings.saveChanges("logger",
+                                    'enableCrossValidationDeepLogging')
 
     return SessionLogger(location, name)
 

@@ -86,17 +86,17 @@ def testTopLevelInputFunction():
     assert lastLog[4] == str(logInfo)
 
 @configSafetyWrapper
-def testNewRunNumberEachSetup():
-    """assert that a new, sequential runNumber is generated each time the log file is reopened"""
+def testNewSessionNumberEachSetup():
+    """assert that a new, sequential sessionNumber is generated each time the log file is reopened"""
     removeLogFile()
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     data = [[],[]]
-    for run in range(5):
+    for session in range(5):
         nimble.createData("Matrix", data)
         # cleanup will require setup before the next log entry
         nimble.logger.active.cleanup()
-    query = "SELECT runNumber FROM logger"
+    query = "SELECT sessionNumber FROM logger"
     lastLogs = nimble.logger.active.extractFromLog(query)
 
     for entry, log in enumerate(lastLogs):
@@ -711,13 +711,20 @@ def testShowLogToStdOut():
     try:
         location = nimble.settings.get("logger", "location")
         name = "showLogTestFile.txt"
-        pathToFile = os.path.join(location,name)
+        pathToFile = os.path.join(location, name)
         # create showLog file with default arguments
         nimble.showLog(saveToFileName=pathToFile)
 
         # get content of file as a string
         with open(pathToFile) as log:
             lines = log.readlines()
+        # check log header output
+        assert "NIMBLE LOGS" in lines[0]
+        # check session header output
+        assert lines[1] == "." * 79 + "\n"
+        assert "SESSION" in lines[2]
+        assert lines[1] == "." * 79 + "\n"
+
         fileContent = "".join(lines)
         fileContent = fileContent.strip()
 
@@ -736,7 +743,7 @@ def testShowLogToStdOut():
 
 @configSafetyWrapper
 def testShowLogSearchFilters():
-    """test the level of detail, runNumber, date, text, maxEntries search filters"""
+    """test the level of detail, sessionNumber, date, text, maxEntries search filters"""
     removeLogFile()
     nimble.settings.set('logger', 'enabledByDefault', 'True')
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
@@ -764,7 +771,7 @@ def testShowLogSearchFilters():
                                    trainY=trainYObj, testX=testObj, testY=testYObj,
                                    performanceFunction=RMSE,
                                    arguments={"k": nimble.CV([3, 5])})
-    # edit log runNumbers and timestamps
+    # edit log sessionNumbers and timestamps
     location = nimble.settings.get("logger", "location")
     name = nimble.settings.get("logger", "name")
     pathToFile = os.path.join(location, name + ".mr")
@@ -772,21 +779,21 @@ def testShowLogSearchFilters():
     c = conn.cursor()
     c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 7")
     conn.commit()
-    c.execute("UPDATE logger SET runNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 7 AND entry <= 14")
+    c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 7 AND entry <= 14")
     conn.commit()
-    c.execute("UPDATE logger SET runNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 14 AND entry <= 21")
+    c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 14 AND entry <= 21")
     conn.commit()
-    c.execute("UPDATE logger SET runNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 21 AND entry <= 28")
+    c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 21 AND entry <= 28")
     conn.commit()
-    c.execute("UPDATE logger SET runNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 28")
+    c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 28")
     conn.commit()
 
     location = nimble.settings.get("logger", "location")
     name = "showLogTestFile.txt"
     pathToFile = os.path.join(location,name)
-    nimble.showLog(levelOfDetail=3, leastRunsAgo=0, mostRunsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
     fullShowLogSize = os.path.getsize(pathToFile)
-    nimble.showLog(levelOfDetail=3, leastRunsAgo=0, mostRunsAgo=5, maximumEntries=100)
+    nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100)
     # level of detail
     nimble.showLog(levelOfDetail=3, saveToFileName=pathToFile)
     mostDetailedSize = os.path.getsize(pathToFile)
@@ -799,79 +806,79 @@ def testShowLogSearchFilters():
     leastDetailedSize = os.path.getsize(pathToFile)
     assert leastDetailedSize < lessDetailedSize
 
-    # runNumber
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=4, saveToFileName=pathToFile)
-    fewerRunsAgoSize = os.path.getsize(pathToFile)
-    assert fewerRunsAgoSize < fullShowLogSize
+    # sessionNumber
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=4, saveToFileName=pathToFile)
+    fewerSessionsAgoSize = os.path.getsize(pathToFile)
+    assert fewerSessionsAgoSize < fullShowLogSize
 
-    nimble.showLog(levelOfDetail=3, leastRunsAgo=1, mostRunsAgo=5, saveToFileName=pathToFile)
-    moreRunsAgoSize = os.path.getsize(pathToFile)
-    assert moreRunsAgoSize < fullShowLogSize
+    nimble.showLog(levelOfDetail=3, leastSessionsAgo=1, mostSessionsAgo=5, saveToFileName=pathToFile)
+    moreSessionsAgoSize = os.path.getsize(pathToFile)
+    assert moreSessionsAgoSize < fullShowLogSize
 
-    assert moreRunsAgoSize == fewerRunsAgoSize
+    assert moreSessionsAgoSize == fewerSessionsAgoSize
 
-    nimble.showLog(levelOfDetail=3, leastRunsAgo=2, mostRunsAgo=4, saveToFileName=pathToFile)
-    runSelectionSize = os.path.getsize(pathToFile)
-    assert runSelectionSize < moreRunsAgoSize
+    nimble.showLog(levelOfDetail=3, leastSessionsAgo=2, mostSessionsAgo=4, saveToFileName=pathToFile)
+    sessionSelectionSize = os.path.getsize(pathToFile)
+    assert sessionSelectionSize < moreSessionsAgoSize
 
     # startDate
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, startDate="2018-03-23", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, startDate="2018-03-23", saveToFileName=pathToFile)
     startLaterSize = os.path.getsize(pathToFile)
     assert startLaterSize < fullShowLogSize
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, startDate="2018-04-24", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, startDate="2018-04-24", saveToFileName=pathToFile)
     startLastSize = os.path.getsize(pathToFile)
     assert startLastSize < startLaterSize
 
     # endDate
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, endDate="2018-03-25", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, endDate="2018-03-25", saveToFileName=pathToFile)
     endEarlierSize = os.path.getsize(pathToFile)
     assert endEarlierSize < fullShowLogSize
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, endDate="2018-03-22", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, endDate="2018-03-22", saveToFileName=pathToFile)
     endEarliestSize = os.path.getsize(pathToFile)
     assert endEarliestSize < endEarlierSize
 
     # startDate and endDate
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, startDate="2018-03-23", endDate="2018-03-25", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, startDate="2018-03-23", endDate="2018-03-25", saveToFileName=pathToFile)
     dateSelectionSize = os.path.getsize(pathToFile)
     assert dateSelectionSize < startLaterSize
     assert dateSelectionSize < endEarlierSize
 
     # startDate and endDate with time
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, startDate="2018-03-23 11:00", endDate="2018-03-23 17:00:00", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, startDate="2018-03-23 11:00", endDate="2018-03-23 17:00:00", saveToFileName=pathToFile)
     timeSelectionSize = os.path.getsize(pathToFile)
     assert timeSelectionSize < dateSelectionSize
 
     #text
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=1, searchForText=None, saveToFileName=pathToFile)
-    oneRunSize = os.path.getsize(pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=1, searchForText=None, saveToFileName=pathToFile)
+    oneSessionSize = os.path.getsize(pathToFile)
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=1, searchForText="trainAndTest", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=1, searchForText="trainAndTest", saveToFileName=pathToFile)
     trainSearchSize = os.path.getsize(pathToFile)
-    assert trainSearchSize < oneRunSize
+    assert trainSearchSize < oneSessionSize
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=1, searchForText="Matrix", saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=1, searchForText="Matrix", saveToFileName=pathToFile)
     loadSearchSize = os.path.getsize(pathToFile)
-    assert loadSearchSize < oneRunSize
+    assert loadSearchSize < oneSessionSize
 
     # regex
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=1, searchForText="Mat.+x", regex=True, saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=1, searchForText="Mat.+x", regex=True, saveToFileName=pathToFile)
     loadRegexSize = os.path.getsize(pathToFile)
     assert loadSearchSize == loadRegexSize
 
     # maximumEntries
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, maximumEntries=34, saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, maximumEntries=34, saveToFileName=pathToFile)
     oneLessSize = os.path.getsize(pathToFile)
     assert oneLessSize < fullShowLogSize
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, maximumEntries=33, saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, maximumEntries=33, saveToFileName=pathToFile)
     twoLessSize = os.path.getsize(pathToFile)
     assert twoLessSize < oneLessSize
 
-    nimble.showLog(levelOfDetail=3, mostRunsAgo=5, maximumEntries=7, saveToFileName=pathToFile)
-    maxEntriesOneRun = os.path.getsize(pathToFile)
-    assert maxEntriesOneRun == oneRunSize
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, maximumEntries=7, saveToFileName=pathToFile)
+    maxEntriesOneSession = os.path.getsize(pathToFile)
+    assert maxEntriesOneSession == oneSessionSize
 
     # showLog returns None, file still created with only header
     nimble.showLog(levelOfDetail=3, maximumEntries=1, saveToFileName=pathToFile)
@@ -934,12 +941,12 @@ def testInvalidDateTimeFormats():
         pass
 
 @raises(InvalidArgumentValue)
-def testLeastRunsAgoNegative():
-    nimble.showLog(leastRunsAgo=-2)
+def testLeastSessionsAgoNegative():
+    nimble.showLog(leastSessionsAgo=-2)
 
 @raises(InvalidArgumentValueCombination)
-def testMostRunsLessThanLeastRuns():
-    nimble.showLog(leastRunsAgo=2, mostRunsAgo=1)
+def testMostSessionsLessThanLeastSessions():
+    nimble.showLog(leastSessionsAgo=2, mostSessionsAgo=1)
 
 def testShowLogSuccessWithUserLog():
     """ Test user headings that match defined logTypes are successfully rendered """
