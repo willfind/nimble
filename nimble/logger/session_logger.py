@@ -664,7 +664,9 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             # logString is a string (cannot eval)
             logInfo = logString
         if sessionNumber != previousLogSessionNumber:
-            fullLog += "\n"
+            # skip first new line if appending because append inserts newline 
+            if not (previousLogSessionNumber is None and append):
+                fullLog += "\n"
             logString = "SESSION {0}".format(sessionNumber)
             fullLog += ".{0:^77}.".format(logString)
             fullLog += "\n"

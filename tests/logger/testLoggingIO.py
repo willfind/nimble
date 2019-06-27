@@ -755,8 +755,8 @@ def testLogHeadingTooLong():
 @configSafetyWrapper
 def testShowLogToFile():
     nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
-    nimble.createData("Matrix", [[4], [5], [6]], useLog=True)
-    #write to log
+    nimble.createData("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
+    # write to log
     location = nimble.settings.get("logger", "location")
     with tempfile.NamedTemporaryFile() as out:
         pathToFile = out.name
@@ -766,23 +766,32 @@ def testShowLogToFile():
         originalSize = os.path.getsize(pathToFile)
         removeLogFile()
 
-        #overwrite
+        # overwrite
         nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
         nimble.showLog(saveToFileName=pathToFile)
         overwriteSize = os.path.getsize(pathToFile)
         assert overwriteSize < originalSize
+        removeLogFile()
 
-        #append
-        nimble.createData("Matrix", [[4], [5], [6]], useLog=True)
+        # append
+        nimble.createData("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
         nimble.showLog(saveToFileName=pathToFile, append=True)
         appendSize = os.path.getsize(pathToFile)
+        # though the information is the same as the original, the appended
+        # version will have the information divided under two separate
+        # session headings
         assert appendSize > originalSize
+        sessionHeadingCount = 0
         with open(pathToFile, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 if i == 0:
                     assert "NIMBLE LOGS" in line
+                # no additional log headers should be present when appending
                 elif "NIMBLE LOGS" in line:
                     assert False # extra header in log
+                if "SESSION" in line:
+                    sessionHeadingCount += 1
+        assert sessionHeadingCount == 2
 
 @prepopulatedLogSafetyWrapper
 @configSafetyWrapper

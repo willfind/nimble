@@ -174,19 +174,17 @@ class CaptureError(Plugin):
 
 class LoggerControl(object):
     def __init__(self):
-        self.logFile = tempfile.NamedTemporaryFile(delete=False)
-
-    def __enter__(self):
         self._backupLoc = nimble.settings.get('logger', 'location')
         self._backupName = nimble.settings.get('logger', 'name')
         self._backupEnabled = nimble.settings.get('logger', 'enabledByDefault')
         self._crossValBackupEnabled = nimble.settings.get('logger', 'enableCrossValidationDeepLogging')
+        self.logDir = tempfile.TemporaryDirectory()
 
-        location, name = self.logFile.name.rsplit(os.path.sep, 1)
+    def __enter__(self):
         # change name of log file (settings hook will init new log
         # files after .set())
-        nimble.settings.set('logger', 'location', location)
-        nimble.settings.set("logger", 'name', name)
+        nimble.settings.set('logger', 'location', self.logDir.name)
+        nimble.settings.set("logger", 'name', "tmpLogs")
         nimble.settings.saveChanges("logger")
         nimble.settings.set("logger", "enabledByDefault", "False")
         nimble.settings.saveChanges("logger")
@@ -194,7 +192,7 @@ class LoggerControl(object):
         nimble.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
-        self.logFile.close()
+        self.logDir.cleanup()
         nimble.settings.set("logger", 'location', self._backupLoc)
         nimble.settings.saveChanges("logger", 'location')
         nimble.settings.set("logger", 'name', self._backupName)
