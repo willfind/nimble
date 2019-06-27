@@ -32,19 +32,21 @@ class KNNClassifier(CustomLearner):
 
         predictions = []
         for point in dists:
-            labelCounts, nearestNeighbor = self._getNearestNeighborLabelCounts(
-                point, returnNearest=True)
+            ordered, votes = self._kNeighborOrderedLabelsAndVotes(point)
             highCount = 0
             bestLabels = []
-            for label, count in labelCounts.items():
+            for label, count in votes.items():
                 if count > highCount:
                     bestLabels = [label]
                     highCount = count
                 elif count == highCount:
                     bestLabels.append(label)
-            # use the nearest neighbor (k=1) as tie breaker, if possible
-            if len(bestLabels) > 1 and nearestNeighbor in bestLabels:
-                predictions.append([nearestNeighbor])
+            # use the nearest neighbor as tie breaker
+            if len(bestLabels) > 1:
+                for label in ordered:
+                    if label in bestLabels:
+                        predictions.append([label])
+                        break
             else:
                 predictions.append([bestLabels[0]])
 
@@ -63,8 +65,8 @@ class KNNClassifier(CustomLearner):
         labelVals = list(self._trainY.elements.countUnique().keys())
         labelVals.sort()
         for point in dists:
-            labelCounts = self._getNearestNeighborLabelCounts(point)
-            scoreList = [labelCounts[val] if val in labelCounts else 0
+            _, labelVotes = self._kNeighborOrderedLabelsAndVotes(point)
+            scoreList = [labelVotes[val] if val in labelVotes else 0
                          for val in labelVals]
             scores = initDataObject(testX.getTypeString(), scoreList,
                                     None, None, skipDataProcessing=True)
@@ -90,22 +92,20 @@ class KNNClassifier(CustomLearner):
         return dists
 
 
-    def _getNearestNeighborLabelCounts(self, point, returnNearest=False):
+    def _kNeighborOrderedLabelsAndVotes(self, point):
         """
-        A dictionary mapping the labels for y to the number of times
+        Returns a two-tuple of a list of the labels in order by distance
+        and a dictionary mapping the labels for y to the number of times
         that label occurred.
         """
-        labelCounts = {}
+        labelVotes = {}
         idxDists = [(i, d) for i, d in enumerate(point)]
         idxDists.sort(key=lambda x: x[1])
-        kNearest = idxDists[:self.k]
-        for i, _ in kNearest:
-            label = self._trainY[i]
-            if label in labelCounts:
-                labelCounts[label] += 1
+        orderedLabels = [self._trainY[i] for i, _ in idxDists[:self.k]]
+        for label in orderedLabels:
+            if label in labelVotes:
+                labelVotes[label] += 1
             else:
-                labelCounts[label] = 1
-        if returnNearest:
-            nearestNeighbor = self._trainY[idxDists[0][0]]
-            return labelCounts, nearestNeighbor
-        return labelCounts
+                labelVotes[label] = 1
+
+        return orderedLabels, labelVotes
