@@ -491,7 +491,7 @@ class SessionLogger(object):
                                                searchForText, regex)
         sessionLogs = self.extractFromLog(query, values)
 
-        logOutput = _showLogOutputString(sessionLogs, levelOfDetail)
+        logOutput = _showLogOutputString(sessionLogs, levelOfDetail, append)
 
         if saveToFileName is not None:
             filePath = os.path.join(self.logLocation, saveToFileName)
@@ -643,13 +643,15 @@ def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
 
     return fullQuery, includedValues
 
-def _showLogOutputString(listOfLogs, levelOfDetail):
+def _showLogOutputString(listOfLogs, levelOfDetail, append):
     """
     Formats the string that will be output for calls to the showLog
     function.
     """
-    fullLog = "{0:^79}\n".format("NIMBLE LOGS")
-    fullLog += "." * 79
+    fullLog = ""
+    if not append:
+        fullLog = "{0:^79}\n".format("NIMBLE LOGS")
+        fullLog += "." * 79
     previousLogSessionNumber = None
     for log in listOfLogs:
         timestamp = log[0]

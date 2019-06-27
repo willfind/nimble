@@ -11,6 +11,7 @@ import sys
 import sqlite3
 import tempfile
 import re
+import functools
 
 from nose import with_setup
 from nose.tools import raises
@@ -30,6 +31,71 @@ from nimble.exceptions import InvalidArgumentType
 # Helpers for tests #
 #####################
 
+def emptyLogSafetyWrapper(testFunc):
+    @functools.wraps(testFunc)
+    def wrapped():
+        removeLogFile()
+        try:
+            testFunc()
+        finally:
+            removeLogFile()
+    return wrapped
+
+def prepopulatedLogSafetyWrapper(testFunc):
+    @functools.wraps(testFunc)
+    def wrapped():
+        removeLogFile()
+        # change settings and input dummy data into log
+        nimble.settings.set('logger', 'enabledByDefault', 'True')
+        nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+        # create an example log file
+        variables = ["x1", "x2", "x3", "label"]
+        data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+                 [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+                 [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
+                 [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+        data2 = [[1, 0, 0, 1],
+                 [0, 1, 0, 2],
+                 [0, 0, 1, 3]]
+        # add data to log
+        for i in range(5):
+            # load
+            trainObj = nimble.createData('Matrix', data=data1, featureNames=variables)
+            testObj = nimble.createData('Matrix', data=data2, featureNames=variables)
+            # data
+            report = trainObj.summaryReport()
+            # prep
+            trainYObj = trainObj.features.extract(3)
+            testYObj = testObj.features.extract(3)
+            # run and crossVal
+            results = nimble.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
+                                       trainY=trainYObj, testX=testObj, testY=testYObj,
+                                       performanceFunction=RMSE,
+                                       arguments={"k": nimble.CV([3, 5])})
+        # edit log sessionNumbers and timestamps
+        location = nimble.settings.get("logger", "location")
+        name = nimble.settings.get("logger", "name")
+        pathToFile = os.path.join(location, name + ".mr")
+        conn = sqlite3.connect(pathToFile)
+        c = conn.cursor()
+        c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 7")
+        conn.commit()
+        c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 7 AND entry <= 14")
+        conn.commit()
+        c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 14 AND entry <= 21")
+        conn.commit()
+        c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 21 AND entry <= 28")
+        conn.commit()
+        c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 28")
+        conn.commit()
+
+        try:
+            testFunc()
+        finally:
+            removeLogFile()
+    return wrapped
+
+
 def removeLogFile():
     nimble.logger.active.cleanup()
     location = nimble.settings.get("logger", "location")
@@ -48,26 +114,28 @@ def getLastLogData():
 ### SETUP ###
 #############
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testLogDirectoryAndFileSetup():
     """assert a new directory and log file are created with first attempt to log"""
-    location = nimble.settings.get("logger", "location")
-    name = nimble.settings.get("logger", "name")
-    pathToFile = os.path.join(location, name + ".mr")
-    if os.path.exists(location):
-        shutil.rmtree(location)
+    newDirectory = os.path.join(nimble.nimblePath, "notCreatedDirectory")
+    nimble.settings.set("logger", "location", newDirectory)
+    nimble.settings.set("logger", "name", 'notCreatedFile')
+    pathToFile = os.path.join(newDirectory, "notCreatedFile.mr")
+    assert not os.path.exists(newDirectory)
+    assert not os.path.exists(pathToFile)
 
-    nimble.settings.set('logger', 'enabledByDefault', 'True')
+    X = nimble.createData("Matrix", [], useLog=True)
 
-    X = nimble.createData("Matrix", [])
-
-    assert os.path.exists(location)
+    assert os.path.exists(newDirectory)
     assert os.path.exists(pathToFile)
+    shutil.rmtree(newDirectory)
 
 #############
 ### INPUT ###
 #############
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testTopLevelInputFunction():
     removeLogFile()
@@ -102,6 +170,7 @@ def testNewSessionNumberEachSetup():
     for entry, log in enumerate(lastLogs):
         assert log[0] == entry
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testLoadTypeFunctionsUseLog():
     """tests that createData is being logged"""
@@ -164,6 +233,7 @@ def testLoadTypeFunctionsUseLog():
     assert "'numPoints': 5" in logInfo
     assert "'numFeatures': 5" in logInfo
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def test_setRandomSeed():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -173,6 +243,7 @@ def test_setRandomSeed():
     logInfo = getLastLogData()
     assert "{'seed': 1337}" in logInfo
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testRunTypeFunctionsUseLog():
     """tests that top level and TrainedLearner functions are being logged"""
@@ -255,7 +326,7 @@ def testRunTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'learner': 'custom.KNNClassifier'" in logInfo
 
-
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testPrepTypeFunctionsUseLog():
     """Test that the functions in base using useLog are being logged"""
@@ -594,7 +665,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj.features.setNames(newFtNames)
     checkLogContents('features.setNames', 'Matrix', [('assignments', newFtNames)])
 
-
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testDataTypeFunctionsUseLog():
     """Test that the data type functions are being logged"""
@@ -617,7 +688,7 @@ def testDataTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'reportType': 'summary'" in logInfo
 
-
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testHandmadeLogEntriesInput():
     typeQuery = "SELECT logType FROM logger ORDER BY entry DESC LIMIT 1"
@@ -659,15 +730,18 @@ def testHandmadeLogEntriesInput():
     assert logType == "User - run"
     assert "User log with heading that matches a logType" in logInfo
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
 def testLogUnacceptedlogType():
     nimble.log(["unacceptable"], "you can't do this")
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
 def testLogUnacceptedlogInfo():
     dataObj = nimble.createData("Matrix", [[1]], useLog=False)
     nimble.log("acceptable", dataObj)
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentValue)
 def testLogHeadingTooLong():
     heading = "#" * 51
@@ -677,34 +751,40 @@ def testLogHeadingTooLong():
 ### OUTPUT ###
 ##############
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testShowLogToFile():
-    removeLogFile()
-    nimble.createData("Matrix", [[1], [2], [3]], useLog = True)
-    nimble.createData("Matrix", [[4], [5], [6]], useLog = True)
+    nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
+    nimble.createData("Matrix", [[4], [5], [6]], useLog=True)
     #write to log
     location = nimble.settings.get("logger", "location")
-    name = "showLogTestFile.txt"
-    pathToFile = os.path.join(location,name)
-    nimble.showLog(saveToFileName=pathToFile)
-    assert os.path.exists(pathToFile)
+    with tempfile.NamedTemporaryFile() as out:
+        pathToFile = out.name
+        nimble.showLog(saveToFileName=pathToFile)
+        assert os.path.exists(pathToFile)
 
-    originalSize = os.path.getsize(pathToFile)
-    removeLogFile()
+        originalSize = os.path.getsize(pathToFile)
+        removeLogFile()
 
-    #overwrite
-    nimble.createData("Matrix", [[1], [2], [3]], useLog = True)
-    nimble.showLog(saveToFileName=pathToFile)
-    overwriteSize = os.path.getsize(pathToFile)
-    assert overwriteSize < originalSize
+        #overwrite
+        nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
+        nimble.showLog(saveToFileName=pathToFile)
+        overwriteSize = os.path.getsize(pathToFile)
+        assert overwriteSize < originalSize
 
-    #append
-    nimble.createData("Matrix", [[4], [5], [6]], useLog = True)
-    nimble.showLog(saveToFileName=pathToFile, append=True)
-    appendSize = os.path.getsize(pathToFile)
-    assert appendSize > originalSize
+        #append
+        nimble.createData("Matrix", [[4], [5], [6]], useLog=True)
+        nimble.showLog(saveToFileName=pathToFile, append=True)
+        appendSize = os.path.getsize(pathToFile)
+        assert appendSize > originalSize
+        with open(pathToFile, 'r') as f:
+            for i, line in enumerate(f.readlines()):
+                if i == 0:
+                    assert "NIMBLE LOGS" in line
+                elif "NIMBLE LOGS" in line:
+                    assert False # extra header in log
 
-
+@prepopulatedLogSafetyWrapper
 @configSafetyWrapper
 def testShowLogToStdOut():
     saved_stdout = sys.stdout
@@ -741,53 +821,10 @@ def testShowLogToStdOut():
     finally:
         sys.stdout = saved_stdout
 
+@prepopulatedLogSafetyWrapper
 @configSafetyWrapper
 def testShowLogSearchFilters():
     """test the level of detail, sessionNumber, date, text, maxEntries search filters"""
-    removeLogFile()
-    nimble.settings.set('logger', 'enabledByDefault', 'True')
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
-    # create an example log file
-    variables = ["x1", "x2", "x3", "label"]
-    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
-             [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
-             [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    data2 = [[1, 0, 0, 1],
-             [0, 1, 0, 2],
-             [0, 0, 1, 3]]
-    # add data to log
-    for i in range(5):
-        # load
-        trainObj = nimble.createData('Matrix', data=data1, featureNames=variables)
-        testObj = nimble.createData('Matrix', data=data2, featureNames=variables)
-        # data
-        report = trainObj.summaryReport()
-        # prep
-        trainYObj = trainObj.features.extract(3)
-        testYObj = testObj.features.extract(3)
-        # run and crossVal
-        results = nimble.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
-                                   trainY=trainYObj, testX=testObj, testY=testYObj,
-                                   performanceFunction=RMSE,
-                                   arguments={"k": nimble.CV([3, 5])})
-    # edit log sessionNumbers and timestamps
-    location = nimble.settings.get("logger", "location")
-    name = nimble.settings.get("logger", "name")
-    pathToFile = os.path.join(location, name + ".mr")
-    conn = sqlite3.connect(pathToFile)
-    c = conn.cursor()
-    c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 7")
-    conn.commit()
-    c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 7 AND entry <= 14")
-    conn.commit()
-    c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 14 AND entry <= 21")
-    conn.commit()
-    c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 21 AND entry <= 28")
-    conn.commit()
-    c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 28")
-    conn.commit()
-
     location = nimble.settings.get("logger", "location")
     name = "showLogTestFile.txt"
     pathToFile = os.path.join(location,name)
@@ -888,14 +925,17 @@ def testShowLogSearchFilters():
     noDataSize = os.path.getsize(pathToFile)
     assert noDataSize < oneEntrySize
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentValue)
-def testLevelofDetailNotInRange():
+def testLevelOfDetailNotInRange():
     nimble.showLog(levelOfDetail=6)
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentValueCombination)
 def testStartGreaterThanEndDate():
     nimble.showLog(startDate="2018-03-24", endDate="2018-03-22")
 
+@emptyLogSafetyWrapper
 def testInvalidDateTimeFormats():
     # year invalid format
     try:
@@ -940,14 +980,17 @@ def testInvalidDateTimeFormats():
     except InvalidArgumentValue:
         pass
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentValue)
 def testLeastSessionsAgoNegative():
     nimble.showLog(leastSessionsAgo=-2)
 
+@emptyLogSafetyWrapper
 @raises(InvalidArgumentValueCombination)
 def testMostSessionsLessThanLeastSessions():
     nimble.showLog(leastSessionsAgo=2, mostSessionsAgo=1)
 
+@emptyLogSafetyWrapper
 def testShowLogSuccessWithUserLog():
     """ Test user headings that match defined logTypes are successfully rendered """
     for lType in nimble.logger.active.logTypes:
