@@ -374,7 +374,7 @@ To install scikit-learn
     def _incrementalTrainer(self, learner, trainX, trainY, arguments,
                             customDict):
         # see partial_fit(X, y[, classes, sample_weight])
-        pass
+        raise NotImplementedError
 
 
     def _applier(self, learnerName, learner, testX, newArguments,
