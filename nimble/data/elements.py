@@ -81,7 +81,7 @@ class Elements(object):
         ----------
         toTransform : function, dict
             * function - in the form of toTransform(elementValue)
-              or toTransform(elementValue, pointNum, featureNum)
+              or toTransform(elementValue, pointIndex, featureIndex)
             * dictionary -  map the current element [key] to the
               transformed element [value].
         points : identifier, list of identifiers
@@ -216,8 +216,8 @@ class Elements(object):
         Parameters
         ----------
         toCalculate : function, dict
-            * function - in the form of toTransform(elementValue)
-              or toTransform(elementValue, pointNum, featureNum)
+            * function - in the form of toCalculate(elementValue)
+              or toCalculate(elementValue, pointIndex, featureIndex)
             * dictionary -  map the current element [key] to the
               transformed element [value].
         points : point, list of points
