@@ -10,14 +10,16 @@ If there is a tie, use k=1
 
 from __future__ import absolute_import
 
-import nimble
-from nimble.customLearners import CustomLearner
-from nimble.exceptions import PackageException
+import numpy
 
-scipy = nimble.importModule('scipy.spatial')
+from nimble.customLearners import CustomLearner
+from nimble.helpers import initDataObject
 
 
 class KNNClassifier(CustomLearner):
+    """
+    K-Nearest Neighbors Classifier using euclidean distance.
+    """
     learnerType = 'classification'
 
     def train(self, trainX, trainY, k=5):
@@ -26,27 +28,30 @@ class KNNClassifier(CustomLearner):
         self._trainY = trainY
 
     def apply(self, testX):
-        def foo(p):
-            nearestPoints = self._generatePointsSortedByDistance(p)
-            results = self._voteNearest(nearestPoints)
-            # sort according to number of votes received
-            def scoreHelperDecending(point):
-                return 0 - point[1]
+        dists = self._getDistanceMatrix(testX)
 
-            results.points.sort(sortHelper=scoreHelperDecending, useLog=False)
-            # only one label received votes
-            if len(results.points) == 1:
-                prediction = results[0, 0]
-            # there is a tie between labels, fall back to k=1
-            elif results[0, 1] == results[1, 1]:
-                prediction = self._trainY[int(nearestPoints[0, 0]), 0]
-            # average case, top of the results has most number of votes
+        predictions = []
+        for point in dists:
+            ordered, votes = self._kNeighborOrderedLabelsAndVotes(point)
+            highCount = 0
+            bestLabels = []
+            for label, count in votes.items():
+                if count > highCount:
+                    bestLabels = [label]
+                    highCount = count
+                elif count == highCount:
+                    bestLabels.append(label)
+            # use the nearest neighbor as tie breaker
+            if len(bestLabels) > 1:
+                for label in ordered:
+                    if label in bestLabels:
+                        predictions.append([label])
+                        break
             else:
-                prediction = results[0, 0]
+                predictions.append([bestLabels[0]])
 
-            return prediction
-
-        return testX.points.calculate(foo, useLog=False)
+        return initDataObject(testX.getTypeString(), predictions, None, None,
+                              skipDataProcessing=True)
 
 
     def getScores(self, testX):
@@ -56,55 +61,51 @@ class KNNClassifier(CustomLearner):
         scores must be returned in the natural ordering of the classes.
         """
         ret = None
-        for p in testX.points:
-            nearestPoints = self._generatePointsSortedByDistance(p)
-            results = self._voteNearest(nearestPoints)
-            # sort ascending according to label ID
-            results.points.sort(0, useLog=False)
-
-            scores = results.features.extract(1, useLog=False)
-            scores.transpose(useLog=False)
-
+        dists = self._getDistanceMatrix(testX)
+        labelVals = list(self._trainY.elements.countUnique().keys())
+        labelVals.sort()
+        for point in dists:
+            _, labelVotes = self._kNeighborOrderedLabelsAndVotes(point)
+            scoreList = [labelVotes[val] if val in labelVotes else 0
+                         for val in labelVals]
+            scores = initDataObject(testX.getTypeString(), scoreList,
+                                    None, None, skipDataProcessing=True)
             if ret is None:
                 ret = scores
             else:
                 ret.points.add(scores, useLog=False)
-
         return ret
 
-    def _generatePointsSortedByDistance(self, test):
+
+    def _getDistanceMatrix(self, testX):
         """
-        Return a matrix where each row contains a point ID, and the
-        distance to the point test.
+        A matrix of the euclidean distances of each point in testX from
+        each point in trainX. The resulting matrix will be shape:
+        numTestPoints x numTrainPoints.
         """
-        if not scipy:
-            msg = "scipy is not available"
-            raise PackageException(msg)
-
-        def distanceFrom(point):
-            index = self._trainX.points.getIndex(point.points.getName(0))
-            return [index, scipy.spatial.distance.euclidean(test, point)]
-
-        distances = self._trainX.points.calculate(distanceFrom, useLog=False)
-        distances.points.sort(1, useLog=False)
-        return distances
+        trainArray = self._trainX.copy('numpy array')
+        testArray = testX.copy('numpy array')
+        # euclidean distance for each point in test
+        dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
+                           + numpy.sum(trainArray**2, axis=1)
+                           + numpy.sum(testArray**2, axis=1)[:, numpy.newaxis])
+        return dists
 
 
-    def _voteNearest(self, votes):
+    def _kNeighborOrderedLabelsAndVotes(self, point):
         """
-        Takes a data object where each row contains a point ID, and the
-        distance to the point we want to classify. Uses the point ID's
-        to find labels in self.trainY, letting those be the votes. In
-        case of a tie, we revert to k=1.
+        Returns a two-tuple of a list of the labels in order by distance
+        and a dictionary mapping the labels for y to the number of times
+        that label occurred.
         """
-        topK = votes.points.copy(end=self.k - 1, useLog=False)
+        labelVotes = {}
+        idxDists = [(i, d) for i, d in enumerate(point)]
+        idxDists.sort(key=lambda x: x[1])
+        orderedLabels = [self._trainY[i] for i, _ in idxDists[:self.k]]
+        for label in orderedLabels:
+            if label in labelVotes:
+                labelVotes[label] += 1
+            else:
+                labelVotes[label] = 1
 
-        def mapper(point):
-            labelIndex = self._trainY[int(point[0]), 0]
-            return [(labelIndex, 1)]
-
-        def reducer(key, valList):
-            return (key, len(valList))
-
-        results = topK.points.mapReduce(mapper, reducer, useLog=False)
-        return results
+        return orderedLabels, labelVotes
