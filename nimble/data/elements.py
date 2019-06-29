@@ -189,10 +189,11 @@ class Elements(object):
         if features is not None:
             features = constructIndicesList(self._source, 'feature', features)
 
-        transformer = validateElementFunction(toTransform, 'toTransform')
+        transformer = validateElementFunction(toTransform, preserveZeros,
+                                              skipNoneReturnValues,
+                                              'toTransform')
 
-        self._transform_implementation(transformer, points, features,
-                                       preserveZeros, skipNoneReturnValues)
+        self._transform_implementation(transformer, points, features)
 
         handleLogging(useLog, 'prep', 'elements.transform',
                       self._source.getTypeString(), Elements.transform,
@@ -322,13 +323,9 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        oneArg = False
-        try:
-            toCalculate(0, 0, 0)
-        except TypeError:
-            oneArg = True
-
-        calculator = validateElementFunction(toCalculate, 'toCalculate')
+        calculator = validateElementFunction(toCalculate, preserveZeros,
+                                             skipNoneReturnValues,
+                                             'toCalculate')
 
         if points is not None:
             points = constructIndicesList(self._source, 'point', points)
@@ -341,23 +338,8 @@ class Elements(object):
             optType = self._source.getTypeString()
 
         # Use vectorized for functions with oneArg
-        if oneArg:
-            if not preserveZeros:
-                # check if the function preserves zero values
-                try:
-                    preserveZeros = calculator(0) == 0
-                except TypeError:
-                    preserveZeros = False
-
-            def toCalculateWrap(value):
-                if preserveZeros and value == 0:
-                    return 0
-                currRet = calculator(value)
-                if skipNoneReturnValues and currRet is None:
-                    return value
-                return currRet
-
-            vectorized = numpy.vectorize(toCalculateWrap)
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
             ret = self._calculate_implementation(vectorized, points, features,
                                                  preserveZeros, optType)
 
@@ -373,17 +355,11 @@ class Elements(object):
                 f = 0
                 for fj in features:
                     value = self._source[pi, fj]
-                    if preserveZeros and value == 0:
-                        valueArray[p, f] = 0
+                    if calculator.oneArg:
+                        currRet = calculator(value)
                     else:
-                        if oneArg:
-                            currRet = calculator(value)
-                        else:
-                            currRet = calculator(value, pi, fj)
-                        if skipNoneReturnValues and currRet is None:
-                            valueArray[p, f] = value
-                        else:
-                            valueArray[p, f] = currRet
+                        currRet = calculator(value, pi, fj)
+                    valueArray[p, f] = currRet
                     f += 1
                 p += 1
 
@@ -708,26 +684,43 @@ class Elements(object):
 # Helpers #
 ###########
 
-def validateElementFunction(func, funcName):
-    if isinstance(func, dict):
-        func = getDictionaryMappingFunction(func)
-
-    def elementValidated(*args, **kwargs):
-        ret = func(*args, **kwargs)
+def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
+                            funcName):
+    def elementValidated(value, *args):
+        if preserveZeros and value == 0:
+            return 0
+        ret = func(value, *args)
+        if skipNoneReturnValues and ret is None:
+            return value
         if not dataHelpers.isAllowedSingleElement(ret):
-            msg = funcName + " can only return numeric values or strings, but "
-            msg += "the returned value was " + str(type(ret))
+            msg = funcName + " can only return numeric, boolean, or string "
+            msg += "values, but the returned value was " + str(type(ret))
             raise InvalidArgumentValue(msg)
         return ret
 
+    if isinstance(func, dict):
+        func = getDictionaryMappingFunction(func)
     try:
         func(0, 0, 0)
+        oneArg = False
+
         def wrappedElementFunction(value, i, j):
             return elementValidated(value, i, j)
 
     except TypeError:
+        oneArg = True
+        # see if we can preserve zeros even if not explicitly set
+        try:
+            if not preserveZeros and func(0) == 0:
+                preserveZeros = True
+        except TypeError:
+            pass
+
         def wrappedElementFunction(value):
             return elementValidated(value)
+
+    wrappedElementFunction.oneArg = oneArg
+    wrappedElementFunction.preserveZeros = preserveZeros
 
     return wrappedElementFunction
 

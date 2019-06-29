@@ -271,7 +271,7 @@ def testPrepTypeFunctionsUseLog():
         expID = "'object': '{0}'".format(objectID)
         assert expFunc in lastLog
         assert expID in lastLog
-        print(lastLog)
+
         if arguments:
             assert 'arguments' in lastLog
             for argName, argVal in arguments:

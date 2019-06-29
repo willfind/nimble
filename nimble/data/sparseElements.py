@@ -30,26 +30,13 @@ class SparseElements(Elements):
     # Structural implementations #
     ##############################
 
-    def _transform_implementation(self, toTransform, points, features,
-                                  preserveZeros, skipNoneReturnValues):
-        oneArg = False
-        try:
-            toTransform(0, 0, 0)
-        except TypeError:
-            if isinstance(toTransform, dict):
-                oneArg = None
-            else:
-                oneArg = True
-
-        if oneArg and toTransform(0) == 0:
-            preserveZeros = True
-
-        if preserveZeros:
+    def _transform_implementation(self, toTransform, points, features):
+        if toTransform.preserveZeros:
             self._transformEachElement_zeroPreserve_implementation(
-                toTransform, points, features, skipNoneReturnValues, oneArg)
+                toTransform, points, features)
         else:
             self._transformEachElement_noPreserve_implementation(
-                toTransform, points, features, skipNoneReturnValues, oneArg)
+                toTransform, points, features)
 
     ################################
     # Higher Order implementations #
@@ -147,8 +134,8 @@ class SparseElements(Elements):
     # Structural helpers #
     ######################
 
-    def _transformEachElement_noPreserve_implementation(
-            self, toTransform, points, features, skipNoneReturnValues, oneArg):
+    def _transformEachElement_noPreserve_implementation(self, toTransform,
+                                                        points, features):
         # returns None if outside of the specified points and feature so that
         # when calculateForEach is called we are given a full data object
         # with only certain values modified.
@@ -158,12 +145,7 @@ class SparseElements(Elements):
             if features is not None and fID not in features:
                 return None
 
-            if oneArg is None:
-                if value in toTransform:
-                    return toTransform[value]
-                else:
-                    return None
-            elif oneArg:
+            if toTransform.oneArg:
                 return toTransform(value)
             else:
                 return toTransform(value, pID, fID)
@@ -182,7 +164,7 @@ class SparseElements(Elements):
 
 
     def _transformEachElement_zeroPreserve_implementation(
-            self, toTransform, points, features, skipNoneReturnValues, oneArg):
+            self, toTransform, points, features):
         for index, val in enumerate(self._source.data.data):
             pID = self._source.data.row[index]
             fID = self._source.data.col[index]
@@ -191,18 +173,10 @@ class SparseElements(Elements):
             if features is not None and fID not in features:
                 continue
 
-            if oneArg is None:
-                if val in toTransform:
-                    currRet = toTransform[val]
-                else:
-                    continue
-            elif oneArg:
+            if toTransform.oneArg:
                 currRet = toTransform(val)
             else:
                 currRet = toTransform(val, pID, fID)
-
-            if skipNoneReturnValues and currRet is None:
-                continue
 
             self._source.data.data[index] = currRet
 
