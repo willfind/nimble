@@ -647,6 +647,38 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret2 == exp2Obj
 
+    def test_elements_calculate_dictionaryMapping(self):
+        data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        reverseMap = {k: v for k, v in zip(range(9), range(8, -1, -1))}
+
+        toTest = self.constructor(data)
+        ret = toTest.elements.calculate(reverseMap)
+        exp = self.constructor([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.elements.calculate(reverseMap, points=[0, 2], features=[1, 2])
+        exp = self.constructor([[7, 6], [1, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.elements.calculate(reverseMap, preserveZeros=True)
+        exp = self.constructor([[0, 7, 6], [5, 4, 3], [2, 1, 0]])
+        assert ret == exp
+
+        reverseMap[2] = None
+        reverseMap[7] = None
+
+        toTest = self.constructor(data)
+        ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=True)
+        exp = self.constructor([[8, 7, 2], [5, 4, 3], [2, 7, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=False)
+        exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
+        assert ret == exp
+
     ######################
     # points.mapReduce() #
     ######################

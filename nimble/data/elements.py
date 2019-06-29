@@ -327,6 +327,13 @@ class Elements(object):
         try:
             function(0, 0, 0)
         except TypeError:
+            if isinstance(function, dict):
+                dictionary = function
+                def transformFromDict(value):
+                    if value in dictionary:
+                        return dictionary[value]
+                    return value
+                function = transformFromDict
             oneArg = True
 
         calculator = validateElementFunction(function, 'function')
