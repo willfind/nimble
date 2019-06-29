@@ -189,10 +189,7 @@ class Elements(object):
         if features is not None:
             features = constructIndicesList(self._source, 'feature', features)
 
-        if isinstance(toTransform, dict):
-            transformer = toTransform
-        else:
-            transformer = validateElementFunction(toTransform, 'toTransform')
+        transformer = validateElementFunction(toTransform, 'toTransform')
 
         self._transform_implementation(transformer, points, features,
                                        preserveZeros, skipNoneReturnValues)
@@ -329,8 +326,6 @@ class Elements(object):
         try:
             toCalculate(0, 0, 0)
         except TypeError:
-            if isinstance(toCalculate, dict):
-                toCalculate = getDictionaryMappingFunction(toCalculate)
             oneArg = True
 
         calculator = validateElementFunction(toCalculate, 'toCalculate')
@@ -353,13 +348,13 @@ class Elements(object):
                     preserveZeros = toCalculate(0) == 0
                 except Exception:
                     preserveZeros = False
+
             def toCalculateWrap(value):
                 if preserveZeros and value == 0:
                     return 0
                 currRet = calculator(value)
                 if skipNoneReturnValues and currRet is None:
                     return value
-
                 return currRet
 
             vectorized = numpy.vectorize(toCalculateWrap)
@@ -714,6 +709,9 @@ class Elements(object):
 ###########
 
 def validateElementFunction(func, funcName):
+    if isinstance(func, dict):
+        func = getDictionaryMappingFunction(func)
+
     def wrappedElementFunction(*args, **kwargs):
         ret = func(*args, **kwargs)
         if not dataHelpers.isAllowedSingleElement(ret):
