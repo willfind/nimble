@@ -206,20 +206,22 @@ class Elements(object):
     # Higher Order Operations #
     ###########################
 
-    def calculate(self, function, points=None, features=None,
+    def calculate(self, toCalculate, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   outputType=None, useLog=None):
         """
         Return a new object with a calculation applied to each element.
 
-        Calculates the results of the given function on the specified
-        elements in this object, with output values collected into a new
-        object that is returned upon completion.
+        Apply a function or mapping to each element in this object or
+        subset of points and features in this  object.
 
         Parameters
         ----------
-        function : function
-            Take a value as input and return the desired value.
+        toCalculate : function, dict
+            * function - in the form of toTransform(elementValue)
+              or toTransform(elementValue, pointNum, featureNum)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
         points : point, list of points
             The subset of points to limit the calculation to. If None,
             the calculation will apply to all points.
@@ -229,8 +231,8 @@ class Elements(object):
         preserveZeros : bool
             Bypass calculation on zero values
         skipNoneReturnValues : bool
-            Bypass values when ``function`` returns None. If False, the
-            value None will replace the value if None is returned.
+            Bypass values when ``toCalculate`` returns None. If False,
+            the value None will replace the value if None is returned.
         outputType: nimble data type
             Return an object of the specified type. If None, the
             returned object will have the same type as the calling
@@ -325,18 +327,13 @@ class Elements(object):
         """
         oneArg = False
         try:
-            function(0, 0, 0)
+            toCalculate(0, 0, 0)
         except TypeError:
-            if isinstance(function, dict):
-                dictionary = function
-                def transformFromDict(value):
-                    if value in dictionary:
-                        return dictionary[value]
-                    return value
-                function = transformFromDict
+            if isinstance(toCalculate, dict):
+                toCalculate = getDictionaryMappingFunction(toCalculate)
             oneArg = True
 
-        calculator = validateElementFunction(function, 'function')
+        calculator = validateElementFunction(toCalculate, 'toCalculate')
 
         if points is not None:
             points = constructIndicesList(self._source, 'point', points)
@@ -353,10 +350,10 @@ class Elements(object):
             if not preserveZeros:
                 # check if the function preserves zero values
                 try:
-                    preserveZeros = function(0) == 0
+                    preserveZeros = toCalculate(0) == 0
                 except Exception:
                     preserveZeros = False
-            def functionWrap(value):
+            def toCalculateWrap(value):
                 if preserveZeros and value == 0:
                     return 0
                 currRet = calculator(value)
@@ -365,7 +362,7 @@ class Elements(object):
 
                 return currRet
 
-            vectorized = numpy.vectorize(functionWrap)
+            vectorized = numpy.vectorize(toCalculateWrap)
             ret = self._calculate_implementation(vectorized, points, features,
                                                  preserveZeros, optType)
 
@@ -402,7 +399,7 @@ class Elements(object):
 
         handleLogging(useLog, 'prep', 'elements.calculate',
                       self._source.getTypeString(), Elements.calculate,
-                      function, points, features, preserveZeros,
+                      toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
 
         return ret
@@ -446,12 +443,10 @@ class Elements(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculate(function=condition, outputType='Matrix',
-                                 useLog=False)
+            ret = self.calculate(condition, outputType='Matrix', useLog=False)
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)
-            ret = self.calculate(function=func, outputType='Matrix',
-                                 useLog=False)
+            ret = self.calculate(func, outputType='Matrix', useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -727,3 +722,10 @@ def validateElementFunction(func, funcName):
             raise InvalidArgumentValue(msg)
         return ret
     return wrappedElementFunction
+
+def getDictionaryMappingFunction(dictionary):
+    def valueMappingFunction(value):
+        if value in dictionary:
+            return dictionary[value]
+        return value
+    return valueMappingFunction
