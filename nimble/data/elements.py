@@ -712,13 +712,23 @@ def validateElementFunction(func, funcName):
     if isinstance(func, dict):
         func = getDictionaryMappingFunction(func)
 
-    def wrappedElementFunction(*args, **kwargs):
+    def elementValidated(*args, **kwargs):
         ret = func(*args, **kwargs)
         if not dataHelpers.isAllowedSingleElement(ret):
             msg = funcName + " can only return numeric values or strings, but "
             msg += "the returned value was " + str(type(ret))
             raise InvalidArgumentValue(msg)
         return ret
+
+    try:
+        func(0, 0, 0)
+        def wrappedElementFunction(value, i, j):
+            return elementValidated(value, i, j)
+
+    except TypeError:
+        def wrappedElementFunction(value):
+            return elementValidated(value)
+
     return wrappedElementFunction
 
 def getDictionaryMappingFunction(dictionary):
