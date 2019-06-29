@@ -345,8 +345,8 @@ class Elements(object):
             if not preserveZeros:
                 # check if the function preserves zero values
                 try:
-                    preserveZeros = toCalculate(0) == 0
-                except Exception:
+                    preserveZeros = calculator(0) == 0
+                except TypeError:
                     preserveZeros = False
 
             def toCalculateWrap(value):

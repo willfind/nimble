@@ -271,7 +271,7 @@ def testPrepTypeFunctionsUseLog():
         expID = "'object': '{0}'".format(objectID)
         assert expFunc in lastLog
         assert expID in lastLog
-
+        print(lastLog)
         if arguments:
             assert 'arguments' in lastLog
             for argName, argVal in arguments:
@@ -397,7 +397,7 @@ def testPrepTypeFunctionsUseLog():
     # elements.calculate
     dataObj = nimble.createData("Matrix", data, useLog=False)
     calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
-    checkLogContents('elements.calculate', "Matrix", [('function', "lambda x: len(x)"),
+    checkLogContents('elements.calculate', "Matrix", [('toCalculate', "lambda x: len(x)"),
                                                       ('features', [0])])
 
     # points.calculate
