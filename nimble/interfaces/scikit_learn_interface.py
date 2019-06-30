@@ -119,7 +119,6 @@ To install scikit-learn
     def _listLearnersBackend(self):
         possibilities = []
         exclude = [
-            'CountVectorizer', 'PatchExtractor', 'TfidfVectorizer',
             'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',
             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
             'FeatureAgglomeration', 'LocalOutlierFactor',
@@ -170,10 +169,7 @@ To install scikit-learn
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        #		if learnerName == 'KernelCenterer':
-        #			import pdb
-        #			pdb.set_trace()
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -208,7 +204,7 @@ To install scikit-learn
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -248,7 +244,7 @@ To install scikit-learn
             toCall = learner.predict_proba
         else:
             raise NotImplementedError('Cannot get scores for this learner')
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         backendArgs = self._paramQuery(method, learnerName, ignore)[0]
         scoreArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
@@ -345,6 +341,8 @@ To install scikit-learn
                 value = trainX
             elif name.lower() == 'y':
                 value = trainY
+            elif name.lower() == 'raw_documents':
+                value = trainX.tolist()[0] #1D list
             else:
                 value = arguments[name]
             fitParams[name] = value
@@ -396,11 +394,14 @@ To install scikit-learn
             msg = "Cannot apply this learner to data, no predict or "
             msg += "transform function"
             raise TypeError(msg)
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         backendArgs = self._paramQuery(method, learnerName, ignore)[0]
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
+        if 'raw_documents' in self._paramQuery(method, learnerName)[0]:
+            testX = testX.tolist()[0] # 1D list
         return toCall(learner, testX, applyArgs, customDict)
+
 
     def _getAttributes(self, learnerBackend):
         obj = learnerBackend
