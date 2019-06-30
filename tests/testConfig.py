@@ -418,8 +418,7 @@ def test_settings_setInterfaceOptionsChanges():
     nimble.interfaces.available.append(tempInterface2)
 
     # set options for all interfaces, then reload
-    for interface in nimble.interfaces.available:
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    nimble.configuration.setAndSaveAvailableInterfaceOptions()
     nimble.settings = nimble.configuration.loadSettings()
 
     nimble.settings.set('Test', 'Temp0', '0')
@@ -430,13 +429,13 @@ def test_settings_setInterfaceOptionsChanges():
 
     # change Test option names and reset options for all interfaces
     tempInterface1.optionNames[1] = 'NotTemp1'
-    for interface in nimble.interfaces.available:
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    nimble.configuration.setAndSaveAvailableInterfaceOptions()
 
     # check values of both changed and unchanged names
     assert nimble.settings.get('Test', 'Temp0') == '0'
     try:
         nimble.settings.get('Test', 'Temp1')
+        assert False
     except six.moves.configparser.NoOptionError:
         pass
     assert nimble.settings.get('Test', 'NotTemp1') == ''
