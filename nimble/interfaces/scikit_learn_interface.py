@@ -52,13 +52,14 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
 
         from sklearn.utils.testing import all_estimators
         import pkgutil
-        pkgutil.walk_packages_ = pkgutil.walk_packages
+        walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
-            packages = pkgutil.walk_packages_(*args, **kwargs)
+            packages = walkPackages(*args, **kwargs)
             # each pkg is a tuple (importer, moduleName, isPackage)
-            # ignoring everything that is not a package prevents trying
+            # we want to ignore anything not in __all__ to prevent trying
             # to import libraries outside of scikit-learn dependencies
-            return [pkg for pkg in packages if pkg[2]]
+            all = self.skl.__all__
+            return [pkg for pkg in packages if pkg[1].split('.')[1] in all]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             all_estimators = all_estimators()
