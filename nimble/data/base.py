@@ -2250,12 +2250,6 @@ class Base(object):
         if to in ['listofdict', 'dictoflist']:
             return self._copy_nestedPythonTypes(to, rowsArePoints)
 
-        # certain shapes and formats are incompatible
-        if to.startswith('scipy'):
-            if self._pointCount == 0 or self._featureCount == 0:
-                msg = "scipy formats cannot output point or feature empty "
-                msg += "objects"
-                raise InvalidArgumentValue(msg)
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, nimble.data.Base):

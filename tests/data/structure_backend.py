@@ -246,8 +246,19 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -293,8 +304,19 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
@@ -338,8 +360,19 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []

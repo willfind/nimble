@@ -307,10 +307,16 @@ class List(Base):
                 raise PackageException(msg)
             asArray = numpy.array(self.data, dtype=elementType)
             if to == 'scipycsc':
+                if isEmpty:
+                    return scipy.sparse.csc_matrix(emptyData)
                 return scipy.sparse.csc_matrix(asArray)
             if to == 'scipycsr':
+                if isEmpty:
+                    return scipy.sparse.csr_matrix(emptyData)
                 return scipy.sparse.csr_matrix(asArray)
             if to == 'scipycoo':
+                if isEmpty:
+                    return scipy.sparse.coo_matrix(emptyData)
                 return scipy.sparse.coo_matrix(asArray)
         if to == 'pandasdataframe':
             if not pd:
