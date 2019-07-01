@@ -313,7 +313,7 @@ To install mlpy
 
     def _incrementalTrainer(self, learner, trainX, trainY, arguments,
                             customDict):
-        raise RuntimeError()
+        raise NotImplementedError
 
 
     def _applier(self, learnerName, learner, testX, newArguments,
