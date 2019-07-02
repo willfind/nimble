@@ -2138,6 +2138,66 @@ def test_createData_keepPoints_csv_endAfterAllFound():
         fromCSV = nimble.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
         assert fromCSV == wanted
 
+
+def test_createData_keepPF_csv_nameAlignment_allNames():
+    for t in nimble.data.available:
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.write("11,22,33\n")
+            tmpCSV.write("111,222,333\n")
+            tmpCSV.flush()
+
+            # names includes all names for point/features in csv,
+            # even though we are not keeping all of them
+            pNamesL = ['first', 'second', 'third']
+            fNamesL = ['one', 'two', 'three']
+            pNamesD = {'first': 0, 'second': 1, 'third': 2}
+            fNamesD = {'one': 0, 'two': 1, 'three': 2}
+
+            fromCSVL = nimble.createData(t, data=tmpCSV.name, pointNames=pNamesL,
+                                         featureNames=fNamesL, keepPoints=[2, 1],
+                                         keepFeatures=[1, 0])
+            fromCSVD = nimble.createData(t, data=tmpCSV.name, pointNames=pNamesD,
+                                         featureNames=fNamesD, keepPoints=[2, 1],
+                                         keepFeatures=[1, 0])
+
+        keptPNames = ['third', 'second']
+        keptFNames = ['two', 'one']
+        keptData = [[222, 111], [22, 11]]
+        expected = nimble.createData(t, keptData, keptPNames, keptFNames)
+
+        assert fromCSVL == expected
+        assert fromCSVD == expected
+
+
+def test_createData_keepPF_csv_nameAlignment_keptNames():
+    for t in nimble.data.available:
+        # instantiate from csv file
+        keptPNames = ['third', 'second']
+        keptFNames = ['two', 'one']
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.write("11,22,33\n")
+            tmpCSV.write("111,222,333\n")
+            tmpCSV.flush()
+
+            fromCSVL = nimble.createData(t, data=tmpCSV.name, pointNames=keptPNames,
+                                         featureNames=keptFNames, keepPoints=[2, 1],
+                                         keepFeatures=[1, 0])
+            fromCSVD = nimble.createData(t, data=tmpCSV.name, pointNames=keptPNames,
+                                         featureNames=keptFNames, keepPoints=[2, 1],
+                                         keepFeatures=[1, 0])
+
+        keptPNames = ['third', 'second']
+        keptFNames = ['two', 'one']
+        keptData = [[222, 111], [22, 11]]
+        expected = nimble.createData(t, keptData, keptPNames, keptFNames)
+
+        assert fromCSVL == expected
+        assert fromCSVD == expected
+
+
 ######################
 ### inputSeparator ###
 ######################
