@@ -192,7 +192,6 @@ class LoggerControl(object):
         nimble.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
-        self.logDir.cleanup()
         nimble.settings.set("logger", 'location', self._backupLoc)
         nimble.settings.saveChanges("logger", 'location')
         nimble.settings.set("logger", 'name', self._backupName)

@@ -138,7 +138,6 @@ def testLogDirectoryAndFileSetup():
 @emptyLogSafetyWrapper
 @configSafetyWrapper
 def testTopLevelInputFunction():
-    removeLogFile()
     """assert the nimble.log function correctly inserts data into the log"""
     header = "input"
     logInfo = {"test": "testInput"}
@@ -153,10 +152,10 @@ def testTopLevelInputFunction():
     assert lastLog[3] == "User - " + header
     assert lastLog[4] == str(logInfo)
 
+@emptyLogSafetyWrapper
 @configSafetyWrapper
 def testNewSessionNumberEachSetup():
     """assert that a new, sequential sessionNumber is generated each time the log file is reopened"""
-    removeLogFile()
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     data = [[],[]]
@@ -836,7 +835,7 @@ def testShowLogSearchFilters():
     """test the level of detail, sessionNumber, date, text, maxEntries search filters"""
     location = nimble.settings.get("logger", "location")
     name = "showLogTestFile.txt"
-    pathToFile = os.path.join(location,name)
+    pathToFile = os.path.join(location, name)
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
     fullShowLogSize = os.path.getsize(pathToFile)
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100)
