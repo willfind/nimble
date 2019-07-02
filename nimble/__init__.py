@@ -32,6 +32,8 @@ from . import logger
 # Import those functions that we want to be accessible in the
 # top level
 from .randomness import setRandomSeed
+from .randomness import pythonRandom
+from .randomness import numpyRandom
 from .core import train
 from .core import trainAndApply
 from .core import trainAndTest

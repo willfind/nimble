@@ -407,34 +407,13 @@ def backend_warningscapture(toCall, prepCall=None):
         sys.stderr = backup
 
 
-def test_warningscapture_trainAndApply():
-    cData = generateClassificationData(2, 10, 5)
-    ((trainX, trainY), (testX, testY)) = cData
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.trainAndApply('foo', trainX)
-
-    backend_warningscapture(wrapped)
-
-
-def test_warningscapture_trainAndTest():
-    cData = generateClassificationData(2, 10, 5)
-    ((trainX, trainY), (testX, testY)) = cData
-
-    def metric(x, y):
-        return 0
-
-    @noLogEntryExpected
-    def wrapped(AWObject):
-        AWObject.trainAndTest('foo', trainX, trainY, testX, testY, metric)
-
-    backend_warningscapture(wrapped)
-
-
 def test_warningscapture_train():
+    cData = generateClassificationData(2, 10, 5)
+    ((trainX, trainY), (testX, testY)) = cData
+
     @noLogEntryExpected
     def wrapped(AWObject):
-        AWObject.train('foo', None)
+        AWObject.train('foo', trainX)
 
     backend_warningscapture(wrapped)
 

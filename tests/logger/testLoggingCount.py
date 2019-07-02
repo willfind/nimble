@@ -143,7 +143,7 @@ elements_funcs = elements_logged + elements_notLogged
 elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
 
 ui_logged = [
-    'train', 'trainAndApply', 'trainAndTest',
+    'train',
     ]
 ui_notLogged = [
     'accessible', 'findCallable', 'getCanonicalName',

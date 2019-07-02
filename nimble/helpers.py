@@ -3873,11 +3873,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             msg += "of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
         if isinstance(testY, Base):
-        #			if not len(trainY.features) == 1:
-        #               msg = "If trainY is a Data object, then it may only "
-        #               msg += "have one feature"
-        #				raise ArgumentException(msg)
-            if len(testY.points) != len(testY.points):
+            if len(testY.points) != len(testX.points):
                 msg = "If testY is a Data object, then it must have the same "
                 msg += "number of points as testX"
                 raise InvalidArgumentValueCombination(msg)

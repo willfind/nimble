@@ -11,13 +11,11 @@ import numpy
 import nose
 
 import nimble
-import nimble.randomness
-from nimble.randomness import pythonRandom
-from nimble.randomness import numpyRandom
+from nimble.randomness import startAlternateControl, endAlternateControl
 from .assertionHelpers import logCountAssertionFactory
 
 
-@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
+@nose.with_setup(startAlternateControl, endAlternateControl)
 def testSetRandomSeedExplicit():
     """ Test nimble.setRandomSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
@@ -25,16 +23,16 @@ def testSetRandomSeedExplicit():
     nimble.setRandomSeed(1333)
 
     for i in range(50):
-        assert pythonRandom.random() == expPy.random()
-        assert numpyRandom.rand() == expNp.rand()
+        assert nimble.pythonRandom.random() == expPy.random()
+        assert nimble.numpyRandom.rand() == expNp.rand()
 
 
-@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
+@nose.with_setup(startAlternateControl, endAlternateControl)
 def testSetRandomSeedNone():
     """ Test nimble.setRandomSeed operates as expected when passed None (-- use system time as seed) """
     nimble.setRandomSeed(None)
-    pyState = pythonRandom.getstate()
-    npState = numpyRandom.get_state()
+    pyState = nimble.pythonRandom.getstate()
+    npState = nimble.numpyRandom.get_state()
 
     origPy = random.Random()
     origPy.setstate(pyState)
@@ -43,11 +41,11 @@ def testSetRandomSeedNone():
 
     nimble.setRandomSeed(None)
 
-    assert origPy.random() != pythonRandom.random()
-    assert origNp.rand() != numpyRandom.rand()
+    assert origPy.random() != nimble.pythonRandom.random()
+    assert origNp.rand() != nimble.numpyRandom.rand()
 
 
-@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
+@nose.with_setup(startAlternateControl, endAlternateControl)
 @logCountAssertionFactory(3)
 def testSetRandomSeedPropagate():
     """ Test that nimble.setRandomSeed will correctly control how randomized methods in nimble perform """
