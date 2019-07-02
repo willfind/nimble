@@ -27,9 +27,9 @@ def test_callAllAsMain():
         # Provide a dummy output directory argument. For the plotting example,
         # this will write the files into the temp dir instead of generating
         # plots on the screen.
-        tempOutDir = tempfile.mkdtemp()
+        tempOutDir = tempfile.TemporaryDirectory()
 
-        cmd = ("python", scriptLoc, tempOutDir)
+        cmd = ("python", scriptLoc, tempOutDir.name)
         spP = subprocess.PIPE
 
         # We want these scripts to run with the local copy of nimble, so we need
