@@ -792,8 +792,8 @@ def testShowLogToFile():
                     sessionHeadingCount += 1
         assert sessionHeadingCount == 2
 
-@prepopulatedLogSafetyWrapper
 @configSafetyWrapper
+@prepopulatedLogSafetyWrapper
 def testShowLogToStdOut():
     saved_stdout = sys.stdout
     try:
@@ -829,8 +829,8 @@ def testShowLogToStdOut():
     finally:
         sys.stdout = saved_stdout
 
-@prepopulatedLogSafetyWrapper
 @configSafetyWrapper
+@prepopulatedLogSafetyWrapper
 def testShowLogSearchFilters():
     """test the level of detail, sessionNumber, date, text, maxEntries search filters"""
     location = nimble.settings.get("logger", "location")
