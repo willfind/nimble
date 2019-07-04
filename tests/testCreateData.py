@@ -2197,8 +2197,26 @@ def test_createData_keepPF_csv_nameAlignment_keptNames():
         assert fromCSVL == expected
         assert fromCSVD == expected
 
+
+def test_createData_csv_keepPoints_keepingAllPointNames_index():
+    data = [[111, 222, 333], [11, 22, 33], [1, 2, 3]]
+    pnames = ['1', '2', '3']
+    wanted = nimble.createData("Matrix", data=data, pointNames=pnames)
+    # instantiate from csv file
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("11,22,33\n")
+        tmpCSV.write("111,222,333\n")
+        tmpCSV.flush()
+
+        # cannot assume that pnames contains all pointNames for data
+        fromCSV = nimble.createData(
+            "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=[2, 1, 0])
+        assert fromCSV == wanted
+
+
 @raises(InvalidArgumentValue)
-def test_createData_csv_keepPoints_keepingAllPointNames():
+def test_createData_csv_keepPoints_keepingAllPointNames_names():
     data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     pnames = ['1', '2', '3']
     wanted = nimble.createData("Matrix", data=data, pointNames=pnames)
@@ -2214,7 +2232,7 @@ def test_createData_csv_keepPoints_keepingAllPointNames():
             "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=['3', '2', '1'])
 
 
-def test_createData_csv_keepFeatures_reordersAllFeatureNames():
+def test_createData_csv_keepFeatures_keepingAllFeatureNames_index():
     data = [[2, 3, 1], [22, 33, 11], [222, 333, 111]]
     fnames = ['2', '3', '1']
     wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
@@ -2229,6 +2247,45 @@ def test_createData_csv_keepFeatures_reordersAllFeatureNames():
         fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, featureNames=fnames, keepFeatures=[1, 2, 0])
         assert fromCSV == wanted
+
+@raises(InvalidArgumentValue)
+def test_createData_csv_keepFeatures_keepingAllFeatureNames_names():
+    data = [[2, 3, 1], [22, 33, 11], [222, 333, 111]]
+    fnames = ['b', 'c', 'a']
+    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    # instantiate from csv file
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("11,22,33\n")
+        tmpCSV.write("111,222,333\n")
+        tmpCSV.flush()
+
+        # assume featureNames passed aligns with order of keepFeatures
+        fromCSV = nimble.createData(
+            "Matrix", data=tmpCSV.name, featureNames=['a', 'b', 'c'], keepFeatures=['b', 'c' ,'a'])
+        assert fromCSV == wanted
+
+
+def test_createData_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
+    data = [[22, 33, 11], [222, 333, 111]]
+    fnames = ['2', '3', '1']
+    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    # instantiate from csv file
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("11,22,33\n")
+        tmpCSV.write("111,222,333\n")
+        tmpCSV.flush()
+
+        # reordered based on keepFeatures since featureNames extracted
+        fromCSVNames = nimble.createData(
+            "Matrix", data=tmpCSV.name, featureNames=True, keepFeatures=fnames)
+        assert fromCSVNames == wanted
+
+        # reordered based on keepFeatures since featureNames extracted
+        fromCSVIndex = nimble.createData(
+            "Matrix", data=tmpCSV.name, featureNames=True, keepFeatures=[1, 2, 0])
+        assert fromCSVIndex == wanted
 
 ######################
 ### inputSeparator ###

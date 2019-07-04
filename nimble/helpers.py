@@ -1763,7 +1763,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # index values are valid
     keepFeaturesValidated = True
 
-    # at this stage, retFNames is either a list of False
+    # at this stage, retFNames is either a list or False
     # modifications are necessary if limiting features
     limitFeatures = keepFeatures != 'all'
     limitPoints = keepPoints != 'all'
@@ -1772,11 +1772,15 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         # featureNames list matches the features in keepFeatures
         keepFtIndices = []
         for ftID in keepFeatures:
-            if ftID in retFNames:
-                keepFtIndices.append(retFNames.index(ftID))
-            elif isinstance(ftID, str):
-                msg = "The value '" + ftID + "' in keepFeatures is not a "
-                msg += "valid featureName"
+            # cannot determine the index location of the feature by name since
+            # featureNames is only defining the names of the returned features
+            if isinstance(ftID, str):
+                msg = "Since featureNames were only provided for the values "
+                msg += "in keepFeatures, keepFeatures can contain only index "
+                msg += "values referencing the feature's location in the "
+                msg += "data. If attempting to use keepFeatures to reorder "
+                msg += "all features, instead create the object first then "
+                msg += "sort the features."
                 raise InvalidArgumentValue(msg)
             elif ftID >= 0:
                 keepFtIndices.append(ftID)
@@ -1825,23 +1829,16 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     if limitPoints and any(isinstance(ptID, str) for ptID in keepPoints):
         if not pointNames:
             msg = "keepPoints can contain only index values since "
-            msg += "no point names were provided"
+            msg += "no pointNames were provided"
             raise InvalidArgumentValue(msg)
-        # since we are iterating through the csv point by point, we do not
-        # know how many points there are and thus, whether pointNames has
-        # a name for each point. If keepPoints has less points than pointNames,
-        # we will assume we have access to all pointNames, but if the list
-        # lengths are equal and keepPoints contains pointNames, we cannot be
-        # sure that pointNames actually includes a name for each point and is
-        # not just the corresponding values for keepPoints so we need to
-        # raise an exception
+        # cannot determine the index location of the point by name since
+        # pointNames is only defining the names of the returned points
         elif pointNames is not True and len(pointNames) == len(keepPoints):
             msg = "Since pointNames were only provided for the values in "
             msg += "keepPoints, keepPoints can contain only index values "
             msg += "referencing the point's location in the data. If "
-            msg += "attempting to use keepPoints to reorder all data, instead "
-            msg += "create the object first then use the object's sort() "
-            msg += "method."
+            msg += "attempting to use keepPoints to reorder all points, "
+            msg += "instead create the object first then sort the points."
             raise InvalidArgumentValue(msg)
 
     extractedPointNames = []
@@ -1870,7 +1867,9 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         msg += "range of possible indices, 0 to "
                         msg += str(len(row) - 1)
                         raise InvalidArgumentValue(msg)
+            # only need to do the validation once
             keepFeaturesValidated = True
+
         # this point will be used
         if keepPoints == 'all' or i in keepPoints or ptName in keepPoints:
             if limitFeatures:
@@ -1886,7 +1885,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             if firstRowLength is None:
                 firstRowLength = len(row)
                 lengthDefiningLine = skippedLines + i + 1
-            if firstRowLength != len(row):
+            elif firstRowLength != len(row):
                 delimiter = dialect.delimiter
                 msg = "The row on line " + str(skippedLines + i + 1) + " has "
                 msg += "length " + str(len(row)) + ". We expected length "
