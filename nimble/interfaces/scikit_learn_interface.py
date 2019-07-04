@@ -62,8 +62,11 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
             return [pkg for pkg in packages if pkg[1].split('.')[1] in all]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
-            all_estimators = all_estimators()
-
+            try:
+                all_estimators = all_estimators(include_dont_test=True)
+            except TypeError:
+                # include_dont_test will be removed in later versions
+                all_estimators = all_estimators()
         self.allEstimators = {}
         for name, obj in all_estimators:
             if name.startswith('_'):

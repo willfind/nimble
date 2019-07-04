@@ -286,7 +286,7 @@ def testSciKitLearnClassificationLearners():
     trainY = abs(data[0][1])
     testX = abs(data[1][0])
     Xtrain = trainX.copy('numpy array')
-    Ytrain = trainY.copy('numpy array')
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
     Xtest = testX.copy('numpy array')
 
     learners = getLearnersByType('classification')
