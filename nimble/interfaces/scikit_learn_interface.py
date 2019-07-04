@@ -58,8 +58,8 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
             # each pkg is a tuple (importer, moduleName, isPackage)
             # we want to ignore anything not in __all__ to prevent trying
             # to import libraries outside of scikit-learn dependencies
-            all = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in all]
+            sklAll = self.skl.__all__
+            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:
