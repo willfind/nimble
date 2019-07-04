@@ -143,163 +143,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
 
     @captureOutput
-    def trainAndApply(self, learnerName, trainX, trainY=None, testX=None,
-                      arguments=None, output=None, scoreMode='label'):
-        """
-        Train a model and apply it to the test data.
-
-        The learner will be trained using the training data, then
-        prediction, transformation, etc. as appropriate to the learner
-        will be applied to the test data and returned.
-
-        Parameters
-        ----------
-        learnerName : str
-            Name of the learner to be called, in the form
-            'package.learner'
-        trainX: nimble Base object
-            Data to be used for training.
-        trainY: identifier, nimble Base object
-            A name or index of the feature in ``trainX`` containing the
-            labels or another nimble Base object containing the labels
-            that correspond to ``trainX``.
-        testX : nimble Base object
-            data set on which the trained learner will be applied (i.e.
-            performing prediction, transformation, etc. as appropriate
-            to the learner).
-        arguments : dict
-            Mapping argument names (strings) to their values, to be used
-            during training and application. eg. {'dimensions':5, 'k':5}
-            To make use of multiple permutations, specify different
-            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
-            generate an error score for  the learner when the learner
-            was passed all three values of ``k``, separately. These will
-            be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the createData ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
-
-        Returns
-        -------
-        results
-            The resulting output of applying learner.
-        """
-        if testX is None:
-            if isinstance(trainY, (six.string_types, int, numpy.integer)):
-                testX = trainX.copy()
-                testX.features.delete(trainY, useLog=False)
-            else:
-                testX = trainX
-        learner = self.train(learnerName, trainX, trainY, arguments=arguments)
-        # call TrainedLearner's apply method
-        # (which is already wrapped to perform transformation)
-        ret = learner.apply(testX, {}, output, scoreMode, useLog=False)
-
-        return ret
-
-
-    @captureOutput
-    def trainAndTest(self, learnerName, trainX, trainY, testX, testY,
-                     performanceFunction, arguments=None, output='match',
-                     scoreMode='label', **kwarguments):
-        """
-        Train a model and get the results of its performance.
-
-        Uses cross validation to generate a performance score for the
-        algorithm, given the particular argument permutation. The
-        argument permutation that performed best cross validating over
-        the training data is then used as the lone argument for training
-        on the whole training data set. Finally, the learned model
-        generates predictions for the testing set, an the performance
-        of those predictions is calculated and returned. If no
-        additional arguments are supplied via arguments, then
-        the result is the performance of the algorithm with default
-        arguments on the testing data.
-
-        Parameters
-        ----------
-        learnerName : str
-            Name of the learner to be called, in the form
-            'package.learner'
-        trainX: nimble Base object
-            Data to be used for training.
-        trainY : identifier, nimble Base object
-            * identifier - The name or index of the feature in
-              ``trainX`` containing the labels.
-            * nimble Base object - contains the labels that correspond
-              to ``trainX``.
-        testX: nimble Base object
-            Data to be used for testing.
-        testY : identifier, nimble Base object
-            * identifier - A name or index of the feature in ``testX``
-              containing the labels.
-            * nimble Base object - contains the labels that correspond
-              to ``testX``.
-        performanceFunction : function
-            If cross validation is triggered to select from the given
-            argument set, then this function will be used to generate a
-            performance score for the run. Function is of the form:
-            def func(knownValues, predictedValues).
-            Look in nimble.calculate for pre-made options. Default is
-            None, since if there is no parameter selection to be done,
-            it is not used.
-        arguments : dict
-            Mapping argument names (strings) to their values, to be used
-            during training and application. eg. {'dimensions':5, 'k':5}
-            To make use of multiple permutations, specify different
-            values for a parameter as a tuple. eg. {'k': (1,3,5)} will
-            generate an error score for  the learner when the learner
-            was passed all three values of ``k``, separately. These will
-            be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the createData ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
-        kwarguments
-            Keyword arguments specified variables that are passed to the
-            learner. To make use of multiple permutations, specify
-            different values for parameters as a tuple.
-            eg. arg1=(1,2,3), arg2=(4,5,6) which correspond to
-            permutations/argument states with one element from arg1 and
-            one element from arg2, such that an example generated
-            permutation/argument state would be ``arg1=2, arg2=4``.
-            Will be merged with ``arguments``.
-
-        Returns
-        -------
-        performance
-            The calculated value of the ``performanceFunction`` after
-            the test.
-        """
-        learner = self.train(learnerName, trainX, trainY, arguments=arguments)
-        # call TrainedLearner's test method
-        # (which is already wrapped to perform transformation)
-        ret = learner.test(testX, testY, performanceFunction, {}, output,
-                           scoreMode, useLog=False)
-
-        return ret
-
-
-    @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
               multiClassStrategy='default', crossValidationResults=None):
         """
@@ -402,7 +245,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.int64)):
+        if isinstance(trainY, (six.string_types, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
@@ -422,11 +265,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
-        inputs = (trainX, trainY, arguments)
+
+        trainXShape = trainX.shape
+        transformedArguments = transformedInputs[3]
         # encapsulate into TrainedLearner object
-        return TrainedLearner(learnerName, inputs, transformedInputs,
+        return TrainedLearner(learnerName, arguments, transformedArguments,
                               customDict, trainedBackend, self, has2dOutput,
-                              crossValidationResults)
+                              crossValidationResults, trainXShape)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -1139,7 +984,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             The training labels.
         arguments : dict
             The transformed arguments.
-        customDict : TODO
+        customDict : dict
+            The customizable dictionary that is passed for training a
+            learner.
 
         Returns
         -------
@@ -1163,7 +1010,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             The training labels.
         arguments : dict
             The transformed arguments.
-        customDict : TODO
+        customDict : dict
+            The customizable dictionary that is passed for training a
+            learner.
 
         Returns
         -------
@@ -1186,7 +1035,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             The testing data.
         arguments : dict
             The transformed arguments.
-        customDict : TODO
+        customDict : dict
+            The customizable dictionary that is passed for applying a
+            learner.
 
         Returns
         -------
@@ -1281,27 +1132,55 @@ class TrainedLearner(object):
     has2dOutput : bool
         True if output will be 2-dimensional, False assumes the output
         will be 1-dimensional.
+    crossValidation : KFoldsCrossValidator
+        The object containing the cross-validation results if
+        cross-validation occurred while training the learner, otherwise
+        None.
+    trainXShape : tuple
+        The shape, (numPts, numFts), of the trainX object.
+
+    Attributes
+    ----------
+    learnerName : str
+        The name of the learner used for training.
+    arguments : dict
+        The original arguments passed to the learner.
+    transformedArguments : dict
+        The complete dictionary of arguments used to train the learner.
+    customDict : dict
+        The customizable dictionary passed to I/O transformation,
+        training and applying a learner.
+    backend : object
+        The learner object returned after training the learner.
+    interface : UniversalInterface
+        The interface used to train this learner.
+    has2dOutput : bool
+        True if output will be 2-dimensional, False assumes the output
+        will be 1-dimensional.
+    crossValidation : KFoldCrossValidator
+        The object containing the cross-validation results, provided
+        cross-validation occurred.  See the Attributes section in
+        ``help(nimble.helpers.KFoldCrossValidator)`` or the Examples
+        section in ``help(nimble.crossValidate)`` for more information
+        on extracting various results from this object.
     """
-    def __init__(self, learnerName, inputs, transformedInputs, customDict,
-                 backend, interfaceObject, has2dOutput,
-                 crossValidationResults):
+    def __init__(self, learnerName, arguments, transformedArguments,
+                 customDict, backend, interfaceObject, has2dOutput,
+                 crossValidationResults, trainXShape):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
         modify or query the backend trained learner.
         """
         self.learnerName = learnerName
-        self.trainX = inputs[0]
-        self.trainY = inputs[1]
-        self.arguments = inputs[2]
-        self.transformedTrainX = transformedInputs[0]
-        self.transformedTrainY = transformedInputs[1]
-        self.transformedArguments = transformedInputs[3]
+        self.arguments = arguments
+        self.transformedArguments = transformedArguments
         self.customDict = customDict
         self.backend = backend
         self.interface = interfaceObject
         self.has2dOutput = has2dOutput
         self.crossValidation = crossValidationResults
+        self._trainXShape = trainXShape
 
         exposedFunctions = self.interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1710,7 +1589,7 @@ class TrainedLearner(object):
             self.transformedArguments[arg] = value
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.int64)):
+        if isinstance(trainY, (six.string_types, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
@@ -1722,11 +1601,8 @@ class TrainedLearner(object):
         customDict = trainedBackend[2]
 
         self.backend = newBackend
-        self.trainX = trainX
-        self.trainY = trainY
+        self._trainXShape = trainX.shape
         self.arguments = merged
-        self.transformedTrainX = transformedInputs[0]
-        self.transformedTrainY = transformedInputs[1]
         self.transformedArguments = transformedInputs[3]
         self.customDict = customDict
         self.has2dOutput = has2dOutput
@@ -1896,16 +1772,15 @@ class TrainedLearner(object):
         """
         Validate testing data is compatible with the training data.
         """
-        trainFts = len(self.trainX.features)
-        testFts = len(testX.features)
-        if trainFts == testFts:
+        if self._trainXShape[1] == len(testX.features):
             return
-        if isSquareData(self.trainX) and isSquareData(testX):
+        trainXIsSquare = self._trainXShape[0] == self._trainXShape[1]
+        if trainXIsSquare and len(testX.points) == len(testX.features):
             return
         msg = "The number of features in testX ({0}) must be equal to the "
         msg += "number of features in the training data ({1}) "
-        msg = msg.format(testFts, trainFts)
-        if isSquareData(self.trainX):
+        msg = msg.format(len(testX.features), self._trainXShape[1])
+        if trainXIsSquare:
             msg += "or the testing data must be square-shaped"
         raise InvalidArgumentValue(msg)
 
@@ -2166,10 +2041,6 @@ def relabeler(point, label=None):
         return 0
     else:
         return 1
-
-
-def isSquareData(data):
-    return len(data.points) == len(data.features)
 
 #######################
 # PredefinedInterface #
