@@ -387,18 +387,26 @@ class QueryBackend(DataTestObject):
         assertNoNamesGenerated(toSave)
 
     def test_save_extensionHandling(self):
-        tmpFile = tempfile.NamedTemporaryFile()
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".nimd")
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        toSave.save(tmpFile.name)
-        LoadObj = loadData(tmpFile.name + '.nimd')
+        # save without extension to ensure the .nimd extension is added
+        fileNameWithoutExtension = tmpFile.name[:-5]
+        # it is important that the saved object has the same name as the
+        # tmpFile otherwise a new file will be created and saved which will
+        # not be cleaned up by tempfile.
+        assert fileNameWithoutExtension + '.nimd' == tmpFile.name
+
+        toSave.save(fileNameWithoutExtension)
+        LoadObj = loadData(tmpFile.name)
         assert isinstance(LoadObj, nimble.data.Base)
 
         try:
-            LoadObj = loadData(tmpFile.name)
+            LoadObj = loadData(fileNameWithoutExtension)
+            assert False
         except InvalidArgumentValue:
             assert True
         else:

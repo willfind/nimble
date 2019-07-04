@@ -24,41 +24,21 @@ class ListElements(Elements):
     # Structural implementations #
     ##############################
 
-    def _transform_implementation(self, toTransform, points, features,
-                                  preserveZeros, skipNoneReturnValues):
-        oneArg = False
-        try:
-            toTransform(0, 0, 0)
-        except TypeError:
-            if isinstance(toTransform, dict):
-                oneArg = None
-            else:
-                oneArg = True
-
+    def _transform_implementation(self, toTransform, points, features):
         IDs = itertools.product(range(len(self._source.points)),
                                 range(len(self._source.features)))
-        for (i, j) in IDs:
+        for i, j in IDs:
             currVal = self._source.data[i][j]
 
             if points is not None and i not in points:
                 continue
             if features is not None and j not in features:
                 continue
-            if preserveZeros and currVal == 0:
-                continue
 
-            if oneArg is None:
-                if currVal in toTransform:
-                    currRet = toTransform[currVal]
-                else:
-                    continue
-            elif oneArg:
+            if toTransform.oneArg:
                 currRet = toTransform(currVal)
             else:
                 currRet = toTransform(currVal, i, j)
-
-            if skipNoneReturnValues and currRet is None:
-                continue
 
             self._source.data[i][j] = currRet
 

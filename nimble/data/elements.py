@@ -81,7 +81,7 @@ class Elements(object):
         ----------
         toTransform : function, dict
             * function - in the form of toTransform(elementValue)
-              or toTransform(elementValue, pointNum, featureNum)
+              or toTransform(elementValue, pointIndex, featureIndex)
             * dictionary -  map the current element [key] to the
               transformed element [value].
         points : identifier, list of identifiers
@@ -189,13 +189,11 @@ class Elements(object):
         if features is not None:
             features = constructIndicesList(self._source, 'feature', features)
 
-        if isinstance(toTransform, dict):
-            transformer = toTransform
-        else:
-            transformer = validateElementFunction(toTransform, 'toTransform')
+        transformer = validateElementFunction(toTransform, preserveZeros,
+                                              skipNoneReturnValues,
+                                              'toTransform')
 
-        self._transform_implementation(transformer, points, features,
-                                       preserveZeros, skipNoneReturnValues)
+        self._transform_implementation(transformer, points, features)
 
         handleLogging(useLog, 'prep', 'elements.transform',
                       self._source.getTypeString(), Elements.transform,
@@ -206,20 +204,22 @@ class Elements(object):
     # Higher Order Operations #
     ###########################
 
-    def calculate(self, function, points=None, features=None,
+    def calculate(self, toCalculate, points=None, features=None,
                   preserveZeros=False, skipNoneReturnValues=False,
                   outputType=None, useLog=None):
         """
         Return a new object with a calculation applied to each element.
 
-        Calculates the results of the given function on the specified
-        elements in this object, with output values collected into a new
-        object that is returned upon completion.
+        Apply a function or mapping to each element in this object or
+        subset of points and features in this  object.
 
         Parameters
         ----------
-        function : function
-            Take a value as input and return the desired value.
+        toCalculate : function, dict
+            * function - in the form of toCalculate(elementValue)
+              or toCalculate(elementValue, pointIndex, featureIndex)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
         points : point, list of points
             The subset of points to limit the calculation to. If None,
             the calculation will apply to all points.
@@ -229,8 +229,8 @@ class Elements(object):
         preserveZeros : bool
             Bypass calculation on zero values
         skipNoneReturnValues : bool
-            Bypass values when ``function`` returns None. If False, the
-            value None will replace the value if None is returned.
+            Bypass values when ``toCalculate`` returns None. If False,
+            the value None will replace the value if None is returned.
         outputType: nimble data type
             Return an object of the specified type. If None, the
             returned object will have the same type as the calling
@@ -323,13 +323,9 @@ class Elements(object):
              [7.000  18.000 9.000 ]]
             )
         """
-        oneArg = False
-        try:
-            function(0, 0, 0)
-        except TypeError:
-            oneArg = True
-
-        calculator = validateElementFunction(function, 'function')
+        calculator = validateElementFunction(toCalculate, preserveZeros,
+                                             skipNoneReturnValues,
+                                             'toCalculate')
 
         if points is not None:
             points = constructIndicesList(self._source, 'point', points)
@@ -342,23 +338,8 @@ class Elements(object):
             optType = self._source.getTypeString()
 
         # Use vectorized for functions with oneArg
-        if oneArg:
-            if not preserveZeros:
-                # check if the function preserves zero values
-                try:
-                    preserveZeros = function(0) == 0
-                except Exception:
-                    preserveZeros = False
-            def functionWrap(value):
-                if preserveZeros and value == 0:
-                    return 0
-                currRet = calculator(value)
-                if skipNoneReturnValues and currRet is None:
-                    return value
-
-                return currRet
-
-            vectorized = numpy.vectorize(functionWrap)
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
             ret = self._calculate_implementation(vectorized, points, features,
                                                  preserveZeros, optType)
 
@@ -374,17 +355,11 @@ class Elements(object):
                 f = 0
                 for fj in features:
                     value = self._source[pi, fj]
-                    if preserveZeros and value == 0:
-                        valueArray[p, f] = 0
+                    if calculator.oneArg:
+                        currRet = calculator(value)
                     else:
-                        if oneArg:
-                            currRet = calculator(value)
-                        else:
-                            currRet = calculator(value, pi, fj)
-                        if skipNoneReturnValues and currRet is None:
-                            valueArray[p, f] = value
-                        else:
-                            valueArray[p, f] = currRet
+                        currRet = calculator(value, pi, fj)
+                    valueArray[p, f] = currRet
                     f += 1
                 p += 1
 
@@ -395,7 +370,7 @@ class Elements(object):
 
         handleLogging(useLog, 'prep', 'elements.calculate',
                       self._source.getTypeString(), Elements.calculate,
-                      function, points, features, preserveZeros,
+                      toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
 
         return ret
@@ -439,12 +414,10 @@ class Elements(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculate(function=condition, outputType='Matrix',
-                                 useLog=False)
+            ret = self.calculate(condition, outputType='Matrix', useLog=False)
         elif isinstance(condition, six.string_types):
             func = lambda x: eval('x'+condition)
-            ret = self.calculate(function=func, outputType='Matrix',
-                                 useLog=False)
+            ret = self.calculate(func, outputType='Matrix', useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -711,12 +684,49 @@ class Elements(object):
 # Helpers #
 ###########
 
-def validateElementFunction(func, funcName):
-    def wrappedElementFunction(*args, **kwargs):
-        ret = func(*args, **kwargs)
+def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
+                            funcName):
+    def elementValidated(value, *args):
+        if preserveZeros and value == 0:
+            return 0
+        ret = func(value, *args)
+        if skipNoneReturnValues and ret is None:
+            return value
         if not dataHelpers.isAllowedSingleElement(ret):
-            msg = funcName + " can only return numeric values or strings, but "
-            msg += "the returned value was " + str(type(ret))
+            msg = funcName + " can only return numeric, boolean, or string "
+            msg += "values, but the returned value was " + str(type(ret))
             raise InvalidArgumentValue(msg)
         return ret
+
+    if isinstance(func, dict):
+        func = getDictionaryMappingFunction(func)
+    try:
+        func(0, 0, 0)
+        oneArg = False
+
+        def wrappedElementFunction(value, i, j):
+            return elementValidated(value, i, j)
+
+    except TypeError:
+        oneArg = True
+        # see if we can preserve zeros even if not explicitly set
+        try:
+            if not preserveZeros and func(0) == 0:
+                preserveZeros = True
+        except TypeError:
+            pass
+
+        def wrappedElementFunction(value):
+            return elementValidated(value)
+
+    wrappedElementFunction.oneArg = oneArg
+    wrappedElementFunction.preserveZeros = preserveZeros
+
     return wrappedElementFunction
+
+def getDictionaryMappingFunction(dictionary):
+    def valueMappingFunction(value):
+        if value in dictionary:
+            return dictionary[value]
+        return value
+    return valueMappingFunction

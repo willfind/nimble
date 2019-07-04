@@ -8000,14 +8000,9 @@ class StructureModifying(StructureShared):
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
-        transformMapping = {1:None}
-        if self.returnType == "Sparse":
-            # Sparse cannot contain None values
-            expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
-            expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
-        else:
-            expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
-            expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
+        transformMapping = {1: None}
+        expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)

@@ -306,7 +306,7 @@ class SessionConfiguration(object):
                                               ToDelete):
                                 ret[kOpt] = self.changes[kSec][kOpt]
             if not found:
-                raise configparser.NoSectionError()
+                raise configparser.NoSectionError(section)
             return ret
         # Otherwise, treat it as a request for a single option,
         else:
@@ -561,16 +561,25 @@ def setInterfaceOptions(settingsObj, interface, save):
     """
     interfaceName = interface.getCanonicalName()
     optionNames = interface.optionNames
+    # remove any existing option names which are no longer in optionNames
+    try:
+        allOptions = settingsObj.get(interfaceName, None)
+        for opName in allOptions:
+            if opName not in optionNames:
+                settingsObj.delete(interfaceName, opName)
+    except configparser.NoSectionError:
+        pass
+    # set new option names
     for opName in optionNames:
         try:
             settingsObj.get(interfaceName, opName)
-        except (configparser.NoSectionError, configparser.NoOptionError):
+        except (configparser.Error):
             settingsObj.set(interfaceName, opName, "")
-        if save:
-            settingsObj.saveChanges(interfaceName, opName)
+    if save:
+        settingsObj.saveChanges(interfaceName)
 
 
-def setAndSaveAvailableIterfaceOptions():
+def setAndSaveAvailableInterfaceOptions():
     """
     Set and save the options for each available interface.
     """

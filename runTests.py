@@ -13,17 +13,15 @@ import os
 import os.path
 import nose
 import sys
-from nose.plugins.base import Plugin
-
-import nose.pyversion
-#import pdb
-#pdb.set_trace()
-#print dir(nose.pyversion)
-from nose.util import ln
+import tempfile
 try:
     from StringIO import StringIO#python 2
 except:
     from six import StringIO#python 3
+
+from nose.plugins.base import Plugin
+import nose.pyversion
+from nose.util import ln
 
 nimblePath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.append(os.path.dirname(nimblePath))
@@ -175,22 +173,18 @@ class CaptureError(Plugin):
 
 
 class LoggerControl(object):
-    def __enter__(self):
+    def __init__(self):
         self._backupLoc = nimble.settings.get('logger', 'location')
         self._backupName = nimble.settings.get('logger', 'name')
         self._backupEnabled = nimble.settings.get('logger', 'enabledByDefault')
         self._crossValBackupEnabled = nimble.settings.get('logger', 'enableCrossValidationDeepLogging')
+        self.logDir = tempfile.TemporaryDirectory()
 
-        # delete previous testing logs:
-        location = os.path.join(nimblePath, 'logs-nimble')
-        mrPath = os.path.join(location, 'log-nimble-unitTests.mr')
-        if os.path.exists(mrPath):
-            os.remove(mrPath)
-
+    def __enter__(self):
         # change name of log file (settings hook will init new log
         # files after .set())
-        nimble.settings.set('logger', 'location', location)
-        nimble.settings.set("logger", 'name', 'log-nimble-unitTests')
+        nimble.settings.set('logger', 'location', self.logDir.name)
+        nimble.settings.set("logger", 'name', "tmpLogs")
         nimble.settings.saveChanges("logger")
         nimble.settings.set("logger", "enabledByDefault", "False")
         nimble.settings.saveChanges("logger")
