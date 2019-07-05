@@ -6,7 +6,7 @@ In object StructureDataSafe:
 copy, points.copy, features.copy
 
 In object StructureModifying:
-__init__,  transpose, points.add, features.add, points.sort,
+__init__,  transpose, T, points.add, features.add, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
 points.transform, features.transform, elements.transform, fillWith,
@@ -184,6 +184,92 @@ class StructureDataSafe(StructureShared):
         assert hasattr(nimble.data.Elements, 'objectValidation')
         assert hasattr(nimble.data.Features, 'objectValidation')
         assert hasattr(nimble.data.Points, 'objectValidation')
+
+    ##########################
+    # T (transpose property) #
+    ##########################
+
+    def test_T_empty(self):
+        """ Test T property on different kinds of emptiness """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        orig = toTest.copy()
+
+        exp1 = [[], []]
+        exp1 = numpy.array(exp1)
+        ret1 = self.constructor(exp1)
+        assert ret1.isIdentical(toTest.T)
+        assert toTest.isIdentical(orig)
+
+
+    @logCountAssertionFactory(0)
+    def test_T_handmade(self):
+        """ Test T property function against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        dataTrans = [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+
+        toTest = self.constructor(copy.deepcopy(data))
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
+
+        assert toTest.T is not None
+        assert dataObjT.isIdentical(toTest.T)
+        assert toTest.isIdentical(dataObjOrig)
+
+        assertNoNamesGenerated(toTest)
+
+    def test_T_handmadeWithZeros(self):
+        """ Test T property function against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
+        dataTrans = [[1, 4, 7, 0, 11], [2, 5, 8, 0, 12], [3, 6, 9, 0, 13]]
+
+        toTest = self.constructor(copy.deepcopy(data))
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
+
+        assert dataObjT.isIdentical(toTest.T)
+        assert toTest.isIdentical(dataObjOrig)
+
+
+    def test_T_handmadeWithAxisNames(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0]]
+        dataTrans = [[1, 4, 7, 0], [2, 5, 8, 0], [3, 6, 9, 0]]
+
+        origPointNames = ['1','2','3','4']
+        origFeatureNames = ['a','b','c']
+        transPointNames = origFeatureNames
+        transFeatureNames = origPointNames
+
+        toTest = self.constructor(copy.deepcopy(data), pointNames=origPointNames,
+                                  featureNames=origFeatureNames)
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans), pointNames=transPointNames,
+                                    featureNames=transFeatureNames)
+
+        dotT = toTest.T
+        assert dotT.points.getNames() == transPointNames
+        assert dotT.features.getNames() == transFeatureNames
+        assert dotT.isIdentical(dataObjT)
+        assert toTest.isIdentical(dataObjOrig)
+
+
+    def test_T_NamePath_preservation(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
+
+        dataObj = self.constructor(copy.deepcopy(data))
+        dataObj._name = "TestName"
+        if isinstance(dataObj, BaseView):
+            dataObj._source._absPath = "TestAbsPath"
+            dataObj._source._relPath = "TestRelPath"
+        else:
+            dataObj._absPath = "TestAbsPath"
+            dataObj._relPath = "TestRelPath"
+
+        dotT = dataObj.T
+        assert dotT.name == "TestName"
+        assert dotT.absolutePath == "TestAbsPath"
+        assert dotT.relativePath == 'TestRelPath'
 
     ########
     # copy #
