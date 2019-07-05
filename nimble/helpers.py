@@ -4102,8 +4102,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
         trainY = trainX.features.extract(trainY)
 
     # Get set of unique class labels
-    labelVector = trainY.copy()
-    labelVector.transpose()
+    labelVector = trainY.T
     labelSet = list(set(labelVector.copy(to="python list")[0]))
 
     # For each class label in the set of labels:  convert the true
