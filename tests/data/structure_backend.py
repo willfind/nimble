@@ -48,6 +48,7 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
+from ..assertionHelpers import CalledFunctionException, calledException
 
 scipy = nimble.importModule('scipy.sparse')
 pd = nimble.importModule('pandas')
@@ -75,13 +76,6 @@ def plusOneOnlyEven(value):
         return (value + 1)
     else:
         return None
-
-class CalledFunctionException(Exception):
-    def __init__(self):
-        pass
-
-def calledException(*args, **kwargs):
-    raise CalledFunctionException()
 
 def noChange(value):
     return value
@@ -635,8 +629,8 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_copy_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         ret = toTest.points.copy(['a', 'b'])
@@ -1403,8 +1397,8 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_copy_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         ret = toTest.features.copy(['a', 'b'])
@@ -2349,13 +2343,13 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_init_pointNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_init_featureNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
     ###############
@@ -3471,8 +3465,8 @@ class StructureModifying(StructureShared):
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_extract_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         ret = toTest.points.extract(['a', 'b'])
@@ -4255,8 +4249,8 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_extract_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         ret = toTest.features.extract(['a', 'b'])
@@ -4929,8 +4923,8 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_delete_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         toTest.points.delete(['a', 'b'])
@@ -5569,8 +5563,8 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_delete_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.delete(['a', 'b'])
@@ -6117,8 +6111,8 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_retain_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_retain_calls_constructIndicesList(self):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         toTest.points.retain(['a', 'b'])
@@ -6803,8 +6797,8 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_retain_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_retain_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.retain(['a', 'b'])
@@ -7515,8 +7509,8 @@ class StructureModifying(StructureShared):
         origObj.points.transform(emitLower)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_transform_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         toTest.points.transform(noChange, points=['a', 'b'])
@@ -7652,8 +7646,8 @@ class StructureModifying(StructureShared):
         origObj.features.transform(None)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_transform_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.transform(noChange, features=['a', 'b'])
@@ -7762,8 +7756,8 @@ class StructureModifying(StructureShared):
     ##########################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_transform_calls_constructIndicesList1(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_transform_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
@@ -7772,8 +7766,8 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_transform_calls_constructIndicesList2(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_transform_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):

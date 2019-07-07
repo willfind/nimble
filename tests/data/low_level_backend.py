@@ -42,6 +42,7 @@ from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAct
 from nimble.randomness import pythonRandom
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from ..assertionHelpers import CalledFunctionException, calledException
 
 ###########
 # helpers #
@@ -64,13 +65,6 @@ class GetItemOnly(object):
 class NotIterable(object):
     def __init__(self, *args):
         self.values = args
-
-class CalledFunctionException(Exception):
-    def __init__(self):
-        pass
-
-def calledException(*args, **kwargs):
-    raise CalledFunctionException()
 
 def confirmExpectedNames(toTest, axis, expected):
     if axis == 'point':
@@ -486,8 +480,8 @@ class LowLevelBackend(object):
         toTest.points.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_points_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         toTest.points.setNames(['a', 'b', 'c'])
 
@@ -616,8 +610,8 @@ class LowLevelBackend(object):
         toTest.features.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_features_setNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_features_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         toTest.features.setNames(['a', 'b', 'c'])
 
@@ -1132,8 +1126,8 @@ class LowLevelBackend(object):
         assert constructIndicesList(toTest, 'feature', mixFts1D) == expected
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_points_setNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_points_setNames_calls_valuesToPythonList(self):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
         constructIndicesList(toTest, ['p1', 'p2', 'p3'])

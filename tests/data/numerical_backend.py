@@ -17,6 +17,7 @@ import sys
 import numpy
 import os
 import os.path
+from unittest.mock import patch
 
 from nose.tools import *
 import six
@@ -31,6 +32,7 @@ from nimble.randomness import pythonRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
+from ..assertionHelpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -679,6 +681,18 @@ def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
     back_autoVsNumpyScalar(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
+@patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+def back_sparseScalarZeroPreserving(constructor, nimbleOp):
+    data = [[1, 2, 3], [0, 0, 0]]
+    toTest = constructor(data)
+    rint = pythonRandom.randint(1, 5)
+    try:
+        ret = getattr(toTest, nimbleOp)(rint)
+        if toTest.getTypeString() == "Sparse":
+            assert False # did not use _scalarZeroPreservingBinary_implementation
+    except CalledFunctionException:
+        assert toTest.getTypeString() == "Sparse"
+
 
 class NumericalDataSafe(DataTestObject):
 
@@ -893,6 +907,9 @@ class NumericalDataSafe(DataTestObject):
     def test_truediv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__truediv__', False)
 
+    def test_truediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__truediv__')
+
 
     ################
     # __rtruediv__ #
@@ -916,6 +933,8 @@ class NumericalDataSafe(DataTestObject):
     def test_rtruediv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rtruediv__', False)
 
+    def test_rtruediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rtruediv__')
 
     ###############
     # __floordiv__ #
@@ -938,6 +957,9 @@ class NumericalDataSafe(DataTestObject):
 
     def test_floordiv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__floordiv__', False)
+
+    def test_floordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__floordiv__')
 
 
     ################
@@ -962,6 +984,9 @@ class NumericalDataSafe(DataTestObject):
     def test_rfloordiv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rfloordiv__', False)
 
+    def test_rfloordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rfloordiv__')
+
 
     ###############
     # __mod__ #
@@ -984,6 +1009,9 @@ class NumericalDataSafe(DataTestObject):
 
     def test_mod_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__mod__', False)
+
+    def test_mod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__mod__')
 
 
     ################
@@ -1008,6 +1036,8 @@ class NumericalDataSafe(DataTestObject):
     def test_rmod_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rmod__', False)
 
+    def test_rmod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rmod__')
 
     ###########
     # __pow__ #
@@ -1538,6 +1568,9 @@ class NumericalModifying(DataTestObject):
     def test_itruediv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__itruediv__', True)
 
+    def test_itruediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__itruediv__')
+
 
     ################
     # __ifloordiv__ #
@@ -1560,6 +1593,9 @@ class NumericalModifying(DataTestObject):
 
     def test_ifloordiv_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__ifloordiv__', True)
+
+    def test_ifloordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__ifloordiv__')
 
 
     ################
@@ -1584,6 +1620,9 @@ class NumericalModifying(DataTestObject):
 
     def test_imod_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__imod__', True)
+
+    def test_imod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__imod__')
 
 
     ###########
