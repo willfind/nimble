@@ -4095,7 +4095,7 @@ class Base(object):
                 rID = combinedRowIDs[i]
                 val = self[rID, currIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
-                if len(valFormed) < maxStrLength:
+                if len(valFormed) <= maxStrLength:
                     valLimited = valFormed
                 else:
                     valLimited = valFormed[:nameCutIndex] + strHold
