@@ -4077,9 +4077,8 @@ class Base(object):
             endIndex -= 1
         currIndex = 0
         numAdded = 0
-        # comparing width without column placeholder to maxWidth allows while
-        # loop to check if last column can replace the column placeholder
-        while (totalWidth - cHoldTotal) < maxWidth and currIndex != endIndex:
+
+        while totalWidth < maxWidth and currIndex != endIndex:
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
             currWidth = 0
@@ -4111,12 +4110,8 @@ class Base(object):
                 currCol.append(valLimited)
 
             totalWidth += currWidth
-            # if the column we are trying to add is the last one possible,
-            # we check the width without the column placeholder
-            lastCol = (numAdded == (self._featureCount - 1)
-                       and totalWidth - (cHoldTotal) <= maxWidth)
             # only add this column if it won't put us over the limit
-            if totalWidth <= maxWidth or lastCol:
+            if totalWidth <= maxWidth:
                 numAdded += 1
                 for i in range(len(currCol)):
                     if len(currTable) != len(currCol):
@@ -4134,7 +4129,10 @@ class Base(object):
                         lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
                     lColWidths.append(currWidth)
-            # add separator length for next column
+
+            # ignore column separator if the next column is the last
+            if numAdded == (self._featureCount - 1):
+                totalWidth -= cHoldTotal
             totalWidth += len(colSep)
 
         # combine the tables. Have to reverse rTable because entries were
