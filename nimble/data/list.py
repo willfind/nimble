@@ -301,15 +301,30 @@ class List(Base):
             if isEmpty:
                 return numpy.matrix(emptyData)
             return numpy.matrix(self.data, dtype=elementType)
-        if to in ['scipycsc', 'scipycsr']:
+        if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             asArray = numpy.array(self.data, dtype=elementType)
             if to == 'scipycsc':
+                if isEmpty:
+                    return scipy.sparse.csc_matrix(emptyData)
                 return scipy.sparse.csc_matrix(asArray)
             if to == 'scipycsr':
+                if isEmpty:
+                    return scipy.sparse.csr_matrix(emptyData)
                 return scipy.sparse.csr_matrix(asArray)
+            if to == 'scipycoo':
+                if isEmpty:
+                    return scipy.sparse.coo_matrix(emptyData)
+                return scipy.sparse.coo_matrix(asArray)
+        if to == 'pandasdataframe':
+            if not pd:
+                msg = "pandas is not available"
+                raise PackageException(msg)
+            if isEmpty:
+                return pd.DataFrame(emptyData)
+            return pd.DataFrame(self.data, dtype=elementType)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):

@@ -246,6 +246,20 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
+
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
 
@@ -290,6 +304,20 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
+
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
 
@@ -331,6 +359,20 @@ class StructureDataSafe(StructureShared):
 
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
+
+        if scipy:
+            scipyCsr = orig.copy(to='scipy csr')
+            assert numpy.array_equal(scipyCsr.todense(), data)
+
+            scipyCsc = orig.copy(to='scipy csc')
+            assert numpy.array_equal(scipyCsc.todense(), data)
+
+            scipyCoo = orig.copy(to='scipy coo')
+            assert numpy.array_equal(scipyCoo.todense(), data)
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -407,7 +449,6 @@ class StructureDataSafe(StructureShared):
         copyDataFrame.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
-
         pyList = orig.copy(to='python list')
         assert type(pyList) == list
         pyList[0][0] = 5
@@ -437,6 +478,17 @@ class StructureDataSafe(StructureShared):
             spcsr[0, 0] = 5
             assert numeric[0, 0] == 1
 
+            spcoo = numeric.copy(to='scipy coo')
+            assert type(spcoo) == type(scipy.sparse.coo_matrix(numpy.matrix([])))
+            spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
+            assert numeric[0, 0] == 1
+
+        if pd:
+            pandasDF = orig.copy(to='pandas dataframe')
+            assert type(pandasDF) == type(pd.DataFrame([]))
+            pandasDF.iloc[0, 0] = 5
+            assert orig[0, 0] == 1
+
         listOfDict = orig.copy(to='list of dict')
         assert type(listOfDict) == list
         assert type(listOfDict[0]) == dict
@@ -462,34 +514,33 @@ class StructureDataSafe(StructureShared):
         for retType in nimble.data.available:
 
             out = orig.copy(to=retType, rowsArePoints=False)
-
             desired = nimble.createData(retType, dataT,
                                         pointNames=featureNames,
                                         featureNames=pointNames, useLog=False)
-
             assert out == desired
 
         out = orig.copy(to='pythonlist', rowsArePoints=False)
-
         assert out == dataT.tolist()
 
         out = orig.copy(to='numpyarray', rowsArePoints=False)
-
         assert numpy.array_equal(out, dataT)
 
         out = orig.copy(to='numpymatrix', rowsArePoints=False)
-
         assert numpy.array_equal(out, dataT)
 
         if scipy:
-
             out = orig.copy(to='scipycsr', rowsArePoints=False)
-
             assert numpy.array_equal(out.toarray(), dataT)
 
             out = orig.copy(to='scipycsc', rowsArePoints=False)
-
             assert numpy.array_equal(out.toarray(), dataT)
+
+            out = out = orig.copy(to='scipycoo', rowsArePoints=False)
+            assert numpy.array_equal(out.toarray(), dataT)
+
+        if pd:
+            out = orig.copy(to='pandasdataframe', rowsArePoints=False)
+            assert numpy.array_equal(out, dataT)
 
         out = orig.copy(to='list of dict', rowsArePoints=False)
 
@@ -516,43 +567,53 @@ class StructureDataSafe(StructureShared):
             orig.copy(to="List", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         try:
             orig.copy(to="Matrix", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         try:
             orig.copy(to="Sparse", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         try:
             orig.copy(to="numpy matrix", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         if scipy:
             try:
                 orig.copy(to="scipy csr", outputAs1D=True)
                 assert False
             except InvalidArgumentValueCombination as ivc:
-                print(ivc)
+                pass
             try:
                 orig.copy(to="scipy csc", outputAs1D=True)
                 assert False
             except InvalidArgumentValueCombination as ivc:
-                print(ivc)
+                pass
+            try:
+                orig.copy(to="scipy coo", outputAs1D=True)
+                assert False
+            except InvalidArgumentValueCombination as ivc:
+                pass
+        if pd:
+            try:
+                orig.copy(to='pandas dataframe', outputAs1D=True)
+            except InvalidArgumentValueCombination as ivc:
+                pass
         try:
             orig.copy(to="list of dict", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         try:
             orig.copy(to="dict of list", outputAs1D=True)
             assert False
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
 
     @raises(ImproperObjectAction)
     def test_copy_outputAs1DWrongShape(self):
@@ -8021,7 +8082,7 @@ class StructureModifying(StructureShared):
             toTest.fillWith(set([1, 3]), 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
-            print(iat)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentType
 
@@ -8029,7 +8090,7 @@ class StructureModifying(StructureShared):
             toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
-            print(iat)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentType
 
@@ -8045,7 +8106,7 @@ class StructureModifying(StructureShared):
             toTest.fillWith(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         except Exception as e:
             assert False  # expected InvalidArgumentValueCombination
 
@@ -8055,7 +8116,7 @@ class StructureModifying(StructureShared):
             toTest.fillWith(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         except Exception as e:
             assert False  # expected InvalidArgumentValueCombination
 
@@ -8070,28 +8131,28 @@ class StructureModifying(StructureShared):
             toTest.fillWith(val, "hello", 0, 1, 1)
             assert False  # expected InvalidArgumentValue
         except InvalidArgumentValue as iav:
-            print(iav)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, "Wrong", 1, 1)
             assert False  # expected InvalidArgumentValue
         except InvalidArgumentValue as iav:
-            print(iav)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, 0, 2, 1)
             assert False  # expected InvalidArgumentValue
         except InvalidArgumentValue as iav:
-            print(iav)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValue
         try:
             toTest.fillWith(val, 0, 0, 1, -12)
             assert False  # expected InvalidArgumentValue
         except InvalidArgumentValue as iav:
-            print(iav)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValue
 
@@ -8106,14 +8167,14 @@ class StructureModifying(StructureShared):
             toTest.fillWith(val, 1, 0, 0, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValueCombination
         try:
             toTest.fillWith(val, 0, 1, 1, 0)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
-            print(ivc)
+            pass
         except Exception:
             assert False  # expected InvalidArgumentValueCombination
 
@@ -8218,7 +8279,7 @@ class StructureModifying(StructureShared):
         self.back_flatten_empty('feature')
 
     def back_flatten_empty(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
 
         pempty = self.constructor(numpy.empty((0,2)))
@@ -8342,7 +8403,7 @@ class StructureModifying(StructureShared):
         self.back_unflatten_empty('feature')
 
     def back_unflatten_empty(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         single = (0,2) if axis == 'point' else (2,0)
 
@@ -8361,7 +8422,7 @@ class StructureModifying(StructureShared):
         self.back_unflatten_wrongShape('feature')
 
     def back_unflatten_wrongShape(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         vecShape = (4,1) if axis == 'point' else (1,4)
 
@@ -8380,7 +8441,7 @@ class StructureModifying(StructureShared):
         self.back_unflatten_doesNotDivide('feature')
 
     def back_unflatten_doesNotDivide(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         primeLength = (1,7) if axis == 'point' else (7,1)
         divisableLength = (1,8) if axis == 'point' else (8,1)
@@ -8400,7 +8461,7 @@ class StructureModifying(StructureShared):
         self.back_unflatten_nameDestroyed('feature')
 
     def back_unflatten_nameDestroyed(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         vecShape = (1,4) if axis == 'point' else (4,1)
         data = numpyRandom.rand(*vecShape)
@@ -8432,7 +8493,7 @@ class StructureModifying(StructureShared):
         self.back_unflatten_nameFormatInconsistent('feature')
 
     def back_unflatten_nameFormatInconsistent(self, axis):
-        checkMsg = True
+        checkMsg = False
         target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
         vecShape = (1,4) if axis == 'point' else (4,1)
         data = numpyRandom.rand(*vecShape)
@@ -11004,15 +11065,6 @@ def exceptionHelper(testObj, target, args, wanted, checkMsg):
     except wanted as check:
         if checkMsg:
             print(check)
-
-# def exceptionHelper(testObj, target, args, wanted, checkMsg,):
-#     try:
-#         axisObj = getattr(testObj, target[0])
-#         getattr(axisObj, target[1])(*args)
-#         assert False  # expected an exception
-#     except wanted as check:
-#         if checkMsg:
-#             print(check)
 
 class StructureAll(StructureDataSafe, StructureModifying):
     pass

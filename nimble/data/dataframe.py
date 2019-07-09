@@ -203,16 +203,21 @@ class DataFrame(Base):
             return self.data.values.copy()
         if to == 'numpymatrix':
             return np.matrix(self.data.values)
-        if to == 'scipycsc':
+        if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csc_matrix(self.data.values)
-        if to == 'scipycsr':
-            if not scipy:
-                msg = "scipy is not available"
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(self.data.values)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(self.data.values)
+            if to == 'scipycoo':
+                return scipy.sparse.coo_matrix(self.data.values)
+        if to == 'pandasdataframe':
+            if not pd:
+                msg = "pandas is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csr_matrix(self.data.values)
+            return pd.DataFrame(self.data.copy())
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):

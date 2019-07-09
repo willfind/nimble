@@ -254,10 +254,18 @@ class Sparse(Base):
             return numpy.array(self.data.todense())
         if to == 'numpymatrix':
             return self.data.todense()
-        if to == 'scipycsc':
-            return self.data.tocsc()
-        if to == 'scipycsr':
-            return self.data.tocsr()
+        if 'scipy' in to:
+            if to == 'scipycsc':
+                return self.data.tocsc()
+            if to == 'scipycsr':
+                return self.data.tocsr()
+            if to == 'scipycoo':
+                return self.data.copy()
+        if to == 'pandasdataframe':
+            if not pd:
+                msg = "pandas is not available"
+                raise PackageException(msg)
+            return pd.DataFrame(self.data.todense())
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
