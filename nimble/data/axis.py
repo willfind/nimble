@@ -823,6 +823,37 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('normalize'),
                       subtract, divide, applyResultTo)
 
+    def _duplicate(self, totalCopies):
+        if not isinstance(totalCopies, (int, numpy.int)):
+            raise InvalidArgumentType("totalCopies must be an integer")
+        if totalCopies < 1:
+            raise InvalidArgumentValue("totalCopies must be greater than 1")
+        if totalCopies == 1:
+            return self._source.copy()
+
+        duplicated = self._duplicate_implementation(totalCopies)
+
+        if isinstance(self, Points):
+            ptNames = self._getNamesNoGeneration()
+            namesToDuplicate = ptNames
+            ftNames = self._source.features._getNamesNoGeneration()
+        else:
+            ftNames = self._getNamesNoGeneration()
+            namesToDuplicate = ftNames
+            ptNames = self._source.points._getNamesNoGeneration()
+
+        if namesToDuplicate is not None:
+            origNames = namesToDuplicate.copy()
+            for i in range(totalCopies):
+                for idx, name in enumerate(origNames):
+                    if i == 0:
+                        namesToDuplicate[idx] = name + "_" + str(i)
+                    else:
+                        namesToDuplicate.append(name + "_" + str(i))
+
+        return nimble.createData(self._source.getTypeString(), duplicated,
+                                 pointNames=ptNames, featureNames=ftNames)
+
     ###################
     # Query functions #
     ###################
@@ -1694,6 +1725,10 @@ class Axis(object):
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):
+        pass
+
+    @abstractmethod
+    def _duplicate_implementation(self, numberOfDuplicates):
         pass
 
     @abstractmethod

@@ -84,6 +84,16 @@ class MatrixAxis(Axis):
                                      pointNames=offAxisNames,
                                      featureNames=axisNames, useLog=False)
 
+    def _duplicate_implementation(self, totalCopies):
+        if isinstance(self, Points):
+            ptDim = totalCopies
+            ftDim = 1
+        else:
+            ptDim = 1
+            ftDim = totalCopies
+        duplicated = numpy.tile(self._source.data, (ptDim, ftDim))
+        return duplicated
+
     ####################
     # Abstract Methods #
     ####################

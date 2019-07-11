@@ -1751,6 +1751,27 @@ class Points(object):
                       Points.combineByExpandingFeatures,
                       featureWithFeatureNames, featureWithValues)
 
+    def duplicate(self, totalCopies=2):
+        """
+        Create an object using copies of this object's points.
+
+        Copies of this object will be stacked vertically. The returned
+        object will have the same number of features as this object and
+        the number of points will be equal to the number of points in
+        this object times ``totalCopies``.
+
+        Parameters
+        ----------
+        totalCopies : int
+            The number of times a copy of the data in this object will
+            be present in the returned object.
+
+        Examples
+        --------
+        TODO
+        """
+        return self._duplicate(totalCopies)
+
     ####################
     # Query functions #
     ###################
@@ -1943,6 +1964,10 @@ class Points(object):
     @abstractmethod
     def _combineByExpandingFeatures_implementation(
             self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        pass
+
+    @abstractmethod
+    def _duplicate(self, totalCopies):
         pass
 
     @abstractmethod

@@ -155,6 +155,29 @@ class SparseAxis(Axis):
         self._source.data = coo_matrix((newData, rowColTuple), shape=shape)
         self._source._sorted = None
 
+    def _duplicate_implementation(self, totalCopies):
+        dupData = numpy.tile(self._source.data.data, totalCopies)
+        fillDup = numpy.empty_like(dupData, dtype=numpy.int)
+        if isinstance(self, Points):
+            dupCol = numpy.tile(self._source.data.col, totalCopies)
+            dupRow = fillDup
+            toDuplicate = self._source.data.row
+            numDuplicated = len(self)
+            startIdx = 0
+        else:
+            dupRow = numpy.tile(self._source.data.row, totalCopies)
+            dupCol = fillDup
+            toDuplicate = self._source.data.col
+            numDuplicated = len(self)
+        startIdx = 0
+        for i in range(totalCopies):
+            endIdx = len(toDuplicate) * (i + 1)
+            fillDup[startIdx:endIdx] = toDuplicate + (numDuplicated * i)
+            startIdx = endIdx
+        duplicated = coo_matrix((dupData, (dupRow, dupCol)))
+
+        return duplicated
+
     #########################
     # Query implementations #
     #########################

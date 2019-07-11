@@ -11,7 +11,8 @@ In object HighLevelDataSafe:
 points.calculate, features.calculate, elements.calculate, points.count,
 features.count, elements.count, elements.countUnique, points.unique,
 features.unique, points.mapReduce, features.mapReduce,
-isApproximatelyEqual, trainAndTestSets
+isApproximatelyEqual, trainAndTestSets, points.duplicate,
+features.duplicate
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
@@ -1504,6 +1505,66 @@ class HighLevelDataSafe(DataTestObject):
 
         assert 0 in unique
         assert unique[0] == 12
+
+    ####################
+    # points.duplicate #
+    ####################
+
+    def test_points_duplicate_1D(self):
+        data = [0, 1, 2, 3]
+        ptNames = ['pt0']
+        ftNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.points.duplicate(3)
+
+        expData = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]]
+        expPtNames = ['pt0_0', 'pt0_1', 'pt0_2']
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
+
+        assert duplicated == exp
+
+    def test_points_duplicate_2D(self):
+        data = [[0, 1, 2], [3, 4, 5]]
+        ptNames = ['pt0', 'pt1']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.points.duplicate(3)
+
+        expData = [[0, 1, 2], [3, 4, 5], [0, 1, 2], [3, 4, 5], [0, 1, 2], [3, 4, 5]]
+        expPtNames = ['pt0_0', 'pt1_0', 'pt0_1', 'pt1_1', 'pt0_2', 'pt1_2']
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
+
+        assert duplicated == exp
+
+    ######################
+    # features.duplicate #
+    ######################
+
+    def test_features_duplicate_1D(self):
+        data = [[0], [1], [2], [3]]
+        ptNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        ftNames = ['a']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.features.duplicate(3)
+
+        expData = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]]
+        expFtNames = ['a_0', 'a_1', 'a_2']
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
+
+        assert duplicated == exp
+
+    def test_features_duplicate_2D(self):
+        data = [[0, 1, 2], [3, 4, 5]]
+        ptNames = ['pt0', 'pt1']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.features.duplicate(3)
+
+        expData = [[0, 1, 2, 0, 1, 2, 0, 1, 2], [3, 4, 5, 3, 4, 5, 3, 4, 5]]
+        expFtNames = ['a_0', 'b_0', 'c_0', 'a_1', 'b_1', 'c_1', 'a_2', 'b_2', 'c_2']
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
+
+        assert duplicated == exp
 
 
 class HighLevelModifying(DataTestObject):

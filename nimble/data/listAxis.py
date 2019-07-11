@@ -108,6 +108,14 @@ class ListAxis(Axis):
             return nimble.createData('List', uniqueData, pointNames=offAxisNames,
                                       featureNames=axisNames, useLog=False)
 
+    def _duplicate_implementation(self, totalCopies):
+        if isinstance(self, Points):
+            duplicated = [lst.copy() for _ in range(totalCopies)
+                          for lst in self._source.data]
+        else:
+            duplicated = [lst * totalCopies for lst in self._source.data]
+        return duplicated
+
     ####################
     # Abstract Methods #
     ####################

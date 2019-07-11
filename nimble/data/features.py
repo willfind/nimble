@@ -1696,6 +1696,27 @@ class Features(object):
                       self._source.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
+    def duplicate(self, totalCopies=2):
+        """
+        Create an object using copies of this object's features.
+
+        Copies of this object will be stacked horizontally. The returned
+        object will have the same number of points as this object and
+        the number of features will be equal to the number of features
+        in this object times ``totalCopies``.
+
+        Parameters
+        ----------
+        totalCopies : int
+            The number of times a copy of the data in this object will
+            be present in the returned object.
+
+        Examples
+        --------
+        TODO
+        """
+        return self._duplicate(totalCopies)
+
     ###################
     # Query functions #
     ###################
@@ -1884,6 +1905,10 @@ class Features(object):
     @abstractmethod
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
+        pass
+
+    @abstractmethod
+    def _duplicate(self, totalCopies):
         pass
 
     @abstractmethod
