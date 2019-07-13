@@ -1696,26 +1696,76 @@ class Features(object):
                       self._source.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
-    def duplicate(self, totalCopies=2):
+    def duplicate(self, totalCopies=2, copyFeatureByFeature=False):
         """
         Create an object using copies of this object's features.
 
         Copies of this object will be stacked horizontally. The returned
         object will have the same number of points as this object and
         the number of features will be equal to the number of features
-        in this object times ``totalCopies``.
+        in this object times ``totalCopies``. If this object contains
+        featureNames, each feature name will have "_#" appended, where #
+        is the number of the copy made.
 
         Parameters
         ----------
         totalCopies : int
             The number of times a copy of the data in this object will
             be present in the returned object.
+        copyFeatureByFeature : bool
+            When False, the default, copies are made as if iterating
+            through each feature in this object ``totalCopies`` times.
+            When True, copies are made as if the object is only iterated
+            once, making ``totalCopies`` copies of each feature before
+            iterating to the next feature. Note: when this object is a
+            single feature, the output will be the same either way.
+
+        Returns
+        -------
+        nimble Base object
+            Object containing the copied data.
 
         Examples
         --------
-        TODO
+        Single feature
+
+        >>> data = nimble.createData('Matrix', [[1], [2], [3]])
+        >>> data.features.setNames(['a'])
+        >>> data.features.duplicate(totalCopies=3)
+        Matrix(
+            [[1.000 1.000 1.000]
+             [2.000 2.000 2.000]
+             [3.000 3.000 3.000]]
+            featureNames={'a_0':0, 'a_1':1, 'a_2':2}
+            )
+
+        Two-dimensional, copyFeatureByFeature is False
+
+        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data.features.setNames(['a', 'b'])
+        >>> data.features.duplicate(totalCopies=2,
+        ...                         copyFeatureByFeature=False)
+        Matrix(
+            [[1.000 2.000 1.000 2.000]
+             [3.000 4.000 3.000 4.000]
+             [5.000 6.000 5.000 6.000]]
+            featureNames={'a_0':0, 'b_0':1, 'a_1':2, 'b_1':3}
+            )
+
+        Two-dimensional, copyFeatureByFeature is True
+
+        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data.features.setNames(['a', 'b'])
+        >>> data.features.duplicate(totalCopies=2,
+        ...                         copyFeatureByFeature=True)
+        Matrix(
+            [[1.000 1.000 2.000 2.000]
+             [3.000 3.000 4.000 4.000]
+             [5.000 5.000 6.000 6.000]]
+            featureNames={'a_0':0, 'a_1':1, 'b_0':2, 'b_1':3}
+            )
         """
-        return self._duplicate(totalCopies)
+        return self._duplicate(totalCopies, copyFeatureByFeature)
 
     ###################
     # Query functions #
@@ -1908,7 +1958,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _duplicate(self, totalCopies):
+    def _duplicate(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

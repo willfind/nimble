@@ -115,15 +115,21 @@ class DataFrameAxis(Axis):
                                      pointNames=offAxisNames,
                                      featureNames=axisNames, useLog=False)
 
-    def _duplicate_implementation(self, totalCopies):
+    def _duplicate_implementation(self, totalCopies, copyValueByValue):
         if isinstance(self, Points):
+            axis = 0
             ptDim = totalCopies
             ftDim = 1
         else:
+            axis = 1
             ptDim = 1
             ftDim = totalCopies
-        duplicated = numpy.tile(self._source.data.values, (ptDim, ftDim))
-        return duplicated
+        if copyValueByValue:
+            duplicated = numpy.repeat(self._source.data.values, totalCopies,
+                                      axis)
+        else:
+            duplicated = numpy.tile(self._source.data.values, (ptDim, ftDim))
+        return pd.DataFrame(duplicated)
 
     ####################
     # Abstract Methods #

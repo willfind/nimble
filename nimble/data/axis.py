@@ -36,6 +36,7 @@ from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
+from .dataHelpers import createDataNoValidation
 
 class Axis(object):
     """
@@ -823,15 +824,14 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('normalize'),
                       subtract, divide, applyResultTo)
 
-    def _duplicate(self, totalCopies):
-        if not isinstance(totalCopies, (int, numpy.int)):
-            raise InvalidArgumentType("totalCopies must be an integer")
-        if totalCopies < 1:
-            raise InvalidArgumentValue("totalCopies must be greater than 1")
+    def _duplicate(self, totalCopies, copyValueByValue):
+        if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:
+            raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._source.copy()
 
-        duplicated = self._duplicate_implementation(totalCopies)
+        duplicated = self._duplicate_implementation(totalCopies,
+                                                    copyValueByValue)
 
         if isinstance(self, Points):
             ptNames = self._getNamesNoGeneration()
@@ -842,7 +842,16 @@ class Axis(object):
             namesToDuplicate = ftNames
             ptNames = self._source.points._getNamesNoGeneration()
 
-        if namesToDuplicate is not None:
+        if copyValueByValue and namesToDuplicate is not None:
+            origNames = namesToDuplicate.copy()
+            for idx, name in enumerate(origNames):
+                for i in range(totalCopies):
+                    currIdx = (totalCopies * idx) + i
+                    if currIdx < len(origNames):
+                        namesToDuplicate[currIdx] = name + "_" + str(i)
+                    else:
+                        namesToDuplicate.append(name + "_" + str(i))
+        elif namesToDuplicate is not None:
             origNames = namesToDuplicate.copy()
             for i in range(totalCopies):
                 for idx, name in enumerate(origNames):
@@ -851,8 +860,8 @@ class Axis(object):
                     else:
                         namesToDuplicate.append(name + "_" + str(i))
 
-        return nimble.createData(self._source.getTypeString(), duplicated,
-                                 pointNames=ptNames, featureNames=ftNames)
+        return createDataNoValidation(self._source.getTypeString(), duplicated,
+                                      pointNames=ptNames, featureNames=ftNames)
 
     ###################
     # Query functions #
@@ -1728,7 +1737,7 @@ class Axis(object):
         pass
 
     @abstractmethod
-    def _duplicate_implementation(self, numberOfDuplicates):
+    def _duplicate_implementation(self, numberOfDuplicates, copyValueByValue):
         pass
 
     @abstractmethod
