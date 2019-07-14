@@ -609,6 +609,43 @@ class QueryBackend(DataTestObject):
 
         assert list(zip(pv, fv)) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
+    ###############################
+    # points/features.__getitem__ #
+    ###############################
+    @noLogEntryExpected
+    def test_pf_getitem(self):
+        featureNames = ["one", "two", "three", "zero", "gender"]
+        pnames = ['1', '4', '7', '0']
+        data = [[1, 2, 3, 0, 'f'], [4, 5, 0, 0, 'm'], [7, 0, 9, 0, 'f'], [0, 0, 0, 0, 'm']]
+
+        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+
+        tmp1 = self.constructor(data[1], featureNames=featureNames, pointNames=[pnames[1]])
+        assert toTest.points[1] == tmp1
+        assert toTest.points['4'] == tmp1
+
+        tmp2 = self.constructor(data[1:], featureNames=featureNames, pointNames=pnames[1:])
+        assert toTest.points[1:] == tmp2
+        assert toTest.points[1:3] == tmp2
+        assert toTest.points["4":"0"] == tmp2
+        assert toTest.points[[1,2,3]] == tmp2
+        assert toTest.points[['4', '7', '0']] == tmp2
+
+        tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
+        assert toTest.features[4] == tmp3
+        assert toTest.features['gender'] == tmp3
+
+        tmp4 = self.constructor([['f', 0], ['m', 0], ['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames)
+        assert toTest.features[4:3:-1] == tmp4
+        assert toTest.features["gender":"zero":-1] == tmp4
+        assert toTest.features[[4,3]] == tmp4
+        assert toTest.features[['gender', 'zero']] == tmp4
+
+        tmp5 = self.constructor([['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames[:2])
+        assert toTest.points[:1].features[4:3:-1] == tmp5
+        assert toTest.points[:"4"].features["gender":"zero":-1] == tmp5
+        assert toTest.points[['1', '4']].features[[4,3]] == tmp5
+        assert toTest.points[[0,1]].features[['gender', 'zero']] == tmp5
 
     ################
     # pointView #
