@@ -563,6 +563,9 @@ def replaceNumpyValues(data, toReplace, replaceWith):
             and isinstance(replaceWith, (int, float, numpy.number))):
         toReplace = [val for val in toReplace
                      if isinstance(val, (int, float, numpy.number))]
+        toReplace = numpy.array(toReplace)
+    else:
+        toReplace = numpy.array(toReplace, dtype=numpy.object_)
 
     # numpy.isin cannot handle nan replacement, so if nan is in
     # toReplace we instead set the flag to trigger nan replacement

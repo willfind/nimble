@@ -2217,9 +2217,11 @@ def test_numericalReplaceMissingWithNonNumeric():
 def test_handmadeTreatAsMissing():
     for t in returnTypes:
         nan = numpy.nan
-        data = [[1, 2, ""], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = nimble.createData(t, data, treatAsMissing=[numpy.nan, None, ""])
-        expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, "nan", "None"]]
+        data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
+        missingList = [nan, "", 5]
+        assert numpy.array(missingList).dtype != numpy.object_
+        toTest = nimble.createData(t, data, treatAsMissing=missingList)
+        expData = [[1, 2, nan], [nan, nan, 6], [7, nan, 9], [nan, "nan", "None"]]
         expRet = nimble.createData(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
