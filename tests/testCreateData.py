@@ -2495,35 +2495,6 @@ def test_DataOutputWithMissingDataTypes2D():
                 assert numpy.array_equal(orig.data.data[3:], expSparseOutput.data[3:])
 
 
-###################
-### Other tests ###
-###################
-
-def test_createData_csv_nonremoval_efficiency():
-    # setup the test fail trigger by replacing the function we don't want to
-    # called
-
-    def failFunction(arg1, arg2, arg3, arg4):
-        assert False  # the function we didn't want to be called was called
-
-    for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
-
-        # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
-            tmpCSV.write("1,2,3\n")
-            tmpCSV.flush()
-            objName = 'fromCSV'
-
-            try:
-                backup = nimble.helpers._removalCleanupAndSelectionOrdering
-                nimble.helpers._removalCleanupAndSelectionOrdering = failFunction
-                fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
-                assert fromList == fromCSV
-            finally:
-                nimble.helpers._removalCleanupAndSelectionOrdering = backup
-
-
 #################
 # Logging count #
 #################

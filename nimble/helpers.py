@@ -1404,148 +1404,6 @@ def _advancePastComments(openFile):
     return numSkipped
 
 
-def _selectionNameValidation(keep, hasNames, kind):
-    """
-    Helper for _loadcsvUsingPython to check that when points or features
-    are specified, if we have no source of names that only integer
-    values are in the specification list. This is generic over whether
-    points or features are selected.
-    """
-    kind = kind.lower()
-    paramName = 'keep' + kind.capitalize()
-    if keep != 'all':
-        if hasNames is False:
-            # in this case we have no names for reference,
-            # so no strings should be in the list
-            if not all(isinstance(val, int) for val in keep):
-                msg = "No " + kind + " names were provided by the user, and "
-                msg += "they are not being extracted from the data, "
-                msg += 'therefore only integer valued indices are '
-                msg += 'allowed in the ' + paramName + 's parameter'
-                raise InvalidArgumentValue(msg)
-
-
-def _csv_getFNamesAndAnalyzeRows(pointNames, featureNames, openFile,
-                                 lineReader, skippedLines, dialect):
-    """
-    If needed, take the first row from the lineReader to define the
-    feature names. Regardless of whether feature names are desired,
-    we will analyze the row we read to determine the number of columns,
-    the number of features (columns without point names), the line
-    number in the file of the row we use to define number of features /
-    columns, and whether or not that row was interpreted as feature
-    names or data.
-    """
-    if featureNames is True:
-        fnamesRow = next(lineReader)
-        # Number values in a row excluding point names
-        numFeatures = len(fnamesRow)
-        # Number of value in a row
-        numColumns = len(fnamesRow)
-
-        if pointNames is True:
-            fnamesRow = fnamesRow[1:]
-            numFeatures -= 1
-        retFNames = fnamesRow
-        columnsDefIndex = (lineReader.line_num - 1) + skippedLines
-        columnsDefSrc = "feature names"
-    else:
-        startPosition = openFile.tell()
-        filtered = itertools.ifilter(_filterCSVRow, openFile)
-        trialReader = csv.reader(filtered, dialect)
-        trialRow = next(trialReader)
-        # Number values in a row excluding point names
-        numFeatures = len(trialRow)
-        # Number of value in a row
-        numColumns = len(trialRow)
-        openFile.seek(startPosition)
-        columnsDefIndex = (trialReader.line_num - 1) + skippedLines
-        columnsDefSrc = "row"
-        retFNames = copy.copy(featureNames)
-
-    return retFNames, numFeatures, numColumns, columnsDefIndex, columnsDefSrc
-
-
-def _validateRowLength(row, numColumns, lineIndex, columnsDefSrc,
-                       columnsDefIndex, delimiter):
-    """
-    Given a row read from a csv line reader, and the expected length of
-    that row, raise an appropriately worded exception if there is a
-    discrepency.
-    """
-    if len(row) != numColumns:
-        msg = "The row on line " + str(lineIndex) + " has a length of "
-        msg += str(len(row)) + ". We expected a length of "
-        msg += str(numColumns) + ". The expected row length was defined "
-        msg += "by looking at the " + columnsDefSrc + " on line "
-        msg += str(columnsDefIndex) + " and using '" + delimiter
-        msg += "' as the separator."
-        raise FileFormatException(msg)
-
-
-def _setupAndValidationForFeatureSelection(
-        keepFeatures, retFNames, removeRecord, numFeatures, featsToRemoveSet):
-    """
-    Once feature names have been determined, we can validate and clean
-    the keep features parameter; transforming any name to an index, and
-    checking that all indices are valid. At the same time, we also setup
-    the data structures needed to record which features are being
-    excluded from every row we will eventually read in.
-    """
-    if keepFeatures != 'all':
-        cleaned = []
-        for val in keepFeatures:
-            selIndex = val
-            # this case can only be true if names were extracted or provided
-            if isinstance(val, six.string_types):
-                try:
-                    selIndex = retFNames.index(val)
-                except ValueError:
-                    msg = 'keepFeatures included a name (' + val + ') '
-                    msg += 'which was not found in the featureNames'
-                    raise InvalidArgumentValue(msg)
-            cleaned.append(selIndex)
-            assert selIndex is not None
-
-        # check for duplicates, and that values are in range
-        found = {}
-        for i in range(len(cleaned)):
-            if cleaned[i] in found:
-                msg = "Duplicate values were present in the keepFeatures "
-                msg += "parameter, at indices ("
-                msg += str(found[cleaned[i]])
-                msg += ") and ("
-                msg += str(i)
-                msg += "). The values were ("
-                msg += str(keepFeatures[found[cleaned[i]]])
-                msg += ") and ("
-                msg += str(keepFeatures[i])
-                msg += ") respectably."
-                raise InvalidArgumentValue(msg)
-            else:
-                found[cleaned[i]] = i
-
-            if cleaned[i] < 0 or cleaned[i] >= numFeatures:
-                msg = "Invalid value in keepFeatures parameter at index ("
-                msg += str(i)
-                msg += "). The value ("
-                msg += str(cleaned[i])
-                msg += ") is not in the range of 0 to "
-                msg += str(numFeatures - 1)  # we want inclusive end points
-                raise InvalidArgumentValue(msg)
-
-        # initialize, but only if we know we'll be adding something
-        keepFeatures = cleaned
-        if len(cleaned) > 0:
-            removeRecord[0] = []
-        for i in range(numFeatures):
-            if i not in cleaned:
-                featsToRemoveSet.add(i)
-                removeRecord[0].append(i)
-
-    return keepFeatures
-
-
 def _raiseSelectionDuplicateException(kind, i1, i2, values):
     msg = "Duplicate or equivalent values were present in the "
     msg += kind
@@ -1559,74 +1417,6 @@ def _raiseSelectionDuplicateException(kind, i1, i2, values):
     msg += str(values[i2])
     msg += ") respectably."
     raise InvalidArgumentValue(msg)
-
-
-def _validationForPointSelection(keepPoints, pointNames):
-    if keepPoints == 'all':
-        return 'all'
-
-    found = {}
-    cleaned = []
-    for i in range(len(keepPoints)):
-        if keepPoints[i] in found:
-            _raiseSelectionDuplicateException(
-                "keepPoints", found[keepPoints[i]], i, keepPoints)
-        else:
-            found[keepPoints[i]] = i
-
-        if (not isinstance(keepPoints[i], six.string_types)
-                and keepPoints[i] < 0):
-            msg = "Invalid value in keepPoints parameter at index ("
-            msg += str(i)
-            msg += "). The value ("
-            msg += str(keepPoints[i])
-            msg += ") was less than 0, yet we only allow valid non-negative "
-            msg += "integer indices or point names as values."
-            raise InvalidArgumentValue(msg)
-
-        if isinstance(pointNames, list):
-            if isinstance(keepPoints[i], six.string_types):
-                try:
-                    cleaned.append(pointNames.index(keepPoints[i]))
-                except ValueError:
-                    msg = 'keepPoints included a name (' + keepPoints[i] + ') '
-                    msg += 'which was not found in the provided pointNames'
-                    raise InvalidArgumentValue(msg)
-            else:
-                cleaned.append(keepPoints[i])
-
-    if cleaned != []:
-        found = {}
-        for i in range(len(cleaned)):
-            if cleaned[i] in found:
-                msg = "Duplicate values were present in the keepPoints "
-                msg += "parameter, at indices ("
-                msg += str(found[cleaned[i]])
-                msg += ") and ("
-                msg += str(i)
-                msg += "). The values were ("
-                msg += str(keepPoints[found[cleaned[i]]])
-                msg += ") and ("
-                msg += str(keepPoints[i])
-                msg += ") respectably."
-                raise InvalidArgumentValue(msg)
-            else:
-                found[cleaned[i]] = i
-
-            if cleaned[i] < 0 or cleaned[i] >= len(pointNames):
-                msg = "Invalid value in keepPoints parameter at index ("
-                msg += str(i)
-                msg += "). The value ("
-                msg += str(cleaned[i])
-                msg += ") is not in the range of 0 to "
-                msg += str(len(pointNames) - 1)  # we want inclusive end points
-                raise InvalidArgumentValue(msg)
-
-        # only do this if cleaned is non-empty / we have provided pointnames
-        return cleaned
-
-    # only get here if cleaned was empty / point names will be extracted
-    return keepPoints
 
 
 def _namesDictToList(names, kind, paramName):
@@ -1819,8 +1609,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 raise InvalidArgumentValue(msg)
         keepFeatures = keepIndices
         retFNames = keepNames
-        if featureNames is True:
-            firstRowLength = len(retFNames)
     elif limitFeatures:
         # featureNames is False, can only handle index values
         if any(isinstance(ftID, str) for ftID in keepFeatures):
@@ -1875,16 +1663,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
         # this point will be used
         if keepPoints == 'all' or i in keepPoints or ptName in keepPoints:
-            if limitFeatures:
-                limitedRow = []
-                for ftID in keepFeatures:
-                    if ftID < len(row):
-                        limitedRow.append(row[ftID])
-                    else:
-                        msg = "The index " + str(ftID) + "is greater than "
-                        msg + "the number of features in the data"
-                        raise InvalidArgumentValue(msg)
-                row = limitedRow
             if firstRowLength is None:
                 firstRowLength = len(row)
                 lengthDefiningLine = skippedLines + i + 1
@@ -1897,6 +1675,11 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 msg += str(lengthDefiningLine) + " and using '" + delimiter
                 msg += "' as the separator."
                 raise FileFormatException(msg)
+            if limitFeatures:
+                limitedRow = []
+                for ftID in keepFeatures:
+                    limitedRow.append(row[ftID])
+                row = limitedRow
             row = list(map(_intFloatOrString, row))
             if ignoreNonNumericalFeatures:
                 for idx, val in enumerate(row):
@@ -1955,191 +1738,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retPNames = pointNames
 
     return (retData, retPNames, retFNames, True)
-
-
-def _adjustNamesGivenKeepList(retNames, keepList, needsRemoval):
-    # In this case neither sorting or removal is necessary
-    if keepList == 'all':
-        return retNames
-
-    # if we're already sorted and we don't need to do removal, we
-    # can return.
-    if sorted(keepList, key=Py2Key) == keepList and not needsRemoval:
-        return retNames
-
-    # if needed, resolve names to indices for easy indexing during
-    # the sort
-    for i, val in enumerate(keepList):
-        if isinstance(val, six.string_types):
-            keepList[i] = retNames.index(val)
-
-    newRetFNames = []
-    for val in keepList:
-        newRetFNames.append(retNames[val])
-    retNames = newRetFNames
-
-    return retNames
-
-
-def _removalCleanupAndSelectionOrdering(
-        data, record, fullRemoveList, keepFeatures):
-    """
-    Adjust the given data so that the features to remove as contained in
-    the dict record are appropriately removed from each row. Since
-    removal is done only after first sighting of an unwanted value, then
-    the rows prior to the first sighting still have that feature.
-    Therefore, this function iterates the rows in the data, removing
-    features until the point where they were discovered.
-
-    Also: if keepFeatures defines an ordering other than the one present
-    in the file, then we will adjust the order of the data in this
-    helper. The actual selection has already occured during the csv
-    reading loop.
-
-    Because data shares references with retData in _loadcsvUsingPython,
-    this does not change the contents of the parameter data, only the
-    lists referenced by it.
-    """
-    # feature order adjustment will take place at the same time as unwanted
-    # column removal. This just defines a triggering variable.
-    adjustFeatureOrder = False
-    if (keepFeatures != 'all'
-            and keepFeatures != sorted(keepFeatures, key=Py2Key)):
-        adjustFeatureOrder = True
-        # maps the index of the column to the position that it should
-        # be copied into.
-        reverseKeepFeatures = {}
-        # since we are doing this lookup after we have selected
-        # some features, we have to reindex according to those
-        # that are currently present. Since they are stored in the
-        # file in lexigraphical order, we use the sorted selection
-        # list to define the reindexing
-        sortedKeepFeatures = sorted(keepFeatures, key=Py2Key)
-        for i in range(len(sortedKeepFeatures)):
-            reIndexed = sortedKeepFeatures[i]
-            reverseKeepFeatures[i] = keepFeatures.index(reIndexed)
-
-    # need to sort keep points. the index into the row maps into the
-    # sorted list, which gives the key to reverseKeepFeatures
-
-    # remaining features to be removed, indexed relative to all possible
-    # features in the csv file
-    absRemoveList = fullRemoveList
-    absRemoveList.sort()
-    # remaining features to be removed, reindexed given the knowledge of
-    # which points have already been removed
-    relRemoveList = copy.copy(absRemoveList)
-
-    copySpace = [None] * len(data[len(data) - 1])
-
-    for rowIndex in range(len(data)):
-        # check if some feature was added at this row, and if so, delete
-        # those indices from the removalList, adjusting feature IDs to be
-        # relative the new length as you go
-        if rowIndex in record:
-            # ASSUMPTION: the lists of added indices in the record are
-            # sorted
-            addedIndex = 0  # index into the list held in record[rowIndex]
-            shift = 0  # the amount we have to shift each index downward
-            copyIndex = 0
-            for i in range(len(absRemoveList)):
-                if (addedIndex < len(record[rowIndex])
-                        and absRemoveList[i] == record[rowIndex][addedIndex]):
-                    shift += 1
-                    addedIndex += 1
-                else:
-                    absRemoveList[copyIndex] = absRemoveList[i]
-                    relRemoveList[copyIndex] = relRemoveList[i] - shift
-                    copyIndex += 1
-            absRemoveList = absRemoveList[:copyIndex]
-            relRemoveList = relRemoveList[:copyIndex]
-
-        # The following loop will be copying inplace. Note though, that
-        # since numCopied will then be used as the index to copy into, and
-        # it will always be less than or equal to i, so we never corrupt
-        # the values we iterate over.
-        remIndex = 0
-        # If no feature reordering will take place, this serves as the index
-        # to copy into. If feature reordering will take place, this is used
-        # as the index of the feature, to do a lookup for the copy index.
-        numCopied = 0
-
-        for i in range(len(data[rowIndex])):
-            if remIndex < len(relRemoveList) and i == relRemoveList[remIndex]:
-                remIndex += 1
-            else:
-                # the index into data[rowIndex] where you will be copying
-                # this particular value
-                featureIndex = numCopied
-                if adjustFeatureOrder:
-                    featureIndex = reverseKeepFeatures[numCopied]
-
-                copySpace[featureIndex] = data[rowIndex][i]
-                numCopied += 1
-
-        # copy the finalized point back into the list referenced by data
-        for i in range(len(copySpace)):
-            data[rowIndex][i] = copySpace[i]
-
-        # TODO: run time trials to compare pop vs copying into new list
-        needToPop = len(data[rowIndex]) - numCopied
-        for i in range(needToPop):
-            data[rowIndex].pop()
-
-
-def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
-                        ignoreNonNumericalFeatures):
-    """
-    Process a row as read by a python csv reader such that the values
-    are converted to numeric types if possible, and the unwanted
-    features are filtered (with the appropriate book keeping operations
-    performed).
-
-    Parameters
-    ----------
-    row : list
-        A python list of string values
-    pointIndex : int
-        The index of this row, as counted by the number of rows returned
-        by the csv reader, excluding a row if it was used as the
-        pointNames. Equivalent to the index of the point matching this
-        row in the returned data.
-    record : dict
-        Maps row indices to those features discovered to be undesirable
-        at that row index.
-    toRemoveSet : set
-        Contains all of the features to ignore, that are known up to
-        this row. Any features we discover we want to ignore at this row
-        are added to this set in this function.
-    ignoreNonNumericalFeatures : bool
-        Flag indicating whether features containing non numerical values
-        will be removed from the data.
-    """
-    # We use copying of values and then returning the appropriate range
-    # to simulate removal of unwanted features
-    copyIndex = 0
-    for i in range(len(row)):
-        value = row[i]
-        processed = _intFloatOrString(value)
-
-        # A known feature to ignore
-        if i in toRemoveSet:
-            pass
-        # A new feature to ignore, have to do book keeping
-        elif (isinstance(processed, six.string_types)
-              and ignoreNonNumericalFeatures):
-            if pointIndex in record:
-                record[pointIndex].append(i)
-            else:
-                record[pointIndex] = [i]
-
-            toRemoveSet.add(i)
-        else:
-            row[copyIndex] = processed
-            copyIndex += 1
-
-    row = row[:copyIndex]
-    return row
 
 
 # Register how you want all the various input output combinations
