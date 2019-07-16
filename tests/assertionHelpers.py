@@ -38,9 +38,17 @@ def logCountAssertionFactory(count):
 noLogEntryExpected = logCountAssertionFactory(0)
 oneLogEntryExpected = logCountAssertionFactory(1)
 
+
 class LazyNameGenerationAssertionError(AssertionError):
     pass
 
 def assertNoNamesGenerated(obj):
     if obj.points._namesCreated() or obj.features._namesCreated():
         raise LazyNameGenerationAssertionError
+
+
+class CalledFunctionException(Exception):
+    pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
