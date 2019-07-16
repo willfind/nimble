@@ -111,21 +111,23 @@ class ListAxis(Axis):
     def _duplicate_implementation(self, totalCopies, copyValueByValue):
         if isinstance(self, Points):
             if copyValueByValue:
-                duplicated = [lst.copy() for lst in self._source.data
+                duplicated = [list(lst) for lst in self._source.data
                               for _ in range(totalCopies)]
             else:
-                duplicated = [lst.copy() for _ in range(totalCopies)
+                duplicated = [list(lst) for _ in range(totalCopies)
                               for lst in self._source.data]
         else:
-            if copyValueByValue:
-                duplicated = []
-                for lst in self._source.data:
+            duplicated = []
+            for lst in self._source.data:
+                if not isinstance(lst, list): # FeatureViewer
+                    lst = list(lst)
+                if copyValueByValue:
                     extended = []
                     for v in lst:
                         extended.extend([v] * totalCopies)
-                    duplicated.append(extended)
-            else:
-                duplicated = [lst * totalCopies for lst in self._source.data]
+                else:
+                    extended = lst * totalCopies
+                duplicated.append(extended)
         return duplicated
 
     ####################

@@ -848,17 +848,17 @@ class Axis(object):
                 for i in range(totalCopies):
                     currIdx = (totalCopies * idx) + i
                     if currIdx < len(origNames):
-                        namesToDuplicate[currIdx] = name + "_" + str(i)
+                        namesToDuplicate[currIdx] = name + "_" + str(i + 1)
                     else:
-                        namesToDuplicate.append(name + "_" + str(i))
+                        namesToDuplicate.append(name + "_" + str(i + 1))
         elif namesToDuplicate is not None:
             origNames = namesToDuplicate.copy()
             for i in range(totalCopies):
                 for idx, name in enumerate(origNames):
                     if i == 0:
-                        namesToDuplicate[idx] = name + "_" + str(i)
+                        namesToDuplicate[idx] = name + "_" + str(i + 1)
                     else:
-                        namesToDuplicate.append(name + "_" + str(i))
+                        namesToDuplicate.append(name + "_" + str(i + 1))
 
         return createDataNoValidation(self._source.getTypeString(), duplicated,
                                       pointNames=ptNames, featureNames=ftNames)

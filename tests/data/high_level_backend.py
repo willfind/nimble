@@ -1510,22 +1510,33 @@ class HighLevelDataSafe(DataTestObject):
     # points.duplicate #
     ####################
 
+    @raises(CalledFunctionException)
+    @mock.patch('nimble.data.Base.copy', calledException)
+    def test_points_duplicate_OneCopyCallsCopy(self):
+        data = [0, 1, 2, 3]
+        ptNames = ['pt']
+        ftNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.points.duplicate(totalCopies=1)
+
+    @noLogEntryExpected
     def test_points_duplicate_1D(self):
         data = [0, 1, 2, 3]
-        ptNames = ['pt0']
+        ptNames = ['pt']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
         duplicated1 = toTest.points.duplicate(3, copyPointByPoint=False)
         duplicated2 = toTest.points.duplicate(3, copyPointByPoint=True)
 
         expData = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]]
-        expPtNames = ['pt0_0', 'pt0_1', 'pt0_2']
+        expPtNames = ['pt_1', 'pt_2', 'pt_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
         assert duplicated1 == exp
         # return is same for either copyPointByPoint when 1D
         assert duplicated1 == duplicated2
 
+    @noLogEntryExpected
     def test_points_duplicate_2D_copyPointByPointFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -1536,11 +1547,12 @@ class HighLevelDataSafe(DataTestObject):
         expData = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0],
                    [1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0],
                    [1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
-        expPtNames = ['1_0', '4_0', '0_0', '1_1', '4_1', '0_1','1_2', '4_2', '0_2']
+        expPtNames = ['1_1', '4_1', '0_1', '1_2', '4_2', '0_2','1_3', '4_3', '0_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
         assert duplicated == exp
 
+    @noLogEntryExpected
     def test_points_duplicate_2D_copyPointByPointTrue(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -1551,7 +1563,7 @@ class HighLevelDataSafe(DataTestObject):
         expData = [[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0],
                    [4, 5, 6, 0], [4, 5, 6, 0], [4, 5, 6, 0],
                    [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        expPtNames = ['1_0', '1_1', '1_2', '4_0', '4_1', '4_2', '0_0', '0_1', '0_2']
+        expPtNames = ['1_1', '1_2', '1_3', '4_1', '4_2', '4_3', '0_1', '0_2', '0_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
         assert duplicated == exp
@@ -1572,6 +1584,16 @@ class HighLevelDataSafe(DataTestObject):
     # features.duplicate #
     ######################
 
+    @raises(CalledFunctionException)
+    @mock.patch('nimble.data.Base.copy', calledException)
+    def test_features_duplicate_OneCopyCallsCopy(self):
+        data = [0, 1, 2, 3]
+        ptNames = ['pt']
+        ftNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+        duplicated = toTest.features.duplicate(totalCopies=1)
+
+    @noLogEntryExpected
     def test_features_duplicate_1D(self):
         data = [[0], [1], [2], [3]]
         ptNames = ['pt0', 'pt1', 'pt2', 'pt3']
@@ -1581,13 +1603,14 @@ class HighLevelDataSafe(DataTestObject):
         duplicated2 = toTest.features.duplicate(3, copyFeatureByFeature=True)
 
         expData = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]]
-        expFtNames = ['a_0', 'a_1', 'a_2']
+        expFtNames = ['a_1', 'a_2', 'a_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
         assert duplicated1 == exp
         # return is same for either copyFeatureByFeature when 1D
         assert duplicated1 == duplicated2
 
+    @noLogEntryExpected
     def test_features_duplicate_2D_copyFeatureByFeatureFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -1598,11 +1621,12 @@ class HighLevelDataSafe(DataTestObject):
         expData = [[1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
                    [4, 5, 6, 0, 4, 5, 6, 0, 4, 5, 6, 0],
                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        expFtNames = ['a_0', 'b_0', 'c_0', 'd_0', 'a_1', 'b_1', 'c_1', 'd_1', 'a_2', 'b_2', 'c_2', 'd_2']
+        expFtNames = ['a_1', 'b_1', 'c_1', 'd_1', 'a_2', 'b_2', 'c_2', 'd_2', 'a_3', 'b_3', 'c_3', 'd_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
         assert duplicated == exp
 
+    @noLogEntryExpected
     def test_features_duplicate_2D_copyFeatureByFeatureTrue(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -1613,7 +1637,7 @@ class HighLevelDataSafe(DataTestObject):
         expData = [[1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 0, 0],
                    [4, 4, 4, 5, 5, 5, 6, 6, 6, 0, 0, 0],
                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        expFtNames = ['a_0', 'a_1', 'a_2', 'b_0', 'b_1', 'b_2', 'c_0', 'c_1', 'c_2', 'd_0', 'd_1', 'd_2']
+        expFtNames = ['a_1', 'a_2', 'a_3', 'b_1', 'b_2', 'b_3', 'c_1', 'c_2', 'c_3', 'd_1', 'd_2', 'd_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
         assert duplicated == exp
