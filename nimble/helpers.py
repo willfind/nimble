@@ -563,6 +563,9 @@ def replaceNumpyValues(data, toReplace, replaceWith):
             and isinstance(replaceWith, (int, float, numpy.number))):
         toReplace = [val for val in toReplace
                      if isinstance(val, (int, float, numpy.number))]
+        toReplace = numpy.array(toReplace)
+    else:
+        toReplace = numpy.array(toReplace, dtype=numpy.object_)
 
     # numpy.isin cannot handle nan replacement, so if nan is in
     # toReplace we instead set the flag to trigger nan replacement
@@ -1746,210 +1749,210 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
-    # after _checkCSV_for_Names then both pointNames and featureNames
-    # should either be True, False, a list or a dict. In the case of
-    # True, we setup an empty list to put extracted names into
-    if pointNames is True:
-        retPNames = []
-    else:
-        retPNames = pointNames
-
-    # Extract names from first row if needed, record number of
-    # columns in a row, and record a few book-keeping details
-    # to be output in case of an exception
-    namesAndMore = _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines, dialect)
-    retFNames = namesAndMore[0]
-    numFeatures = namesAndMore[1]
-    numColumns = namesAndMore[2]
-    columnsDefIndex = namesAndMore[3]
-    columnsDefSrc = namesAndMore[4]
-
-    # Validation: check that if we have no source of names, and specific
-    # values are specified for selection, that they are specified only
-    # with integer indices, NOT names.
-    hasPointNames = not pointNames is False
-    hasFeatureNames = not featureNames is False
-    _selectionNameValidation(keepPoints, hasPointNames, 'point')
-    _selectionNameValidation(keepFeatures, hasFeatureNames, 'feature')
-
-    _validationForPointSelection(keepPoints, pointNames)
-    notYetFoundPoints = None
-    if keepPoints != 'all':
-        notYetFoundPoints = {}
-        for i in range(len(keepPoints)):
-            notYetFoundPoints[keepPoints[i]] = i
-
-    # This is a record of the discovery of features to remove. It maps
-    # the index of a point in the data to the features discovered to be
-    # undesirable at that point. Thus, after all of the file has been read
-    # into memory, this record can be used to remove those features from
-    # the points prior to their discovery.
-    removeRecord = {}
-
-    # A set containing the indices of all features that are being removed
-    # from the data.
-    featsToRemoveSet = set([])
-
-    # now that we have featureNames, we can do full validation of both
-    # the feature names and the keepFeatures parameter. We also setup
-    # the removal record wrt columns that do not represent selected
-    # features.
-    keepFeatures = _setupAndValidationForFeatureSelection(
-        keepFeatures, retFNames, removeRecord, numFeatures, featsToRemoveSet)
-
-    # Variables to be used in the main loop for reading the csv data.
-    # data is where the data from the file will be placed, in the same
-    # order as in the file.
-    data = []
-    # retData is where the data from the file will be placed, in the
-    # order specified by keepPoints if that order doesn't match the
-    # order in the file. shares references to the same lists as the
-    # variable data, so lists modified through data share changes with
-    # retData. Will be None and ignored if no reordering needs to take
-    # place.
-    retData = None
-    if keepPoints != 'all' and keepPoints != sorted(keepPoints, key=Py2Key):
-        retData = [None] * len(keepPoints)
-        keepPointsValToIndex = {}
-        for i in range(len(keepPoints)):
-            keepPointsValToIndex[keepPoints[i]] = i
-
-    # incremented at beginning of loop, so starts negative.
-    # addedIndex is the index of the list that matches this row in the returned
-    # list of lists
-    addedIndex = -1
-    # pointIndex is the index of potential points read off from lineReader.
-    # It is always incremented, even if that point is no selected
-    pointIndex = -1
-    # lineIndex is the index of the newline sepearated row that
-    # the lineReader will return next. Inclueds the lines skipped
-    # at the beginning of the file
-    lineIndex = skippedLines
-
-    # Read through the csv file, row by row.
-    # The csv reader gives a list of string values for each row
-    for row in lineReader:
-        addedIndex += 1
-        pointIndex += 1
-        lineIndex = lineReader.line_num + skippedLines
-
-        # Validation: require equal length of all rows
-        _validateRowLength(
-            row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex,
-            delimiter=dialect.delimiter)
-
-        # grab the pointName if needed
-        currPName = None
+    firstRowLength = None
+    if featureNames is True:
+        retFNames = next(lineReader)
         if pointNames is True:
-            currPName = row[0]
+            retFNames = retFNames[1:]
+        firstRowLength = len(retFNames)
+        lengthDefiningLine = skippedLines
+        skippedLines += 1
+    else:
+        retFNames = featureNames
+
+    # for many cases, we can determine if values in keepFeatures are valid
+    # indices now but when keepFeaturesValidated is False we need to wait
+    # until we have access to the first point before we can determine if
+    # index values are valid
+    keepFeaturesValidated = True
+
+    # at this stage, retFNames is either a list or False
+    # modifications are necessary if limiting features
+    limitFeatures = keepFeatures != 'all'
+    limitPoints = keepPoints != 'all'
+    if (limitFeatures and retFNames and len(retFNames) == len(keepFeatures)
+            and featureNames is not True):
+        # featureNames list matches the features in keepFeatures
+        keepFtIndices = []
+        for ftID in keepFeatures:
+            # cannot determine the index location of the feature by name since
+            # featureNames is only defining the names of the returned features
+            if isinstance(ftID, str):
+                msg = "Since featureNames were only provided for the values "
+                msg += "in keepFeatures, keepFeatures can contain only index "
+                msg += "values referencing the feature's location in the "
+                msg += "data. If attempting to use keepFeatures to reorder "
+                msg += "all features, instead create the object first then "
+                msg += "sort the features."
+                raise InvalidArgumentValue(msg)
+            elif ftID >= 0:
+                keepFtIndices.append(ftID)
+                keepFeaturesValidated = False
+            else:
+                msg = "Negative index values are not permitted, found "
+                msg += str(ftID) + "in keepFeatures"
+                raise InvalidArgumentValue(msg)
+        keepFeatures = keepFtIndices
+    elif limitFeatures and retFNames:
+        # given or extacted all featureNames, sort and limit using keepFeatures
+        keepIndices = []
+        keepNames = []
+        for ftID in keepFeatures:
+            if isinstance(ftID, str) and ftID in retFNames:
+                keepIndices.append(retFNames.index(ftID))
+                keepNames.append(ftID)
+            elif isinstance(ftID, str):
+                msg = "The value '" + ftID + "' in keepFeatures is not a valid "
+                msg += "featureName"
+                raise InvalidArgumentValue(msg)
+            # index values
+            elif ftID >= 0 and ftID < len(retFNames):
+                keepIndices.append(ftID)
+                keepNames.append(retFNames[ftID])
+            elif ftID >= 0:
+                msg = "The index " + str(ftID) + " is greater than the number "
+                msg += "of features in the data " + str(len(retFNames))
+                raise InvalidArgumentValue(msg)
+            else:
+                msg = "Negative index values are not permitted, found "
+                msg += str(ftID) + "in keepFeatures"
+                raise InvalidArgumentValue(msg)
+        keepFeatures = keepIndices
+        retFNames = keepNames
+        if featureNames is True:
+            firstRowLength = len(retFNames)
+    elif limitFeatures:
+        # featureNames is False, can only handle index values
+        if any(isinstance(ftID, str) for ftID in keepFeatures):
+            msg = "keepFeatures can contain only index values because no "
+            msg += "featureNames were provided"
+            raise InvalidArgumentValue(msg)
+        keepFeaturesValidated = False
+
+    if limitPoints and any(isinstance(ptID, str) for ptID in keepPoints):
+        if not pointNames:
+            msg = "keepPoints can contain only index values since "
+            msg += "no pointNames were provided"
+            raise InvalidArgumentValue(msg)
+        # cannot determine the index location of the point by name since
+        # pointNames is only defining the names of the returned points
+        elif pointNames is not True and len(pointNames) == len(keepPoints):
+            msg = "Since pointNames were only provided for the values in "
+            msg += "keepPoints, keepPoints can contain only index values "
+            msg += "referencing the point's location in the data. If "
+            msg += "attempting to use keepPoints to reorder all points, "
+            msg += "instead create the object first then sort the points."
+            raise InvalidArgumentValue(msg)
+
+    extractedPointNames = []
+    nonNumericFeatures = set()
+    locatedPoints = []
+    retData = []
+    if limitPoints:
+        # we want to insert the points and names in the desired order
+        retData = [None] * len(keepPoints)
+        extractedPointNames = [None] * len(keepPoints)
+
+    # lineReader is now at the first line of data
+    for i, row in enumerate(lineReader):
+        if pointNames is True:
+            ptName = row[0]
             row = row[1:]
-            # validate keepPoints, given new information
-            if (keepPoints != 'all'
-                    and pointIndex in keepPoints
-                    and currPName in keepPoints):
-                _raiseSelectionDuplicateException(
-                    "keepPoints", keepPoints.index(pointIndex),
-                    keepPoints.index(currPName), keepPoints)
-        elif isinstance(pointNames, list):
-            currPName = pointNames[pointIndex]
-
-        # Run through selection criteria, adjusting variables as needed,
-        # and raising exceptions if needed.
-        isSelected = False
-        if keepPoints == 'all':
-            isSelected = True
-        elif currPName in keepPoints:
-            del notYetFoundPoints[currPName]
-            if retData is not None:
-                currIndex = keepPointsValToIndex[currPName]
-                keepPointsValToIndex[pointIndex] = currIndex
-                del keepPointsValToIndex[currPName]
-            isSelected = True
-        elif pointIndex in keepPoints:
-            del notYetFoundPoints[pointIndex]
-            isSelected = True
-
-        # we only do this if this row is destined for the data, not the
-        # feature names
-        if isSelected:
-            # add point name if needed
-            if pointNames is True:
-                retPNames.append(currPName)
-            # process the remaining data
-            toAdd = convertAndFilterRow(row, addedIndex, removeRecord,
-                                        featsToRemoveSet,
-                                        ignoreNonNumericalFeatures)
-            data.append(toAdd)
-            if retData is not None:
-                retData[keepPointsValToIndex[pointIndex]] = toAdd
+        elif pointNames and len(pointNames) > len(keepPoints):
+            ptName = pointNames[i]
         else:
-            # not selected, so move on to the next row; and index
-            # as if it was never present
-            addedIndex -= 1
+            ptName = None
+        if not keepFeaturesValidated:
+            if any(val >= len(row) for val in keepFeatures):
+                for val in keepFeatures:
+                    if val > len(row):
+                        msg = "The index " + str(val) + " is outside the "
+                        msg += "range of possible indices, 0 to "
+                        msg += str(len(row) - 1)
+                        raise InvalidArgumentValue(msg)
+            # only need to do the validation once
+            keepFeaturesValidated = True
 
-        # In this case we have grabbed all of the desired points, so
-        # we can stop reading the file
-        if notYetFoundPoints is not None and len(notYetFoundPoints) == 0:
-            break
+        # this point will be used
+        if keepPoints == 'all' or i in keepPoints or ptName in keepPoints:
+            if limitFeatures:
+                limitedRow = []
+                for ftID in keepFeatures:
+                    if ftID < len(row):
+                        limitedRow.append(row[ftID])
+                    else:
+                        msg = "The index " + str(ftID) + "is greater than "
+                        msg + "the number of features in the data"
+                        raise InvalidArgumentValue(msg)
+                row = limitedRow
+            if firstRowLength is None:
+                firstRowLength = len(row)
+                lengthDefiningLine = skippedLines + i + 1
+            elif firstRowLength != len(row):
+                delimiter = dialect.delimiter
+                msg = "The row on line " + str(skippedLines + i + 1) + " has "
+                msg += "length " + str(len(row)) + ". We expected length "
+                msg += str(firstRowLength) + ". The expected row length was "
+                msg += "defined by looking at the row on line "
+                msg += str(lengthDefiningLine) + " and using '" + delimiter
+                msg += "' as the separator."
+                raise FileFormatException(msg)
+            row = list(map(_intFloatOrString, row))
+            if ignoreNonNumericalFeatures:
+                for idx, val in enumerate(row):
+                    if isinstance(val, str):
+                        nonNumericFeatures.add(idx)
+            if keepPoints == 'all':
+                retData.append(row)
+                if pointNames is True:
+                    extractedPointNames.append(ptName)
+            else:
+                if ptName is not None and ptName in keepPoints:
+                    locate = ptName
+                elif i in keepPoints:
+                    locate = i
+                else:
+                    locate = pointNames[i]
+                location = keepPoints.index(locate)
+                locatedPoints.append(locate)
+                retData[location] = row
+                if pointNames is True:
+                    extractedPointNames[location] = ptName
 
-    # check to see if all of the wanted points in keepPoints were
-    # found in the data
-    if notYetFoundPoints is not None and len(notYetFoundPoints) > 0:
-        msg = "The following entries in keepPoints were not found "
-        msg += "in the data:"
-        for key in notYetFoundPoints:
-            msg += " (" + str(key) + ")"
+    if ignoreNonNumericalFeatures:
+        if retFNames:
+            retFNames = [retFNames[i] for i in range(len(retFNames))
+                         if i not in nonNumericFeatures]
+        removeNonNumeric = []
+        for row in retData:
+            removeNonNumeric.append([row[i] for i in range(len(row))
+                                     if i not in nonNumericFeatures])
+        retData = removeNonNumeric
+
+    if limitPoints and len(keepPoints) != len(locatedPoints):
+        unlocated = []
+        for ptID in keepPoints:
+            if ptID not in locatedPoints:
+                unlocated.append(ptID)
+
+        msg = "The points " + ",".join(map(str, unlocated)) + " were not "
+        msg += "found in the data"
         raise InvalidArgumentValue(msg)
 
-    # the List form of featsToRemoveSet
-    featsToRemoveList = list(featsToRemoveSet)
-
-    # Since the convertAndFilterRow helper only removes unwanted features
-    # after they've been discovered, we need to remove the from the earlier
-    # part of the data after it has all been read into memory. Also, we
-    # may need to adjust the order of features and points due to the
-    # selection paramters, and this is a convenient and efficient place to
-    # do so. If we don't need to do either of those things, then we
-    # don't even enter the helper
-    removalNeeded = (list(removeRecord.keys()) != [0]
-                     and list(removeRecord.keys()) != [])
-    reorderNeeded = (keepFeatures != 'all'
-                     and keepFeatures != sorted(keepFeatures, key=Py2Key))
-    if removalNeeded or reorderNeeded:
-        _removalCleanupAndSelectionOrdering(
-            data, removeRecord, featsToRemoveList, keepFeatures)
-
-    # adjust WRT removed columns
-    if isinstance(retFNames, list):
-        copyIndex = 0
-        # ASSUMPTION: featsToRemoveList is a sorted list
-        removeListIndex = 0
-        for i in range(len(retFNames)):
-            # if it is a feature that has been removed from the data,
-            # we skip over and don't copy it.
-            if (removeListIndex < len(featsToRemoveList)
-                    and i == featsToRemoveList[removeListIndex]):
-                removeListIndex += 1
+    if pointNames is True:
+        retPNames = extractedPointNames
+    elif pointNames and (keepPoints == 'all' or len(retData) == len(pointNames)):
+        retPNames = pointNames
+    elif pointNames:
+        # we need to limit pointNames to kept points
+        retPNames = []
+        for ptID in keepPoints:
+            if isinstance(ptID, str):
+                retPNames.append(ptID)
             else:
-                retFNames[copyIndex] = retFNames[i]
-                copyIndex += 1
-        retFNames = retFNames[:copyIndex]
-
-        needsRemoval = False  # This was done directly above
-        retFNames = _adjustNamesGivenKeepList(
-            retFNames, keepFeatures, needsRemoval)
-
-    if isinstance(retPNames, list):
-        # we only need to do removal if names were provided. If
-        # they were extracted, they were only added if that row was
-        # kept
-        needsRemoval = isinstance(pointNames, list)
-        retPNames = _adjustNamesGivenKeepList(
-            retPNames, keepPoints, needsRemoval)
-
-    if retData is None:
-        retData = data
+                retPNames.append(pointNames[ptID])
+    else:
+        retPNames = pointNames
 
     return (retData, retPNames, retFNames, True)
 
