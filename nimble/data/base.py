@@ -2060,6 +2060,34 @@ class Base(object):
         handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
                       Base.transpose)
 
+    @property
+    def T(self):
+        """
+        Invert the feature and point indices of the data.
+
+        Return this object with inverted feature and point indices,
+        including inverting point and feature names, if available.
+
+        Examples
+        --------
+        >>> raw = [[1, 2, 3], [4, 5, 6]]
+        >>> data = nimble.createData('List', raw)
+        >>> data
+        List(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            )
+        >>> data.T
+        List(
+            [[1.000 4.000]
+             [2.000 5.000]
+             [3.000 6.000]]
+            )
+        """
+        ret = self.copy()
+        ret.transpose(useLog=False)
+        return ret
+
 
     def referenceDataFrom(self, other, useLog=None):
         """
