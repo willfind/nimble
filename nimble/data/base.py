@@ -785,14 +785,14 @@ class Base(object):
             [[1.000 0.000 0.000]
              [0.000 1.000 0.000]
              [0.000 0.000 1.000]
-             [0.000 1.000 0.000]]
-            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
+             [0.000 0.000 1.000]]
+            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testData
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'f':1}
+            [[0.000 1.000 0.000]
+             [1.000 0.000 0.000]]
+            pointNames={'e':0, 'd':1}
             )
 
         Returning a 4-tuple.
@@ -814,28 +814,28 @@ class Base(object):
             [[1.000 0.000 0.000]
              [0.000 1.000 0.000]
              [0.000 0.000 1.000]
-             [0.000 1.000 0.000]]
-            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
+             [0.000 0.000 1.000]]
+            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> trainY
         Matrix(
             [[1.000]
              [2.000]
              [3.000]
-             [2.000]]
-            pointNames={'d':0, 'b':1, 'c':2, 'e':3}
+             [3.000]]
+            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testX
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'f':1}
+            [[0.000 1.000 0.000]
+             [1.000 0.000 0.000]]
+            pointNames={'e':0, 'd':1}
             )
         >>> testY
         Matrix(
-            [[1.000]
-             [3.000]]
-            pointNames={'a':0, 'f':1}
+            [[2.000]
+             [1.000]]
+            pointNames={'e':0, 'd':1}
             )
         """
         order = list(range(len(self.points)))
@@ -1120,26 +1120,28 @@ class Base(object):
         >>> pam = office['pam', :]
         >>> print(pam)
                id  age   department   salary gender
-
+        <BLANKLINE>
         pam   4331  26 administration 28000    f
-
+        <BLANKLINE>
         >>> sales = office[[3, 1], :]
         >>> print(sales)
                   id  age department salary gender
-
+        <BLANKLINE>
         dwight   4211  45   sales    33000    m
            jim   4434  26   sales    26000    m
+        <BLANKLINE>
 
         *Note: retains list order; index 3 placed before index 1*
 
         >>> nonManagement = office[1:4, :]
         >>> print(nonManagement)
                   id  age   department   salary gender
-
+        <BLANKLINE>
            jim   4434  26     sales      26000    m
            pam   4331  26 administration 28000    f
         dwight   4211  45     sales      33000    m
         angela   4344  45   accounting   43500    f
+        <BLANKLINE>
 
         *Note: slices are inclusive; index 4 ('gender') was included*
 
@@ -1148,34 +1150,37 @@ class Base(object):
         >>> departments = office[:, 2]
         >>> print(departments)
                     department
-
+        <BLANKLINE>
         michael     management
             jim       sales
             pam   administration
          dwight       sales
          angela     accounting
+        <BLANKLINE>
 
         >>> genderAndAge = office[:, ['gender', 'age']]
         >>> print(genderAndAge)
                   gender age
-
+        <BLANKLINE>
         michael     m     41
             jim     m     26
             pam     f     26
          dwight     m     45
          angela     f     45
+        <BLANKLINE>
 
         *Note: retains list order; 'gender' placed before 'age'*
 
         >>> deptSalary = office[:, 'department':'salary']
         >>> print(deptSalary)
                     department   salary
-
+        <BLANKLINE>
         michael     management   50000
             jim       sales      26000
             pam   administration 28000
          dwight       sales      33000
          angela     accounting   43500
+        <BLANKLINE>
 
         *Note: slices are inclusive; 'salary' was included*
 
@@ -1184,9 +1189,10 @@ class Base(object):
         >>> femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
         >>> print(femaleSalaryAndDept)
                  salary   department
-
+        <BLANKLINE>
            pam   28000  administration
         angela   43500    accounting
+        <BLANKLINE>
 
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
         ('salary') precedes index 2 ('department')*
@@ -1194,10 +1200,11 @@ class Base(object):
         >>> first3Ages = office[:2, 'age']
         >>> print(first3Ages)
                   age
-
+        <BLANKLINE>
         michael    41
             jim    26
             pam    26
+        <BLANKLINE>
 
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
@@ -1437,7 +1444,7 @@ class Base(object):
         return not self.__eq__(other)
 
     def toString(self, includeNames=True, maxWidth=79, maxHeight=30,
-                 sigDigits=3, maxColumnWidth=19):
+                 sigDigits=3, maxColumnWidth=19, keepTrailingWhitespace=False):
         """
         A string representation of this object.
 
@@ -1532,7 +1539,11 @@ class Base(object):
                 else:
                     padded = getattr(val, dataOrientation)(finalWidths[c])
                 row[c] = padded
-            line = colSep.join(finalTable[r]) + "\n"
+            # for __repr__ output want to retain whitespace
+            if keepTrailingWhitespace:
+                line = colSep.join(finalTable[r]) + "\n"
+            else:
+                line = colSep.join(finalTable[r]).rstrip() + "\n"
             out += line
 
         return out
@@ -1549,7 +1560,7 @@ class Base(object):
         # decrease max width for indentation (4) and nested list padding (4)
         stringWidth = maxW - 8
         dataStr = self.toString(includeNames=False, maxWidth=stringWidth,
-                                maxHeight=maxH)
+                                maxHeight=maxH, keepTrailingWhitespace=True)
         byLine = dataStr.split('\n')
         # toString ends with a \n, so we get rid of the empty line produced by
         # the split

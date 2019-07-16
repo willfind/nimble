@@ -39,19 +39,18 @@ def inverse(aObj):
 
     Examples
     --------
-    >>> from nimble.calculate import inverse
     >>> raw = [[1, 2], [3, 4]]
     >>> data = nimble.createData('Matrix', raw)
     >>> data
     Matrix(
-    [[1.000 2.000]
-     [3.000 4.000]]
-    )
+        [[1.000 2.000]
+         [3.000 4.000]]
+        )
     >>> inverse(data)
     Matrix(
-    [[-2.000 1.000 ]
-     [1.500  -0.500]]
-    )
+        [[-2.000 1.000 ]
+         [1.500  -0.500]]
+        )
     """
     if scipy is None:
         msg = "scipy must be installed in order to use the inverse function."
@@ -115,8 +114,8 @@ def pseudoInverse(aObj, method='svd'):
     aObj : nimble Base object.
         Square object to be pseudo-inverted.
     method : str.
-        - 'svd'. Uses singular-value decomposition by default.
-        - 'least-squares'.  Uses least squares solver included.
+        * 'svd'. Uses singular-value decomposition by default.
+        * 'least-squares'.  Uses least squares solver included.
 
     Returns
     -------
@@ -134,24 +133,22 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> from nimble.calculate import pseudoInverse
-    >>> data = nimble.createRandomData('Matrix',
-    >>>                              numPoints=4,
-    >>>                              numFeatures=3,
-    >>>                              sparsity=0.5)
+    >>> nimble.setRandomSeed(42)
+    >>> data = nimble.createRandomData('Matrix', numPoints=4,
+    ...                                numFeatures=3, sparsity=0.5)
     >>> data
     Matrix(
-        [[0.000  -0.000 -0.000]
-         [0.774  -0.538 -0.000]
-         [-0.000 -0.000 0.000 ]
-         [0.582  0.888  0.894 ]]
-    )
+        [[-0.824 -0.000 0.000 ]
+         [-1.402 0.000  -0.358]
+         [-0.000 0.000  -0.000]
+         [-0.000 -0.406 -0.911]]
+        )
     >>> pseudoInverse(data)
     Matrix(
-        [[0.000  0.881  0.000 0.315]
-         [-0.000 -0.592 0.000 0.452]
-         [-0.000 0.014  0.000 0.464]]
-    )
+        [[ -1.214 0.000  0.000 -0.000]
+         [-10.664 6.269  0.000 -2.461]
+         [ 4.753  -2.794 0.000 0.000 ]]
+        )
     """
     if scipy is None:
         msg = "scipy must be installed in order to use the pseudoInverse function."
@@ -231,16 +228,16 @@ def solve(aObj, bObj):
         [[3.000 2.000  0.000]
          [1.000 -1.000 0.000]
          [0.000 5.000  1.000]]
-    )
+        )
     >>> bObj
     Matrix(
         [[2.000 4.000 -1.000]]
-    )
+        )
     >>> xObj = solve(aObj, bObj)
     >>> xObj
     Matrix(
         [[2.000 -2.000 9.000]]
-    )
+        )
     """
     return _backendSolvers(aObj, bObj, solve)
 
