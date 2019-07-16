@@ -12,6 +12,7 @@ import sqlite3
 import tempfile
 import re
 import functools
+from unittest.mock import patch
 
 from nose import with_setup
 from nose.tools import raises
@@ -325,6 +326,23 @@ def testRunTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'learner': 'custom.KNNClassifier'" in logInfo
 
+
+def checkLogContents(funcName, objectID, arguments=None):
+    lastLog = getLastLogData()
+    expFunc = "'function': '{0}'".format(funcName)
+    expID = "'object': '{0}'".format(objectID)
+    assert expFunc in lastLog
+    assert expID in lastLog
+
+    if arguments:
+        assert 'arguments' in lastLog
+        for argName, argVal in arguments:
+            expArgs1 = "'{0}': '{1}'".format(argName, argVal)
+            # double quotations may wrap the second arg if it contains quotations
+            expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
+            assert expArgs1 in lastLog or expArgs2 in lastLog
+
+
 @emptyLogSafetyWrapper
 @configSafetyWrapper
 def testPrepTypeFunctionsUseLog():
@@ -334,21 +352,6 @@ def testPrepTypeFunctionsUseLog():
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-
-    def checkLogContents(funcName, objectID, arguments=None):
-        lastLog = getLastLogData()
-        expFunc = "'function': '{0}'".format(funcName)
-        expID = "'object': '{0}'".format(objectID)
-        assert expFunc in lastLog
-        assert expID in lastLog
-
-        if arguments:
-            assert 'arguments' in lastLog
-            for argName, argVal in arguments:
-                expArgs1 = "'{0}': '{1}'".format(argName, argVal)
-                # double quotations may wrap the second arg if it contains quotations
-                expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
-                assert expArgs1 in lastLog or expArgs2 in lastLog
 
     ########
     # Base #
@@ -728,6 +731,23 @@ def testHandmadeLogEntriesInput():
     logInfo = getLastLogData()
     assert logType == "User - run"
     assert "User log with heading that matches a logType" in logInfo
+
+def raisesOSError(*args, **kwargs):
+    raise OSError
+
+@configSafetyWrapper
+@emptyLogSafetyWrapper
+@patch('inspect.getsourcelines', raisesOSError)
+def testFailedLambdaStringConversion():
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
+
+    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
+            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
+            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
+    dataObj = nimble.createData("Matrix", data, useLog=False)
+    calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
+    checkLogContents('elements.calculate', "Matrix", [('toCalculate', "<lambda>"),
+                                                      ('features', [0])])
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
