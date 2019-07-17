@@ -23,7 +23,8 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 
-scipy = nimble.importModule('scipy.io')
+scipy = nimble.importModule('scipy')
+pd = nimble.importModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -205,16 +206,22 @@ class Matrix(Base):
             return numpy.array(self.data)
         if to == 'numpymatrix':
             return self.data.copy()
-        if to == 'scipycsc':
+        if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csc_matrix(self.data)
-        if to == 'scipycsr':
-            if not scipy:
-                msg = "scipy is not available"
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(self.data)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(self.data)
+            if to == 'scipycoo':
+                return scipy.sparse.coo_matrix(self.data)
+        if to == 'pandasdataframe':
+            if not pd:
+                msg = "pandas is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csr_matrix(self.data)
+            return pd.DataFrame(self.data.copy())
+
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):

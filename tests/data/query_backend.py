@@ -38,6 +38,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
+from ..assertionHelpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -58,12 +59,6 @@ def _pnames(num):
     for i in range(num):
         ret.append('p' + str(i))
     return ret
-
-class CalledFunctionException(Exception):
-    pass
-
-def calledException(*args, **kwargs):
-    raise CalledFunctionException()
 
 
 class QueryBackend(DataTestObject):
@@ -1318,7 +1313,7 @@ class QueryBackend(DataTestObject):
     @raises(CalledFunctionException)
     def backend_sim_callsFunctions(self, objFunc, calcFunc, axis):
         toPatch = 'nimble.calculate.' + calcFunc
-        with patch(toPatch, side_effect=calledException):
+        with patch(toPatch, calledException):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
                 obj = self.constructor(data)
@@ -1715,7 +1710,7 @@ class QueryBackend(DataTestObject):
     @raises(CalledFunctionException)
     def backend_stat_callsFunctions(self, objFunc, calcFunc, axis):
         toPatch = 'nimble.calculate.' + calcFunc
-        with patch(toPatch, side_effect=calledException):
+        with patch(toPatch, calledException):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
                 obj = self.constructor(data)

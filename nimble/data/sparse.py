@@ -254,10 +254,18 @@ class Sparse(Base):
             return numpy.array(self.data.todense())
         if to == 'numpymatrix':
             return self.data.todense()
-        if to == 'scipycsc':
-            return self.data.tocsc()
-        if to == 'scipycsr':
-            return self.data.tocsr()
+        if 'scipy' in to:
+            if to == 'scipycsc':
+                return self.data.tocsc()
+            if to == 'scipycsr':
+                return self.data.tocsr()
+            if to == 'scipycoo':
+                return self.data.copy()
+        if to == 'pandasdataframe':
+            if not pd:
+                msg = "pandas is not available"
+                raise PackageException(msg)
+            return pd.DataFrame(self.data.todense())
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -878,6 +886,10 @@ class Sparse(Base):
                 otherConv = other.copy('Matrix')
                 ret = getattr(selfData, opName)(otherConv.data)
             else:
+                nonZeroModifying = ['truediv', 'floordiv', 'mod']
+                if any(name in opName for name in nonZeroModifying):
+                    return self._scalarZeroPreservingBinary_implementation(
+                        opName, other)
                 # scalar operations apply to all elements; use dense
                 return self._genericNumericBinary_implementation(opName, other)
 
@@ -989,18 +1001,37 @@ class Sparse(Base):
                 otherData = other.copy().data.data
             else:
                 otherData = other.data.data
-        elif isinstance(other, nimble.data.Base):
+        else: # another Base object type
             otherData = other.copy('Sparse').data.data
-        else:
-            otherData = other
+
         ret = numpy.mod(selfData.data, otherData)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
         if opName.startswith('__i'):
-            absPath, relPath = self._absPath, self._relPath
             self.data = coo
-            self._absPath, self._relPath = absPath, relPath
+            return self
+        return Sparse(coo)
+
+    def _scalarZeroPreservingBinary_implementation(self, opName, other):
+        """
+        Helper applying operation directly to data attribute.
+
+        Zeros are preserved for these operations, so we only need to
+        apply the operation to the data attribute, the row and col
+        attributes will remain unchanged.
+        """
+        if self.data.data is None:
+            selfData = self.copy().data
+        else:
+            selfData = self.data
+
+        ret = getattr(selfData.data, opName)(other)
+        coo = coo_matrix((ret, (selfData.row, selfData.col)),
+                         shape=self.shape)
+        coo.eliminate_zeros() # remove any zeros introduced into data
+        if opName.startswith('__i'):
+            self.data = coo
             return self
         return Sparse(coo)
 

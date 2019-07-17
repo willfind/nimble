@@ -52,17 +52,21 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
 
         from sklearn.utils.testing import all_estimators
         import pkgutil
-        pkgutil.walk_packages_ = pkgutil.walk_packages
+        walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
-            packages = pkgutil.walk_packages_(*args, **kwargs)
+            packages = walkPackages(*args, **kwargs)
             # each pkg is a tuple (importer, moduleName, isPackage)
-            # ignoring everything that is not a package prevents trying
+            # we want to ignore anything not in __all__ to prevent trying
             # to import libraries outside of scikit-learn dependencies
-            return [pkg for pkg in packages if pkg[2]]
+            sklAll = self.skl.__all__
+            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
-            all_estimators = all_estimators()
-
+            try:
+                all_estimators = all_estimators(include_dont_test=True)
+            except TypeError:
+                # include_dont_test will be removed in later versions
+                all_estimators = all_estimators()
         self.allEstimators = {}
         for name, obj in all_estimators:
             if name.startswith('_'):
@@ -118,7 +122,6 @@ To install scikit-learn
     def _listLearnersBackend(self):
         possibilities = []
         exclude = [
-            'CountVectorizer', 'PatchExtractor', 'TfidfVectorizer',
             'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',
             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
             'FeatureAgglomeration', 'LocalOutlierFactor',
@@ -169,10 +172,7 @@ To install scikit-learn
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        #		if learnerName == 'KernelCenterer':
-        #			import pdb
-        #			pdb.set_trace()
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -207,7 +207,7 @@ To install scikit-learn
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -247,7 +247,7 @@ To install scikit-learn
             toCall = learner.predict_proba
         else:
             raise NotImplementedError('Cannot get scores for this learner')
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         backendArgs = self._paramQuery(method, learnerName, ignore)[0]
         scoreArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
@@ -344,6 +344,8 @@ To install scikit-learn
                 value = trainX
             elif name.lower() == 'y':
                 value = trainY
+            elif name.lower() == 'raw_documents':
+                value = trainX.tolist()[0] #1D list
             else:
                 value = arguments[name]
             fitParams[name] = value
@@ -395,11 +397,14 @@ To install scikit-learn
             msg = "Cannot apply this learner to data, no predict or "
             msg += "transform function"
             raise TypeError(msg)
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
         backendArgs = self._paramQuery(method, learnerName, ignore)[0]
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
+        if 'raw_documents' in self._paramQuery(method, learnerName)[0]:
+            testX = testX.tolist()[0] # 1D list
         return toCall(learner, testX, applyArgs, customDict)
+
 
     def _getAttributes(self, learnerBackend):
         obj = learnerBackend

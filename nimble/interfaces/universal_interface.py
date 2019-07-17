@@ -186,8 +186,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainY = trainX.features.extract(trainY, useLog=False)
 
                 # Get set of unique class labels
-                labelVector = trainY.copy()
-                labelVector.transpose(useLog=False)
+                labelVector = trainY.T
                 labelVectorToList = labelVector.copy(to="python list")[0]
                 labelSet = list(set(labelVectorToList))
 
