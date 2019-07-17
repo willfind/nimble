@@ -1770,11 +1770,10 @@ class Points(object):
             be present in the returned object.
         copyPointByPoint : bool
             When False, the default, copies are made as if iterating
-            through each point in this object ``totalCopies`` times.
-            When True, copies are made as the object is only iterated
+            through the points in this object ``totalCopies`` times.
+            When True, copies are made as if the object is only iterated
             once, making ``totalCopies`` copies of each point before
-            iterating to the next point. Note: when this object is a
-            single point, the output will be the same either way.
+            iterating to the next point.
 
         Returns
         -------

@@ -1715,11 +1715,10 @@ class Features(object):
             be present in the returned object.
         copyFeatureByFeature : bool
             When False, the default, copies are made as if iterating
-            through each feature in this object ``totalCopies`` times.
+            through the features in this object ``totalCopies`` times.
             When True, copies are made as if the object is only iterated
             once, making ``totalCopies`` copies of each feature before
-            iterating to the next feature. Note: when this object is a
-            single feature, the output will be the same either way.
+            iterating to the next feature.
 
         Returns
         -------
