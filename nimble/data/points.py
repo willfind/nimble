@@ -14,6 +14,7 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
+import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
 
@@ -1791,7 +1792,7 @@ class Points(object):
             [[1.000 2.000 3.000]
              [1.000 2.000 3.000]
              [1.000 2.000 3.000]]
-            pointNames={'a_0':0, 'a_1':1, 'a_2':2}
+            pointNames={'a_1':0, 'a_2':1, 'a_3':2}
             )
 
         Two-dimensional, copyPointByPoint is False
@@ -1804,7 +1805,7 @@ class Points(object):
              [4.000 5.000 6.000]
              [1.000 2.000 3.000]
              [4.000 5.000 6.000]]
-            pointNames={'a_0':0, 'b_0':1, 'a_1':2, 'b_1':3}
+            pointNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
             )
 
         Two-dimensional, copyPointByPoint is True
@@ -1817,7 +1818,7 @@ class Points(object):
              [1.000 2.000 3.000]
              [4.000 5.000 6.000]
              [4.000 5.000 6.000]]
-            pointNames={'a_0':0, 'a_1':1, 'b_0':2, 'b_1':3}
+            pointNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """
         return self._duplicate(totalCopies, copyPointByPoint)

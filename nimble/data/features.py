@@ -16,6 +16,7 @@ from abc import abstractmethod
 import numpy
 import six
 
+import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 
@@ -1736,7 +1737,7 @@ class Features(object):
             [[1.000 1.000 1.000]
              [2.000 2.000 2.000]
              [3.000 3.000 3.000]]
-            featureNames={'a_0':0, 'a_1':1, 'a_2':2}
+            featureNames={'a_1':0, 'a_2':1, 'a_3':2}
             )
 
         Two-dimensional, copyFeatureByFeature is False
@@ -1749,7 +1750,7 @@ class Features(object):
             [[1.000 2.000 1.000 2.000]
              [3.000 4.000 3.000 4.000]
              [5.000 6.000 5.000 6.000]]
-            featureNames={'a_0':0, 'b_0':1, 'a_1':2, 'b_1':3}
+            featureNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
             )
 
         Two-dimensional, copyFeatureByFeature is True
@@ -1762,7 +1763,7 @@ class Features(object):
             [[1.000 1.000 2.000 2.000]
              [3.000 3.000 4.000 4.000]
              [5.000 5.000 6.000 6.000]]
-            featureNames={'a_0':0, 'a_1':1, 'b_0':2, 'b_1':3}
+            featureNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """
         return self._duplicate(totalCopies, copyFeatureByFeature)
