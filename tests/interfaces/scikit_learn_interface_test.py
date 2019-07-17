@@ -263,12 +263,15 @@ def testSciKitLearnExcludedLearners():
     apply = nimble.trainAndApply(toCall('KernelCenterer'), trainX)
 
 
-def getLearnersByType(lType, ignore=[]):
+def getLearnersByType(lType=None, ignore=[]):
     learners = nimble.listLearners(packageName)
     typeMatch = []
     for learner in learners:
-        learnerType = nimble.learnerType(toCall(learner))
-        if lType == learnerType and learner not in ignore:
+        if lType is not None:
+            learnerType = nimble.learnerType(toCall(learner))
+            if lType == learnerType and learner not in ignore:
+                typeMatch.append(learner)
+        elif learner not in ignore:
             typeMatch.append(learner)
     assert typeMatch # check not returning an empty list
     return typeMatch
@@ -283,7 +286,7 @@ def testSciKitLearnClassificationLearners():
     trainY = abs(data[0][1])
     testX = abs(data[1][0])
     Xtrain = trainX.copy('numpy array')
-    Ytrain = trainY.copy('numpy array')
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
     Xtest = testX.copy('numpy array')
 
     learners = getLearnersByType('classification')
@@ -581,7 +584,8 @@ def testSciKitLearnOtherFitTransformLearners():
 
 
     skl = SciKitLearn()
-    transform = getLearnersByType('other')
+    text = ['CountVectorizer', 'TfidfVectorizer']
+    transform = getLearnersByType('other', ignore=text)
     learners = [t for t in transform if hasattr(skl.findCallable(t), 'fit_transform')]
     assert learners
 
@@ -607,6 +611,38 @@ def testSciKitLearnOtherFitTransformLearners():
     for learner in learners:
         compareOutputs(learner)
 
+
+@sklSkipDec
+def testSciKitLearnTextVectorizers():
+    data = [
+    'This is the first document.',
+    'This is the second second document.',
+    'And the third one.',
+    'Is this the first document?',
+]
+    trainX = nimble.createData('Matrix', data)
+    Xtrain = data
+
+
+    skl = SciKitLearn()
+    learners = ['CountVectorizer', 'TfidfVectorizer']
+
+    @logCountAssertionFactory(3)
+    def compareOutputs(learner):
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+
+        transSKL = sciKitLearnObj.fit_transform(Xtrain)
+        transSKL = nimble.createData('Matrix', transSKL, useLog=False)
+
+        TL = nimble.train(toCall(learner), trainX)
+        transNimble = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transNimble, transSL)
+
+    for learner in learners:
+        compareOutputs(learner)
 
 @sklSkipDec
 @logCountAssertionFactory(4)
@@ -675,7 +711,8 @@ def testGetAttributesCallable():
     ((rTrainX, rTrainY), (rTestX, rTestY)) = rData
     printExceptions = False
 
-    allLearners = nimble.listLearners('scikitlearn')
+    text = ['CountVectorizer', 'TfidfVectorizer']
+    allLearners = getLearnersByType(ignore=text)
     toTest = allLearners
 
     for learner in toTest:

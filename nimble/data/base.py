@@ -2060,6 +2060,34 @@ class Base(object):
         handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
                       Base.transpose)
 
+    @property
+    def T(self):
+        """
+        Invert the feature and point indices of the data.
+
+        Return this object with inverted feature and point indices,
+        including inverting point and feature names, if available.
+
+        Examples
+        --------
+        >>> raw = [[1, 2, 3], [4, 5, 6]]
+        >>> data = nimble.createData('List', raw)
+        >>> data
+        List(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            )
+        >>> data.T
+        List(
+            [[1.000 4.000]
+             [2.000 5.000]
+             [3.000 6.000]]
+            )
+        """
+        ret = self.copy()
+        ret.transpose(useLog=False)
+        return ret
+
 
     def referenceDataFrom(self, other, useLog=None):
         """
@@ -2147,7 +2175,8 @@ class Base(object):
             'Matrix', 'Sparse' or 'DataFrame'. To specify a raw return
             type (which will not include point or feature names),
             specify to: 'python list', 'numpy array', 'numpy matrix',
-            'scipy csr', 'scipy csc', 'list of dict' or 'dict of list'.
+            'scipy csr', 'scipy csc', 'scipy coo', 'pandas dataframe',
+            'list of dict' or 'dict of list'.
         rowsArePoints : bool
             Define whether the rows of the output object correspond to
             the points in this object. Default is True, if False the
@@ -2223,14 +2252,16 @@ class Base(object):
             to = ''.join(tokens)
             tokens = to.split('.')
             to = ''.join(tokens)
-            if to not in ['pythonlist', 'numpyarray', 'numpymatrix',
-                          'scipycsr', 'scipycsc', 'listofdict',
-                          'dictoflist']:
+            accepted = ['pythonlist', 'numpyarray', 'numpymatrix', 'scipycsr',
+                        'scipycsc', 'scipycoo', 'pandasdataframe',
+                        'listofdict', 'dictoflist']
+            if to not in accepted:
                 msg = "The only accepted 'to' types are: 'List', 'Matrix', "
                 msg += "'Sparse', 'DataFrame', 'python list', 'numpy array', "
                 msg += "'numpy matrix', 'scipy csr', 'scipy csc', "
-                msg += "'list of dict', and 'dict of list'"
-                raise InvalidArgumentType(msg)
+                msg += "'scipy coo', 'pandas dataframe',  'list of dict', "
+                msg += "'and dict of list'"
+                raise InvalidArgumentValue(msg)
 
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
@@ -2247,12 +2278,6 @@ class Base(object):
         if to in ['listofdict', 'dictoflist']:
             return self._copy_nestedPythonTypes(to, rowsArePoints)
 
-        # certain shapes and formats are incompatible
-        if to.startswith('scipy'):
-            if self._pointCount == 0 or self._featureCount == 0:
-                msg = "scipy formats cannot output point or feature empty "
-                msg += "objects"
-                raise InvalidArgumentValue(msg)
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, nimble.data.Base):

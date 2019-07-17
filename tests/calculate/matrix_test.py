@@ -11,15 +11,10 @@ from nimble.calculate import elementwiseMultiply
 from nimble.calculate import elementwisePower
 from nimble.exceptions import InvalidArgumentType
 from ..assertionHelpers import noLogEntryExpected
+from ..assertionHelpers import CalledFunctionException, calledException
 
-class CalledFunctionException(Exception):
-    pass
-
-def functionCalled(*args, **kwargs):
-    raise CalledFunctionException()
-
-@patch('nimble.data.Elements.multiply', side_effect=functionCalled)
-def test_elementwiseMultiply_callsObjElementsMultiply(mockObj):
+@patch('nimble.data.Elements.multiply', calledException)
+def test_elementwiseMultiply_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
     for leftRType in nimble.data.available:
@@ -57,8 +52,8 @@ def test_elementwiseMultiply_logCount():
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
-@patch('nimble.data.Elements.power', side_effect=functionCalled)
-def test_elementwisePower_callsObjElementsMultiply(mockObj):
+@patch('nimble.data.Elements.power', calledException)
+def test_elementwisePower_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
     for leftRType in nimble.data.available:

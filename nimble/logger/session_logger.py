@@ -664,7 +664,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             # logString is a string (cannot eval)
             logInfo = logString
         if sessionNumber != previousLogSessionNumber:
-            # skip first new line if appending because append inserts newline 
+            # skip first new line if appending because append inserts newline
             if not (previousLogSessionNumber is None and append):
                 fullLog += "\n"
             logString = "SESSION {0}".format(sessionNumber)
@@ -952,24 +952,27 @@ def _lambdaFunctionString(function):
     """
     Returns a string of a lambda function.
     """
-    sourceLine = inspect.getsourcelines(function)[0][0]
-    line = re.findall(r'lambda.*', sourceLine)[0]
-    lambdaString = ""
-    afterColon = False
-    openParenthesis = 1
-    for letter in line:
-        if letter == "(":
-            openParenthesis += 1
-        elif letter == ")":
-            openParenthesis -= 1
-        elif letter == ":":
-            afterColon = True
-        elif letter == "," and afterColon:
-            return lambdaString
-        if openParenthesis == 0:
-            return lambdaString
-        else:
-            lambdaString += letter
+    try:
+        sourceLine = inspect.getsourcelines(function)[0][0]
+        line = re.findall(r'lambda.*', sourceLine)[0]
+        lambdaString = ""
+        afterColon = False
+        openParenthesis = 1
+        for letter in line:
+            if letter == "(":
+                openParenthesis += 1
+            elif letter == ")":
+                openParenthesis -= 1
+            elif letter == ":":
+                afterColon = True
+            elif letter == "," and afterColon:
+                return lambdaString
+            if openParenthesis == 0:
+                return lambdaString
+            else:
+                lambdaString += letter
+    except Exception:
+        lambdaString = "<lambda>"
     return lambdaString
 
 def startTimer(useLog):

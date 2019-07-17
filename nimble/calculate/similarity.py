@@ -43,11 +43,9 @@ def correlation(X, X_T=None):
 
     """
     if X_T is None:
-        X_T = X.copy()
-        X_T.transpose(useLog=False)
+        X_T = X.T
     stdVector = X.points.statistics('populationstd')
-    stdVector_T = stdVector.copy()
-    stdVector_T.transpose(useLog=False)
+    stdVector_T = stdVector.T
 
     cov = covariance(X, X_T, False)
     stdMatrix = stdVector * stdVector_T
@@ -63,13 +61,11 @@ def covariance(X, X_T=None, sample=True):
 
     """
     if X_T is None:
-        X_T = X.copy()
-        X_T.transpose(useLog=False)
+        X_T = X.T
     pointMeansVector = X.points.statistics('mean')
     fill = lambda x: [x[0]] * len(X.features)
     pointMeans = pointMeansVector.points.calculate(fill, useLog=False)
-    pointMeans_T = pointMeans.copy()
-    pointMeans_T.transpose(useLog=False)
+    pointMeans_T = pointMeans.T
 
     XminusEofX = X - pointMeans
     X_TminusEofX_T = X_T - pointMeans_T

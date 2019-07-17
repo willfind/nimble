@@ -908,8 +908,7 @@ class Axis(object):
 
             toCall = dotProd
 
-        transposed = self._source.copy()
-        transposed.transpose(useLog=False)
+        transposed = self._source.T
 
         if isinstance(self, Points):
             ret = toCall(self._source, transposed)
