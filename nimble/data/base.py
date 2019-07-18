@@ -2071,6 +2071,34 @@ class Base(object):
         handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
                       Base.transpose)
 
+    @property
+    def T(self):
+        """
+        Invert the feature and point indices of the data.
+
+        Return this object with inverted feature and point indices,
+        including inverting point and feature names, if available.
+
+        Examples
+        --------
+        >>> raw = [[1, 2, 3], [4, 5, 6]]
+        >>> data = nimble.createData('List', raw)
+        >>> data
+        List(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            )
+        >>> data.T
+        List(
+            [[1.000 4.000]
+             [2.000 5.000]
+             [3.000 6.000]]
+            )
+        """
+        ret = self.copy()
+        ret.transpose(useLog=False)
+        return ret
+
 
     def referenceDataFrom(self, other, useLog=None):
         """
@@ -4085,6 +4113,7 @@ class Base(object):
             endIndex -= 1
         currIndex = 0
         numAdded = 0
+
         while totalWidth < maxWidth and currIndex != endIndex:
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
@@ -4102,7 +4131,7 @@ class Base(object):
                 rID = combinedRowIDs[i]
                 val = self[rID, currIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
-                if len(valFormed) < maxStrLength:
+                if len(valFormed) <= maxStrLength:
                     valLimited = valFormed
                 else:
                     valLimited = valFormed[:nameCutIndex] + strHold
@@ -4116,13 +4145,9 @@ class Base(object):
 
                 currCol.append(valLimited)
 
-            totalWidth += currWidth + len(colSep)
-            # test: total width is under max without column holder
-            allCols = totalWidth - (cHoldTotal) <= maxWidth
-            # test: the column we are trying to add is the last one possible
-            allCols = allCols and (numAdded == (self._featureCount - 1))
+            totalWidth += currWidth
             # only add this column if it won't put us over the limit
-            if totalWidth - len(colSep) <= maxWidth or allCols:
+            if totalWidth <= maxWidth:
                 numAdded += 1
                 for i in range(len(currCol)):
                     if len(currTable) != len(currCol):
@@ -4140,6 +4165,11 @@ class Base(object):
                         lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
                     lColWidths.append(currWidth)
+
+            # ignore column separator if the next column is the last
+            if numAdded == (self._featureCount - 1):
+                totalWidth -= cHoldTotal
+            totalWidth += len(colSep)
 
         # combine the tables. Have to reverse rTable because entries were
         # appended in a right to left order

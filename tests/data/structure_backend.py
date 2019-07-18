@@ -6,7 +6,7 @@ In object StructureDataSafe:
 copy, points.copy, features.copy
 
 In object StructureModifying:
-__init__,  transpose, points.add, features.add, points.sort,
+__init__,  transpose, T, points.add, features.add, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
 points.transform, features.transform, elements.transform, fillWith,
@@ -48,6 +48,7 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
+from ..assertionHelpers import CalledFunctionException, calledException
 
 scipy = nimble.importModule('scipy.sparse')
 pd = nimble.importModule('pandas')
@@ -75,13 +76,6 @@ def plusOneOnlyEven(value):
         return (value + 1)
     else:
         return None
-
-class CalledFunctionException(Exception):
-    def __init__(self):
-        pass
-
-def calledException(*args, **kwargs):
-    raise CalledFunctionException()
 
 def noChange(value):
     return value
@@ -184,6 +178,92 @@ class StructureDataSafe(StructureShared):
         assert hasattr(nimble.data.Elements, 'objectValidation')
         assert hasattr(nimble.data.Features, 'objectValidation')
         assert hasattr(nimble.data.Points, 'objectValidation')
+
+    ##########################
+    # T (transpose property) #
+    ##########################
+
+    def test_T_empty(self):
+        """ Test T property on different kinds of emptiness """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        orig = toTest.copy()
+
+        exp1 = [[], []]
+        exp1 = numpy.array(exp1)
+        ret1 = self.constructor(exp1)
+        assert ret1.isIdentical(toTest.T)
+        assert toTest.isIdentical(orig)
+
+
+    @logCountAssertionFactory(0)
+    def test_T_handmade(self):
+        """ Test T property function against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        dataTrans = [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+
+        toTest = self.constructor(copy.deepcopy(data))
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
+
+        assert toTest.T is not None
+        assert dataObjT.isIdentical(toTest.T)
+        assert toTest.isIdentical(dataObjOrig)
+
+        assertNoNamesGenerated(toTest)
+
+    def test_T_handmadeWithZeros(self):
+        """ Test T property function against handmade output """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
+        dataTrans = [[1, 4, 7, 0, 11], [2, 5, 8, 0, 12], [3, 6, 9, 0, 13]]
+
+        toTest = self.constructor(copy.deepcopy(data))
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans))
+
+        assert dataObjT.isIdentical(toTest.T)
+        assert toTest.isIdentical(dataObjOrig)
+
+
+    def test_T_handmadeWithAxisNames(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0]]
+        dataTrans = [[1, 4, 7, 0], [2, 5, 8, 0], [3, 6, 9, 0]]
+
+        origPointNames = ['1','2','3','4']
+        origFeatureNames = ['a','b','c']
+        transPointNames = origFeatureNames
+        transFeatureNames = origPointNames
+
+        toTest = self.constructor(copy.deepcopy(data), pointNames=origPointNames,
+                                  featureNames=origFeatureNames)
+        dataObjOrig = toTest.copy()
+        dataObjT = self.constructor(copy.deepcopy(dataTrans), pointNames=transPointNames,
+                                    featureNames=transFeatureNames)
+
+        dotT = toTest.T
+        assert dotT.points.getNames() == transPointNames
+        assert dotT.features.getNames() == transFeatureNames
+        assert dotT.isIdentical(dataObjT)
+        assert toTest.isIdentical(dataObjOrig)
+
+
+    def test_T_NamePath_preservation(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
+
+        dataObj = self.constructor(copy.deepcopy(data))
+        dataObj._name = "TestName"
+        if isinstance(dataObj, BaseView):
+            dataObj._source._absPath = "TestAbsPath"
+            dataObj._source._relPath = "TestRelPath"
+        else:
+            dataObj._absPath = "TestAbsPath"
+            dataObj._relPath = "TestRelPath"
+
+        dotT = dataObj.T
+        assert dotT.name == "TestName"
+        assert dotT.absolutePath == "TestAbsPath"
+        assert dotT.relativePath == 'TestRelPath'
 
     ########
     # copy #
@@ -696,8 +776,8 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_copy_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         ret = toTest.points.copy(['a', 'b'])
@@ -1464,8 +1544,8 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_copy_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         ret = toTest.features.copy(['a', 'b'])
@@ -2410,13 +2490,13 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_init_pointNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', side_effect=calledException)
-    def test_init_featureNames_calls_valuesToPythonList(self, mockFunc):
+    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
     ###############
@@ -3532,8 +3612,8 @@ class StructureModifying(StructureShared):
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_extract_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         ret = toTest.points.extract(['a', 'b'])
@@ -4316,8 +4396,8 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_extract_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         ret = toTest.features.extract(['a', 'b'])
@@ -4990,8 +5070,8 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_delete_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         toTest.points.delete(['a', 'b'])
@@ -5630,8 +5710,8 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_delete_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.delete(['a', 'b'])
@@ -6178,8 +6258,8 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_retain_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_retain_calls_constructIndicesList(self):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         toTest.points.retain(['a', 'b'])
@@ -6864,8 +6944,8 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_retain_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_retain_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.retain(['a', 'b'])
@@ -7576,8 +7656,8 @@ class StructureModifying(StructureShared):
         origObj.points.transform(emitLower)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_transform_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         toTest.points.transform(noChange, points=['a', 'b'])
@@ -7713,8 +7793,8 @@ class StructureModifying(StructureShared):
         origObj.features.transform(None)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_transform_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
         toTest.features.transform(noChange, features=['a', 'b'])
@@ -7823,8 +7903,8 @@ class StructureModifying(StructureShared):
     ##########################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_transform_calls_constructIndicesList1(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_transform_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
@@ -7833,8 +7913,8 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_transform_calls_constructIndicesList2(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_transform_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):

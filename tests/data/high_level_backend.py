@@ -47,6 +47,7 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
+from ..assertionHelpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -93,13 +94,6 @@ def plusOneOnlyEven(value):
         return (value + 1)
     else:
         return None
-
-class CalledFunctionException(Exception):
-    def __init__(self):
-        pass
-
-def calledException(*args, **kwargs):
-    raise CalledFunctionException()
 
 def noChange(value):
     return value
@@ -166,8 +160,8 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.points.calculate(returnInvalidObj)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_points_calculate_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_points_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
         ret = toTest.points.calculate(noChange, points=['a', 'b'])
@@ -366,8 +360,8 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.features.calculate(returnInvalidObj)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', side_effect=calledException)
-    def test_features_calculate_calls_constructIndicesList(self, mockFunc):
+    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    def test_features_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         ret = toTest.features.calculate(noChange, features=['a', 'b'])
@@ -515,8 +509,8 @@ class HighLevelDataSafe(DataTestObject):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_calculate_calls_constructIndicesList1(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_calculate_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
@@ -525,8 +519,8 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.elements.calculate(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', side_effect=calledException)
-    def test_elements_calculate_calls_constructIndicesList2(self, mockFunc):
+    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
+    def test_elements_calculate_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
