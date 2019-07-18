@@ -14,6 +14,7 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
+import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
 

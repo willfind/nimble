@@ -103,30 +103,32 @@ def createRandomData(
     --------
     Random integers.
 
+    >>> nimble.setRandomSeed(42)
     >>> ptNames = ['a', 'b', 'c', 'd', 'e']
     >>> random = nimble.createRandomData('Matrix', 5, 5, 0,
     ...                                  pointNames=ptNames,
     ...                                  elementType='int')
     >>> random
     Matrix(
-        [[52.000 93.000 15.000 72.000 61.000]
-         [21.000 83.000 87.000 75.000 75.000]
-         [88.000 24.000 3.000  22.000 53.000]
-         [2.000  88.000 30.000 38.000 2.000 ]
-         [64.000 60.000 21.000 33.000 76.000]]
+        [[30.000 11.000 93.000 36.000 47.000]
+         [30.000 20.000 54.000 58.000 76.000]
+         [37.000 32.000 10.000 54.000 92.000]
+         [44.000 4.000  32.000 63.000 35.000]
+         [66.000 92.000 86.000 15.000 97.000]]
         pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
         )
 
     Random floats, high sparsity.
 
+    >>> nimble.setRandomSeed(42)
     >>> sparse = nimble.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
-        [[  0    0 0   0   0]
-         [  0    0 0   0   0]
-         [-0.636 0 0   0   0]
-         [  0    0 0 0.291 0]
-         [  0    0 0   0   0]]
+        [[  0      0    0 0 0]
+         [  0      0    0 0 0]
+         [  0      0    0 0 0]
+         [-0.084 -2.296 0 0 0]
+         [  0      0    0 0 0]]
         )
     """
     validateReturnType(returnType)
@@ -885,12 +887,12 @@ def createData(
     >>> with open('createData.csv', 'w') as cd:
     ...     out = cd.write('1,2,3\\n4,5,6')
     >>> fromFile = nimble.createData('Matrix', 'createData.csv')
-    >>> fromFile
+    >>> fromFile # doctest: +ELLIPSIS
     Matrix(
         [[1.000 2.000 3.000]
          [4.000 5.000 6.000]]
         name="createData.csv"
-        path="/nimble/createData.csv"
+        path="...createData.csv"
         )
 
     Adding point and feature names.

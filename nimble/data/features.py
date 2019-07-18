@@ -16,6 +16,7 @@ from abc import abstractmethod
 import numpy
 import six
 
+import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
 

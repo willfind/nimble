@@ -949,7 +949,7 @@ class QueryBackend(DataTestObject):
                     assert line == 'fa --'
                 elif i == 1:
                     # separator for ftNames and data
-                    assert line == '     '
+                    assert line == ''
                 else:
                     assert line == 'a  --'
 
@@ -965,7 +965,7 @@ class QueryBackend(DataTestObject):
                 assert line == 'fa -- fc'
             elif i == 1:
                 # separator for ftNames and data
-                assert line == '        '
+                assert line == ''
             else:
                 assert line == 'a  -- cc'
 
@@ -981,7 +981,7 @@ class QueryBackend(DataTestObject):
                 assert line == 'fa  fb fc'
             elif i == 1:
                 # separator for ftNames and data
-                assert line == '         '
+                assert line == ''
             else:
                 assert line == 'a  bbb cc'
 
