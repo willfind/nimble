@@ -953,22 +953,27 @@ class QueryBackend(DataTestObject):
                 else:
                     assert line == 'a  --'
 
-        # width of 8 and 9 will return first ft, colHold, last ft ('a  -- cc')
-        for mw in range(8, 10):
-            ret = data.toString(maxWidth=mw, includeNames=True)
-            # ignore last index since ret always ends with \n
-            retSplit = ret.split('\n')[:-1]
-            for i, line in enumerate(retSplit):
-                if i == 0:
-                    assert line == 'fa -- fc'
-                elif i == 1:
-                    # separator for ftNames and data
-                    assert line == '        '
-                else:
-                    assert line == 'a  -- cc'
+        # width of 8 will return first ft, colHold, last ft ('a  -- cc')
+        # 2 for first column based on feature name 'fa', 2 for colHold,
+        # 2 for last column (both feature name and data have same width),
+        # and 2 separating spaces
+        ret = data.toString(maxWidth=8, includeNames=True)
+        # ignore last index since ret always ends with \n
+        retSplit = ret.split('\n')[:-1]
+        for i, line in enumerate(retSplit):
+            if i == 0:
+                assert line == 'fa -- fc'
+            elif i == 1:
+                # separator for ftNames and data
+                assert line == '        '
+            else:
+                assert line == 'a  -- cc'
 
-        # width of 10 can accommodate all data ('a  bbb cc')
-        ret = data.toString(maxWidth=10, includeNames=True)
+        # width of 9 can accommodate all data ('a  bbb cc')
+        # 2 for first column based on feature name 'fa', 3 for second column
+        # based on width of 'bbb', 2 for third column (both feature name and
+        # data have same width) and 2 separating spaces
+        ret = data.toString(maxWidth=9, includeNames=True)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
