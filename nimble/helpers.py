@@ -1477,8 +1477,8 @@ def _keepIndexValuesValidation(axis, keepList, nameList):
             raise InvalidArgumentValue(msg)
         if idVal < 0:
             msg = "Negative index values are not permitted, found "
-            msg += str(idVal) + " in {keep}"
-            msg = msg.format(keep=keep)
+            msg += "{value} in {keep}"
+            msg = msg.format(value=idVal, keep=keep)
             raise InvalidArgumentValue(msg)
 
 
@@ -1512,8 +1512,8 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
             keepIndices.append(idx)
             keepNames.append(ftID)
         elif isinstance(ftID, str):
-            msg = "The value '" + ftID + "' in keepFeatures is not a valid "
-            msg += "featureName"
+            msg = "The value '{v}' in keepFeatures is not a valid featureName"
+            msg = msg.format(v=ftID)
             raise InvalidArgumentValue(msg)
         # index values
         elif 0 <= ftID < len(retFNames):
@@ -1523,12 +1523,14 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
             keepIndices.append(ftID)
             keepNames.append(name)
         elif ftID >= 0:
-            msg = "The index " + str(ftID) + " is greater than the number "
-            msg += "of features in the data " + str(len(retFNames))
+            msg = "The index {idx} is greater than the number of features in "
+            msg += "the data, {numFts}"
+            msg = msg.format(idx=ftID, numFts=len(retFNames))
             raise InvalidArgumentValue(msg)
         else:
-            msg = "Negative index values are not permitted, found "
-            msg += str(ftID) + "in keepFeatures"
+            msg = "Negative index values are not permitted, found {v} in "
+            msg += "keepFeatures"
+            msg = msg.format(v=ftID)
             raise InvalidArgumentValue(msg)
 
     return keepIndices, keepNames
