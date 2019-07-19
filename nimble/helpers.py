@@ -1244,19 +1244,6 @@ def _intFloatOrString(inString):
         return ret
 
 
-def _defaultParser(line):
-    """
-    When given a comma separated value line, it will attempt to convert
-    the values first to int, then to float, and if all else fails will
-    keep values as strings. Returns list of values.
-    """
-    ret = []
-    lineList = line.split(',')
-    for entry in lineList:
-        ret.append(_intFloatOrString(entry))
-    return ret
-
-
 def isEmptyRaw(raw):
     """
     Determine if raw data contains no values.
@@ -1404,21 +1391,6 @@ def _advancePastComments(openFile):
     return numSkipped
 
 
-def _raiseSelectionDuplicateException(kind, i1, i2, values):
-    msg = "Duplicate or equivalent values were present in the "
-    msg += kind
-    msg += " parameter, at indices ("
-    msg += str(i1)
-    msg += ") and ("
-    msg += str(i2)
-    msg += "). The values were ("
-    msg += str(values[i1])
-    msg += ") and ("
-    msg += str(values[i2])
-    msg += ") respectably."
-    raise InvalidArgumentValue(msg)
-
-
 def _namesDictToList(names, kind, paramName):
     if not isinstance(names, dict):
         return names
@@ -1465,6 +1437,101 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
     openFile.seek(startPosition)
 
     return dialect
+
+
+def _checkForDuplicates(lst, varName):
+    duplicates = set(x for x in lst if lst.count(x) > 1)
+    if duplicates:
+        msg = "{var} cannot contain duplicate values. "
+        if len(duplicates) == 1:
+            duplicateString = str(list(duplicates)[0])
+            msg += "The value {val} was duplicated"
+        else:
+            duplicateString = ",".join(map(str, duplicates))
+            msg += "The values {val} were duplicated"
+        msg = msg.format(var=varName, val=duplicateString)
+        raise InvalidArgumentValue(msg)
+
+
+def _keepIndexValuesValidation(axis, keepList, nameList):
+    """
+    Preliminary validation when keepPoints/Features can only contain
+    index values.
+    """
+    keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
+    for idVal in keepList:
+        # cannot determine the index location of the feature by name since
+        # featureNames is only defining the names of the returned features
+        if isinstance(idVal, str) and nameList:
+            msg = "Since {axis}Names were only provided for the values in "
+            msg += "{keep}, {keep} can contain only index values referencing "
+            msg += "the {axis}'s location in the data. If attempting to use "
+            msg += "{keep} to reorder all {axis}s, instead create the object "
+            msg += "first then sort the {axis}s."
+            msg = msg.format(axis=axis, keep=keep)
+            raise InvalidArgumentValue(msg)
+        if isinstance(idVal, str):
+            msg = "{keep} can contain only index values because no "
+            msg += "{axis}Names were provided"
+            msg = msg.format(axis=axis, keep=keep)
+            raise InvalidArgumentValue(msg)
+        if idVal < 0:
+            msg = "Negative index values are not permitted, found "
+            msg += str(idVal) + " in {keep}"
+            msg = msg.format(keep=keep)
+            raise InvalidArgumentValue(msg)
+
+
+def _keepIndexNameConflict(axis, index, name):
+    """
+    Helper for raising exception when two values in keepPoints/Features
+    represent the same point/feature.
+    """
+    keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
+    msg = "{keep} cannot contain duplicate values. The index {index} and the "
+    msg += "name '{name}' represent the same {axis} and are both in {keep} "
+    msg = msg.format(keep=keep, index=index, name=name, axis=axis)
+    raise InvalidArgumentValue(msg)
+
+
+def _limitToKeptFeatures(keepFeatures, retFNames):
+    """
+    Limit the featureNames to only those in keepFeatures.
+
+    Returns a two-tuple of lists. The first list converts all values in
+    keepFeatures to indices and the second provides the featureNames for
+    the values in keepFeatures.
+    """
+    keepIndices = []
+    keepNames = []
+    for ftID in keepFeatures:
+        if isinstance(ftID, str) and ftID in retFNames:
+            idx = retFNames.index(ftID)
+            if idx in keepIndices:
+                _keepIndexNameConflict('feature', idx, ftID)
+            keepIndices.append(idx)
+            keepNames.append(ftID)
+        elif isinstance(ftID, str):
+            msg = "The value '" + ftID + "' in keepFeatures is not a valid "
+            msg += "featureName"
+            raise InvalidArgumentValue(msg)
+        # index values
+        elif 0 <= ftID < len(retFNames):
+            name = retFNames[ftID]
+            if name in keepNames:
+                _keepIndexNameConflict('feature', ftID, name)
+            keepIndices.append(ftID)
+            keepNames.append(name)
+        elif ftID >= 0:
+            msg = "The index " + str(ftID) + " is greater than the number "
+            msg += "of features in the data " + str(len(retFNames))
+            raise InvalidArgumentValue(msg)
+        else:
+            msg = "Negative index values are not permitted, found "
+            msg += str(ftID) + "in keepFeatures"
+            raise InvalidArgumentValue(msg)
+
+    return keepIndices, keepNames
 
 
 def _loadcsvUsingPython(openFile, pointNames, featureNames,
@@ -1560,77 +1627,23 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # modifications are necessary if limiting features
     limitFeatures = keepFeatures != 'all'
     limitPoints = keepPoints != 'all'
-    if (limitFeatures and retFNames and len(retFNames) == len(keepFeatures)
-            and featureNames is not True):
-        # featureNames list matches the features in keepFeatures
-        keepFtIndices = []
-        for ftID in keepFeatures:
-            # cannot determine the index location of the feature by name since
-            # featureNames is only defining the names of the returned features
-            if isinstance(ftID, str):
-                msg = "Since featureNames were only provided for the values "
-                msg += "in keepFeatures, keepFeatures can contain only index "
-                msg += "values referencing the feature's location in the "
-                msg += "data. If attempting to use keepFeatures to reorder "
-                msg += "all features, instead create the object first then "
-                msg += "sort the features."
-                raise InvalidArgumentValue(msg)
-            elif ftID >= 0:
-                keepFtIndices.append(ftID)
-                keepFeaturesValidated = False
-            else:
-                msg = "Negative index values are not permitted, found "
-                msg += str(ftID) + "in keepFeatures"
-                raise InvalidArgumentValue(msg)
-        keepFeatures = keepFtIndices
-    elif limitFeatures and retFNames:
-        # given or extacted all featureNames, sort and limit using keepFeatures
-        keepIndices = []
-        keepNames = []
-        for ftID in keepFeatures:
-            if isinstance(ftID, str) and ftID in retFNames:
-                keepIndices.append(retFNames.index(ftID))
-                keepNames.append(ftID)
-            elif isinstance(ftID, str):
-                msg = "The value '" + ftID + "' in keepFeatures is not a valid "
-                msg += "featureName"
-                raise InvalidArgumentValue(msg)
-            # index values
-            elif ftID >= 0 and ftID < len(retFNames):
-                keepIndices.append(ftID)
-                keepNames.append(retFNames[ftID])
-            elif ftID >= 0:
-                msg = "The index " + str(ftID) + " is greater than the number "
-                msg += "of features in the data " + str(len(retFNames))
-                raise InvalidArgumentValue(msg)
-            else:
-                msg = "Negative index values are not permitted, found "
-                msg += str(ftID) + "in keepFeatures"
-                raise InvalidArgumentValue(msg)
-        keepFeatures = keepIndices
-        retFNames = keepNames
+    if limitFeatures:
+        _checkForDuplicates(keepFeatures, 'keepFeatures')
+    if (limitFeatures and retFNames
+            and (len(retFNames) != len(keepFeatures) or featureNames is True)):
+        # have all featureNames
+        keepFeatures, retFNames = _limitToKeptFeatures(keepFeatures, retFNames)
     elif limitFeatures:
-        # featureNames is False, can only handle index values
-        if any(isinstance(ftID, str) for ftID in keepFeatures):
-            msg = "keepFeatures can contain only index values because no "
-            msg += "featureNames were provided"
-            raise InvalidArgumentValue(msg)
+        # none or a subset of the featureNames provided
+        _keepIndexValuesValidation('feature', keepFeatures, featureNames)
         keepFeaturesValidated = False
-
-    if limitPoints and any(isinstance(ptID, str) for ptID in keepPoints):
-        if not pointNames:
-            msg = "keepPoints can contain only index values since "
-            msg += "no pointNames were provided"
-            raise InvalidArgumentValue(msg)
-        # cannot determine the index location of the point by name since
-        # pointNames is only defining the names of the returned points
-        elif pointNames is not True and len(pointNames) == len(keepPoints):
-            msg = "Since pointNames were only provided for the values in "
-            msg += "keepPoints, keepPoints can contain only index values "
-            msg += "referencing the point's location in the data. If "
-            msg += "attempting to use keepPoints to reorder all points, "
-            msg += "instead create the object first then sort the points."
-            raise InvalidArgumentValue(msg)
+    if limitPoints:
+        _checkForDuplicates(keepPoints, 'keepPoints')
+        # none or a subset of the pointNames provided
+        if (not pointNames or
+                (pointNames is not True
+                 and len(pointNames) == len(keepPoints))):
+            _keepIndexValuesValidation('point', keepPoints, pointNames)
 
     extractedPointNames = []
     nonNumericFeatures = set()
@@ -1661,6 +1674,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             # only need to do the validation once
             keepFeaturesValidated = True
 
+        if keepPoints != 'all' and i in keepPoints and ptName in keepPoints:
+            _keepIndexNameConflict('point', i, ptName)
         # this point will be used
         if keepPoints == 'all' or i in keepPoints or ptName in keepPoints:
             if firstRowLength is None:
@@ -1717,14 +1732,13 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         for ptID in keepPoints:
             if ptID not in locatedPoints:
                 unlocated.append(ptID)
-
         msg = "The points " + ",".join(map(str, unlocated)) + " were not "
         msg += "found in the data"
         raise InvalidArgumentValue(msg)
 
     if pointNames is True:
         retPNames = extractedPointNames
-    elif pointNames and (keepPoints == 'all' or len(retData) == len(pointNames)):
+    elif pointNames and len(retData) == len(pointNames):
         retPNames = pointNames
     elif pointNames:
         # we need to limit pointNames to kept points
@@ -2952,6 +2966,7 @@ class CV(object):
             self.argumentTuple = tuple(argumentList)
         except TypeError:
             msg = "argumentList must be iterable."
+            raise InvalidArgumentValue(msg)
 
     def __getitem__(self, key):
         return self.argumentTuple[key]
