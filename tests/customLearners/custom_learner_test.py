@@ -287,7 +287,8 @@ def testCustomLearnerIncTrainCheck():
 
     name = 'Custom.LoveAtFirstSightClassifier'
     tlObj = nimble.train(name, trainX=trainObj, trainY=labelsObj)
-
+    origBackend = tlObj.backend
+    assert all(val in origBackend.scope for val in [0, 1, 2])
     origAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
     # label set [0,1,2] with 0 as constant prediction value
     verifyScores(origAllScores, 0)
@@ -298,7 +299,9 @@ def testCustomLearnerIncTrainCheck():
     extLabelsObj = nimble.createData("Matrix", extendLabels)
 
     tlObj.incrementalTrain(extTrainObj, extLabelsObj)
-
+    # check incrementalTrain does not instantiate a new backend
+    assert tlObj.backend == origBackend
+    assert 3 in origBackend.scope
     incAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
     # label set now [0,1,2,3] with 3 as constant prediction value
     verifyScores(incAllScores, 3)
@@ -309,6 +312,10 @@ def testCustomLearnerIncTrainCheck():
     reLabelsObj = nimble.createData('Matrix', reLabels)
 
     tlObj.retrain(reTrainObj, reLabelsObj)
+    # retrain instantiates a new trained backend on only the retrain data,
+    # so the learner is trained from scratch even if incrementalTrain is used
+    assert tlObj.backend != origBackend
+    assert all(val not in tlObj.backend.scope for val in origBackend.scope)
     reAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
     # label set now [-2,-1] with -1 as constant prediction value
     verifyScores(reAllScores, 1)
