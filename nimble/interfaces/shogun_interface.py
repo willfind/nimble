@@ -27,6 +27,7 @@ import sys
 import os
 import json
 import distutils.version
+import multiprocessing
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -430,10 +431,11 @@ To install shogun
             setter = getattr(learner, 'set_' + name)
             setter(setterArgs[name])
 
-        if trainY is not None:
+        if trainY is not None and runSuccessful(learner.set_labels, trainY):
             learner.set_labels(trainY)
 
-        learner.train(trainX)
+        if runSuccessful(learner.train, trainX):
+            learner.train(trainX)
 
         # TODO online training prep learner.start_train()
         # batch training if data is passed
@@ -455,17 +457,19 @@ To install shogun
         try:
             ptVal = learner.get_machine_problem_type()
             if ptVal == self._access('Classifier', 'PT_BINARY'):
-                retLabels = learner.apply_binary(testX)
+                retFunc = learner.apply_binary
             elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
-                retLabels = learner.apply_multiclass(testX)
+                retFunc = learner.apply_multiclass
             elif ptVal == self._access('Classifier', 'PT_REGRESSION'):
-                retLabels = learner.apply_regression(testX)
+                retFunc = learner.apply_regression
             elif ptVal == self._access('Classifier', 'PT_STRUCTURED'):
-                retLabels = learner.apply_structured(testX)
+                retFunc = learner.apply_structured
             elif ptVal == self._access('Classifier', 'PT_LATENT'):
-                retLabels = learner.apply_latent(testX)
+                retFunc = learner.apply_latent
             else:
-                retLabels = learner.apply(testX)
+                retFunc = learner.apply
+            if runSuccessful(retFunc, testX):
+                retLabels = retFunc(testX)
         except Exception as e:
             print(e)
             return None
@@ -671,7 +675,7 @@ To install shogun
 ### GENERIC HELPERS ###
 #######################
 
-excludedLearners = [  # parent classes, not actually runnable
+excludedLearners = [ # parent classes, not actually runnable
                     'BaseMulticlassMachine',
                     'CDistanceMachine',
                     'CSVM',
@@ -692,70 +696,9 @@ excludedLearners = [  # parent classes, not actually runnable
                     # Deliberately unsupported
                     'ScatterSVM',  # experimental method
 
-                    # Should be implemented, but don't work
-                    #'BalancedConditionalProbabilityTree',  # streaming dense features input
-                    #'ConditionalProbabilityTree', 	 # requires streaming features
-                    'DomainAdaptationSVMLinear',  # segfault
-                    'DomainAdaptationMulticlassLibLinear',  # segFault
-                    'DomainAdaptationSVM',
-                    #'DualLibQPBMSOSVM',  # problem type 3
-                    'FeatureBlockLogisticRegression',  # remapping
-                    'GaussianProcessRegression',  # segfault in testDataIntegrity
-                    'KernelRidgeRegression',  # segfault
-                    #'KernelStructuredOutputMachine',  # problem type 3
-                    'KRRNystrom',  # segfault on train - strict kern on init requirement?
-                    #'LatentSVM',  # problem type 4
+                    # Failing tests
                     'LibLinearRegression',
-                    #'LibSVMOneClass',
-                    #'LinearMulticlassMachine',  # mixes machines. is this even possible to run?
-                    #'LinearStructuredOutputMachine',  # problem type 3
-                    #'MKLMulticlass',  # needs combined kernel type?
-                    #'MKLClassification',  # compute by subkernel not implemented
-                    #'MKLOneClass',  # Interleaved MKL optimization is currently only supported with SVMlight
-                    #'MKLRegression',  # kernel stuff?
-                    'MultitaskClusteredLogisticRegression',  # assertion error
-                    'MultitaskCompositeMachine',  # takes machine as input?
-                    #'MultitaskL12LogisticRegression',  # assertion error
-                    'MultitaskLeastSquaresRegression',  # core dump
-                    'MultitaskLogisticRegression',  # core dump
-                    #'MultitaskTraceLogisticRegression',  # assertion error
-                    'OnlineLibLinear',  # needs streaming dot features
-                    'OnlineSVMSGD',  # needs streaming dot features
-                    #'PluginEstimate',  # takes string inputs?
-                    #'RandomConditionalProbabilityTree',  # takes streaming dense features
-                    #'RelaxedTree',  # [ERROR] Call set_machine_for_confusion_matrix before training
-                    #'ShareBoost',  # non standard input
-                    #'StructuredOutputMachine',  # problem type 3
-                    #'SubGradientSVM',  #doesn't terminate
-                    'VowpalWabbit',  # segfault
-                    #'WDSVMOcas',  # string input
-
-                    # functioning learners
-                    #'AveragedPerceptron'
-                    'GaussianNaiveBayes',  # something wonky with getting scores
-                    #'GMNPSVM',
-                    #'GNPPSVM',
-                    #'GPBTSVM',
-                    #'Hierarchical',
-                    #'KMeans',
-                    #'KNN',
-                    #'LaRank',
-                    #'LibLinear',
-                    #'LibSVM',
-                    #'LibSVR',
-                    #'MPDSVM',
-                    #'MulticlassLibLinear',
-                    #'MulticlassLibSVM',
-                    'NewtonSVM',
-                    #'Perceptron',
-                    #'SGDQN',
-                    #'SVMLight',
-                    #'SVMLightOneClass',
-                    #'SVMLin',
-                    #'SVMOcas',
-                    #'SVMSGD',
-                    #'SVRLight',
-]
+                    ]
 
 
 def _enforceNonUnicodeStrings(manifest):
@@ -849,3 +792,45 @@ def _remapLabelsSpecific(toRemap, space):
     toRemap.features.transform(remap, useLog=False)
 
     return inverse
+
+
+def catchSignals(conn, target, args, kwargs):
+    """
+    Run Shogun in a separate process to prevent signal failures.
+
+    If this process exits due to a signal (like segfault), nothing will
+    be sent to the parent conn indicating that this process failed to
+    run sucessfully. Exceptions are caught and sent to the parent conn
+    to allow us to raise the exception outside this process.
+    """
+    try:
+        target(*args, **kwargs)
+        conn.send(True)
+    # Process will catch exception, send through conn to raise later
+    except Exception as e:
+        conn.send(e)
+    finally:
+        conn.close()
+
+
+def runSuccessful(target, *args, **kwargs):
+    """
+    Determine if a call to shogun function or method will be successful.
+
+    The function runs as a separate process through a child connection.
+    The process can either exit or run successfully. If succesful, the
+    parent conn may be an Exception to be raise, otherwise True is
+    returned. If unsuccessful, we cannot be sure why the process
+    exited so a SystemError is raised.
+    """
+    pConn, cConn = multiprocessing.Pipe()
+    allArgs = (cConn, target, args, kwargs)
+    p = multiprocessing.Process(target=catchSignals, args=allArgs)
+    p.start()
+    p.join()
+    if pConn.poll():
+        ret = pConn.recv()
+        if isinstance(ret, Exception):
+            raise ret
+        return ret
+    raise SystemError("shogun encountered an unidentifiable error")

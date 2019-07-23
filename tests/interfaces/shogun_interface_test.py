@@ -18,7 +18,6 @@ from nose.plugins.attrib import attr
 import nimble
 from nimble.randomness import numpyRandom
 from nimble.exceptions import InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.interfaces.interface_helpers import PythonSearcher
 
 from .skipTestDecorator import SkipMissing
@@ -86,7 +85,7 @@ def _DISABLED_testShogunObjectsInManifest():
 
 
 @shogunSkipDec
-@raises(InvalidArgumentValueCombination)
+@raises(InvalidArgumentValue)
 def testShogun_shapemismatchException():
     """ Test shogun raises exception when the shape of the train and test data don't match """
     variables = ["Y", "x1", "x2"]
