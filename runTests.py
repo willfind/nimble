@@ -10,20 +10,17 @@ from __future__ import absolute_import
 import warnings
 import inspect
 import os
-import os.path
-import nose
 import sys
 import tempfile
-try:
-    from StringIO import StringIO#python 2
-except:
-    from six import StringIO#python 3
+from io import StringIO#python 3
 
+import nose
 from nose.plugins.base import Plugin
 import nose.pyversion
 from nose.util import ln
 
-nimblePath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+nimblePath = os.path.dirname(currPath)
 sys.path.append(os.path.dirname(nimblePath))
 
 import nimble
@@ -46,9 +43,6 @@ class ExtensionPlugin(Plugin):
     def wantFile(self, file):
         # TODO fix selection of files in interfaces/tests
         if not file.endswith('.py'):
-            return False
-
-        if file == '__init__.py' and sys.version_info.major > 2:#in python3, don't check __init__.py
             return False
 
         dname = os.path.dirname(file)
@@ -102,6 +96,7 @@ class CaptureError(Plugin):
     def __init__(self):
         self.stderr = []
         self._buf = None
+        super(CaptureError, self).__init__()
 
     def options(self, parser, env):
         """Register commandline options"""
@@ -172,12 +167,43 @@ class CaptureError(Plugin):
                       """Captured stderr output.""")
 
 
+class FileRemover(Plugin):
+    """
+    Remove specified files generated during testing.
+    """
+    name = "FileRemover"
+
+    def __init__(self):
+        super(FileRemover, self).__init__()
+        # nimblePath is working directory
+        self.deleteFiles = ['createData.csv']
+
+    def options(self, parser, env):
+        Plugin.options(self, parser, env)
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+        self.enabled = True
+
+    def finalize(self, result):
+        for fileName in self.deleteFiles:
+            fullPath = os.path.join(nimblePath, fileName)
+            if os.path.exists(fullPath):
+                os.remove(fullPath)
+
+
 class LoggerControl(object):
+    """
+    Set logging configuration state while testing.
+
+    Restores the original state upon completion.
+    """
     def __init__(self):
         self._backupLoc = nimble.settings.get('logger', 'location')
         self._backupName = nimble.settings.get('logger', 'name')
         self._backupEnabled = nimble.settings.get('logger', 'enabledByDefault')
-        self._crossValBackupEnabled = nimble.settings.get('logger', 'enableCrossValidationDeepLogging')
+        self._crossValBackupEnabled = nimble.settings.get(
+            'logger', 'enableCrossValidationDeepLogging')
         self.logDir = tempfile.TemporaryDirectory()
 
     def __enter__(self):
@@ -185,21 +211,18 @@ class LoggerControl(object):
         # files after .set())
         nimble.settings.set('logger', 'location', self.logDir.name)
         nimble.settings.set("logger", 'name', "tmpLogs")
-        nimble.settings.saveChanges("logger")
         nimble.settings.set("logger", "enabledByDefault", "False")
-        nimble.settings.saveChanges("logger")
-        nimble.settings.set("logger", "enableCrossValidationDeepLogging", "False")
+        nimble.settings.set("logger", "enableCrossValidationDeepLogging",
+                            "False")
         nimble.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
         nimble.settings.set("logger", 'location', self._backupLoc)
-        nimble.settings.saveChanges("logger", 'location')
         nimble.settings.set("logger", 'name', self._backupName)
-        nimble.settings.saveChanges("logger", 'name')
         nimble.settings.set("logger", "enabledByDefault", self._backupEnabled)
-        nimble.settings.saveChanges("logger", "enabledByDefault")
-        nimble.settings.set("logger", "enableCrossValidationDeepLogging", self._crossValBackupEnabled)
-        nimble.settings.saveChanges("logger", "enableCrossValidationDeepLogging")
+        nimble.settings.set("logger", "enableCrossValidationDeepLogging",
+                            self._crossValBackupEnabled)
+        nimble.settings.saveChanges("logger")
 
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose
@@ -207,18 +230,17 @@ if __name__ == '__main__':
 
     # TODO: check for -w and override???
 
-    # setup so that this only tests the nimble dir, regardless of where it has been called
-    workingDirDef = ["-w", nimblePath]
+    # setup so that this only tests the nimble dir, regardless of where it has
+    # been called and doctest is always run
+    workingDirDef = ["-w", nimblePath, '--with-doctest']
     args.extend(workingDirDef)
 
-    # Set options so that the logger outputs to a different file than
-    # during the course of normal operations
+    plugins = [ExtensionPlugin(), CaptureError(), FileRemover()]
     with LoggerControl():
         # suppress all warnings -- nosetests only captures std out, not stderr,
-        # and there are some tests that call learners in unfortunate ways, causing
-        # ALOT of annoying warnings.
+        # and there are some tests that call learners in unfortunate ways,
+        # causing ALOT of annoying warnings.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='tests/testDataIntegrity.py')
-            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
+            nose.run(addplugins=plugins, argv=args)
     exit(0)
