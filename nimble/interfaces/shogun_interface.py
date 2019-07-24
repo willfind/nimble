@@ -42,7 +42,8 @@ from nimble.docHelpers import inheritDocstringsFactory
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
 shogunDir = None
 
-trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data', 'train_features', 'data']
+trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data',
+                 'train_features', 'data']
 trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
 
 # kernel : k, kernel
@@ -66,26 +67,17 @@ class Shogun(PredefinedInterface, UniversalInterface):
             if not (hasTrain and hasApply):
                 return False
 
-            if obj.__name__ in excludedLearners:
+            if obj.__name__ in excludedLearners or 'Online' in obj.__name__:
+                # Online TODO
                 return False
 
             # needs more to be able to distinguish between things that are runnable
             # and partial implementations. try get_machine_problem_type()?
             try:
                 instantiated = obj()
-            except TypeError:
-                # if we can't even instantiate it, then its not a usable class
-                return False
-            try:
                 instantiated.get_machine_problem_type()
             except Exception:
                 return False
-
-            #				if name.startswith("get_"):
-            #					try:
-            #						getattr(instantiated, name)()
-            #					except Exception:
-            #						return False
 
             return True
 
@@ -173,12 +165,10 @@ To install shogun
 
 
     def learnerType(self, name):
-        try:
-            ptVal = self._getMachineProblemType(name)
-        except SystemError:
-            return 'UNKNOWN'
+        ptVal = self._getMachineProblemType(name)
 
-        if ptVal == self._access('Classifier', 'PT_BINARY') or ptVal == self._access('Classifier', 'PT_MULTICLASS'):
+        if (ptVal == self._access('Classifier', 'PT_BINARY')
+                or ptVal == self._access('Classifier', 'PT_MULTICLASS')):
             return 'classification'
         if ptVal == self._access('Classifier', 'PT_REGRESSION'):
             return 'regression'
@@ -696,8 +686,10 @@ excludedLearners = [ # parent classes, not actually runnable
                     # Deliberately unsupported
                     'ScatterSVM',  # experimental method
 
-                    # Failing tests
+                    # test issues
                     'LibLinearRegression',
+                    'DomainAdaptationSVMLinear',
+                    'VowpalWabbit',
                     ]
 
 
@@ -798,10 +790,10 @@ def catchSignals(conn, target, args, kwargs):
     """
     Run Shogun in a separate process to prevent signal failures.
 
-    If this process exits due to a signal (like segfault), nothing will
-    be sent to the parent conn indicating that this process failed to
-    run sucessfully. Exceptions are caught and sent to the parent conn
-    to allow us to raise the exception outside this process.
+    If this process exits due to a signal, nothing will be sent to the
+    parent conn indicating that this process failed to run sucessfully.
+    Exceptions are caught and sent to the parent conn to allow the
+    exception to be raised outside this process.
     """
     try:
         target(*args, **kwargs)
@@ -818,10 +810,10 @@ def runSuccessful(target, *args, **kwargs):
     Determine if a call to shogun function or method will be successful.
 
     The function runs as a separate process through a child connection.
-    The process can either exit or run successfully. If succesful, the
-    parent conn may be an Exception to be raise, otherwise True is
-    returned. If unsuccessful, we cannot be sure why the process
-    exited so a SystemError is raised.
+    The process can either exit or run successfully. If successful, the
+    parent conn may be True (we can run the function) or an Exception to
+    be raised. If unsuccessful, we cannot be sure why the process exited
+    so a SystemError is raised.
     """
     pConn, cConn = multiprocessing.Pipe()
     allArgs = (cConn, target, args, kwargs)
