@@ -322,7 +322,7 @@ baseDunder_tested = [
     'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
     'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
-axisDunder_tested = ['Axis.__iter__', 'Axis.__len__']
+axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
 elementsDunder_tested = ['Elements.__iter__', 'Elements.__next__']

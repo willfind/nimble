@@ -176,6 +176,15 @@ class Axis(object):
         except InvalidArgumentValue:
             return False
 
+    def __getitem__(self, key):
+        if isinstance(key, (int, float, str, numpy.integer)):
+            key = [self._processSingle(key)]
+        else:
+            key = self._processMultiple(key)
+        if key is None:
+            return self._source.copy()
+        return self._structuralBackend_implementation('copy', key)
+
     #########################
     # Structural Operations #
     #########################
@@ -841,9 +850,6 @@ class Axis(object):
 
         return ret
 
-    ###################
-    # Query functions #
-    ###################
 
     def _similarities(self, similarityFunction):
         accepted = [
@@ -1131,7 +1137,7 @@ class Axis(object):
 
     def _processSingle(self, key):
         """
-        Helper for Base.__getitem__ when given a single value.
+        Helper for Base and Axis __getitem__ when given a single value.
         """
         length = len(self)
         if key.__class__ is str or key.__class__ is six.text_type:
@@ -1157,7 +1163,7 @@ class Axis(object):
 
     def _processMultiple(self, key):
         """
-        Helper for Base.__getitem__ when given multiple values.
+        Helper for Base and Axis __getitem__ when given multiple values.
 
         If the input is a full slice, copying for __getitem__ can be
         ignored so None is returned. Otherwise the input will be
