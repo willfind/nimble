@@ -28,6 +28,7 @@ import os
 import json
 import distutils.version
 import multiprocessing
+import re
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -226,11 +227,10 @@ To install shogun
 
     def _setupDefaultsGivenBaseNames(self, name, allNames):
         allValues = []
-        for index in range(len(allNames)):
-            group = allNames[index]
+        for group in allNames:
             curr = {}
             for paramName in group:
-                curr[paramName] = self.HiddenDefault(paramName)
+                curr[paramName] = ShogunDefault(paramName)
             allValues.append(curr)
 
         ret = []
@@ -241,8 +241,7 @@ To install shogun
             base = []
             for i in range(len(allValues)):
                 base.append([])
-        for index in range(len(base)):
-            group = base[index]
+        for index, group in enumerate(base):
             curr = allValues[index]
             for paramName in group:
                 if paramName in curr:
@@ -312,7 +311,7 @@ To install shogun
         delkeys = []
         for key in arguments:
             val = arguments[key]
-            if isinstance(val, self.HiddenDefault):
+            if isinstance(val, ShogunDefault):
                 delkeys.append(key)
         for key in delkeys:
             del arguments[key]
@@ -424,8 +423,26 @@ To install shogun
         if trainY is not None and runSuccessful(learner.set_labels, trainY):
             learner.set_labels(trainY)
 
-        if runSuccessful(learner.train, trainX):
-            learner.train(trainX)
+        emptyTrain = False
+        if (hasattr(learner, 'set_features')
+                and runSuccessful(learner.set_features, trainX)):
+            learner.set_features(trainX)
+            emptyTrain = True
+
+        try:
+            if emptyTrain and runSuccessful(learner.train):
+                learner.train()
+            elif runSuccessful(learner.train, trainX):
+                learner.train(trainX)
+        except SystemError as se:
+            missing = re.search(r"assertion ([a-z]+) failed", str(se))
+            if missing:
+                paramName = missing.groups()[0]
+                msg = "MISSING LEARNER PARAMETER! Shogun has indicated that a "
+                msg += "'{0}' parameter is required for this learner"
+                msg = msg.format(paramName)
+                raise InvalidArgumentValue(msg)
+            raise
 
         # TODO online training prep learner.start_train()
         # batch training if data is passed
@@ -645,21 +662,25 @@ To install shogun
 
         return ret
 
-    class HiddenDefault(object):
-        def __init__(self, name, typeString='UNKNOWN'):
-            self.name = name
-            self.typeString = typeString
+class ShogunDefault(object):
+    def __init__(self, name, typeString='UNKNOWN'):
+        self.name = name
+        self.typeString = typeString
 
-        def __eq__(self, other):
-            if isinstance(other, Shogun.HiddenDefault):
-                return self.name == other.name and self.typeString == other.typeString
-            return False
+    def __eq__(self, other):
+        if isinstance(other, ShogunDefault):
+            return self.name == other.name and self.typeString == other.typeString
+        return False
 
-        def __copy__(self):
-            return Shogun.HiddenDefault(self.name, self.typeString)
+    def __copy__(self):
+        return ShogunDefault(self.name, self.typeString)
 
-        def __deepcopy(self):
-            return self.__copy__()
+    def __deepcopy(self):
+        return self.__copy__()
+
+    def __str__(self):
+        return "ShogunDefault({0})".format(self.name)
+
 
 #######################
 ### GENERIC HELPERS ###
