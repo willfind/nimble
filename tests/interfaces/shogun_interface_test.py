@@ -14,11 +14,18 @@ import inspect
 import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
+try:
+    from shogun import RealFeatures, BinaryLabels, MulticlassLabels
+except ImportError:
+    pass
 
 import nimble
 from nimble.randomness import numpyRandom
 from nimble.exceptions import InvalidArgumentValue
+from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
+from nimble.helpers import generateClassificationData
+from nimble.helpers import generateRegressionData
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -431,3 +438,80 @@ def testShogunListLearners():
             for dSet in defaults:
                 for key in dSet.keys():
                     assert key in pSet
+
+
+def toCall(learner):
+    return "shogun." + learner
+
+def getLearnersByType(lType=None, ignore=[]):
+    learners = nimble.listLearners('shogun')
+    typeMatch = []
+    for learner in learners:
+        if lType is not None:
+            learnerType = nimble.learnerType(toCall(learner))
+            if lType == learnerType and learner not in ignore:
+                typeMatch.append(learner)
+        elif learner not in ignore:
+            typeMatch.append(learner)
+    assert typeMatch # check not returning an empty list
+    return typeMatch
+
+def equalityAssertHelper(ret1, ret2, ret3=None):
+    def identicalThenApprox(lhs, rhs):
+        try:
+            assert lhs.isIdentical(rhs)
+        except AssertionError:
+            assert lhs.isApproximatelyEqual(rhs)
+
+    identicalThenApprox(ret1, ret2)
+    if ret3 is not None:
+        identicalThenApprox(ret1, ret3)
+        identicalThenApprox(ret2, ret3)
+
+@shogunSkipDec
+@attr('slow')
+def testShogunBinaryClassificationLearners():
+    data = generateClassificationData(2, 10, 20)
+    # some classification learners require non-negative data
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    trainY.points.fill(0, -1)
+    testX = abs(data[1][0])
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = BinaryLabels(Ytrain)
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    dataIssues = ['FeatureBlockLogisticRegression', 'LibSVM', 'LDA']
+    kernel = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MKLClassification',
+              'MKLOneClass', 'MPDSVM']
+    text = ['PluginEstimate', 'WDSVMOcas']
+    ignore = dataIssues + kernel + text
+    learners = getLearnersByType('classification', ignore)
+    learners = [l for l in learners if 'Multitask' not in l]
+
+    @logCountAssertionFactory(2)
+    def compareOutputs(learner):
+        sg = Shogun()
+        sgObj = sg.findCallable(learner)
+        shogunObj = sgObj()
+        ptVal = shogunObj.get_machine_problem_type()
+        if not ptVal == sg._access('Classifier', 'PT_BINARY'):
+            # not binary classification
+            # add to log so assertion passes
+            for i in range(2):
+                nimble.log("pass", "pass")
+            return
+
+        shogunObj.set_labels(Ytrain)
+        shogunObj.train(Xtrain)
+        predLabels = shogunObj.apply_binary(Xtest)
+        predArray = predLabels.get_labels().reshape(-1, 1)
+        predSG = nimble.createData('Matrix', predArray, useLog=False)
+        TL = nimble.train(toCall(learner), trainX, trainY)
+        predNimble = TL.apply(testX)
+
+        equalityAssertHelper(predSG, predNimble)
+
+    for learner in learners:
+        compareOutputs(learner)

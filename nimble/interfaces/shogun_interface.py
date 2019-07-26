@@ -350,8 +350,7 @@ To install shogun
 
                     return inverseMapper
 
-                ret.elements.transform(makeInverseMapper(remap), features=0,
-                                       useLog=False)
+                ret.elements.transform(remap, useLog=False)
 
         return ret
 
@@ -388,16 +387,12 @@ To install shogun
         # is where we have to add them back in.
         for name in diffNames:
             if name in trainXAliases:
-                if name in rawDefaults[bestIndex]:
-                    pass
-                #setterArgs[name] = trainX  TODO -- do we actually want this?
-                else:
+                # init with trainX if we can't use setter
+                if not name in rawDefaults[bestIndex]:
                     initArgs[name] = trainX
             if name in trainYAliases:
-                if name in rawDefaults[bestIndex]:
-                    pass
-                #setterArgs[name] = trainY  TODO -- do we actually want this?
-                else:
+                # init with trainX if we can't use setter
+                if not name in rawDefaults[bestIndex]:
                     initArgs[name] = trainY
 
         # it may be the case that the nimble passed the args needed to initialize
@@ -418,7 +413,8 @@ To install shogun
 
         for name in setterArgs:
             setter = getattr(learner, 'set_' + name)
-            setter(setterArgs[name])
+            if runSuccessful(setter, setterArgs[name]):
+                setter(setterArgs[name])
 
         if trainY is not None and runSuccessful(learner.set_labels, trainY):
             learner.set_labels(trainY)
@@ -428,7 +424,6 @@ To install shogun
                 and runSuccessful(learner.set_features, trainX)):
             learner.set_features(trainX)
             emptyTrain = True
-
         try:
             if emptyTrain and runSuccessful(learner.train):
                 learner.train()
@@ -597,17 +592,13 @@ To install shogun
             labelsObj = labelsObj.copy(to='Matrix')
             problemType = self._getMachineProblemType(learnerName)
             if problemType == self._access('Classifier', 'PT_MULTICLASS'):
-                inverseMapping = _remapLabelsRange(labelsObj)
+                inverseMapping = _remapLabels(labelsObj)
                 customDict['remap'] = inverseMapping
-                if len(inverseMapping) == 1:
-                    raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labels = self._access('Features', 'MulticlassLabels')(flattened.astype(float))
             elif problemType == self._access('Classifier', 'PT_BINARY'):
-                inverseMapping = _remapLabelsSpecific(labelsObj, [-1, 1])
+                inverseMapping = _remapLabels(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
-                if len(inverseMapping) == 1:
-                    raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labels = self._access('Features', 'BinaryLabels')(flattened.astype(float))
             elif problemType == self._access('Classifier', 'PT_REGRESSION'):
@@ -722,88 +713,28 @@ def _enforceNonUnicodeStrings(manifest):
                 group[i] = str(group[i])
     return manifest
 
-
-def _remapLabelsRange(toRemap):
+def _remapLabels(toRemap, space=None):
     """
-    Transform toRemap so its n unique values are mapped into the value range 0 to n-1
+    Transform toRemap so its values are mapped into a given space.
 
-    toRemap: must be a nimble Base object with a single feature. The contained values
-    will be transformed, on a first come first serve basis, into the values 0 to n-1
-    where n is the number of unique values. This object is modified by this function.
-
-    Returns: list encoding the inverse mapping, where the value at index i was the
-    value originally in toRemap that was replaced with the value i.
-
+    If space is None, the space is set to the range of n unique values,
+    0 to n - 1.  Otherwise, the space must provide a value for each
+    unique value in toRemp. The return is the inverse map for use when
+    mapping these values back to their original values. 
     """
     assert len(toRemap.features) == 1
-    assert len(toRemap.features) > 0
-
-    mapping = {}
-    inverse = []
-
-    def remap(fView):
-        invIndex = 0
-        ret = []
-        for value in fView:
-            if value not in mapping:
-                mapping[value] = invIndex
-                inverse.append(value)
-                invIndex += 1
-            ret.append(mapping[value])
-        return ret
-
-    toRemap.features.transform(remap, useLog=False)
-
-    return inverse
-
-
-def _remapLabelsSpecific(toRemap, space):
-    """
-    Transform toRemap so its values are mapped into the provided space
-
-    toRemap: must be a data representation with a single feature containing as many
-    unique values as the length of the list-typed parameter named 'space'.
-    The contained values will be transformed, on a first come first serve basis, into
-    the values contained in space. This object is modified by this function.
-
-    space: list containing the values you want to be contained by toRemap.
-
-    Returns: dict encoding the inverse mapping where the value at i was the
-    value originally in toRemap that was replaced with the value i. The only valid
-    keys in the return will be those also present in the paramater space
-
-    Raises: InvalidArgumentValue if there are more than unique values than values in space
-
-    """
-    assert len(toRemap.points) > 0
-    assert len(toRemap.features) == 1
-
-    mapping = {}
-    inverse = []
-    invIndex = 0
-    maxLength = len(space)
-
-    for value in toRemap:
-        if value not in mapping:
-            mapping[value] = invIndex
-            inverse.append(value)
-            invIndex += 1
-            if invIndex > maxLength:
-                if space == [-1, 1]:
-                    msg = "Multiclass training data cannot be used by a binary-only classifier"
-                    raise InvalidArgumentValue(msg)
-                else:
-                    msg = "toRemap contains more values than can be mapped into the provided space."
-                    raise InvalidArgumentValue(msg)
-
-    def remap(fView):
-        ret = []
-        for value in fView:
-            ret.append(space[mapping[value]])
-        return ret
-
-    toRemap.features.transform(remap, useLog=False)
-
+    uniqueVals = list(toRemap.elements.countUnique().keys())
+    if space is None:
+        space = range(len(uniqueVals))
+    remap = {orig: mapped for orig, mapped in zip(uniqueVals, space)}
+    if len(remap) == 1:
+        msg = "Cannot train a classifier with data containing only one label"
+        raise InvalidArgumentValue(msg)
+    if len(uniqueVals) != len(space):
+        msg = "Cannot map label values into space of length " + str(len(space))
+        raise InvalidArgumentValue(msg)
+    toRemap.elements.transform(remap, useLog=False)
+    inverse = {mapped: orig for orig, mapped in remap.items()}
     return inverse
 
 
