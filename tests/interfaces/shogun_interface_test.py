@@ -172,7 +172,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
     data2 = [[11, 11], [0, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {'st': 1, 'kernel': 'GaussianKernel', 'w': 2, 'size': 10}
+    args = {'solver_type': 1, 'kernel': 'GaussianKernel', 'width': 2, 'cache_size': 10}
     ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y",
                                testX=testObj, output=None, arguments=args)
 
@@ -183,7 +183,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 
 @shogunSkipDec
 @oneLogEntryExpected
-def testShogunKMeans():
+def testShogunKNN():
     """ Test shogun by calling the KNN classifier, a distance based machine """
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, 8, 1], [1, 7, 1], [2, 1, 9], [2, 1, 8]]
@@ -215,7 +215,7 @@ def testShogunMulticlassSVM():
     data2 = [[0, 0], [-101, 1], [1, 101], [1, 1]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {'C': .5, 'k': 'LinearKernel'}
+    args = {'C': .5, 'kernel': 'LinearKernel'}
 
     #	args = {'C':1}
     #	args = {}
@@ -272,7 +272,7 @@ def testShogunRossData():
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'C': 1.0}
-    argsk = {'C': 1.0, 'k': "LinearKernel"}
+    argsk = {'C': 1.0, 'kernel': "LinearKernel"}
 
     ret = nimble.trainAndApply("shogun.MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None,
                             arguments=argsk)
@@ -484,14 +484,13 @@ def testShogunBinaryClassificationLearners():
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
     dataIssues = ['FeatureBlockLogisticRegression', 'LibSVM', 'LDA',
-                  'MKLClassification', 'MKLOneClass', 'VowpalWabbit']
-    text = ['PluginEstimate', 'WDSVMOcas']
-    ignore = dataIssues + text
-    learners = getLearnersByType('classification', ignore)
+                  'MKLClassification', 'MKLOneClass', 'PluginEstimate',
+                  'VowpalWabbit', 'WDSVMOcas']
+    learners = getLearnersByType('classification', ignore=dataIssues)
     remove = ['Multitask', 'DomainAdaptation']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
-    kernels = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MPDSVM']
+    needKernel = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MPDSVM']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -508,11 +507,11 @@ def testShogunBinaryClassificationLearners():
 
         shogunObj.set_labels(Ytrain)
         args = {}
-        if learner in kernels:
-            args['kernel'] = GaussianKernel
+        if learner in needKernel:
             kernel = GaussianKernel()
             kernel.init(Xtrain, Xtrain)
             shogunObj.set_kernel(kernel)
+            args['kernel'] = 'GaussianKernel'
         shogunObj.train(Xtrain)
         predLabels = shogunObj.apply_binary(Xtest)
         predArray = predLabels.get_labels().reshape(-1, 1)
@@ -540,17 +539,18 @@ def testShogunMulticlassClassificationLearners():
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
     dataIssues = ['Autoencoder', 'BalancedConditionalProbabilityTree',
-                  'CHAIDTree', 'DeepAutoencoder', 'MCLDA', 'MKLMulticlass',
-                  'MulticlassLibSVM', 'MulticlassTreeGuidedLogisticRegression',
-                  'NeuralNetwork', 'RandomConditionalProbabilityTree',
-                  'RandomForest', 'RelaxedTree', 'ShareBoost']
-    # text = ['PluginEstimate', 'WDSVMOcas']
-    ignore = dataIssues #+ text
-    learners = getLearnersByType('classification', ignore)
-    # learners = [l for l in learners if 'Multitask' not in l]
-    remove = ['Multitask', 'KMeans', 'DomainAdaptation']
+                  'CHAIDTree', 'DeepAutoencoder', 'KMeans', 'KMeansMiniBatch',
+                  'MCLDA', 'MKLMulticlass', 'MulticlassLibSVM',
+                  'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
+                  'RandomConditionalProbabilityTree', 'RandomForest',
+                  'RelaxedTree', 'ShareBoost']
+    learners = getLearnersByType('classification', dataIssues)
+    # Any of these learner types need to be removed for this test
+    remove = ['Multitask', 'DomainAdaptation']
     learners = [l for l in learners if not any(x in l for x in remove)]
-    kernels = ['GMNPSVM', 'LaRank']
+
+    needKernel = ['GMNPSVM', 'LaRank']
+    needDistance = ['Hierarchical', 'KNN']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -564,25 +564,20 @@ def testShogunMulticlassClassificationLearners():
             for i in range(2):
                 nimble.log("pass", "pass")
             return
-
+        print(learner)
         shogunObj.set_labels(Ytrain)
         args = {}
-        if learner in kernels:
-            args['kernel'] = GaussianKernel
+        if learner in needKernel:
             kernel = GaussianKernel()
             kernel.init(Xtrain, Xtrain)
             shogunObj.set_kernel(kernel)
-        try:
-            shogunObj.train(Xtrain)
-        except SystemError as se:
-            if 'assertion distance failed' in str(se):
-                dist = EuclideanDistance()
-                dist.init(Xtrain, Xtrain)
-                shogunObj.set_distance(dist)
-                args['distance'] = EuclideanDistance
-                shogunObj.train(Xtrain)
-            else:
-                raise
+            args['kernel'] = 'GaussianKernel'
+        if learner in needDistance:
+            dist = EuclideanDistance()
+            dist.init(Xtrain, Xtrain)
+            shogunObj.set_distance(dist)
+            args['distance'] = 'EuclideanDistance'
+        shogunObj.train(Xtrain)
         predLabels = shogunObj.apply_multiclass(Xtest)
         predArray = predLabels.get_labels().reshape(-1, 1)
         predSG = nimble.createData('Matrix', predArray, useLog=False)
@@ -593,15 +588,3 @@ def testShogunMulticlassClassificationLearners():
 
     for learner in learners:
         compareOutputs(learner)
-
-
-@raises(InvalidArgumentValue)
-def testShogunArgumentInstantiationFails():
-    trainX = nimble.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]] * 3)
-    trainY = nimble.createData('Matrix', [[0], [1], [0]] * 3)
-    args = {}
-    # pass a shogun learner object instead of kernel to trigger failure
-    sg = Shogun()
-    sgObj = sg.findCallable('GNPPSVM')
-    args['kernel'] = sgObj
-    TL = nimble.train(toCall('GNPPSVM'), trainX, trainY, arguments=args)

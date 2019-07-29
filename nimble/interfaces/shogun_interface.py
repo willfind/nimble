@@ -191,7 +191,7 @@ To install shogun
         for group in base:
             curr = []
             for paramName in group:
-                if paramName not in trainXAliases and paramName not in trainYAliases:
+                if paramName not in trainXAliases + trainYAliases:
                     curr.append(paramName)
             ret.append(curr)
 
@@ -204,22 +204,14 @@ To install shogun
 
 
     def _getParameterNamesBackend(self, name):
-        query = self._queryParamManifest(name)
-        base = query if query is not None else [[]]
-
-        #		return base
         ret = []
-        for group in base:
-            backend = self.findCallable(name)
-            params = group
-            for funcname in dir(backend):
-                if funcname.startswith('set_'):
-                    funcname = funcname[4:]
-                    if funcname not in params:
-                        params.append(funcname)
-            ret.append(params)
+        backend = self.findCallable(name)
+        for funcname in dir(backend):
+            if funcname.startswith('set_'):
+                funcname = funcname[4:]
+                ret.append(funcname)
 
-        return ret
+        return [ret]
 
     def _getDefaultValuesBackend(self, name):
         allNames = self._getParameterNamesBackend(name)
@@ -233,22 +225,7 @@ To install shogun
                 curr[paramName] = ShogunDefault(paramName)
             allValues.append(curr)
 
-        ret = []
-        query = self._queryParamManifest(name)
-        if query is not None:
-            base = query
-        else:
-            base = []
-            for i in range(len(allValues)):
-                base.append([])
-        for index, group in enumerate(base):
-            curr = allValues[index]
-            for paramName in group:
-                if paramName in curr:
-                    del curr[paramName]
-            ret.append(curr)
-
-        return ret
+        return allValues
 
     def _getScores(self, learnerName, learner, testX, newArguments,
                    storedArguments, customDict):
@@ -340,7 +317,8 @@ To install shogun
         if outputType == 'match':
             outputType = customDict['match']
         ret = nimble.createData(outputType, retRaw, useLog=False)
-
+        print(customDict['remap'])
+        print(ret)
         if outputFormat == 'label':
             remap = customDict['remap']
             if remap is not None:
@@ -351,80 +329,22 @@ To install shogun
                     return inverseMapper
 
                 ret.elements.transform(remap, useLog=False)
-
+        print(ret)
         return ret
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         toCall = self.findCallable(learnerName)
-
-        # Figure out which, if any, aliases for trainX or trainY were ignored
-        # during argument validation and instantiation
-        #		setX = True
-        #		setY = True
-        learnerParams = self._getLearnerParameterNamesBackend(learnerName)
-        rawParams = self._getParameterNamesBackend(learnerName)
-        learnerDefaults = self._getLearnerDefaultValuesBackend(learnerName)
-        rawDefaults = self._getDefaultValuesBackend(learnerName)
-        bestIndex = self._chooseBestParameterSet(learnerParams,
-                                                 learnerDefaults, arguments)
-        useLearnerParams = learnerParams[bestIndex]
-        useRawParams = rawParams[bestIndex]
-        useLearnerDefaults = learnerDefaults[bestIndex]
-        useRawDefaults = rawDefaults[bestIndex]
-
-        diffNames = list(set(useRawParams) - set(useLearnerParams))
-
+        learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
         # Figure out which params have to be set using setters, instead of passed in.
         setterArgs = {}
-        initArgs = {}
-        kernels = []
         for name, arg in arguments.items():
-            # Until instantiated, all shogun classes are SwigPyObjectType.
-            # For arguments of this type, we will assume that this is a
-            # Kernel or Distance and try to instantiate it ourselves to make
-            # it useable.
-            if isinstance(arg, type(toCall)):
-                try:
-                    arg = arg()
-                    arg.init(trainX, trainX)
-                except Exception as e:
-                    msg = "Shogun object instantiation failed. By default, "
-                    msg += "nimble assumes shogun objects as arguments are "
-                    msg += "Kernel or Distance objects and attempts to "
-                    msg += "instantiate them using (trainX, trainX). This can "
-                    msg += "be avoided by passing an object that has already "
-                    msg += "been instantiated to the {0} parameter. For "
-                    msg += "reference the error received from shogun was: {1}"
-                    msg = msg.format(name, str(e))
-                    raise InvalidArgumentValue(msg)
-            if name in useLearnerDefaults:
+            # use setter for everything in learnerDefaults
+            if name in learnerDefaults:
                 setterArgs[name] = arg
-            else:
-                initArgs[name] = arg
 
-        # if we've ignored aliased names (as demonstrated by the difference between
-        # the raw parameter name list and the learner parameter name list) then this
-        # is where we have to add them back in.
-        for name in diffNames:
-            if name in trainXAliases:
-                # init with trainX if we can't use setter
-                if not name in useRawDefaults:
-                    initArgs[name] = trainX
-            if name in trainYAliases:
-                # init with trainX if we can't use setter
-                if not name in useRawDefaults:
-                    initArgs[name] = trainY
-
-        # actually pack args for init. c++ backend with a thin python layer means
-        # the crucial information is where in a list the values are, NOT the associated
-        # name.
-        initArgsList = []
-        for name in useRawParams:
-            if name not in useRawDefaults:
-                initArgsList.append(initArgs[name])
-        learner = toCall(*initArgsList)
+        learner = toCall()
 
         for name, arg in setterArgs.items():
             setter = getattr(learner, 'set_' + name)
@@ -631,25 +551,6 @@ To install shogun
                 trans = self._access('Features', 'StreamingRealFeatures')()
         return trans
 
-    def _queryParamManifest(self, name):
-        """
-        Checks the param manifest for an entry associated with the given name.
-        Returns a list of list of parameter names if an entry is found, None
-        otherwise. The parameter manifest is the raw output of constructor parsing,
-        so there are some idiosyncrasies in the naming that this helper
-        navigates
-        """
-        ret = None
-        # exactly correct key
-        if name in self._paramsManifest:
-            ret = copy.deepcopy(self._paramsManifest[name])
-        # some objects have names which start with a capital C and then
-        # are followed by the name they would have in the documentation
-        if 'C' + name in self._paramsManifest:
-            ret = copy.deepcopy(self._paramsManifest['C' + name])
-
-        return ret
-
 class ShogunDefault(object):
     def __init__(self, name, typeString='UNKNOWN'):
         self.name = name
@@ -669,6 +570,9 @@ class ShogunDefault(object):
     def __str__(self):
         return "ShogunDefault({0})".format(self.name)
 
+    def __repr__(self):
+        return self.__str__()
+
 
 #######################
 ### GENERIC HELPERS ###
@@ -680,6 +584,7 @@ excludedLearners = [ # parent classes, not actually runnable
                     'CSVM',
                     'KernelMachine',
                     'KernelMulticlassMachine',
+                    'KMeansBase',
                     'LinearLatentMachine',
                     'LinearMachine',
                     'LinearMulticlassMachine',
