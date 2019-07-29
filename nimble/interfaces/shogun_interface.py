@@ -366,21 +366,43 @@ To install shogun
         rawParams = self._getParameterNamesBackend(learnerName)
         learnerDefaults = self._getLearnerDefaultValuesBackend(learnerName)
         rawDefaults = self._getDefaultValuesBackend(learnerName)
-        bestIndex = self._chooseBestParameterSet(learnerParams, learnerDefaults, arguments)
-        diffNames = list(set(rawParams[bestIndex]) - set(learnerParams[bestIndex]))
+        bestIndex = self._chooseBestParameterSet(learnerParams,
+                                                 learnerDefaults, arguments)
+        useLearnerParams = learnerParams[bestIndex]
+        useRawParams = rawParams[bestIndex]
+        useLearnerDefaults = learnerDefaults[bestIndex]
+        useRawDefaults = rawDefaults[bestIndex]
+
+        diffNames = list(set(useRawParams) - set(useLearnerParams))
+
 
         # Figure out which params have to be set using setters, instead of passed in.
         setterArgs = {}
         initArgs = {}
         kernels = []
-        for name in arguments:
-            if name in learnerDefaults[bestIndex]:
-                setterArgs[name] = arguments[name]
+        for name, arg in arguments.items():
+            # Until instantiated, all shogun classes are SwigPyObjectType.
+            # For arguments of this type, we will assume that this is a
+            # Kernel or Distance and try to instantiate it ourselves to make
+            # it useable.
+            if isinstance(arg, type(toCall)):
+                try:
+                    arg = arg()
+                    arg.init(trainX, trainX)
+                except Exception as e:
+                    msg = "Shogun object instantiation failed. By default, "
+                    msg += "nimble assumes shogun objects as arguments are "
+                    msg += "Kernel or Distance objects and attempts to "
+                    msg += "instantiate them using (trainX, trainX). This can "
+                    msg += "be avoided by passing an object that has already "
+                    msg += "been instantiated to the {0} parameter. For "
+                    msg += "reference the error received from shogun was: {1}"
+                    msg = msg.format(name, str(e))
+                    raise InvalidArgumentValue(msg)
+            if name in useLearnerDefaults:
+                setterArgs[name] = arg
             else:
-                initArgs[name] = arguments[name]
-
-            if isinstance(arguments[name], self._access('Classifier', 'Kernel')):
-                kernels.append(name)
+                initArgs[name] = arg
 
         # if we've ignored aliased names (as demonstrated by the difference between
         # the raw parameter name list and the learner parameter name list) then this
@@ -388,56 +410,31 @@ To install shogun
         for name in diffNames:
             if name in trainXAliases:
                 # init with trainX if we can't use setter
-                if not name in rawDefaults[bestIndex]:
+                if not name in useRawDefaults:
                     initArgs[name] = trainX
             if name in trainYAliases:
                 # init with trainX if we can't use setter
-                if not name in rawDefaults[bestIndex]:
+                if not name in useRawDefaults:
                     initArgs[name] = trainY
-
-        # it may be the case that the nimble passed the args needed to initialize
-        # a kernel. If not, it isn't useable until we do it ourselves
-        for name in kernels:
-            currKern = arguments[name]
-            if not currKern.has_features():
-                currKern.init(trainX, trainX)
 
         # actually pack args for init. c++ backend with a thin python layer means
         # the crucial information is where in a list the values are, NOT the associated
         # name.
         initArgsList = []
-        for name in rawParams[bestIndex]:
-            if name not in rawDefaults[bestIndex]:
+        for name in useRawParams:
+            if name not in useRawDefaults:
                 initArgsList.append(initArgs[name])
         learner = toCall(*initArgsList)
 
-        for name in setterArgs:
+        for name, arg in setterArgs.items():
             setter = getattr(learner, 'set_' + name)
-            if runSuccessful(setter, setterArgs[name]):
-                setter(setterArgs[name])
+            if runSuccessful(setter, arg):
+                setter(arg)
 
-        if trainY is not None and runSuccessful(learner.set_labels, trainY):
+        if trainY is not None:
             learner.set_labels(trainY)
 
-        emptyTrain = False
-        if (hasattr(learner, 'set_features')
-                and runSuccessful(learner.set_features, trainX)):
-            learner.set_features(trainX)
-            emptyTrain = True
-        try:
-            if emptyTrain and runSuccessful(learner.train):
-                learner.train()
-            elif runSuccessful(learner.train, trainX):
-                learner.train(trainX)
-        except SystemError as se:
-            missing = re.search(r"assertion ([a-z]+) failed", str(se))
-            if missing:
-                paramName = missing.groups()[0]
-                msg = "MISSING LEARNER PARAMETER! Shogun has indicated that a "
-                msg += "'{0}' parameter is required for this learner"
-                msg = msg.format(paramName)
-                raise InvalidArgumentValue(msg)
-            raise
+        learner.train(trainX)
 
         # TODO online training prep learner.start_train()
         # batch training if data is passed
@@ -685,6 +682,7 @@ excludedLearners = [ # parent classes, not actually runnable
                     'KernelMulticlassMachine',
                     'LinearLatentMachine',
                     'LinearMachine',
+                    'LinearMulticlassMachine',
                     'MKL',
                     'Machine',
                     'MulticlassMachine',
@@ -692,16 +690,15 @@ excludedLearners = [ # parent classes, not actually runnable
                     'MultitaskLinearMachineBase',
                     'NativeMulticlassMachine',
                     'OnlineLinearMachine',
+                    'TreeMachineWithC45TreeNodeData',
+                    'TreeMachineWithCARTreeNodeData',
+                    'TreeMachineWithCHAIDTreeNodeData',
+                    'TreeMachineWithID3TreeNodeData',
                     'TreeMachineWithConditionalProbabilityTreeNodeData',
                     'TreeMachineWithRelaxedTreeNodeData',
 
                     # Deliberately unsupported
                     'ScatterSVM',  # experimental method
-
-                    # test issues
-                    'LibLinearRegression',
-                    'DomainAdaptationSVMLinear',
-                    'VowpalWabbit',
                     ]
 
 
@@ -720,7 +717,7 @@ def _remapLabels(toRemap, space=None):
     If space is None, the space is set to the range of n unique values,
     0 to n - 1.  Otherwise, the space must provide a value for each
     unique value in toRemp. The return is the inverse map for use when
-    mapping these values back to their original values. 
+    mapping these values back to their original values.
     """
     assert len(toRemap.features) == 1
     uniqueVals = list(toRemap.elements.countUnique().keys())
@@ -731,7 +728,11 @@ def _remapLabels(toRemap, space=None):
         msg = "Cannot train a classifier with data containing only one label"
         raise InvalidArgumentValue(msg)
     if len(uniqueVals) != len(space):
-        msg = "Cannot map label values into space of length " + str(len(space))
+        if space == [-1, 1]:
+            spaceStr = "binary"
+        else:
+            spaceStr = "space " + str(space)
+        msg = "Cannot map label values to " + spaceStr
         raise InvalidArgumentValue(msg)
     toRemap.elements.transform(remap, useLog=False)
     inverse = {mapped: orig for orig, mapped in remap.items()}

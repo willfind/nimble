@@ -16,6 +16,7 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 try:
     from shogun import RealFeatures, BinaryLabels, MulticlassLabels
+    from shogun import LinearKernel, GaussianKernel, EuclideanDistance
 except ImportError:
     pass
 
@@ -142,7 +143,7 @@ def testShogun_multiClassDataToBinaryAlg():
 def testShogunHandmadeBinaryClassification():
     """ Test shogun by calling a binary linear classifier """
     variables = ["Y", "x1", "x2"]
-    data = [[0, 1, 0], [-0, 0, 1], [1, 3, 2]]
+    data = [[0, 1, 0], [-0, 0, 1], [5, 3, 2]]
     trainingObj = nimble.createData('Matrix', data, featureNames=variables,
                                  useLog=False)
 
@@ -154,36 +155,36 @@ def testShogunHandmadeBinaryClassification():
                             testX=testObj, output=None, arguments=args)
 
     assert ret is not None
-
-    # shogun binary classifiers seem to return confidence values, not class ID
-    assert ret.data[0, 0] > 0
+    assert ret[0, 0] == 5
+    assert ret[1, 0] == 0
 
 
 @shogunSkipDec
 @oneLogEntryExpected
 def testShogunHandmadeBinaryClassificationWithKernel():
     """ Test shogun by calling a binary linear classifier with a kernel """
-
     variables = ["Y", "x1", "x2"]
-    data = [[5, -11, -5], [1, 0, 1], [1, 3, 2]]
+    data = [[5, 1, 18], [5, 1, 13], [5, 2, 9], [5, 3, 6], [-2, 3, 15], [-2, 6, 11],
+            [-2, 6, 6], [5, 6, 3], [-2, 9, 5], [5, 9, 2], [-2, 10, 10], [-2, 11, 5],
+            [-2, 12, 6], [5, 13, 1], [-2, 16, 3], [5, 18, 1]]
     trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
 
-    data2 = [[5, 3], [-1, 0]]
+    data2 = [[11, 11], [0, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'st': 1, 'kernel': 'GaussianKernel', 'w': 2, 'size': 10}
-    ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+    ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y",
+                               testX=testObj, output=None, arguments=args)
 
     assert ret is not None
-
-    # shogun binary classifiers seem to return confidence values, not class ID
-    assert ret.data[0, 0] > 0
+    assert ret[0, 0] == -2
+    assert ret[1, 0] == 5
 
 
 @shogunSkipDec
 @oneLogEntryExpected
 def testShogunKMeans():
-    """ Test shogun by calling the Kmeans classifier, a distance based machine """
+    """ Test shogun by calling the KNN classifier, a distance based machine """
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, 8, 1], [1, 7, 1], [2, 1, 9], [2, 1, 8]]
     trainingObj = nimble.createData('Matrix', data, featureNames=variables, useLog=False)
@@ -193,10 +194,10 @@ def testShogunKMeans():
 
     args = {'distance': 'ManhattanMetric'}
 
-    ret = nimble.trainAndApply("shogun.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+    ret = nimble.trainAndApply("shogun.KNN", trainingObj, trainY="Y",
+                               testX=testObj, output=None, arguments=args)
 
     assert ret is not None
-
     assert ret.data[0, 0] == 0
     assert ret.data[1, 0] == 1
     assert ret.data[2, 0] == 2
@@ -205,7 +206,7 @@ def testShogunKMeans():
 @shogunSkipDec
 @oneLogEntryExpected
 def testShogunMulticlassSVM():
-    """ Test shogun by calling a multilass classifier with a kernel """
+    """ Test shogun by calling a multiclass classifier with a kernel """
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, -118, 1], [1, -117, 1], [2, 1, 191], [2, 1, 118], [3, -1000, -500]]
@@ -482,13 +483,15 @@ def testShogunBinaryClassificationLearners():
     Ytrain = BinaryLabels(Ytrain)
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
-    dataIssues = ['FeatureBlockLogisticRegression', 'LibSVM', 'LDA']
-    kernel = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MKLClassification',
-              'MKLOneClass', 'MPDSVM']
+    dataIssues = ['FeatureBlockLogisticRegression', 'LibSVM', 'LDA',
+                  'MKLClassification', 'MKLOneClass', 'VowpalWabbit']
     text = ['PluginEstimate', 'WDSVMOcas']
-    ignore = dataIssues + kernel + text
+    ignore = dataIssues + text
     learners = getLearnersByType('classification', ignore)
-    learners = [l for l in learners if 'Multitask' not in l]
+    remove = ['Multitask', 'DomainAdaptation']
+    learners = [l for l in learners if not any(x in l for x in remove)]
+
+    kernels = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MPDSVM']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -498,20 +501,107 @@ def testShogunBinaryClassificationLearners():
         ptVal = shogunObj.get_machine_problem_type()
         if not ptVal == sg._access('Classifier', 'PT_BINARY'):
             # not binary classification
-            # add to log so assertion passes
+            # add dummy data to log so log assertion passes
             for i in range(2):
                 nimble.log("pass", "pass")
             return
 
         shogunObj.set_labels(Ytrain)
+        args = {}
+        if learner in kernels:
+            args['kernel'] = GaussianKernel
+            kernel = GaussianKernel()
+            kernel.init(Xtrain, Xtrain)
+            shogunObj.set_kernel(kernel)
         shogunObj.train(Xtrain)
         predLabels = shogunObj.apply_binary(Xtest)
         predArray = predLabels.get_labels().reshape(-1, 1)
         predSG = nimble.createData('Matrix', predArray, useLog=False)
-        TL = nimble.train(toCall(learner), trainX, trainY)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
         predNimble = TL.apply(testX)
 
         equalityAssertHelper(predSG, predNimble)
 
     for learner in learners:
         compareOutputs(learner)
+
+
+@shogunSkipDec
+@attr('slow')
+def testShogunMulticlassClassificationLearners():
+    data = generateClassificationData(3, 10, 20)
+    # some classification learners require non-negative data
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = MulticlassLabels(Ytrain)
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    dataIssues = ['Autoencoder', 'BalancedConditionalProbabilityTree',
+                  'CHAIDTree', 'DeepAutoencoder', 'MCLDA', 'MKLMulticlass',
+                  'MulticlassLibSVM', 'MulticlassTreeGuidedLogisticRegression',
+                  'NeuralNetwork', 'RandomConditionalProbabilityTree',
+                  'RandomForest', 'RelaxedTree', 'ShareBoost']
+    # text = ['PluginEstimate', 'WDSVMOcas']
+    ignore = dataIssues #+ text
+    learners = getLearnersByType('classification', ignore)
+    # learners = [l for l in learners if 'Multitask' not in l]
+    remove = ['Multitask', 'KMeans', 'DomainAdaptation']
+    learners = [l for l in learners if not any(x in l for x in remove)]
+    kernels = ['GMNPSVM', 'LaRank']
+
+    @logCountAssertionFactory(2)
+    def compareOutputs(learner):
+        sg = Shogun()
+        sgObj = sg.findCallable(learner)
+        shogunObj = sgObj()
+        ptVal = shogunObj.get_machine_problem_type()
+        if not ptVal == sg._access('Classifier', 'PT_MULTICLASS'):
+            # not multiclass classification
+            # add dummy data to log so log assertion passes
+            for i in range(2):
+                nimble.log("pass", "pass")
+            return
+
+        shogunObj.set_labels(Ytrain)
+        args = {}
+        if learner in kernels:
+            args['kernel'] = GaussianKernel
+            kernel = GaussianKernel()
+            kernel.init(Xtrain, Xtrain)
+            shogunObj.set_kernel(kernel)
+        try:
+            shogunObj.train(Xtrain)
+        except SystemError as se:
+            if 'assertion distance failed' in str(se):
+                dist = EuclideanDistance()
+                dist.init(Xtrain, Xtrain)
+                shogunObj.set_distance(dist)
+                args['distance'] = EuclideanDistance
+                shogunObj.train(Xtrain)
+            else:
+                raise
+        predLabels = shogunObj.apply_multiclass(Xtest)
+        predArray = predLabels.get_labels().reshape(-1, 1)
+        predSG = nimble.createData('Matrix', predArray, useLog=False)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
+        predNimble = TL.apply(testX)
+
+        equalityAssertHelper(predSG, predNimble)
+
+    for learner in learners:
+        compareOutputs(learner)
+
+
+@raises(InvalidArgumentValue)
+def testShogunArgumentInstantiationFails():
+    trainX = nimble.createData('Matrix', [[0, 0, 1], [0, 1, 0], [1, 0, 0]] * 3)
+    trainY = nimble.createData('Matrix', [[0], [1], [0]] * 3)
+    args = {}
+    # pass a shogun learner object instead of kernel to trigger failure
+    sg = Shogun()
+    sgObj = sg.findCallable('GNPPSVM')
+    args['kernel'] = sgObj
+    TL = nimble.train(toCall('GNPPSVM'), trainX, trainY, arguments=args)
