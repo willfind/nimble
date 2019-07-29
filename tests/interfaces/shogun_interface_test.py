@@ -15,7 +15,8 @@ import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
-    from shogun import RealFeatures, BinaryLabels, MulticlassLabels
+    from shogun import RealFeatures
+    from shogun import BinaryLabels, MulticlassLabels, RegressionLabels
     from shogun import LinearKernel, GaussianKernel, EuclideanDistance
 except ImportError:
     pass
@@ -485,18 +486,20 @@ def testShogunClassificationLearners():
     learners = [l for l in learners if not any(x in l for x in remove)]
 
     needKernel = ['GMNPSVM', 'GNPPSVM', 'GPBTSVM', 'LaRank', 'LibSVMOneClass',
+                  'MKLClassification', 'MKLMulticlass', 'MKLOneClass',
                   'MPDSVM']
-    needDistance = ['Hierarchical', 'KNN']
+    needDistance = ['Hierarchical', 'KNN', 'KMeans', 'KMeansMiniBatch']
     expectedFailures = [
         'Autoencoder', 'BalancedConditionalProbabilityTree', 'CHAIDTree',
         'DeepAutoencoder', 'DomainAdaptationMulticlassLibLinear',
         'DomainAdaptationSVMLinear', 'FeatureBlockLogisticRegression',
-        'KMeans', 'KMeansMiniBatch', 'LDA', 'LibSVM', 'MKLClassification',
+        'KMeansMiniBatch', 'LDA', 'LibSVM', 'MKLClassification',
         'MKLMulticlass', 'MKLOneClass', 'MulticlassLibSVM',
         'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
         'PluginEstimate', 'RandomConditionalProbabilityTree', 'RandomForest',
         'RelaxedTree', 'ShareBoost', 'VowpalWabbit', 'WDSVMOcas'
         ]
+    varyingPredictionsPossible = ['KMeans']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -543,9 +546,79 @@ def testShogunClassificationLearners():
             predSG = nimble.createData('Matrix', predArray, useLog=False)
             TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
             predNimble = TL.apply(testX)
-
-            equalityAssertHelper(predSG, predNimble)
+            try:
+                equalityAssertHelper(predSG, predNimble)
+            except AssertionError:
+                assert learner in varyingPredictionsPossible
         except SystemError:
+            try:
+                # shogun will fail so want to check that signal is caught
+                # and error is raised
+                TL = nimble.train(toCall(learner), trainX, trainY,
+                                  arguments=args, useLog=False)
+                predNimble = TL.apply(testX, useLog=False)
+                assert False # expected SystemError
+            except SystemError:
+                assert learner in expectedFailures
+                addDummyLabels(2) # so log assertion passes
+
+    for learner in learners:
+        compareOutputs(learner)
+
+@shogunSkipDec
+@attr('slow')
+def testShogunRegressionLearners():
+    data = generateRegressionData(3, 10, 20)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = RegressionLabels(Ytrain)
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    learners = getLearnersByType('regression')
+    remove = ['Multitask', 'LibLinearRegression']
+    learners = [l for l in learners if not any(x in l for x in remove)]
+
+    needKernel = ['KRRNystrom', 'KernelRidgeRegression', 'LibSVR', 'MKLRegression']
+    needDistance = []
+    expectedFailures = ['GaussianProcessRegression', 'MKLRegression']
+    varyingPredictionsPossible = ['KRRNystrom']
+
+    @logCountAssertionFactory(2)
+    def compareOutputs(learner):
+        sg = Shogun()
+        sgObj = sg.findCallable(learner)
+        shogunObj = sgObj()
+
+        args = {}
+        if learner in needKernel:
+            kernel = GaussianKernel()
+            kernel.init(Xtrain, Xtrain)
+            shogunObj.set_kernel(kernel)
+            args['kernel'] = 'GaussianKernel'
+        if learner in needDistance:
+            dist = EuclideanDistance()
+            dist.init(Xtrain, Xtrain)
+            shogunObj.set_distance(dist)
+            args['distance'] = 'EuclideanDistance'
+        try:
+            runSuccessful(shogunObj.set_labels, Ytrain)
+            shogunObj.set_labels(Ytrain)
+            runSuccessful(shogunObj.train, Xtrain)
+            shogunObj.train(Xtrain)
+            runSuccessful(shogunObj.apply_regression, Xtest)
+            predLabels = shogunObj.apply_regression(Xtest)
+            predArray = predLabels.get_labels().reshape(-1, 1)
+            predSG = nimble.createData('Matrix', predArray, useLog=False)
+            TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
+            predNimble = TL.apply(testX)
+            try:
+                equalityAssertHelper(predSG, predNimble)
+            except AssertionError:
+                assert learner in varyingPredictionsPossible
+        except SystemError as se:
             try:
                 # shogun will fail so want to check that signal is caught
                 # and error is raised
