@@ -625,7 +625,7 @@ def initDataObject(
         reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
                                          'None', 'nan', 'NULL', 'NA'),
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
-        _extracted=(None, None)):
+        extracted=(None, None)):
     """
     1. Set up autoType
     2. Extract names
@@ -641,8 +641,8 @@ def initDataObject(
     if returnType is None:
         returnType = autoType
 
-    ptsExtracted = _extracted[0] if _extracted[0] else pointNames is True
-    ftsExtracted = _extracted[1] if _extracted[1] else featureNames is True
+    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
+    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
     # If skipping data processing, no modification needs to be made
     # to the data, so we can skip name extraction and missing replacement.
@@ -961,7 +961,7 @@ def createDataFromFile(
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith, _extracted=extracted)
+        replaceMissingWith=replaceMissingWith, extracted=extracted)
 
 
 def _loadmtxForAuto(

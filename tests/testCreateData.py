@@ -1771,7 +1771,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
         def fakeinitDataObject(
                 returnType, rawData, pointNames, featureNames, name, path,
                 keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
-                reuseData=False, _extracted=(None, None)):
+                reuseData=False, extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return nimble.data.List(rawData)
