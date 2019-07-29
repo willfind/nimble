@@ -317,8 +317,7 @@ To install shogun
         if outputType == 'match':
             outputType = customDict['match']
         ret = nimble.createData(outputType, retRaw, useLog=False)
-        print(customDict['remap'])
-        print(ret)
+
         if outputFormat == 'label':
             remap = customDict['remap']
             if remap is not None:
@@ -329,7 +328,7 @@ To install shogun
                     return inverseMapper
 
                 ret.elements.transform(remap, useLog=False)
-        print(ret)
+
         return ret
 
 
@@ -348,12 +347,12 @@ To install shogun
 
         for name, arg in setterArgs.items():
             setter = getattr(learner, 'set_' + name)
-            if runSuccessful(setter, arg):
-                setter(arg)
+            setter(arg)
 
         if trainY is not None:
+            runSuccessful(learner.set_labels, trainY)
             learner.set_labels(trainY)
-
+        runSuccessful(learner.train, trainX)
         learner.train(trainX)
 
         # TODO online training prep learner.start_train()
@@ -373,25 +372,21 @@ To install shogun
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
         # TODO does shogun allow apply time arguments?
-        try:
-            ptVal = learner.get_machine_problem_type()
-            if ptVal == self._access('Classifier', 'PT_BINARY'):
-                retFunc = learner.apply_binary
-            elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
-                retFunc = learner.apply_multiclass
-            elif ptVal == self._access('Classifier', 'PT_REGRESSION'):
-                retFunc = learner.apply_regression
-            elif ptVal == self._access('Classifier', 'PT_STRUCTURED'):
-                retFunc = learner.apply_structured
-            elif ptVal == self._access('Classifier', 'PT_LATENT'):
-                retFunc = learner.apply_latent
-            else:
-                retFunc = learner.apply
-            if runSuccessful(retFunc, testX):
-                retLabels = retFunc(testX)
-        except Exception as e:
-            print(e)
-            return None
+        ptVal = learner.get_machine_problem_type()
+        if ptVal == self._access('Classifier', 'PT_BINARY'):
+            retFunc = learner.apply_binary
+        elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
+            retFunc = learner.apply_multiclass
+        elif ptVal == self._access('Classifier', 'PT_REGRESSION'):
+            retFunc = learner.apply_regression
+        elif ptVal == self._access('Classifier', 'PT_STRUCTURED'):
+            retFunc = learner.apply_structured
+        elif ptVal == self._access('Classifier', 'PT_LATENT'):
+            retFunc = learner.apply_latent
+        else:
+            retFunc = learner.apply
+        runSuccessful(retFunc, testX)
+        retLabels = retFunc(testX)
         return retLabels
 
 
@@ -682,5 +677,5 @@ def runSuccessful(target, *args, **kwargs):
         ret = pConn.recv()
         if isinstance(ret, Exception):
             raise ret
-        return ret
+        return
     raise SystemError("shogun encountered an unidentifiable error")

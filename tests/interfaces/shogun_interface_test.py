@@ -27,6 +27,7 @@ from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
+from nimble.interfaces.shogun_interface import runSuccessful
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -469,88 +470,33 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
         identicalThenApprox(ret1, ret3)
         identicalThenApprox(ret2, ret3)
 
-@shogunSkipDec
-@attr('slow')
-def testShogunBinaryClassificationLearners():
-    data = generateClassificationData(2, 10, 20)
-    # some classification learners require non-negative data
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    trainY.points.fill(0, -1)
-    testX = abs(data[1][0])
-    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    Ytrain = trainY.copy('numpy array', outputAs1D=True)
-    Ytrain = BinaryLabels(Ytrain)
-    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-
-    dataIssues = ['FeatureBlockLogisticRegression', 'LibSVM', 'LDA',
-                  'MKLClassification', 'MKLOneClass', 'PluginEstimate',
-                  'VowpalWabbit', 'WDSVMOcas']
-    learners = getLearnersByType('classification', ignore=dataIssues)
-    remove = ['Multitask', 'DomainAdaptation']
-    learners = [l for l in learners if not any(x in l for x in remove)]
-
-    needKernel = ['GNPPSVM', 'GPBTSVM', 'LibSVMOneClass', 'MPDSVM']
-
-    @logCountAssertionFactory(2)
-    def compareOutputs(learner):
-        sg = Shogun()
-        sgObj = sg.findCallable(learner)
-        shogunObj = sgObj()
-        ptVal = shogunObj.get_machine_problem_type()
-        if not ptVal == sg._access('Classifier', 'PT_BINARY'):
-            # not binary classification
-            # add dummy data to log so log assertion passes
-            for i in range(2):
-                nimble.log("pass", "pass")
-            return
-
-        shogunObj.set_labels(Ytrain)
-        args = {}
-        if learner in needKernel:
-            kernel = GaussianKernel()
-            kernel.init(Xtrain, Xtrain)
-            shogunObj.set_kernel(kernel)
-            args['kernel'] = 'GaussianKernel'
-        shogunObj.train(Xtrain)
-        predLabels = shogunObj.apply_binary(Xtest)
-        predArray = predLabels.get_labels().reshape(-1, 1)
-        predSG = nimble.createData('Matrix', predArray, useLog=False)
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
-        predNimble = TL.apply(testX)
-
-        equalityAssertHelper(predSG, predNimble)
-
-    for learner in learners:
-        compareOutputs(learner)
-
+def addDummyLabels(number):
+    for i in range(number):
+        nimble.log('pass', 'pass')
 
 @shogunSkipDec
 @attr('slow')
-def testShogunMulticlassClassificationLearners():
-    data = generateClassificationData(3, 10, 20)
-    # some classification learners require non-negative data
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    testX = abs(data[1][0])
-    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    Ytrain = trainY.copy('numpy array', outputAs1D=True)
-    Ytrain = MulticlassLabels(Ytrain)
-    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+def testShogunClassificationLearners():
+    binaryData = generateClassificationData(2, 10, 20)
+    multiclassData = generateClassificationData(3, 10, 20)
 
-    dataIssues = ['Autoencoder', 'BalancedConditionalProbabilityTree',
-                  'CHAIDTree', 'DeepAutoencoder', 'KMeans', 'KMeansMiniBatch',
-                  'MCLDA', 'MKLMulticlass', 'MulticlassLibSVM',
-                  'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
-                  'RandomConditionalProbabilityTree', 'RandomForest',
-                  'RelaxedTree', 'ShareBoost']
-    learners = getLearnersByType('classification', dataIssues)
-    # Any of these learner types need to be removed for this test
-    remove = ['Multitask', 'DomainAdaptation']
+    learners = getLearnersByType('classification')
+    remove = ['Multitask']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
-    needKernel = ['GMNPSVM', 'LaRank']
+    needKernel = ['GMNPSVM', 'GNPPSVM', 'GPBTSVM', 'LaRank', 'LibSVMOneClass',
+                  'MPDSVM']
     needDistance = ['Hierarchical', 'KNN']
+    expectedFailures = [
+        'Autoencoder', 'BalancedConditionalProbabilityTree', 'CHAIDTree',
+        'DeepAutoencoder', 'DomainAdaptationMulticlassLibLinear',
+        'DomainAdaptationSVMLinear', 'FeatureBlockLogisticRegression',
+        'KMeans', 'KMeansMiniBatch', 'LDA', 'LibSVM', 'MKLClassification',
+        'MKLMulticlass', 'MKLOneClass', 'MulticlassLibSVM',
+        'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
+        'PluginEstimate', 'RandomConditionalProbabilityTree', 'RandomForest',
+        'RelaxedTree', 'ShareBoost', 'VowpalWabbit', 'WDSVMOcas'
+        ]
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -558,14 +504,23 @@ def testShogunMulticlassClassificationLearners():
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()
-        if not ptVal == sg._access('Classifier', 'PT_MULTICLASS'):
-            # not multiclass classification
-            # add dummy data to log so log assertion passes
-            for i in range(2):
-                nimble.log("pass", "pass")
-            return
-        print(learner)
-        shogunObj.set_labels(Ytrain)
+        if ptVal == sg._access('Classifier', 'PT_BINARY'):
+            trainX = abs(binaryData[0][0])
+            trainY = abs(binaryData[0][1])
+            trainY.points.fill(0, -1, useLog=False)
+            testX = abs(binaryData[1][0])
+            Ytrain = trainY.copy('numpy array', outputAs1D=True)
+            Ytrain = BinaryLabels(Ytrain)
+            sgApply = shogunObj.apply_binary
+        else:
+            trainX = abs(multiclassData[0][0])
+            trainY = abs(multiclassData[0][1])
+            testX = abs(multiclassData[1][0])
+            Ytrain = trainY.copy('numpy array', outputAs1D=True)
+            Ytrain = MulticlassLabels(Ytrain)
+            sgApply = shogunObj.apply_multiclass
+        Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+        Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
         args = {}
         if learner in needKernel:
             kernel = GaussianKernel()
@@ -577,14 +532,30 @@ def testShogunMulticlassClassificationLearners():
             dist.init(Xtrain, Xtrain)
             shogunObj.set_distance(dist)
             args['distance'] = 'EuclideanDistance'
-        shogunObj.train(Xtrain)
-        predLabels = shogunObj.apply_multiclass(Xtest)
-        predArray = predLabels.get_labels().reshape(-1, 1)
-        predSG = nimble.createData('Matrix', predArray, useLog=False)
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
-        predNimble = TL.apply(testX)
+        try:
+            runSuccessful(shogunObj.set_labels, Ytrain)
+            shogunObj.set_labels(Ytrain)
+            runSuccessful(shogunObj.train, Xtrain)
+            shogunObj.train(Xtrain)
+            runSuccessful(sgApply, Xtest)
+            predLabels = sgApply(Xtest)
+            predArray = predLabels.get_labels().reshape(-1, 1)
+            predSG = nimble.createData('Matrix', predArray, useLog=False)
+            TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
+            predNimble = TL.apply(testX)
 
-        equalityAssertHelper(predSG, predNimble)
+            equalityAssertHelper(predSG, predNimble)
+        except SystemError:
+            try:
+                # shogun will fail so want to check that signal is caught
+                # and error is raised
+                TL = nimble.train(toCall(learner), trainX, trainY,
+                                  arguments=args, useLog=False)
+                predNimble = TL.apply(testX, useLog=False)
+                assert False # expected SystemError
+            except SystemError:
+                assert learner in expectedFailures
+                addDummyLabels(2) # so log assertion passes
 
     for learner in learners:
         compareOutputs(learner)
