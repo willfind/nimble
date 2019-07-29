@@ -624,7 +624,8 @@ def initDataObject(
         keepPoints='all', keepFeatures='all', elementType=None,
         reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
                                          'None', 'nan', 'NULL', 'NA'),
-        replaceMissingWith=numpy.nan, skipDataProcessing=False):
+        replaceMissingWith=numpy.nan, skipDataProcessing=False,
+        _extracted=(None, None)):
     """
     1. Set up autoType
     2. Extract names
@@ -639,6 +640,9 @@ def initDataObject(
 
     if returnType is None:
         returnType = autoType
+
+    ptsExtracted = _extracted[0] if _extracted[0] else pointNames is True
+    ftsExtracted = _extracted[1] if _extracted[1] else featureNames is True
 
     # If skipping data processing, no modification needs to be made
     # to the data, so we can skip name extraction and missing replacement.
@@ -676,9 +680,19 @@ def initDataObject(
                 pathsToPass = (absPath, relPath)
 
     initMethod = getattr(nimble.data, returnType)
+    # if limiting data based on keepPoints or keepFeatures,
+    # delay name setting because names may be a subset
+    if keepPoints == 'all':
+        usePNames = pointNames
+    else:
+        usePNames = True if pointNames is True else None
+    if keepFeatures == 'all':
+        useFNames = featureNames
+    else:
+        useFNames = True if featureNames is True else None
     try:
-        ret = initMethod(rawData, pointNames=pointNames,
-                         featureNames=featureNames, name=name,
+        ret = initMethod(rawData, pointNames=usePNames,
+                         featureNames=useFNames, name=name,
                          paths=pathsToPass, elementType=elementType,
                          reuseData=reuseData, **kwargs)
     except Exception:
@@ -686,8 +700,8 @@ def initDataObject(
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(nimble.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames,
-                             featureNames=featureNames, name=name,
+            ret = autoMethod(rawData, pointNames=usePNames,
+                             featureNames=useFNames, name=name,
                              paths=pathsToPass, elementType=elementType,
                              reuseData=reuseData, **kwargs)
             ret = ret.copy(to=returnType)
@@ -722,6 +736,16 @@ def initDataObject(
 
     # keep points and features if still needed
     if keepPoints != 'all':
+        if not ptsExtracted and len(keepPoints) == len(ret.points):
+            _raiseKeepLengthConflict('point')
+        # if we have all pointNames, set them now
+        if (isinstance(pointNames, (list, dict))
+                and len(pointNames) == len(ret.points)):
+            ret.points.setNames(pointNames)
+            setPtNamesAfter = False
+        else:
+            _keepIndexValuesValidation('point', keepPoints, pointNames)
+            setPtNamesAfter = True
         cleaned = []
         for val in keepPoints:
             converted = ret.points.getIndex(val)
@@ -732,7 +756,21 @@ def initDataObject(
             ret.points.sort(sortHelper=pCmp)
         else:
             ret = ret.points.copy(cleaned)
+        # if we had a subset of pointNames can set now on the cleaned data
+        if setPtNamesAfter:
+            ret.points.setNames(pointNames)
     if keepFeatures != 'all':
+        if not ftsExtracted and len(keepFeatures) == len(ret.features):
+            _raiseKeepLengthConflict('feature')
+        # if we have all featureNames, set them now
+        if (isinstance(featureNames, (list, dict))
+                and len(featureNames) == len(ret.features)):
+            ret.features.setNames(featureNames)
+            setFtNamesAfter = False
+        # otherwise we require keepFeatures to be index and set names later
+        else:
+            _keepIndexValuesValidation('feature', keepFeatures, featureNames)
+            setFtNamesAfter = True
         cleaned = []
         for val in keepFeatures:
             converted = ret.features.getIndex(val)
@@ -744,6 +782,9 @@ def initDataObject(
             ret.features.sort(sortHelper=fCmp)
         else:
             ret = ret.features.copy(cleaned)
+        # if we had a subset of featureNames can set now on the cleaned data
+        if setFtNamesAfter:
+            ret.features.setNames(featureNames)
 
     return ret
 
@@ -906,6 +947,7 @@ def createDataFromFile(
         tokens = path.rsplit(os.path.sep)
         name = tokens[len(tokens) - 1]
 
+    extracted = (pointNames is True, featureNames is True)
     if selectSuccess:
         keepPoints = 'all'
         keepFeatures = 'all'
@@ -919,7 +961,7 @@ def createDataFromFile(
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith)
+        replaceMissingWith=replaceMissingWith, _extracted=extracted)
 
 
 def _loadmtxForAuto(
@@ -1482,7 +1524,7 @@ def _keepIndexValuesValidation(axis, keepList, nameList):
             raise InvalidArgumentValue(msg)
 
 
-def _keepIndexNameConflict(axis, index, name):
+def _raiseKeepIndexNameConflict(axis, index, name):
     """
     Helper for raising exception when two values in keepPoints/Features
     represent the same point/feature.
@@ -1493,6 +1535,20 @@ def _keepIndexNameConflict(axis, index, name):
     msg = msg.format(keep=keep, index=index, name=name, axis=axis)
     raise InvalidArgumentValue(msg)
 
+
+def _raiseKeepLengthConflict(axis):
+    """
+    Helper to prevent defining keepPoints/Features for every point or
+    feature because it cannot be determined whether the list is defining
+    the values in the order of the data or order of keepPoints/Features.
+    """
+    keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
+    msg = "The length of {keep} cannot be the same as the number of {axis}s. "
+    msg += "If attempting to use {keep} to keep and/or reorder all {axis}s, "
+    msg += "instead create the object using {keep}='all', then sort the "
+    msg += "{axis}s."
+    msg = msg.format(keep=keep, axis=axis)
+    raise InvalidArgumentValue(msg)
 
 def _limitToKeptFeatures(keepFeatures, retFNames):
     """
@@ -1508,7 +1564,7 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
         if isinstance(ftID, str) and ftID in retFNames:
             idx = retFNames.index(ftID)
             if idx in keepIndices:
-                _keepIndexNameConflict('feature', idx, ftID)
+                _raiseKeepIndexNameConflict('feature', idx, ftID)
             keepIndices.append(idx)
             keepNames.append(ftID)
         elif isinstance(ftID, str):
@@ -1519,7 +1575,7 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
         elif 0 <= ftID < len(retFNames):
             name = retFNames[ftID]
             if name in keepNames:
-                _keepIndexNameConflict('feature', ftID, name)
+                _raiseKeepIndexNameConflict('feature', ftID, name)
             keepIndices.append(ftID)
             keepNames.append(name)
         elif ftID >= 0:
@@ -1651,6 +1707,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     nonNumericFeatures = set()
     locatedPoints = []
     retData = []
+    totalPoints = 0
     if limitPoints:
         # we want to insert the points and names in the desired order
         retData = [None] * len(keepPoints)
@@ -1673,11 +1730,9 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         msg += "range of possible indices, 0 to "
                         msg += str(len(row) - 1)
                         raise InvalidArgumentValue(msg)
-            # only need to do the validation once
-            keepFeaturesValidated = True
 
         if keepPoints != 'all' and i in keepPoints and ptName in keepPoints:
-            _keepIndexNameConflict('point', i, ptName)
+            _raiseKeepIndexNameConflict('point', i, ptName)
         # this point will be used
         if keepPoints == 'all' or i in keepPoints or ptName in keepPoints:
             if firstRowLength is None:
@@ -1692,6 +1747,11 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 msg += str(lengthDefiningLine) + " and using '" + delimiter
                 msg += "' as the separator."
                 raise FileFormatException(msg)
+            if not keepFeaturesValidated:
+                if limitFeatures and len(keepFeatures) == firstRowLength:
+                    _raiseKeepLengthConflict('feature')
+                # only need to do the validation once
+                keepFeaturesValidated = True
             if limitFeatures:
                 limitedRow = []
                 for ftID in keepFeatures:
@@ -1718,6 +1778,12 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True:
                     extractedPointNames[location] = ptName
+        totalPoints = i + 1
+
+    if (keepPoints != 'all' and pointNames
+            and pointNames is not True
+            and len(retData) == totalPoints == len(keepPoints)):
+        _raiseKeepLengthConflict('point')
 
     if ignoreNonNumericalFeatures:
         if retFNames:

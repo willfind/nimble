@@ -1474,7 +1474,7 @@ def test_createData_keepPF_AllPossibleNatOrder():
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
-            poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2], 'all']
+            poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
                 ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
@@ -1493,7 +1493,7 @@ def test_createData_keepPF_AllPossibleReverseOrder():
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
-            poss = [[0, 1], [0, 2], [1, 2], [0, 1, 2]]
+            poss = [[0, 1], [0, 2], [1, 2]]
             for (pSel, fSel) in itertools.product(poss, poss):
                 ret = nimble.createData(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
@@ -1556,10 +1556,10 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                 assert retN == fromOrig
 
 
-def test_createData_keepPF_AllPossibleWithNames_listProvided():
-    pnames = ["11.", "111."]
-    fnames = ["2.", "3."]
-    data = [[22., 33.], [222., 333.]]
+def test_createData_keepPF_AllPossibleWithNames_fullNamesListProvided():
+    pnames = ["11.", "111.", "1111"]
+    fnames = ["2.", "3.", "4."]
+    data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
     orig = nimble.createData(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
@@ -1569,7 +1569,7 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
-            poss = [[0], [1], 'all']
+            poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
@@ -1600,10 +1600,10 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
                 assert retN == fromOrig
 
 
-def test_createData_keepPF_AllPossibleWithNames_dictProvided():
-    pnames = {"11.": 0, "111.": 1}
-    fnames = {"2.": 0, "3.": 1}
-    data = [[22., 33.], [222., 333.]]
+def test_createData_keepPF_AllPossibleWithNames_fullNamesDictProvided():
+    pnames = {"11.": 0, "111.": 1, "1111.": 2}
+    fnames = {"2.": 0, "3.": 1, "4.": 2}
+    data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
     orig = nimble.createData(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
@@ -1613,7 +1613,7 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
-            poss = [[0], [1], 'all']
+            poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
@@ -1642,6 +1642,96 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
 
                 assert ret == fromOrig
                 assert retN == fromOrig
+
+
+def test_createData_keepPF_AllCombosWithExactNamesProvided():
+    pnames = ["11.", "111.", "1111."]
+    fnames = ["2.", "3.", "4."]
+    data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
+    orig = nimble.createData(
+        returnType="List", data=data, pointNames=pnames, featureNames=fnames)
+
+    filesForms = ['csv', 'mtx']
+    for (t, f) in itertools.product(returnTypes, filesForms):
+        with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            tmpF.flush()
+
+            toUseData = orig.copy(to="pythonlist")
+            pSel = [0, 1]
+            fSel = [1, 0]
+            pNameSel = ["11.", "111."]
+            fNameSel = ["3.", "2."]
+
+            fromOrig = nimble.createData(
+                t, toUseData, keepPoints=pSel, keepFeatures=fSel,
+                pointNames=pNameSel, featureNames=fNameSel)
+
+            ret = nimble.createData(
+                t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
+                pointNames=pNameSel, featureNames=fNameSel)
+
+            assert ret == fromOrig
+
+            pSel = ["11.", "111."]
+            # using names should fail because we do not have full
+            # access to the names for every data point
+            try:
+                retN = nimble.createData(
+                    t, tmpF.name, keepPoints=pSel, pointNames=pNameSel,
+                    featureNames=fNameSel)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
+
+            fSel = ["3.", "2."]
+            # using names should fail because we do not have full
+            # access to the names for every data point
+            try:
+                retN = nimble.createData(
+                    t, tmpF.name, keepFeatures=fSel, pointNames=pNameSel,
+                    featureNames=fNameSel)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
+
+            # keepPoints/Features is not permitted to be the same length
+            # as its respective axis when names are not extracted
+            pSel = [1, 0, 2]
+            try:
+                ret = nimble.createData(
+                    t, tmpF.name, keepPoints=pSel, pointNames=pnames,
+                    featureNames=fnames)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
+
+            pSel = ["111.", "11.", "1111."]
+            try:
+                retN = nimble.createData(
+                    t, tmpF.name, keepPoints=pSel, pointNames=pnames,
+                    featureNames=fnames)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
+
+            fSel = [2, 1, 0]
+            try:
+                ret = nimble.createData(
+                    t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
+                    featureNames=fnames)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
+
+            fSel = ["3.", "2.", "4."]
+            try:
+                retN = nimble.createData(
+                    t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
+                    featureNames=fnames)
+                assert False # expected InvalidArgumentValue
+            except InvalidArgumentValue:
+                pass
 
 
 def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
@@ -1681,7 +1771,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
         def fakeinitDataObject(
                 returnType, rawData, pointNames, featureNames, name, path,
                 keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
-                reuseData=False):
+                reuseData=False, _extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return nimble.data.List(rawData)
@@ -1778,15 +1868,16 @@ def test_createData_keepPF_csv_simple():
 
 
 def test_createData_keepPF_mtxArr_simple():
-    fromList = nimble.createData(returnType='Matrix', data=[[2]])
+    fromList = nimble.createData(returnType='Matrix', data=[[3]])
 
     # instantiate from mtx array file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("1 3\n")
+        tmpMTXArr.write("2 2\n")
         tmpMTXArr.write("1\n")
         tmpMTXArr.write("2\n")
         tmpMTXArr.write("3\n")
+        tmpMTXArr.write("4\n")
         tmpMTXArr.flush()
         fromMTXArr = nimble.createData(
             returnType='Matrix', data=tmpMTXArr.name, keepPoints=[0],
@@ -1801,10 +1892,10 @@ def test_createData_keepPF_mtxCoo_simple():
     # instantiate from mtx coordinate file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("1 3 3\n")
+        tmpMTXCoo.write("2 3 3\n")
         tmpMTXCoo.write("1 1 1\n")
         tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
+        tmpMTXCoo.write("2 3 3\n")
         tmpMTXCoo.flush()
         fromMTXCoo = nimble.createData(
             returnType='Matrix', data=tmpMTXCoo.name, keepPoints=[0],
@@ -2198,6 +2289,7 @@ def test_createData_keepPF_csv_nameAlignment_keptNames():
         assert fromCSVD == expected
 
 
+@raises(InvalidArgumentValue)
 def test_createData_csv_keepPoints_keepingAllPointNames_index():
     data = [[111, 222, 333], [11, 22, 33], [1, 2, 3]]
     pnames = ['1', '2', '3']
@@ -2212,7 +2304,6 @@ def test_createData_csv_keepPoints_keepingAllPointNames_index():
         # cannot assume that pnames contains all pointNames for data
         fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=[2, 1, 0])
-        assert fromCSV == wanted
 
 
 @raises(InvalidArgumentValue)
@@ -2232,6 +2323,7 @@ def test_createData_csv_keepPoints_keepingAllPointNames_names():
             "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=['3', '2', '1'])
 
 
+@raises(InvalidArgumentValue)
 def test_createData_csv_keepFeatures_keepingAllFeatureNames_index():
     data = [[2, 3, 1], [22, 33, 11], [222, 333, 111]]
     fnames = ['2', '3', '1']
@@ -2246,7 +2338,7 @@ def test_createData_csv_keepFeatures_keepingAllFeatureNames_index():
         # assume featureNames passed aligns with order of keepFeatures
         fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, featureNames=fnames, keepFeatures=[1, 2, 0])
-        assert fromCSV == wanted
+
 
 @raises(InvalidArgumentValue)
 def test_createData_csv_keepFeatures_keepingAllFeatureNames_names():
@@ -2263,7 +2355,6 @@ def test_createData_csv_keepFeatures_keepingAllFeatureNames_names():
         # assume featureNames passed aligns with order of keepFeatures
         fromCSV = nimble.createData(
             "Matrix", data=tmpCSV.name, featureNames=['a', 'b', 'c'], keepFeatures=['b', 'c' ,'a'])
-        assert fromCSV == wanted
 
 
 def test_createData_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
