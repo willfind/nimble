@@ -824,43 +824,42 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('normalize'),
                       subtract, divide, applyResultTo)
 
-    def _duplicate(self, totalCopies, copyValueByValue):
+    def _repeat(self, totalCopies, copyValueByValue):
         if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:
             raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._source.copy()
 
-        duplicated = self._duplicate_implementation(totalCopies,
-                                                    copyValueByValue)
+        repeated = self._repeat_implementation(totalCopies, copyValueByValue)
 
         if isinstance(self, Points):
             ptNames = self._getNamesNoGeneration()
-            namesToDuplicate = ptNames
+            namesToRepeat = ptNames
             ftNames = self._source.features._getNamesNoGeneration()
         else:
             ftNames = self._getNamesNoGeneration()
-            namesToDuplicate = ftNames
+            namesToRepeat = ftNames
             ptNames = self._source.points._getNamesNoGeneration()
 
-        if copyValueByValue and namesToDuplicate is not None:
-            origNames = namesToDuplicate.copy()
+        if copyValueByValue and namesToRepeat is not None:
+            origNames = namesToRepeat.copy()
             for idx, name in enumerate(origNames):
                 for i in range(totalCopies):
                     currIdx = (totalCopies * idx) + i
                     if currIdx < len(origNames):
-                        namesToDuplicate[currIdx] = name + "_" + str(i + 1)
+                        namesToRepeat[currIdx] = name + "_" + str(i + 1)
                     else:
-                        namesToDuplicate.append(name + "_" + str(i + 1))
-        elif namesToDuplicate is not None:
-            origNames = namesToDuplicate.copy()
+                        namesToRepeat.append(name + "_" + str(i + 1))
+        elif namesToRepeat is not None:
+            origNames = namesToRepeat.copy()
             for i in range(totalCopies):
                 for idx, name in enumerate(origNames):
                     if i == 0:
-                        namesToDuplicate[idx] = name + "_" + str(i + 1)
+                        namesToRepeat[idx] = name + "_" + str(i + 1)
                     else:
-                        namesToDuplicate.append(name + "_" + str(i + 1))
+                        namesToRepeat.append(name + "_" + str(i + 1))
 
-        return createDataNoValidation(self._source.getTypeString(), duplicated,
+        return createDataNoValidation(self._source.getTypeString(), repeated,
                                       pointNames=ptNames, featureNames=ftNames)
 
     ###################
@@ -1736,7 +1735,7 @@ class Axis(object):
         pass
 
     @abstractmethod
-    def _duplicate_implementation(self, numberOfDuplicates, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

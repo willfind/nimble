@@ -11,8 +11,8 @@ In object HighLevelDataSafe:
 points.calculate, features.calculate, elements.calculate, points.count,
 features.count, elements.count, elements.countUnique, points.unique,
 features.unique, points.mapReduce, features.mapReduce,
-isApproximatelyEqual, trainAndTestSets, points.duplicate,
-features.duplicate
+isApproximatelyEqual, trainAndTestSets, points.repeat,
+features.repeat
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
@@ -1501,42 +1501,42 @@ class HighLevelDataSafe(DataTestObject):
         assert unique[0] == 12
 
     ####################
-    # points.duplicate #
+    # points.repeat #
     ####################
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.Base.copy', calledException)
-    def test_points_duplicate_OneCopyCallsCopy(self):
+    def test_points_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.points.duplicate(totalCopies=1)
+        repeated = toTest.points.repeat(totalCopies=1, copyPointByPoint=True)
 
     @noLogEntryExpected
-    def test_points_duplicate_1D(self):
+    def test_points_repeat_1D(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated1 = toTest.points.duplicate(3, copyPointByPoint=False)
-        duplicated2 = toTest.points.duplicate(3, copyPointByPoint=True)
+        repeated1 = toTest.points.repeat(3, copyPointByPoint=False)
+        repeated2 = toTest.points.repeat(3, copyPointByPoint=True)
 
         expData = [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]]
         expPtNames = ['pt_1', 'pt_2', 'pt_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
-        assert duplicated1 == exp
+        assert repeated1 == exp
         # return is same for either copyPointByPoint when 1D
-        assert duplicated1 == duplicated2
+        assert repeated1 == repeated2
 
     @noLogEntryExpected
-    def test_points_duplicate_2D_copyPointByPointFalse(self):
+    def test_points_repeat_2D_copyPointByPointFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.points.duplicate(3)
+        repeated = toTest.points.repeat(3, copyPointByPoint=False)
 
         expData = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0],
                    [1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0],
@@ -1544,15 +1544,15 @@ class HighLevelDataSafe(DataTestObject):
         expPtNames = ['1_1', '4_1', '0_1', '1_2', '4_2', '0_2','1_3', '4_3', '0_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
-        assert duplicated == exp
+        assert repeated == exp
 
     @noLogEntryExpected
-    def test_points_duplicate_2D_copyPointByPointTrue(self):
+    def test_points_repeat_2D_copyPointByPointTrue(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.points.duplicate(3, copyPointByPoint=True)
+        repeated = toTest.points.repeat(3, copyPointByPoint=True)
 
         expData = [[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0],
                    [4, 5, 6, 0], [4, 5, 6, 0], [4, 5, 6, 0],
@@ -1560,57 +1560,57 @@ class HighLevelDataSafe(DataTestObject):
         expPtNames = ['1_1', '1_2', '1_3', '4_1', '4_2', '4_3', '0_1', '0_2', '0_3']
         exp = self.constructor(expData, pointNames=expPtNames, featureNames=ftNames)
 
-        assert duplicated == exp
+        assert repeated == exp
 
     @raises(InvalidArgumentType)
-    def test_points_duplicate_invalidCopyCount_float(self):
+    def test_points_repeat_invalidCopyCount_float(self):
         data = [[0, 1, 2], [3, 4, 5]]
         toTest = self.constructor(data)
-        duplicated = toTest.points.duplicate(1.5)
+        repeated = toTest.points.repeat(1.5, copyPointByPoint=False)
 
     @raises(InvalidArgumentType)
-    def test_points_duplicate_invalidCopyCount_negative(self):
+    def test_points_repeat_invalidCopyCount_negative(self):
         data = [[0, 1, 2], [3, 4, 5]]
         toTest = self.constructor(data)
-        duplicated = toTest.points.duplicate(-1)
+        repeated = toTest.points.repeat(-1, copyPointByPoint=False)
 
     ######################
-    # features.duplicate #
+    # features.repeat #
     ######################
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.Base.copy', calledException)
-    def test_features_duplicate_OneCopyCallsCopy(self):
+    def test_features_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.features.duplicate(totalCopies=1)
+        repeated = toTest.features.repeat(totalCopies=1, copyFeatureByFeature=False)
 
     @noLogEntryExpected
-    def test_features_duplicate_1D(self):
+    def test_features_repeat_1D(self):
         data = [[0], [1], [2], [3]]
         ptNames = ['pt0', 'pt1', 'pt2', 'pt3']
         ftNames = ['a']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated1 = toTest.features.duplicate(3, copyFeatureByFeature=False)
-        duplicated2 = toTest.features.duplicate(3, copyFeatureByFeature=True)
+        repeated1 = toTest.features.repeat(3, copyFeatureByFeature=False)
+        repeated2 = toTest.features.repeat(3, copyFeatureByFeature=True)
 
         expData = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]]
         expFtNames = ['a_1', 'a_2', 'a_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
-        assert duplicated1 == exp
+        assert repeated1 == exp
         # return is same for either copyFeatureByFeature when 1D
-        assert duplicated1 == duplicated2
+        assert repeated1 == repeated2
 
     @noLogEntryExpected
-    def test_features_duplicate_2D_copyFeatureByFeatureFalse(self):
+    def test_features_repeat_2D_copyFeatureByFeatureFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.features.duplicate(3)
+        repeated = toTest.features.repeat(3, copyFeatureByFeature=False)
 
         expData = [[1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
                    [4, 5, 6, 0, 4, 5, 6, 0, 4, 5, 6, 0],
@@ -1618,15 +1618,15 @@ class HighLevelDataSafe(DataTestObject):
         expFtNames = ['a_1', 'b_1', 'c_1', 'd_1', 'a_2', 'b_2', 'c_2', 'd_2', 'a_3', 'b_3', 'c_3', 'd_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
-        assert duplicated == exp
+        assert repeated == exp
 
     @noLogEntryExpected
-    def test_features_duplicate_2D_copyFeatureByFeatureTrue(self):
+    def test_features_repeat_2D_copyFeatureByFeatureTrue(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        duplicated = toTest.features.duplicate(3, copyFeatureByFeature=True)
+        repeated = toTest.features.repeat(3, copyFeatureByFeature=True)
 
         expData = [[1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 0, 0],
                    [4, 4, 4, 5, 5, 5, 6, 6, 6, 0, 0, 0],
@@ -1634,19 +1634,19 @@ class HighLevelDataSafe(DataTestObject):
         expFtNames = ['a_1', 'a_2', 'a_3', 'b_1', 'b_2', 'b_3', 'c_1', 'c_2', 'c_3', 'd_1', 'd_2', 'd_3']
         exp = self.constructor(expData, pointNames=ptNames, featureNames=expFtNames)
 
-        assert duplicated == exp
+        assert repeated == exp
 
     @raises(InvalidArgumentType)
-    def test_features_duplicate_invalidCopyCount_float(self):
+    def test_features_repeat_invalidCopyCount_float(self):
         data = [[0, 1, 2], [3, 4, 5]]
         toTest = self.constructor(data)
-        duplicated = toTest.features.duplicate(1.5)
+        repeated = toTest.features.repeat(1.5, copyFeatureByFeature=False)
 
     @raises(InvalidArgumentType)
-    def test_features_duplicate_invalidCopyCount_negative(self):
+    def test_features_repeat_invalidCopyCount_negative(self):
         data = [[0, 1, 2], [3, 4, 5]]
         toTest = self.constructor(data)
-        duplicated = toTest.features.duplicate(-1)
+        repeated = toTest.features.repeat(-1, copyFeatureByFeature=False)
 
 
 class HighLevelModifying(DataTestObject):

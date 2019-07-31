@@ -111,10 +111,10 @@ class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
         unique = self._source.copy(to='Sparse')
         return unique.features._unique_implementation()
 
-    def _duplicate_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         copy = self._source.copy(to='Sparse')
-        return copy.features._duplicate_implementation(totalCopies,
-                                                       copyValueByValue)
+        return copy.features._repeat_implementation(totalCopies,
+                                                    copyValueByValue)
 
 class nzIt(object):
     """

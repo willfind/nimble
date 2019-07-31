@@ -84,7 +84,7 @@ class MatrixAxis(Axis):
                                      pointNames=offAxisNames,
                                      featureNames=axisNames, useLog=False)
 
-    def _duplicate_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         if isinstance(self, Points):
             axis = 0
             ptDim = totalCopies
@@ -94,10 +94,10 @@ class MatrixAxis(Axis):
             ptDim = 1
             ftDim = totalCopies
         if copyValueByValue:
-            duplicated = numpy.repeat(self._source.data, totalCopies, axis)
+            repeated = numpy.repeat(self._source.data, totalCopies, axis)
         else:
-            duplicated = numpy.tile(self._source.data, (ptDim, ftDim))
-        return duplicated
+            repeated = numpy.tile(self._source.data, (ptDim, ftDim))
+        return repeated
 
     ####################
     # Abstract Methods #

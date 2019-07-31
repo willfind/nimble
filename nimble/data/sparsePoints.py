@@ -144,10 +144,10 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
         unique = self._source.copy(to='Sparse')
         return unique.points._unique_implementation()
 
-    def _duplicate_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         copy = self._source.copy(to='Sparse')
-        return copy.points._duplicate_implementation(totalCopies,
-                                                     copyValueByValue)
+        return copy.points._repeat_implementation(totalCopies,
+                                                  copyValueByValue)
 
 class nzIt(object):
     """

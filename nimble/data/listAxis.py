@@ -108,16 +108,16 @@ class ListAxis(Axis):
             return nimble.createData('List', uniqueData, pointNames=offAxisNames,
                                       featureNames=axisNames, useLog=False)
 
-    def _duplicate_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         if isinstance(self, Points):
             if copyValueByValue:
-                duplicated = [list(lst) for lst in self._source.data
-                              for _ in range(totalCopies)]
+                repeated = [list(lst) for lst in self._source.data
+                            for _ in range(totalCopies)]
             else:
-                duplicated = [list(lst) for _ in range(totalCopies)
-                              for lst in self._source.data]
+                repeated = [list(lst) for _ in range(totalCopies)
+                            for lst in self._source.data]
         else:
-            duplicated = []
+            repeated = []
             for lst in self._source.data:
                 if not isinstance(lst, list): # FeatureViewer
                     lst = list(lst)
@@ -127,8 +127,8 @@ class ListAxis(Axis):
                         extended.extend([v] * totalCopies)
                 else:
                     extended = lst * totalCopies
-                duplicated.append(extended)
-        return duplicated
+                repeated.append(extended)
+        return repeated
 
     ####################
     # Abstract Methods #

@@ -115,7 +115,7 @@ features_logged = [
     'transform', 'splitByParsing',
     ]
 features_notLogged = [
-    'count', 'duplicate', 'getIndex', 'getIndices', 'getName', 'getNames',
+    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
     'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
@@ -127,7 +127,7 @@ points_logged = [
     'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
     ]
 points_notLogged = [
-    'count', 'duplicate', 'getIndex', 'getIndices', 'getName', 'getNames',
+    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
     'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged

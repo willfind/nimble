@@ -155,30 +155,30 @@ class SparseAxis(Axis):
         self._source.data = coo_matrix((newData, rowColTuple), shape=shape)
         self._source._sorted = None
 
-    def _duplicate_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         if copyValueByValue:
             numpyFunc = numpy.repeat
         else:
             numpyFunc = numpy.tile
-        dupData = numpyFunc(self._source.data.data, totalCopies)
-        fillDup = numpy.empty_like(dupData, dtype=numpy.int)
+        repData = numpyFunc(self._source.data.data, totalCopies)
+        fillDup = numpy.empty_like(repData, dtype=numpy.int)
         if isinstance(self, Points):
-            dupCol = numpyFunc(self._source.data.col, totalCopies)
-            dupRow = fillDup
-            toDuplicate = self._source.data.row
-            numDuplicated = len(self)
+            repCol = numpyFunc(self._source.data.col, totalCopies)
+            repRow = fillDup
+            toRepeat = self._source.data.row
+            numRepeatd = len(self)
             startIdx = 0
             shape = ((len(self) * totalCopies), len(self._source.features))
         else:
-            dupRow = numpyFunc(self._source.data.row, totalCopies)
-            dupCol = fillDup
-            toDuplicate = self._source.data.col
-            numDuplicated = len(self)
+            repRow = numpyFunc(self._source.data.row, totalCopies)
+            repCol = fillDup
+            toRepeat = self._source.data.col
+            numRepeatd = len(self)
             shape = (len(self._source.points), (len(self) * totalCopies))
 
         startIdx = 0
         if copyValueByValue:
-            for idx in toDuplicate:
+            for idx in toRepeat:
                 endIdx = startIdx + totalCopies
                 indexRange = numpy.array(range(totalCopies))
                 adjustedIndices = indexRange + (totalCopies * idx)
@@ -186,13 +186,13 @@ class SparseAxis(Axis):
                 startIdx = endIdx
         else:
             for i in range(totalCopies):
-                endIdx = len(toDuplicate) * (i + 1)
-                fillDup[startIdx:endIdx] = toDuplicate + (numDuplicated * i)
+                endIdx = len(toRepeat) * (i + 1)
+                fillDup[startIdx:endIdx] = toRepeat + (numRepeatd * i)
                 startIdx = endIdx
 
-        duplicated = coo_matrix((dupData, (dupRow, dupCol)), shape=shape)
+        repeated = coo_matrix((repData, (repRow, repCol)), shape=shape)
 
-        return duplicated
+        return repeated
 
     #########################
     # Query implementations #

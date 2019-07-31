@@ -1752,7 +1752,7 @@ class Points(object):
                       Points.combineByExpandingFeatures,
                       featureWithFeatureNames, featureWithValues)
 
-    def duplicate(self, totalCopies=2, copyPointByPoint=False):
+    def repeat(self, totalCopies, copyPointByPoint):
         """
         Create an object using copies of this object's points.
 
@@ -1769,11 +1769,11 @@ class Points(object):
             The number of times a copy of the data in this object will
             be present in the returned object.
         copyPointByPoint : bool
-            When False, the default, copies are made as if iterating
-            through the points in this object ``totalCopies`` times.
-            When True, copies are made as if the object is only iterated
-            once, making ``totalCopies`` copies of each point before
-            iterating to the next point.
+            When False, copies are made as if iterating through the
+            points in this object ``totalCopies`` times. When True,
+            copies are made as if the object is only iterated once,
+            making ``totalCopies`` copies of each point before iterating
+            to the next point.
 
         Returns
         -------
@@ -1786,7 +1786,7 @@ class Points(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2, 3]])
         >>> data.points.setNames(['a'])
-        >>> data.points.duplicate(totalCopies=3)
+        >>> data.points.repeat(totalCopies=3)
         Matrix(
             [[1.000 2.000 3.000]
              [1.000 2.000 3.000]
@@ -1798,7 +1798,7 @@ class Points(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]])
         >>> data.points.setNames(['a', 'b'])
-        >>> data.points.duplicate(totalCopies=2, copyPointByPoint=False)
+        >>> data.points.repeat(totalCopies=2, copyPointByPoint=False)
         Matrix(
             [[1.000 2.000 3.000]
              [4.000 5.000 6.000]
@@ -1811,7 +1811,7 @@ class Points(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]])
         >>> data.points.setNames(['a', 'b'])
-        >>> data.points.duplicate(totalCopies=2, copyPointByPoint=True)
+        >>> data.points.repeat(totalCopies=2, copyPointByPoint=True)
         Matrix(
             [[1.000 2.000 3.000]
              [1.000 2.000 3.000]
@@ -1820,7 +1820,7 @@ class Points(object):
             pointNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """
-        return self._duplicate(totalCopies, copyPointByPoint)
+        return self._repeat(totalCopies, copyPointByPoint)
 
     ####################
     # Query functions #
@@ -2017,7 +2017,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _duplicate(self, totalCopies, copyValueByValue):
+    def _repeat(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

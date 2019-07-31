@@ -1697,7 +1697,7 @@ class Features(object):
                       self._source.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
-    def duplicate(self, totalCopies=2, copyFeatureByFeature=False):
+    def repeat(self, totalCopies, copyFeatureByFeature):
         """
         Create an object using copies of this object's features.
 
@@ -1714,10 +1714,10 @@ class Features(object):
             The number of times a copy of the data in this object will
             be present in the returned object.
         copyFeatureByFeature : bool
-            When False, the default, copies are made as if iterating
-            through the features in this object ``totalCopies`` times.
-            When True, copies are made as if the object is only iterated
-            once, making ``totalCopies`` copies of each feature before
+            When False, copies are made as if iterating through the
+            features in this object ``totalCopies`` times. When True,
+            copies are made as if the object is only iterated once,
+            making ``totalCopies`` copies of each feature before
             iterating to the next feature.
 
         Returns
@@ -1731,7 +1731,7 @@ class Features(object):
 
         >>> data = nimble.createData('Matrix', [[1], [2], [3]])
         >>> data.features.setNames(['a'])
-        >>> data.features.duplicate(totalCopies=3)
+        >>> data.features.repeat(totalCopies=3)
         Matrix(
             [[1.000 1.000 1.000]
              [2.000 2.000 2.000]
@@ -1743,7 +1743,7 @@ class Features(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
-        >>> data.features.duplicate(totalCopies=2,
+        >>> data.features.repeat(totalCopies=2,
         ...                         copyFeatureByFeature=False)
         Matrix(
             [[1.000 2.000 1.000 2.000]
@@ -1756,7 +1756,7 @@ class Features(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
-        >>> data.features.duplicate(totalCopies=2,
+        >>> data.features.repeat(totalCopies=2,
         ...                         copyFeatureByFeature=True)
         Matrix(
             [[1.000 1.000 2.000 2.000]
@@ -1765,7 +1765,7 @@ class Features(object):
             featureNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """
-        return self._duplicate(totalCopies, copyFeatureByFeature)
+        return self._repeat(totalCopies, copyFeatureByFeature)
 
     ###################
     # Query functions #
@@ -1958,7 +1958,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _duplicate(self, totalCopies, copyValueByValue):
+    def _repeat(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod
