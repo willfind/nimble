@@ -86,8 +86,6 @@ class Shogun(PredefinedInterface, UniversalInterface):
         contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
         self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
 
-        self.loadParameterManifest()
-
         super(Shogun, self).__init__()
 
     def _access(self, module, target):
@@ -417,85 +415,6 @@ To install shogun
     ### METHOD HELPERS ###
     ######################
 
-    def loadParameterManifest(self):
-        """
-        Load manifest containing parameter names and defaults for all relevant objects
-        in shogun. If no manifest is available, then instantiate to an empty object.
-
-        """
-        # find most likely manifest file
-        metadataPath = os.path.join(nimble.nimblePath, 'interfaces', 'metadata')
-        best, exact = self._findBestManifest(metadataPath)
-        exists = os.path.exists(best) if best is not None else False
-        # default to empty if no best manifest exists
-        self._paramsManifest = {}
-        if exists:
-            with open(best, 'r') as fp:
-                self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
-
-
-    def _findBestManifest(self, metadataPath):
-        """
-        Returns a double. The first value is the absolute path to the manifest
-        file that is the closest match for this version of shogun, or None if
-        there is no such file. The second value is a boolean stating whether
-        the first value is an exact match for the desired version.
-
-        """
-        def _getSignificantVersion(versionString):
-            return distutils.version.LooseVersion(versionString.split('_')[0]).version
-
-        ourVersion = _getSignificantVersion(self.version())
-
-        possible = os.listdir(metadataPath)
-        if len(possible) == 0:
-            return None, False
-
-        ours = (ourVersion, None, None)
-        toSort = [ours]
-        for name in possible:
-            if name.startswith("shogunParameterManifest"):
-                pieces = name.split('_')
-                currVersion = _getSignificantVersion(pieces[1])
-                toSort.append((currVersion, name, ))
-        if len(toSort) == 1:
-            return None, False
-
-        sortedPairs = sorted(toSort, key=(lambda p: p[0]))
-        ourIndex = sortedPairs.index(ours)
-
-        # If what we're looking for is present, it has to be next to
-        # our seeded version at ourIndex
-        left, right = None, None
-        if ourIndex != 0:
-            left = sortedPairs[ourIndex - 1]
-        if ourIndex != len(sortedPairs) - 1:
-            right = sortedPairs[ourIndex + 1]
-
-        best = None
-        if left is None:
-            best = right
-        elif right is None:
-            best = left
-        # at least one of them must be non-None, so this must mean both
-        # are non None
-        else:
-            best = left[1]
-            for index in range(len(ourVersion)):
-                currOurs = ourVersion[index]
-                currL = left[0][index]
-                currR = right[0][index]
-
-                if currL == currOurs and currR != currOurs:
-                    best = left
-                    break
-                if currL != currOurs and currR == currOurs:
-                    best = right
-                    break
-
-        return os.path.join(metadataPath, best[1]), ourVersion == best[0]
-
-
     def _inputTransLabelHelper(self, labelsObj, learnerName, customDict):
         customDict['remap'] = None
         try:
@@ -600,15 +519,6 @@ excludedLearners = [ # parent classes, not actually runnable
                     # Deliberately unsupported
                     'ScatterSVM',  # experimental method
                     ]
-
-
-def _enforceNonUnicodeStrings(manifest):
-    for name in manifest:
-        groupList = manifest[name]
-        for group in groupList:
-            for i in range(len(group)):
-                group[i] = str(group[i])
-    return manifest
 
 def _remapLabels(toRemap, space=None):
     """
