@@ -68,8 +68,10 @@ class Shogun(PredefinedInterface, UniversalInterface):
             if not (hasTrain and hasApply):
                 return False
 
-            if obj.__name__ in excludedLearners or 'Online' in obj.__name__:
-                # Online TODO
+            ignore = ['Machine', 'Base', 'Online'] # TODO Online
+            if any(partial in obj.__name__ for partial in ignore):
+                return False
+            if obj.__name__ in excludedLearners:
                 return False
 
             # needs more to be able to distinguish between things that are runnable
@@ -316,7 +318,7 @@ To install shogun
             outputType = customDict['match']
         ret = nimble.createData(outputType, retRaw, useLog=False)
 
-        if outputFormat == 'label':
+        if outputFormat == 'label' and 'remap' in customDict:
             remap = customDict['remap']
             if remap is not None:
                 def makeInverseMapper(inverseMappingParam):
@@ -355,9 +357,9 @@ To install shogun
 
         # TODO online training prep learner.start_train()
         # batch training if data is passed
-
-        learner.get_unique_labels = numpy.unique(trainY.get_labels())
-        customDict['numLabels'] = len(learner.get_unique_labels)
+        if trainY is not None:
+            learner.get_unique_labels = numpy.unique(trainY.get_labels())
+            customDict['numLabels'] = len(learner.get_unique_labels)
 
         return learner
 
@@ -493,28 +495,8 @@ class ShogunDefault(object):
 #######################
 
 excludedLearners = [ # parent classes, not actually runnable
-                    'BaseMulticlassMachine',
-                    'CDistanceMachine',
                     'CSVM',
-                    'KernelMachine',
-                    'KernelMulticlassMachine',
-                    'KMeansBase',
-                    'LinearLatentMachine',
-                    'LinearMachine',
-                    'LinearMulticlassMachine',
-                    'MKL',
-                    'Machine',
-                    'MulticlassMachine',
                     'MulticlassSVM',
-                    'MultitaskLinearMachineBase',
-                    'NativeMulticlassMachine',
-                    'OnlineLinearMachine',
-                    'TreeMachineWithC45TreeNodeData',
-                    'TreeMachineWithCARTreeNodeData',
-                    'TreeMachineWithCHAIDTreeNodeData',
-                    'TreeMachineWithID3TreeNodeData',
-                    'TreeMachineWithConditionalProbabilityTreeNodeData',
-                    'TreeMachineWithRelaxedTreeNodeData',
 
                     # Deliberately unsupported
                     'ScatterSVM',  # experimental method

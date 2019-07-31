@@ -31,6 +31,7 @@ from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
+from nimble.helpers import generateClusteredPoints
 from nimble.interfaces.shogun_interface import raiseFailedProcess
 
 from .skipTestDecorator import SkipMissing
@@ -634,6 +635,71 @@ def testShogunRegressionLearners():
                 addDummyLabels(2) # so log assertion passes
 
     for learner in learners:
+        compareOutputs(learner)
+
+
+@shogunSkipDec
+@attr('slow')
+def testShogunClusterLearners():
+    data = generateClusteredPoints(3, 60, 8)
+    data = data[0]
+    data.points.shuffle()
+    trainX = data[:50,:]
+    testX = data[50:,:]
+    Xtrain = trainX.data
+    Xtest = testX.data
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    learners = ['Hierarchical', 'KMeans', 'KMeansMiniBatch']
+
+    needDistance = ['Hierarchical', 'KMeans', 'KMeansMiniBatch']
+
+    @logCountAssertionFactory(2)
+    def compareOutputs(learner):
+        sg = Shogun()
+        sgObj = sg.findCallable(learner)
+        shogunObj = sgObj()
+
+        args = {}
+        if hasattr(shogunObj, 'set_batch_size'):
+            shogunObj.set_batch_size(10)
+            shogunObj.set_mb_iter(1)
+            args['batch_size'] = 10
+            args['mb_iter'] = 1
+        if learner in needDistance:
+            dist = EuclideanDistance()
+            dist.init(Xtrain, Xtrain)
+            shogunObj.set_distance(dist)
+            args['distance'] = 'EuclideanDistance'
+        try:
+            raiseFailedProcess(shogunObj.train, Xtrain)
+            shogunObj.train(Xtrain)
+            raiseFailedProcess(shogunObj.apply_multiclass, Xtest)
+            predLabels = shogunObj.apply_multiclass(Xtest)
+            predArray = predLabels.get_labels().reshape(-1, 1)
+            predSG = nimble.createData('Matrix', predArray, useLog=False)
+            TL = nimble.train(toCall(learner), trainX, arguments=args)
+            predNimble = TL.apply(testX)
+            try:
+                equalityAssertHelper(predSG, predNimble)
+            except AssertionError:
+                pass
+                # assert learner in varyingPredictionsPossible
+        except SystemError as se:
+            try:
+                # shogun will fail so want to check that signal is caught
+                # and error is raised
+                TL = nimble.train(toCall(learner), trainX, arguments=args,
+                                  useLog=False)
+                predNimble = TL.apply(testX, useLog=False)
+                assert False # expected SystemError
+            except SystemError:
+                assert learner in expectedFailures
+                addDummyLabels(2) # so log assertion passes
+
+    for learner in learners:
+        print(learner)
         compareOutputs(learner)
 
 
