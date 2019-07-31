@@ -350,9 +350,9 @@ To install shogun
             setter(arg)
 
         if trainY is not None:
-            runSuccessful(learner.set_labels, trainY)
+            raiseFailedProcess(learner.set_labels, trainY)
             learner.set_labels(trainY)
-        runSuccessful(learner.train, trainX)
+        raiseFailedProcess(learner.train, trainX)
         learner.train(trainX)
 
         # TODO online training prep learner.start_train()
@@ -385,7 +385,7 @@ To install shogun
             retFunc = learner.apply_latent
         else:
             retFunc = learner.apply
-        runSuccessful(retFunc, testX)
+        raiseFailedProcess(retFunc, testX)
         retLabels = retFunc(testX)
         return retLabels
 
@@ -639,43 +639,35 @@ def _remapLabels(toRemap, space=None):
     return inverse
 
 
-def catchSignals(conn, target, args, kwargs):
+def catchSignals(target, args, kwargs):
     """
-    Run Shogun in a separate process to prevent signal failures.
+    Run shogun in a separate process to prevent signal failures.
 
-    If this process exits due to a signal, nothing will be sent to the
-    parent conn indicating that this process failed to run sucessfully.
-    Exceptions are caught and sent to the parent conn to allow the
-    exception to be raised outside this process.
+    If this process exits due to a signal, this will trigger an
+    exception to be raised in the parent process.
     """
     try:
         target(*args, **kwargs)
-        conn.send(True)
-    # Process will catch exception, send through conn to raise later
-    except Exception as e:
-        conn.send(e)
-    finally:
-        conn.close()
+    # Exceptions are acceptable, we are only concerned with signals
+    except Exception:
+        pass
 
 
-def runSuccessful(target, *args, **kwargs):
+def raiseFailedProcess(target, *args, **kwargs):
     """
     Determine if a call to shogun function or method will be successful.
 
-    The function runs as a separate process through a child connection.
-    The process can either exit or run successfully. If successful, the
-    parent conn may be True (we can run the function) or an Exception to
-    be raised. If unsuccessful, we cannot be sure why the process exited
-    so a SystemError is raised.
+    When data is incompatible in shogun, it may throw a signal to exit
+    rather than raising an exception. These seem to occur almost
+    immediately upon calling the function, so we try running the
+    function in a separate process for 0.1s and raise an exception
+    (SystemError for consistency with shogun) if the process exits.
     """
-    pConn, cConn = multiprocessing.Pipe()
-    allArgs = (cConn, target, args, kwargs)
+    allArgs = (target, args, kwargs)
     p = multiprocessing.Process(target=catchSignals, args=allArgs)
     p.start()
-    p.join()
-    if pConn.poll():
-        ret = pConn.recv()
-        if isinstance(ret, Exception):
-            raise ret
-        return
-    raise SystemError("shogun encountered an unidentifiable error")
+    p.join(0.1) # limit to only enough time for signal in failed process
+    exitcode = p.exitcode
+    p.terminate()
+    if exitcode:
+        raise SystemError("shogun encountered an unidentifiable error")
