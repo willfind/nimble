@@ -1697,6 +1697,76 @@ class Features(object):
                       self._source.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
+    def repeat(self, totalCopies, copyFeatureByFeature):
+        """
+        Create an object using copies of this object's features.
+
+        Copies of this object will be stacked horizontally. The returned
+        object will have the same number of points as this object and
+        the number of features will be equal to the number of features
+        in this object times ``totalCopies``. If this object contains
+        featureNames, each feature name will have "_#" appended, where #
+        is the number of the copy made.
+
+        Parameters
+        ----------
+        totalCopies : int
+            The number of times a copy of the data in this object will
+            be present in the returned object.
+        copyFeatureByFeature : bool
+            When False, copies are made as if iterating through the
+            features in this object ``totalCopies`` times. When True,
+            copies are made as if the object is only iterated once,
+            making ``totalCopies`` copies of each feature before
+            iterating to the next feature.
+
+        Returns
+        -------
+        nimble Base object
+            Object containing the copied data.
+
+        Examples
+        --------
+        Single feature
+
+        >>> data = nimble.createData('Matrix', [[1], [2], [3]])
+        >>> data.features.setNames(['a'])
+        >>> data.features.repeat(totalCopies=3)
+        Matrix(
+            [[1.000 1.000 1.000]
+             [2.000 2.000 2.000]
+             [3.000 3.000 3.000]]
+            featureNames={'a_1':0, 'a_2':1, 'a_3':2}
+            )
+
+        Two-dimensional, copyFeatureByFeature is False
+
+        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data.features.setNames(['a', 'b'])
+        >>> data.features.repeat(totalCopies=2,
+        ...                         copyFeatureByFeature=False)
+        Matrix(
+            [[1.000 2.000 1.000 2.000]
+             [3.000 4.000 3.000 4.000]
+             [5.000 6.000 5.000 6.000]]
+            featureNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
+            )
+
+        Two-dimensional, copyFeatureByFeature is True
+
+        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data.features.setNames(['a', 'b'])
+        >>> data.features.repeat(totalCopies=2,
+        ...                         copyFeatureByFeature=True)
+        Matrix(
+            [[1.000 1.000 2.000 2.000]
+             [3.000 3.000 4.000 4.000]
+             [5.000 5.000 6.000 6.000]]
+            featureNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
+            )
+        """
+        return self._repeat(totalCopies, copyFeatureByFeature)
+
     ###################
     # Query functions #
     ###################
@@ -1885,6 +1955,10 @@ class Features(object):
     @abstractmethod
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
+        pass
+
+    @abstractmethod
+    def _repeat(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

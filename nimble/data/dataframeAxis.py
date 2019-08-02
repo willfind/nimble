@@ -115,6 +115,22 @@ class DataFrameAxis(Axis):
                                      pointNames=offAxisNames,
                                      featureNames=axisNames, useLog=False)
 
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
+        if isinstance(self, Points):
+            axis = 0
+            ptDim = totalCopies
+            ftDim = 1
+        else:
+            axis = 1
+            ptDim = 1
+            ftDim = totalCopies
+        if copyValueByValue:
+            repeated = numpy.repeat(self._source.data.values, totalCopies,
+                                    axis)
+        else:
+            repeated = numpy.tile(self._source.data.values, (ptDim, ftDim))
+        return pd.DataFrame(repeated)
+
     ####################
     # Abstract Methods #
     ####################

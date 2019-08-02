@@ -115,8 +115,8 @@ features_logged = [
     'transform', 'splitByParsing',
     ]
 features_notLogged = [
-    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
-    'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
+    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -127,8 +127,8 @@ points_logged = [
     'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
     ]
 points_notLogged = [
-    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
-    'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
+    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
