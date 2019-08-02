@@ -18,9 +18,10 @@ import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
-    from shogun import RealFeatures
+    from shogun import RealFeatures, RealSubsetFeatures
     from shogun import BinaryLabels, MulticlassLabels, RegressionLabels
     from shogun import LinearKernel, GaussianKernel, EuclideanDistance
+    from shogun import ZeroMean, GaussianLikelihood, ExactInferenceMethod
 except ImportError:
     pass
 
@@ -475,35 +476,95 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
         identicalThenApprox(ret1, ret3)
         identicalThenApprox(ret2, ret3)
 
-def addDummyLabels(number):
-    for i in range(number):
-        nimble.log('pass', 'pass')
+def shogunTrainBackend(learner, data, toSet):
+    Xtrain, Ytrain = data
+    sg = Shogun()
+    sgObj = sg.findCallable(learner)
+    shogunObj = sgObj()
+    args = {}
+    for arg, val in toSet.items():
+        if arg == 'needInit':
+            # val is a of arguments to instantiate
+            for setter, toInit in val.items():
+                needInit = sg.findCallable(toInit)()
+                if setter in ['kernel', 'distance']:
+                    needInit.init(Xtrain, Xtrain)
+                getattr(shogunObj, 'set_' + setter)(needInit)
+                args[setter] = toInit
+        else:
+            getattr(shogunObj, 'set_' + arg)(val)
+            args[arg] = val
+    if Ytrain is not None:
+        raiseFailedProcess(shogunObj.set_labels, Ytrain)
+        shogunObj.set_labels(Ytrain)
+    raiseFailedProcess(shogunObj.train, Xtrain)
+    shogunObj.train(Xtrain)
+    return shogunObj, args
+
+def shogunApplyBackend(obj, toTest, applier):
+    applyFunc = getattr(obj, applier)
+    raiseFailedProcess(applyFunc, toTest)
+    predLabels = applyFunc(toTest)
+    predArray = predLabels.get_labels().reshape(-1, 1)
+    predSG = nimble.createData('Matrix', predArray, useLog=False)
+    return predSG
+
+def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
+                         extraTrainSetup, varyingPredictionsPossible):
+    trainX, trainY, testX = data[:3]
+    shogunTraining = data[3:5]
+    shogunTesting = data[5]
+    toSet = {}
+    toSet['needInit'] = {}
+    if learner in needKernel:
+        toSet['needInit']['kernel'] = 'GaussianKernel'
+    if learner in needDistance:
+        toSet['needInit']['distance'] = 'EuclideanDistance'
+    trainShogun = data[3:5]
+    if learner in extraTrainSetup:
+        shogunObj, args = extraTrainSetup[learner](shogunTraining, toSet)
+    else:
+        shogunObj, args = shogunTrainBackend(learner, shogunTraining, toSet)
+    testShogun = data[5]
+    predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
+
+    TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
+    predNimble = TL.apply(testX)
+
+    try:
+        equalityAssertHelper(predSG, predNimble)
+    except AssertionError:
+        assert learner in varyingPredictionsPossible
 
 @shogunSkipDec
 @attr('slow')
 def testShogunClassificationLearners():
-    binaryData = generateClassificationData(2, 10, 20)
-    multiclassData = generateClassificationData(3, 10, 20)
+    binaryData = generateClassificationData(2, 20, 20)
+    multiclassData = generateClassificationData(3, 20, 20)
+    clusterData = generateClusteredPoints(3, 60, 8)[0]
 
-    learners = getLearnersByType('classification')
-    remove = ['Multitask', 'KMeans'] # TODO KMeans working always different result
+    ignore = [ # learners that fail with provided data
+        'Autoencoder', 'BalancedConditionalProbabilityTree', 'DeepAutoencoder',
+        'DomainAdaptationMulticlassLibLinear', 'DomainAdaptationSVMLinear',
+        'FeatureBlockLogisticRegression', 'MulticlassLibSVM',
+        'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
+        'PluginEstimate', 'RandomConditionalProbabilityTree', 'ShareBoost',
+        'VowpalWabbit', 'WDSVMOcas']
+    learners = getLearnersByType('classification', ignore)
+    remove = ['Multitask', 'Machine', 'Base']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
-    needKernel = ['GMNPSVM', 'GNPPSVM', 'GPBTSVM', 'LaRank', 'LibSVMOneClass',
-                  'MKLClassification', 'MKLMulticlass', 'MKLOneClass',
-                  'MPDSVM']
-    needDistance = ['Hierarchical', 'KNN']
-    expectedFailures = [
-        'Autoencoder', 'BalancedConditionalProbabilityTree', 'CHAIDTree',
-        'DeepAutoencoder', 'DomainAdaptationMulticlassLibLinear',
-        'DomainAdaptationSVMLinear', 'FeatureBlockLogisticRegression',
-        'KMeansMiniBatch', 'LDA', 'LibSVM', 'MKLClassification',
-        'MKLMulticlass', 'MKLOneClass', 'MulticlassLibSVM',
-        'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
-        'PluginEstimate', 'RandomConditionalProbabilityTree', 'RandomForest',
-        'RelaxedTree', 'ShareBoost', 'VowpalWabbit', 'WDSVMOcas'
-        ]
-    varyingPredictionsPossible = ['QDA']
+    cluster = ['KMeans', 'KMeansMiniBatch']
+    needKernel = ['GMNPSVM', 'GNPPSVM', 'GPBTSVM', 'LaRank', 'LibSVM',
+                  'LibSVMOneClass', 'MKLClassification', 'MKLMulticlass',
+                  'MKLOneClass', 'MPDSVM', 'RelaxedTree']
+    needDistance = ['Hierarchical', 'KMeans', 'KMeansMiniBatch', 'KNN']
+    extraTrainSetup = {'CHAIDTree': trainCHAIDTree,
+                       'KMeansMiniBatch': trainKMeansMiniBatch,
+                       'RandomForest': trainRandomForestClassifier,
+                       'RelaxedTree': trainRelaxedTree}
+
+    varyingPredictionsPossible = ['KMeans', 'KMeansMiniBatch', 'QDA']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
@@ -511,63 +572,57 @@ def testShogunClassificationLearners():
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()
-        if ptVal == sg._access('Classifier', 'PT_BINARY'):
+        if learner in cluster:
+            clusterData.points.shuffle(useLog=False)
+            trainX = clusterData[:50,:]
+            trainY = None
+            testX = clusterData[50:,:]
+            Ytrain = None
+            sgApply = 'apply_multiclass'
+        elif ptVal == sg._access('Classifier', 'PT_BINARY'):
             trainX = abs(binaryData[0][0])
             trainY = abs(binaryData[0][1])
             trainY.points.fill(0, -1, useLog=False)
             testX = abs(binaryData[1][0])
             Ytrain = trainY.copy('numpy array', outputAs1D=True)
             Ytrain = BinaryLabels(Ytrain)
-            sgApply = shogunObj.apply_binary
+            sgApply = 'apply_binary'
         else:
             trainX = abs(multiclassData[0][0])
             trainY = abs(multiclassData[0][1])
             testX = abs(multiclassData[1][0])
             Ytrain = trainY.copy('numpy array', outputAs1D=True)
             Ytrain = MulticlassLabels(Ytrain)
-            sgApply = shogunObj.apply_multiclass
+            sgApply = 'apply_multiclass'
         Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
         Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-        args = {}
-        if learner in needKernel:
-            kernel = GaussianKernel()
-            kernel.init(Xtrain, Xtrain)
-            shogunObj.set_kernel(kernel)
-            args['kernel'] = 'GaussianKernel'
-        if learner in needDistance:
-            dist = EuclideanDistance()
-            dist.init(Xtrain, Xtrain)
-            shogunObj.set_distance(dist)
-            args['distance'] = 'EuclideanDistance'
-        try:
-            raiseFailedProcess(shogunObj.set_labels, Ytrain)
-            shogunObj.set_labels(Ytrain)
-            raiseFailedProcess(shogunObj.train, Xtrain)
-            shogunObj.train(Xtrain)
-            raiseFailedProcess(sgApply, Xtest)
-            predLabels = sgApply(Xtest)
-            predArray = predLabels.get_labels().reshape(-1, 1)
-            predSG = nimble.createData('Matrix', predArray, useLog=False)
-            TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
-            predNimble = TL.apply(testX)
-            try:
-                equalityAssertHelper(predSG, predNimble)
-            except AssertionError:
-                assert learner in varyingPredictionsPossible
-        except SystemError:
-            try:
-                # shogun will fail so want to check that signal is caught
-                # and error is raised
-                TL = nimble.train(toCall(learner), trainX, trainY,
-                                  arguments=args, useLog=False)
-                predNimble = TL.apply(testX, useLog=False)
-                assert False # expected SystemError
-            except SystemError:
-                assert learner in expectedFailures
-                addDummyLabels(2) # so log assertion passes
+        data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+
+        trainAndApplyBackend(learner, data, sgApply, needKernel, needDistance,
+                              extraTrainSetup, varyingPredictionsPossible)
 
     for learner in learners:
         compareOutputs(learner)
+
+def trainCHAIDTree(data, toSet):
+    ft = numpy.array([1] * 20, dtype='int32')
+    toSet['feature_types'] = ft
+    return shogunTrainBackend('CHAIDTree', data, toSet)
+
+def trainRandomForestClassifier(data, toSet):
+    toSet['needInit']['combination_rule'] = 'MajorityVote'
+    toSet['num_bags'] = 5
+    return shogunTrainBackend('RandomForest', data, toSet)
+
+def trainKMeansMiniBatch(data, toSet):
+    toSet['batch_size'] = 10
+    toSet['mb_iter'] = 2
+    return shogunTrainBackend('KMeansMiniBatch', data, toSet)
+
+def trainRelaxedTree(data, toSet):
+    toSet['needInit']['machine_for_confusion_matrix'] = 'MulticlassLibLinear'
+    return shogunTrainBackend('RelaxedTree', data, toSet)
+
 
 @shogunSkipDec
 @attr('slow')
@@ -581,128 +636,40 @@ def testShogunRegressionLearners():
     Ytrain = RegressionLabels(Ytrain)
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
-    learners = getLearnersByType('regression')
-    remove = ['Multitask', "LibLinearRegression"] # LibLinearRegression strange failure
+    ignore = ["LibLinearRegression"] # LibLinearRegression strange failure
+    learners = getLearnersByType('regression', ignore)
+
+    remove = ['Multitask', 'Machine', 'Base']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
-    needKernel = ['KRRNystrom', 'KernelRidgeRegression', 'LibSVR', 'MKLRegression']
-    needDistance = []
-    expectedFailures = ['GaussianProcessRegression', 'MKLRegression']
+    needKernel = ['KRRNystrom', 'KernelRidgeRegression', 'LibSVR']
+
+    extraTrainSetup = {'GaussianProcessRegression': trainGaussianProcessRegression,}
+
     varyingPredictionsPossible = ['KRRNystrom']
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
-        sg = Shogun()
-        sgObj = sg.findCallable(learner)
-        shogunObj = sgObj()
-
-        args = {}
-        if learner in needKernel:
-            kernel = GaussianKernel()
-            kernel.init(Xtrain, Xtrain)
-            shogunObj.set_kernel(kernel)
-            args['kernel'] = 'GaussianKernel'
-        if learner in needDistance:
-            dist = EuclideanDistance()
-            dist.init(Xtrain, Xtrain)
-            shogunObj.set_distance(dist)
-            args['distance'] = 'EuclideanDistance'
-        try:
-            raiseFailedProcess(shogunObj.set_labels, Ytrain)
-            shogunObj.set_labels(Ytrain)
-            raiseFailedProcess(shogunObj.train, Xtrain)
-            shogunObj.train(Xtrain)
-            raiseFailedProcess(shogunObj.apply_regression, Xtest)
-            predLabels = shogunObj.apply_regression(Xtest)
-            predArray = predLabels.get_labels().reshape(-1, 1)
-            predSG = nimble.createData('Matrix', predArray, useLog=False)
-            TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
-            predNimble = TL.apply(testX)
-            try:
-                equalityAssertHelper(predSG, predNimble)
-            except AssertionError:
-                assert learner in varyingPredictionsPossible
-        except SystemError as se:
-            try:
-                # shogun will fail so want to check that signal is caught
-                # and error is raised
-                TL = nimble.train(toCall(learner), trainX, trainY,
-                                  arguments=args, useLog=False)
-                predNimble = TL.apply(testX, useLog=False)
-                assert False # expected SystemError
-            except SystemError:
-                assert learner in expectedFailures
-                addDummyLabels(2) # so log assertion passes
-
-    for learner in learners:
-        compareOutputs(learner)
-
-
-@shogunSkipDec
-@attr('slow')
-def testShogunClusterLearners():
-    data = generateClusteredPoints(3, 60, 8)
-    data = data[0]
-    data.points.shuffle()
-    trainX = data[:50,:]
-    testX = data[50:,:]
-    Xtrain = trainX.data
-    Xtest = testX.data
-    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-
-    learners = ['Hierarchical', 'KMeans', 'KMeansMiniBatch']
-
-    needDistance = ['Hierarchical', 'KMeans', 'KMeansMiniBatch']
-
-    @logCountAssertionFactory(2)
-    def compareOutputs(learner):
-        sg = Shogun()
-        sgObj = sg.findCallable(learner)
-        shogunObj = sgObj()
-
-        args = {}
-        if hasattr(shogunObj, 'set_batch_size'):
-            shogunObj.set_batch_size(10)
-            shogunObj.set_mb_iter(1)
-            args['batch_size'] = 10
-            args['mb_iter'] = 1
-        if learner in needDistance:
-            dist = EuclideanDistance()
-            dist.init(Xtrain, Xtrain)
-            shogunObj.set_distance(dist)
-            args['distance'] = 'EuclideanDistance'
-        try:
-            raiseFailedProcess(shogunObj.train, Xtrain)
-            shogunObj.train(Xtrain)
-            raiseFailedProcess(shogunObj.apply_multiclass, Xtest)
-            predLabels = shogunObj.apply_multiclass(Xtest)
-            predArray = predLabels.get_labels().reshape(-1, 1)
-            predSG = nimble.createData('Matrix', predArray, useLog=False)
-            TL = nimble.train(toCall(learner), trainX, arguments=args)
-            predNimble = TL.apply(testX)
-            try:
-                equalityAssertHelper(predSG, predNimble)
-            except AssertionError:
-                pass
-                # assert learner in varyingPredictionsPossible
-        except SystemError as se:
-            try:
-                # shogun will fail so want to check that signal is caught
-                # and error is raised
-                TL = nimble.train(toCall(learner), trainX, arguments=args,
-                                  useLog=False)
-                predNimble = TL.apply(testX, useLog=False)
-                assert False # expected SystemError
-            except SystemError:
-                assert learner in expectedFailures
-                addDummyLabels(2) # so log assertion passes
+        data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+        trainAndApplyBackend(learner, data, 'apply_regression', needKernel, [],
+                              extraTrainSetup, varyingPredictionsPossible)
 
     for learner in learners:
         print(learner)
         compareOutputs(learner)
 
+def trainGaussianProcessRegression(data, toSet):
+    Xtrain, Ytrain = data
+    kernel = GaussianKernel()
+    kernel.init(Xtrain, Xtrain)
+    mean_function = ZeroMean()
+    gauss_likelihood = GaussianLikelihood()
+    eim = ExactInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    toSet['inference_method'] = eim
+    return shogunTrainBackend('GaussianProcessRegression', data, toSet)
 
+
+@shogunSkipDec
 def test_raiseFailedProcess_maxTime():
     def dontSleep():
         pass

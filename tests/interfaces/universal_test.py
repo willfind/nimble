@@ -18,14 +18,24 @@ from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 class Initable(object):
-    def __init__(self, C=1, thresh=0.5):
+    def __init__(self, C=1, thresh=0.5, subInit=None):
         self.C = C
         self.thresh = thresh
+        self.subInit = subInit
 
     def __eq__(self, other):
-        if self.C == other.C and self.thresh == other.thresh:
-            return True
-        return False
+        if self.C != other.C:
+            return False
+        if self.thresh != other.thresh:
+            return False
+        if self.subInit != other.subInit:
+            return False
+        return True
+
+class SubInitable(object):
+    def __init__(self, A, B):
+        self.A = A
+        self.B = B
 
 
 class TestInterface(UniversalInterface):
@@ -55,9 +65,11 @@ class TestInterface(UniversalInterface):
         elif name == 'foo':
             return [['estimator']]
         elif name == 'initable':
-            return [['C', 'thresh']]
+            return [['C', 'thresh', 'subInit']]
         elif name == 'initable2':
-            return [['C', 'thresh']]
+            return [['C', 'thresh', 'subInit']]
+        elif name == 'initable3':
+            return [['A', 'B']]
         else:
             return [[]]
 
@@ -70,9 +82,11 @@ class TestInterface(UniversalInterface):
         if name == 'foo':
             return [{'estimator': Initable()}]
         if name == 'initable':
-            return [{'C': 1, 'thresh': 0.5}]
+            return [{'C': 1, 'thresh': 0.5, 'subInit': None}]
         if name == 'initable2':
-            return [{'C': 1, 'thresh': 0.5}]
+            return [{'C': 1, 'thresh': 0.5, 'subInit': None}]
+        if name == 'initable3':
+            return [{}]
         return [{}]
 
     def isAlias(self, name):
@@ -110,6 +124,8 @@ class TestInterface(UniversalInterface):
             return Initable
         if name == 'initable2':
             return Initable
+        if name == 'initable3':
+            return SubInitable
         available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'foo', 'bar', 'exposeTest']
         if name in available:
             return name
@@ -213,14 +229,21 @@ def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsInFl
     learner = 'foo'
     arguments = {'estimator': 'initable2', 'C': 11}
     ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable2', 'initable2': {'C': 11, 'thresh': 0.5}}
+    assert ret == {'estimator': 'initable2', 'initable2': {'C': 11, 'thresh': 0.5, 'subInit': None}}
 
 
 def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
     learner = 'foo'
     arguments = {'estimator': 'initable', 'C': .11, 'thresh': 15}
     ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
+    assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15, 'subInit': None}}
+
+def test__validateArgumentDistributionNestedArgumentInitables():
+    learner = 'foo'
+    arguments = {'estimator': 'initable', 'subInit': 'initable3', 'A': 4, 'B': 2}
+    ret = TestObject._validateArgumentDistribution(learner, arguments)
+    init3Dict = {'C': 1, 'thresh': 0.5, 'subInit':'initable3', 'initable3': {'A': 4, 'B': 2}}
+    assert ret == {'estimator': 'initable', 'initable': init3Dict}
 
 
 @noLogEntryExpected

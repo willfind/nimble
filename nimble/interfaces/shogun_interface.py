@@ -68,7 +68,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
             if not (hasTrain and hasApply):
                 return False
 
-            ignore = ['Machine', 'Base', 'Online'] # TODO Online
+            ignore = ['MKL', 'Online'] # TODO Online
             if any(partial in obj.__name__ for partial in ignore):
                 return False
             if obj.__name__ in excludedLearners:
