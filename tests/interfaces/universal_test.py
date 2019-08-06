@@ -37,6 +37,11 @@ class SubInitable(object):
         self.A = A
         self.B = B
 
+    def __eq__(self, other):
+        if self.A == other.A and self.B == other.B:
+            return True
+        return False
+
 
 class TestInterface(UniversalInterface):
     def __init__(self):

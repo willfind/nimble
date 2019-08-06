@@ -350,9 +350,9 @@ To install shogun
             setter(arg)
 
         if trainY is not None:
-            raiseFailedProcess(learner.set_labels, trainY)
+            raiseFailedProcess('labels', learner.set_labels, trainY)
             learner.set_labels(trainY)
-        raiseFailedProcess(learner.train, trainX)
+        raiseFailedProcess('train', learner.train, trainX)
         learner.train(trainX)
 
         # TODO online training prep learner.start_train()
@@ -385,7 +385,7 @@ To install shogun
             retFunc = learner.apply_latent
         else:
             retFunc = learner.apply
-        raiseFailedProcess(retFunc, testX)
+        raiseFailedProcess('apply', retFunc, testX)
         retLabels = retFunc(testX)
         return retLabels
 
@@ -545,21 +545,29 @@ def catchSignals(target, args, kwargs):
         pass
 
 
-def raiseFailedProcess(target, *args, **kwargs):
+def raiseFailedProcess(process, target, *args, **kwargs):
     """
     Determine if a call to shogun function or method will be successful.
 
     When data is incompatible in shogun, it may throw a signal to exit
     rather than raising an exception. These seem to occur almost
     immediately upon calling the function, so we try running the
-    function in a separate process for 0.1s and raise an exception
+    function in a separate process for 0.2s and raise an exception
     (SystemError for consistency with shogun) if the process exits.
     """
     allArgs = (target, args, kwargs)
     p = multiprocessing.Process(target=catchSignals, args=allArgs)
     p.start()
-    p.join(0.1) # limit to only enough time for signal in failed process
+    p.join(timeout=0.2)
     exitcode = p.exitcode
     p.terminate()
     if exitcode:
-        raise SystemError("shogun encountered an unidentifiable error")
+        msg = "shogun encountered an error while attempting "
+        if process == 'labels':
+            msg += "to set the labels with the provided trainY data, "
+        elif process == 'train':
+            msg += "to train with the provided trainX data, "
+        elif process == 'apply':
+            msg += "to apply the learner to the provided testX data, "
+        msg += "and exited with code " + str(abs(exitcode))
+        raise SystemError(msg)

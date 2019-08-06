@@ -655,7 +655,6 @@ def testShogunRegressionLearners():
                               extraTrainSetup, varyingPredictionsPossible)
 
     for learner in learners:
-        print(learner)
         compareOutputs(learner)
 
 def trainGaussianProcessRegression(data, toSet):
@@ -683,11 +682,11 @@ def test_raiseFailedProcess_maxTime():
     def failedProcessCheck(target):
         p = multiprocessing.Process(target=target)
         p.start()
-        p.join(0.1) # limit to only enough time for signal in failed process
+        p.join(timeout=0.1)
         exitcode = p.exitcode
         p.terminate()
         if exitcode:
-            raise SystemError("shogun encountered an unidentifiable error")
+            raise SystemError("exitcode")
 
     # successful process that takes less than 0.1s
     start = time.time()
