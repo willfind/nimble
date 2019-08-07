@@ -553,7 +553,9 @@ def testShogunClassificationLearners():
         'FeatureBlockLogisticRegression', 'MulticlassLibSVM',
         'MulticlassTreeGuidedLogisticRegression', 'NeuralNetwork',
         'PluginEstimate', 'RandomConditionalProbabilityTree', 'ShareBoost',
-        'VowpalWabbit', 'WDSVMOcas']
+        'VowpalWabbit', 'WDSVMOcas',
+        # tested elsewhere
+        'GaussianProcessClassification']
     learners = getLearnersByType('classification', ignore)
     remove = ['Multitask', 'Machine', 'Base']
     learners = [l for l in learners if not any(x in l for x in remove)]
@@ -672,39 +674,11 @@ def trainGaussianProcessRegression(data, toSet):
     toSet['inference_method'] = eim
     return shogunTrainBackend('GaussianProcessRegression', data, toSet)
 
-@shogunSkipDec
-def TODOShogunMachineLearner():
-    data = generateClassificationData(3, 20, 20)
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    testX = abs(data[1][0])
-    Ytrain = trainY.copy('numpy array', outputAs1D=True)
-    Ytrain = MulticlassLabels(Ytrain)
-    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-
-    extraTrainSetup = {'LinearMulticlassMachine': trainLinearMulticlassMachine}
-
-    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
-    trainAndApplyBackend('LinearMulticlassMachine', data, 'apply_multiclass',
-                         [], [],  extraTrainSetup, [])
-
-def trainLinearMulticlassMachine(data, toSet):
-    # TODO machine takes 2 parameters num and machine, this is problematic
-    # because cannot provide two values for machine
-    toSet['machine'] = 'LibLinear'
-    toSet['rejection_strategy'] = 'MulticlassOneVsOneStrategy'
-    return shogunTrainBackend('LinearMulticlassMachine', data, toSet)
-
-
-@shogunSkipDec
-def TODOShogunStructuredOutputLearner():
-    # TODO these are primarily the learners which are classified as 'other'
-    pass
 
 @shogunSkipDec
 def testShogunGaussianProcessClassification():
-    # classified as 'other' can be binary or multiclass classification
+    # can be binary or multiclass classification
+    
     # TODO Binary getting output but different result
     # data = generateClassificationData(2, 20, 20)
     # trainX = abs(data[0][0])
@@ -758,6 +732,37 @@ def trainGPCMulticlass(data, toSet):
     mlim = MultiLaplaceInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
     toSet['inference_method'] = mlim
     return shogunTrainBackend('GaussianProcessClassification', data, toSet)
+
+
+@shogunSkipDec
+def TODOShogunMachineLearner():
+    data = generateClassificationData(3, 20, 20)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = MulticlassLabels(Ytrain)
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    extraTrainSetup = {'LinearMulticlassMachine': trainLinearMulticlassMachine}
+
+    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    trainAndApplyBackend('LinearMulticlassMachine', data, 'apply_multiclass',
+                         [], [],  extraTrainSetup, [])
+
+def trainLinearMulticlassMachine(data, toSet):
+    # TODO machine takes 2 parameters num and machine, this is problematic
+    # because cannot provide two values for machine
+    toSet['machine'] = 'LibLinear'
+    toSet['rejection_strategy'] = 'MulticlassOneVsOneStrategy'
+    return shogunTrainBackend('LinearMulticlassMachine', data, toSet)
+
+
+@shogunSkipDec
+def TODOShogunStructuredOutputLearner():
+    # TODO these are primarily the learners which are classified as 'other'
+    pass
 
 
 @shogunSkipDec

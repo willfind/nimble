@@ -165,7 +165,8 @@ To install shogun
         ptVal = self._getMachineProblemType(name)
 
         if (ptVal == self._access('Classifier', 'PT_BINARY')
-                or ptVal == self._access('Classifier', 'PT_MULTICLASS')):
+                or ptVal == self._access('Classifier', 'PT_MULTICLASS')
+                or ptVal == self._access('Classifier', 'PT_CLASS')):
             return 'classification'
         if ptVal == self._access('Classifier', 'PT_REGRESSION'):
             return 'regression'
