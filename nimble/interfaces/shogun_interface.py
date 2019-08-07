@@ -45,7 +45,8 @@ shogunDir = None
 
 trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data',
                  'train_features', 'data']
-trainYAliases = ['trainlab', 'lab', 'labs', 'training_labels', 'train_labels']
+trainYAliases = ['trainlab', 'lab', 'labs', 'labels', 'training_labels',
+                 'train_labels']
 
 # kernel : k, kernel
 # distance : d
@@ -152,15 +153,10 @@ To install shogun
 
     def _getMachineProblemType(self, learnerName):
         """
-        SystemError
+        Get learner type
         """
         learner = self.findCallable(learnerName)
-
-        try:
-            learner = learner()
-        except TypeError:
-            pass
-
+        learner = learner()
         ptVal = learner.get_machine_problem_type()
         return ptVal
 
@@ -236,7 +232,8 @@ To install shogun
         predLabels = predObj.get_labels()
         numLabels = customDict['numLabels']
         if hasattr(predObj, 'get_multiclass_confidences'):
-            # setup an array in the right shape, number of predicted labels by number of possible labels
+            # setup an array in the right shape, number of predicted labels
+            # by number of possible labels
             scoresPerPoint = numpy.empty((len(predLabels), numLabels))
             for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
@@ -260,11 +257,16 @@ To install shogun
         return self._searcher.findInPackage(None, name)
 
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        # check something that we know won't work, but shogun will not report intelligently
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
+        # check something that we know won't work, but shogun will not report
+        # intelligently
         if trainX is not None or testX is not None:
             if 'pointLen' not in customDict:
-                customDict['pointLen'] = len(trainX.features) if trainX is not None else len(testX.features)
+                if trainX is not None:
+                    customDict['pointLen'] = len(trainX.features)
+                else:
+                    customDict['pointLen'] = len(testX.features)
             if trainX is not None and len(trainX.features) != customDict['pointLen']:
                 msg = "Length of points in the training data and testing data must be the same"
                 raise InvalidArgumentValueCombination(msg)
@@ -286,8 +288,7 @@ To install shogun
             testXTrans = self._inputTransDataHelper(testX, learnerName)
 
         delkeys = []
-        for key in arguments:
-            val = arguments[key]
+        for key, val in arguments.items():
             if isinstance(val, ShogunDefault):
                 delkeys.append(key)
         for key in delkeys:
@@ -300,15 +301,18 @@ To install shogun
         return (trainXTrans, trainYTrans, testXTrans, copiedArguments)
 
 
-    def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
         # often, but not always, we have to unpack a Labels object
         if isinstance(outputValue, self._access('Classifier', 'Labels')):
-            # outputValue is a labels object, have to pull out the raw values with a function call
+            # outputValue is a labels object, have to pull out the raw values
+            # with a function call
             retRaw = outputValue.get_labels()
             # prep for next call
             retRaw = numpy.atleast_2d(retRaw)
-            # we are given a column organized return, we want row first organization, to match up
-            # with our input rows as points standard
+            # we are given a column organized return, we want row first
+            # organization, to match up with our input rows as points standard
             retRaw = retRaw.transpose()
         else:
             retRaw = outputValue
@@ -336,7 +340,8 @@ To install shogun
         toCall = self.findCallable(learnerName)
         learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
-        # Figure out which params have to be set using setters, instead of passed in.
+        # Figure out which params have to be set using setters, instead of
+        # passed in.
         setterArgs = {}
         for name, arg in arguments.items():
             # use setter for everything in learnerDefaults
@@ -364,15 +369,18 @@ To install shogun
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
         # StreamingDotFeatures?
         raise NotImplementedError
 
 
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
-        # TODO does shogun allow apply time arguments?
+        # shogun does not appear to allow apply time arguments
         ptVal = learner.get_machine_problem_type()
+        if ptVal == self._access('Classifier', 'PT_CLASS'):
+            ptVal = customDict['problemType']
         if ptVal == self._access('Classifier', 'PT_BINARY'):
             retFunc = learner.apply_binary
         elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
@@ -424,21 +432,30 @@ To install shogun
             #if labelsObj.getTypeString() != 'Matrix':
             labelsObj = labelsObj.copy(to='Matrix')
             problemType = self._getMachineProblemType(learnerName)
+            if problemType == self._access('Classifier', 'PT_CLASS'):
+                # could be either binary or multiclass
+                flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
+                if len(numpy.unique(flattened)) == 2:
+                    problemType = self._access('Classifier', 'PT_BINARY')
+                else:
+                    problemType = self._access('Classifier', 'PT_MULTICLASS')
+                customDict['problemType'] = problemType
             if problemType == self._access('Classifier', 'PT_MULTICLASS'):
                 inverseMapping = _remapLabels(labelsObj)
                 customDict['remap'] = inverseMapping
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self._access('Features', 'MulticlassLabels')(flattened.astype(float))
+                labeler = self._access('Features', 'MulticlassLabels')
             elif problemType == self._access('Classifier', 'PT_BINARY'):
                 inverseMapping = _remapLabels(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self._access('Features', 'BinaryLabels')(flattened.astype(float))
+                labeler = self._access('Features', 'BinaryLabels')
             elif problemType == self._access('Classifier', 'PT_REGRESSION'):
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self._access('Features', 'RegressionLabels')(flattened.astype(float))
+                labeler = self._access('Features', 'RegressionLabels')
             else:
                 raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
+            labels = labeler(flattened.astype(float))
         except ImportError:
             from shogun.Features import Labels
 
@@ -474,7 +491,7 @@ class ShogunDefault(object):
 
     def __eq__(self, other):
         if isinstance(other, ShogunDefault):
-            return self.name == other.name and self.typeString == other.typeString
+            return self.name == other.name
         return False
 
     def __copy__(self):
@@ -564,10 +581,10 @@ def raiseFailedProcess(process, target, *args, **kwargs):
     if exitcode:
         msg = "shogun encountered an error while attempting "
         if process == 'labels':
-            msg += "to set the labels with the provided trainY data, "
+            msg += "to set the labels with the provided trainY data "
         elif process == 'train':
-            msg += "to train with the provided trainX data, "
+            msg += "to train with the provided trainX data "
         elif process == 'apply':
-            msg += "to apply the learner to the provided testX data, "
+            msg += "to apply the learner to the provided testX data "
         msg += "and exited with code " + str(abs(exitcode))
         raise SystemError(msg)

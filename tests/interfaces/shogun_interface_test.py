@@ -22,6 +22,8 @@ try:
     from shogun import BinaryLabels, MulticlassLabels, RegressionLabels
     from shogun import LinearKernel, GaussianKernel, EuclideanDistance
     from shogun import ZeroMean, GaussianLikelihood, ExactInferenceMethod
+    from shogun import ConstMean, SoftMaxLikelihood, MultiLaplaceInferenceMethod
+    from shogun import ProbitLikelihood, SingleLaplaceInferenceMethod
 except ImportError:
     pass
 
@@ -484,7 +486,7 @@ def shogunTrainBackend(learner, data, toSet):
     args = {}
     for arg, val in toSet.items():
         if arg == 'needInit':
-            # val is a of arguments to instantiate
+            # val is an argument to instantiate
             for setter, toInit in val.items():
                 needInit = sg.findCallable(toInit)()
                 if setter in ['kernel', 'distance']:
@@ -495,15 +497,15 @@ def shogunTrainBackend(learner, data, toSet):
             getattr(shogunObj, 'set_' + arg)(val)
             args[arg] = val
     if Ytrain is not None:
-        raiseFailedProcess(shogunObj.set_labels, Ytrain)
+        raiseFailedProcess('labels', shogunObj.set_labels, Ytrain)
         shogunObj.set_labels(Ytrain)
-    raiseFailedProcess(shogunObj.train, Xtrain)
+    raiseFailedProcess('train', shogunObj.train, Xtrain)
     shogunObj.train(Xtrain)
     return shogunObj, args
 
 def shogunApplyBackend(obj, toTest, applier):
     applyFunc = getattr(obj, applier)
-    raiseFailedProcess(applyFunc, toTest)
+    raiseFailedProcess('apply', applyFunc, toTest)
     predLabels = applyFunc(toTest)
     predArray = predLabels.get_labels().reshape(-1, 1)
     predSG = nimble.createData('Matrix', predArray, useLog=False)
@@ -534,6 +536,8 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
     try:
         equalityAssertHelper(predSG, predNimble)
     except AssertionError:
+        # TODO inplace because randomness is not being controlled at this
+        # point, once this is handled this should be removed
         assert learner in varyingPredictionsPossible
 
 @shogunSkipDec
@@ -658,6 +662,7 @@ def testShogunRegressionLearners():
         compareOutputs(learner)
 
 def trainGaussianProcessRegression(data, toSet):
+    # TODO can this be done without stepping outside of nimble?
     Xtrain, Ytrain = data
     kernel = GaussianKernel()
     kernel.init(Xtrain, Xtrain)
@@ -666,6 +671,93 @@ def trainGaussianProcessRegression(data, toSet):
     eim = ExactInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
     toSet['inference_method'] = eim
     return shogunTrainBackend('GaussianProcessRegression', data, toSet)
+
+@shogunSkipDec
+def TODOShogunMachineLearner():
+    data = generateClassificationData(3, 20, 20)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = MulticlassLabels(Ytrain)
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    extraTrainSetup = {'LinearMulticlassMachine': trainLinearMulticlassMachine}
+
+    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    trainAndApplyBackend('LinearMulticlassMachine', data, 'apply_multiclass',
+                         [], [],  extraTrainSetup, [])
+
+def trainLinearMulticlassMachine(data, toSet):
+    # TODO machine takes 2 parameters num and machine, this is problematic
+    # because cannot provide two values for machine
+    toSet['machine'] = 'LibLinear'
+    toSet['rejection_strategy'] = 'MulticlassOneVsOneStrategy'
+    return shogunTrainBackend('LinearMulticlassMachine', data, toSet)
+
+
+@shogunSkipDec
+def TODOShogunStructuredOutputLearner():
+    # TODO these are primarily the learners which are classified as 'other'
+    pass
+
+@shogunSkipDec
+def testShogunGaussianProcessClassification():
+    # classified as 'other' can be binary or multiclass classification
+    # TODO Binary getting output but different result
+    # data = generateClassificationData(2, 20, 20)
+    # trainX = abs(data[0][0])
+    # trainY = abs(data[0][1])
+    # testX = abs(data[1][0])
+    # Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    # Ytrain = BinaryLabels(Ytrain)
+    # Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    # Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+    #
+    # extraTrainSetup = {'GaussianProcessClassification': trainGPCBinary}
+    #
+    # data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    # trainAndApplyBackend('GaussianProcessClassification', data, 'apply_binary',
+    #                      [], [],  extraTrainSetup, [])
+
+    # Multiclass
+    data = generateClassificationData(3, 20, 20)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = MulticlassLabels(Ytrain)
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    extraTrainSetup = {'GaussianProcessClassification': trainGPCMulticlass}
+
+    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    trainAndApplyBackend('GaussianProcessClassification', data, 'apply_multiclass',
+                         [], [],  extraTrainSetup, [])
+
+def trainGPCBinary(data, toSet):
+    # TODO can this be done without stepping outside of nimble?
+    Xtrain, Ytrain = data
+    kernel = GaussianKernel()
+    kernel.init(Xtrain, Xtrain)
+    mean_function = ZeroMean()
+    gauss_likelihood = ProbitLikelihood()
+    mlim = SingleLaplaceInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    toSet['inference_method'] = mlim
+    return shogunTrainBackend('GaussianProcessClassification', data, toSet)
+
+def trainGPCMulticlass(data, toSet):
+    # TODO can this be done without stepping outside of nimble?
+    Xtrain, Ytrain = data
+    kernel = GaussianKernel()
+    kernel.init(Xtrain, Xtrain)
+    mean_function = ConstMean()
+    gauss_likelihood = SoftMaxLikelihood()
+    mlim = MultiLaplaceInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    toSet['inference_method'] = mlim
+    return shogunTrainBackend('GaussianProcessClassification', data, toSet)
 
 
 @shogunSkipDec
