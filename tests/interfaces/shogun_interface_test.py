@@ -547,7 +547,7 @@ def testShogunClassificationLearners():
     multiclassData = generateClassificationData(3, 20, 20)
     clusterData = generateClusteredPoints(3, 60, 8)[0]
 
-    ignore = [ # learners that fail with provided data
+    ignore = [ # learners that fail with provided parameters and data
         'Autoencoder', 'BalancedConditionalProbabilityTree', 'DeepAutoencoder',
         'DomainAdaptationMulticlassLibLinear', 'DomainAdaptationSVMLinear',
         'FeatureBlockLogisticRegression', 'MulticlassLibSVM',
@@ -557,13 +557,12 @@ def testShogunClassificationLearners():
         # tested elsewhere
         'GaussianProcessClassification']
     learners = getLearnersByType('classification', ignore)
-    remove = ['Multitask', 'Machine', 'Base']
+    remove = ['Machine', 'Base']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
     cluster = ['KMeans', 'KMeansMiniBatch']
     needKernel = ['GMNPSVM', 'GNPPSVM', 'GPBTSVM', 'LaRank', 'LibSVM',
-                  'LibSVMOneClass', 'MKLClassification', 'MKLMulticlass',
-                  'MKLOneClass', 'MPDSVM', 'RelaxedTree']
+                  'LibSVMOneClass', 'MPDSVM', 'RelaxedTree']
     needDistance = ['Hierarchical', 'KMeans', 'KMeansMiniBatch', 'KNN']
     extraTrainSetup = {'CHAIDTree': trainCHAIDTree,
                        'KMeansMiniBatch': trainKMeansMiniBatch,
@@ -645,7 +644,7 @@ def testShogunRegressionLearners():
     ignore = ["LibLinearRegression"] # LibLinearRegression strange failure
     learners = getLearnersByType('regression', ignore)
 
-    remove = ['Multitask', 'Machine', 'Base']
+    remove = ['Machine', 'Base']
     learners = [l for l in learners if not any(x in l for x in remove)]
 
     needKernel = ['KRRNystrom', 'KernelRidgeRegression', 'LibSVR']
@@ -678,7 +677,7 @@ def trainGaussianProcessRegression(data, toSet):
 @shogunSkipDec
 def testShogunGaussianProcessClassification():
     # can be binary or multiclass classification
-    
+
     # TODO Binary getting output but different result
     # data = generateClassificationData(2, 20, 20)
     # trainX = abs(data[0][0])

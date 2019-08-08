@@ -69,7 +69,10 @@ class Shogun(PredefinedInterface, UniversalInterface):
             if not (hasTrain and hasApply):
                 return False
 
-            ignore = ['MKL', 'Online'] # TODO Online
+            # MKL seem to require some sort of dependency (SVMlight?)
+            # Labels setting not currently set up to handle Multitask learners
+            # TODO Online
+            ignore = ['MKL', 'Multitask', 'Online']
             if any(partial in obj.__name__ for partial in ignore):
                 return False
             if obj.__name__ in excludedLearners:
