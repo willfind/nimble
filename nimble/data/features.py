@@ -1731,7 +1731,8 @@ class Features(object):
 
         >>> data = nimble.createData('Matrix', [[1], [2], [3]])
         >>> data.features.setNames(['a'])
-        >>> data.features.repeat(totalCopies=3)
+        >>> data.features.repeat(totalCopies=3,
+        ...                      copyFeatureByFeature=False)
         Matrix(
             [[1.000 1.000 1.000]
              [2.000 2.000 2.000]
@@ -1744,7 +1745,7 @@ class Features(object):
         >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
         >>> data.features.repeat(totalCopies=2,
-        ...                         copyFeatureByFeature=False)
+        ...                      copyFeatureByFeature=False)
         Matrix(
             [[1.000 2.000 1.000 2.000]
              [3.000 4.000 3.000 4.000]
@@ -1757,7 +1758,7 @@ class Features(object):
         >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
         >>> data.features.repeat(totalCopies=2,
-        ...                         copyFeatureByFeature=True)
+        ...                      copyFeatureByFeature=True)
         Matrix(
             [[1.000 1.000 2.000 2.000]
              [3.000 3.000 4.000 4.000]

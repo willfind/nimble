@@ -1786,7 +1786,7 @@ class Points(object):
 
         >>> data = nimble.createData('Matrix', [[1, 2, 3]])
         >>> data.points.setNames(['a'])
-        >>> data.points.repeat(totalCopies=3)
+        >>> data.points.repeat(totalCopies=3, copyPointByPoint=False)
         Matrix(
             [[1.000 2.000 3.000]
              [1.000 2.000 3.000]
