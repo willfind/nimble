@@ -22,6 +22,7 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.docHelpers import inheritDocstringsFactory
+from nimble.importExternalLibraries import importModule
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -59,7 +60,8 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
             # we want to ignore anything not in __all__ to prevent trying
             # to import libraries outside of scikit-learn dependencies
             sklAll = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll]
+            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll
+                    and importModule(pkg[1]) is not None]
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:

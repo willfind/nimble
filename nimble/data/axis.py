@@ -36,6 +36,7 @@ from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
+from .dataHelpers import createDataNoValidation
 
 class Axis(object):
     """
@@ -175,6 +176,15 @@ class Axis(object):
             return True
         except InvalidArgumentValue:
             return False
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, float, str, numpy.integer)):
+            key = [self._processSingle(key)]
+        else:
+            key = self._processMultiple(key)
+        if key is None:
+            return self._source.copy()
+        return self._structuralBackend_implementation('copy', key)
 
     #########################
     # Structural Operations #
@@ -823,6 +833,44 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('normalize'),
                       subtract, divide, applyResultTo)
 
+    def _repeat(self, totalCopies, copyValueByValue):
+        if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:
+            raise InvalidArgumentType("totalCopies must be a positive integer")
+        if totalCopies == 1:
+            return self._source.copy()
+
+        repeated = self._repeat_implementation(totalCopies, copyValueByValue)
+
+        if isinstance(self, Points):
+            ptNames = self._getNamesNoGeneration()
+            namesToRepeat = ptNames
+            ftNames = self._source.features._getNamesNoGeneration()
+        else:
+            ftNames = self._getNamesNoGeneration()
+            namesToRepeat = ftNames
+            ptNames = self._source.points._getNamesNoGeneration()
+
+        if copyValueByValue and namesToRepeat is not None:
+            origNames = namesToRepeat.copy()
+            for idx, name in enumerate(origNames):
+                for i in range(totalCopies):
+                    currIdx = (totalCopies * idx) + i
+                    if currIdx < len(origNames):
+                        namesToRepeat[currIdx] = name + "_" + str(i + 1)
+                    else:
+                        namesToRepeat.append(name + "_" + str(i + 1))
+        elif namesToRepeat is not None:
+            origNames = namesToRepeat.copy()
+            for i in range(totalCopies):
+                for idx, name in enumerate(origNames):
+                    if i == 0:
+                        namesToRepeat[idx] = name + "_" + str(i + 1)
+                    else:
+                        namesToRepeat.append(name + "_" + str(i + 1))
+
+        return createDataNoValidation(self._source.getTypeString(), repeated,
+                                      pointNames=ptNames, featureNames=ftNames)
+
     ###################
     # Query functions #
     ###################
@@ -841,9 +889,6 @@ class Axis(object):
 
         return ret
 
-    ###################
-    # Query functions #
-    ###################
 
     def _similarities(self, similarityFunction):
         accepted = [
@@ -1131,7 +1176,7 @@ class Axis(object):
 
     def _processSingle(self, key):
         """
-        Helper for Base.__getitem__ when given a single value.
+        Helper for Base and Axis __getitem__ when given a single value.
         """
         length = len(self)
         if key.__class__ is str or key.__class__ is six.text_type:
@@ -1157,7 +1202,7 @@ class Axis(object):
 
     def _processMultiple(self, key):
         """
-        Helper for Base.__getitem__ when given multiple values.
+        Helper for Base and Axis __getitem__ when given multiple values.
 
         If the input is a full slice, copying for __getitem__ can be
         ignored so None is returned. Otherwise the input will be
@@ -1693,6 +1738,10 @@ class Axis(object):
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):
+        pass
+
+    @abstractmethod
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

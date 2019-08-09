@@ -454,7 +454,7 @@ class Elements(object):
         >>> data = nimble.identity('Matrix', 5)
         >>> unique = data.elements.countUnique()
         >>> unique
-        {1.0: 5, 0.0: 20}
+        {0.0: 20, 1.0: 5}
 
         Count for a subset of elements.
 
@@ -462,7 +462,7 @@ class Elements(object):
         >>> unique = data.elements.countUnique(points=0,
         ...                                    features=[0, 1, 2])
         >>> unique
-        {1.0: 1, 0.0: 2}
+        {0.0: 2, 1.0: 1}
         """
         return self._countUnique_implementation(points, features)
 

@@ -604,6 +604,43 @@ class QueryBackend(DataTestObject):
 
         assert list(zip(pv, fv)) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
+    ###############################
+    # points/features.__getitem__ #
+    ###############################
+    @noLogEntryExpected
+    def test_pf_getitem(self):
+        featureNames = ["one", "two", "three", "zero", "gender"]
+        pnames = ['1', '4', '7', '0']
+        data = [[1, 2, 3, 0, 'f'], [4, 5, 0, 0, 'm'], [7, 0, 9, 0, 'f'], [0, 0, 0, 0, 'm']]
+
+        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+
+        tmp1 = self.constructor(data[1], featureNames=featureNames, pointNames=[pnames[1]])
+        assert toTest.points[1] == tmp1
+        assert toTest.points['4'] == tmp1
+
+        tmp2 = self.constructor(data[1:], featureNames=featureNames, pointNames=pnames[1:])
+        assert toTest.points[1:] == tmp2
+        assert toTest.points[1:3] == tmp2
+        assert toTest.points["4":"0"] == tmp2
+        assert toTest.points[[1,2,3]] == tmp2
+        assert toTest.points[['4', '7', '0']] == tmp2
+
+        tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
+        assert toTest.features[4] == tmp3
+        assert toTest.features['gender'] == tmp3
+
+        tmp4 = self.constructor([['f', 0], ['m', 0], ['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames)
+        assert toTest.features[4:3:-1] == tmp4
+        assert toTest.features["gender":"zero":-1] == tmp4
+        assert toTest.features[[4,3]] == tmp4
+        assert toTest.features[['gender', 'zero']] == tmp4
+
+        tmp5 = self.constructor([['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames[:2])
+        assert toTest.points[:1].features[4:3:-1] == tmp5
+        assert toTest.points[:"4"].features["gender":"zero":-1] == tmp5
+        assert toTest.points[['1', '4']].features[[4,3]] == tmp5
+        assert toTest.points[[0,1]].features[['gender', 'zero']] == tmp5
 
     ################
     # pointView #
@@ -949,26 +986,31 @@ class QueryBackend(DataTestObject):
                     assert line == 'fa --'
                 elif i == 1:
                     # separator for ftNames and data
-                    assert line == '     '
+                    assert line == ''
                 else:
                     assert line == 'a  --'
 
-        # width of 8 and 9 will return first ft, colHold, last ft ('a  -- cc')
-        for mw in range(8, 10):
-            ret = data.toString(maxWidth=mw, includeNames=True)
-            # ignore last index since ret always ends with \n
-            retSplit = ret.split('\n')[:-1]
-            for i, line in enumerate(retSplit):
-                if i == 0:
-                    assert line == 'fa -- fc'
-                elif i == 1:
-                    # separator for ftNames and data
-                    assert line == '        '
-                else:
-                    assert line == 'a  -- cc'
+        # width of 8 will return first ft, colHold, last ft ('a  -- cc')
+        # 2 for first column based on feature name 'fa', 2 for colHold,
+        # 2 for last column (both feature name and data have same width),
+        # and 2 separating spaces
+        ret = data.toString(maxWidth=8, includeNames=True)
+        # ignore last index since ret always ends with \n
+        retSplit = ret.split('\n')[:-1]
+        for i, line in enumerate(retSplit):
+            if i == 0:
+                assert line == 'fa -- fc'
+            elif i == 1:
+                # separator for ftNames and data
+                assert line == ''
+            else:
+                assert line == 'a  -- cc'
 
-        # width of 10 can accommodate all data ('a  bbb cc')
-        ret = data.toString(maxWidth=10, includeNames=True)
+        # width of 9 can accommodate all data ('a  bbb cc')
+        # 2 for first column based on feature name 'fa', 3 for second column
+        # based on width of 'bbb', 2 for third column (both feature name and
+        # data have same width) and 2 separating spaces
+        ret = data.toString(maxWidth=9, includeNames=True)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
@@ -976,7 +1018,7 @@ class QueryBackend(DataTestObject):
                 assert line == 'fa  fb fc'
             elif i == 1:
                 # separator for ftNames and data
-                assert line == '         '
+                assert line == ''
             else:
                 assert line == 'a  bbb cc'
 

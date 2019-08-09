@@ -14,6 +14,7 @@ from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
+import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
 
@@ -1751,6 +1752,76 @@ class Points(object):
                       Points.combineByExpandingFeatures,
                       featureWithFeatureNames, featureWithValues)
 
+    def repeat(self, totalCopies, copyPointByPoint):
+        """
+        Create an object using copies of this object's points.
+
+        Copies of this object will be stacked vertically. The returned
+        object will have the same number of features as this object and
+        the number of points will be equal to the number of points in
+        this object times ``totalCopies``. If this object contains
+        pointNames, each point name will have "_#" appended, where # is
+        the number of the copy made.
+
+        Parameters
+        ----------
+        totalCopies : int
+            The number of times a copy of the data in this object will
+            be present in the returned object.
+        copyPointByPoint : bool
+            When False, copies are made as if iterating through the
+            points in this object ``totalCopies`` times. When True,
+            copies are made as if the object is only iterated once,
+            making ``totalCopies`` copies of each point before iterating
+            to the next point.
+
+        Returns
+        -------
+        nimble Base object
+            Object containing the copied data.
+
+        Examples
+        --------
+        Single point
+
+        >>> data = nimble.createData('Matrix', [[1, 2, 3]])
+        >>> data.points.setNames(['a'])
+        >>> data.points.repeat(totalCopies=3, copyPointByPoint=False)
+        Matrix(
+            [[1.000 2.000 3.000]
+             [1.000 2.000 3.000]
+             [1.000 2.000 3.000]]
+            pointNames={'a_1':0, 'a_2':1, 'a_3':2}
+            )
+
+        Two-dimensional, copyPointByPoint is False
+
+        >>> data = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]])
+        >>> data.points.setNames(['a', 'b'])
+        >>> data.points.repeat(totalCopies=2, copyPointByPoint=False)
+        Matrix(
+            [[1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [1.000 2.000 3.000]
+             [4.000 5.000 6.000]]
+            pointNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
+            )
+
+        Two-dimensional, copyPointByPoint is True
+
+        >>> data = nimble.createData('Matrix', [[1, 2, 3], [4, 5, 6]])
+        >>> data.points.setNames(['a', 'b'])
+        >>> data.points.repeat(totalCopies=2, copyPointByPoint=True)
+        Matrix(
+            [[1.000 2.000 3.000]
+             [1.000 2.000 3.000]
+             [4.000 5.000 6.000]
+             [4.000 5.000 6.000]]
+            pointNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
+            )
+        """
+        return self._repeat(totalCopies, copyPointByPoint)
+
     ####################
     # Query functions #
     ###################
@@ -1943,6 +2014,10 @@ class Points(object):
     @abstractmethod
     def _combineByExpandingFeatures_implementation(
             self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        pass
+
+    @abstractmethod
+    def _repeat(self, totalCopies, copyValueByValue):
         pass
 
     @abstractmethod

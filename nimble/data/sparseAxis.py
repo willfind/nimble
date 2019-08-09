@@ -155,6 +155,45 @@ class SparseAxis(Axis):
         self._source.data = coo_matrix((newData, rowColTuple), shape=shape)
         self._source._sorted = None
 
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
+        if copyValueByValue:
+            numpyFunc = numpy.repeat
+        else:
+            numpyFunc = numpy.tile
+        repData = numpyFunc(self._source.data.data, totalCopies)
+        fillDup = numpy.empty_like(repData, dtype=numpy.int)
+        if isinstance(self, Points):
+            repCol = numpyFunc(self._source.data.col, totalCopies)
+            repRow = fillDup
+            toRepeat = self._source.data.row
+            numRepeatd = len(self)
+            startIdx = 0
+            shape = ((len(self) * totalCopies), len(self._source.features))
+        else:
+            repRow = numpyFunc(self._source.data.row, totalCopies)
+            repCol = fillDup
+            toRepeat = self._source.data.col
+            numRepeatd = len(self)
+            shape = (len(self._source.points), (len(self) * totalCopies))
+
+        startIdx = 0
+        if copyValueByValue:
+            for idx in toRepeat:
+                endIdx = startIdx + totalCopies
+                indexRange = numpy.array(range(totalCopies))
+                adjustedIndices = indexRange + (totalCopies * idx)
+                fillDup[startIdx:endIdx] = adjustedIndices
+                startIdx = endIdx
+        else:
+            for i in range(totalCopies):
+                endIdx = len(toRepeat) * (i + 1)
+                fillDup[startIdx:endIdx] = toRepeat + (numRepeatd * i)
+                startIdx = endIdx
+
+        repeated = coo_matrix((repData, (repRow, repCol)), shape=shape)
+
+        return repeated
+
     #########################
     # Query implementations #
     #########################
