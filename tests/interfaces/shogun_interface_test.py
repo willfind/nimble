@@ -49,6 +49,15 @@ OUTFILE_PREFIX = 'shogunParameterManifest_v'
 
 
 @shogunSkipDec
+def test_Shogun_findCallable_nameAndDocPreservation():
+    shogunInt = nimble.helpers.findBestInterface('shogun')
+    swigObj = shogunInt.findCallable('LibSVM')
+    wrappedShogun = swigObj()
+    assert 'WrappedShogun' in str(type(wrappedShogun))
+    assert wrappedShogun.__name__ == 'LibSVM'
+    assert wrappedShogun.__doc__
+
+@shogunSkipDec
 def _DISABLED_testShogunObjectsInManifest():
     shogunInt = nimble.helpers.findBestInterface('shogun')
     fullVersion = shogunInt.version()

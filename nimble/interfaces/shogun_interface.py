@@ -205,7 +205,7 @@ To install shogun
 
     def _getParameterNamesBackend(self, name):
         ret = []
-        backend = self.findCallable(name)
+        backend = self._searcher.findInPackage(None, name)
         for funcname in dir(backend):
             if funcname.startswith('set_'):
                 funcname = funcname[4:]
@@ -258,7 +258,24 @@ To install shogun
 
 
     def _findCallableBackend(self, name):
-        return self._searcher.findInPackage(None, name)
+        def shogunToPython(cls):
+
+            class WrappedShogun(cls):
+                def __init__(self, **kwargs):
+                    super(WrappedShogun, self).__init__()
+
+                    for name, arg in kwargs.items():
+                        if not isinstance(arg, ShogunDefault):
+                            setter = getattr(self, 'set_' + name)
+                            setter(arg)
+
+                    self.__name__ = cls.__name__
+                    self.__doc__ = cls.__doc__
+
+            return WrappedShogun
+
+        callable = self._searcher.findInPackage(None, name)
+        return shogunToPython(callable)
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
@@ -344,19 +361,14 @@ To install shogun
         toCall = self.findCallable(learnerName)
         learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
-        # Figure out which params have to be set using setters, instead of
-        # passed in.
+        # Figure out which argument values are needed for training
         setterArgs = {}
         for name, arg in arguments.items():
             # use setter for everything in learnerDefaults
             if name in learnerDefaults:
                 setterArgs[name] = arg
 
-        learner = toCall()
-
-        for name, arg in setterArgs.items():
-            setter = getattr(learner, 'set_' + name)
-            setter(arg)
+        learner = toCall(**setterArgs)
 
         if trainY is not None:
             raiseFailedProcess('labels', learner.set_labels, trainY)
