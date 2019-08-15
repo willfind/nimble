@@ -3738,67 +3738,9 @@ class Base(object):
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        if self._pointCount == 0 or self._featureCount == 0:
-            msg = "Cannot do ** when points or features is empty"
-            raise ImproperObjectAction(msg)
-        if not dataHelpers._looksNumeric(other):
-            msg = "'other' must be an instance of a scalar"
-            raise InvalidArgumentType(msg)
-        if other != int(other):
-            raise InvalidArgumentType("other may only be an integer type")
-        if other < 0:
-            raise InvalidArgumentValue("other must be greater than zero")
-
-        if self._pointNamesCreated():
-            retPNames = self.points.getNames()
-        else:
-            retPNames = None
-        if self._featureNamesCreated():
-            retFNames = self.features.getNames()
-        else:
-            retFNames = None
-
-        if other == 1:
-            ret = self.copy()
-            ret._name = dataHelpers.nextDefaultObjectName()
-            return ret
-
-        # exact conditions in which we need to instantiate this object
-        if other == 0 or other % 2 == 0:
-            identity = nimble.createData(self.getTypeString(),
-                                         numpy.eye(self._pointCount),
-                                         pointNames=retPNames,
-                                         featureNames=retFNames, useLog=False)
-        if other == 0:
-            return identity
-
-        # this means that we don't start with a multiplication at the ones
-        # place, so we need to reserve the identity as the in progress return
-        # value
-        if other % 2 == 0:
-            ret = identity
-        else:
-            ret = self.copy()
-
-        # by setting up ret, we've taken care of the original ones place
-        curr = other >> 1
-        # the running binary exponent we've calculated. We've done the ones
-        # place, so this is just a copy
-        running = self.copy()
-
-        while curr != 0:
-            running = running._matrixMultiply_implementation(running)
-            if (curr % 2) == 1:
-                ret = ret._matrixMultiply_implementation(running)
-
-            # shift right to put the next digit in the ones place
-            curr = curr >> 1
-
-        ret.points.setNames(retPNames, useLog=False)
-        ret.features.setNames(retFNames, useLog=False)
-
+        ret = self.copy()
+        ret.elements.power(other, useLog=False)
         ret._name = dataHelpers.nextDefaultObjectName()
-
         return ret
 
     def __ipow__(self, other):
@@ -3808,8 +3750,7 @@ class Base(object):
         is a nimble Base object, or elementwise by a scalar if ``other``
         is some kind of numeric value.
         """
-        ret = self.__pow__(other)
-        self.referenceDataFrom(ret, useLog=False)
+        self.elements.power(other, useLog=False)
         return self
 
     def __pos__(self):

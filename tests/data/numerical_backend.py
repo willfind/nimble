@@ -1069,9 +1069,9 @@ class NumericalDataSafe(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
+            # need numpy.array so performed elementwise
+            resultf = numpy.array(lhsf) ** scalar
+            resulti = numpy.array(lhsi) ** scalar
             resfObj = lhsfObj ** scalar
             resiObj = lhsiObj ** scalar
 
@@ -1654,9 +1654,9 @@ class NumericalModifying(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
+            # need numpy array to perform elementwise
+            resultf = numpy.array(lhsf) ** scalar
+            resulti = numpy.array(lhsi) ** scalar
             resfObj = lhsfObj.__ipow__(scalar)
             resiObj = lhsiObj.__ipow__(scalar)
 
