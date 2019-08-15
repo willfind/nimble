@@ -891,7 +891,7 @@ class Sparse(Base):
                     return self._scalarZeroPreservingBinary_implementation(
                         opName, other)
                 # scalar operations apply to all elements; use dense
-                return self._genericNumericBinary_implementation(opName, other)
+                return self._genericArithmeticBinary_implementation(opName, other)
 
             if ret is NotImplemented:
                 # most NotImplemented are inplace operations
@@ -900,7 +900,7 @@ class Sparse(Base):
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
                 else:
-                    return self._genericNumericBinary_implementation(opName,
+                    return self._genericArithmeticBinary_implementation(opName,
                                                                      other)
 
             if opName.startswith('__i'):

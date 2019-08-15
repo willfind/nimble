@@ -481,6 +481,9 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains zero """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [0, 0, 0], [6, 7, 8]]
+    if attr1.startswith('__r'):
+        # put zeros in lhs
+        data1, data2 = data2, data1
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
@@ -667,6 +670,7 @@ def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
 
 def run_full_backendDivMod_rop(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, nimbleOp))
     run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
