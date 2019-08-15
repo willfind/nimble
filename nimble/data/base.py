@@ -3620,13 +3620,13 @@ class Base(object):
         nimble Base object, or element wise with a scalar if other is
         some kind of numeric value.
         """
-        return self._genericNumericBinary('__add__', other)
+        return self._genericArithmeticBinary('__add__', other)
 
     def __radd__(self, other):
         """
         Perform scalar addition with this object on the right
         """
-        return self._genericNumericBinary('__radd__', other)
+        return self._genericArithmeticBinary('__radd__', other)
 
     def __iadd__(self, other):
         """
@@ -3634,7 +3634,7 @@ class Base(object):
         ``other`` is a nimble Base object, or element wise with a scalar
         if ``other`` is some kind of numeric value.
         """
-        return self._genericNumericBinary('__iadd__', other)
+        return self._genericArithmeticBinary('__iadd__', other)
 
     def __sub__(self, other):
         """
@@ -3642,13 +3642,13 @@ class Base(object):
         data object, or element wise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        return self._genericNumericBinary('__sub__', other)
+        return self._genericArithmeticBinary('__sub__', other)
 
     def __rsub__(self, other):
         """
         Subtract each element of this object from the given scalar.
         """
-        return self._genericNumericBinary('__rsub__', other)
+        return self._genericArithmeticBinary('__rsub__', other)
 
     def __isub__(self, other):
         """
@@ -3656,7 +3656,7 @@ class Base(object):
         is a nimble Base object, or element wise with a scalar if
         ``other`` is some kind of numeric value.
         """
-        return self._genericNumericBinary('__isub__', other)
+        return self._genericArithmeticBinary('__isub__', other)
 
     def __truediv__(self, other):
         """
@@ -3664,14 +3664,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericNumericBinary('__truediv__', other)
+        return self._genericArithmeticBinary('__truediv__', other)
 
     def __rtruediv__(self, other):
         """
         Perform element wise true division using this object as the
         denominator, and the given scalar value as the numerator.
         """
-        return self._genericNumericBinary('__rtruediv__', other)
+        return self._genericArithmeticBinary('__rtruediv__', other)
 
     def __itruediv__(self, other):
         """
@@ -3680,7 +3680,7 @@ class Base(object):
         elementwise by a scalar if ``other`` is some kind of numeric
         value.
         """
-        return self._genericNumericBinary('__itruediv__', other)
+        return self._genericArithmeticBinary('__itruediv__', other)
 
     def __floordiv__(self, other):
         """
@@ -3688,7 +3688,7 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if ``other`` is some kind of numeric value.
         """
-        return self._genericNumericBinary('__floordiv__', other)
+        return self._genericArithmeticBinary('__floordiv__', other)
 
     def __rfloordiv__(self, other):
         """
@@ -3696,7 +3696,7 @@ class Base(object):
         denominator, and the given scalar value as the numerator.
 
         """
-        return self._genericNumericBinary('__rfloordiv__', other)
+        return self._genericArithmeticBinary('__rfloordiv__', other)
 
     def __ifloordiv__(self, other):
         """
@@ -3705,7 +3705,7 @@ class Base(object):
         elementwise by a scalar if ```other``` is some kind of numeric
         value.
         """
-        return self._genericNumericBinary('__ifloordiv__', other)
+        return self._genericArithmeticBinary('__ifloordiv__', other)
 
     def __mod__(self, other):
         """
@@ -3713,14 +3713,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericNumericBinary('__mod__', other)
+        return self._genericArithmeticBinary('__mod__', other)
 
     def __rmod__(self, other):
         """
         Perform mod using the elements of this object as the divisors,
         and the given scalar value as the dividend.
         """
-        return self._genericNumericBinary('__rmod__', other)
+        return self._genericArithmeticBinary('__rmod__', other)
 
     def __imod__(self, other):
         """
@@ -3728,7 +3728,7 @@ class Base(object):
         dividends, elementwise if 'other' is a nimble Base object, or
         elementwise by a scalar if other is some kind of numeric value.
         """
-        return self._genericNumericBinary('__imod__', other)
+        return self._genericArithmeticBinary('__imod__', other)
 
     @to2args
     def __pow__(self, other, z):
@@ -3805,7 +3805,7 @@ class Base(object):
                 msg = msg.format('left')
                 raise ImproperObjectAction(msg)
 
-    def _genericNumericBinary_sizeValidation(self, opName, other):
+    def _genericArithmeticBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
             msg += "(self=" + str(self._pointCount) + " vs other="
@@ -3819,7 +3819,7 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
-    def _genericNumericBinary_validation(self, opName, other):
+    def _genericArithmeticBinary_validation(self, opName, other):
         isNimble = isinstance(other, nimble.data.Base)
 
         if not isNimble and not dataHelpers._looksNumeric(other):
@@ -3837,31 +3837,35 @@ class Base(object):
         divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
                     '__floordiv__', '__rfloordiv__', '__ifloordiv__',
                     '__mod__', '__rmod__', '__imod__', ]
+        if opName.startswith('__r'):
+            toCheck = self
+        else:
+            toCheck = other
         if isNimble and opName in divNames:
-            if other.containsZero():
+            if toCheck.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
                 raise ZeroDivisionError(msg)
-            unique = other.elements.countUnique()
+            unique = toCheck.elements.countUnique()
             if any(val != val or numpy.isinf(val) for val in unique):
                 msg = "Cannot perform " + opName + " when the second "
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
         if not isNimble and opName in divNames:
-            if other == 0:
+            if toCheck == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
                 raise ZeroDivisionError(msg)
 
-    def _genericNumericBinary(self, opName, other):
+    def _genericArithmeticBinary(self, opName, other):
 
         isNimble = isinstance(other, nimble.data.Base)
 
         if isNimble:
-            self._genericNumericBinary_sizeValidation(opName, other)
+            self._genericArithmeticBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
-        self._genericNumericBinary_validation(opName, other)
+        self._genericArithmeticBinary_validation(opName, other)
         # figure out return obj's point / feature names
         if opName not in ['__pos__', '__neg__', '__abs__'] and isNimble:
             # everything else that uses this helper is a binary scalar op
@@ -3882,7 +3886,7 @@ class Base(object):
         return ret
 
 
-    def _genericNumericBinary_implementation(self, opName, other):
+    def _genericArithmeticBinary_implementation(self, opName, other):
         selfData = self.copy('numpymatrix')
         if isinstance(other, nimble.data.Base):
             otherData = other.copy('numpymatrix')
