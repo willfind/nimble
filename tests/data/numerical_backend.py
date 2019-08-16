@@ -481,6 +481,9 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains zero """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [0, 0, 0], [6, 7, 8]]
+    if attr1.startswith('__r'):
+        # put zeros in lhs
+        data1, data2 = data2, data1
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
@@ -494,6 +497,9 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains an infinity """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [5, numpy.Inf, 10], [6, 7, 8]]
+    if attr1.startswith('__r'):
+        # put inf in lhs
+        data1, data2 = data2, data1
     caller = callerCon(data1)
     callee = calleeConstructor(data2, calleeCon)
 
@@ -667,6 +673,8 @@ def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
 
 def run_full_backendDivMod_rop(constructor, npEquiv, nimbleOp, inplace, sparsity):
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
     run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
@@ -1069,9 +1077,9 @@ class NumericalDataSafe(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
+            # need numpy.array so performed elementwise
+            resultf = numpy.array(lhsf) ** scalar
+            resulti = numpy.array(lhsi) ** scalar
             resfObj = lhsfObj ** scalar
             resiObj = lhsiObj ** scalar
 
@@ -1654,9 +1662,9 @@ class NumericalModifying(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
+            # need numpy array to perform elementwise
+            resultf = numpy.array(lhsf) ** scalar
+            resulti = numpy.array(lhsi) ** scalar
             resfObj = lhsfObj.__ipow__(scalar)
             resiObj = lhsiObj.__ipow__(scalar)
 

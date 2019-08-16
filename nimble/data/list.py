@@ -581,7 +581,7 @@ class List(Base):
 
 
     def _numericBinary_implementation(self, opName, other):
-        return self._genericNumericBinary_implementation(opName, other)
+        return self._genericArithmeticBinary_implementation(opName, other)
 
     def _mul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
