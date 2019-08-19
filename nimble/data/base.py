@@ -3745,8 +3745,9 @@ class Base(object):
     @to2args
     def __rpow__(self, other, z):
         """
-        Perform elementwise exponentiation using the ``other`` scalar
-        value as the base.
+        Perform elementwise exponentiation using the values in ``other``
+        as the base. ``other`` can be a nimble data object or a
+        scalar.
         """
         if isinstance(other, Base):
             self._genericArithmeticBinary_sizeValidation('__rpow__', other)
