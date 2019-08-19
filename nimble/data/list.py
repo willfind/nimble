@@ -580,7 +580,7 @@ class List(Base):
         return False
 
 
-    def _numericBinary_implementation(self, opName, other):
+    def _arithmeticBinary_implementation(self, opName, other):
         return self._genericArithmeticBinary_implementation(opName, other)
 
     def _mul__implementation(self, other):

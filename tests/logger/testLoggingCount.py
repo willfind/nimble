@@ -319,8 +319,8 @@ baseDunder_tested = [
     'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__', 'Base.__len__',
     'Base.__mod__', 'Base.__mul__', 'Base.__neg__', 'Base.__pos__',
     'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmod__',
-    'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
+    'Base.__rmul__', 'Base.__rpow__', 'Base.__rsub__', 'Base.__rtruediv__',
+    'Base.__sub__', 'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []

@@ -374,7 +374,7 @@ class DataFrame(Base):
         return 0 in self.data.values
 
 
-    def _numericBinary_implementation(self, opName, other):
+    def _arithmeticBinary_implementation(self, opName, other):
         if isinstance(other, DataFrame):
             ret = getattr(self.data, opName)(other.data)
         elif isinstance(other, nimble.data.Base):

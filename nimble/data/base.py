@@ -3733,22 +3733,36 @@ class Base(object):
     @to2args
     def __pow__(self, other, z):
         """
-        Perform exponentiation (iterated __mul__) using the elements of
-        this object as the bases, elementwise if ``other`` is a nimble
-        data object, or elementwise by a scalar if ``other`` is some
-        kind of numeric value.
+        Perform elementwise exponentiation using the elements of this
+        object as the bases. ``other`` can be a nimble data object or a
+        scalar.
         """
         ret = self.copy()
         ret.elements.power(other, useLog=False)
         ret._name = dataHelpers.nextDefaultObjectName()
         return ret
 
+    @to2args
+    def __rpow__(self, other, z):
+        """
+        Perform elementwise exponentiation using the ``other`` scalar
+        value as the base.
+        """
+        if isinstance(other, Base):
+            self._genericArithmeticBinary_sizeValidation('__rpow__', other)
+            self._validateEqualNames('point', 'point', '__rpow__', other)
+            self._validateEqualNames('feature', 'feature', '__rpow__', other)
+        self._genericArithmeticBinary_validation('__rpow__', other)
+        ret = self.elements.calculate(lambda v: other ** v, useLog=False)
+        ret.points.setNames(self.points.getNames(), useLog=False)
+        ret.features.setNames(self.features.getNames(), useLog=False)
+        return ret
+
     def __ipow__(self, other):
         """
-        Perform in-place exponentiation (iterated __mul__) using the
-        elements of this object as the bases, element wise if ``other``
-        is a nimble Base object, or elementwise by a scalar if ``other``
-        is some kind of numeric value.
+        Perform inplace elementwise exponentiation using the elements of
+        this object as the bases. ``other`` can be a nimble data object
+        or a scalar.
         """
         self.elements.power(other, useLog=False)
         return self
@@ -3875,7 +3889,7 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._numericBinary_implementation(opName, other)
+        ret = self._arithmeticBinary_implementation(opName, other)
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
 

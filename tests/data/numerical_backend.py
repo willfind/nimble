@@ -1097,6 +1097,56 @@ class NumericalDataSafe(DataTestObject):
         back_binaryscalar_NamePath_preservations(self.constructor, '__pow__')
 
 
+    ############
+    # __rpow__ #
+    ############
+
+    def test_rpow_exceptions(self):
+        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
+        constructor = self.constructor
+        nimbleOp = '__rpow__'
+        inputs = (constructor, nimbleOp)
+        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
+
+        inputs = (constructor, int, nimbleOp)
+        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
+
+        inputs = (constructor, constructor, nimbleOp)
+        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
+
+        inputs = (constructor, constructor, nimbleOp)
+        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
+
+    @noLogEntryExpected
+    def test_rpow_autoVsNumpyScalar(self):
+        """ Test __rpow__ with automated data and a scalar argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+            scalar = pythonRandom.randint(1, 5)
+
+            datas = makeAllData(self.constructor, None, n, .02)
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
+            # need numpy.array so performed elementwise
+            resultf = scalar ** numpy.array(lhsf)
+            resulti = scalar ** numpy.array(lhsi)
+            resfObj = scalar ** lhsfObj
+            resiObj = scalar ** lhsiObj
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
+
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+
+
+    def test_rpow_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rpow__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rpow__', False)
+
+    def test_rpow_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rpow__')
+
+
     ###########
     # __pos__ #
     ###########
