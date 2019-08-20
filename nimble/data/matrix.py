@@ -19,6 +19,7 @@ from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .matrixElements import MatrixElements, MatrixElementsView
+from .stretch import Stretch
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
@@ -78,6 +79,13 @@ class Matrix(Base):
 
     def _getElements(self):
         return MatrixElements(self)
+
+    @property
+    def stretch(self):
+        """
+        TODO
+        """
+        return Stretch(self)
 
     def _transpose_implementation(self):
         """

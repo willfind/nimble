@@ -21,6 +21,7 @@ from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
+from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
@@ -83,6 +84,13 @@ class Sparse(Base):
 
     def _getElements(self):
         return SparseElements(self)
+
+    @property
+    def stretch(self):
+        """
+        TODO
+        """
+        return StretchSparse(self)
 
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
@@ -964,9 +972,12 @@ class Sparse(Base):
         self._absPath, self._relPath = absPath, relPath
         return self
 
+    def __rpow__(self, other):
+        return other.__pow__(self)
+
     def _rsub__implementation(self, other):
-        other = other * -1
-        return self._numericBinary_implementation('__add__', other)
+        neg = self * -1
+        return neg._numericBinary_implementation('__add__', other)
 
     def _genericFloordiv_implementation(self, opName, other):
         """
@@ -992,19 +1003,22 @@ class Sparse(Base):
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
         """
+        self._sortInternal('point')
         if self.data.data is None:
             selfData = self.copy().data
         else:
             selfData = self.data
-        if isinstance(other, Sparse):
-            if other.data.data is None:
-                otherData = other.copy().data.data
-            else:
-                otherData = other.data.data
+        if isinstance(other, Sparse) and other.data.data is None:
+            other = other.copy()
         else: # another Base object type
-            otherData = other.copy('Sparse').data.data
+            other = other.copy('Sparse')
+        other._sortInternal('point')
+        otherData = other.data.data
 
-        ret = numpy.mod(selfData.data, otherData)
+        if opName.startswith('__r'):
+            ret = numpy.mod(otherData, selfData.data)
+        else:
+            ret = numpy.mod(selfData.data, otherData)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data

@@ -3551,9 +3551,9 @@ class Base(object):
         object depending on the input ``other``.
         """
         if (not isinstance(other, nimble.data.Base)
-                and not dataHelpers._looksNumeric(other)):
+                and not dataHelpers._looksNumeric(other)
+                or isinstance(other, nimble.data.stretch.Stretch)):
             return NotImplemented
-
         # Test element type self
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do a multiplication when points or features is empty"
@@ -3738,6 +3738,8 @@ class Base(object):
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
+        if isinstance(other, nimble.data.stretch.Stretch):
+            return NotImplemented
         ret = self.copy()
         ret.elements.power(other, useLog=False)
         ret._name = dataHelpers.nextDefaultObjectName()
@@ -3821,7 +3823,6 @@ class Base(object):
 
     def _genericArithmeticBinary_validation(self, opName, other):
         isNimble = isinstance(other, nimble.data.Base)
-
         if not isNimble and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
@@ -3858,7 +3859,9 @@ class Base(object):
                 raise ZeroDivisionError(msg)
 
     def _genericArithmeticBinary(self, opName, other):
-
+        isStretch = isinstance(other, nimble.data.stretch.Stretch)
+        if isStretch:
+            return NotImplemented
         isNimble = isinstance(other, nimble.data.Base)
 
         if isNimble:

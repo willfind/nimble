@@ -691,6 +691,7 @@ def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
 @patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
+    print('****', nimbleOp)
     data = [[1, 2, 3], [0, 0, 0]]
     toTest = constructor(data)
     rint = pythonRandom.randint(1, 5)
