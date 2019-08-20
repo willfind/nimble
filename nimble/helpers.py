@@ -3051,6 +3051,12 @@ class CV(object):
     def __repr__(self):
         return "CV(" + str(list(self.argumentTuple)) + ")"
 
+
+class Init(object):
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
 def generateClassificationData(labels, pointsPer, featuresPer):
     """
     Randomly generate sensible data for a classification problem.

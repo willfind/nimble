@@ -115,8 +115,9 @@ def testMlpyHandmadeKernelPCA():
     data2 = [[4, 4]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
+    kernel = nimble.Init("KernelGaussian")
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None,
-                            arguments={"kernel": "KernelGaussian", 'k': 1})
+                            arguments={"kernel": kernel, 'k': 1})
 
     assert ret is not None
     # check return has the right dimension
@@ -310,22 +311,25 @@ def testMlpyKernelLearners():
 
     data2 = [[2, 3], [-200, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
-
+    kl = nimble.Init("KernelLinear")
     ret = nimble.trainAndApply("mlpy.KFDA", trainingObj2d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelLinear'})
+                            arguments={'kernel': kl})
     assert ret is not None
+    kp = nimble.Init("KernelPolynomial")
     ret = nimble.trainAndApply("mlpy.KFDAC", trainingObj2d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelPolynomial'})
+                            arguments={'kernel': kp})
     assert ret is not None
+    kg = nimble.Init("KernelGaussian")
     ret = nimble.trainAndApply("mlpy.KPCA", trainingObj4d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelGaussian'})
+                            arguments={'kernel': kg})
     assert ret is not None
+    ks = nimble.Init("KernelSigmoid")
     ret = nimble.trainAndApply("mlpy.KernelRidge", trainingObj4d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelSigmoid'})
+                            arguments={'kernel': ks})
     assert ret is not None
     # 2 classes
     ret = nimble.trainAndApply("mlpy.Parzen", trainingObj2d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelGaussian'})
+                            arguments={'kernel': kg})
     assert ret is not None
 
 @mlpySkipDec
@@ -339,9 +343,9 @@ def testMlpyKernelExponentialDisallowed():
 
     data2 = [[2, 3], [-200, 0]]
     testObj = nimble.createData('Matrix', data2)
-
+    kernel = nimble.Init("KernelExponential")
     ret = nimble.trainAndApply("mlpy.KFDA", trainingObj2d, trainY="Y", testX=testObj, output=None,
-                            arguments={'kernel': 'KernelExponential'})
+                            arguments={'kernel': kernel})
     assert ret is not None
 
 @mlpySkipDec

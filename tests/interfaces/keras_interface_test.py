@@ -36,9 +36,9 @@ def testKerasAPI():
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
     y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
-    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
-    layer1 = {'type':'Dropout', 'rate':0.5}
-    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
     #####test fit
@@ -81,9 +81,9 @@ def testKerasIncremental():
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
     y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
-    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
-    layer1 = {'type':'Dropout', 'rate':0.5}
-    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
     #####test fit
@@ -110,9 +110,9 @@ def testKeras_Sparse_FitGenerator():
     x_train = createData('Sparse', x_data, useLog=False)
     y_train = createData('Matrix', y_data, useLog=False)
 
-    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':7}
-    layer1 = {'type':'Dropout', 'rate':0.5}
-    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
@@ -130,9 +130,9 @@ def test_TrainedLearnerApplyArguments():
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
     y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
-    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
-    layer1 = {'type':'Dropout', 'rate':0.5}
-    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
     # Sequential.predict takes a 'steps' argument. Default is 20
@@ -153,9 +153,9 @@ def test_TrainedLearnerApplyArguments_exception():
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
     y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
 
-    layer0 = {'type':'Dense', 'units':64, 'activation':'relu', 'input_dim':20}
-    layer1 = {'type':'Dropout', 'rate':0.5}
-    layer2 = {'type':'Dense', 'units':1, 'activation':'sigmoid'}
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    layer1 = nimble.Init('Dropout', rate=0.5)
+    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
     # Sequential.predict does not take a 'foo' argument.

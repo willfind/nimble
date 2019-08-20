@@ -147,80 +147,80 @@ class TestInterface(UniversalInterface):
 
 TestObject = TestInterface()
 
-
-#######################################
-### _validateArgumentDistribution() ###
-#######################################
-
-#def test__validateArgumentDistribution
-
-# TODO tests involving default arguments
-
-@raises(InvalidArgumentValue)
-def test__validateArgumentDistributionMissingArgument():
-    learner = 'l0'
-    arguments = {'l0a0': 1}
-    TestObject._validateArgumentDistribution(learner, arguments)
-
-
-@raises(InvalidArgumentValue)
-def test__validateArgumentDistributionOverlappingArgumentsFlat():
-    learner = 'l2'
-    arguments = {'dup': 1, 'sub': 'subFunc'}
-    TestObject._validateArgumentDistribution(learner, arguments)
-
-
-@raises(InvalidArgumentValue)
-def test__validateArgumentDistributionExtraArgument():
-    learner = 'l1'
-    arguments = {'l1a0': 1, 'l5a100': 11}
-    TestObject._validateArgumentDistribution(learner, arguments)
-
-
-def test__validateArgumentDistributionWorking():
-    learner = 'l1'
-    arguments = {'l1a0': 1}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'l1a0': 1}
-
-
-def test__validateArgumentDistributionOverlappingArgumentsNested():
-    learner = 'l2'
-    arguments = {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
-
-
-def test__validateArgumentDistributionInstantiableDefaultValue():
-    learner = 'foo'
-    arguments = {}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': Initable()}
-
-###############
-# ignoring this test for now, since the code now works under the assumption that an interaces'
-# default values will not be set up in a way to take advantage of our argument instantiation
-# conventions. If a default value is a string, it should STAY a string, even if that string
-# corresponds to an instantiable object
-#def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsSeparate():
-#	learner = 'foo'
-#	arguments = {'initable':{'C':11}}
-#	ret = TestObject._validateArgumentDistribution(learner, arguments)
-#	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
-##############
-
-def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsInFlat():
-    learner = 'foo'
-    arguments = {'estimator': 'initable2', 'C': 11}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable2', 'initable2': {'C': 11, 'thresh': 0.5}}
-
-
-def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
-    learner = 'foo'
-    arguments = {'estimator': 'initable', 'C': .11, 'thresh': 15}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
+#
+# #######################################
+# ### _validateArgumentDistribution() ###
+# #######################################
+#
+# #def test__validateArgumentDistribution
+#
+# # TODO tests involving default arguments
+#
+# @raises(InvalidArgumentValue)
+# def test__validateArgumentDistributionMissingArgument():
+#     learner = 'l0'
+#     arguments = {'l0a0': 1}
+#     TestObject._validateArgumentDistribution(learner, arguments)
+#
+#
+# @raises(InvalidArgumentValue)
+# def test__validateArgumentDistributionOverlappingArgumentsFlat():
+#     learner = 'l2'
+#     arguments = {'dup': 1, 'sub': 'subFunc'}
+#     TestObject._validateArgumentDistribution(learner, arguments)
+#
+#
+# @raises(InvalidArgumentValue)
+# def test__validateArgumentDistributionExtraArgument():
+#     learner = 'l1'
+#     arguments = {'l1a0': 1, 'l5a100': 11}
+#     TestObject._validateArgumentDistribution(learner, arguments)
+#
+#
+# def test__validateArgumentDistributionWorking():
+#     learner = 'l1'
+#     arguments = {'l1a0': 1}
+#     ret = TestObject._validateArgumentDistribution(learner, arguments)
+#     assert ret == {'l1a0': 1}
+#
+#
+# def test__validateArgumentDistributionOverlappingArgumentsNested():
+#     learner = 'l2'
+#     arguments = {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
+#     ret = TestObject._validateArgumentDistribution(learner, arguments)
+#     assert ret == {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
+#
+#
+# def test__validateArgumentDistributionInstantiableDefaultValue():
+#     learner = 'foo'
+#     arguments = {}
+#     ret = TestObject._validateArgumentDistribution(learner, arguments)
+#     assert ret == {'estimator': Initable()}
+#
+# ###############
+# # ignoring this test for now, since the code now works under the assumption that an interaces'
+# # default values will not be set up in a way to take advantage of our argument instantiation
+# # conventions. If a default value is a string, it should STAY a string, even if that string
+# # corresponds to an instantiable object
+# #def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsSeparate():
+# #	learner = 'foo'
+# #	arguments = {'initable':{'C':11}}
+# #	ret = TestObject._validateArgumentDistribution(learner, arguments)
+# #	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
+# ##############
+#
+# def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsInFlat():
+#     learner = 'foo'
+#     arguments = {'estimator': 'initable2', 'C': 11}
+#     ret = TestObject._validateArgumentDistribution(learner, arguments)
+#     assert ret == {'estimator': 'initable2', 'initable2': {'C': 11, 'thresh': 0.5}}
+#
+#
+# def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
+#     learner = 'foo'
+#     arguments = {'estimator': 'initable', 'C': .11, 'thresh': 15}
+#     ret = TestObject._validateArgumentDistribution(learner, arguments)
+#     assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
 
 
 @noLogEntryExpected
