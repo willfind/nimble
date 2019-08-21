@@ -57,8 +57,8 @@ from .core import showLog
 from .core import learnerType
 from .core import loadData
 from .core import loadTrainedLearner
-from .helpers import CV
-from .helpers import Init
+from .core import CV
+from .core import Init
 
 capturedErr = tempfile.NamedTemporaryFile()
 

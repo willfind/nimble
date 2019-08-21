@@ -220,17 +220,18 @@ To install keras
             elif testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
                 testX = testX.copy(to='numpy matrix')
-        #
-        # # this particular learner requires integer inputs
-        # if learnerName == 'MultinomialHMM':
-        #     if trainX is not None:
-        #         trainX = numpy.array(trainX, numpy.int32)
-        #     if trainY is not None:
-        #         trainY = numpy.array(trainY, numpy.int32)
-        #     if testX is not None:
-        #         testX = numpy.array(testX, numpy.int32)
 
-        return (trainX, trainY, testX, copy.copy(arguments))
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if arg == 'layers':
+                for i, v in enumerate(val):
+                    if isinstance(v, nimble.Init):
+                        val[i] = self.findCallable(v.name)(**v.kwargs)
+            elif isinstance(val, nimble.Init):
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
+
+        return (trainX, trainY, testX, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,

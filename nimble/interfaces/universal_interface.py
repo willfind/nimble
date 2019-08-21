@@ -291,18 +291,20 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # verify the learner is available
         self._confirmValidLearner(learnerName)
 
-        instantiatedInputs = self._argumentTransformation(learnerName,
-                                                          arguments)
-
         # the scratch space dictionary that the package implementor may use to
         # pass information between I/O transformation, the trainer and applier
         customDict = {}
 
+        # include default arguments and validate the arguments provided
+        allArguments = self._getAllArguments(learnerName, arguments)
+
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
-            learnerName, trainX, trainY, None, instantiatedInputs, customDict)
+            learnerName, trainX, trainY, None, allArguments, customDict)
         transTrainX, transTrainY, _, transArguments = transformedInputs
 
+        transformedInputs = (transformedInputs[0], transformedInputs[1],
+                             transformedInputs[2], transArguments)
         ### LEARNER CREATION / TRAINING ###
 
         # train the instantiated learner
@@ -312,24 +314,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         return (trainedBackend, transformedInputs, customDict)
 
 
-    def _argumentTransformation(self, learnerName, arguments):
-        transformed = {}
+    def _getAllArguments(self, learnerName, arguments):
         if arguments is None:
             arguments = {}
-        for arg, val in arguments.items():
-            if isinstance(val, nimble.Init):
-                initObject = self._instantiatedObject(val)
-                transformed[arg] = initObject
-            else:
-                try:
-                    # it its iterable, check fo the presence of Init
-                    for i, v in enumerate(val):
-                        if isinstance(v, nimble.Init):
-                            val[i] = self._instantiatedObject(v)
-                except TypeError:
-                    pass
-                transformed[arg] = val # copy?
-
         learnerParams = self.getLearnerParameterNames(learnerName)
         learnerDefaults = self.getLearnerDefaultValues(learnerName)
         bestIndex = self._chooseBestParameterSet(learnerParams,
@@ -337,14 +324,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         useParams = learnerParams[bestIndex]
         useDefaults = learnerDefaults[bestIndex]
 
-        completeArgs, _ = self._getCompleteArguments(
-            learnerName, useParams, useDefaults, transformed, learnerParams,
+        completeArgs = self._getCompleteArguments(
+            learnerName, useParams, useDefaults, arguments, learnerParams,
             learnerDefaults)
 
         return completeArgs
 
 
-    def _instantiatedObject(self, toInit):
+    def _argumentInit(self, toInit):
         """
         Recursive function for instantiating learner subobjects
         """
@@ -352,54 +339,39 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         if initObject is None:
             msg = 'Unable to locate "{}" in this interface'.format(toInit.name)
             raise InvalidArgumentValue(msg)
+
+        initArgs = {}
+        for arg, val in toInit.kwargs.items():
+            # recurse if another subject needs to be instantiated
+            if isinstance(val, nimble.Init):
+                subObj = self._argumentInit(val)
+                initArgs[arg] = subObj
+            else:
+                initArgs[arg] = val
+
         allParams = self._getParameterNames(toInit.name)
         allDefaults = self._getDefaultValues(toInit.name)
         bestIndex = self._chooseBestParameterSet(allParams, allDefaults,
                                                  toInit.kwargs)
         useParams = allParams[bestIndex]
         useDefaults = allDefaults[bestIndex]
-        initArgs = {}
-        for arg, val in toInit.kwargs.items():
-            # recursive if another subject needs to be instantiated
-            if isinstance(val, nimble.Init):
-                subObj = self._instantiatedObject(val)
-                initArgs[arg] = subObj
-            else:
-                initArgs[arg] = val
 
-        completeArgs, extra = self._getCompleteArguments(
+        # validate arguments
+        completeArgs = self._getCompleteArguments(
             toInit.name, useParams, useDefaults, initArgs, allParams,
             allDefaults)
 
-        try:
-            return initObject(**completeArgs)
-        except TypeError:
-            if extra:
-                msg = "EXTRA LEARNER PARAMETER! "
-                msg += "When trying to validate arguments for "
-                msg += name + ", the following list of parameter "
-                msg += "names were not matched: "
-                msg += prettyListString(list(extra.keys()), useAnd=True)
-                msg += ". The allowed parameters were: "
-                msg += prettyListString(neededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the "
-                msg += "inputs out of the following (numbered) list of "
-                msg += "possible parameter sets: "
-                msg += prettyListString(possibleParams, numberItems=True,
-                                    itemStr=prettyListString)
-                msg += ". The full mapping of inputs actually provided was: "
-                msg += prettyDictString(initArgs)
+        return initObject(**initArgs)
 
-                raise InvalidArgumentValue(msg)
-            raise
 
     def _getCompleteArguments(self, name, neededParams, availableDefaults,
                               arguments, possibleParams, possibleDefaults):
+        check = arguments.copy()
         completeArgs = {}
         for param in neededParams:
-            if param in arguments:
-                completeArgs[param] = arguments[param]
-                del arguments[param]
+            if param in check:
+                completeArgs[param] = check[param]
+                del check[param]
             elif param in availableDefaults:
                 completeArgs[param] = availableDefaults[param]
             else:
@@ -421,7 +393,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     msg += ". Out of the allowed parameters, the following "
                     msg += "could be omited, which would result in the "
                     msg += "associated default value being used: "
-                    msg += prettyDictString(useDefaults, useAnd=True)
+                    msg += prettyDictString(availableDefaults, useAnd=True)
 
                 if len(arguments) == 0:
                     msg += ". However, no arguments were inputed."
@@ -431,9 +403,28 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 raise InvalidArgumentValue(msg)
 
-        completeArgs.update(arguments)
+        if check:
+            msg = "EXTRA LEARNER PARAMETER! "
+            msg += "When trying to validate arguments for "
+            msg += name + ", the following list of parameter "
+            msg += "names were not matched: "
+            msg += prettyListString(list(check.keys()), useAnd=True)
+            msg += ". The allowed parameters were: "
+            msg += prettyListString(neededParams, useAnd=True)
+            msg += ". These were choosen as the best guess given the "
+            msg += "inputs out of the following (numbered) list of "
+            msg += "possible parameter sets: "
+            msg += prettyListString(possibleParams, numberItems=True,
+                                itemStr=prettyListString)
+            msg += ". The full mapping of inputs actually provided was: "
+            msg += prettyDictString(arguments) + ". "
+            msg += "If extra parameters were intended to be passed to one of "
+            msg += "the arguments, be sure to group them using a nimble.Init "
+            msg += "object. "
 
-        return completeArgs, arguments
+            raise InvalidArgumentValue(msg)
+
+        return completeArgs
 
 
     def setOption(self, option, value):

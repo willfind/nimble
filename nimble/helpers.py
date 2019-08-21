@@ -2984,7 +2984,7 @@ class ArgumentIterator(object):
             iterableArgDict = {}
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
-                if isinstance(rawArgumentInput[key], CV):
+                if isinstance(rawArgumentInput[key], nimble.CV):
                     self.numPermutations *= len(rawArgumentInput[key])
                     iterableArgDict[key] = rawArgumentInput[key]
                 else: # numPermutations not increased
@@ -3028,34 +3028,6 @@ class ArgumentIterator(object):
         """
         self.index = 0
 
-class CV(object):
-    def __init__(self, argumentList):
-        try:
-            self.argumentTuple = tuple(argumentList)
-        except TypeError:
-            msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg)
-
-    def __getitem__(self, key):
-        return self.argumentTuple[key]
-
-    def __setitem__(self, key, value):
-        raise ImproperObjectAction("CV objects are immutable")
-
-    def __len__(self):
-        return len(self.argumentTuple)
-
-    def __str__(self):
-        return str(self.argumentTuple)
-
-    def __repr__(self):
-        return "CV(" + str(list(self.argumentTuple)) + ")"
-
-
-class Init(object):
-    def __init__(self, name, **kwargs):
-        self.name = name
-        self.kwargs = kwargs
 
 def generateClassificationData(labels, pointsPer, featuresPer):
     """

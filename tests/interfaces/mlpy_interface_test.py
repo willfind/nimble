@@ -127,7 +127,7 @@ def testMlpyHandmadeKernelPCA():
 @raises(InvalidArgumentValue)
 @noLogEntryExpected
 def testMlpyHandmadeInnerProductTrainingPCAException():
-    """ Test mlpy by calling a kernel based leaner with no kernel or transformed data """
+    """ Test mlpy by calling a kernel based learner with no kernel or transformed data """
     data = [[1, 1], [2, 2], [3, 3], [7, 7]]
     trainObj = nimble.createData('Matrix', data, useLog=False)
 

@@ -41,33 +41,31 @@ def testKerasAPI():
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
+    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     #####test fit
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
-                       nesterov=True)
+                       epochs=20, batch_size=128)
 
     #######test apply
     x = mym.apply(testX=x_train)
 
     #########test trainAndApply
     x = nimble.trainAndApply('keras.Sequential', trainX=x_train, trainY=y_train, testX=x_train,
-                             optimizer='sgd', layers=layers, loss='binary_crossentropy',
-                             metrics=['accuracy'], epochs=20, batch_size=128, lr=0.1,
-                            decay=1e-6, momentum=0.9, nesterov=True)
+                             optimizer=optimizer, layers=layers, loss='binary_crossentropy',
+                             metrics=['accuracy'], epochs=20, batch_size=128)
 
     #########test trainAndTest
     x = nimble.trainAndTest('keras.Sequential', trainX=x_train, testX=x_train, trainY=y_train,
-                            testY=y_train, optimizer='sgd', layers=layers,
+                            testY=y_train, optimizer=optimizer, layers=layers,
                             loss='binary_crossentropy', metrics=['accuracy'], epochs=20,
-                            batch_size=128, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
+                            batch_size=128,
                             performanceFunction=nimble.calculate.loss.rootMeanSquareError)
 
     #########test CV
     results = nimble.crossValidate(
-        "keras.Sequential", X=x_train, Y=y_train, optimizer='sgd', layers=layers,
+        "keras.Sequential", X=x_train, Y=y_train, optimizer=optimizer, layers=layers,
         loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128,
-        lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
         performanceFunction=nimble.calculate.loss.rootMeanSquareError)
     bestArguments = results.bestArguments
     bestScore = results.bestResult
@@ -85,12 +83,11 @@ def testKerasIncremental():
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-
+    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     #####test fit
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=20, batch_size=128, lr=0.1, decay=1e-6, momentum=0.9,
-                       nesterov=True)
+                       epochs=20, batch_size=128)
 
     #####test incrementalTrain
     mym.incrementalTrain(x_train, y_train)
@@ -114,10 +111,11 @@ def testKeras_Sparse_FitGenerator():
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
+    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
 
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer='sgd',
+    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=2, batch_size=1, lr=0.1, decay=1e-6, momentum=0.9, nesterov=True,
+                       epochs=2, batch_size=1,
                        steps_per_epoch=20, max_queue_size=1, shuffle=False, steps=20)
 
     x = mym.apply(testX=x_train)
@@ -135,12 +133,12 @@ def test_TrainedLearnerApplyArguments():
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
+    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     # Sequential.predict takes a 'steps' argument. Default is 20
     mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
-        optimizer='sgd', layers=layers, loss='binary_crossentropy',
-        metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,
-        nesterov=True, shuffle=False)
+        optimizer=optimizer, layers=layers, loss='binary_crossentropy',
+        metrics=['accuracy'], epochs=1, shuffle=False)
     # using arguments parameter
     newArgs = mym.apply(testX=x_train, arguments={'steps': 50})
     # using kwarguments
@@ -158,12 +156,12 @@ def test_TrainedLearnerApplyArguments_exception():
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
+    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     # Sequential.predict does not take a 'foo' argument.
     mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
-        optimizer='sgd', layers=layers, loss='binary_crossentropy',
-        metrics=['accuracy'], epochs=1, lr=0.1, decay=1e-6, momentum=0.9,
-        nesterov=True, shuffle=False)
+        optimizer=optimizer, layers=layers, loss='binary_crossentropy',
+        metrics=['accuracy'], epochs=1, shuffle=False)
     try:
         # using arguments parameter
         newArgs1 = mym.apply(testX=x_train, arguments={'foo': 50})
