@@ -55,8 +55,8 @@ class MatrixFeatures(MatrixAxis, Features):
                 # need self.data to be object dtype if inserting object dtype
                 if numpy.issubdtype(self._source.data.dtype, numpy.number):
                     self._source.data = self._source.data.astype(numpy.object_)
-            reshape = (len(self._source.points), 1)
-            self._source.data[:, j] = numpy.array(currRet).reshape(reshape)
+
+            self._source.data[:, j] = numpy.array(currRet)
 
     # def _flattenToOne_implementation(self):
     #     numElements = len(self._source.points) * len(self._source.features)

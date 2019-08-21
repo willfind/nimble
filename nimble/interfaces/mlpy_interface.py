@@ -23,7 +23,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None

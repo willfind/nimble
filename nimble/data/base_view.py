@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import copy
 
 import nimble
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from .base import Base
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory

@@ -1,8 +1,13 @@
 """
-Helper functions to support shared documentation amongst subclasses.
+Helper functions that support multiple modules.
+
+Functions here do not import from nimble, allowing for each function
+to be imported into any module without risk of circular imports.
 """
 from __future__ import absolute_import
 import inspect
+
+import numpy
 
 
 def isFunction(func):
@@ -32,3 +37,11 @@ def inheritDocstringsFactory(toInherit):
 
         return cls
     return inheritDocstring
+
+
+def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
+    ret = numpy.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
+                      ndmin=2)
+    if len(ret.shape) > 2:
+        raise InvalidArgumentValue('Only two-dimensional data is permitted')
+    return ret

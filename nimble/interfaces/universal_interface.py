@@ -19,7 +19,7 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from nimble.exceptions import prettyListString
 from nimble.exceptions import prettyDictString
 from nimble.interfaces.interface_helpers import (

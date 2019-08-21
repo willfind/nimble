@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -53,9 +53,9 @@ class List(Base):
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, elementType=None, **kwds):
-        if ((not isinstance(data, (list, numpy.matrix)))
+        if ((not isinstance(data, (list, numpy.ndarray)))
                 and 'PassThrough' not in str(type(data))):
-            msg = "the input data can only be a list or a numpy matrix "
+            msg = "the input data can only be a list or a numpy array "
             msg += "or ListPassThrough."
             raise InvalidArgumentType(msg)
 
@@ -102,8 +102,8 @@ class List(Base):
                 # Both list and FeatureViewer have a copy method.
                 data = [pt.copy() for pt in data]
 
-        if isinstance(data, numpy.matrix):
-            #case5: data is a numpy matrix. shape is already in np matrix
+        if isinstance(data, numpy.ndarray):
+            #case5: data is a numpy array. shape is already in np array
             shape = data.shape
             data = data.tolist()
 
@@ -283,11 +283,11 @@ class List(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if isEmpty:
-                data = numpy.matrix(emptyData)
+                data = numpy2DArray(emptyData)
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = numpy.matrix(self.data, dtype=elementType)
+                data = numpy2DArray(self.data, dtype=elementType)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -628,10 +628,10 @@ class List(Base):
         convert self.data to a numpy matrix
         """
         if len(self.data) == 0:# in case, self.data is []
-            return numpy.matrix(numpy.empty([len(self.points.getNames()),
+            return numpy2DArray(numpy.empty([len(self.points.getNames()),
                                              len(self.features.getNames())]))
 
-        return numpy.matrix(self.data)
+        return numpy2DArray(self.data)
 
 class ListView(BaseView, List):
     """

@@ -33,7 +33,7 @@ from nose.tools import *
 from nimble import createData
 from nimble.data import Base
 from nimble.data import available
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.data.dataHelpers import constructIndicesList

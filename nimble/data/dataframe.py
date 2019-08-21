@@ -12,7 +12,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -56,9 +56,9 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not isinstance(data, (pd.DataFrame, np.matrix)):
+        if not isinstance(data, (pd.DataFrame, np.ndarray)):
             msg = "the input data can only be a pandas DataFrame or a numpy "
-            msg += "matrix or ListPassThrough."
+            msg += "array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):

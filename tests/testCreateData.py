@@ -2503,7 +2503,7 @@ def test_DataOutputWithMissingDataTypes1D():
     for t in returnTypes:
         nan = numpy.nan
         expListOutput = [[1.0, 2.0, nan]]
-        expMatrixOutput = numpy.matrix(expListOutput)
+        expMatrixOutput = numpy.array(expListOutput)
         expDataFrameOutput = pd.DataFrame(expListOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expListOutput)
 
@@ -2546,7 +2546,7 @@ def test_DataOutputWithMissingDataTypes2D():
     for t in returnTypes:
         nan = numpy.nan
         expListOutput = [[1, 2, nan], [3,4,'b']]
-        expMatrixOutput = numpy.matrix(expListOutput, dtype=object)
+        expMatrixOutput = numpy.array(expListOutput, dtype=object)
         expDataFrameOutput = pd.DataFrame(expMatrixOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expMatrixOutput)
 

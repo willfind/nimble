@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -41,7 +41,7 @@ class Sparse(Base):
     Parameters
     ----------
     data : object
-        A scipy sparse matrix, numpy matrix.
+        A scipy sparse matrix, numpy array.
     reuseData : bool
     elementType : type
         The scipy or numpy dtype of the data.
@@ -54,10 +54,10 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if ((not isinstance(data, numpy.matrix))
+        if ((not isinstance(data, numpy.ndarray))
                 and (not scipy.sparse.isspmatrix(data))):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "numpy matrix"
+            msg += "numpy array"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -68,7 +68,7 @@ class Sparse(Base):
         elif scipy.sparse.isspmatrix(data):
             #data is a spmatrix in other format instead of coo
             self.data = data.tocoo()
-        else:#data is numpy.matrix
+        else:#data is numpy.array
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None

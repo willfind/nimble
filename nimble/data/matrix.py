@@ -13,7 +13,7 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -45,27 +45,23 @@ class Matrix(Base):
     """
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
-        if not isinstance(data, (numpy.matrix, numpy.ndarray)):
+        if not isinstance(data, numpy.ndarray):
             msg = "the input data can only be a numpy matrix "
             msg += "or numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
-            if reuseData:
-                self.data = data
-            else:
-                self.data = copy.copy(data)#copy.deepcopy may give messed data
+            self.data = numpy2DArray(data)
         else:
             #when data is a np matrix, its dtype has been adjusted in
             # extractNamesAndConvertData but when data is a ListPassThrough,
             # we need to do dtype adjustment here
             if elementType:
-                self.data = numpy.matrix(data, dtype=elementType)
+                self.data = numpy2DArray(data, dtype=elementType)
+            elif reuseData:
+                self.data = data
             else:
-                try:
-                    self.data = numpy.matrix(data, dtype=numpy.float)
-                except ValueError:
-                    self.data = numpy.matrix(data, dtype=object)
+                self.data = numpy2DArray(data, copy=True)
 
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -87,7 +83,7 @@ class Matrix(Base):
         This is not an in place operation, a new list of lists is
         constructed.
         """
-        self.data = self.data.getT()
+        self.data = self.data.transpose()
 
     def _getTypeString_implementation(self):
         return 'Matrix'
@@ -147,7 +143,7 @@ class Matrix(Base):
 
         with open(outPath, 'ab') as outFile:#python3 need this.
             if includePointNames:
-                pnames = numpy.matrix(self.points.getNames())
+                pnames = numpy2DArray(self.points.getNames())
                 pnames = pnames.transpose()
 
                 viewData = self.data.view()
@@ -203,9 +199,9 @@ class Matrix(Base):
         if to == 'pythonlist':
             return self.data.tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data)
-        if to == 'numpymatrix':
             return self.data.copy()
+        if to == 'numpymatrix':
+            return numpy.matrix(self.data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
@@ -404,7 +400,7 @@ class Matrix(Base):
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
 
-        self.data = numpy.matrix(merged, dtype=numpy.object_)
+        self.data = numpy2DArray(merged, dtype=numpy.object_)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
         toFill = numpy.zeros((len(self.points), len(uniqueVals)))
@@ -466,10 +462,12 @@ class Matrix(Base):
         as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
-        if isinstance(other, Matrix) or isinstance(other, nimble.data.Sparse):
-            return Matrix(self.data * other.data)
+        if isinstance(other, Matrix):
+            return Matrix(numpy.matmul(self.data, other.data))
+        elif isinstance(other, nimble.data.Sparse):
+            return Matrix(numpy.matrix(self.data) * other.data)
         else:
-            return Matrix(self.data * other.copy(to="numpyarray"))
+            return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
     def _scalarMultiply_implementation(self, scalar):
         """

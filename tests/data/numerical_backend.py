@@ -512,10 +512,10 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
 def makeAllData(constructor, rhsCons, n, sparsity):
     randomlf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
     randomrf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
-    lhsf = randomlf.copy(to="numpymatrix")
-    rhsf = randomrf.copy(to="numpymatrix")
-    lhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
-    rhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
+    lhsf = randomlf.copy(to="numpyarray")
+    rhsf = randomrf.copy(to="numpyarray")
+    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
+    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
 
     lhsfObj = constructor(lhsf)
     lhsiObj = constructor(lhsi)
@@ -1490,7 +1490,7 @@ class NumericalModifying(DataTestObject):
         back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imul__', True, 0.2)
 
     def test_imul__autoVsNumpyObjCalleeDiffTypes(self):
-        """ Test __mul__ against generated data with different nimble types of objects """
+        """ Test __imul__ against generated data with different nimble types of objects """
         back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
     def test_imul_binaryscalar_pfname_preservations(self):
