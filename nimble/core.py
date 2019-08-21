@@ -994,9 +994,9 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
         values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object. eg.
-        {'kernel':nimble.Init('KernelGaussian', width=2.0)}. These will
-        be merged any kwarguments for the learner.
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments`` .
     folds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1159,9 +1159,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
         values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object. eg.
-        {'kernel':nimble.Init('KernelGaussian', width=2.0)}. These will
-        be merged any kwarguments for the learner.
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
         output wanted: 'label' if we class labels are desired,
@@ -1338,9 +1338,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
         values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object. eg.
-        {'kernel':nimble.Init('KernelGaussian', width=2.0)}. These will
-        be merged any kwarguments for the learner.
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1517,9 +1517,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
         values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object. eg.
-        {'kernel':nimble.Init('KernelGaussian', width=2.0)}. These will
-        be merged any kwarguments for the learner.
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1708,9 +1708,9 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
         values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object. eg.
-        {'kernel':nimble.Init('KernelGaussian', width=2.0)}. These will
-        be merged any kwarguments for the learner.
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -2058,12 +2058,12 @@ class Init(object):
         self.kwargs = kwargs
 
     def __str__(self):
-        formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
-        kwargStr = ", ".join(formatKwargs)
-        return "Init({}, {})".format(self.name, kwargStr)
+        return self.__repr__()
 
     def __repr__(self):
-        return self.__str__()
+        formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
+        kwargStr = ", ".join(formatKwargs)
+        return "Init({}, {})".format(repr(self.name), kwargStr)
 
 
 def coo_matrixTodense(origTodense):

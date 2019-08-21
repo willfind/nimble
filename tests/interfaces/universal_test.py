@@ -187,6 +187,21 @@ def test_getAllArguments_Working():
     ret = TestObject._getAllArguments(learner, None)
     assert ret == {'estimator': Initable()}
 
+
+###################
+### nimble.Init ###
+###################
+
+def test_Init_str_repr_output():
+    init = nimble.Init('foo', bar=2)
+    exp = "Init('foo', bar=2)"
+    assert str(init) == exp
+    assert repr(init) == exp
+
+@raises(TypeError)
+def test_Init_args():
+    init = nimble.Init('foo', 1)
+
 ########################
 ### _argumentInit() ###
 #######################

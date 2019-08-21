@@ -314,56 +314,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         return (trainedBackend, transformedInputs, customDict)
 
 
-    def _getAllArguments(self, learnerName, arguments):
-        if arguments is None:
-            arguments = {}
-        learnerParams = self.getLearnerParameterNames(learnerName)
-        learnerDefaults = self.getLearnerDefaultValues(learnerName)
-        bestIndex = self._chooseBestParameterSet(learnerParams,
-                                                 learnerDefaults, arguments)
-        useParams = learnerParams[bestIndex]
-        useDefaults = learnerDefaults[bestIndex]
-
-        completeArgs = self._getCompleteArguments(
-            learnerName, useParams, useDefaults, arguments, learnerParams,
-            learnerDefaults)
-
-        return completeArgs
-
-
-    def _argumentInit(self, toInit):
-        """
-        Recursive function for instantiating learner subobjects
-        """
-        initObject = self.findCallable(toInit.name)
-        if initObject is None:
-            msg = 'Unable to locate "{}" in this interface'.format(toInit.name)
-            raise InvalidArgumentValue(msg)
-
-        initArgs = {}
-        for arg, val in toInit.kwargs.items():
-            # recurse if another subject needs to be instantiated
-            if isinstance(val, nimble.Init):
-                subObj = self._argumentInit(val)
-                initArgs[arg] = subObj
-            else:
-                initArgs[arg] = val
-
-        allParams = self._getParameterNames(toInit.name)
-        allDefaults = self._getDefaultValues(toInit.name)
-        bestIndex = self._chooseBestParameterSet(allParams, allDefaults,
-                                                 toInit.kwargs)
-        useParams = allParams[bestIndex]
-        useDefaults = allDefaults[bestIndex]
-
-        # validate arguments
-        completeArgs = self._getCompleteArguments(
-            toInit.name, useParams, useDefaults, initArgs, allParams,
-            allDefaults)
-
-        return initObject(**initArgs)
-
-
     def _getCompleteArguments(self, name, neededParams, availableDefaults,
                               arguments, possibleParams, possibleDefaults):
         check = arguments.copy()
@@ -425,6 +375,55 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             raise InvalidArgumentValue(msg)
 
         return completeArgs
+
+
+    def _getAllArguments(self, learnerName, arguments):
+        if arguments is None:
+            arguments = {}
+        learnerParams = self.getLearnerParameterNames(learnerName)
+        learnerDefaults = self.getLearnerDefaultValues(learnerName)
+        bestIndex = self._chooseBestParameterSet(learnerParams,
+                                                 learnerDefaults, arguments)
+        useParams = learnerParams[bestIndex]
+        useDefaults = learnerDefaults[bestIndex]
+
+        completeArgs = self._getCompleteArguments(
+            learnerName, useParams, useDefaults, arguments, learnerParams,
+            learnerDefaults)
+
+        return completeArgs
+
+
+    def _argumentInit(self, toInit):
+        """
+        Recursive function for instantiating learner subobjects
+        """
+        initObject = self.findCallable(toInit.name)
+        if initObject is None:
+            msg = 'Unable to locate "{}" in this interface'.format(toInit.name)
+            raise InvalidArgumentValue(msg)
+
+        initArgs = {}
+        for arg, val in toInit.kwargs.items():
+            # recurse if another subject needs to be instantiated
+            if isinstance(val, nimble.Init):
+                subObj = self._argumentInit(val)
+                initArgs[arg] = subObj
+            else:
+                initArgs[arg] = val
+
+        allParams = self._getParameterNames(toInit.name)
+        allDefaults = self._getDefaultValues(toInit.name)
+        bestIndex = self._chooseBestParameterSet(allParams, allDefaults,
+                                                 toInit.kwargs)
+        useParams = allParams[bestIndex]
+        useDefaults = allDefaults[bestIndex]
+
+        # validate arguments
+        _ = self._getCompleteArguments(toInit.name, useParams, useDefaults,
+                                       initArgs, allParams, allDefaults)
+
+        return initObject(**initArgs)
 
 
     def setOption(self, option, value):
