@@ -38,7 +38,7 @@ class List(Base):
     Parameters
     ----------
     data : object
-        A list, numpy matrix, or a ListPassThrough.
+        A list, numpy matrix, numpy array, or a ListPassThrough.
     reuseData : bool
         Only works when input data is a list.
     shape : tuple
@@ -55,8 +55,8 @@ class List(Base):
                  checkAll=True, elementType=None, **kwds):
         if ((not isinstance(data, (list, numpy.ndarray)))
                 and 'PassThrough' not in str(type(data))):
-            msg = "the input data can only be a list or a numpy array "
-            msg += "or ListPassThrough."
+            msg = "the input data can only be a list, a numpy array, a numpy "
+            msg += "matrix, or ListPassThrough."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
@@ -623,15 +623,6 @@ class List(Base):
             for i in range(len(point)):
                 point[i] *= scalar
 
-    def outputMatrixData(self):
-        """
-        convert self.data to a numpy matrix
-        """
-        if len(self.data) == 0:# in case, self.data is []
-            return numpy2DArray(numpy.empty([len(self.points.getNames()),
-                                             len(self.features.getNames())]))
-
-        return numpy2DArray(self.data)
 
 class ListView(BaseView, List):
     """

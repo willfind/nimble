@@ -35,7 +35,7 @@ class Matrix(Base):
     Parameters
     ----------
     data : object
-        Must be a numpy matrix.
+        Must be a numpy array or numpy matrix.
     reuseData : bool
     elementType : type
         The numpy dtype of this object.
@@ -46,22 +46,11 @@ class Matrix(Base):
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
         if not isinstance(data, numpy.ndarray):
-            msg = "the input data can only be a numpy matrix "
-            msg += "or numpy array."
+            msg = "the input data can only be a numpy array "
+            msg += "or numpy matrix."
             raise InvalidArgumentType(msg)
 
-        if isinstance(data, numpy.matrix):
-            self.data = numpy2DArray(data)
-        else:
-            #when data is a np matrix, its dtype has been adjusted in
-            # extractNamesAndConvertData but when data is a ListPassThrough,
-            # we need to do dtype adjustment here
-            if elementType:
-                self.data = numpy2DArray(data, dtype=elementType)
-            elif reuseData:
-                self.data = data
-            else:
-                self.data = numpy2DArray(data, copy=True)
+        self.data = numpy2DArray(data)
 
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -465,9 +454,8 @@ class Matrix(Base):
         if isinstance(other, Matrix):
             return Matrix(numpy.matmul(self.data, other.data))
         elif isinstance(other, nimble.data.Sparse):
-            return Matrix(numpy.matrix(self.data) * other.data)
-        else:
-            return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
+            return Matrix(self.data * other.data)
+        return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
     def _scalarMultiply_implementation(self, scalar):
         """

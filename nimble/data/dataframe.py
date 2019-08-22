@@ -5,14 +5,14 @@ Class extending Base, using a pandas DataFrame to store data.
 from __future__ import division
 from __future__ import absolute_import
 
-import numpy as np
+import numpy
 from six.moves import range
 from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -34,7 +34,7 @@ class DataFrame(Base):
     Parameters
     ----------
     data : object
-        pandas DataFrame or numpy matrix.
+        pandas DataFrame or numpy array or numpy matrix.
     reuseData : bool
         Only used when data is a pandas DataFrame.
     elementType : type
@@ -48,7 +48,7 @@ class DataFrame(Base):
         """
         The initializer.
         Inputs:
-            data: pandas DataFrame, or numpy matrix.
+            data: pandas DataFrame, a numpy array, or a numpy matrix.
             reuseData: boolean. only used when data is a pandas
             DataFrame.
         """
@@ -56,7 +56,7 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not isinstance(data, (pd.DataFrame, np.ndarray)):
+        if not isinstance(data, (pd.DataFrame, numpy.ndarray)):
             msg = "the input data can only be a pandas DataFrame or a numpy "
             msg += "array."
             raise InvalidArgumentType(msg)
@@ -193,7 +193,7 @@ class DataFrame(Base):
                 data.reset_index(drop=True, inplace=True)
                 data.columns = range(len(self.features))
             else:
-                data = np.matrix(self.data.values)
+                data = numpy2DArray(self.data.values)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -202,7 +202,7 @@ class DataFrame(Base):
         if to == 'numpyarray':
             return self.data.values.copy()
         if to == 'numpymatrix':
-            return np.matrix(self.data.values)
+            return numpy.matrix(self.data.values)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
@@ -224,8 +224,8 @@ class DataFrame(Base):
         """
         """
         if not isinstance(values, nimble.data.Base):
-            values = values * np.ones((pointEnd - pointStart + 1,
-                                       featureEnd - featureStart + 1))
+            values = values * numpy.ones((pointEnd - pointStart + 1,
+                                          featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
             values = values.data.values
@@ -315,8 +315,8 @@ class DataFrame(Base):
             else:
                 r = r + numColsL
             matches = self.data.iloc[:, l] == self.data.iloc[:, r]
-            nansL = np.array([x != x for x in self.data.iloc[:, l]])
-            nansR = np.array([x != x for x in self.data.iloc[:, r]])
+            nansL = numpy.array([x != x for x in self.data.iloc[:, l]])
+            nansR = numpy.array([x != x for x in self.data.iloc[:, r]])
             acceptableValues = matches + nansL + nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
@@ -332,7 +332,7 @@ class DataFrame(Base):
         self._pointCount = len(self.data.index)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
-        toFill = np.zeros((len(self.points), len(uniqueVals)))
+        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
         for ptIdx, val in enumerate(self.data.values):
             ftIdx = uniqueVals.index(val)
             toFill[ptIdx, ftIdx] = 1
@@ -397,14 +397,11 @@ class DataFrame(Base):
         as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
-
-        leftData = np.matrix(self.data)
         if isinstance(other, nimble.data.Sparse):
-            rightData = other.data
+            ret = self.data.values * other.data
         else:
-            rightData = np.matrix(other.data)
-
-        return DataFrame(leftData * rightData)
+            ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
+        return DataFrame(ret)
 
     def _scalarMultiply_implementation(self, scalar):
         """
@@ -418,178 +415,102 @@ class DataFrame(Base):
     def _mul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
+        ret = self.copy()
+        ret._scalarMultiply_implementation(other)
+        return ret
 
     def _add__implementation(self, other):
         """
         """
-        leftData = np.matrix(self.data)
         if isinstance(other, nimble.data.Base):
             if isinstance(other, nimble.data.Sparse):
-                rightData = other.data
+                otherData = other.data
             else:
-                rightData = np.matrix(other.data)
+                otherData = other.copy('numpyarray')
         else:
-            rightData = other
-        leftData += rightData
-        return DataFrame(leftData, reuseData=True)
+            otherData = other
+        ret = self.data.values + otherData
+        return DataFrame(ret, reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data
         return DataFrame(ret, reuseData=True)
 
     def _iadd__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if isinstance(other, nimble.data.Sparse):
-                rightData = other.data
-            else:
-                rightData = np.matrix(other.data)
-            ret = np.matrix(self.data) + rightData
-        else:
-            ret = np.matrix(self.data) + np.matrix(other)
+        ret = self.__add__(other)
         self.data = pd.DataFrame(ret)
         return self
 
     def _sub__implementation(self, other):
-        leftData = np.matrix(self.data)
         if isinstance(other, nimble.data.Base):
             if isinstance(other, nimble.data.Sparse):
-                rightData = other.data
+                otherData = other.data
             else:
-                rightData = np.matrix(other.data)
+                otherData = other.copy('numpyarray')
         else:
-            rightData = other
-        leftData -= rightData
+            otherData = other
+        ret = self.data.values - otherData
 
-        return DataFrame(leftData, reuseData=True)
+        return DataFrame(ret, reuseData=True)
 
     def _rsub__implementation(self, other):
-        ret = pd.DataFrame(other - self.data.values)
-        pNames = self.points._getNamesNoGeneration()
-        fNames = self.features._getNamesNoGeneration()
-        return DataFrame(ret, pointNames=pNames, featureNames=fNames,
-                         reuseData=True)
+        ret = other - self.data
+        return DataFrame(ret, reuseData=True)
 
     def _isub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if isinstance(other, nimble.data.Sparse):
-                rightData = other.data
-            else:
-                rightData = np.matrix(other.data)
-            ret = np.matrix(self.data) - rightData
-        else:
-            ret = np.matrix(self.data) - np.matrix(other)
+        ret = self.__sub__(other)
         self.data = pd.DataFrame(ret)
-        return self
-
-    def _div__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
-            elif isinstance(other.data, list):
-                ret = self.data / np.array(other.data)
-            else:
-                ret = self.data / other.data
-        else:
-            ret = self.data / other
-        return DataFrame(ret, reuseData=True)
-
-
-    def _rdiv__implementation(self, other):
-        ret = np.asmatrix(other / self.data.values)
-        return DataFrame(ret, reuseData=True)
-
-    def _idiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                self.data /= other.data.todense()
-            else:
-                self.data /= np.matrix(other.data)
-        else:
-            tmp_mat = np.matrix(other)
-            self.data /= (other if tmp_mat.shape == (1, 1) else tmp_mat)
         return self
 
     def _truediv__implementation(self, other):
         if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values.__truediv__(other.data.todense())
-            else:
-                ret = self.data.values.__truediv__(other.data)
+            otherData = other.copy('numpyarray')
         else:
-            ret = self.data.values.__itruediv__(other)
-        return DataFrame(np.asmatrix(ret), reuseData=True)
+            otherData = other
+        ret = self.data.values / otherData
+        return DataFrame(ret, reuseData=True)
 
     def _rtruediv__implementation(self, other):
-        ret = self.data.values.__rtruediv__(other)
-        return DataFrame(np.asmatrix(ret), reuseData=True)
+        ret = other / self.data.values
+        return DataFrame(ret, reuseData=True)
 
     def _itruediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = np.matrix(self.data).__itruediv__(other.data.todense())
-            else:
-                ret = np.matrix(self.data).__itruediv__(np.matrix(other.data))
-        else:
-            ret = np.matrix(self.data).__itruediv__(np.matrix(other))
+        ret = self.__truediv__(other)
         self.data = pd.DataFrame(ret)
         return self
 
     def _floordiv__implementation(self, other):
         if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values // other.data.todense()
-            else:
-                ret = self.data.values // other.data
+            otherData = other.copy('numpyarray')
         else:
-            ret = self.data.values // other
-        return DataFrame(np.asmatrix(ret), reuseData=True)
-
+            otherData = other
+        ret = self.data.values // otherData
+        return DataFrame(ret, reuseData=True)
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data.values
-        return DataFrame(np.asmatrix(ret), reuseData=True)
+        return DataFrame(ret, reuseData=True)
 
     def _ifloordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = np.matrix(self.data) // other.data.todense()
-            else:
-                ret = np.matrix(self.data) // np.matrix(other.data)
-        else:
-            ret = np.matrix(self.data) // np.matrix(other)
+        ret = self.__floordiv__(other)
         self.data = pd.DataFrame(ret)
         return self
 
     def _mod__implementation(self, other):
         if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values % other.data.todense()
-            else:
-                ret = self.data.values % other.data
+            otherData = other.copy('numpyarray')
         else:
-            ret = self.data.values % other
-        return DataFrame(np.asmatrix(ret), reuseData=True)
-
+            otherData = other
+        ret = self.data.values % otherData
+        return DataFrame(ret, reuseData=True)
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return DataFrame(np.asmatrix(ret), reuseData=True)
-
+        return DataFrame(ret, reuseData=True)
 
     def _imod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                self.data %= other.data.todense()
-            else:
-                self.data %= np.matrix(other.data)
-        else:
-            tmp_mat = np.matrix(other)
-            self.data %= (other if tmp_mat.shape == (1, 1) else tmp_mat)
-
+        ret = self.__mod__(other)
+        self.data = pd.DataFrame(ret)
         return self
 
     def _updateName(self, axis):

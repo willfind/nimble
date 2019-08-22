@@ -1953,8 +1953,7 @@ def test_createData_keepPF_spCoo_simple():
         return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-    rawMat = numpy.matrix(rawList)
-    raw = scipy.sparse.coo_matrix(rawMat)
+    raw = scipy.sparse.coo_matrix(rawList)
 
     fromCOO = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
@@ -1971,8 +1970,7 @@ def test_createData_keepPF_spCsc_simple():
         return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-    rawMat = numpy.matrix(rawList)
-    raw = scipy.sparse.csc_matrix(rawMat)
+    raw = scipy.sparse.csc_matrix(rawList)
 
     fromCSC = nimble.createData(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])

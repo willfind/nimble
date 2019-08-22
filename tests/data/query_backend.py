@@ -148,7 +148,7 @@ class QueryBackend(DataTestObject):
     def test_isIdentical_FalseBozoTypes(self):
         """ Test isIdentical() against some non-equal input of crazy types """
         toTest = self.constructor([[4, 5]])
-        assert not toTest.isIdentical(numpy.matrix([[1, 1], [2, 2]]))
+        assert not toTest.isIdentical(numpy.array([[1, 1], [2, 2]]))
         assert not toTest.isIdentical('self.constructor([[1,2,3]])')
         assert not toTest.isIdentical(toTest.isIdentical)
         assertNoNamesGenerated(toTest)

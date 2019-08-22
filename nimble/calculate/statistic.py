@@ -343,10 +343,10 @@ def residuals(toPredict, controlVars):
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
     workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
-    workingCV = workingCV.copy(to="numpy matrix")
-    workingTP = toPredict.copy(to="numpy matrix")
+    workingCV = workingCV.copy(to="numpy array")
+    workingTP = toPredict.copy(to="numpy array")
 
     x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
-    pred = workingCV * x
+    pred = numpy.matmul(workingCV, x)
     ret = toPredict - pred
     return ret

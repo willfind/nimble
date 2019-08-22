@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue
-
+from nimble.utility import numpy2DArray
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
@@ -88,7 +88,7 @@ class MatrixFeatures(MatrixAxis, Features):
         existingData = self._source.data[:, featureIndex + 1:]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._source.data = numpy.matrix(tmpData)
+        self._source.data = numpy2DArray(tmpData)
 
     #########################
     # Query implementations #

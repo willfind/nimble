@@ -33,7 +33,7 @@ from nose.tools import *
 from nimble import createData
 from nimble.data import Base
 from nimble.data import available
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.data.dataHelpers import constructIndicesList
@@ -1248,7 +1248,7 @@ class LowLevelBackend(object):
 
     @raises(InvalidArgumentType)
     def testconstructIndicesList_numpyMatrix(self):
-        self.constructIndicesList_backend(lambda lst: numpy.matrix(lst))
+        self.constructIndicesList_backend(lambda lst: numpy2DArray(lst))
 
     @raises(InvalidArgumentType)
     def testconstructIndicesList_pandasDataFrame(self):

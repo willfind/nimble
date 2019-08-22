@@ -3887,9 +3887,9 @@ class Base(object):
 
 
     def _genericArithmeticBinary_implementation(self, opName, other):
-        selfData = self.copy('numpymatrix')
+        selfData = self.copy('numpyarray')
         if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpymatrix')
+            otherData = other.copy('numpyarray')
         else:
             otherData = other
         ret = getattr(selfData, opName)(otherData)

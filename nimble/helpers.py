@@ -524,7 +524,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
 
 def elementTypeConvert(rawData, elementType):
     """
-    Convert rawData to numpy matrix with dtype = elementType, or try
+    Convert rawData to numpy array with dtype = elementType, or try
     dtype=float then try dtype=object.
     """
     if pd and isinstance(rawData, pd.Series) and len(rawData) == 0:
@@ -547,11 +547,11 @@ def elementTypeConvert(rawData, elementType):
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
-    Replace values in a numpy matrix or array.
+    Replace values in a numpy array.
 
     Parameters
     ----------
-    data : numpy.matrix, numpy.array
+    data : numpy.ndarray
         A numpy array of data.
     toReplace : list
         A list of values to search and replace in the data.
@@ -1035,7 +1035,7 @@ def _loadmtxForAuto(
 
 def extractNamesFromNumpy(data, pnamesID, fnamesID):
     """
-    Extract name values from a numpy matrix or array.
+    Extract name values from a numpy array.
     """
     # if there are no elements, extraction cannot happen. We return correct
     # results for this case so it is excluded from the subsequent code

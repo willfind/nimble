@@ -9,6 +9,7 @@ import itertools
 import numpy
 
 import nimble
+from nimble.utility import numpy2DArray
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
@@ -80,10 +81,7 @@ class MatrixElements(Elements):
                 result = result.todense()
         else:
             result = numpy.multiply(self._source.data, other.data)
-        if isinstance(result, numpy.matrix):
-            self._source.data = result
-        else:
-            self._source.data = numpy.matrix(result)
+        self._source.data = numpy2DArray(result)
 
 
 class MatrixElementsView(ElementsView, MatrixElements):

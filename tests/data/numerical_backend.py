@@ -1365,10 +1365,10 @@ class NumericalModifying(DataTestObject):
 
             randomlf = nimble.createRandomData('Matrix', n, n, .2)
             randomrf = nimble.createRandomData('Matrix', n, n, .2)
-            lhsf = randomlf.copy(to="numpymatrix")
-            rhsf = randomrf.copy(to="numpymatrix")
-            lhsi = numpy.matrix(numpy.ones((n, n)))
-            rhsi = numpy.matrix(numpy.ones((n, n)))
+            lhsf = randomlf.copy(to="numpyarray")
+            rhsf = randomrf.copy(to="numpyarray")
+            lhsi = numpy.ones((n, n))
+            rhsi = numpy.ones((n, n))
 
             lhsfObj = self.constructor(lhsf)
             rhsfObj = maker(rhsf)

@@ -37,6 +37,7 @@ from nimble.helpers import createConstantHelper
 from nimble.helpers import computeMetrics
 from nimble.randomness import numpyRandom, generateSubsidiarySeed
 from nimble.randomness import startAlternateControl, endAlternateControl
+from nimble.utility import numpy2DArray
 
 cloudpickle = nimble.importModule('cloudpickle')
 scipy = nimble.importModule('scipy.sparse')
@@ -2004,7 +2005,7 @@ def coo_matrixTodense(origTodense):
             retDType = self.dtype
             if isinstance(retDType, numpy.flexible):
                 retDType = object
-            ret = numpy.matrix(numpy.zeros(self.shape), dtype=retDType)
+            ret = numpy2DArray(numpy.zeros(self.shape), dtype=retDType)
             nz = (self.row, self.col)
             for (i, j), v in zip(zip(*nz), self.data):
                 ret[i, j] = v

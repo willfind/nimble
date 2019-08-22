@@ -276,7 +276,7 @@ To install scikit-learn
             elif trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copy().data
             else:
-                trainX = trainX.copy(to='numpy matrix')
+                trainX = trainX.copy(to='numpy array')
 
         if trainY is not None:
             if len(trainY.features) > 1:
@@ -297,7 +297,7 @@ To install scikit-learn
             elif testX.getTypeString() == 'Sparse':
                 testX = testX.copy().data
             else:
-                testX = testX.copy(to='numpy matrix')
+                testX = testX.copy(to='numpy array')
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':
