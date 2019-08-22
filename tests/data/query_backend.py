@@ -1539,7 +1539,7 @@ class QueryBackend(DataTestObject):
             else:
                 cov = X.points.similarities('population Covariance')
 
-            stdMatrix = stdVector * stdVector_T
+            stdMatrix = stdVector.matrixMultiply(stdVector_T)
             ret = cov / stdMatrix
 
             return ret

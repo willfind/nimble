@@ -872,7 +872,7 @@ class Sparse(Base):
 
     def _arithmeticBinary_implementation(self, opName, other):
         """
-        Directs the operation to the best implementation available, 
+        Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
         if self.data.data is None:
@@ -880,13 +880,14 @@ class Sparse(Base):
         else:
             selfData = self.data
         try:
-            if isinstance(other, Sparse):
+            # scipy will do matrix multiplication so ignore mul operations
+            if isinstance(other, Sparse) and 'mul' not in opName:
                 if other.data.data is None:
                     otherData = other.copy().data
                 else:
                     otherData = other.data
                 ret = getattr(selfData, opName)(otherData)
-            elif isinstance(other, nimble.data.Base):
+            elif isinstance(other, nimble.data.Base) and 'mul' not in opName:
                 otherConv = other.copy('Matrix')
                 ret = getattr(selfData, opName)(otherConv.data)
             else:
@@ -949,7 +950,7 @@ class Sparse(Base):
             self.data = coo_matrix(([], ([], [])),
                                    (len(self.points), len(self.features)))
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:
@@ -1026,7 +1027,6 @@ class Sparse(Base):
             selfData = self.copy().data
         else:
             selfData = self.data
-
         ret = getattr(selfData.data, opName)(other)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
@@ -1301,8 +1301,8 @@ class SparseView(BaseView, Sparse):
 
         return ret
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         selfConv = self.copy(to="Sparse")
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
-        return selfConv._mul__implementation(other)
+        return selfConv._matmul__implementation(other)

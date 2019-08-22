@@ -48,7 +48,7 @@ def correlation(X, X_T=None):
     stdVector_T = stdVector.T
 
     cov = covariance(X, X_T, False)
-    stdMatrix = stdVector * stdVector_T
+    stdMatrix = stdVector.matrixMultiply(stdVector_T)
     ret = cov / stdMatrix
 
     return ret
@@ -77,7 +77,7 @@ def covariance(X, X_T=None, sample=True):
     else:
         divisor = len(X.features)
 
-    ret = (XminusEofX * X_TminusEofX_T) / divisor
+    ret = (XminusEofX.matrixMultiply(X_TminusEofX_T)) / divisor
     return ret
 
 

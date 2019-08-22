@@ -3545,7 +3545,10 @@ class Base(object):
     ###############################################################
     ###############################################################
 
-    def __mul__(self, other):
+    def matrixMultiply(self, other):
+        return self.__matmul__(other)
+
+    def __matmul__(self, other):
         """
         Perform matrix multiplication or scalar multiplication on this
         object depending on the input ``other``.
@@ -3571,10 +3574,10 @@ class Base(object):
                 msg += "match the point in the callee object."
                 raise InvalidArgumentValue(msg)
 
-            self._validateEqualNames('feature', 'point', '__mul__', other)
+            self._validateEqualNames('feature', 'point', '__matmul__', other)
 
         try:
-            ret = self._mul__implementation(other)
+            ret = self._matmul__implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
             self._numericValidation()
@@ -3593,26 +3596,44 @@ class Base(object):
 
         return ret
 
-    def __rmul__(self, other):
+    def __rmatmul__(self, other):
         """
-        Perform scalar multiplication with this object on the right
+        Perform scalar multiplication with this object on the right.
         """
         if dataHelpers._looksNumeric(other):
-            return self.__mul__(other)
-        else:
-            return NotImplemented
+            return self.__matmul__(other)
+        return NotImplemented
 
-    def __imul__(self, other):
+    def __imatmul__(self, other):
         """
         Perform in place matrix multiplication or scalar multiplication,
         depending in the input ``other``.
         """
-        ret = self.__mul__(other)
+        ret = self.__matmul__(other)
         if ret is not NotImplemented:
             self.referenceDataFrom(ret, useLog=False)
             ret = self
-
         return ret
+
+    def __mul__(self, other):
+        """
+        Perform elementwise multiplication or scalar multiplication,
+        depending in the input ``other``.
+        """
+        return self._genericArithmeticBinary('__mul__', other)
+
+    def __rmul__(self, other):
+        """
+        Perform elementwise multiplication with this object on the right
+        """
+        return self._genericArithmeticBinary('__rmul__', other)
+
+    def __imul__(self, other):
+        """
+        Perform in place elementwise multiplication or scalar
+        multiplication, depending in the input ``other``.
+        """
+        return self._genericArithmeticBinary('__imul__', other)
 
     def __add__(self, other):
         """

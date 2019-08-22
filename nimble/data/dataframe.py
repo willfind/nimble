@@ -411,7 +411,7 @@ class DataFrame(Base):
         """
         self.data = self.data * scalar
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         ret = self.copy()

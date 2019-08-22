@@ -909,7 +909,7 @@ class Axis(object):
             toCall = populationCovariance
         elif cleanFuncName == 'dotproduct':
             def dotProd(X, X_T):
-                return X * X_T
+                return X.matrixMultiply(X_T)
 
             toCall = dotProd
 

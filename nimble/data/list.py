@@ -584,11 +584,11 @@ class List(Base):
         """
         Directs operations to use generic (numpy) operations, given that
         certain operations are implemented differently or not possible
-        for lists. 
+        for lists.
         """
         return self._genericArithmeticBinary_implementation(opName, other)
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:

@@ -231,8 +231,8 @@ class BaseView(Base):
     ###############################################################
 
     @exceptionDocstring
-    def __imul__(self, other):
-        readOnlyException("__imul__")
+    def __imatmul__(self, other):
+        readOnlyException("__imatmul__")
 
     @exceptionDocstring
     def __iadd__(self, other):

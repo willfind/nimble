@@ -198,7 +198,8 @@ def methodObjectValidation(func):
         assert source._name == startName
         funcName = func.__name__
         inplaceNumeric = ['__iadd__', '__isub__', '__imul__', '__idiv__',
-                          '__ifloordiv__', '__itruediv__', '__imod__']
+                          '__ifloordiv__', '__itruediv__', '__imod__',
+                          '__imatmul__']
 
         finalAbsPath = startAbsPath
         finalRelPath = startRelPath
