@@ -580,7 +580,12 @@ class List(Base):
         return False
 
 
-    def _numericBinary_implementation(self, opName, other):
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Directs operations to use generic (numpy) operations, given that
+        certain operations are implemented differently or not possible
+        for lists. 
+        """
         return self._genericArithmeticBinary_implementation(opName, other)
 
     def _mul__implementation(self, other):

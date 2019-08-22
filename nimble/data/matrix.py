@@ -427,19 +427,17 @@ class Matrix(Base):
         return 0 in self.data
 
 
-    def _numericBinary_implementation(self, opName, other):
-        if isinstance(other, Matrix):
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Attempt to perform operation with data as is, preserving sparse
+        representations if possible. Otherwise, uses the generic
+        implementation.
+        """
+        try:
             ret = getattr(self.data, opName)(other.data)
-        elif isinstance(other, nimble.data.Base):
-            otherConv = other.copy('Matrix')
-            ret = getattr(self.data, opName)(otherConv.data)
-        else:
-            ret = getattr(self.data, opName)(other)
-        if opName.startswith('__i'):
-            # data modified within object
-            return self
-        return Matrix(ret)
-
+            return Matrix(ret)
+        except (AttributeError, InvalidArgumentType):
+            return self._genericArithmeticBinary_implementation(opName, other)
 
     def _matrixMultiply_implementation(self, other):
         """
@@ -454,6 +452,7 @@ class Matrix(Base):
         if isinstance(other, Matrix):
             return Matrix(numpy.matmul(self.data, other.data))
         elif isinstance(other, nimble.data.Sparse):
+            # '*' is matrix multiplication in scipy
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
@@ -473,175 +472,6 @@ class Matrix(Base):
             ret = self.copy()
             ret._scalarMultiply_implementation(other)
             return ret
-
-    def _add__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data + other.data
-        else:
-            ret = self.data + other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _radd__implementation(self, other):
-        ret = other + self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _iadd__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data + other.data
-        else:
-            ret = self.data + other
-        self.data = ret
-        return self
-
-    def _sub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data - other.data
-        else:
-            ret = self.data - other
-
-        pNames = self.points._getNamesNoGeneration()
-        fNames = self.features._getNamesNoGeneration()
-
-        return Matrix(ret, pointNames=pNames, featureNames=fNames,
-                      reuseData=True)
-
-    def _rsub__implementation(self, other):
-        ret = other - self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _isub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data - other.data
-        else:
-            ret = self.data - other
-        self.data = ret
-        return self
-
-    def _div__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
-            else:
-                ret = self.data / other.data
-        else:
-            ret = self.data / other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _rdiv__implementation(self, other):
-        ret = other / self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _idiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
-            else:
-                ret = self.data / other.data
-        else:
-            ret = self.data / other
-        self.data = ret
-        return self
-
-    def _truediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.__truediv__(other.data.todense())
-            else:
-                ret = self.data.__truediv__(other.data)
-        else:
-            ret = self.data.__itruediv__(other)
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _rtruediv__implementation(self, other):
-        ret = self.data.__rtruediv__(other)
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _itruediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.__itruediv__(other.data.todense())
-            else:
-                ret = self.data.__itruediv__(other.data)
-        else:
-            ret = self.data.__itruediv__(other)
-        self.data = ret
-        return self
-
-    def _floordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data // other.data.todense()
-            else:
-                ret = self.data // other.data
-        else:
-            ret = self.data // other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _rfloordiv__implementation(self, other):
-        ret = other // self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _ifloordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data // other.data.todense()
-            else:
-                ret = self.data // other.data
-        else:
-            ret = self.data // other
-        self.data = ret
-        return self
-
-    def _mod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data % other.data.todense()
-            else:
-                ret = self.data % other.data
-        else:
-            ret = self.data % other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _rmod__implementation(self, other):
-        ret = other % self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _imod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data % other.data.todense()
-            else:
-                ret = self.data % other.data
-        else:
-            ret = self.data % other
-        self.data = ret
-        return self
-
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):
     """

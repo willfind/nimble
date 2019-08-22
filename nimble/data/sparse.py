@@ -870,7 +870,11 @@ class Sparse(Base):
         return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
 
-    def _numericBinary_implementation(self, opName, other):
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Directs the operation to the best implementation available, 
+        preserving the sparse representation whenever possible.
+        """
         if self.data.data is None:
             selfData = self.copy().data
         else:
@@ -903,9 +907,6 @@ class Sparse(Base):
                     return self._genericArithmeticBinary_implementation(opName,
                                                                      other)
 
-            if opName.startswith('__i'):
-                # data modified within object
-                return self
             return Sparse(ret)
 
         except AttributeError as ae:
@@ -958,7 +959,7 @@ class Sparse(Base):
 
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
-        ret = self._numericBinary_implementation(notInplace, other)
+        ret = self._arithmeticBinary_implementation(notInplace, other)
         absPath, relPath = self._absPath, self._relPath
         self.referenceDataFrom(ret, useLog=False)
         self._absPath, self._relPath = absPath, relPath
@@ -966,21 +967,21 @@ class Sparse(Base):
 
     def _rsub__implementation(self, other):
         other = other * -1
-        return self._numericBinary_implementation('__add__', other)
+        return self._arithmeticBinary_implementation('__add__', other)
 
     def _genericFloordiv_implementation(self, opName, other):
         """
         Perform floordiv by modifying the results of truediv.
 
         There is no need for additional conversion when an inplace
-        operation is called because _numericBinary_implementation will
+        operation is called because _arithmeticBinary_implementation will
         return the self object in those cases, so the changes below are
         reflected inplace.
         """
         opSplit = opName.split('floordiv')
         trueDiv = opSplit[0] + 'truediv__'
         # ret is self for inplace operation
-        ret = self._numericBinary_implementation(trueDiv, other)
+        ret = self._arithmeticBinary_implementation(trueDiv, other)
         ret.data.data = numpy.floor(ret.data.data)
         ret.data.eliminate_zeros()
         return ret

@@ -374,18 +374,17 @@ class DataFrame(Base):
         return 0 in self.data.values
 
 
-    def _numericBinary_implementation(self, opName, other):
-        if isinstance(other, DataFrame):
-            ret = getattr(self.data, opName)(other.data)
-        elif isinstance(other, nimble.data.Base):
-            otherConv = other.copy('DataFrame')
-            ret = getattr(self.data, opName)(otherConv.data)
-        else:
-            ret = getattr(self.data, opName)(other)
-        if opName.startswith('__i'):
-            # data modified within object
-            return self
-        return DataFrame(ret)
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Attempt to perform operation with data as is, preserving sparse
+        representations if possible. Otherwise, uses the generic
+        implementation.
+        """
+        try:
+            ret = getattr(self.data.values, opName)(other.data)
+            return DataFrame(ret)
+        except (AttributeError, InvalidArgumentType):
+            return self._genericArithmeticBinary_implementation(opName, other)
 
     def _matrixMultiply_implementation(self, other):
         """
@@ -418,100 +417,6 @@ class DataFrame(Base):
         ret = self.copy()
         ret._scalarMultiply_implementation(other)
         return ret
-
-    def _add__implementation(self, other):
-        """
-        """
-        if isinstance(other, nimble.data.Base):
-            if isinstance(other, nimble.data.Sparse):
-                otherData = other.data
-            else:
-                otherData = other.copy('numpyarray')
-        else:
-            otherData = other
-        ret = self.data.values + otherData
-        return DataFrame(ret, reuseData=True)
-
-    def _radd__implementation(self, other):
-        ret = other + self.data
-        return DataFrame(ret, reuseData=True)
-
-    def _iadd__implementation(self, other):
-        ret = self.__add__(other)
-        self.data = pd.DataFrame(ret)
-        return self
-
-    def _sub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if isinstance(other, nimble.data.Sparse):
-                otherData = other.data
-            else:
-                otherData = other.copy('numpyarray')
-        else:
-            otherData = other
-        ret = self.data.values - otherData
-
-        return DataFrame(ret, reuseData=True)
-
-    def _rsub__implementation(self, other):
-        ret = other - self.data
-        return DataFrame(ret, reuseData=True)
-
-    def _isub__implementation(self, other):
-        ret = self.__sub__(other)
-        self.data = pd.DataFrame(ret)
-        return self
-
-    def _truediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpyarray')
-        else:
-            otherData = other
-        ret = self.data.values / otherData
-        return DataFrame(ret, reuseData=True)
-
-    def _rtruediv__implementation(self, other):
-        ret = other / self.data.values
-        return DataFrame(ret, reuseData=True)
-
-    def _itruediv__implementation(self, other):
-        ret = self.__truediv__(other)
-        self.data = pd.DataFrame(ret)
-        return self
-
-    def _floordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpyarray')
-        else:
-            otherData = other
-        ret = self.data.values // otherData
-        return DataFrame(ret, reuseData=True)
-
-    def _rfloordiv__implementation(self, other):
-        ret = other // self.data.values
-        return DataFrame(ret, reuseData=True)
-
-    def _ifloordiv__implementation(self, other):
-        ret = self.__floordiv__(other)
-        self.data = pd.DataFrame(ret)
-        return self
-
-    def _mod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpyarray')
-        else:
-            otherData = other
-        ret = self.data.values % otherData
-        return DataFrame(ret, reuseData=True)
-
-    def _rmod__implementation(self, other):
-        ret = other % self.data.values
-        return DataFrame(ret, reuseData=True)
-
-    def _imod__implementation(self, other):
-        ret = self.__mod__(other)
-        self.data = pd.DataFrame(ret)
-        return self
 
     def _updateName(self, axis):
         """

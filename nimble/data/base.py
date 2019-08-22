@@ -3875,7 +3875,13 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._numericBinary_implementation(opName, other)
+        ret = self._arithmeticBinary_implementation(opName, other)
+
+        if opName.startswith('__i'):
+            absPath, relPath = self._absPath, self._relPath
+            self.referenceDataFrom(ret, useLog=False)
+            self._absPath, self._relPath = absPath, relPath
+            ret = self
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
 
@@ -3895,11 +3901,6 @@ class Base(object):
         ret = getattr(selfData, opName)(otherData)
         ret = createDataNoValidation(self.getTypeString(), ret)
 
-        if opName.startswith('__i'):
-            absPath, relPath = self._absPath, self._relPath
-            self.referenceDataFrom(ret, useLog=False)
-            self._absPath, self._relPath = absPath, relPath
-            ret = self
         return ret
 
 
