@@ -677,4 +677,3 @@ def test_is2DArray():
     raw3D = [[[1, 2, 3]]]
     arr3D = numpy.array(raw3D)
     assert not is2DArray(arr3D)
-

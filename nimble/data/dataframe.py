@@ -34,7 +34,7 @@ class DataFrame(Base):
     Parameters
     ----------
     data : object
-        pandas DataFrame or numpy array or numpy matrix.
+        pandas DataFrame or two-dimensional numpy array.
     reuseData : bool
         Only used when data is a pandas DataFrame.
     elementType : type
@@ -45,13 +45,6 @@ class DataFrame(Base):
     """
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
-        """
-        The initializer.
-        Inputs:
-            data: pandas DataFrame, a numpy array, or a numpy matrix.
-            reuseData: boolean. only used when data is a pandas
-            DataFrame.
-        """
         if not pd:
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)

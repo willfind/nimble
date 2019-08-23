@@ -35,7 +35,7 @@ class Matrix(Base):
     Parameters
     ----------
     data : object
-        Must be a numpy array or numpy matrix.
+        Must be a two-dimensional numpy array.
     reuseData : bool
     elementType : type
         The numpy dtype of this object.
@@ -46,7 +46,7 @@ class Matrix(Base):
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
         if not is2DArray(data):
-            msg = "the input data can only be a two-dimensional array."
+            msg = "the input data can only be a two-dimensional numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):

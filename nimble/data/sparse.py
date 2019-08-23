@@ -41,7 +41,7 @@ class Sparse(Base):
     Parameters
     ----------
     data : object
-        A scipy sparse matrix, numpy array.
+        A scipy sparse matrix or two-dimensional numpy array.
     reuseData : bool
     elementType : type
         The scipy or numpy dtype of the data.

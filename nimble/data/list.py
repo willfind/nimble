@@ -38,7 +38,7 @@ class List(Base):
     Parameters
     ----------
     data : object
-        A list, numpy matrix, numpy array, or a ListPassThrough.
+        A list, two-dimensional numpy array, or a ListPassThrough.
     reuseData : bool
         Only works when input data is a list.
     shape : tuple
