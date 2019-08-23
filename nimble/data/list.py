@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -53,10 +53,10 @@ class List(Base):
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, elementType=None, **kwds):
-        if ((not isinstance(data, (list, numpy.ndarray)))
+        if (not (isinstance(data, list) or is2DArray(data))
                 and 'PassThrough' not in str(type(data))):
-            msg = "the input data can only be a list, a numpy array, a numpy "
-            msg += "matrix, or ListPassThrough."
+            msg = "the input data can only be a list, a two-dimensional numpy "
+            msg += "array, or ListPassThrough."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
@@ -102,7 +102,7 @@ class List(Base):
                 # Both list and FeatureViewer have a copy method.
                 data = [pt.copy() for pt in data]
 
-        if isinstance(data, numpy.ndarray):
+        if is2DArray(data):
             #case5: data is a numpy array. shape is already in np array
             shape = data.shape
             data = data.tolist()

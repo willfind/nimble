@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -54,10 +54,9 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if ((not isinstance(data, numpy.ndarray))
-                and (not scipy.sparse.isspmatrix(data))):
+        if not is2DArray(data) and not scipy.sparse.isspmatrix(data):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "numpy array"
+            msg += "two-dimensional numpy array"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):

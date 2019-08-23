@@ -36,7 +36,7 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray
+from nimble.utility import numpy2DArray, is2DArray
 
 scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
@@ -513,7 +513,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData.todense(), elementType)
 
     if (returnType == 'Sparse'
-            and isinstance(rawData, numpy.ndarray)
+            and is2DArray(rawData)
             and rawData.shape[0]*rawData.shape[1] > 0):
     #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),

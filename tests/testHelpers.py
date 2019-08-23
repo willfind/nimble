@@ -27,7 +27,7 @@ from nimble.helpers import trainAndApplyOneVsAll
 from nimble.helpers import _mergeArguments
 from nimble.helpers import computeMetrics
 from nimble.helpers import inspectArguments
-from nimble.utility import numpy2DArray
+from nimble.utility import numpy2DArray, is2DArray
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import fractionIncorrect
@@ -662,3 +662,19 @@ def test_numpy2DArray_converts1D():
 def test_numpy2DArray_dimensionException():
     raw = [[[1, 2], [3, 4]]]
     ret = numpy2DArray(raw)
+
+def test_is2DArray():
+    raw1D = [1, 2, 3]
+    arr1D = numpy.array(raw1D)
+    mat1D = numpy.matrix(raw1D)
+    assert not is2DArray(arr1D)
+    assert is2DArray(mat1D)
+    raw2D = [[1, 2, 3]]
+    arr2D = numpy.array(raw2D)
+    mat2D = numpy.matrix(raw2D)
+    assert is2DArray(arr2D)
+    assert is2DArray(mat2D)
+    raw3D = [[[1, 2, 3]]]
+    arr3D = numpy.array(raw3D)
+    assert not is2DArray(arr3D)
+

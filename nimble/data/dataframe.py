@@ -12,7 +12,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -56,9 +56,9 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not isinstance(data, (pd.DataFrame, numpy.ndarray)):
-            msg = "the input data can only be a pandas DataFrame or a numpy "
-            msg += "array."
+        if not isinstance(data, pd.DataFrame) and not is2DArray(data):
+            msg = "the input data can only be a pandas DataFrame or a two-"
+            msg += "dimensional numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):

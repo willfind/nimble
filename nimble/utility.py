@@ -42,6 +42,13 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
+# class Array2D(numpy.ndarray):
+#     def __init__(self, *args, **kwargs):
+#         super(self, Array2D).__init__(*args, **kwargs)
+#         if len(self.shape) == 1:
+#             self.reshape((1, -1))
+#         elif len(self.shape) > 2:
+#             raise InvalidArgumentValue('data cannot exceed two-dimensions')
 
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     ret = numpy.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
@@ -49,3 +56,6 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     if len(ret.shape) > 2:
         raise InvalidArgumentValue('obj cannot be more than two-dimensional')
     return ret
+
+def is2DArray(arr):
+    return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2

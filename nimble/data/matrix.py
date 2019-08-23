@@ -13,7 +13,7 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -45,12 +45,18 @@ class Matrix(Base):
     """
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
-        if not isinstance(data, numpy.ndarray):
-            msg = "the input data can only be a numpy array "
-            msg += "or numpy matrix."
+        if not is2DArray(data):
+            msg = "the input data can only be a two-dimensional array."
             raise InvalidArgumentType(msg)
 
-        self.data = numpy2DArray(data)
+        if isinstance(data, numpy.matrix):
+            data = numpy2DArray(data)
+        if elementType is not None:
+            data = data.astype(elementType)
+        if reuseData:
+            self.data = data
+        else:
+            self.data = data.copy()
 
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
