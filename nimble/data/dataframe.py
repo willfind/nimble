@@ -200,7 +200,7 @@ class DataFrame(Base):
         if to == 'pythonlist':
             return self.data.values.tolist()
         if to == 'numpyarray':
-            return self.data.values.copy()
+            return numpy2DArray(self.data.values)
         if to == 'numpymatrix':
             return numpy.matrix(self.data.values)
         if 'scipy' in to:

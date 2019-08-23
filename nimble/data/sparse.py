@@ -251,7 +251,7 @@ class Sparse(Base):
         if to == 'pythonlist':
             return self.data.todense().tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data.todense())
+            return numpy2DArray(self.data.todense())
         if to == 'numpymatrix':
             return numpy.matrix(self.data.todense())
         if 'scipy' in to:
@@ -879,15 +879,18 @@ class Sparse(Base):
             selfData = self.copy().data
         else:
             selfData = self.data
+
+        # scipy will perform matrix multiplication with mul operators
+        if 'mul' in opName:
+            return self._genericMul__implementation(opName, other)
         try:
-            # scipy will do matrix multiplication so ignore mul operations
-            if isinstance(other, Sparse) and 'mul' not in opName:
+            if isinstance(other, Sparse):
                 if other.data.data is None:
                     otherData = other.copy().data
                 else:
                     otherData = other.data
                 ret = getattr(selfData, opName)(otherData)
-            elif isinstance(other, nimble.data.Base) and 'mul' not in opName:
+            elif isinstance(other, nimble.data.Base):
                 otherConv = other.copy('Matrix')
                 ret = getattr(selfData, opName)(otherConv.data)
             else:
@@ -969,6 +972,22 @@ class Sparse(Base):
     def _rsub__implementation(self, other):
         other = other * -1
         return self._arithmeticBinary_implementation('__add__', other)
+
+    def _genericMul__implementation(self, opName, other):
+        if 'i' in opName:
+            if isinstance(other, nimble.data.Base):
+                self.elements.multiply(other, useLog=False)
+            else:
+                self.data *= other
+                self.data.eliminate_zeros()
+            return self
+        ret = self.copy()
+        if isinstance(other, nimble.data.Base):
+            ret.elements.multiply(other, useLog=False)
+        else:
+            ret.data *= other
+            ret.data.eliminate_zeros()
+        return ret
 
     def _genericFloordiv_implementation(self, opName, other):
         """

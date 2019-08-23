@@ -27,6 +27,7 @@ from nimble.helpers import trainAndApplyOneVsAll
 from nimble.helpers import _mergeArguments
 from nimble.helpers import computeMetrics
 from nimble.helpers import inspectArguments
+from nimble.utility import numpy2DArray
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import fractionIncorrect
@@ -649,3 +650,15 @@ def test_inspectArguments():
     assert v == 'sigArgs'
     assert k == 'sigKwargs'
     assert d == (False, True, None)
+
+def test_numpy2DArray_converts1D():
+    raw = [1, 2, 3, 4]
+    ret = numpy2DArray(raw)
+    fromNumpy = numpy.array(raw)
+    assert len(ret.shape) == 2
+    assert not numpy.array_equal(ret,fromNumpy)
+
+@raises(InvalidArgumentValue)
+def test_numpy2DArray_dimensionException():
+    raw = [[[1, 2], [3, 4]]]
+    ret = numpy2DArray(raw)

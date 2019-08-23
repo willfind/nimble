@@ -296,7 +296,7 @@ class List(Base):
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
-            return numpy.array(self.data, dtype=elementType)
+            return numpy2DArray(self.data, dtype=elementType)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
