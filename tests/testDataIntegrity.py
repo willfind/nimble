@@ -151,19 +151,16 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
             try:
                 toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
                 toCall(learner, cTrainCombined, 0, cTestCombined, 0)
-#                print learner
             # this is meant to safely bypass those learners that have required arguments
             except InvalidArgumentValue as iav:
-                pass
-#                print iav
+                continue
             # this is generally how shogun explodes
             except SystemError as se:
-                pass
-#                print se
+                continue
             except NotImplementedError as nie:
                 if not allowNotImplemented:
                     raise nie
-#                print nie
+                continue
             assertUnchanged4Obj(learner, cData, backCTrainX, backCTrainY,
                                 backCTestX, backCTestY)
             assertUnchanged2Obj(learner, (cTrainCombined, cTestCombined),
@@ -172,18 +169,15 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
             try:
                 toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
                 toCall(learner, rTrainCombined, 0, rTestCombined, 0)
-#                print learner
             # this is meant to safely bypass those learners that have required arguments
             except InvalidArgumentValue as iav:
-                pass
-#                print iav
+                continue
             except SystemError as se:
-                pass
-#                print se
+                continue
             except NotImplementedError as nie:
                 if not allowNotImplemented:
                     raise nie
-#                print nie
+                continue
             assertUnchanged4Obj(learner, rData, backRTrainX, backRTrainY,
                                 backRTestX, backRTestY)
             assertUnchanged2Obj(learner, (rTrainCombined, rTestCombined),
