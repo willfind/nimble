@@ -29,6 +29,7 @@ except ImportError:
 
 import nimble
 from nimble.randomness import numpyRandom
+from nimble.randomness import startAlternateControl, endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
@@ -489,7 +490,7 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
 
 def shogunTrainBackend(learner, data, toSet):
     Xtrain, Ytrain = data
-    sg = Shogun()
+    sg = nimble.helpers.findBestInterface('shogun')
     sgObj = sg.findCallable(learner)
     shogunObj = sgObj()
     args = {}
@@ -520,8 +521,11 @@ def shogunApplyBackend(obj, toTest, applier):
     predSG = nimble.createData('Matrix', predArray, useLog=False)
     return predSG
 
+@with_setup(startAlternateControl, endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
-                         extraTrainSetup, varyingPredictionsPossible):
+                         extraTrainSetup):
+    seed = nimble.randomness.generateSubsidiarySeed()
+    nimble.setRandomSeed(seed, useLog=False)
     trainX, trainY, testX = data[:3]
     shogunTraining = data[3:5]
     shogunTesting = data[5]
@@ -539,15 +543,11 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
     testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
+    nimble.setRandomSeed(seed, useLog=False)
     TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
     predNimble = TL.apply(testX)
 
-    try:
-        equalityAssertHelper(predSG, predNimble)
-    except AssertionError:
-        # TODO inplace because randomness is not being controlled at this
-        # point, once this is handled this should be removed
-        assert learner in varyingPredictionsPossible
+    equalityAssertHelper(predSG, predNimble)
 
 @shogunSkipDec
 @attr('slow')
@@ -578,11 +578,9 @@ def testShogunClassificationLearners():
                        'RandomForest': trainRandomForestClassifier,
                        'RelaxedTree': trainRelaxedTree}
 
-    varyingPredictionsPossible = ['KMeans', 'KMeansMiniBatch', 'QDA']
-
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
-        sg = Shogun()
+        sg = nimble.helpers.findBestInterface('shogun')
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()
@@ -613,7 +611,7 @@ def testShogunClassificationLearners():
         data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
 
         trainAndApplyBackend(learner, data, sgApply, needKernel, needDistance,
-                              extraTrainSetup, varyingPredictionsPossible)
+                              extraTrainSetup)
 
     for learner in learners:
         compareOutputs(learner)
@@ -650,7 +648,7 @@ def testShogunRegressionLearners():
     Ytrain = RegressionLabels(Ytrain)
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
-    ignore = ["LibLinearRegression"] # LibLinearRegression strange failure
+    ignore = ['LibLinearRegression'] # LibLinearRegression strange failure
     learners = getLearnersByType('regression', ignore)
 
     remove = ['Machine', 'Base']
@@ -660,13 +658,11 @@ def testShogunRegressionLearners():
 
     extraTrainSetup = {'GaussianProcessRegression': trainGaussianProcessRegression,}
 
-    varyingPredictionsPossible = ['KRRNystrom']
-
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
         data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
         trainAndApplyBackend(learner, data, 'apply_regression', needKernel, [],
-                              extraTrainSetup, varyingPredictionsPossible)
+                              extraTrainSetup)
 
     for learner in learners:
         compareOutputs(learner)
@@ -687,27 +683,27 @@ def trainGaussianProcessRegression(data, toSet):
 def testShogunGaussianProcessClassification():
     # can be binary or multiclass classification
 
-    # TODO Binary getting output but different result
-    # data = generateClassificationData(2, 20, 20)
-    # trainX = abs(data[0][0])
-    # trainY = abs(data[0][1])
-    # testX = abs(data[1][0])
-    # Ytrain = trainY.copy('numpy array', outputAs1D=True)
-    # Ytrain = BinaryLabels(Ytrain)
-    # Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    # Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-    #
-    # extraTrainSetup = {'GaussianProcessClassification': trainGPCBinary}
-    #
-    # data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
-    # trainAndApplyBackend('GaussianProcessClassification', data, 'apply_binary',
-    #                      [], [],  extraTrainSetup, [])
+    data = generateClassificationData(2, 20, 20)
+    trainX = data[0][0]
+    trainY = data[0][1]
+    trainY.points.fill(0, -1, useLog=False)
+    testX = data[1][0]
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = BinaryLabels(Ytrain)
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    extraTrainSetup = {'GaussianProcessClassification': trainGPCBinary}
+
+    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    trainAndApplyBackend('GaussianProcessClassification', data, 'apply_binary',
+                         [], [],  extraTrainSetup)
 
     # Multiclass
     data = generateClassificationData(3, 20, 20)
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    testX = abs(data[1][0])
+    trainX = data[0][0]
+    trainY = data[0][1]
+    testX = data[1][0]
     Ytrain = trainY.copy('numpy array', outputAs1D=True)
     Ytrain = MulticlassLabels(Ytrain)
     Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
@@ -717,7 +713,7 @@ def testShogunGaussianProcessClassification():
 
     data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
     trainAndApplyBackend('GaussianProcessClassification', data, 'apply_multiclass',
-                         [], [],  extraTrainSetup, [])
+                         [], [],  extraTrainSetup)
 
 def trainGPCBinary(data, toSet):
     # TODO can this be done without stepping outside of nimble?

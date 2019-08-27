@@ -8,14 +8,21 @@ import random
 
 import numpy
 
+from .importExternalLibraries import importModule
 from .logger import handleLogging
+
+shogun = importModule('shogun')
+shogunRandom = None
+if shogun is not None:
+    shogunRandom = shogun.Math
+    shogunRandom.init_random(42)
 
 pythonRandom = random.Random(42)
 numpyRandom = numpy.random.RandomState(42)
 
-# We use (None, None) to signal that we are outside of a section of
+# We use (None, None, None) to signal that we are outside of a section of
 # uncontrolled randomness
-_saved = (None, None)
+_saved = (None, None, None)
 _stillDefault = True
 
 
@@ -33,7 +40,12 @@ def setRandomSeed(seed, useLog=None):
     global _stillDefault
     pythonRandom.seed(seed)
     numpyRandom.seed(seed)
-    if _saved != (None, None):
+    if shogun is not None:
+        if seed is None:
+            # use same seed as numpy used
+            seed = int(numpyRandom.get_state()[1][0])
+        shogunRandom.init_random(seed)
+    if _saved != (None, None, None):
         _stillDefault = False
 
     handleLogging(useLog, 'setRandomSeed', seed=seed)
@@ -49,9 +61,10 @@ def generateSubsidiarySeed():
     """
     # must range from zero to maxSeed because numpy random wants an
     # unsigned 32 bit int. Negative numbers can cause conversion errors,
-    # and larger numbers can cause exceptions
+    # and larger numbers can cause exceptions. 0 has no effect on randomness
+    # in shogun start at 1.
     maxSeed = (2 ** 32) - 1
-    return pythonRandom.randint(0, maxSeed)
+    return pythonRandom.randint(1, maxSeed)
 
 
 def stillDefaultState():
@@ -95,7 +108,13 @@ def startAlternateControl(seed=None):
         os system time.
     """
     global _saved
-    _saved = (pythonRandom.getstate(), numpyRandom.get_state())
+
+    if shogun is not None:
+        shogunSeed = shogunRandom.get_seed()
+    else:
+        shogunSeed = None
+
+    _saved = (pythonRandom.getstate(), numpyRandom.get_state(), shogunSeed)
     setRandomSeed(seed, useLog=False)
 
 
@@ -110,7 +129,8 @@ def endAlternateControl():
     ``startAlternateControl``.
     """
     global _saved
-    if _saved != (None, None):
+    if _saved != (None, None, None):
         pythonRandom.setstate(_saved[0])
         numpyRandom.set_state(_saved[1])
-        _saved = (None, None)
+        shogunRandom.init_random(_saved[2])
+        _saved = (None, None, None)

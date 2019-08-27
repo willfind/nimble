@@ -29,6 +29,7 @@ import json
 import distutils.version
 import multiprocessing
 import re
+import warnings
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -274,8 +275,14 @@ To install shogun
 
             return WrappedShogun
 
-        callable = self._searcher.findInPackage(None, name)
-        return shogunToPython(callable)
+        callableObj = self._searcher.findInPackage(None, name)
+
+        shogunWarn = ['LibLinearRegression', 'SGDQN']
+        if name in shogunWarn:
+            msg = "nimble cannot guarantee replicable results for " + name
+            warnings.warn(msg)
+
+        return shogunToPython(callableObj)
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
