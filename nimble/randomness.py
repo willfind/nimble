@@ -62,7 +62,7 @@ def generateSubsidiarySeed():
     # must range from zero to maxSeed because numpy random wants an
     # unsigned 32 bit int. Negative numbers can cause conversion errors,
     # and larger numbers can cause exceptions. 0 has no effect on randomness
-    # in shogun start at 1.
+    # control in shogun so start at 1.
     maxSeed = (2 ** 32) - 1
     return pythonRandom.randint(1, maxSeed)
 
