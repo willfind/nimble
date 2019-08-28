@@ -22,7 +22,6 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
-from nimble.interfaces.scikit_learn_interface import SciKitLearn
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -38,7 +37,7 @@ sklSkipDec = SkipMissing(packageName)
 @sklSkipDec
 @noLogEntryExpected
 def test_SciKitLearn_version():
-    interface = SciKitLearn()
+    interface = nimble.helpers.findBestInterface('scikitlearn')
     assert interface.version() == sklearn.__version__
 
 def toCall(learner):
@@ -293,7 +292,7 @@ def testSciKitLearnClassificationLearners():
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -332,7 +331,7 @@ def testSciKitLearnRegressionLearners():
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -360,7 +359,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
     """ Test that predictions for from nimble.trainAndApply match predictions from scikitlearn
     multitask learners with predict method"""
 
-    skl = SciKitLearn()
+    skl = nimble.helpers.findBestInterface('scikitlearn')
 
     trainX = [[0,0], [1, 1], [2, 2]]
     trainY = [[0, 0], [1, 1], [2, 2]]
@@ -398,7 +397,6 @@ def testSciKitLearnMultiTaskRegressionLearners():
 def testSciKitLearnClusterLearners():
     data = generateClusteredPoints(3, 60, 8)
     data = data[0]
-    data.points.shuffle()
     trainX = data[:50,:]
     testX = data[50:,:]
     Xtrain = trainX.data
@@ -408,7 +406,7 @@ def testSciKitLearnClusterLearners():
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -444,7 +442,7 @@ def testSciKitLearnOtherPredictLearners():
     Ytrain = trainY.data
     Xtest = testX.data
 
-    skl = SciKitLearn()
+    skl = nimble.helpers.findBestInterface('scikitlearn')
     predictors = getLearnersByType('other')
     learners = [p for p in predictors if hasattr(skl.findCallable(p), 'predict')]
     assert learners
@@ -481,7 +479,7 @@ def testSciKitLearnTransformationLearners():
 
     @logCountAssertionFactory(3)
     def compareDualInputOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -502,7 +500,7 @@ def testSciKitLearnTransformationLearners():
 
     @logCountAssertionFactory(3)
     def compareSingleInputOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -551,7 +549,7 @@ def testSciKitLearnSparsePCATransformation():
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
-        skl = SciKitLearn()
+        skl = nimble.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = nimble.randomness.generateSubsidiarySeed()
@@ -583,7 +581,7 @@ def testSciKitLearnOtherFitTransformLearners():
     Xtrain = trainX.data
 
 
-    skl = SciKitLearn()
+    skl = nimble.helpers.findBestInterface('scikitlearn')
     text = ['CountVectorizer', 'TfidfVectorizer']
     transform = getLearnersByType('other', ignore=text)
     learners = [t for t in transform if hasattr(skl.findCallable(t), 'fit_transform')]
@@ -624,7 +622,7 @@ def testSciKitLearnTextVectorizers():
     Xtrain = data
 
 
-    skl = SciKitLearn()
+    skl = nimble.helpers.findBestInterface('scikitlearn')
     learners = ['CountVectorizer', 'TfidfVectorizer']
 
     @logCountAssertionFactory(3)

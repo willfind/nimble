@@ -31,12 +31,11 @@ import nimble
 from nimble.randomness import numpyRandom
 from nimble.randomness import startAlternateControl, endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
-from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
-from nimble.interfaces.shogun_interface import raiseFailedProcess
+from nimble.interfaces.shogun_interface import checkProcessFailure
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -507,15 +506,15 @@ def shogunTrainBackend(learner, data, toSet):
             getattr(shogunObj, 'set_' + arg)(val)
             args[arg] = val
     if Ytrain is not None:
-        raiseFailedProcess('labels', shogunObj.set_labels, Ytrain)
+        checkProcessFailure('labels', shogunObj.set_labels, Ytrain)
         shogunObj.set_labels(Ytrain)
-    raiseFailedProcess('train', shogunObj.train, Xtrain)
+    checkProcessFailure('train', shogunObj.train, Xtrain)
     shogunObj.train(Xtrain)
     return shogunObj, args
 
 def shogunApplyBackend(obj, toTest, applier):
     applyFunc = getattr(obj, applier)
-    raiseFailedProcess('apply', applyFunc, toTest)
+    checkProcessFailure('apply', applyFunc, toTest)
     predLabels = applyFunc(toTest)
     predArray = predLabels.get_labels().reshape(-1, 1)
     predSG = nimble.createData('Matrix', predArray, useLog=False)
@@ -585,7 +584,6 @@ def testShogunClassificationLearners():
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()
         if learner in cluster:
-            clusterData.points.shuffle(useLog=False)
             trainX = clusterData[:50,:]
             trainY = None
             testX = clusterData[50:,:]
@@ -770,7 +768,7 @@ def TODOShogunStructuredOutputLearner():
 
 
 @shogunSkipDec
-def test_raiseFailedProcess_maxTime():
+def test_checkProcessFailure_maxTime():
     def dontSleep():
         pass
 

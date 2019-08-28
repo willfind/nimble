@@ -59,7 +59,6 @@ class Shogun(PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-
         self.shogun = modifyImportPathAndImport(shogunDir, 'shogun')
         self.versionString = None
 
@@ -345,9 +344,7 @@ To install shogun
         else:
             retRaw = outputValue
 
-        outputType = 'Matrix'
-        if outputType == 'match':
-            outputType = customDict['match']
+        outputType = customDict['match']
         ret = nimble.createData(outputType, retRaw, useLog=False)
 
         if outputFormat == 'label' and 'remap' in customDict:
@@ -378,9 +375,9 @@ To install shogun
         learner = toCall(**setterArgs)
 
         if trainY is not None:
-            raiseFailedProcess('labels', learner.set_labels, trainY)
+            checkProcessFailure('labels', learner.set_labels, trainY)
             learner.set_labels(trainY)
-        raiseFailedProcess('train', learner.train, trainX)
+        checkProcessFailure('train', learner.train, trainX)
         learner.train(trainX)
 
         # TODO online training prep learner.start_train()
@@ -416,7 +413,7 @@ To install shogun
             retFunc = learner.apply_latent
         else:
             retFunc = learner.apply
-        raiseFailedProcess('apply', retFunc, testX)
+        checkProcessFailure('apply', retFunc, testX)
         retLabels = retFunc(testX)
         return retLabels
 
@@ -585,7 +582,7 @@ def catchSignals(target, args, kwargs):
         pass
 
 
-def raiseFailedProcess(process, target, *args, **kwargs):
+def checkProcessFailure(process, target, *args, **kwargs):
     """
     Determine if a call to shogun function or method will be successful.
 
