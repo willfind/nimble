@@ -485,14 +485,17 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
     if attr1.startswith('__r'):
         # put zeros in lhs
         data1, data2 = data2, data1
+        callee = calleeConstructor(data2, calleeCon)
+    elif calleeCon is None:
+        callee = 0
+    else:
+        callee = calleeConstructor(data2, calleeCon)
     caller = callerCon(data1)
-    callee = calleeConstructor(data2, calleeCon)
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
         toCall = getattr(toCall, attr2)
     toCall(callee)
-
 
 def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation when other data contains an infinity """
@@ -501,8 +504,31 @@ def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
     if attr1.startswith('__r'):
         # put inf in lhs
         data1, data2 = data2, data1
+        callee = calleeConstructor(data2, calleeCon)
+    elif calleeCon is None:
+        callee = numpy.Inf
+    else:
+        callee = calleeConstructor(data2, calleeCon)
     caller = callerCon(data1)
-    callee = calleeConstructor(data2, calleeCon)
+
+    toCall = getattr(caller, attr1)
+    if attr2 is not None:
+        toCall = getattr(toCall, attr2)
+    toCall(callee)
+
+def back_byNanException(callerCon, calleeCon, attr1, attr2=None):
+    """ Test operation when other data contains an infinity """
+    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
+    data2 = [[1, 2, 3], [5, numpy.nan, 10], [6, 7, 8]]
+    if attr1.startswith('__r'):
+        # put inf in lhs
+        data1, data2 = data2, data1
+        callee = calleeConstructor(data2, calleeCon)
+    elif calleeCon is None:
+        callee = numpy.nan
+    else:
+        callee = calleeConstructor(data2, calleeCon)
+    caller = callerCon(data1)
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
@@ -646,7 +672,11 @@ def wrapAndCall(toWrap, expected, *args):
 
 def run_full_backendDivMod(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, None, nimbleOp))
     wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, None, nimbleOp))
+    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, None, nimbleOp))
 
     run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
@@ -675,7 +705,11 @@ def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
 def run_full_backendDivMod_rop(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, None, nimbleOp))
     wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, None, nimbleOp))
+    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
+    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, None, nimbleOp))
     run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
@@ -701,6 +735,9 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
             assert False # did not use _scalarZeroPreservingBinary_implementation
     except CalledFunctionException:
         assert toTest.getTypeString() == "Sparse"
+    except ZeroDivisionError:
+        assert nimbleOp.startswith('__r')
+
 
 
 class NumericalDataSafe(DataTestObject):

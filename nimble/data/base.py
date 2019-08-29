@@ -3841,9 +3841,9 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericArithmeticBinary_validation(self, opName, other):
-        isNimble = isinstance(other, nimble.data.Base)
+        otherNimble = isinstance(other, nimble.data.Base)
 
-        if not isNimble and not dataHelpers._looksNumeric(other):
+        if not otherNimble and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
@@ -3852,7 +3852,7 @@ class Base(object):
         self._numericValidation()
 
         # test element type other
-        if isNimble:
+        if otherNimble:
             other._numericValidation(right=True)
 
         divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
@@ -3860,9 +3860,12 @@ class Base(object):
                     '__mod__', '__rmod__', '__imod__', ]
         if opName.startswith('__r'):
             toCheck = self
+            toCheckNimble = True
         else:
             toCheck = other
-        if isNimble and opName in divNames:
+            toCheckNimble = isinstance(toCheck, nimble.data.Base)
+
+        if toCheckNimble and opName in divNames:
             if toCheck.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
@@ -3872,11 +3875,15 @@ class Base(object):
                 msg = "Cannot perform " + opName + " when the second "
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
-        if not isNimble and opName in divNames:
+        if not toCheckNimble and opName in divNames:
             if toCheck == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
                 raise ZeroDivisionError(msg)
+            if toCheck != toCheck or numpy.isinf(toCheck):
+                msg = "Cannot perform " + opName + " when the second "
+                msg += "argument contains any NaNs or Infs"
+                raise InvalidArgumentValue(msg)
 
     def _genericArithmeticBinary(self, opName, other):
 
