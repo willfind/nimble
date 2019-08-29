@@ -291,25 +291,20 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # verify the learner is available
         self._confirmValidLearner(learnerName)
 
-        # validate argument distributions
-        groupedArgsWithDefaults = self._validateArgumentDistribution(
-            learnerName, arguments)
-
-        ### INPUT TRANSFORMATION ###
-        # recursively work through arguments,
-        # doing in-package object instantiation
-        instantiatedInputs = self._instantiateArguments(
-            learnerName, groupedArgsWithDefaults)
-
         # the scratch space dictionary that the package implementor may use to
         # pass information between I/O transformation, the trainer and applier
         customDict = {}
 
+        # include default arguments and validate the arguments provided
+        allArguments = self._getAllArguments(learnerName, arguments)
+
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
-            learnerName, trainX, trainY, None, instantiatedInputs, customDict)
+            learnerName, trainX, trainY, None, allArguments, customDict)
         transTrainX, transTrainY, _, transArguments = transformedInputs
 
+        transformedInputs = (transformedInputs[0], transformedInputs[1],
+                             transformedInputs[2], transArguments)
         ### LEARNER CREATION / TRAINING ###
 
         # train the instantiated learner
@@ -317,6 +312,118 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                                        transArguments, customDict)
 
         return (trainedBackend, transformedInputs, customDict)
+
+
+    def _getCompleteArguments(self, name, neededParams, availableDefaults,
+                              arguments, possibleParams, possibleDefaults):
+        check = arguments.copy()
+        completeArgs = {}
+        for param in neededParams:
+            if param in check:
+                completeArgs[param] = check[param]
+                del check[param]
+            elif param in availableDefaults:
+                completeArgs[param] = availableDefaults[param]
+            else:
+                msg = "MISSING LEARNING PARAMETER! "
+                msg += "When trying to validate arguments for " + name
+                msg += ", we couldn't find a value for the parameter named "
+                msg += "'" + param + "'. "
+                msg += "The allowed parameters were: "
+                msg += prettyListString(neededParams, useAnd=True)
+                msg += ". These were choosen as the best guess given the "
+                msg += "inputs out of the following (numbered) list of "
+                msg += "possible parameter sets: "
+                msg += prettyListString(possibleParams, numberItems=True,
+                                        itemStr=prettyListString)
+                if len(availableDefaults) == 0:
+                    msg += ". Out of the allowed parameters, all required "
+                    msg += "values specified by the user"
+                else:
+                    msg += ". Out of the allowed parameters, the following "
+                    msg += "could be omited, which would result in the "
+                    msg += "associated default value being used: "
+                    msg += prettyDictString(availableDefaults, useAnd=True)
+
+                if len(arguments) == 0:
+                    msg += ". However, no arguments were inputed."
+                else:
+                    msg += ". The full mapping of inputs actually provided "
+                    msg += "was: " + prettyDictString(arguments)
+
+                raise InvalidArgumentValue(msg)
+
+        if check:
+            msg = "EXTRA LEARNER PARAMETER! "
+            msg += "When trying to validate arguments for "
+            msg += name + ", the following list of parameter "
+            msg += "names were not matched: "
+            msg += prettyListString(list(check.keys()), useAnd=True)
+            msg += ". The allowed parameters were: "
+            msg += prettyListString(neededParams, useAnd=True)
+            msg += ". These were choosen as the best guess given the "
+            msg += "inputs out of the following (numbered) list of "
+            msg += "possible parameter sets: "
+            msg += prettyListString(possibleParams, numberItems=True,
+                                itemStr=prettyListString)
+            msg += ". The full mapping of inputs actually provided was: "
+            msg += prettyDictString(arguments) + ". "
+            msg += "If extra parameters were intended to be passed to one of "
+            msg += "the arguments, be sure to group them using a nimble.Init "
+            msg += "object. "
+
+            raise InvalidArgumentValue(msg)
+
+        return completeArgs
+
+
+    def _getAllArguments(self, learnerName, arguments):
+        if arguments is None:
+            arguments = {}
+        learnerParams = self.getLearnerParameterNames(learnerName)
+        learnerDefaults = self.getLearnerDefaultValues(learnerName)
+        bestIndex = self._chooseBestParameterSet(learnerParams,
+                                                 learnerDefaults, arguments)
+        useParams = learnerParams[bestIndex]
+        useDefaults = learnerDefaults[bestIndex]
+
+        completeArgs = self._getCompleteArguments(
+            learnerName, useParams, useDefaults, arguments, learnerParams,
+            learnerDefaults)
+
+        return completeArgs
+
+
+    def _argumentInit(self, toInit):
+        """
+        Recursive function for instantiating learner subobjects
+        """
+        initObject = self.findCallable(toInit.name)
+        if initObject is None:
+            msg = 'Unable to locate "{}" in this interface'.format(toInit.name)
+            raise InvalidArgumentValue(msg)
+
+        initArgs = {}
+        for arg, val in toInit.kwargs.items():
+            # recurse if another subject needs to be instantiated
+            if isinstance(val, nimble.Init):
+                subObj = self._argumentInit(val)
+                initArgs[arg] = subObj
+            else:
+                initArgs[arg] = val
+
+        allParams = self._getParameterNames(toInit.name)
+        allDefaults = self._getDefaultValues(toInit.name)
+        bestIndex = self._chooseBestParameterSet(allParams, allDefaults,
+                                                 toInit.kwargs)
+        useParams = allParams[bestIndex]
+        useDefaults = allDefaults[bestIndex]
+
+        # validate arguments
+        _ = self._getCompleteArguments(toInit.name, useParams, useDefaults,
+                                       initArgs, allParams, allDefaults)
+
+        return initObject(**initArgs)
 
 
     def setOption(self, option, value):
@@ -354,326 +461,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             ret = self._optionDefaults(option)
         return ret
 
-
-    def _validateArgumentDistribution(self, learnerName, arguments):
-        """
-        We check that each call has all the needed arguments, that in
-        total we are using each argument only once, and that we use them
-        all.
-
-        Returns
-        -------
-        A copy of the arguments
-            These have been arranged for easy instantiation.
-        """
-        if arguments is None:
-            arguments = []
-        baseCallName = learnerName
-        possibleParamSets = self.getLearnerParameterNames(learnerName)
-        possibleDefaults = self.getLearnerDefaultValues(learnerName)
-        bestIndex = self._chooseBestParameterSet(possibleParamSets,
-                                                 possibleDefaults, arguments)
-
-        neededParams = possibleParamSets[bestIndex]
-        availableDefaults = possibleDefaults[bestIndex]
-        available = copy.deepcopy(arguments)
-
-        ret, _ = self._validateArgumentDistributionHelper(
-            baseCallName, neededParams, availableDefaults, available, False,
-            arguments)
-        return ret
-
-    def _isInstantiable(self, val, hasDefault, defVal):
-        if hasDefault and isinstance(defVal, six.string_types):
-            return False
-
-        if isinstance(val, six.string_types):
-            tmpCallable = self.findCallable(val)
-
-            # if tmpCallable returned something, so long as it isn't a function
-            # or a method, it should be instantiable
-            isNone = tmpCallable is None
-            isMethod = inspect.ismethod(tmpCallable)
-            isFunction = inspect.isfunction(tmpCallable)
-            if not isNone and not isMethod and not isFunction:
-                return True
-
-        return False
-
-    def _validateArgumentDistributionHelper(
-            self, currCallName, currNeededParams, currDefaults, available,
-            sharedPool, original):
-        """
-        Recursive function for actually performing
-        _validateArgumentDistribution. Will recurse when encountering
-        shorthand for making in package calls, where the desired
-        arguments are in another dictionary.
-        """
-        ret = {}
-        # key: key value in ret for accessing appropriate subargs set
-        # value: list of key value pair to replace in that set
-        delayedAllocations = {None: []}
-        # dict where the key matches the param name of the thing that will be
-        # instantiated, and the value is a triple, consisting of the the
-        # avaiable value, the values consused from available, and the additions
-        # to delayedAllocations
-        delayedInstantiations = {}
-        #work through this level's needed parameters
-        for paramName in currNeededParams:
-            # is param actually there? Is there a default associated with it?
-            present = paramName in available
-            hasDefault = paramName in currDefaults
-
-            # In each conditional, we have three main tasks: identifying what
-            # values will be used, book keeping for that value (removal,
-            # delayed allocation / instantiation), and adding values to ret
-            if present and hasDefault:
-                paramValue = available[paramName]
-                paramDefault = currDefaults[paramName]
-                addToDelayedIfNeeded = True
-                if (self._isInstantiable(paramValue, True, paramDefault)
-                        or self._isInstantiable(
-                            paramDefault, True, paramDefault)):
-                    availableBackup = copy.deepcopy(available)
-                    allocationsBackup = copy.deepcopy(delayedAllocations)
-
-                if self._isInstantiable(paramDefault, True, paramDefault):
-                    # try recursive call using default value
-                    try:
-                        self._setupValidationRecursiveCall(
-                            paramDefault, available, ret, delayedAllocations,
-                            original)
-                    except Exception:
-                    # try recursive call with actual value and copied available
-                        available = availableBackup
-                        self._setupValidationRecursiveCall(
-                            paramValue, available, ret, delayedAllocations,
-                            original)
-                        del available[paramName]
-                        addToDelayedIfNeeded = False
-                else:
-                    ret[paramName] = paramDefault
-
-                if not self._isInstantiable(paramValue, True, paramDefault):
-                    # mark to use real value if it isn't allocated elsewhere
-                    delayedAllocations[None].append((paramName, paramValue))
-                else:
-                    if addToDelayedIfNeeded:
-                        availableChanges = {}
-                        for keyBackup in availableBackup:
-                            valueBackup = availableBackup[keyBackup]
-                            if keyBackup not in available:
-                                availableChanges[keyBackup] = valueBackup
-                        delayedInstantiations[paramName] = (
-                            available[paramName], availableChanges,
-                            allocationsBackup)
-
-            elif present and not hasDefault:
-                paramValue = available[paramName]
-                # is it something that needs to be instantiated and therefore
-                # needs params of its own?
-                if self._isInstantiable(paramValue, False, None):
-                    self._setupValidationRecursiveCall(paramValue, available,
-                                                       ret, delayedAllocations,
-                                                       original)
-                del available[paramName]
-                ret[paramName] = paramValue
-            elif not present and hasDefault:
-                paramValue = currDefaults[paramName]
-                # is it something that needs to be instantiated and therefore
-                # needs params of its own?
-                # TODO is findCallable really most reliable trigger for this?
-                # maybe we should check that you can get params from it too
-                # if isInstantiable(paramValue, True, paramValue):
-                #    self._setupValidationRecursiveCall(
-                #        paramValue, available, ret, delayedAllocations,
-                #        original)
-                ret[paramName] = currDefaults[paramName]
-            # not present and no default
-            else:
-                if currCallName in self.listLearners():
-                    subParamGroup = self.getLearnerParameterNames(currCallName)
-                else:
-                    subParamGroup = self._getParameterNames(currCallName)
-
-                msg = "MISSING LEARNING PARAMETER! "
-                msg += "When trying to validate arguments for " + currCallName
-                msg += ", we couldn't find a value for the parameter named "
-                msg += "'" + str(paramName) + "'. "
-                msg += "The allowed parameters were: "
-                msg += prettyListString(currNeededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the "
-                msg += "inputs out of the following (numbered) list of "
-                msg += "possible parameter sets: "
-                msg += prettyListString(subParamGroup, numberItems=True,
-                                        itemStr=prettyListString)
-
-                if len(currDefaults) == 0:
-                    msg += ". Out of the allowed parameters, all required "
-                    msg += "values specified by the user"
-                else:
-                    msg += ". Out of the allowed parameters, the following "
-                    msg += "could be omited, which would result in the "
-                    msg += "associated default value being used: "
-                    msg += prettyDictString(currDefaults, useAnd=True)
-
-                if len(original) == 0:
-                    msg += ". However, no arguments were inputed."
-                else:
-                    msg += ". The full mapping of inputs actually provided "
-                    msg += "was: " + prettyDictString(original) + ". "
-
-                raise InvalidArgumentValue(msg)
-
-        # if this pool of arguments is not shared, then this is the last
-        # subcall, and we can finalize the allocations
-        if not sharedPool:
-            # work through list of instantiable arguments which were
-            # tentatively called using defaults
-            for key in delayedInstantiations.keys():
-                (value, used, _) = delayedInstantiations[key]
-                # check to see if it is still in available
-                if key in available:
-                    # undo the changes made by the default call
-                    used.update(available)
-                    # make recursive call instead with the actual value
-                    #try:
-                    self._setupValidationRecursiveCall(value, used, ret,
-                                                       delayedAllocations,
-                                                       original)
-                    available = used
-                    ret[key] = value
-                    del available[key]
-                #except:
-                # if fail, keep the results of the call with the default
-                #	pass
-
-            # work through a list of possible keys for delayedAllocations dict,
-            # if there are allocations associated with that key, perform them.
-            for possibleKey in delayedAllocations.keys():
-                changesList = delayedAllocations[possibleKey]
-                for (k, v) in changesList:
-                    if k in available:
-                        if possibleKey is None:
-                            ret[k] = v
-                        else:
-                            ret[possibleKey][k] = v
-                        del available[k]
-
-            # at this point, everything should have been used and then removed.
-            if len(available) != 0:
-                if currCallName in self.listLearners():
-                    subParamGroup = self.getLearnerParameterNames(currCallName)
-                else:
-                    subParamGroup = self._getParameterNames(currCallName)
-
-                msg = "EXTRA LEARNER PARAMETER! "
-                msg += "When trying to validate arguments for "
-                msg += currCallName + ", the following list of parameter "
-                msg += "names were not matched: "
-                msg += prettyListString(list(available.keys()), useAnd=True)
-                msg += ". The allowed parameters were: "
-                msg += prettyListString(currNeededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the "
-                msg += "inputs out of the following (numbered) list of "
-                msg += "possible parameter sets: "
-                msg += prettyListString(subParamGroup, numberItems=True,
-                                        itemStr=prettyListString)
-                msg += ". The full mapping of inputs actually provided was: "
-                msg += prettyDictString(original) + ". "
-
-                raise InvalidArgumentValue(msg)
-
-            delayedAllocations = {}
-
-        return (ret, delayedAllocations)
-
-    def _setupValidationRecursiveCall(self, paramValue, available, callingRet,
-                                      callingAllocations, original):
-        # are the params for this value in a restricted argument pool?
-        if paramValue in available:
-            subSource = available[paramValue]
-            subShared = False
-            # We can and should do this here because if there is ever another
-            # key with paramVale as the value, then it will be functionally
-            # equivalent to save these args for then as it would be to use them
-            # here. So, we do the easy thing, and consume them now.
-            del available[paramValue]
-        # else, they're in the main, shared, pool
-        else:
-            subSource = available
-            subShared = True
-
-        # where we get the wanted parameter set from depends on the kind of
-        # thing that we need to instantiate
-        if paramValue in self.listLearners():
-            subParamGroup = self.getLearnerParameterNames(paramValue)
-            subDefaults = self.getLearnerDefaultValues(paramValue)
-        else:
-            subParamGroup = self._getParameterNames(paramValue)
-            subDefaults = self._getDefaultValues(paramValue)
-
-        bestIndex = self._chooseBestParameterSet(subParamGroup, subDefaults,
-                                                 subSource)
-        subParamGroup = subParamGroup[bestIndex]
-        subDefaults = subDefaults[bestIndex]
-
-        (ret, allocations) = self._validateArgumentDistributionHelper(
-            paramValue, subParamGroup, subDefaults, subSource, subShared,
-            original)
-
-        # integrate the returned values into the state of the calling frame
-        callingRet[paramValue] = ret
-        if subShared:
-            for pair in allocations[None]:
-                if paramValue not in callingAllocations:
-                    callingAllocations[paramValue] = []
-                callingAllocations[paramValue].append(pair)
-
-
-    def _instantiateArguments(self, learnerName, arguments):
-        """
-        Recursively consumes the contents of the arguments parameter,
-        checking for ones that need to be instantiated using in-package
-        calls, and performing that action if needed. Returns a new
-        dictionary with the same contents as 'arguments', except with
-        the replacement of in-package objects for their string names.
-        """
-        toProcess = copy.deepcopy(arguments)
-        return self._instantiateArgumentsHelper(toProcess)
-
-    def _instantiateArgumentsHelper(self, toProcess):
-        """
-        Recursive function for actually performing
-        _instantiateArguments. Will recurse when encountering shorthand
-        for making in package calls, where the desired arguments are in
-        another dictionary.
-        """
-        ignoreKeys = []
-        ret = {}
-        for paramName in toProcess:
-            paramValue = toProcess[paramName]
-            if isinstance(paramValue, six.string_types):
-                ignoreKeys.append(paramValue)
-                toCall = self.findCallable(paramValue)
-                # if we can find an object for it, and we've prepped the
-                # arguments, then we actually instantiate an object
-                if toCall is not None and paramValue in toProcess:
-                    subInitParams = toProcess[paramValue]
-                    if subInitParams is None:
-                        ret[paramName] = paramValue
-                        continue
-                    instantiatedParams = self._instantiateArgumentsHelper(
-                        subInitParams)
-                    paramValue = toCall(**instantiatedParams)
-
-            ret[paramName] = paramValue
-
-        # for key in ignoreKeys:
-        #     if key in ret:
-        #         del ret[key]
-
-        return ret
 
     def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults,
                                 arguments):

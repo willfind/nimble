@@ -308,7 +308,13 @@ To install scikit-learn
             if testX is not None:
                 testX = numpy.array(testX, numpy.int32)
 
-        return (trainX, trainY, testX, copy.deepcopy(arguments))
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if isinstance(val, nimble.Init):
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
+
+        return (trainX, trainY, testX, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,

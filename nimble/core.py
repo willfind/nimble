@@ -15,6 +15,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.exceptions import ImproperObjectAction
 from nimble.logger import handleLogging, startTimer, stopTimer
 from nimble.logger import stringToDatetime
 from nimble.helpers import findBestInterface
@@ -467,6 +468,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         Mapping argument names (strings) to their values, to be used
         during training and application.
         Example: {'dimensions':5, 'k':5}
+        If an argument requires its own parameters for instantiation,
+        use a nimble.Init object.
+        Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -989,8 +993,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments`` .
     folds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1151,9 +1157,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         To trigger cross-validation using multiple values for arguments,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        scorevfor  the learner when the learner was passed all three
-        values ofv``k``, separately. These will be merged any
-        kwarguments for the learner.
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
         output wanted: 'label' if we class labels are desired,
@@ -1329,8 +1337,10 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1506,8 +1516,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1695,8 +1707,10 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1986,6 +2000,70 @@ def loadTrainedLearner(inputPath, useLog=None):
     handleLogging(useLog, 'load', "TrainedLearner",
                   learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
+
+
+class CV(object):
+    """
+    Provide a list of values to an argument for cross-validation.
+
+    Triggers cross-validation to occur for the learner using each of the
+    values provided and scoring each one.
+
+    Parameters
+    ----------
+    argumentList : list
+        A list of values for the argument.
+    """
+    def __init__(self, argumentList):
+        try:
+            self.argumentTuple = tuple(argumentList)
+        except TypeError:
+            msg = "argumentList must be iterable."
+            raise InvalidArgumentValue(msg)
+
+    def __getitem__(self, key):
+        return self.argumentTuple[key]
+
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
+    def __len__(self):
+        return len(self.argumentTuple)
+
+    def __str__(self):
+        return str(self.argumentTuple)
+
+    def __repr__(self):
+        return "CV(" + str(list(self.argumentTuple)) + ")"
+
+
+class Init(object):
+    """
+    Provide interface-specific objects as learner arguments.
+
+    Triggers the interface to search for object ``name`` and instantiate
+    the object so that it can be used as the argument of the learner.
+    Additional instantiation parameters can be provided as keyword
+    arguments.
+
+    Parameters
+    ----------
+    name : str
+        The name of the object to find within the interface.
+    kwargs
+        Any keyword arguments will be used as instantiation parameters.
+    """
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
+        kwargStr = ", ".join(formatKwargs)
+        return "Init({}, {})".format(repr(self.name), kwargStr)
 
 
 def coo_matrixTodense(origTodense):
