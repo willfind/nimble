@@ -132,5 +132,6 @@ def endAlternateControl():
     if _saved != (None, None, None):
         pythonRandom.setstate(_saved[0])
         numpyRandom.set_state(_saved[1])
-        shogunRandom.init_random(_saved[2])
+        if shogun is not None:
+            shogunRandom.init_random(_saved[2])
         _saved = (None, None, None)

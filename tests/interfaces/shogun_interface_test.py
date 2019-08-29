@@ -45,9 +45,6 @@ scipy = nimble.importModule('scipy.sparse')
 
 shogunSkipDec = SkipMissing('shogun')
 
-OUTFILE_PREFIX = 'shogunParameterManifest_v'
-
-
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
     shogunInt = nimble.helpers.findBestInterface('shogun')
@@ -56,58 +53,6 @@ def test_Shogun_findCallable_nameAndDocPreservation():
     assert 'WrappedShogun' in str(type(wrappedShogun))
     assert wrappedShogun.__name__ == 'LibSVM'
     assert wrappedShogun.__doc__
-
-@shogunSkipDec
-def _DISABLED_testShogunObjectsInManifest():
-    shogunInt = nimble.helpers.findBestInterface('shogun')
-    fullVersion = shogunInt.version()
-    print (fullVersion)
-    version = distutils.version.LooseVersion(fullVersion.split('_')[0]).vstring[1:]
-
-    fileName = OUTFILE_PREFIX + version
-    filePath = os.path.join(nimble.nimblePath, 'interfaces', 'metadata', fileName)
-
-    print (filePath)
-
-    with open(filePath, 'r') as fp:
-        manifest = json.load(fp)
-
-    hasAll = hasattr(shogunInt.shogun, '__all__')
-    contents = shogunInt.shogun.__all__ if hasAll else dir(shogunInt.shogun)
-    depth = 1 if hasAll else 0
-
-    # the function here is passed as the function to determine what kinds of objects
-    # count as learners. For this application, we define all objects that are instantiable as
-    # 'learners' so that we can easily get a list of instantiable objects in shogun to see if
-    # they are represented int he manifest. We define an instantiable object as an
-    # init callable object which is not a method, function, or builtin.
-    def isInstantable(x):
-        hasInit = hasattr(x, '__init__')
-        hasCall = hasattr(x, '__call__')
-        isMethod = inspect.ismethod(x)
-        isFunction = inspect.isfunction(x)
-        isBuiltiin = inspect.isbuiltin(x)
-        if hasInit and hasCall and not isMethod and not isFunction and not isBuiltiin:
-            return True
-        return False
-
-    allObjectsSearcher = PythonSearcher(shogunInt.shogun, contents, {}, isInstantable, depth)
-    allObjects = allObjectsSearcher.allLearners()
-
-    unseen = []
-    for k in manifest.keys():
-        if not(k in allObjects or k[1:] in allObjects):
-            unseen.append(k)
-
-#    print (unseen)
-#    print ("")
-
-#    for objName in allObjects:
-#        assert objName in manifest or 'C' + objName in manifest
-#        if not(objName in manifest or 'C' + objName in manifest):
-#            print (objName)
-
-#    assert False
 
 
 @shogunSkipDec
