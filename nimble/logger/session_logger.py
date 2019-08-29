@@ -359,8 +359,8 @@ class SessionLogger(object):
 
             if arguments is not None and arguments != {}:
                 for name, value in arguments.items():
-                    if isinstance(value, nimble.CV):
-                        arguments[name] = repr(value)
+                    arguments[name] = repr(value)
+
                 logInfo['arguments'] = arguments
 
             if metrics is not None and metrics != {}:

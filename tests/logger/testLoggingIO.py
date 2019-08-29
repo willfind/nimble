@@ -222,7 +222,8 @@ def testLoadTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "TrainedLearner" in logInfo
     assert "'learnerName': 'KNNClassifier'" in logInfo
-    assert "'learnerArgs': {'k': 1}" in logInfo
+    # all keys and values in learnerArgs are stored as strings
+    assert "'learnerArgs': {'k': '1'}" in logInfo
 
     # loadData
     with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
