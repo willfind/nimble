@@ -151,7 +151,7 @@ class SessionLogger(object):
 
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
         sessionNum = self.sessionNumber
-        logInfo = str(logInfo)
+        logInfo = repr(logInfo)
         statement = "INSERT INTO logger "
         statement += "(timestamp,sessionNumber,logType,logInfo) "
         statement += "VALUES (?,?,?,?);"
@@ -359,8 +359,12 @@ class SessionLogger(object):
 
             if arguments is not None and arguments != {}:
                 for name, value in arguments.items():
-                    arguments[name] = repr(value)
-
+                    try:
+                        literal_eval(repr(value))
+                        arguments[name] = value
+                    except (ValueError, SyntaxError):
+                        # use repr for objects which cannot eval
+                        arguments[name] = repr(value)
                 logInfo['arguments'] = arguments
 
             if metrics is not None and metrics != {}:
