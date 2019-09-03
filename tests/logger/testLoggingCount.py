@@ -94,7 +94,7 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
     'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'merge',
+    'flattenToOnePoint', 'groupByFeature', 'matrixMultiply', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
@@ -319,12 +319,13 @@ for call in classes:
 
 baseDunder_tested = [
     'Base.__abs__', 'Base.__add__', 'Base.__getitem__', 'Base.__floordiv__',
-    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imul__',
-    'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__', 'Base.__len__',
-    'Base.__mod__', 'Base.__mul__', 'Base.__neg__', 'Base.__pos__',
-    'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmod__',
-    'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
+    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imatmul__',
+    'Base.__imul__', 'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__',
+    'Base.__len__', 'Base.__matmul__', 'Base.__mod__', 'Base.__mul__',
+    'Base.__neg__', 'Base.__pos__', 'Base.__pow__', 'Base.__radd__',
+    'Base.__rfloordiv__', 'Base.__rmatmul__', 'Base.__rmod__', 'Base.__rmul__',
+    'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__', 'Base.__truediv__',
+    'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []

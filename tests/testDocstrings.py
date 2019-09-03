@@ -5,7 +5,7 @@ expected.
 
 from __future__ import absolute_import
 
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from nimble.data import Base, Matrix, List, Sparse, DataFrame
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.interfaces.keras_interface import Keras

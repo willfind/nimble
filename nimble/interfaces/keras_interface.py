@@ -19,7 +19,7 @@ from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 
 
 # Contains path to keras root directory
@@ -206,7 +206,7 @@ To install keras
         if trainX is not None:
             if trainX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                trainX = trainX.copy(to='numpy matrix')
+                trainX = trainX.copy(to='numpy array')
 
         if trainY is not None:
             if len(trainY.features) > 1:
@@ -219,7 +219,7 @@ To install keras
                 testX = testX.data
             elif testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                testX = testX.copy(to='numpy matrix')
+                testX = testX.copy(to='numpy array')
 
         instantiatedArgs = {}
         for arg, val in arguments.items():
@@ -288,8 +288,8 @@ To install keras
             def sparseGenerator():
                 while True:
                     for i in range(len(trainX.points)):
-                        tmpData = (trainX.pointView(i).copy(to='numpy matrix'),
-                                   numpy.matrix(trainY[i]))
+                        tmpData = (trainX.pointView(i).copy(to='numpyarray'),
+                                   numpy2DArray(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
             learner.fit_generator(**fitParams)
@@ -384,7 +384,7 @@ To install keras
             def sparseGenerator():
                 while True:
                     for i in range(len(testX.points)):
-                        tmpData = testX.pointView(i).copy(to='numpy matrix')
+                        tmpData = testX.pointView(i).copy(to='numpy array')
                         yield tmpData
             arguments['generator'] = sparseGenerator()
             return learner.predict_generator(**arguments)

@@ -37,7 +37,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine

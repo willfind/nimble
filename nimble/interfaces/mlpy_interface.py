@@ -23,7 +23,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -218,7 +218,7 @@ To install mlpy
             if trainX.getTypeString() == 'Matrix':
                 transTrainX = trainX.data
             else:
-                transTrainX = trainX.copy(to='numpy matrix')
+                transTrainX = trainX.copy(to='numpy array')
         else:
             transTrainX = None
 
@@ -231,7 +231,7 @@ To install mlpy
             if testX.getTypeString() == 'Matrix':
                 transTestX = testX.data
             else:
-                transTestX = testX.copy(to='numpy matrix')
+                transTestX = testX.copy(to='numpy array')
         else:
             transTestX = None
 

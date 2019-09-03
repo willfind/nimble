@@ -14,6 +14,7 @@ except ImportError:
 
 import nimble
 from nimble.customLearners import CustomLearner
+from nimble.utility import numpy2DArray
 
 
 class MultiOutputLinearRegression(CustomLearner):
@@ -27,7 +28,7 @@ class MultiOutputLinearRegression(CustomLearner):
 
     def train(self, trainX, trainY):
         self._models = []
-        rawTrainX = trainX.copy(to='numpymatrix')
+        rawTrainX = trainX.copy(to='numpyarray')
 
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i, useLog=False)
@@ -39,13 +40,13 @@ class MultiOutputLinearRegression(CustomLearner):
 
     def apply(self, testX):
         results = []
-        rawTestX = testX.copy(to='numpymatrix')
+        rawTestX = testX.copy(to='numpyarray')
 
         for i in range(len(self._models)):
             curr = self._models[i].predict(rawTestX)
             results.append(curr)
 
-        results = numpy.matrix(results)
+        results = numpy2DArray(results)
         results = results.transpose()
 
         return nimble.createData("Matrix", results, useLog=False)

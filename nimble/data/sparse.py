@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -41,7 +41,7 @@ class Sparse(Base):
     Parameters
     ----------
     data : object
-        A scipy sparse matrix, numpy matrix.
+        A scipy sparse matrix or two-dimensional numpy array.
     reuseData : bool
     elementType : type
         The scipy or numpy dtype of the data.
@@ -54,10 +54,9 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if ((not isinstance(data, numpy.matrix))
-                and (not scipy.sparse.isspmatrix(data))):
+        if not is2DArray(data) and not scipy.sparse.isspmatrix(data):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "numpy matrix"
+            msg += "two-dimensional numpy array"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -68,7 +67,7 @@ class Sparse(Base):
         elif scipy.sparse.isspmatrix(data):
             #data is a spmatrix in other format instead of coo
             self.data = data.tocoo()
-        else:#data is numpy.matrix
+        else:#data is numpy.array
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
@@ -251,9 +250,9 @@ class Sparse(Base):
         if to == 'pythonlist':
             return self.data.todense().tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data.todense())
+            return numpy2DArray(self.data.todense())
         if to == 'numpymatrix':
-            return self.data.todense()
+            return numpy.matrix(self.data.todense())
         if 'scipy' in to:
             if to == 'scipycsc':
                 return self.data.tocsc()
@@ -870,11 +869,19 @@ class Sparse(Base):
         return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
 
-    def _numericBinary_implementation(self, opName, other):
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Directs the operation to the best implementation available,
+        preserving the sparse representation whenever possible.
+        """
         if self.data.data is None:
             selfData = self.copy().data
         else:
             selfData = self.data
+
+        # scipy will perform matrix multiplication with mul operators
+        if 'mul' in opName:
+            return self._genericMul__implementation(opName, other)
         try:
             if isinstance(other, Sparse):
                 if other.data.data is None:
@@ -903,9 +910,6 @@ class Sparse(Base):
                     return self._genericArithmeticBinary_implementation(opName,
                                                                      other)
 
-            if opName.startswith('__i'):
-                # data modified within object
-                return self
             return Sparse(ret)
 
         except AttributeError as ae:
@@ -948,7 +952,7 @@ class Sparse(Base):
             self.data = coo_matrix(([], ([], [])),
                                    (len(self.points), len(self.features)))
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         if isinstance(other, nimble.data.Base):
             return self._matrixMultiply_implementation(other)
         else:
@@ -958,7 +962,7 @@ class Sparse(Base):
 
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
-        ret = self._numericBinary_implementation(notInplace, other)
+        ret = self._arithmeticBinary_implementation(notInplace, other)
         absPath, relPath = self._absPath, self._relPath
         self.referenceDataFrom(ret, useLog=False)
         self._absPath, self._relPath = absPath, relPath
@@ -966,21 +970,37 @@ class Sparse(Base):
 
     def _rsub__implementation(self, other):
         other = other * -1
-        return self._numericBinary_implementation('__add__', other)
+        return self._arithmeticBinary_implementation('__add__', other)
+
+    def _genericMul__implementation(self, opName, other):
+        if 'i' in opName:
+            if isinstance(other, nimble.data.Base):
+                self.elements.multiply(other, useLog=False)
+            else:
+                self.data *= other
+                self.data.eliminate_zeros()
+            return self
+        ret = self.copy()
+        if isinstance(other, nimble.data.Base):
+            ret.elements.multiply(other, useLog=False)
+        else:
+            ret.data *= other
+            ret.data.eliminate_zeros()
+        return ret
 
     def _genericFloordiv_implementation(self, opName, other):
         """
         Perform floordiv by modifying the results of truediv.
 
         There is no need for additional conversion when an inplace
-        operation is called because _numericBinary_implementation will
+        operation is called because _arithmeticBinary_implementation will
         return the self object in those cases, so the changes below are
         reflected inplace.
         """
         opSplit = opName.split('floordiv')
         trueDiv = opSplit[0] + 'truediv__'
         # ret is self for inplace operation
-        ret = self._numericBinary_implementation(trueDiv, other)
+        ret = self._arithmeticBinary_implementation(trueDiv, other)
         ret.data.data = numpy.floor(ret.data.data)
         ret.data.eliminate_zeros()
         return ret
@@ -1025,7 +1045,6 @@ class Sparse(Base):
             selfData = self.copy().data
         else:
             selfData = self.data
-
         ret = getattr(selfData.data, opName)(other)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
@@ -1300,8 +1319,8 @@ class SparseView(BaseView, Sparse):
 
         return ret
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         selfConv = self.copy(to="Sparse")
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
-        return selfConv._mul__implementation(other)
+        return selfConv._matmul__implementation(other)
