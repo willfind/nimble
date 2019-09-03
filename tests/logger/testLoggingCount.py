@@ -49,7 +49,7 @@ nimble_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
     'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
@@ -209,6 +209,10 @@ def test_importModule_logCount():
 @noLogEntryExpected
 def test_CV_logCount():
     k = nimble.CV([1, 3, 5])
+
+@noLogEntryExpected
+def test_Init_logCount():
+    i = nimble.Init('foo', bar=1)
 
 ########
 # Base #
