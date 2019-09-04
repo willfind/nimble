@@ -801,23 +801,11 @@ class NumericalDataSafe(DataTestObject):
     @noLogEntryExpected
     def test_matmul_autoObjs(self):
         """ Test __matmul__ against automated data """
-        back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__matmul__', False, 0.2)
+        back_autoVsNumpyObjCallee(self.constructor, numpy.matmul, '__matmul__', False, 0.2)
 
-    @noLogEntryExpected
-    def test_matmul_autoScalar(self):
-        """ Test __matmul__ of a scalar against automated data """
-        back_autoVsNumpyScalar(self.constructor, numpy.dot, '__matmul__', False, 0.2)
-
-    def test_autoVsNumpyObjCalleeDiffTypes(self):
+    def test_matmul_autoVsNumpyObjCalleeDiffTypes(self):
         """ Test __matmul__ against generated data with different nimble types of objects """
-        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__matmul__', False, 0.2)
-
-    def test_matmul_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __matmul__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__matmul__', False)
-
-    def test_matmul_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__matmul__')
+        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.matmul, '__matmul__', False, 0.2)
 
     def test_matmul_matrixmul_pfname_preservations(self):
         """ Test p/f names are preserved when calling __matmul__ with obj arg"""
@@ -825,30 +813,6 @@ class NumericalDataSafe(DataTestObject):
 
     def test_matmul_matrixmul_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__matmul__', False)
-
-
-    ###############
-    # __rmatmul__ #
-    ###############
-    @noLogEntryExpected
-    def test_rmatmul_autoScalar(self):
-        """ Test __rmatmul__ of a scalar against automated data """
-        back_autoVsNumpyScalar(self.constructor, numpy.dot, '__rmatmul__', False, 0.2)
-
-    def test_rmatmul_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __rmatmul__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__rmatmul__', False)
-
-    def test_rmatmul_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__rmatmul__')
-
-    def test_rmatmul_matrixmul_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __rmatmul__ with obj arg"""
-        back_matrixmul_pfname_preservations(self.constructor, '__rmatmul__', False)
-
-    def test_rmatmul_matrixmul_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, '__rmatmul__', False)
-
 
     ############
     # __add__ #
@@ -1574,23 +1538,11 @@ class NumericalModifying(DataTestObject):
     @noLogEntryExpected
     def test_imatmul_autoObjs(self):
         """ Test __imatmul__ against automated data """
-        back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__imatmul__', True, 0.2)
-
-    @noLogEntryExpected
-    def test_imatmul_autoScalar(self):
-        """ Test __imatmul__ of a scalar against automated data """
-        back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imatmul__', True, 0.2)
+        back_autoVsNumpyObjCallee(self.constructor, numpy.matmul, '__imatmul__', True, 0.2)
 
     def test_imatmul__autoVsNumpyObjCalleeDiffTypes(self):
         """ Test __imatmul__ against generated data with different nimble types of objects """
-        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__imatmul__', False, 0.2)
-
-    def test_imatmul_binaryscalar_pfname_preservations(self):
-        """ Test p/f names are preserved when calling __imatmul__ with scalar arg"""
-        back_binaryscalar_pfname_preservations(self.constructor, '__imatmul__', True)
-
-    def test_imatmul_binaryscalar_NamePath_preservations(self):
-        back_binaryscalar_NamePath_preservations(self.constructor, '__imatmul__')
+        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.matmul, '__imatmul__', False, 0.2)
 
     def test_imatmul_matrixmul_pfname_preservations(self):
         """ Test p/f names are preserved when calling __imatmul__ with obj arg"""

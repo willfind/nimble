@@ -3550,11 +3550,9 @@ class Base(object):
 
     def __matmul__(self, other):
         """
-        Perform matrix multiplication or scalar multiplication on this
-        object depending on the input ``other``.
+        Perform matrix multiplication.
         """
-        if (not isinstance(other, nimble.data.Base)
-                and not dataHelpers._looksNumeric(other)):
+        if not isinstance(other, nimble.data.Base):
             return NotImplemented
 
         # Test element type self
@@ -3563,18 +3561,17 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         # test element type other
-        if isinstance(other, nimble.data.Base):
-            if len(other.points) == 0 or len(other.features) == 0:
-                msg = "Cannot do a multiplication when points or features is "
-                msg += "empty"
-                raise ImproperObjectAction(msg)
+        if len(other.points) == 0 or len(other.features) == 0:
+            msg = "Cannot do a multiplication when points or features is "
+            msg += "empty"
+            raise ImproperObjectAction(msg)
 
-            if self._featureCount != len(other.points):
-                msg = "The number of features in the calling object must "
-                msg += "match the point in the callee object."
-                raise InvalidArgumentValue(msg)
+        if self._featureCount != len(other.points):
+            msg = "The number of features in the calling object must "
+            msg += "match the point in the callee object."
+            raise InvalidArgumentValue(msg)
 
-            self._validateEqualNames('feature', 'point', '__matmul__', other)
+        self._validateEqualNames('feature', 'point', '__matmul__', other)
 
         try:
             ret = self._matmul__implementation(other)
@@ -3584,11 +3581,10 @@ class Base(object):
             other._numericValidation(right=True)
             raise e
 
-        if isinstance(other, nimble.data.Base):
-            if self._pointNamesCreated():
-                ret.points.setNames(self.points.getNames(), useLog=False)
-            if other._featureNamesCreated():
-                ret.features.setNames(other.features.getNames(), useLog=False)
+        if self._pointNamesCreated():
+            ret.points.setNames(self.points.getNames(), useLog=False)
+        if other._featureNamesCreated():
+            ret.features.setNames(other.features.getNames(), useLog=False)
 
         pathSource = 'merge' if isinstance(other, nimble.data.Base) else 'self'
 
@@ -3598,16 +3594,13 @@ class Base(object):
 
     def __rmatmul__(self, other):
         """
-        Perform scalar multiplication with this object on the right.
+        Perform matrix multiplication with this object on the right.
         """
-        if dataHelpers._looksNumeric(other):
-            return self.__matmul__(other)
         return NotImplemented
 
     def __imatmul__(self, other):
         """
-        Perform in place matrix multiplication or scalar multiplication,
-        depending in the input ``other``.
+        Perform in place matrix multiplication.
         """
         ret = self.__matmul__(other)
         if ret is not NotImplemented:

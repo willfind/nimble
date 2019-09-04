@@ -589,14 +589,6 @@ class List(Base):
         return self._genericArithmeticBinary_implementation(opName, other)
 
     def _matmul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
-
-    def _matrixMultiply_implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -616,18 +608,6 @@ class List(Base):
                 retP.append(runningTotal)
             ret.append(retP)
         return List(ret)
-
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        for point in self.data:
-            for i in range(len(point)):
-                point[i] *= scalar
-
 
 class ListView(BaseView, List):
     """

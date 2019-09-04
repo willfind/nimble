@@ -2083,7 +2083,7 @@ def coo_matrixTodense(origTodense):
             retDType = self.dtype
             if isinstance(retDType, numpy.flexible):
                 retDType = object
-            ret = numpy2DArray(numpy.zeros(self.shape), dtype=retDType)
+            ret = numpy.zeros(self.shape, dtype=retDType)
             nz = (self.row, self.col)
             for (i, j), v in zip(zip(*nz), self.data):
                 ret[i, j] = v

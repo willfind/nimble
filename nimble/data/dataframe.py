@@ -186,14 +186,14 @@ class DataFrame(Base):
                 data.reset_index(drop=True, inplace=True)
                 data.columns = range(len(self.features))
             else:
-                data = numpy2DArray(self.data.values)
+                data = self.data.values.copy()
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
         if to == 'pythonlist':
             return self.data.values.tolist()
         if to == 'numpyarray':
-            return numpy2DArray(self.data.values)
+            return self.data.values.copy()
         if to == 'numpymatrix':
             return numpy.matrix(self.data.values)
         if 'scipy' in to:
@@ -379,7 +379,7 @@ class DataFrame(Base):
         except (AttributeError, InvalidArgumentType):
             return self._genericArithmeticBinary_implementation(opName, other)
 
-    def _matrixMultiply_implementation(self, other):
+    def _matmul__implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -394,22 +394,6 @@ class DataFrame(Base):
         else:
             ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
         return DataFrame(ret)
-
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        self.data = self.data * scalar
-
-    def _matmul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        ret = self.copy()
-        ret._scalarMultiply_implementation(other)
-        return ret
 
     def _updateName(self, axis):
         """
