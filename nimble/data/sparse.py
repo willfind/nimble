@@ -250,7 +250,7 @@ class Sparse(Base):
         if to == 'pythonlist':
             return self.data.todense().tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data.todense())
+            return self.data.todense()
         if to == 'numpymatrix':
             return numpy.matrix(self.data.todense())
         if 'scipy' in to:

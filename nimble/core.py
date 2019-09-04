@@ -2073,7 +2073,7 @@ def coo_matrixTodense(origTodense):
     """
     def f(self):
         try:
-            return origTodense(self)
+            return numpy.array(origTodense(self))
         except Exception:
             # flexible dtypes, such as strings, when used in scipy sparse
             # object create an implicitly mixed datatype: some values are
