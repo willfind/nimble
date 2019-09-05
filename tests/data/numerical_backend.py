@@ -717,7 +717,7 @@ def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     data = [[1, 2, 3], [0, 0, 0]]
     toTest = constructor(data)
-    rint = pythonRandom.randint(1, 5)
+    rint = pythonRandom.randint(2, 5)
     try:
         ret = getattr(toTest, nimbleOp)(rint)
         if toTest.getTypeString() == "Sparse":
@@ -727,6 +727,19 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     except ZeroDivisionError:
         assert nimbleOp.startswith('__r')
 
+@patch('nimble.data.Sparse._genericArithmeticBinary_implementation', calledException)
+@patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+def back_sparseScalarOfOne(constructor, nimbleOp):
+    """Test Sparse does not call helper functions for these scalar ops """
+    data = [[1, 2, 3], [0, 0, 0]]
+    toTest = constructor(data)
+    rint = 1.0
+    # Sparse should use a copy of toTest when exponent is 1, so neither
+    # helper function should be called
+    try:
+        ret = getattr(toTest, nimbleOp)(rint)
+    except CalledFunctionException:
+        assert False # this function should not be used for this operation
 
 
 class NumericalDataSafe(DataTestObject):
@@ -951,6 +964,9 @@ class NumericalDataSafe(DataTestObject):
     def test_mul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__mul__', False)
 
+    def test_mul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__mul__')
+
     ############
     # __rmul__ #
     ############
@@ -973,6 +989,8 @@ class NumericalDataSafe(DataTestObject):
     def test_rmul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rmul__', False)
 
+    def test_rmul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__rmul__')
 
     ###############
     # __truediv__ #
@@ -998,6 +1016,9 @@ class NumericalDataSafe(DataTestObject):
 
     def test_truediv_Sparse_calls_scalarZeroPreservingBinary(self):
         back_sparseScalarZeroPreserving(self.constructor, '__truediv__')
+
+    def test_truediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__truediv__')
 
 
     ################
@@ -1166,13 +1187,7 @@ class NumericalDataSafe(DataTestObject):
 
             expfObj = self.constructor(resultf)
             expiObj = self.constructor(resulti)
-            if t == 3:
-                print(lhsf)
-                print(rhsf)
-                print(lhsfObj)
-                print(rhsfObj)
-                print(resfObj)
-                print(expfObj)
+
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
 
@@ -1235,6 +1250,11 @@ class NumericalDataSafe(DataTestObject):
     def test_pow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__pow__')
 
+    def test_pow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__pow__')
+
+    def test_pow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__pow__')
 
     ############
     # __rpow__ #
@@ -1782,6 +1802,8 @@ class NumericalModifying(DataTestObject):
     def test_imul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__imul__', True)
 
+    def test_imul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__imul__')
 
     ################
     # __itruediv__ #
@@ -1807,6 +1829,9 @@ class NumericalModifying(DataTestObject):
 
     def test_itruediv_Sparse_calls_scalarZeroPreservingBinary(self):
         back_sparseScalarZeroPreserving(self.constructor, '__itruediv__')
+
+    def test_itruediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__itruediv__')
 
 
     ################
@@ -1967,6 +1992,11 @@ class NumericalModifying(DataTestObject):
     def test_ipow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
 
+    def test_ipow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__ipow__')
+
+    def test_ipow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__ipow__')
 
 class AllNumerical(NumericalDataSafe, NumericalModifying):
     pass

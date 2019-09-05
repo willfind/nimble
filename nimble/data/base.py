@@ -3911,19 +3911,21 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         elif opName.startswith('__r'):
-            if other == 0 and any(elem < 0 for elem in self.elements):
-                msg = 'Zero cannot be raised to negative exponents'
-                raise ZeroDivisionError(msg)
-            if any(isComplex(other ** elem) for elem in self.elements):
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
+            for elem in self.elements:
+                if other == 0 and elem < 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(other ** elem):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
         else:
-            if other < 0 and any(elem == 0 for elem in self.elements):
-                msg = 'Zero cannot be raised to negative exponents'
-                raise ZeroDivisionError(msg)
-            if any(isComplex(elem ** other) for elem in self.elements):
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
+            for elem in self.elements:
+                if other < 0 and elem == 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(elem ** other):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
 
 
     def _genericArithmeticBinary(self, opName, other):
