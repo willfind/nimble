@@ -913,11 +913,13 @@ class Sparse(Base):
             return Sparse(ret)
 
         except AttributeError as ae:
+            if opName.startswith('__i'):
+                return self._inplaceBinary_implementation(opName, other)
             if 'floordiv' in opName:
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
-            raise ae
+            return self._genericArithmeticBinary_implementation(opName, other)
 
 
     def _matrixMultiply_implementation(self, other):
