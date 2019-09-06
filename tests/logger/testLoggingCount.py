@@ -137,7 +137,7 @@ elements_logged = [
     'calculate', 'transform', 'multiply', 'power',
     ]
 elements_notLogged = [
-    'count', 'countUnique', 'next',
+    'count', 'countUnique',
     ]
 elements_funcs = elements_logged + elements_notLogged
 elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
@@ -324,13 +324,13 @@ baseDunder_tested = [
     'Base.__len__', 'Base.__matmul__', 'Base.__mod__', 'Base.__mul__',
     'Base.__neg__', 'Base.__pos__', 'Base.__pow__', 'Base.__radd__',
     'Base.__rfloordiv__', 'Base.__rmatmul__', 'Base.__rmod__', 'Base.__rmul__',
-    'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__', 'Base.__truediv__',
-    'Base.__copy__', 'Base.__deepcopy__',
+    'Base.__rpow__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
+    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__iter__', 'Elements.__next__']
+elementsDunder_tested = ['Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 
