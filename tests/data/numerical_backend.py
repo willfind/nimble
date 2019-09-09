@@ -683,23 +683,15 @@ def run_full_backendDivMod(constructor, npEquiv, nimbleOp, inplace, sparsity):
 
 def run_full_backend(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
-
     wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_otherNotNumericException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_pShapeException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_fShapeException, InvalidArgumentValue, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
 
     back_autoVsNumpyObjCallee(constructor, npEquiv, nimbleOp, inplace, sparsity)
-
     back_autoVsNumpyScalar(constructor, npEquiv, nimbleOp, inplace, sparsity)
-
     back_autoVsNumpyObjCalleeDiffTypes(constructor, npEquiv, nimbleOp, inplace, sparsity)
 
 
@@ -715,11 +707,8 @@ def run_full_backendDivMod_rop(constructor, npEquiv, nimbleOp, inplace, sparsity
 
 def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
     wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *(constructor, nimbleOp))
-
     wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_pEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
-
     wrapAndCall(back_fEmptyException, ImproperObjectAction, *(constructor, constructor, nimbleOp))
 
     back_autoVsNumpyScalar(constructor, npEquiv, nimbleOp, inplace, sparsity)
@@ -728,7 +717,7 @@ def run_full_backend_rOp(constructor, npEquiv, nimbleOp, inplace, sparsity):
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     data = [[1, 2, 3], [0, 0, 0]]
     toTest = constructor(data)
-    rint = pythonRandom.randint(1, 5)
+    rint = pythonRandom.randint(2, 5)
     try:
         ret = getattr(toTest, nimbleOp)(rint)
         if toTest.getTypeString() == "Sparse":
@@ -738,6 +727,19 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     except ZeroDivisionError:
         assert nimbleOp.startswith('__r')
 
+@patch('nimble.data.Sparse._genericArithmeticBinary_implementation', calledException)
+@patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+def back_sparseScalarOfOne(constructor, nimbleOp):
+    """Test Sparse does not call helper functions for these scalar ops """
+    data = [[1, 2, 3], [0, 0, 0]]
+    toTest = constructor(data)
+    rint = 1.0
+    # Sparse should use a copy of toTest when exponent is 1, so neither
+    # helper function should be called
+    try:
+        ret = getattr(toTest, nimbleOp)(rint)
+    except CalledFunctionException:
+        assert False # this function should not be used for this operation
 
 
 class NumericalDataSafe(DataTestObject):
@@ -926,6 +928,9 @@ class NumericalDataSafe(DataTestObject):
     def test_mul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__mul__', False)
 
+    def test_mul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__mul__')
+
     ############
     # __rmul__ #
     ############
@@ -948,6 +953,8 @@ class NumericalDataSafe(DataTestObject):
     def test_rmul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__rmul__', False)
 
+    def test_rmul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__rmul__')
 
     ###############
     # __truediv__ #
@@ -973,6 +980,9 @@ class NumericalDataSafe(DataTestObject):
 
     def test_truediv_Sparse_calls_scalarZeroPreservingBinary(self):
         back_sparseScalarZeroPreserving(self.constructor, '__truediv__')
+
+    def test_truediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__truediv__')
 
 
     ################
@@ -1124,6 +1134,28 @@ class NumericalDataSafe(DataTestObject):
         wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
 
     @noLogEntryExpected
+    def test_pow_autoVsNumpyObj(self):
+        """ Test __pow__ with automated data and a nimble argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+
+            datas = makeAllData(self.constructor, self.constructor, n, .02)
+            # map abs() to avoid complex numbers
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
+
+            resultf = lhsf ** rhsf
+            resulti = lhsi ** rhsi
+            resfObj = lhsfObj ** rhsfObj
+            resiObj = lhsiObj ** rhsiObj
+
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
+
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+
+    @noLogEntryExpected
     def test_pow_autoVsNumpyScalar(self):
         """ Test __pow__ with automated data and a scalar argument, against numpy operations """
         trials = 5
@@ -1133,9 +1165,9 @@ class NumericalDataSafe(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-            # need numpy.array so performed elementwise
-            resultf = numpy.array(lhsf) ** scalar
-            resulti = numpy.array(lhsi) ** scalar
+
+            resultf = lhsf ** scalar
+            resulti = lhsi ** scalar
             resfObj = lhsfObj ** scalar
             resiObj = lhsiObj ** scalar
 
@@ -1145,12 +1177,115 @@ class NumericalDataSafe(DataTestObject):
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
 
+    @raises(ZeroDivisionError)
+    def test_pow_nimbleObj_zeroDivision_exception(self):
+        lhs = [[1, 2, 0], [4, 5, 6], [7, 8, 9]]
+        rhs = [[3, 2, -1], [2, 2, 2], [4, 5, 9]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+        lhsObj ** rhsObj
+
+    @raises(ZeroDivisionError)
+    def test_pow_scalar_zeroDivision_exception(self):
+        lhs = [[1, 2, 0], [4, 5, 6], [7, 8, 9]]
+        rhs = -1
+        lhsObj = self.constructor(lhs)
+        lhsObj ** rhs
+
+    @raises(ImproperObjectAction)
+    def test_pow_nimbleObj_complexNumber_exception(self):
+        lhs = [[1, 2, -0.895], [4, 5, 6], [7, 8, 9]]
+        rhs = [[3, 2, -0.895], [2, 2, 2], [4, 5, 9]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+        lhsObj ** rhsObj
+
+    @raises(ImproperObjectAction)
+    def test_pow_scalar_complexNumber_exception(self):
+        lhs = [[1, 2, -0.895], [4, 5, 6], [7, 8, 9]]
+        rhs = -0.895
+        lhsObj = self.constructor(lhs)
+        lhsObj ** rhs
+
     def test_pow_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __pow__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__pow__', False)
 
     def test_pow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__pow__')
+
+    def test_pow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__pow__')
+
+    def test_pow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__pow__')
+
+    ############
+    # __rpow__ #
+    ############
+
+    def test_rpow_exceptions(self):
+        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
+        constructor = self.constructor
+        nimbleOp = '__rpow__'
+        inputs = (constructor, nimbleOp)
+        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
+
+        inputs = (constructor, int, nimbleOp)
+        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
+
+        inputs = (constructor, constructor, nimbleOp)
+        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
+
+        inputs = (constructor, constructor, nimbleOp)
+        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
+
+    @noLogEntryExpected
+    def test_rpow_autoVsNumpyScalar(self):
+        """ Test __rpow__ with automated data and a scalar argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+            scalar = pythonRandom.randint(0, 5)
+
+            datas = makeAllData(self.constructor, None, n, .02)
+            # map abs() to avoid complex numbers
+            def getAbs(val):
+                if val is not None:
+                    return abs(val)
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(getAbs, datas)
+
+            resultf = scalar ** lhsf
+            resulti = scalar ** lhsi
+            resfObj = scalar ** lhsfObj
+            resiObj = scalar ** lhsiObj
+
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
+
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+
+    @raises(ZeroDivisionError)
+    def test_rpow_scalar_zeroDivision_exception(self):
+        data = [[1, 2, -1], [4, 5, 6], [7, 8, 9]]
+        num = 0
+        obj = self.constructor(data)
+        num ** obj
+
+    @raises(ImproperObjectAction)
+    def test_rpow_scalar_complexNumber_exception(self):
+        data = [[1, 2, -0.895], [4, 5, 6], [7, 8, 9]]
+        num = -0.895
+        obj = self.constructor(data)
+        num ** obj
+
+    def test_rpow_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rpow__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rpow__', False)
+
+    def test_rpow_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rpow__')
 
 
     ###########
@@ -1619,6 +1754,8 @@ class NumericalModifying(DataTestObject):
     def test_imul_binaryelementwise_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, '__imul__', True)
 
+    def test_imul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__imul__')
 
     ################
     # __itruediv__ #
@@ -1644,6 +1781,9 @@ class NumericalModifying(DataTestObject):
 
     def test_itruediv_Sparse_calls_scalarZeroPreservingBinary(self):
         back_sparseScalarZeroPreserving(self.constructor, '__itruediv__')
+
+    def test_itruediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__itruediv__')
 
 
     ################
@@ -1719,6 +1859,31 @@ class NumericalModifying(DataTestObject):
         inputs = (constructor, constructor, nimbleOp)
         wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
 
+    @noLogEntryExpected
+    def test_ipow_autoVsNumpyObj(self):
+        """ Test __ipow__ with automated data and a nimble argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+            scalar = pythonRandom.randint(0, 5)
+
+            datas = makeAllData(self.constructor, self.constructor, n, .02)
+            # map abs() to avoid complex numbers
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
+
+            resultf = lhsf ** rhsf
+            resulti = lhsi ** rhsi
+            resfObj = lhsfObj.__ipow__(rhsfObj)
+            resiObj = lhsiObj.__ipow__(rhsiObj)
+
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
+
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+            assert resfObj.isIdentical(lhsfObj)
+            assert resiObj.isIdentical(lhsiObj)
+
     def test_ipow_autoVsNumpyScalar(self):
         """ Test __ipow__ with automated data and a scalar argument, against numpy operations """
         trials = 5
@@ -1728,9 +1893,9 @@ class NumericalModifying(DataTestObject):
 
             datas = makeAllData(self.constructor, None, n, .02)
             (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-            # need numpy array to perform elementwise
-            resultf = numpy.array(lhsf) ** scalar
-            resulti = numpy.array(lhsi) ** scalar
+
+            resultf = lhsf ** scalar
+            resulti = lhsi ** scalar
             resfObj = lhsfObj.__ipow__(scalar)
             resiObj = lhsiObj.__ipow__(scalar)
 
@@ -1742,6 +1907,36 @@ class NumericalModifying(DataTestObject):
             assert resfObj.isIdentical(lhsfObj)
             assert resiObj.isIdentical(lhsiObj)
 
+    @raises(ZeroDivisionError)
+    def test_ipow_nimbleObj_zeroDivision_exception(self):
+        lhs = [[1, 2, 0], [4, 5, 6], [7, 8, 9]]
+        rhs = [[3, 2, -1], [2, 2, 2], [4, 5, 9]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+        lhsObj **= rhsObj
+
+    @raises(ZeroDivisionError)
+    def test_ipow_scalar_zeroDivision_exception(self):
+        lhs = [[1, 2, 0], [4, 5, 6], [7, 8, 9]]
+        rhs = -1
+        lhsObj = self.constructor(lhs)
+        lhsObj **= rhs
+
+    @raises(ImproperObjectAction)
+    def test_ipow_nimbleObj_complexNumber_exception(self):
+        lhs = [[1, 2, -0.895], [4, 5, 6], [7, 8, 9]]
+        rhs = [[3, 2, -0.895], [2, 2, 2], [4, 5, 9]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+        lhsObj **= rhsObj
+
+    @raises(ImproperObjectAction)
+    def test_ipow_scalar_complexNumber_exception(self):
+        lhs = [[1, 2, -0.895], [4, 5, 6], [7, 8, 9]]
+        rhs = -0.895
+        lhsObj = self.constructor(lhs)
+        lhsObj **= rhs
+
     def test_ipow_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __ipow__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__ipow__', True)
@@ -1749,6 +1944,11 @@ class NumericalModifying(DataTestObject):
     def test_ipow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
 
+    def test_ipow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__ipow__')
+
+    def test_ipow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__ipow__')
 
 class AllNumerical(NumericalDataSafe, NumericalModifying):
     pass

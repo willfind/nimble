@@ -3752,10 +3752,14 @@ class Base(object):
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        ret = self.copy()
-        ret.elements.power(other, useLog=False)
-        ret._name = dataHelpers.nextDefaultObjectName()
-        return ret
+        return self._genericArithmeticBinary('__pow__', other)
+
+    def __rpow__(self, other):
+        """
+        Perform elementwise exponentiation (iterated __mul__) using the
+        ``other`` scalar value as the bases.
+        """
+        return self._genericArithmeticBinary('__rpow__', other)
 
     def __ipow__(self, other):
         """
@@ -3764,8 +3768,7 @@ class Base(object):
         is a nimble Base object, or elementwise by a scalar if ``other``
         is some kind of numeric value.
         """
-        self.elements.power(other, useLog=False)
-        return self
+        return self._genericArithmeticBinary('__ipow__', other)
 
     def __pos__(self):
         """
@@ -3851,6 +3854,14 @@ class Base(object):
         divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
                     '__floordiv__', '__rfloordiv__', '__ifloordiv__',
                     '__mod__', '__rmod__', '__imod__', ]
+        powNames = ['__pow__', '__rpow__', '__ipow__']
+        if opName in divNames:
+            self._validateDivMod(opName, other)
+
+        if opName in powNames:
+            self._validatePow(opName, other)
+
+    def _validateDivMod(self, opName, other):
         if opName.startswith('__r'):
             toCheck = self
             toCheckNimble = True
@@ -3858,7 +3869,7 @@ class Base(object):
             toCheck = other
             toCheckNimble = isinstance(toCheck, nimble.data.Base)
 
-        if toCheckNimble and opName in divNames:
+        if toCheckNimble:
             if toCheck.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
@@ -3868,7 +3879,7 @@ class Base(object):
                 msg = "Cannot perform " + opName + " when the second "
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
-        if not toCheckNimble and opName in divNames:
+        else:
             if toCheck == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
@@ -3878,8 +3889,39 @@ class Base(object):
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
 
-    def _genericArithmeticBinary(self, opName, other):
 
+    def _validatePow(self, opName, other):
+        def isComplex(val):
+            return numpy.isnan(val) or isinstance(val, complex)
+
+        if isinstance(other, nimble.data.Base):
+            zipLR = zip(self.elements, other.elements)
+            for l, r in zipLR:
+                if l == 0 and r < 0:
+                    msg = 'Zeros cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(l ** r):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+        elif opName.startswith('__r'):
+            for elem in self.elements:
+                if other == 0 and elem < 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(other ** elem):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+        else:
+            for elem in self.elements:
+                if other < 0 and elem == 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(elem ** other):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+
+
+    def _genericArithmeticBinary(self, opName, other):
         isNimble = isinstance(other, nimble.data.Base)
 
         if isNimble:

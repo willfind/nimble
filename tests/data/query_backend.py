@@ -2398,7 +2398,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        viewIter = toTest.elements
+        viewIter = iter(toTest.elements)
         try:
             next(viewIter)
         except StopIteration:
@@ -2410,7 +2410,7 @@ class QueryBackend(DataTestObject):
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        viewIter = toTest.elements
+        viewIter = iter(toTest.elements)
         try:
             next(viewIter)
         except StopIteration:

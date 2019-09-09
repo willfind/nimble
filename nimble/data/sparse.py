@@ -874,31 +874,20 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
-
         # scipy will perform matrix multiplication with mul operators
         if 'mul' in opName:
             return self._genericMul__implementation(opName, other)
         try:
-            if isinstance(other, Sparse):
-                if other.data.data is None:
-                    otherData = other.copy().data
+            if isinstance(other, nimble.data.Base):
+                selfData = self._getSparseData()
+                if isinstance(other, Sparse):
+                    otherData = other._getSparseData()
                 else:
-                    otherData = other.data
+                    otherConv = other.copy('Matrix')
+                    otherData = otherConv.data
                 ret = getattr(selfData, opName)(otherData)
-            elif isinstance(other, nimble.data.Base):
-                otherConv = other.copy('Matrix')
-                ret = getattr(selfData, opName)(otherConv.data)
             else:
-                nonZeroModifying = ['truediv', 'floordiv', 'mod']
-                if any(name in opName for name in nonZeroModifying):
-                    return self._scalarZeroPreservingBinary_implementation(
-                        opName, other)
-                # scalar operations apply to all elements; use dense
-                return self._genericArithmeticBinary_implementation(opName, other)
+                return self._scalarBinary_implementation(opName, other)
 
             if ret is NotImplemented:
                 # most NotImplemented are inplace operations
@@ -906,18 +895,37 @@ class Sparse(Base):
                     return self._inplaceBinary_implementation(opName, other)
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
-                else:
-                    return self._genericArithmeticBinary_implementation(opName,
+                return self._genericArithmeticBinary_implementation(opName,
                                                                      other)
 
             return Sparse(ret)
 
         except AttributeError as ae:
+            if opName.startswith('__i'):
+                return self._inplaceBinary_implementation(opName, other)
             if 'floordiv' in opName:
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
-            raise ae
+            return self._genericArithmeticBinary_implementation(opName, other)
+
+
+    def _scalarBinary_implementation(self, opName, other):
+        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        if any(name in opName for name in oneSafe) and other == 1:
+            selfData = self._getSparseData()
+            return Sparse(selfData)
+        zeroSafe = ['truediv', 'floordiv', 'mod']
+        zeroPreserved = any(name in opName for name in zeroSafe)
+        if 'pow' in opName and opName != '__rpow__' and other != 0:
+            zeroPreserved = True
+        if zeroPreserved:
+            return self._scalarZeroPreservingBinary_implementation(
+                opName, other)
+        else:
+            # scalar operations apply to all elements; use dense
+            return self._genericArithmeticBinary_implementation(opName,
+                                                                other)
 
     def _matmul__implementation(self, other):
         """
@@ -951,6 +959,8 @@ class Sparse(Base):
         return self._arithmeticBinary_implementation('__add__', other)
 
     def _genericMul__implementation(self, opName, other):
+        if other == 1:
+            return self._scalarBinary_implementation(opName, other)
         if 'i' in opName:
             target = self
         else:
@@ -986,15 +996,9 @@ class Sparse(Base):
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
         """
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
+        selfData = self._getSparseData()
         if isinstance(other, Sparse):
-            if other.data.data is None:
-                otherData = other.copy().data.data
-            else:
-                otherData = other.data.data
+            otherData = other._getSparseData().data
         else: # another Base object type
             otherData = other.copy('Sparse').data.data
 
@@ -1015,10 +1019,7 @@ class Sparse(Base):
         apply the operation to the data attribute, the row and col
         attributes will remain unchanged.
         """
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
+        selfData = self._getSparseData()
         ret = getattr(selfData.data, opName)(other)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
@@ -1047,6 +1048,19 @@ class Sparse(Base):
 
         # flag that we are internally sorted
         self._sorted = axis
+
+    def _getSparseData(self):
+        """
+        Get the backend coo_matrix data for this object.
+
+        Since Views set self.data.data to None, we need to copy the view
+        to gain access to the coo_matrix data.
+        """
+        if self.data.data is None:
+            selfData = self.copy().data
+        else:
+            selfData = self.data
+        return selfData
 
 ###################
 # Generic Helpers #
