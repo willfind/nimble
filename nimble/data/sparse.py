@@ -250,7 +250,7 @@ class Sparse(Base):
         if to == 'pythonlist':
             return self.data.todense().tolist()
         if to == 'numpyarray':
-            return numpy2DArray(self.data.todense())
+            return self.data.todense()
         if to == 'numpymatrix':
             return numpy.matrix(self.data.todense())
         if 'scipy' in to:
@@ -927,8 +927,7 @@ class Sparse(Base):
             return self._genericArithmeticBinary_implementation(opName,
                                                                 other)
 
-
-    def _matrixMultiply_implementation(self, other):
+    def _matmul__implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -947,27 +946,6 @@ class Sparse(Base):
 
         return nimble.createData('Sparse', retData, useLog=False)
 
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        if scalar != 0:
-            self.data.data *= scalar
-        else:
-            self.data = coo_matrix(([], ([], [])),
-                                   (len(self.points), len(self.features)))
-
-    def _matmul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
-
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
         ret = self._arithmeticBinary_implementation(notInplace, other)
@@ -984,19 +962,15 @@ class Sparse(Base):
         if other == 1:
             return self._scalarBinary_implementation(opName, other)
         if 'i' in opName:
-            if isinstance(other, nimble.data.Base):
-                self.elements.multiply(other, useLog=False)
-            else:
-                self.data *= other
-                self.data.eliminate_zeros()
-            return self
-        ret = self.copy()
-        if isinstance(other, nimble.data.Base):
-            ret.elements.multiply(other, useLog=False)
+            target = self
         else:
-            ret.data *= other
-            ret.data.eliminate_zeros()
-        return ret
+            target = self.copy()
+        if isinstance(other, nimble.data.Base):
+            target.elements.multiply(other, useLog=False)
+        else:
+            target.data *= other
+            target.data.eliminate_zeros()
+        return target
 
     def _genericFloordiv_implementation(self, opName, other):
         """

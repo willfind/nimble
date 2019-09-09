@@ -497,11 +497,9 @@ def convertData(returnType, rawData, pointNames, featureNames,
         lenFts = len(featureNames) if featureNames else 0
         if len(rawData) == 0:
             lenPts = len(pointNames) if pointNames else 0
-            rawData = numpy2DArray(numpy.empty([lenPts, lenFts]),
-                                   dtype=elementType)
+            rawData = numpy.empty([lenPts, lenFts], dtype=elementType)
         elif isinstance(rawData[0], list) and len(rawData[0]) == 0:
-            rawData = numpy2DArray(numpy.empty([len(rawData), lenFts]),
-                                   dtype=elementType)
+            rawData = numpy.empty([len(rawData), lenFts], dtype=elementType)
         # if there are actually elements, we attempt to convert them
         else:
             rawData = elementTypeConvert(rawData, elementType)
