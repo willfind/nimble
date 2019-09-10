@@ -38,7 +38,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -308,7 +308,8 @@ To install shogun
 
         trainYTrans = None
         if trainY is not None:
-            trainYTrans = self._inputTransLabelHelper(trainY, learnerName, customDict)
+            trainYTrans = self._inputTransLabelHelper(trainY, learnerName,
+                                                      customDict)
 
         testXTrans = None
         if testX is not None:
@@ -321,11 +322,19 @@ To install shogun
         for key in delkeys:
             del arguments[key]
 
-        # TODO copiedArguments = copy.deepcopy(arguments) ?
-        # copiedArguments = copy.copy(arguments)
-        copiedArguments = arguments
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if isinstance(val, nimble.Init):
+                allParams = self._getParameterNames(val.name)[0]
+                # add trainX and/or trainY if needed for object instantiation
+                for yParam in [p for p in trainYAliases if p in allParams]:
+                    val.kwargs[yParam] = trainYTrans
+                for xParam in [p for p in trainXAliases if p in allParams]:
+                    val.kwargs[xParam] = trainXTrans
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
 
-        return (trainXTrans, trainYTrans, testXTrans, copiedArguments)
+        return (trainXTrans, trainYTrans, testXTrans, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,

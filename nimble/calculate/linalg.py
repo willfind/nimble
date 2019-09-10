@@ -302,17 +302,17 @@ def _backendSolvers(aObj, bObj, solverFunction):
             aCopy = aObj.copy()
             solution = scipy.sparse.linalg.spsolve(aCopy.data,
                                                    numpy.asarray(bObj.data))
-            solution = numpy.asmatrix(solution)
+            solution = solution
         else:
             if isinstance(aObj, nimble.data.sparse.SparseView): #Sparse View
                 aCopy = aObj.copy()
                 solution = scipy.sparse.linalg.lsqr(aCopy.data,
                                                     numpy.asarray(bObj.data))
-                solution = numpy.asmatrix(solution[0])
+                solution = solution[0]
             else: # Sparse
                 solution = scipy.sparse.linalg.lsqr(aObj.data,
                                                     numpy.asarray(bObj.data))
-                solution = numpy.asmatrix(solution[0])
+                solution = solution[0]
 
     sol = nimble.createData(aOriginalType, solution,
                          featureNames=aObj.features.getNames(),

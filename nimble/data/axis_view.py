@@ -5,7 +5,7 @@ base class for read only axis views of data objects.
 
 from __future__ import absolute_import
 
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from .axis import Axis
 from .points import Points
 

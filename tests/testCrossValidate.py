@@ -18,6 +18,7 @@ from six.moves import range
 import nimble
 from nimble import crossValidate
 from nimble import createData
+from nimble import CV
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -26,7 +27,6 @@ from nimble.randomness import pythonRandom
 from nimble.helpers import computeMetrics
 from nimble.helpers import generateClassificationData
 from nimble.helpers import KFoldCrossValidator
-from nimble.helpers import CV
 from nimble.customLearners import CustomLearner
 from nimble.configuration import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected

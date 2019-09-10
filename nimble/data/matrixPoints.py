@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue
-
+from nimble.utility import numpy2DArray
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
@@ -86,14 +86,14 @@ class MatrixPoints(MatrixAxis, Points):
             featuresToCollapse, retainData, collapseData, currNumPoints,
             currFtNames, numRetPoints, numRetFeatures)
 
-        self._source.data = numpy.matrix(tmpData)
+        self._source.data = numpy2DArray(tmpData)
 
     def _combineByExpandingFeatures_implementation(
             self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
                                                 uniqueNames, numRetFeatures)
 
-        self._source.data = numpy.matrix(tmpData)
+        self._source.data = numpy2DArray(tmpData)
 
     #########################
     # Query implementations #

@@ -19,7 +19,7 @@ from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray
 
 
 # Contains path to keras root directory
@@ -137,7 +137,7 @@ To install keras
         compile_ = self._paramQuery('compile', learnerName, ignore)
 
         ret = init[0] + fit[0] + fitGenerator[0] + compile_[0] + predict[0]
-
+        ret = list(set(ret)) # remove duplicates
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
@@ -202,33 +202,11 @@ To install keras
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
-        if 'layers' in arguments:
-            #this is to check if layers has been processed or not
-            if isinstance(arguments['layers'][0], dict):
-                if learnerName == 'Sequential':
-                    layersObj = []
-                    for layer in arguments['layers']:
-                        layerType = layer.pop('type')
-                        layersObj.append(self.findCallable(layerType)(**layer))
-                else:
-                    layersObj = {}
-                    for layer in arguments['layers']:
-                        layerType = layer.pop('type')
-                        layerName = layer.pop('layerName')
-                        toCall = self.findCallable(layerType)(**layer)
-                        if 'inputs' in layer:
-                            inputName = layer.pop('inputs')
-                            layersObj[layerName] = toCall(layersObj[inputName])
-                        else:
-                            layersObj[layerName] = toCall
-                    arguments['inputs'] = layersObj[arguments['inputs']]
-                    arguments['outputs'] = layersObj[arguments['outputs']]
-                arguments['layers'] = layersObj
 
         if trainX is not None:
             if trainX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                trainX = trainX.copy(to='numpy matrix')
+                trainX = trainX.copy(to='numpy array')
 
         if trainY is not None:
             if len(trainY.features) > 1:
@@ -241,18 +219,19 @@ To install keras
                 testX = testX.data
             elif testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
-                testX = testX.copy(to='numpy matrix')
-        #
-        # # this particular learner requires integer inputs
-        # if learnerName == 'MultinomialHMM':
-        #     if trainX is not None:
-        #         trainX = numpy.array(trainX, numpy.int32)
-        #     if trainY is not None:
-        #         trainY = numpy.array(trainY, numpy.int32)
-        #     if testX is not None:
-        #         testX = numpy.array(testX, numpy.int32)
+                testX = testX.copy(to='numpy array')
 
-        return (trainX, trainY, testX, copy.copy(arguments))
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if arg == 'layers':
+                for i, v in enumerate(val):
+                    if isinstance(v, nimble.Init):
+                        val[i] = self.findCallable(v.name)(**v.kwargs)
+            elif isinstance(val, nimble.Init):
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
+
+        return (trainX, trainY, testX, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,
@@ -309,8 +288,8 @@ To install keras
             def sparseGenerator():
                 while True:
                     for i in range(len(trainX.points)):
-                        tmpData = (trainX.pointView(i).copy(to='numpy matrix'),
-                                   numpy.matrix(trainY[i]))
+                        tmpData = (trainX.pointView(i).copy(to='numpyarray'),
+                                   numpy2DArray(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
             learner.fit_generator(**fitParams)
@@ -405,7 +384,7 @@ To install keras
             def sparseGenerator():
                 while True:
                     for i in range(len(testX.points)):
-                        tmpData = testX.pointView(i).copy(to='numpy matrix')
+                        tmpData = testX.pointView(i).copy(to='numpy array')
                         yield tmpData
             arguments['generator'] = sparseGenerator()
             return learner.predict_generator(**arguments)

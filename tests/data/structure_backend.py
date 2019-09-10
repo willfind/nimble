@@ -549,17 +549,17 @@ class StructureDataSafe(StructureShared):
             numeric = self.constructor(data[:4], pointNames=pointNames[:4],
                                        featureNames=featureNames)
             spcsc = numeric.copy(to='scipy csc')
-            assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
+            assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
             spcsc[0, 0] = 5
             assert numeric[0, 0] == 1
 
             spcsr = numeric.copy(to='scipy csr')
-            assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
+            assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
             spcsr[0, 0] = 5
             assert numeric[0, 0] == 1
 
             spcoo = numeric.copy(to='scipy coo')
-            assert type(spcoo) == type(scipy.sparse.coo_matrix(numpy.matrix([])))
+            assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
             spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
             assert numeric[0, 0] == 1
 

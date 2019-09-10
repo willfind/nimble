@@ -18,14 +18,27 @@ from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
 class Initable(object):
-    def __init__(self, C=1, thresh=0.5):
+    def __init__(self, C=1, thresh=0.5, sub=None):
         self.C = C
         self.thresh = thresh
+        self.sub = sub
 
     def __eq__(self, other):
-        if self.C == other.C and self.thresh == other.thresh:
-            return True
-        return False
+        if self.C != other.C:
+            return False
+        if self.thresh != other.thresh:
+            return False
+        if self.sub != other.sub:
+            return False
+        return True
+
+
+class SubObj(object):
+    def __init__(self, dup):
+        self.dup = dup
+
+    def __eq__(self, other):
+        return self.dup == other.dup
 
 
 class TestInterface(UniversalInterface):
@@ -36,7 +49,7 @@ class TestInterface(UniversalInterface):
         return True
 
     def _listLearnersBackend(self):
-        return ['l0', 'l1', 'l2', 'exposeTest']
+        return ['l0', 'l1', 'l2', 'exposeTest', 'foo']
 
     def _getLearnerParameterNamesBackend(self, name):
         return self._getParameterNames(name)
@@ -50,14 +63,12 @@ class TestInterface(UniversalInterface):
             return [['dup', 'sub']]
         elif name == 'l1a0':
             return [['l1a0a0']]
-        elif name == 'subFunc':
+        elif name == 'subObj':
             return [['dup']]
         elif name == 'foo':
             return [['estimator']]
         elif name == 'initable':
-            return [['C', 'thresh']]
-        elif name == 'initable2':
-            return [['C', 'thresh']]
+            return [['C', 'thresh', 'sub']]
         else:
             return [[]]
 
@@ -65,14 +76,10 @@ class TestInterface(UniversalInterface):
         return self._getDefaultValues(name)
 
     def _getDefaultValuesBackend(self, name):
-        if name == 'bar':
-            return [{'estimator': 'initable'}, {'estimater2': 'initable'}]
         if name == 'foo':
             return [{'estimator': Initable()}]
         if name == 'initable':
-            return [{'C': 1, 'thresh': 0.5}]
-        if name == 'initable2':
-            return [{'C': 1, 'thresh': 0.5}]
+            return [{'C': 1, 'thresh': 0.5, 'sub': None}]
         return [{}]
 
     def isAlias(self, name):
@@ -108,9 +115,9 @@ class TestInterface(UniversalInterface):
     def _findCallableBackend(self, name):
         if name == 'initable':
             return Initable
-        if name == 'initable2':
-            return Initable
-        available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'foo', 'bar', 'exposeTest']
+        if name == 'subObj':
+            return SubObj
+        available = ['l0', 'l1', 'l2', 'l1a0', 'subObj', 'foo', 'exposeTest']
         if name in available:
             return name
         else:
@@ -148,80 +155,82 @@ class TestInterface(UniversalInterface):
 TestObject = TestInterface()
 
 
-#######################################
-### _validateArgumentDistribution() ###
-#######################################
-
-#def test__validateArgumentDistribution
-
-# TODO tests involving default arguments
+###########################
+### _getAllArguments() ###
+##########################
 
 @raises(InvalidArgumentValue)
-def test__validateArgumentDistributionMissingArgument():
+def test_getAllArguments_ArgumentsIsNone():
+    learner = 'l0'
+    TestObject._getAllArguments(learner, None)
+
+@raises(InvalidArgumentValue)
+def test_getAllArguments_MissingArgument():
     learner = 'l0'
     arguments = {'l0a0': 1}
-    TestObject._validateArgumentDistribution(learner, arguments)
-
-
-@raises(InvalidArgumentValue)
-def test__validateArgumentDistributionOverlappingArgumentsFlat():
-    learner = 'l2'
-    arguments = {'dup': 1, 'sub': 'subFunc'}
-    TestObject._validateArgumentDistribution(learner, arguments)
-
+    TestObject._getAllArguments(learner, arguments)
 
 @raises(InvalidArgumentValue)
-def test__validateArgumentDistributionExtraArgument():
+def test_getAllArguments_ExtraArgument():
     learner = 'l1'
     arguments = {'l1a0': 1, 'l5a100': 11}
-    TestObject._validateArgumentDistribution(learner, arguments)
+    TestObject._getAllArguments(learner, arguments)
 
-
-def test__validateArgumentDistributionWorking():
+def test_getAllArguments_Working():
+    # passed argument
     learner = 'l1'
     arguments = {'l1a0': 1}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
+    ret = TestObject._getAllArguments(learner, arguments)
     assert ret == {'l1a0': 1}
-
-
-def test__validateArgumentDistributionOverlappingArgumentsNested():
-    learner = 'l2'
-    arguments = {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'dup': 1, 'sub': 'subFunc', 'subFunc': {'dup': 2}}
-
-
-def test__validateArgumentDistributionInstantiableDefaultValue():
+    # default argument
     learner = 'foo'
-    arguments = {}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
+    ret = TestObject._getAllArguments(learner, None)
     assert ret == {'estimator': Initable()}
 
-###############
-# ignoring this test for now, since the code now works under the assumption that an interaces'
-# default values will not be set up in a way to take advantage of our argument instantiation
-# conventions. If a default value is a string, it should STAY a string, even if that string
-# corresponds to an instantiable object
-#def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsSeparate():
-#	learner = 'foo'
-#	arguments = {'initable':{'C':11}}
-#	ret = TestObject._validateArgumentDistribution(learner, arguments)
-#	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
-##############
 
-def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsInFlat():
-    learner = 'foo'
-    arguments = {'estimator': 'initable2', 'C': 11}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable2', 'initable2': {'C': 11, 'thresh': 0.5}}
+###################
+### nimble.Init ###
+###################
 
+def test_Init_str_repr_output():
+    init = nimble.Init('foo', bar=2)
+    exp = "Init('foo', bar=2)"
+    assert str(init) == exp
+    assert repr(init) == exp
 
-def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
-    learner = 'foo'
-    arguments = {'estimator': 'initable', 'C': .11, 'thresh': 15}
-    ret = TestObject._validateArgumentDistribution(learner, arguments)
-    assert ret == {'estimator': 'initable', 'initable': {'C': .11, 'thresh': 15}}
+@raises(TypeError)
+def test_Init_args():
+    init = nimble.Init('foo', 1)
 
+########################
+### _argumentInit() ###
+#######################
+
+@raises(InvalidArgumentValue)
+def test_argumentInit_MissingArgumentForObjectInstantiation():
+    toInit = nimble.Init('subObj')
+    TestObject._argumentInit(toInit)
+
+@raises(InvalidArgumentValue)
+def test_argumentInit_ExtraArgumentForObjectInstantiation():
+    toInit = nimble.Init('subObj', dup=2, bar=5)
+    TestObject._argumentInit(toInit)
+
+def test_argumentInit_ObjectInstantiatedDefault():
+    toInit = nimble.Init('initable')
+    ret = TestObject._argumentInit(toInit)
+    assert ret == Initable()
+
+def test_argumentInit_ObjectInstantiated_UninstantiatedParams():
+    toInit = nimble.Init('initable', C=0.1, thresh=0.05)
+    ret = TestObject._argumentInit(toInit)
+    assert ret == Initable(C=0.1, thresh=0.05)
+
+def test_argumentInit_ObjectInstantiated_InstantiatedParam():
+    sub = nimble.Init('subObj', dup=2)
+    toInit = nimble.Init('initable', C=1, thresh=0.05, sub=sub)
+    ret = TestObject._argumentInit(toInit)
+    assert ret == Initable(C=1, thresh=0.05, sub=SubObj(2))
 
 @noLogEntryExpected
 def test_accessible():

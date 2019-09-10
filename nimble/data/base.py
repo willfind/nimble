@@ -3545,7 +3545,10 @@ class Base(object):
     ###############################################################
     ###############################################################
 
-    def __mul__(self, other):
+    def matrixMultiply(self, other):
+        return self.__matmul__(other)
+
+    def __matmul__(self, other):
         """
         Perform matrix multiplication or scalar multiplication on this
         object depending on the input ``other``.
@@ -3571,10 +3574,10 @@ class Base(object):
                 msg += "match the point in the callee object."
                 raise InvalidArgumentValue(msg)
 
-            self._validateEqualNames('feature', 'point', '__mul__', other)
+            self._validateEqualNames('feature', 'point', '__matmul__', other)
 
         try:
-            ret = self._mul__implementation(other)
+            ret = self._matmul__implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
             self._numericValidation()
@@ -3593,26 +3596,44 @@ class Base(object):
 
         return ret
 
-    def __rmul__(self, other):
+    def __rmatmul__(self, other):
         """
-        Perform scalar multiplication with this object on the right
+        Perform scalar multiplication with this object on the right.
         """
         if dataHelpers._looksNumeric(other):
-            return self.__mul__(other)
-        else:
-            return NotImplemented
+            return self.__matmul__(other)
+        return NotImplemented
 
-    def __imul__(self, other):
+    def __imatmul__(self, other):
         """
         Perform in place matrix multiplication or scalar multiplication,
         depending in the input ``other``.
         """
-        ret = self.__mul__(other)
+        ret = self.__matmul__(other)
         if ret is not NotImplemented:
             self.referenceDataFrom(ret, useLog=False)
             ret = self
-
         return ret
+
+    def __mul__(self, other):
+        """
+        Perform elementwise multiplication or scalar multiplication,
+        depending in the input ``other``.
+        """
+        return self._genericArithmeticBinary('__mul__', other)
+
+    def __rmul__(self, other):
+        """
+        Perform elementwise multiplication with this object on the right
+        """
+        return self._genericArithmeticBinary('__rmul__', other)
+
+    def __imul__(self, other):
+        """
+        Perform in place elementwise multiplication or scalar
+        multiplication, depending in the input ``other``.
+        """
+        return self._genericArithmeticBinary('__imul__', other)
 
     def __add__(self, other):
         """
@@ -3820,9 +3841,9 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericArithmeticBinary_validation(self, opName, other):
-        isNimble = isinstance(other, nimble.data.Base)
+        otherNimble = isinstance(other, nimble.data.Base)
 
-        if not isNimble and not dataHelpers._looksNumeric(other):
+        if not otherNimble and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
@@ -3831,7 +3852,7 @@ class Base(object):
         self._numericValidation()
 
         # test element type other
-        if isNimble:
+        if otherNimble:
             other._numericValidation(right=True)
 
         divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
@@ -3839,9 +3860,12 @@ class Base(object):
                     '__mod__', '__rmod__', '__imod__', ]
         if opName.startswith('__r'):
             toCheck = self
+            toCheckNimble = True
         else:
             toCheck = other
-        if isNimble and opName in divNames:
+            toCheckNimble = isinstance(toCheck, nimble.data.Base)
+
+        if toCheckNimble and opName in divNames:
             if toCheck.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
@@ -3851,11 +3875,15 @@ class Base(object):
                 msg = "Cannot perform " + opName + " when the second "
                 msg += "argument contains any NaNs or Infs"
                 raise InvalidArgumentValue(msg)
-        if not isNimble and opName in divNames:
+        if not toCheckNimble and opName in divNames:
             if toCheck == 0:
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "is zero"
                 raise ZeroDivisionError(msg)
+            if toCheck != toCheck or numpy.isinf(toCheck):
+                msg = "Cannot perform " + opName + " when the second "
+                msg += "argument contains any NaNs or Infs"
+                raise InvalidArgumentValue(msg)
 
     def _genericArithmeticBinary(self, opName, other):
 
@@ -3875,7 +3903,13 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._numericBinary_implementation(opName, other)
+        ret = self._arithmeticBinary_implementation(opName, other)
+
+        if opName.startswith('__i'):
+            absPath, relPath = self._absPath, self._relPath
+            self.referenceDataFrom(ret, useLog=False)
+            self._absPath, self._relPath = absPath, relPath
+            ret = self
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
 
@@ -3887,19 +3921,14 @@ class Base(object):
 
 
     def _genericArithmeticBinary_implementation(self, opName, other):
-        selfData = self.copy('numpymatrix')
+        selfData = self.copy('numpyarray')
         if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpymatrix')
+            otherData = other.copy('numpyarray')
         else:
             otherData = other
         ret = getattr(selfData, opName)(otherData)
         ret = createDataNoValidation(self.getTypeString(), ret)
 
-        if opName.startswith('__i'):
-            absPath, relPath = self._absPath, self._relPath
-            self.referenceDataFrom(ret, useLog=False)
-            self._absPath, self._relPath = absPath, relPath
-            ret = self
         return ret
 
 

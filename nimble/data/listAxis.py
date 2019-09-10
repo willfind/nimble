@@ -59,8 +59,7 @@ class ListAxis(Axis):
             if self._source.data == []:
                 # create empty matrix with correct shape
                 shape = (len(self._source.points), len(targetList))
-                empty = numpy.empty(shape)
-                satisfying = numpy.matrix(empty, dtype=numpy.object_)
+                satisfying = numpy.empty(shape, dtype=numpy.object_)
             else:
                 satisfying = [[self._source.data[pt][ft] for ft in targetList]
                               for pt in range(len(self._source.points))]

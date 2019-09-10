@@ -36,6 +36,7 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
+from nimble.utility import numpy2DArray, is2DArray
 
 scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
@@ -119,7 +120,7 @@ def isAllowedRaw(data, allowLPT=False):
         return True
     if scipy and scipy.sparse.issparse(data):
         return True
-    if isinstance(data, (tuple, list, dict, numpy.ndarray, numpy.matrix)):
+    if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
 
     if pd:
@@ -299,7 +300,7 @@ def transposeMatrix(matrixObj):
     copy.deepcopy(np.transpose(matrixObj)) may generate a messed data,
     so I created this function.
     """
-    return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
+    return numpy2DArray(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
 
 def extractNames(rawData, pointNames, featureNames):
@@ -321,13 +322,13 @@ def extractNames(rawData, pointNames, featureNames):
             msg = "if featureNames are not 'bool' or a 'str', "
             msg += "they should be other 'iterable' object"
             raise InvalidArgumentType(msg)
-    # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
+    # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.array
     # featureNames must be those keys
     # pointNames must be False or automatic
     if isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
-            rawData = numpy.matrix(list(rawData.values()), dtype=numpy.object_)
+            rawData = numpy2DArray(list(rawData.values()), dtype=numpy.object_)
             if len(featureNames) == len(rawData):
                 # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
                 # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
@@ -343,7 +344,7 @@ def extractNames(rawData, pointNames, featureNames):
             rawData = numpy.empty([0, 0])
             pointNames = None
 
-    # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
+    # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.array
     # featureNames must be those keys
     # pointNames must be False or automatic
     elif (isinstance(rawData, list)
@@ -374,7 +375,7 @@ def extractNames(rawData, pointNames, featureNames):
         elif isinstance(rawData, tuple):
             rawData = list(rawData)
             func = extractNamesFromRawList
-        elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
+        elif isinstance(rawData, numpy.ndarray):
             func = extractNamesFromNumpy
         elif scipy and scipy.sparse.issparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
@@ -481,8 +482,8 @@ def convertData(returnType, rawData, pointNames, featureNames,
           scipy and scipy.sparse.isspmatrix(rawData) and
           returnType == 'Sparse'):
         pass
-    elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
-        # if the input data is a np matrix, then convert it anyway to make sure
+    elif isinstance(rawData, numpy.ndarray):
+        # if the input data is a np array, then convert it anyway to make sure
         # try dtype=float 1st.
         rawData = elementTypeConvert(rawData, elementType)
     elif pd and isinstance(rawData, pd.SparseDataFrame):
@@ -496,10 +497,10 @@ def convertData(returnType, rawData, pointNames, featureNames,
         lenFts = len(featureNames) if featureNames else 0
         if len(rawData) == 0:
             lenPts = len(pointNames) if pointNames else 0
-            rawData = numpy.matrix(numpy.empty([lenPts, lenFts]),
+            rawData = numpy2DArray(numpy.empty([lenPts, lenFts]),
                                    dtype=elementType)
         elif isinstance(rawData[0], list) and len(rawData[0]) == 0:
-            rawData = numpy.matrix(numpy.empty([len(rawData), lenFts]),
+            rawData = numpy2DArray(numpy.empty([len(rawData), lenFts]),
                                    dtype=elementType)
         # if there are actually elements, we attempt to convert them
         else:
@@ -512,7 +513,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData.todense(), elementType)
 
     if (returnType == 'Sparse'
-            and isinstance(rawData, numpy.matrix)
+            and is2DArray(rawData)
             and rawData.shape[0]*rawData.shape[1] > 0):
     #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
@@ -523,7 +524,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
 
 def elementTypeConvert(rawData, elementType):
     """
-    Convert rawData to numpy matrix with dtype = elementType, or try
+    Convert rawData to numpy array with dtype = elementType, or try
     dtype=float then try dtype=object.
     """
     if pd and isinstance(rawData, pd.Series) and len(rawData) == 0:
@@ -535,22 +536,22 @@ def elementTypeConvert(rawData, elementType):
         rawData = rawData.values
 
     if elementType:
-        return numpy.matrix(rawData, dtype=elementType)
+        return numpy2DArray(rawData, dtype=elementType)
     else:
         try:
-            data = numpy.matrix(rawData, dtype=numpy.float)
+            data = numpy2DArray(rawData, dtype=numpy.float)
         except ValueError:
-            data = numpy.matrix(rawData, dtype=object)
+            data = numpy2DArray(rawData, dtype=object)
         return data
 
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
-    Replace values in a numpy matrix or array.
+    Replace values in a numpy array.
 
     Parameters
     ----------
-    data : numpy.matrix, numpy.array
+    data : numpy.ndarray
         A numpy array of data.
     toReplace : list
         A list of values to search and replace in the data.
@@ -600,7 +601,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData = handleMissing.tolist()
 
-    elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
+    elif isinstance(rawData, numpy.ndarray):
         rawData = replaceNumpyValues(rawData, treatAsMissing,
                                            replaceMissingWith)
 
@@ -1034,7 +1035,7 @@ def _loadmtxForAuto(
 
 def extractNamesFromNumpy(data, pnamesID, fnamesID):
     """
-    Extract name values from a numpy matrix or array.
+    Extract name values from a numpy array.
     """
     # if there are no elements, extraction cannot happen. We return correct
     # results for this case so it is excluded from the subsequent code
@@ -2984,7 +2985,7 @@ class ArgumentIterator(object):
             iterableArgDict = {}
             self.numPermutations = 1
             for key in rawArgumentInput.keys():
-                if isinstance(rawArgumentInput[key], CV):
+                if isinstance(rawArgumentInput[key], nimble.CV):
                     self.numPermutations *= len(rawArgumentInput[key])
                     iterableArgDict[key] = rawArgumentInput[key]
                 else: # numPermutations not increased
@@ -3028,28 +3029,6 @@ class ArgumentIterator(object):
         """
         self.index = 0
 
-class CV(object):
-    def __init__(self, argumentList):
-        try:
-            self.argumentTuple = tuple(argumentList)
-        except TypeError:
-            msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg)
-
-    def __getitem__(self, key):
-        return self.argumentTuple[key]
-
-    def __setitem__(self, key, value):
-        raise ImproperObjectAction("CV objects are immutable")
-
-    def __len__(self):
-        return len(self.argumentTuple)
-
-    def __str__(self):
-        return str(self.argumentTuple)
-
-    def __repr__(self):
-        return "CV(" + str(list(self.argumentTuple)) + ")"
 
 def generateClassificationData(labels, pointsPer, featuresPer):
     """
