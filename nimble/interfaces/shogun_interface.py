@@ -29,6 +29,7 @@ import json
 import distutils.version
 import multiprocessing
 import re
+import warnings
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -58,7 +59,6 @@ class Shogun(PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-
         self.shogun = modifyImportPathAndImport(shogunDir, 'shogun')
         self.versionString = None
 
@@ -274,8 +274,14 @@ To install shogun
 
             return WrappedShogun
 
-        callable = self._searcher.findInPackage(None, name)
-        return shogunToPython(callable)
+        callableObj = self._searcher.findInPackage(None, name)
+
+        shogunWarn = ['LibLinearRegression', 'SGDQN']
+        if name in shogunWarn:
+            msg = "nimble cannot guarantee replicable results for " + name
+            warnings.warn(msg)
+
+        return shogunToPython(callableObj)
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
@@ -302,7 +308,8 @@ To install shogun
 
         trainYTrans = None
         if trainY is not None:
-            trainYTrans = self._inputTransLabelHelper(trainY, learnerName, customDict)
+            trainYTrans = self._inputTransLabelHelper(trainY, learnerName,
+                                                      customDict)
 
         testXTrans = None
         if testX is not None:
@@ -315,11 +322,19 @@ To install shogun
         for key in delkeys:
             del arguments[key]
 
-        # TODO copiedArguments = copy.deepcopy(arguments) ?
-        # copiedArguments = copy.copy(arguments)
-        copiedArguments = arguments
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if isinstance(val, nimble.Init):
+                allParams = self._getParameterNames(val.name)[0]
+                # add trainX and/or trainY if needed for object instantiation
+                for yParam in [p for p in trainYAliases if p in allParams]:
+                    val.kwargs[yParam] = trainYTrans
+                for xParam in [p for p in trainXAliases if p in allParams]:
+                    val.kwargs[xParam] = trainXTrans
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
 
-        return (trainXTrans, trainYTrans, testXTrans, copiedArguments)
+        return (trainXTrans, trainYTrans, testXTrans, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,
@@ -338,9 +353,7 @@ To install shogun
         else:
             retRaw = outputValue
 
-        outputType = 'Matrix'
-        if outputType == 'match':
-            outputType = customDict['match']
+        outputType = customDict['match']
         ret = nimble.createData(outputType, retRaw, useLog=False)
 
         if outputFormat == 'label' and 'remap' in customDict:
@@ -371,9 +384,9 @@ To install shogun
         learner = toCall(**setterArgs)
 
         if trainY is not None:
-            raiseFailedProcess('labels', learner.set_labels, trainY)
+            checkProcessFailure('labels', learner.set_labels, trainY)
             learner.set_labels(trainY)
-        raiseFailedProcess('train', learner.train, trainX)
+        checkProcessFailure('train', learner.train, trainX)
         learner.train(trainX)
 
         # TODO online training prep learner.start_train()
@@ -409,7 +422,7 @@ To install shogun
             retFunc = learner.apply_latent
         else:
             retFunc = learner.apply
-        raiseFailedProcess('apply', retFunc, testX)
+        checkProcessFailure('apply', retFunc, testX)
         retLabels = retFunc(testX)
         return retLabels
 
@@ -578,7 +591,7 @@ def catchSignals(target, args, kwargs):
         pass
 
 
-def raiseFailedProcess(process, target, *args, **kwargs):
+def checkProcessFailure(process, target, *args, **kwargs):
     """
     Determine if a call to shogun function or method will be successful.
 

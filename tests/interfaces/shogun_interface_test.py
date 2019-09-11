@@ -18,24 +18,21 @@ import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
-    from shogun import RealFeatures, RealSubsetFeatures
+    from shogun import RealFeatures
     from shogun import BinaryLabels, MulticlassLabels, RegressionLabels
-    from shogun import LinearKernel, GaussianKernel, EuclideanDistance
-    from shogun import ZeroMean, GaussianLikelihood, ExactInferenceMethod
-    from shogun import ConstMean, SoftMaxLikelihood, MultiLaplaceInferenceMethod
-    from shogun import ProbitLikelihood, SingleLaplaceInferenceMethod
 except ImportError:
     pass
 
 import nimble
+from nimble import Init
 from nimble.randomness import numpyRandom
+from nimble.randomness import startAlternateControl, endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
-from nimble.interfaces.shogun_interface import Shogun
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
-from nimble.interfaces.shogun_interface import raiseFailedProcess
+from nimble.interfaces.shogun_interface import checkProcessFailure
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
@@ -45,9 +42,6 @@ scipy = nimble.importModule('scipy.sparse')
 
 shogunSkipDec = SkipMissing('shogun')
 
-OUTFILE_PREFIX = 'shogunParameterManifest_v'
-
-
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
     shogunInt = nimble.helpers.findBestInterface('shogun')
@@ -56,58 +50,6 @@ def test_Shogun_findCallable_nameAndDocPreservation():
     assert 'WrappedShogun' in str(type(wrappedShogun))
     assert wrappedShogun.__name__ == 'LibSVM'
     assert wrappedShogun.__doc__
-
-@shogunSkipDec
-def _DISABLED_testShogunObjectsInManifest():
-    shogunInt = nimble.helpers.findBestInterface('shogun')
-    fullVersion = shogunInt.version()
-    print (fullVersion)
-    version = distutils.version.LooseVersion(fullVersion.split('_')[0]).vstring[1:]
-
-    fileName = OUTFILE_PREFIX + version
-    filePath = os.path.join(nimble.nimblePath, 'interfaces', 'metadata', fileName)
-
-    print (filePath)
-
-    with open(filePath, 'r') as fp:
-        manifest = json.load(fp)
-
-    hasAll = hasattr(shogunInt.shogun, '__all__')
-    contents = shogunInt.shogun.__all__ if hasAll else dir(shogunInt.shogun)
-    depth = 1 if hasAll else 0
-
-    # the function here is passed as the function to determine what kinds of objects
-    # count as learners. For this application, we define all objects that are instantiable as
-    # 'learners' so that we can easily get a list of instantiable objects in shogun to see if
-    # they are represented int he manifest. We define an instantiable object as an
-    # init callable object which is not a method, function, or builtin.
-    def isInstantable(x):
-        hasInit = hasattr(x, '__init__')
-        hasCall = hasattr(x, '__call__')
-        isMethod = inspect.ismethod(x)
-        isFunction = inspect.isfunction(x)
-        isBuiltiin = inspect.isbuiltin(x)
-        if hasInit and hasCall and not isMethod and not isFunction and not isBuiltiin:
-            return True
-        return False
-
-    allObjectsSearcher = PythonSearcher(shogunInt.shogun, contents, {}, isInstantable, depth)
-    allObjects = allObjectsSearcher.allLearners()
-
-    unseen = []
-    for k in manifest.keys():
-        if not(k in allObjects or k[1:] in allObjects):
-            unseen.append(k)
-
-#    print (unseen)
-#    print ("")
-
-#    for objName in allObjects:
-#        assert objName in manifest or 'C' + objName in manifest
-#        if not(objName in manifest or 'C' + objName in manifest):
-#            print (objName)
-
-#    assert False
 
 
 @shogunSkipDec
@@ -151,7 +93,7 @@ def testShogun_multiClassDataToBinaryAlg():
     data2 = [[5, 3], [-1, 0]]
     testObj = nimble.createData('Matrix', data2)
 
-    args = {'kernel': 'GaussianKernel', 'width': 2, 'size': 10}
+    args = {'kernel': Init('GaussianKernel', width=2, size=10)}
     # TODO -  is this failing because of kernel issues, or the thing we want to test?
     ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
@@ -190,7 +132,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
     data2 = [[11, 11], [0, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {'solver_type': 1, 'kernel': 'GaussianKernel', 'width': 2, 'cache_size': 10}
+    args = {'solver_type': 1, 'kernel': Init('GaussianKernel', width=2, cache_size=10)}
     ret = nimble.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y",
                                testX=testObj, output=None, arguments=args)
 
@@ -210,7 +152,7 @@ def testShogunKNN():
     data2 = [[0, -10], [10, 1], [1, 10]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {'distance': 'ManhattanMetric'}
+    args = {'distance': Init('ManhattanMetric')}
 
     ret = nimble.trainAndApply("shogun.KNN", trainingObj, trainY="Y",
                                testX=testObj, output=None, arguments=args)
@@ -233,7 +175,7 @@ def testShogunMulticlassSVM():
     data2 = [[0, 0], [-101, 1], [1, 101], [1, 1]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {'C': .5, 'kernel': 'LinearKernel'}
+    args = {'C': .5, 'kernel': Init('LinearKernel')}
 
     #	args = {'C':1}
     #	args = {}
@@ -290,7 +232,7 @@ def testShogunRossData():
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
     args = {'C': 1.0}
-    argsk = {'C': 1.0, 'kernel': "LinearKernel"}
+    argsk = {'C': 1.0, 'kernel': Init("LinearKernel")}
 
     ret = nimble.trainAndApply("shogun.MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None,
                             arguments=argsk)
@@ -489,48 +431,49 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
 
 def shogunTrainBackend(learner, data, toSet):
     Xtrain, Ytrain = data
-    sg = Shogun()
+    sg = nimble.helpers.findBestInterface('shogun')
     sgObj = sg.findCallable(learner)
     shogunObj = sgObj()
     args = {}
     for arg, val in toSet.items():
-        if arg == 'needInit':
+        if isinstance(val, Init):
+            allParams = sg._getParameterNames(val.name)[0]
+            if 'labels' in allParams:
+                val.kwargs['labels'] = Ytrain
+            if 'features' in allParams:
+                val.kwargs['features'] = Xtrain
             # val is an argument to instantiate
-            for setter, toInit in val.items():
-                needInit = sg.findCallable(toInit)()
-                if setter in ['kernel', 'distance']:
-                    needInit.init(Xtrain, Xtrain)
-                getattr(shogunObj, 'set_' + setter)(needInit)
-                args[setter] = toInit
-        else:
-            getattr(shogunObj, 'set_' + arg)(val)
-            args[arg] = val
+            val = sg._argumentInit(val)
+        getattr(shogunObj, 'set_' + arg)(val)
+        args[arg] = val
     if Ytrain is not None:
-        raiseFailedProcess('labels', shogunObj.set_labels, Ytrain)
+        checkProcessFailure('labels', shogunObj.set_labels, Ytrain)
         shogunObj.set_labels(Ytrain)
-    raiseFailedProcess('train', shogunObj.train, Xtrain)
+    checkProcessFailure('train', shogunObj.train, Xtrain)
     shogunObj.train(Xtrain)
     return shogunObj, args
 
 def shogunApplyBackend(obj, toTest, applier):
     applyFunc = getattr(obj, applier)
-    raiseFailedProcess('apply', applyFunc, toTest)
+    checkProcessFailure('apply', applyFunc, toTest)
     predLabels = applyFunc(toTest)
     predArray = predLabels.get_labels().reshape(-1, 1)
     predSG = nimble.createData('Matrix', predArray, useLog=False)
     return predSG
 
+@with_setup(startAlternateControl, endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
-                         extraTrainSetup, varyingPredictionsPossible):
+                         extraTrainSetup):
+    seed = nimble.randomness.generateSubsidiarySeed()
+    nimble.setRandomSeed(seed, useLog=False)
     trainX, trainY, testX = data[:3]
     shogunTraining = data[3:5]
     shogunTesting = data[5]
     toSet = {}
-    toSet['needInit'] = {}
     if learner in needKernel:
-        toSet['needInit']['kernel'] = 'GaussianKernel'
+        toSet['kernel'] = Init('GaussianKernel')
     if learner in needDistance:
-        toSet['needInit']['distance'] = 'EuclideanDistance'
+        toSet['distance'] = Init('EuclideanDistance')
     trainShogun = data[3:5]
     if learner in extraTrainSetup:
         shogunObj, args = extraTrainSetup[learner](shogunTraining, toSet)
@@ -539,15 +482,11 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
     testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
+    nimble.setRandomSeed(seed, useLog=False)
     TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
     predNimble = TL.apply(testX)
 
-    try:
-        equalityAssertHelper(predSG, predNimble)
-    except AssertionError:
-        # TODO inplace because randomness is not being controlled at this
-        # point, once this is handled this should be removed
-        assert learner in varyingPredictionsPossible
+    equalityAssertHelper(predSG, predNimble)
 
 @shogunSkipDec
 @attr('slow')
@@ -578,16 +517,13 @@ def testShogunClassificationLearners():
                        'RandomForest': trainRandomForestClassifier,
                        'RelaxedTree': trainRelaxedTree}
 
-    varyingPredictionsPossible = ['KMeans', 'KMeansMiniBatch', 'QDA']
-
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
-        sg = Shogun()
+        sg = nimble.helpers.findBestInterface('shogun')
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()
         if learner in cluster:
-            clusterData.points.shuffle(useLog=False)
             trainX = clusterData[:50,:]
             trainY = None
             testX = clusterData[50:,:]
@@ -613,7 +549,7 @@ def testShogunClassificationLearners():
         data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
 
         trainAndApplyBackend(learner, data, sgApply, needKernel, needDistance,
-                              extraTrainSetup, varyingPredictionsPossible)
+                              extraTrainSetup)
 
     for learner in learners:
         compareOutputs(learner)
@@ -624,7 +560,7 @@ def trainCHAIDTree(data, toSet):
     return shogunTrainBackend('CHAIDTree', data, toSet)
 
 def trainRandomForestClassifier(data, toSet):
-    toSet['needInit']['combination_rule'] = 'MajorityVote'
+    toSet['combination_rule'] = Init('MajorityVote')
     toSet['num_bags'] = 5
     return shogunTrainBackend('RandomForest', data, toSet)
 
@@ -634,7 +570,7 @@ def trainKMeansMiniBatch(data, toSet):
     return shogunTrainBackend('KMeansMiniBatch', data, toSet)
 
 def trainRelaxedTree(data, toSet):
-    toSet['needInit']['machine_for_confusion_matrix'] = 'MulticlassLibLinear'
+    toSet['machine_for_confusion_matrix'] = Init('MulticlassLibLinear')
     return shogunTrainBackend('RelaxedTree', data, toSet)
 
 
@@ -650,7 +586,7 @@ def testShogunRegressionLearners():
     Ytrain = RegressionLabels(Ytrain)
     Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
 
-    ignore = ["LibLinearRegression"] # LibLinearRegression strange failure
+    ignore = ['LibLinearRegression'] # LibLinearRegression strange failure
     learners = getLearnersByType('regression', ignore)
 
     remove = ['Machine', 'Base']
@@ -660,13 +596,11 @@ def testShogunRegressionLearners():
 
     extraTrainSetup = {'GaussianProcessRegression': trainGaussianProcessRegression,}
 
-    varyingPredictionsPossible = ['KRRNystrom']
-
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
         data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
         trainAndApplyBackend(learner, data, 'apply_regression', needKernel, [],
-                              extraTrainSetup, varyingPredictionsPossible)
+                              extraTrainSetup)
 
     for learner in learners:
         compareOutputs(learner)
@@ -674,11 +608,11 @@ def testShogunRegressionLearners():
 def trainGaussianProcessRegression(data, toSet):
     # TODO can this be done without stepping outside of nimble?
     Xtrain, Ytrain = data
-    kernel = GaussianKernel()
-    kernel.init(Xtrain, Xtrain)
-    mean_function = ZeroMean()
-    gauss_likelihood = GaussianLikelihood()
-    eim = ExactInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    kernel = Init('GaussianKernel')
+    mean_function = Init('ZeroMean')
+    gauss_likelihood = Init('GaussianLikelihood')
+    eim = Init('ExactInferenceMethod', kernel=kernel, mean=mean_function,
+               model=gauss_likelihood)
     toSet['inference_method'] = eim
     return shogunTrainBackend('GaussianProcessRegression', data, toSet)
 
@@ -687,27 +621,27 @@ def trainGaussianProcessRegression(data, toSet):
 def testShogunGaussianProcessClassification():
     # can be binary or multiclass classification
 
-    # TODO Binary getting output but different result
-    # data = generateClassificationData(2, 20, 20)
-    # trainX = abs(data[0][0])
-    # trainY = abs(data[0][1])
-    # testX = abs(data[1][0])
-    # Ytrain = trainY.copy('numpy array', outputAs1D=True)
-    # Ytrain = BinaryLabels(Ytrain)
-    # Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
-    # Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
-    #
-    # extraTrainSetup = {'GaussianProcessClassification': trainGPCBinary}
-    #
-    # data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
-    # trainAndApplyBackend('GaussianProcessClassification', data, 'apply_binary',
-    #                      [], [],  extraTrainSetup, [])
+    data = generateClassificationData(2, 20, 20)
+    trainX = data[0][0]
+    trainY = data[0][1]
+    trainY.points.fill(0, -1, useLog=False)
+    testX = data[1][0]
+    Ytrain = trainY.copy('numpy array', outputAs1D=True)
+    Ytrain = BinaryLabels(Ytrain)
+    Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
+    Xtest = RealFeatures(testX.copy('numpy array', rowsArePoints=False))
+
+    extraTrainSetup = {'GaussianProcessClassification': trainGPCBinary}
+
+    data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
+    trainAndApplyBackend('GaussianProcessClassification', data, 'apply_binary',
+                         [], [],  extraTrainSetup)
 
     # Multiclass
     data = generateClassificationData(3, 20, 20)
-    trainX = abs(data[0][0])
-    trainY = abs(data[0][1])
-    testX = abs(data[1][0])
+    trainX = data[0][0]
+    trainY = data[0][1]
+    testX = data[1][0]
     Ytrain = trainY.copy('numpy array', outputAs1D=True)
     Ytrain = MulticlassLabels(Ytrain)
     Xtrain = RealFeatures(trainX.copy('numpy array', rowsArePoints=False))
@@ -717,27 +651,25 @@ def testShogunGaussianProcessClassification():
 
     data = (trainX, trainY, testX, Xtrain, Ytrain, Xtest)
     trainAndApplyBackend('GaussianProcessClassification', data, 'apply_multiclass',
-                         [], [],  extraTrainSetup, [])
+                         [], [],  extraTrainSetup)
 
 def trainGPCBinary(data, toSet):
-    # TODO can this be done without stepping outside of nimble?
     Xtrain, Ytrain = data
-    kernel = GaussianKernel()
-    kernel.init(Xtrain, Xtrain)
-    mean_function = ZeroMean()
-    gauss_likelihood = ProbitLikelihood()
-    mlim = SingleLaplaceInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    kernel = Init('GaussianKernel')
+    mean_function = Init('ZeroMean')
+    gauss_likelihood = Init('ProbitLikelihood')
+    mlim = Init('SingleLaplaceInferenceMethod', kernel=kernel, mean=mean_function,
+                model=gauss_likelihood)
     toSet['inference_method'] = mlim
     return shogunTrainBackend('GaussianProcessClassification', data, toSet)
 
 def trainGPCMulticlass(data, toSet):
-    # TODO can this be done without stepping outside of nimble?
     Xtrain, Ytrain = data
-    kernel = GaussianKernel()
-    kernel.init(Xtrain, Xtrain)
-    mean_function = ConstMean()
-    gauss_likelihood = SoftMaxLikelihood()
-    mlim = MultiLaplaceInferenceMethod(kernel, Xtrain, mean_function, Ytrain, gauss_likelihood)
+    kernel = Init('GaussianKernel')
+    mean_function = Init('ConstMean')
+    gauss_likelihood = Init('SoftMaxLikelihood')
+    mlim = Init('MultiLaplaceInferenceMethod', kernel=kernel, mean=mean_function,
+                model=gauss_likelihood)
     toSet['inference_method'] = mlim
     return shogunTrainBackend('GaussianProcessClassification', data, toSet)
 
@@ -774,7 +706,7 @@ def TODOShogunStructuredOutputLearner():
 
 
 @shogunSkipDec
-def test_raiseFailedProcess_maxTime():
+def test_checkProcessFailure_maxTime():
     def dontSleep():
         pass
 
