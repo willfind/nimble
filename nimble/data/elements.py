@@ -41,28 +41,10 @@ class Elements(object):
     """
     def __init__(self, source, **kwds):
         self._source = source
-        self._ptPosition = 0
-        self._ftPosition = 0
         super(Elements, self).__init__(**kwds)
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next item
-        """
-        while self._ptPosition < len(self._source.points):
-            while self._ftPosition < len(self._source.features):
-                value = self._source[self._ptPosition, self._ftPosition]
-                self._ftPosition += 1
-                return value
-            self._ptPosition += 1
-            self._ftPosition = 0
-        raise StopIteration
-
-    def __next__(self):
-        return self.next()
+        return ElementIterator(self._source)
 
     #########################
     # Structural Operations #
@@ -688,7 +670,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
                             funcName):
     def elementValidated(value, *args):
         if preserveZeros and value == 0:
-            return 0
+            return float(0)
         ret = func(value, *args)
         if skipNoneReturnValues and ret is None:
             return value
@@ -730,3 +712,31 @@ def getDictionaryMappingFunction(dictionary):
             return dictionary[value]
         return value
     return valueMappingFunction
+
+class ElementIterator(object):
+    """
+    Object providing iteration through each item in the axis.
+    """
+    def __init__(self, source):
+        self._source = source
+        self._ptPosition = 0
+        self._ftPosition = 0
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next item
+        """
+        while self._ptPosition < len(self._source.points):
+            while self._ftPosition < len(self._source.features):
+                value = self._source[self._ptPosition, self._ftPosition]
+                self._ftPosition += 1
+                return value
+            self._ptPosition += 1
+            self._ftPosition = 0
+        raise StopIteration
+
+    def __next__(self):
+        return self.next()
