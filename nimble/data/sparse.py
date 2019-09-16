@@ -269,7 +269,7 @@ class Sparse(Base):
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
         # sort values or call helper as needed
-        constant = not isinstance(values, nimble.data.Base)
+        constant = not isinstance(values, Base)
         if constant:
             if values == 0:
                 self._fillWith_zeros_implementation(pointStart, featureStart,
@@ -878,7 +878,7 @@ class Sparse(Base):
         if 'mul' in opName:
             return self._genericMul__implementation(opName, other)
         try:
-            if isinstance(other, nimble.data.Base):
+            if isinstance(other, Base):
                 selfData = self._getSparseData()
                 if isinstance(other, Sparse):
                     otherData = other._getSparseData()
@@ -895,7 +895,7 @@ class Sparse(Base):
                     return self._inplaceBinary_implementation(opName, other)
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
-                return self._genericArithmeticBinary_implementation(opName,
+                return self._defaultArithmeticBinary_implementation(opName,
                                                                      other)
 
             return Sparse(ret)
@@ -907,7 +907,7 @@ class Sparse(Base):
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
-            return self._genericArithmeticBinary_implementation(opName, other)
+            return self._defaultArithmeticBinary_implementation(opName, other)
 
 
     def _scalarBinary_implementation(self, opName, other):
@@ -924,7 +924,7 @@ class Sparse(Base):
                 opName, other)
         else:
             # scalar operations apply to all elements; use dense
-            return self._genericArithmeticBinary_implementation(opName,
+            return self._defaultArithmeticBinary_implementation(opName,
                                                                 other)
 
     def _matmul__implementation(self, other):
@@ -955,8 +955,7 @@ class Sparse(Base):
         return self
 
     def _rsub__implementation(self, other):
-        other = other * -1
-        return self._arithmeticBinary_implementation('__add__', other)
+        return (self * -1)._arithmeticBinary_implementation('__add__', other)
 
     def _genericMul__implementation(self, opName, other):
         if other == 1:
@@ -965,7 +964,7 @@ class Sparse(Base):
             target = self
         else:
             target = self.copy()
-        if isinstance(other, nimble.data.Base):
+        if isinstance(other, Base):
             target.elements.multiply(other, useLog=False)
         else:
             target.data *= other
@@ -1002,7 +1001,10 @@ class Sparse(Base):
         else: # another Base object type
             otherData = other.copy('Sparse').data.data
 
-        ret = numpy.mod(selfData.data, otherData)
+        if opName == '__rmod__':
+            ret = numpy.mod(otherData, selfData.data)
+        else:
+            ret = numpy.mod(selfData.data, otherData)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data

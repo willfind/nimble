@@ -2291,7 +2291,7 @@ class Base(object):
 
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
-        if isinstance(ret, nimble.data.Base):
+        if isinstance(ret, Base):
             if not rowsArePoints:
                 ret.transpose(useLog=False)
             ret._name = self.name
@@ -2417,7 +2417,7 @@ class Base(object):
             msg += "or equal to featureEnd (" + str(featureEnd) + ")."
             raise InvalidArgumentValueCombination(msg)
 
-        if isinstance(values, nimble.data.Base):
+        if isinstance(values, Base):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
             if len(values.points) != prange:
@@ -3522,7 +3522,7 @@ class Base(object):
         * 'least squares' - Computes object x such that 2-norm |b - Ax|
           is minimized.
         """
-        if not isinstance(b, nimble.data.Base):
+        if not isinstance(b, Base):
             msg = "b must be an instance of Base."
             raise InvalidArgumentType(msg)
 
@@ -3552,7 +3552,26 @@ class Base(object):
         """
         Perform matrix multiplication.
         """
-        if not isinstance(other, nimble.data.Base):
+        return self._genericMatMul_implementation('__matmul__', other)
+
+    def __rmatmul__(self, other):
+        """
+        Perform matrix multiplication with this object on the right.
+        """
+        return self._genericMatMul_implementation('__rmatmul__', other)
+
+    def __imatmul__(self, other):
+        """
+        Perform in place matrix multiplication.
+        """
+        ret = self.__matmul__(other)
+        if ret is not NotImplemented:
+            self.referenceDataFrom(ret, useLog=False)
+            ret = self
+        return ret
+
+    def _genericMatMul_implementation(self, opName, other):
+        if not isinstance(other, Base):
             return NotImplemented
 
         # Test element type self
@@ -3571,41 +3590,33 @@ class Base(object):
             msg += "match the point in the callee object."
             raise InvalidArgumentValue(msg)
 
-        self._validateEqualNames('feature', 'point', '__matmul__', other)
+        self._validateEqualNames('feature', 'point', opName, other)
+
+        if opName.startswith('__r'):
+            if self.getTypeString() == other.getTypeString():
+                caller = other
+            else:
+                caller = other.copy(self.getTypeString())
+            callee = self
+        else:
+            caller = self
+            callee = other
 
         try:
-            ret = self._matmul__implementation(other)
+            ret = caller._matmul__implementation(callee)
         except Exception as e:
             #TODO: improve how the exception is catch
             self._numericValidation()
             other._numericValidation(right=True)
             raise e
 
-        if self._pointNamesCreated():
-            ret.points.setNames(self.points.getNames(), useLog=False)
-        if other._featureNamesCreated():
-            ret.features.setNames(other.features.getNames(), useLog=False)
+        if caller._pointNamesCreated():
+            ret.points.setNames(caller.points.getNames(), useLog=False)
+        if callee._featureNamesCreated():
+            ret.features.setNames(callee.features.getNames(), useLog=False)
 
-        pathSource = 'merge' if isinstance(other, nimble.data.Base) else 'self'
+        dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
 
-        dataHelpers.binaryOpNamePathMerge(self, other, ret, None, pathSource)
-
-        return ret
-
-    def __rmatmul__(self, other):
-        """
-        Perform matrix multiplication with this object on the right.
-        """
-        return NotImplemented
-
-    def __imatmul__(self, other):
-        """
-        Perform in place matrix multiplication.
-        """
-        ret = self.__matmul__(other)
-        if ret is not NotImplemented:
-            self.referenceDataFrom(ret, useLog=False)
-            ret = self
         return ret
 
     def __mul__(self, other):
@@ -3837,12 +3848,15 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericArithmeticBinary_validation(self, opName, other):
-        otherNimble = isinstance(other, nimble.data.Base)
-
+        otherNimble = isinstance(other, Base)
         if not otherNimble and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
+        if otherNimble:
+            self._genericArithmeticBinary_sizeValidation(opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         # Test element type self
         self._numericValidation()
@@ -3867,7 +3881,7 @@ class Base(object):
             toCheckNimble = True
         else:
             toCheck = other
-            toCheckNimble = isinstance(toCheck, nimble.data.Base)
+            toCheckNimble = isinstance(toCheck, Base)
 
         if toCheckNimble:
             if toCheck.containsZero():
@@ -3894,7 +3908,7 @@ class Base(object):
         def isComplex(val):
             return numpy.isnan(val) or isinstance(val, complex)
 
-        if isinstance(other, nimble.data.Base):
+        if isinstance(other, Base):
             zipLR = zip(self.elements, other.elements)
             for l, r in zipLR:
                 if l == 0 and r < 0:
@@ -3922,15 +3936,10 @@ class Base(object):
 
 
     def _genericArithmeticBinary(self, opName, other):
-        isNimble = isinstance(other, nimble.data.Base)
-
-        if isNimble:
-            self._genericArithmeticBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
         self._genericArithmeticBinary_validation(opName, other)
         # figure out return obj's point / feature names
-        if opName not in ['__pos__', '__neg__', '__abs__'] and isNimble:
+        otherNimble = isinstance(other, Base)
+        if opName not in ['__pos__', '__neg__', '__abs__'] and otherNimble:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
@@ -3949,15 +3958,15 @@ class Base(object):
         ret.features.setNames(retFNames, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
-        pathSource = 'merge' if isNimble else 'self'
+        pathSource = 'merge' if otherNimble else 'self'
         dataHelpers.binaryOpNamePathMerge(
             self, other, ret, nameSource, pathSource)
         return ret
 
 
-    def _genericArithmeticBinary_implementation(self, opName, other):
+    def _defaultArithmeticBinary_implementation(self, opName, other):
         selfData = self.copy('numpyarray')
-        if isinstance(other, nimble.data.Base):
+        if isinstance(other, Base):
             otherData = other.copy('numpyarray')
         else:
             otherData = other

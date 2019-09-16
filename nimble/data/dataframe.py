@@ -216,7 +216,7 @@ class DataFrame(Base):
                                  pointEnd, featureEnd):
         """
         """
-        if not isinstance(values, nimble.data.Base):
+        if not isinstance(values, Base):
             values = values * numpy.ones((pointEnd - pointStart + 1,
                                           featureEnd - featureStart + 1))
         else:
@@ -373,11 +373,14 @@ class DataFrame(Base):
         representations if possible. Otherwise, uses the generic
         implementation.
         """
+        if isinstance(other, nimble.data.Sparse) and opName.startswith('__r'):
+            # rhs may return array of sparse matrices so use default
+            return self._defaultArithmeticBinary_implementation(opName, other)
         try:
             ret = getattr(self.data.values, opName)(other.data)
             return DataFrame(ret)
         except (AttributeError, InvalidArgumentType):
-            return self._genericArithmeticBinary_implementation(opName, other)
+            return self._defaultArithmeticBinary_implementation(opName, other)
 
     def _matmul__implementation(self, other):
         """
