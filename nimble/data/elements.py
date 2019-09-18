@@ -354,7 +354,12 @@ class Elements(object):
         """
         wrappedMatch = wrapMatchFunctionFactory(toMatch)
 
-        return self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+        ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+
+        ret.points.setNames(self._source.points._getNamesNoGeneration())
+        ret.features.setNames(self._source.features._getNamesNoGeneration())
+
+        return ret
 
     def count(self, condition):
         """
@@ -660,7 +665,6 @@ class Elements(object):
             createDataKwargs['elementType'] = numpy.object_
 
         ret = nimble.createData(optType, values, **createDataKwargs)
-
 
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath

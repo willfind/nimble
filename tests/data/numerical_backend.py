@@ -1360,6 +1360,229 @@ class NumericalDataSafe(DataTestObject):
     def test_abs_unary_NamePath_preservatinos(self):
         back_unary_NamePath_preservations(self.constructor, '__abs__')
 
+    ####################
+    # logical backends #
+    ####################
+
+    @raises(ImproperObjectAction)
+    def back_logical_exception_selfInvalidValue(self, logicOp):
+        lhs = [[True, 2], [True, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    @raises(ImproperObjectAction)
+    def back_logical_exception_otherInvalidValue(self, logicOp):
+        lhs = [[True, True], [True, False]]
+        rhs = [[False, True], [2, False]]
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    @raises(InvalidArgumentValue)
+    def back_logical_exception_shapeMismatch(self, logicOp):
+        lhs = [[True, True, True], [True, False, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    @raises(ImproperObjectAction)
+    def back_logical_exception_pEmpty(self, logicOp):
+        lhs = numpy.empty((0, 3))
+        rhs = numpy.empty((0, 3))
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    @raises(ImproperObjectAction)
+    def back_logical_exception_fEmpty(self, logicOp):
+        lhs = numpy.empty((3, 0))
+        rhs = numpy.empty((3, 0))
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    def getLogicalExpectedOutput(self, logicOp):
+        if logicOp == '__and__':
+            return [[False, True], [False, False]]
+        if logicOp == '__or__':
+            return [[True, True], [True, False]]
+        if logicOp == '__xor__':
+            return [[True, False], [True, False]]
+
+    @noLogEntryExpected
+    def back_logical_allCombinations(self, logicOp, inputType):
+        if inputType == 'int':
+            lhs = [[1, 1], [1, 0]]
+            rhs = [[0, 1], [0, 0]]
+        elif inputType == 'float':
+            lhs = [[1.0, 1.0], [1.0, 0.0]]
+            rhs = [[0.0, 1.0], [0.0, 0.0]]
+        else:
+            lhs = [[True, True], [True, False]]
+            rhs = [[False, True], [False, False]]
+
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        exp = self.getLogicalExpectedOutput(logicOp)
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert expObj == getattr(lhsObj, logicOp)(rhsObj)
+
+    @noLogEntryExpected
+    def back_logical_diffObjectTypes(self, logicOp):
+        lhs = [[True, True], [True, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+
+        exp = self.getLogicalExpectedOutput(logicOp)
+        expObj = self.constructor(exp, elementType=bool)
+        for rType in [t for t in nimble.data.available if t != lhsObj.getTypeString()]:
+            rhsObj = nimble.createData(rType, rhs, useLog=False)
+
+            assert expObj == getattr(lhsObj, logicOp)(rhsObj)
+
+    def run_logical_fullBackend(self, logicOp):
+        self.back_logical_exception_selfInvalidValue(logicOp)
+        self.back_logical_exception_otherInvalidValue(logicOp)
+        self.back_logical_exception_shapeMismatch(logicOp)
+        self.back_logical_exception_pEmpty(logicOp)
+        self.back_logical_exception_fEmpty(logicOp)
+
+        self.back_logical_allCombinations(logicOp, inputType='bool')
+        self.back_logical_allCombinations(logicOp, inputType='int')
+        self.back_logical_allCombinations(logicOp, inputType='float')
+        self.back_logical_diffObjectTypes(logicOp)
+
+    ###########
+    # __and__ #
+    ###########
+
+    def test_logical_and_fullSuite(self):
+        self.run_logical_fullBackend('__and__')
+
+    def test_logical_and_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __and__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__and__', False)
+
+    def test_logical_and_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__and__', False)
+
+
+    ##########
+    # __or__ #
+    ##########
+
+    def test_logical_or_fullSuite(self):
+        self.run_logical_fullBackend('__or__')
+
+    def test_logical_or_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __or__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__or__', False)
+
+    def test_logical_or_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__or__', False)
+
+    ##########
+    # __xor__ #
+    ##########
+
+    def test_logical_xor_fullSuite(self):
+        self.run_logical_fullBackend('__xor__')
+
+    def test_logical_xor_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __xor__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__xor__', False)
+
+    def test_logical_xor_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__xor__', False)
+
+    ##############
+    # __invert__ #
+    ##############
+
+    @raises(ImproperObjectAction)
+    def test_invert_exception_InvalidValue(self):
+        bools = [[True, 2], [False, 0]]
+        boolsObj = self.constructor(bools)
+        ~boolsObj
+
+    def test_invert_returnsAllBools(self):
+        bools = [[True, True], [False, False]]
+        boolsObj = self.constructor(bools)
+        boolsInvert = ~boolsObj
+
+        assert boolsInvert[0, 0] is False or boolsInvert[0, 0] is numpy.bool_(False)
+        assert boolsInvert[0, 1] is False or boolsInvert[0, 1] is numpy.bool_(False)
+        assert boolsInvert[1, 0] is True or boolsInvert[1, 0] is numpy.bool_(True)
+        assert boolsInvert[1, 1] is True or boolsInvert[1, 1] is numpy.bool_(True)
+
+    @noLogEntryExpected
+    def test_invert_TrueFalse(self):
+        bools = [[True, True], [False, False]]
+        boolsObj = self.constructor(bools)
+        exp = [[False, False], [True, True]]
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert ~boolsObj == expObj
+
+    @noLogEntryExpected
+    def test_invert_int0sAnd1s(self):
+        bools = [[1, 1], [0, 0]]
+        boolsObj = self.constructor(bools)
+        exp = [[False, False], [True, True]]
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert ~boolsObj == expObj
+
+    @noLogEntryExpected
+    def test_invert_float0sAnd1s(self):
+        bools = [[1.0, 1.0], [0.0, 0.0]]
+        boolsObj = self.constructor(bools)
+        exp = [[False, False], [True, True]]
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert ~boolsObj == expObj
+
+    def test_invert_pfname_preservation(self):
+        bools = [[True, True], [False, False]]
+        pnames = ['p1', 'p2']
+        fnames = ['f1', 'f2']
+
+        boolsObj = self.constructor(bools, pointNames=pnames, featureNames=fnames)
+
+        boolsInvert = ~boolsObj
+
+        assert boolsInvert.points.getNames() == pnames
+        assert boolsInvert.features.getNames() == fnames
+
+    def test_invert_namePath_preservation(self):
+        bools = [[True, True], [False, False]]
+
+        boolsObj = self.constructor(bools, name=preserveName, path=preservePair)
+
+        boolsInvert = ~boolsObj
+
+        assert boolsInvert.absolutePath == preserveAPath
+        assert boolsInvert.relativePath == preserveRPath
+        assert boolsInvert.name != preserveName
+        assert boolsInvert.nameIsDefault()
+
 
 class NumericalModifying(DataTestObject):
     ##################

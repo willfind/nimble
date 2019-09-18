@@ -3982,7 +3982,12 @@ class Base(object):
 
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
-        return boolObj.elements.calculate(lambda v: not v, useLog=False)
+        ret = boolObj.elements.matching(lambda v: not v)
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+        return ret
+
 
     def _genericLogicalBinary(self, opName, other):
         if not isinstance(other, Base):
@@ -4005,7 +4010,12 @@ class Base(object):
                 msg += 'containing True, False, 0 and 1 values'
                 raise ImproperObjectAction(msg)
 
-            return self.elements.matching(lambda v: bool(v))
+            ret = self.elements.matching(lambda v: bool(v))
+            ret.points.setNames(self.points._getNamesNoGeneration(),
+                                useLog=False)
+            ret.features.setNames(self.features._getNamesNoGeneration(),
+                                  useLog=False)
+            return ret
 
         return self
 

@@ -1707,6 +1707,33 @@ class HighLevelDataSafe(DataTestObject):
 
         assert isNonNumeric == expObj
 
+    def test_elements_matching_pfname_preservation(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        pnames = ['pos', 'neg', 'zero']
+        fnames = ['1', '2', '3']
+
+        obj = self.constructor(raw, pointNames=pnames, featureNames=fnames)
+        matchPositive = obj.elements.matching(match.positive)
+
+        assert matchPositive.points.getNames() == pnames
+        assert matchPositive.features.getNames() == fnames
+
+    def test_elements_matching_namePath_preservation(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+
+        preserveName = "PreserveTestName"
+        preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+        preserveRPath = os.path.relpath(preserveAPath)
+        preservePair = (preserveAPath, preserveRPath)
+
+        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        matchPositive = obj.elements.matching(match.positive)
+
+        assert matchPositive.absolutePath == preserveAPath
+        assert matchPositive.relativePath == preserveRPath
+        assert matchPositive.name != preserveName
+        assert matchPositive.nameIsDefault()
+
     #####################################
     # points/features matching backends #
     #####################################
@@ -1798,6 +1825,33 @@ class HighLevelDataSafe(DataTestObject):
     def test_points_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('point')
 
+    def test_points_matching_pfname_preservation(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        pnames = ['pos', 'neg', 'zero']
+        fnames = ['1', '2', '3']
+
+        obj = self.constructor(raw, pointNames=pnames, featureNames=fnames)
+        allNeg = obj.points.matching(match.allNegative)
+
+        assert allNeg.points.getNames() == pnames
+        assert not allNeg.features._namesCreated()
+
+    def test_points_matching_namePath_preservation(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+
+        preserveName = "PreserveTestName"
+        preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+        preserveRPath = os.path.relpath(preserveAPath)
+        preservePair = (preserveAPath, preserveRPath)
+
+        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        allNeg = obj.points.matching(match.allNegative)
+
+        assert allNeg.absolutePath == preserveAPath
+        assert allNeg.relativePath == preserveRPath
+        assert allNeg.name != preserveName
+        assert allNeg.nameIsDefault()
+
     #####################
     # features.matching #
     #####################
@@ -1820,6 +1874,33 @@ class HighLevelDataSafe(DataTestObject):
     @noLogEntryExpected
     def test_features_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('feature')
+
+    def test_features_matching_pfname_preservation(self):
+        raw = [[1, -1, 0], [2, -2, 0], [3, -3, 0]]
+        fnames = ['pos', 'neg', 'zero']
+        pnames = ['1', '2', '3']
+
+        obj = self.constructor(raw, pointNames=pnames, featureNames=fnames)
+        allZeros = obj.features.matching(match.allZero)
+
+        assert allZeros.features.getNames() == fnames
+        assert not allZeros.points._namesCreated()
+
+    def test_features_matching_namePath_preservation(self):
+        raw = [[1, -1, 0], [2, -2, 0], [3, -3, 0]]
+
+        preserveName = "PreserveTestName"
+        preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+        preserveRPath = os.path.relpath(preserveAPath)
+        preservePair = (preserveAPath, preserveRPath)
+
+        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        allZeros = obj.points.matching(match.allZero)
+
+        assert allZeros.absolutePath == preserveAPath
+        assert allZeros.relativePath == preserveRPath
+        assert allZeros.name != preserveName
+        assert allZeros.nameIsDefault()
 
 
 class HighLevelModifying(DataTestObject):
