@@ -727,7 +727,7 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     except ZeroDivisionError:
         assert nimbleOp.startswith('__r')
 
-@patch('nimble.data.Sparse._genericArithmeticBinary_implementation', calledException)
+@patch('nimble.data.Sparse._defaultBinaryOperations_implementation', calledException)
 @patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
 def back_sparseScalarOfOne(constructor, nimbleOp):
     """Test Sparse does not call helper functions for these scalar ops """

@@ -37,6 +37,7 @@ from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import wrapMatchFunctionFactory
 
 class Axis(object):
     """
@@ -432,9 +433,22 @@ class Axis(object):
     ###########################
 
     def _calculate(self, function, limitTo, useLog=None):
+        ret = self._calculate_backend(function, limitTo)
+
+        handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('calculate'),
+                      function, limitTo)
+        return ret
+
+    def _matching(self, function):
+        wrappedMatch = wrapMatchFunctionFactory(function)
+        return self._calculate_backend(wrappedMatch, None, matching=True)
+
+    def _calculate_backend(self, function, limitTo, matching=False):
         if limitTo is not None:
-            limitTo = copy.copy(limitTo)
             limitTo = constructIndicesList(self._source, self._axis, limitTo)
+        else:
+            limitTo = [i for i in range(len(self))]
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
@@ -444,7 +458,16 @@ class Axis(object):
         if function is None:
             raise InvalidArgumentType("function must not be None")
 
-        ret = self._calculate_implementation(function, limitTo)
+        retData = self._calculate_implementation(function, limitTo)
+
+        createDataKwargs = {'useLog': False}
+        if matching:
+            createDataKwargs['elementType'] = bool
+
+        ret = nimble.createData(self._source.getTypeString(), retData,
+                                **createDataKwargs)
+        if self._axis != 'point':
+            ret.transpose(useLog=False)
 
         if isinstance(self, Points):
             if limitTo is not None and self._namesCreated():
@@ -467,16 +490,10 @@ class Axis(object):
         ret._absPath = self._source.absolutePath
         ret._relPath = self._source.relativePath
 
-        handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
-                      self._source.getTypeString(), self._sigFunc('calculate'),
-                      function, limitTo)
-
         return ret
 
     def _calculate_implementation(self, function, limitTo):
         retData = []
-        if limitTo is None:
-            limitTo = [i for i in range(len(self))]
         for axisID in limitTo:
             if isinstance(self, Points):
                 view = self._source.pointView(axisID)
@@ -507,12 +524,7 @@ class Axis(object):
                     msg += "container of valid values"
                     raise InvalidArgumentValue(msg)
 
-        ret = nimble.createData(self._source.getTypeString(), retData,
-                             useLog=False)
-        if self._axis != 'point':
-            ret.transpose(useLog=False)
-
-        return ret
+        return retData
 
 
     def _add(self, toAdd, insertBefore, useLog=None):

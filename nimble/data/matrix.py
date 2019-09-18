@@ -433,7 +433,7 @@ class Matrix(Base):
         return 0 in self.data
 
 
-    def _arithmeticBinary_implementation(self, opName, other):
+    def _binaryOperations_implementation(self, opName, other):
         """
         Attempt to perform operation with data as is, preserving sparse
         representations if possible. Otherwise, uses the generic
@@ -443,7 +443,7 @@ class Matrix(Base):
             ret = getattr(self.data, opName)(other.data)
             return Matrix(ret)
         except (AttributeError, InvalidArgumentType):
-            return self._genericArithmeticBinary_implementation(opName, other)
+            return self._defaultBinaryOperations_implementation(opName, other)
 
     def _matmul__implementation(self, other):
         """

@@ -472,7 +472,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = nimble.createData("Matrix", data, useLog=False)
     calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
     checkLogContents('elements.calculate', "Matrix", [('toCalculate', "lambda x: len(x)"),
-                                                      ('features', [0])])
+                                                      ('features', 0)])
 
     # points.calculate
     dataObj = nimble.createData("Matrix", data, useLog=False)
@@ -483,7 +483,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = nimble.createData("Matrix", data, useLog=False)
     calculated = dataObj.features.calculate(lambda x: len(x), features=0)
     checkLogContents('features.calculate', "Matrix", [('function', "lambda x: len(x)"),
-                                                      ('features', [0])])
+                                                      ('features', 0)])
 
     # points.shuffle
     dataObj = nimble.createData("List", data, useLog=False)
@@ -748,7 +748,7 @@ def testFailedLambdaStringConversion():
     dataObj = nimble.createData("Matrix", data, useLog=False)
     calculated = dataObj.elements.calculate(lambda x: len(x), features=0)
     checkLogContents('elements.calculate', "Matrix", [('toCalculate', "<lambda>"),
-                                                      ('features', [0])])
+                                                      ('features', 0)])
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)

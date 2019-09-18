@@ -6,7 +6,7 @@ pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
-inverse, solveLinearSystem
+inverse, solveLinearSystem, __and__, __or__, __xor__
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -34,6 +34,7 @@ from nimble.data.dataHelpers import formatIfNeeded
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -2658,7 +2659,158 @@ class QueryBackend(DataTestObject):
         Aobj.solveLinearSystem(bobj, solveFunction='foo')
 
 
+    ####################
+    # logical backends #
+    ####################
 
+    @raises(ImproperObjectAction)
+    def back_logical_exception_InvalidValue(self, logicOp):
+        lhs = [[True, 2], [True, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    @raises(InvalidArgumentValue)
+    def back_logical_exception_shapeMismatch(self, logicOp):
+        lhs = [[True, True, True], [True, False, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        getattr(lhsObj, logicOp)(rhsObj)
+
+    def getLogicalExpectedOutput(self, logicOp):
+        if logicOp == '__and__':
+            return [[False, True], [False, False]]
+        if logicOp == '__or__':
+            return [[True, True], [True, False]]
+        if logicOp == '__xor__':
+            return [[True, False], [True, False]]
+
+    @noLogEntryExpected
+    def back_logical_allCombinations(self, logicOp, inputType):
+        if inputType == 'int':
+            lhs = [[1, 1], [1, 0]]
+            rhs = [[0, 1], [0, 0]]
+        elif inputType == 'float':
+            lhs = [[1.0, 1.0], [1.0, 0.0]]
+            rhs = [[0.0, 1.0], [0.0, 0.0]]
+        else:
+            lhs = [[True, True], [True, False]]
+            rhs = [[False, True], [False, False]]
+
+
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        exp = self.getLogicalExpectedOutput(logicOp)
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert expObj == getattr(lhsObj, logicOp)(rhsObj)
+
+    @noLogEntryExpected
+    def back_logical_diffObjectTypes(self, logicOp):
+        lhs = [[True, True], [True, False]]
+        rhs = [[False, True], [False, False]]
+
+        lhsObj = self.constructor(lhs)
+
+        exp = self.getLogicalExpectedOutput(logicOp)
+        expObj = self.constructor(exp)
+        for rType in [t for t in nimble.data.available if t != lhsObj.getTypeString()]:
+            rhsObj = nimble.createData(rType, rhs, useLog=False)
+
+            assert expObj == getattr(lhsObj, logicOp)(rhsObj)
+
+    ###########
+    # __and__ #
+    ###########
+
+    def test_logicalAnd_exception_InvalidValue(self):
+        self.back_logical_exception_InvalidValue('__and__')
+
+    def test_logicalAnd_exception_shapeMismatch(self):
+        self.back_logical_exception_shapeMismatch('__and__')
+
+    def test_logicalAnd_TrueFalse(self):
+        self.back_logical_allCombinations('__and__', inputType='bool')
+
+    def test_logicalAnd_int0sAnd1s(self):
+        self.back_logical_allCombinations('__and__', inputType='int')
+
+    def test_logicalAnd_float0sAnd1s(self):
+        self.back_logical_allCombinations('__and__', inputType='float')
+
+    def test_logicalAnd_diffObjectTypes(self):
+        self.back_logical_diffObjectTypes('__and__')
+
+
+    ##########
+    # __or__ #
+    ##########
+
+    def test_logicalOr_exception_InvalidValue(self):
+        self.back_logical_exception_InvalidValue('__or__')
+
+    def test_logicalOr_exception_shapeMismatch(self):
+        self.back_logical_exception_shapeMismatch('__or__')
+
+    def test_logicalOr_TrueFalse(self):
+        self.back_logical_allCombinations('__or__', inputType='bool')
+
+    def test_logicalOr_int0sAnd1s(self):
+        self.back_logical_allCombinations('__or__', inputType='int')
+
+    def test_logicalOr_float0sAnd1s(self):
+        self.back_logical_allCombinations('__or__', inputType='float')
+
+    def test_logicalOr_diffObjectTypes(self):
+        self.back_logical_diffObjectTypes('__or__')
+
+    ##########
+    # __xor__ #
+    ##########
+
+    def test_logicalXor_exception_InvalidValue(self):
+        self.back_logical_exception_InvalidValue('__xor__')
+
+    def test_logicalXor_exception_shapeMismatch(self):
+        self.back_logical_exception_shapeMismatch('__xor__')
+
+    def test_logicalXor_TrueFalse(self):
+        self.back_logical_allCombinations('__xor__', inputType='bool')
+
+    def test_logicalXor_int0sAnd1s(self):
+        self.back_logical_allCombinations('__xor__', inputType='int')
+
+    def test_logicalXor_float0sAnd1s(self):
+        self.back_logical_allCombinations('__xor__', inputType='float')
+
+    def test_logicalXor_diffObjectTypes(self):
+        self.back_logical_diffObjectTypes('__xor__')
+
+    ##############
+    # __invert__ #
+    ##############
+
+    @raises(ImproperObjectAction)
+    def test_invert_exception_InvalidValue(self):
+        bools = [[True, 2], [False, 0]]
+        boolsObj = self.constructor(bools)
+        ~boolsObj
+
+    @noLogEntryExpected
+    def test_invert_TrueFalse(self):
+        bools = [[True, True], [False, False]]
+        boolsObj = self.constructor(bools, elementType=bool)
+        exp = [[False, False], [True, True]]
+        expObj = self.constructor(exp, elementType=bool)
+
+        assert ~boolsObj == expObj
 
 ###########
 # Helpers #

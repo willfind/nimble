@@ -62,7 +62,7 @@ class SparseElements(Elements):
             values = coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return nimble.createData(outputType, values, useLog=False)
+            return values
         # subset of data
         if preserveZeros:
             dataSubset = []
@@ -77,7 +77,7 @@ class SparseElements(Elements):
             values = coo_matrix((dataSubset, (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
-            return nimble.createData(outputType, values, useLog=False)
+            return values
         # zeros not preserved
         return self._calculate_genericVectorized(
             function, points, features, outputType)

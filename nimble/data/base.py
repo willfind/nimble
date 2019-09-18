@@ -24,6 +24,7 @@ from six.moves import range
 from six.moves import zip
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -3822,7 +3823,7 @@ class Base(object):
                 msg = msg.format('left')
                 raise ImproperObjectAction(msg)
 
-    def _genericArithmeticBinary_sizeValidation(self, opName, other):
+    def _genericBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
             msg += "(self=" + str(self._pointCount) + " vs other="
@@ -3843,6 +3844,11 @@ class Base(object):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
+
+        if otherNimble:
+            self._genericBinary_sizeValidation(opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         # Test element type self
         self._numericValidation()
@@ -3922,13 +3928,11 @@ class Base(object):
 
 
     def _genericArithmeticBinary(self, opName, other):
-        isNimble = isinstance(other, nimble.data.Base)
-
-        if isNimble:
-            self._genericArithmeticBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
         self._genericArithmeticBinary_validation(opName, other)
+        return self._genericBinaryOperations(opName, other)
+
+    def _genericBinaryOperations(self, opName, other):
+        isNimble = isinstance(other, nimble.data.Base)
         # figure out return obj's point / feature names
         if opName not in ['__pos__', '__neg__', '__abs__'] and isNimble:
             # everything else that uses this helper is a binary scalar op
@@ -3938,7 +3942,7 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._arithmeticBinary_implementation(opName, other)
+        ret = self._binaryOperations_implementation(opName, other)
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
@@ -3955,7 +3959,7 @@ class Base(object):
         return ret
 
 
-    def _genericArithmeticBinary_implementation(self, opName, other):
+    def _defaultBinaryOperations_implementation(self, opName, other):
         selfData = self.copy('numpyarray')
         if isinstance(other, nimble.data.Base):
             otherData = other.copy('numpyarray')
@@ -3966,6 +3970,44 @@ class Base(object):
 
         return ret
 
+
+    def __and__(self, other):
+        return self._genericLogicalBinary('__and__', other)
+
+    def __or__(self, other):
+        return self._genericLogicalBinary('__or__', other)
+
+    def __xor__(self, other):
+        return self._genericLogicalBinary('__xor__', other)
+
+    def __invert__(self):
+        boolObj = self._logicalValidationAndConversion()
+        return boolObj.elements.calculate(lambda v: not v, useLog=False)
+
+    def _genericLogicalBinary(self, opName, other):
+        if not isinstance(other, Base):
+            msg = 'other must be an instance of a nimble Base object'
+            raise InvalidArgumentType(msg)
+        self._genericBinary_sizeValidation(opName, other)
+        lhsBool = self._logicalValidationAndConversion()
+        rhsBool = other._logicalValidationAndConversion()
+        self._validateEqualNames('point', 'point', opName, other)
+        self._validateEqualNames('feature', 'feature', opName, other)
+
+        return lhsBool._genericBinaryOperations(opName, rhsBool)
+
+    def _logicalValidationAndConversion(self):
+        if (not hasattr(self.data, 'dtype')
+                or self.data.dtype not in [bool, numpy.bool_]):
+            validValues = match.allValues([True, False, 0, 1])
+            if not validValues(self):
+                msg = 'logical operations can only be performed on data '
+                msg += 'containing True, False, 0 and 1 values'
+                raise ImproperObjectAction(msg)
+
+            return self.elements.matching(lambda v: bool(v))
+
+        return self
 
     ############################
     ############################

@@ -216,8 +216,8 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if _looksNumeric(value):
-        if not isinstance(value, int) and sigDigits is not None:
+    if _looksNumeric(value) and not (value is True or value is False):
+        if isinstance(value, (float, numpy.float)) and sigDigits is not None:
             return format(value, '.' + str(int(sigDigits)) + 'f')
     return str(value)
 
@@ -688,8 +688,10 @@ def createDataNoValidation(returnType, data, pointNames=None,
     to default values.
     """
     if hasattr(data, 'dtype'):
-        if not issubclass(data.dtype.type, (numpy.number, numpy.object_)):
-            raise InvalidArgumentType("data must have numeric or object dtype")
+        accepted = (numpy.number, numpy.object_, numpy.bool_)
+        if not issubclass(data.dtype.type, accepted):
+            msg = "data must have numeric, boolean, or object dtype"
+            raise InvalidArgumentType(msg)
     initMethod = getattr(nimble.data, returnType)
     if returnType == 'List':
         return initMethod(data, pointNames=pointNames,
@@ -742,3 +744,17 @@ def denseCountUnique(obj, points=None, features=None):
     intMap = {v: k for k, v in mapping.items()}
     vals, counts = numpy.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}
+
+
+def wrapMatchFunctionFactory(matchFunc):
+    def wrappedMatch(value):
+        ret = matchFunc(value)
+        if ret not in [False, True, 0, 1]:
+            msg = 'toMatch function must return True, False, 0 or 1'
+            raise InvalidArgumentValue(msg)
+        return ret == True # converts 1 and 0 to True and False
+    wrappedMatch.oneArg = True
+    wrappedMatch.__name__ = matchFunc.__name__
+    wrappedMatch.__doc__ = matchFunc.__doc__
+
+    return wrappedMatch

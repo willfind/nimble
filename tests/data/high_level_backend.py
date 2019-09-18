@@ -12,7 +12,7 @@ points.calculate, features.calculate, elements.calculate, points.count,
 features.count, elements.count, elements.countUnique, points.unique,
 features.unique, points.mapReduce, features.mapReduce,
 isApproximatelyEqual, trainAndTestSets, points.repeat,
-features.repeat
+features.repeat, points.matching, features.matching, elements.matching
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
@@ -1647,6 +1647,179 @@ class HighLevelDataSafe(DataTestObject):
         data = [[0, 1, 2], [3, 4, 5]]
         toTest = self.constructor(data)
         repeated = toTest.features.repeat(-1, copyFeatureByFeature=False)
+
+    #####################
+    # elements.matching #
+    #####################
+
+    @raises(InvalidArgumentValue)
+    def test_elements_matching_funcDoesNotReturnBoolean(self):
+        def returnVal(val):
+            return val
+
+        raw = [[1, 2, 3], [-1, -2, -3]]
+        obj = self.constructor(raw)
+        obj.elements.matching(returnVal)
+
+    @noLogEntryExpected
+    def test_elements_matching_allElementsAreBool(self):
+        raw = [[1, 2, 3], [-1, -2, -3]]
+        obj = self.constructor(raw)
+        matches = obj.elements.matching(lambda x: x > 0)
+
+        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
+        assert matches[0, 1] is True or matches[0, 1] is numpy.bool_(True)
+        assert matches[0, 2] is True or matches[0, 2] is numpy.bool_(True)
+        assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
+        assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
+        assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
+
+    @noLogEntryExpected
+    def test_elements_matching_varietyOfFuncs(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+
+        exp = [[True, True, True], [False, False, False], [False, False, False]]
+        expObj = self.constructor(exp)
+        matchPositive = obj.elements.matching(match.positive)
+
+        assert matchPositive == expObj
+
+        exp = [[True, True, True], [True, False, False], [True, True, True]]
+        expObj = self.constructor(exp)
+        greaterEqualToNeg1 = obj.elements.matching(lambda x: x >= -1)
+
+        assert greaterEqualToNeg1 == expObj
+
+        raw = [['a', None, 'c'], [numpy.nan, None, -3], [0, 'zero', None]]
+        obj = self.constructor(raw)
+
+        exp = [[False, True, False], [True, True, False], [False, False, True]]
+        expObj = self.constructor(exp)
+        isMissing = obj.elements.matching(match.missing)
+
+        assert isMissing == expObj
+
+        exp = [[True, False, True], [False, False, False], [False, True, False]]
+
+        expObj = self.constructor(exp)
+        isNonNumeric = obj.elements.matching(match.nonNumeric)
+
+        assert isNonNumeric == expObj
+
+    #####################################
+    # points/features matching backends #
+    #####################################
+
+    @raises(InvalidArgumentValue)
+    def back_pointsfeatures_matching_funcDoesNotReturnBoolean(self, axis):
+        def returnInput(input):
+            return input
+
+        raw = [[1, 2, 3], [-1, -2, -3]]
+        obj = self.constructor(raw)
+        if axis == 'point':
+            obj.points.matching(returnInput)
+        else:
+            obj.features.matching(returnInput)
+
+    def back_pointsfeatures_matching_varietyOfFuncs(self, axis):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+        exp = [[True], [False], [False]]
+        expObj = self.constructor(exp)
+        if axis == 'point':
+            matchPositive = obj.points.matching(match.allPositive)
+        else:
+            obj = obj.T
+            expObj = expObj.T
+            matchPositive = obj.features.matching(match.allPositive)
+
+        assert matchPositive == expObj
+
+        exp = [[True], [False], [True]]
+        expObj = self.constructor(exp)
+        if axis == 'point':
+            anyGreaterNeg1 = obj.points.matching(lambda view: any(x > -1 for x in view))
+        else:
+            expObj = expObj.T
+            anyGreaterNeg1 = obj.features.matching(lambda view: any(x > -1 for x in view))
+
+        assert anyGreaterNeg1 == expObj
+
+        raw = [[None, None, numpy.nan], [numpy.nan, None, -3], [0, 'zero', None]]
+        obj = self.constructor(raw)
+
+        exp = [[True], [False], [False]]
+        expObj = self.constructor(exp)
+        if axis == 'point':
+            allMissing = obj.points.matching(match.allMissing)
+        else:
+            obj = obj.T
+            expObj = expObj.T
+            allMissing = obj.features.matching(match.allMissing)
+
+        assert allMissing == expObj
+
+        raw = [['a', None, 'c'], [numpy.nan, None, -3], [0, 'zero', 0]]
+        obj = self.constructor(raw)
+
+        exp = [[True], [False], [True]]
+        expObj = self.constructor(exp)
+        if axis == 'point':
+            anyNonNumeric = obj.points.matching(match.anyNonNumeric)
+        else:
+            obj = obj.T
+            expObj = expObj.T
+            anyNonNumeric = obj.features.matching(match.anyNonNumeric)
+
+        assert anyNonNumeric == expObj
+
+    ###################
+    # points.matching #
+    ###################
+
+    def test_points_matching_funcDoesNotReturnBoolean(self):
+        self.back_pointsfeatures_matching_funcDoesNotReturnBoolean('point')
+
+    @noLogEntryExpected
+    def test_points_matching_allElementsAreBool(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [1, 2, -3]]
+        obj = self.constructor(raw)
+        matches = obj.points.matching(match.allPositive)
+
+        assert len(matches.features) == 1
+        assert len(matches.points) == 3
+        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
+        assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
+        assert matches[2, 0] is False or matches[2, 0] is numpy.bool_(False)
+
+    @noLogEntryExpected
+    def test_points_matching_varietyOfFuncs(self):
+        self.back_pointsfeatures_matching_varietyOfFuncs('point')
+
+    #####################
+    # features.matching #
+    #####################
+
+    def test_features_matching_funcDoesNotReturnBoolean(self):
+        self.back_pointsfeatures_matching_funcDoesNotReturnBoolean('feature')
+
+    @noLogEntryExpected
+    def test_features_matching_allElementsAreBool(self):
+        raw = [[1, 2, 3], [1, -2, -3], [1, 2, -3]]
+        obj = self.constructor(raw)
+        matches = obj.features.matching(match.allPositive)
+
+        assert len(matches.points) == 1
+        assert len(matches.features) == 3
+        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
+        assert matches[0, 1] is False or matches[0, 1] is numpy.bool_(False)
+        assert matches[0, 2] is False or matches[0, 2] is numpy.bool_(False)
+
+    @noLogEntryExpected
+    def test_features_matching_varietyOfFuncs(self):
+        self.back_pointsfeatures_matching_varietyOfFuncs('feature')
 
 
 class HighLevelModifying(DataTestObject):
