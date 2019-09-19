@@ -3585,22 +3585,24 @@ class Base(object):
             msg += "empty"
             raise ImproperObjectAction(msg)
 
-        if self._featureCount != len(other.points):
-            msg = "The number of features in the calling object must "
-            msg += "match the point in the callee object."
-            raise InvalidArgumentValue(msg)
-
-        self._validateEqualNames('feature', 'point', opName, other)
-
         if opName.startswith('__r'):
-            if self.getTypeString() == other.getTypeString():
-                caller = other
-            else:
-                caller = other.copy(self.getTypeString())
+            caller = other
             callee = self
         else:
             caller = self
             callee = other
+
+        if caller._featureCount != len(callee.points):
+            msg = "The number of features in the left hand object must "
+            msg += "match the number of points in the right hand side object."
+            raise InvalidArgumentValue(msg)
+
+        caller._validateEqualNames('feature', 'point', opName, callee)
+
+        # match types with self (the orignal caller of the __r*__ op)
+        if (opName.startswith('__r')
+                and self.getTypeString() != other.getTypeString()):
+            caller = caller.copy(self.getTypeString())
 
         try:
             ret = caller._matmul__implementation(callee)
