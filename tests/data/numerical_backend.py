@@ -827,10 +827,10 @@ class NumericalDataSafe(DataTestObject):
     @raises(InvalidArgumentValue)
     def test_rmatmul_shapeException(self):
         """ Test __rmatmul__ raises exception the shapes of the object don't fit correctly """
-        data1 = [[1, 2], [4, 5], [7, 8]]
-        data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        caller = self.constructor(data1)
-        callee = self.constructor(data2)
+        dataLHS = [[1, 2], [4, 5], [7, 8]]
+        dataRHS = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        callee = self.constructor(dataLHS)
+        caller = self.constructor(dataRHS)
 
         caller.__rmatmul__(callee)
 
