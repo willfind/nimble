@@ -328,7 +328,7 @@ class List(Base):
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
-        if not isinstance(values, nimble.data.Base):
+        if not isinstance(values, Base):
             values = [values] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
@@ -586,7 +586,7 @@ class List(Base):
         certain operations are implemented differently or not possible
         for lists.
         """
-        return self._genericArithmeticBinary_implementation(opName, other)
+        return self._defaultArithmeticBinary_implementation(opName, other)
 
     def _matmul__implementation(self, other):
         """
