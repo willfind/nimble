@@ -329,7 +329,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     assert other.relativePath == preserveRPathOther
 
 
-def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
+def back_matrixmul_pfname_preservations(callerCon, attr1, inplace):
     """ Test that p/f names are preserved when calling a binary element wise op """
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
@@ -339,63 +339,70 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace, attr2=None):
     caller = callerCon(data, pnames, fnames)
     ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
     other = callerCon(data, ofnames, pnames)
+    # only rhs should pass
     try:
         toCall = getattr(caller, attr1)
-        if attr2 is not None:
-            toCall = getattr(toCall, attr2)
         ret = toCall(other)
-        if ret != NotImplemented:
-            assert False
+        assert ret.points.getNames() == other.points.getNames()
+        assert ret.features.getNames() == caller.features.getNames()
+    # lhs conflict between names; reverse operation eliminates conflict
     except InvalidArgumentValue:
-        pass
+        toCall = getattr(other, attr1)
+        ret = toCall(caller)
     # if it isn't the exception we expect, pass it on
     except:
         einfo = sys.exc_info()
         six.reraise(einfo[1], None, einfo[2])
+    assert ret.points.getNames() == other.points.getNames()
+    assert ret.features.getNames() == caller.features.getNames()
 
     # names interwoven
     interPnames = ['f1', 'f2', None]
     caller = callerCon(data, pnames, fnames)
     other = callerCon(data, interPnames, fnames)
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    ret = toCall(other)
-
-    if ret != NotImplemented:
-        if attr1 == '__rmatmul__':
-            assert ret.points.getNames() == other.points.getNames()
-            assert ret.features.getNames() == caller.features.getNames()
-        else:
-            assert ret.points.getNames() == caller.points.getNames()
-            assert ret.features.getNames() == other.features.getNames()
+    # only lhs should pass
+    try:
+        toCall = getattr(caller, attr1)
+        ret = toCall(other)
+    # rhs conflict between names; reverse operation eliminates conflict
+    except InvalidArgumentValue:
+        toCall = getattr(other, attr1)
+        ret = toCall(caller)
+    # if it isn't the exception we expect, pass it on
+    except:
+        einfo = sys.exc_info()
+        six.reraise(einfo[1], None, einfo[2])
+    assert ret.points.getNames() == caller.points.getNames()
+    assert ret.features.getNames() == other.features.getNames()
 
     # both names same
     caller = callerCon(data, pnames, pnames)
     other = callerCon(data, pnames, fnames)
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    ret = toCall(other)
+    # only lhs should pass
+    try:
+        toCall = getattr(caller, attr1)
+        ret = toCall(other)
+    # rhs conflict between names; reverse operation eliminates conflict
+    except InvalidArgumentValue:
+        toCall = getattr(other, attr1)
+        ret = toCall(caller)
+    # if it isn't the exception we expect, pass it on
+    except:
+        einfo = sys.exc_info()
+        six.reraise(einfo[1], None, einfo[2])
+    assert ret.points.getNames() == caller.points.getNames()
+    assert ret.features.getNames() == other.features.getNames()
 
-    if ret != NotImplemented:
-        if attr1 == '__rmatmul__':
-            assert ret.points.getNames() == other.points.getNames()
-            assert ret.features.getNames() == caller.features.getNames()
-        else:
-            assert ret.points.getNames() == caller.points.getNames()
-            assert ret.features.getNames() == other.features.getNames()
-
-        # check name separation between caller and returned object
-        ret.points.setName('p1', 'p0')
-        if inplace:
-            assert 'p0' in caller.points.getNames()
-            assert 'p1' not in caller.points.getNames()
-        else:
-            assert 'p0' not in caller.points.getNames()
-            assert 'p1' in caller.points.getNames()
-        assert 'p0' in ret.points.getNames()
-        assert 'p1' not in ret.points.getNames()
+    # check name separation between caller and returned object
+    ret.points.setName('p1', 'p0')
+    if inplace:
+        assert 'p0' in caller.points.getNames()
+        assert 'p1' not in caller.points.getNames()
+    else:
+        assert 'p0' not in caller.points.getNames()
+        assert 'p1' in caller.points.getNames()
+    assert 'p0' in ret.points.getNames()
+    assert 'p1' not in ret.points.getNames()
 
 
 def back_otherObjectExceptions(callerCon, attr1, attr2=None):
