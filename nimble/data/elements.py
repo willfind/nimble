@@ -321,7 +321,7 @@ class Elements(object):
 
         return ret
 
-    def matching(self, toMatch):
+    def matching(self, toMatch, useLog=None):
         """
         Return an object of boolean values identifying matching values.
 
@@ -358,6 +358,10 @@ class Elements(object):
 
         ret.points.setNames(self._source.points._getNamesNoGeneration())
         ret.features.setNames(self._source.features._getNamesNoGeneration())
+
+        handleLogging(useLog, 'prep', 'elements.matching',
+                      self._source.getTypeString(), Elements.matching,
+                      toMatch)
 
         return ret
 

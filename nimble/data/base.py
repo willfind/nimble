@@ -3982,7 +3982,7 @@ class Base(object):
 
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
-        ret = boolObj.elements.matching(lambda v: not v)
+        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
         ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
         ret.features.setNames(self.features._getNamesNoGeneration(),
                               useLog=False)
@@ -4010,7 +4010,7 @@ class Base(object):
                 msg += 'containing True, False, 0 and 1 values'
                 raise ImproperObjectAction(msg)
 
-            ret = self.elements.matching(lambda v: bool(v))
+            ret = self.elements.matching(lambda v: bool(v), useLog=False)
             ret.points.setNames(self.points._getNamesNoGeneration(),
                                 useLog=False)
             ret.features.setNames(self.features._getNamesNoGeneration(),

@@ -1661,7 +1661,7 @@ class HighLevelDataSafe(DataTestObject):
         obj = self.constructor(raw)
         obj.elements.matching(returnVal)
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def test_elements_matching_allElementsAreBool(self):
         raw = [[1, 2, 3], [-1, -2, -3]]
         obj = self.constructor(raw)
@@ -1674,7 +1674,7 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
-    @noLogEntryExpected
+    @logCountAssertionFactory(4)
     def test_elements_matching_varietyOfFuncs(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -1750,11 +1750,12 @@ class HighLevelDataSafe(DataTestObject):
         else:
             obj.features.matching(returnInput)
 
+    @logCountAssertionFactory(4)
     def back_pointsfeatures_matching_varietyOfFuncs(self, axis):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
         exp = [[True], [False], [False]]
-        expObj = self.constructor(exp)
+        expObj = self.constructor(exp, featureNames=['allPositive'])
         if axis == 'point':
             matchPositive = obj.points.matching(match.allPositive)
         else:
@@ -1778,7 +1779,7 @@ class HighLevelDataSafe(DataTestObject):
         obj = self.constructor(raw)
 
         exp = [[True], [False], [False]]
-        expObj = self.constructor(exp)
+        expObj = self.constructor(exp, featureNames=['allMissing'])
         if axis == 'point':
             allMissing = obj.points.matching(match.allMissing)
         else:
@@ -1792,7 +1793,7 @@ class HighLevelDataSafe(DataTestObject):
         obj = self.constructor(raw)
 
         exp = [[True], [False], [True]]
-        expObj = self.constructor(exp)
+        expObj = self.constructor(exp, featureNames=['anyNonNumeric'])
         if axis == 'point':
             anyNonNumeric = obj.points.matching(match.anyNonNumeric)
         else:
@@ -1809,7 +1810,7 @@ class HighLevelDataSafe(DataTestObject):
     def test_points_matching_funcDoesNotReturnBoolean(self):
         self.back_pointsfeatures_matching_funcDoesNotReturnBoolean('point')
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def test_points_matching_allElementsAreBool(self):
         raw = [[1, 2, 3], [-1, -2, -3], [1, 2, -3]]
         obj = self.constructor(raw)
@@ -1821,7 +1822,6 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
         assert matches[2, 0] is False or matches[2, 0] is numpy.bool_(False)
 
-    @noLogEntryExpected
     def test_points_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('point')
 
@@ -1834,7 +1834,7 @@ class HighLevelDataSafe(DataTestObject):
         allNeg = obj.points.matching(match.allNegative)
 
         assert allNeg.points.getNames() == pnames
-        assert not allNeg.features._namesCreated()
+        assert allNeg.features.getNames() == ['allNegative']
 
     def test_points_matching_namePath_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
@@ -1859,7 +1859,7 @@ class HighLevelDataSafe(DataTestObject):
     def test_features_matching_funcDoesNotReturnBoolean(self):
         self.back_pointsfeatures_matching_funcDoesNotReturnBoolean('feature')
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def test_features_matching_allElementsAreBool(self):
         raw = [[1, 2, 3], [1, -2, -3], [1, 2, -3]]
         obj = self.constructor(raw)
@@ -1871,7 +1871,6 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[0, 1] is False or matches[0, 1] is numpy.bool_(False)
         assert matches[0, 2] is False or matches[0, 2] is numpy.bool_(False)
 
-    @noLogEntryExpected
     def test_features_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('feature')
 
@@ -1884,7 +1883,7 @@ class HighLevelDataSafe(DataTestObject):
         allZeros = obj.features.matching(match.allZero)
 
         assert allZeros.features.getNames() == fnames
-        assert not allZeros.points._namesCreated()
+        assert allZeros.points.getNames() == ['allZero']
 
     def test_features_matching_namePath_preservation(self):
         raw = [[1, -1, 0], [2, -2, 0], [3, -3, 0]]

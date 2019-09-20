@@ -440,9 +440,22 @@ class Axis(object):
                       function, limitTo)
         return ret
 
-    def _matching(self, function):
+    def _matching(self, function, useLog=None):
         wrappedMatch = wrapMatchFunctionFactory(function)
-        return self._calculate_backend(wrappedMatch, None, matching=True)
+
+        ret = self._calculate_backend(wrappedMatch, None, matching=True)
+
+        self._setNames(self._getNamesNoGeneration())
+        if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
+            if self._axis == 'point':
+                ret.features.setNames([function.__name__], useLog=False)
+            else:
+                ret.points.setNames([function.__name__], useLog=False)
+
+        handleLogging(useLog, 'prep', '{ax}s.matching'.format(ax=self._axis),
+                      self._source.getTypeString(), self._sigFunc('matching'),
+                      function)
+        return ret
 
     def _calculate_backend(self, function, limitTo, matching=False):
         if limitTo is not None:

@@ -1169,13 +1169,15 @@ class Points(object):
         """
         return self._calculate(function, points, useLog)
 
-    def matching(self, function):
+    def matching(self, function, useLog=None):
         """
         Return a boolean value object identifying matching points.
 
         Apply a function returning a boolean value for each point in
         this object. Common any/all matching functions can be found in
-        nimble's match module.
+        nimble's match module. Note that the featureName in the returned
+        object will be set to the ``__name__`` attribute of ``function``
+        unless it is a ``lambda`` function.
 
         Parameters
         ----------
@@ -1199,9 +1201,10 @@ class Points(object):
             [[False]
              [False]
              [ True]]
+            featureNames={'allPositive':0}
             )
         """
-        return self._matching(function)
+        return self._matching(function, useLog)
 
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
@@ -2019,7 +2022,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _matching(self, function):
+    def _matching(self, function, useLog=None):
         pass
 
     @abstractmethod

@@ -1177,13 +1177,15 @@ class Features(object):
         """
         return self._calculate(function, features, useLog)
 
-    def matching(self, function):
+    def matching(self, function, useLog=None):
         """
         Return a boolean value object identifying matching features.
 
         Apply a function returning a boolean value for each feature in
         this object. Common any/all matching functions can be found in
-        nimble's match module.
+        nimble's match module. Note that the pointName in the returned
+        object will be set to the ``__name__`` attribute of ``function``
+        unless it is a ``lambda`` function.
 
         Parameters
         ----------
@@ -1205,9 +1207,10 @@ class Features(object):
         >>> allPositiveFts
         Matrix(
             [[False False True]]
+            pointNames={'allPositive':0}
             )
         """
-        return self._matching(function)
+        return self._matching(function, useLog)
 
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
@@ -1966,7 +1969,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _matching(self, function):
+    def _matching(self, function, useLog=None):
         pass
 
     @abstractmethod
