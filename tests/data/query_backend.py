@@ -424,6 +424,34 @@ class QueryBackend(DataTestObject):
     ##############
     # __getitem__#
     ##############
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_duplicateValuesPoint(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj[[0, 1, 0], :]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_duplicateValuesFeature(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj[:, [1, 0, 1]]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_mixedTypesPoint(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj[[False, True, 2], :]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_mixedTypesFeature(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj[:, [False, True, 2]]
+
     @noLogEntryExpected
     def test_getitem_allExamples(self):
         """
@@ -605,6 +633,73 @@ class QueryBackend(DataTestObject):
 
         assert list(zip(pv, fv)) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_nimble2D(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        rawIdx = [[1, 2, 3], [4, 5, 6]]
+        idxObj = self.constructor(rawIdx)
+
+        obj[idxObj]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_nimbleBoolean2D(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.elements.matching(lambda x: x % 2 == 0)
+
+        obj[idxObj]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_nimbleBooleanPointVectorShape(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
+        idxObjShort = idxObj[:1]
+
+        obj[idxObjShort, :]
+
+    @raises(InvalidArgumentValue)
+    def test_getitem_exception_nimbleBooleanFeatureVectorShape(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.features.matching(lambda ft: sum(ft) > 12)
+        idxObjShort = idxObj[:1]
+
+        obj[:, idxObjShort]
+
+    def test_getitem_nimbleBooleanPointVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj[idxObj, :]
+
+        expData = [[4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
+
+    def test_getitem_nimbleBooleanFeatureVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj[:, idxObj]
+
+        expData = [[1, 2], [4, 5], [7, 8]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
+
+
     ###############################
     # points/features.__getitem__ #
     ###############################
@@ -642,6 +737,72 @@ class QueryBackend(DataTestObject):
         assert toTest.points[:"4"].features["gender":"zero":-1] == tmp5
         assert toTest.points[['1', '4']].features[[4,3]] == tmp5
         assert toTest.points[[0,1]].features[['gender', 'zero']] == tmp5
+
+    @raises(InvalidArgumentValue)
+    def test_points_getitem_exception_duplicateValues(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj.points[[0, 1, 0]]
+
+    @raises(InvalidArgumentValue)
+    def test_features_getitem_exception_duplicateValues(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        obj.features[[1, 0, 1]]
+
+    def test_points_getitem_nimbleBooleanPointVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj.points[idxObj]
+
+        expData = [[4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
+
+    def test_points_getitem_nimbleBooleanFeatureVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj.points[idxObj]
+
+        expData = [[1, 2, 3], [4, 5, 6]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
+
+    def test_features_getitem_nimbleBooleanPointVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj.features[idxObj]
+
+        expData = [[2, 3], [5, 6], [8, 9]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
+
+    def test_features_getitem_nimbleBooleanFeatureVector(self):
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+
+        idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
+        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        ret = obj.features[idxObj]
+
+        expData = [[1, 2], [4, 5], [7, 8]]
+        exp = self.constructor(expData)
+
+        assert ret == exp
 
     ################
     # pointView #

@@ -749,10 +749,11 @@ def denseCountUnique(obj, points=None, features=None):
 def wrapMatchFunctionFactory(matchFunc):
     def wrappedMatch(value):
         ret = matchFunc(value)
-        if ret not in [False, True, 0, 1]:
+        # in [True, False] also covers 0 and 1 and numpy number and bool types
+        if ret not in [True, False]:
             msg = 'toMatch function must return True, False, 0 or 1'
             raise InvalidArgumentValue(msg)
-        return ret == True # converts 1 and 0 to True and False
+        return bool(ret) # converts 1 and 0 to True and False
     wrappedMatch.oneArg = True
     wrappedMatch.__name__ = matchFunc.__name__
     wrappedMatch.__doc__ = matchFunc.__doc__

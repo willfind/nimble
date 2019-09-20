@@ -991,6 +991,21 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.copy(start=2, end=0)
 
+    @raises(InvalidArgumentValueCombination)
+    def test_points_copy_exceptionInversionPointName(self):
+        """ Test points.copy() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
+        pointNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=pointNames)
+        toTest.points.copy(start="two", end="one")
+
+    @raises(InvalidArgumentValue)
+    def test_points_copy_exceptionDuplicates(self):
+        """ Test points.copy() for InvalidArgumentValueCombination when toCopy contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.points.copy([0, 1, 0])
+
     def test_points_copy_handmadeRange(self):
         """ Test points.copy() against handmade output for range copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1822,6 +1837,12 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.copy(start="two", end="one")
 
+    @raises(InvalidArgumentValue)
+    def test_features_copy_exceptionDuplicates(self):
+        """ Test points.copy() for InvalidArgumentValueCombination when toCopy contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.features.copy([0, 1, 0])
 
     def test_features_copy_rangeIntoFEmpty(self):
         """ Test features.copy() copies all Featuress using ranges """
@@ -3832,6 +3853,21 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.extract(start=2, end=0)
 
+    @raises(InvalidArgumentValueCombination)
+    def test_points_extract_exceptionInversionPointName(self):
+        """ Test points.extract() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
+        pointNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=pointNames)
+        toTest.points.extract(start="two", end="one")
+
+    @raises(InvalidArgumentValue)
+    def test_points_extract_exceptionDuplicates(self):
+        """ Test points.extract() for InvalidArgumentValueCombination when toExtract contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.points.extract([0, 1, 0])
+
     def test_points_extract_handmadeRange(self):
         """ Test points.extract() against handmade output for range extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4683,6 +4719,12 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.extract(start="two", end="one")
 
+    @raises(InvalidArgumentValue)
+    def test_features_extract_exceptionDuplicates(self):
+        """ Test points.extract() for InvalidArgumentValueCombination when toExtract contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.features.extract([0, 1, 0])
 
     def test_features_extract_rangeIntoFEmpty(self):
         """ Test features.extract() removes all Featuress using ranges """
@@ -5252,6 +5294,21 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.delete(start=2, end=0)
+
+    @raises(InvalidArgumentValueCombination)
+    def test_points_delete_exceptionInversionPointName(self):
+        """ Test points.delete() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
+        pointNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=pointNames)
+        toTest.points.delete(start="two", end="one")
+
+    @raises(InvalidArgumentValue)
+    def test_points_delete_exceptionDuplicates(self):
+        """ Test points.delete() for InvalidArgumentValueCombination when toDelete contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.points.delete([0, 1, 0])
 
     def test_points_delete_handmadeRange(self):
         """ Test points.delete() against handmade output for range deletion """
@@ -5951,6 +6008,13 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.delete(start="two", end="one")
 
+    @raises(InvalidArgumentValue)
+    def test_features_delete_exceptionDuplicates(self):
+        """ Test points.delete() for InvalidArgumentValueCombination when toDelete contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.features.delete([0, 1, 0])
+
     def test_features_delete_rangeIntoFEmpty(self):
         """ Test features.delete() removes all Featuress using ranges """
         featureNames = ["one", "two", "three"]
@@ -6477,6 +6541,21 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.points.retain(start=2, end=0)
+
+    @raises(InvalidArgumentValueCombination)
+    def test_points_retain_exceptionInversionPointName(self):
+        """ Test points.retain() for InvalidArgumentValueCombination when start comes after end as FeatureNames"""
+        pointNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=pointNames)
+        toTest.points.retain(start="two", end="one")
+
+    @raises(InvalidArgumentValue)
+    def test_points_retain_exceptionDuplicates(self):
+        """ Test points.retain() for InvalidArgumentValueCombination when toRetain contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.points.retain([0, 1, 0])
 
     def test_points_retain_handmadeRange(self):
         """ Test points.retain() against handmade output for range retention """
@@ -7212,6 +7291,12 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.features.retain(start="two", end="one")
 
+    @raises(InvalidArgumentValue)
+    def test_features_retain_exceptionDuplicates(self):
+        """ Test points.retain() for InvalidArgumentValueCombination when toRetain contains duplicates """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toTest.features.retain([0, 1, 0])
 
     def test_features_retain_rangeIntoFEmpty(self):
         """ Test features.retain() retains all features using ranges """

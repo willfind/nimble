@@ -1191,10 +1191,10 @@ class Axis(object):
         Helper for Base and Axis __getitem__ when given a single value.
         """
         length = len(self)
-        if key.__class__ is str or key.__class__ is six.text_type:
+        if isinstance(key, str):
             return self.getIndex(key)
 
-        if key.__class__ is float:
+        if isinstance(key, (float, numpy.float)):
             if key % 1: # x!=int(x)
                 msg = "A float valued key of value x is only accepted if x == "
                 msg += "int(x). The given value was " + str(key) + " yet int("
@@ -1225,7 +1225,7 @@ class Axis(object):
         list, None
         """
         length = len(self)
-        if key.__class__ is slice:
+        if isinstance(key, slice):
             if key == slice(None): # full slice
                 return None
             start = key.start if key.start is not None else 0
@@ -1243,9 +1243,24 @@ class Axis(object):
                 stop -= 1
             return [i for i in range(start, stop, step)]
         else:
+            numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
+            if numBool == length:
+                return [i for i, v in enumerate(key) if v]
+            if numBool > 0:
+                msg = 'The key provided for {ax}s contains boolean values. '
+                msg += 'Booleans are only permitted if the key contains '
+                msg += 'only boolean type values for every {ax} in this object.'
+                raise InvalidArgumentValue(msg.format(ax=self._axis))
             key = [self._processSingle(i) for i in key]
             if key == list(range(length)):  # full slice
                 return None
+            if len(set(key)) != len(key):
+                duplicates = set(val for val in key if key.count(val) > 1)
+                msg = 'Duplicate key values are not allowed. The following '
+                msg += 'values were duplicated: {dup}. Duplicate {ax}s can '
+                msg += "be generated using an object's {ax}s.repeat() method"
+                msg = msg.format(dup=duplicates, ax=self._axis)
+                raise InvalidArgumentValue(msg)
             return key
 
     ########################
@@ -1279,6 +1294,13 @@ class Axis(object):
             argName = 'to' + structure.capitalize()
             targetList = constructIndicesList(self._source, axis, target,
                                               argName)
+            if len(set(targetList)) != len(targetList):
+                dup = set(v for v in targetList if targetList.count(v) > 1)
+                msg = '{name} cannot contain duplicate values. The following '
+                msg += 'were duplicated: {dup}. Duplicate {ax}s can be '
+                msg += "generated using an object's {ax}s.repeat() method"
+                msg = msg.format(name=argName, dup=dup, ax=self._axis)
+                raise InvalidArgumentValue(msg)
         # boolean function
         elif target is not None:
             # construct list from function
