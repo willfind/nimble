@@ -216,7 +216,7 @@ class DataFrame(Base):
                                  pointEnd, featureEnd):
         """
         """
-        if not isinstance(values, nimble.data.Base):
+        if not isinstance(values, Base):
             values = values * numpy.ones((pointEnd - pointStart + 1,
                                           featureEnd - featureStart + 1))
         else:
@@ -373,6 +373,9 @@ class DataFrame(Base):
         representations if possible. Otherwise, uses the generic
         implementation.
         """
+        if isinstance(other, nimble.data.Sparse) and opName.startswith('__r'):
+            # rhs may return array of sparse matrices so use default
+            return self._defaultBinaryOperations_implementation(opName, other)
         try:
             ret = getattr(self.data.values, opName)(other.data)
             return DataFrame(ret)
