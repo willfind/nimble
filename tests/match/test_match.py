@@ -14,47 +14,57 @@ def backend_match_value(toMatch, true, false):
     for f in false:
         assert not toMatch(f)
 
-misingValues = [None, float('nan'), numpy.nan]
+missingValues = [None, float('nan'), numpy.nan]
 stringValues = ['a', str(1)]
 zeroValues = [0, float(0), numpy.int(0), numpy.float(0)]
 positiveValues = [3, float(3), numpy.int(3), numpy.float(3)]
 negativeValues = [-3, float(-3), numpy.int(-3), numpy.float(-3)]
-numericValues = positiveValues + negativeValues + zeroValues + [numpy.nan]
+infinityValues = [float('inf'), -float('inf'), numpy.inf, -numpy.inf]
+trueValues = [True, numpy.bool(True), numpy.bool_(True)]
+falseValues = [False, numpy.bool(False), numpy.bool_(False)]
+boolValues = trueValues + falseValues
+
+numericValues = (positiveValues + negativeValues + zeroValues
+                 + infinityValues + [float('nan'), numpy.nan])
 
 def test_match_missing():
-    true = misingValues
-    false = numericValues[:-1] + stringValues
+    true = missingValues
+    false = numericValues[:-2] + stringValues + boolValues
     backend_match_value(match.missing, true, false)
 
 def test_match_numeric():
     true = numericValues
-    false = stringValues + [None]
+    false = stringValues + boolValues + [None]
     backend_match_value(match.numeric, true, false)
 
 def test_match_nonNumeric():
-    true = stringValues + [None]
+    true = stringValues + boolValues + [None]
     false = numericValues
     backend_match_value(match.nonNumeric, true, false)
 
 def test_match_zero():
-    true = zeroValues
-    false = positiveValues + negativeValues + stringValues + misingValues
+    true = zeroValues + falseValues
+    false = positiveValues + negativeValues + stringValues + missingValues + trueValues
     backend_match_value(match.zero, true, false)
 
 def test_match_nonZero():
-    true = positiveValues + negativeValues + stringValues + misingValues
-    false = zeroValues
+    true = positiveValues + negativeValues + stringValues + missingValues + trueValues
+    false = zeroValues + falseValues
     backend_match_value(match.nonZero, true, false)
 
 def test_match_positive():
-    true = positiveValues
-    false = negativeValues + zeroValues + stringValues + misingValues
+    true = positiveValues + trueValues
+    false = negativeValues + zeroValues + stringValues + missingValues + falseValues
     backend_match_value(match.positive, true, false)
 
 def test_match_negative():
     true = negativeValues
-    false = positiveValues + zeroValues + stringValues + misingValues
+    false = positiveValues + zeroValues + stringValues + missingValues + boolValues
     backend_match_value(match.negative, true, false)
+
+def test_match_infinity():
+    true = infinityValues
+    false = [v for v in numericValues if v not in infinityValues] + stringValues + boolValues
 
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):

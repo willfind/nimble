@@ -79,11 +79,13 @@ fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
 # no match functions should not be logged.
 match_funcs = [
-    'allMissing', 'allNegative', 'allNonNumeric', 'allNonZero', 'allNumeric',
-    'allPositive', 'allValues', 'allZero', 'anyMissing', 'anyNegative',
-    'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive', 'anyValues',
-    'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
-    'nonZero', 'numeric', 'positive', 'zero',
+    'allBoolean', 'allFalse', 'allInfinity', 'allMissing', 'allNegative',
+    'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
+    'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyInfinity',
+    'anyMissing', 'anyNegative', 'anyNonNumeric', 'anyNonZero', 'anyNumeric',
+    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean',
+    'convertMatchToFunction', 'false', 'infinity', 'missing', 'negative',
+    'nonNumeric', 'nonZero', 'numeric', 'positive', 'true', 'zero'
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
