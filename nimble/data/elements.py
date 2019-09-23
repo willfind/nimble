@@ -351,6 +351,16 @@ class Elements(object):
             [[ True False  True]
              [False  True False]]
             )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, None], [None, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isMissing = data.elements.matching(match.missing)
+        >>> isMissing
+        Matrix(
+            [[False False  True]
+             [ True False False]]
+            )
         """
         wrappedMatch = wrapMatchFunctionFactory(toMatch)
 

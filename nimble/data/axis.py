@@ -458,10 +458,6 @@ class Axis(object):
         return ret
 
     def _calculate_backend(self, function, limitTo, matching=False):
-        if limitTo is not None:
-            limitTo = constructIndicesList(self._source, self._axis, limitTo)
-        else:
-            limitTo = [i for i in range(len(self))]
         if len(self._source.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
@@ -470,6 +466,11 @@ class Axis(object):
             raise ImproperObjectAction(msg)
         if function is None:
             raise InvalidArgumentType("function must not be None")
+
+        if limitTo is not None:
+            limitTo = constructIndicesList(self._source, self._axis, limitTo)
+        else:
+            limitTo = [i for i in range(len(self))]
 
         retData = self._calculate_implementation(function, limitTo)
 
@@ -1257,6 +1258,7 @@ class Axis(object):
             return [i for i in range(start, stop, step)]
         else:
             numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
+            # contains all boolean values
             if numBool == length:
                 return [i for i, v in enumerate(key) if v]
             if numBool > 0:

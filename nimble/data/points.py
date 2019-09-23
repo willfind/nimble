@@ -1203,6 +1203,18 @@ class Points(object):
              [ True]]
             featureNames={'allPositive':0}
             )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, float('nan')], [-3, 3, 3], [5, 5, 5]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> ptHasMissing = data.points.matching(match.anyMissing)
+        >>> ptHasMissing
+        Matrix(
+            [[ True]
+             [False]
+             [False]]
+            featureNames={'anyMissing':0}
+            )
         """
         return self._matching(function, useLog)
 

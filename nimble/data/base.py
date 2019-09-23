@@ -3861,11 +3861,6 @@ class Base(object):
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
-        if otherNimble:
-            self._genericBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
-
         # Test element type self
         self._numericValidation()
 
@@ -3948,9 +3943,8 @@ class Base(object):
         return self._genericBinaryOperations(opName, other)
 
     def _genericBinaryOperations(self, opName, other):
-        isNimble = isinstance(other, nimble.data.Base)
-        # figure out return obj's point / feature names
         otherNimble = isinstance(other, Base)
+        # figure out return obj's point / feature names
         if opName not in ['__pos__', '__neg__', '__abs__'] and otherNimble:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
