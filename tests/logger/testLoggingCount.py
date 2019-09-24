@@ -49,7 +49,7 @@ nimble_logged = [
     'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CV', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
     'identity', 'importModule', 'listLearners', 'learnerParameters',
     'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
@@ -94,7 +94,7 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
     'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'merge',
+    'flattenToOnePoint', 'groupByFeature', 'matrixMultiply', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
@@ -137,7 +137,7 @@ elements_logged = [
     'calculate', 'transform', 'multiply', 'power',
     ]
 elements_notLogged = [
-    'count', 'countUnique', 'next',
+    'count', 'countUnique',
     ]
 elements_funcs = elements_logged + elements_notLogged
 elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
@@ -209,6 +209,10 @@ def test_importModule_logCount():
 @noLogEntryExpected
 def test_CV_logCount():
     k = nimble.CV([1, 3, 5])
+
+@noLogEntryExpected
+def test_Init_logCount():
+    i = nimble.Init('foo', bar=1)
 
 ########
 # Base #
@@ -315,17 +319,18 @@ for call in classes:
 
 baseDunder_tested = [
     'Base.__abs__', 'Base.__add__', 'Base.__getitem__', 'Base.__floordiv__',
-    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imul__',
-    'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__', 'Base.__len__',
-    'Base.__mod__', 'Base.__mul__', 'Base.__neg__', 'Base.__pos__',
-    'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmod__',
-    'Base.__rmul__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
+    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imatmul__',
+    'Base.__imul__', 'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__',
+    'Base.__len__', 'Base.__matmul__', 'Base.__mod__', 'Base.__mul__',
+    'Base.__neg__', 'Base.__pos__', 'Base.__pow__', 'Base.__radd__',
+    'Base.__rfloordiv__', 'Base.__rmatmul__', 'Base.__rmod__', 'Base.__rmul__',
+    'Base.__rpow__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
     'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__iter__', 'Elements.__next__']
+elementsDunder_tested = ['Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 

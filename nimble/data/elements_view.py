@@ -6,7 +6,7 @@ base class for read only elements views of data objects.
 from __future__ import absolute_import
 
 import nimble
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from .elements import Elements
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory

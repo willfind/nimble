@@ -23,7 +23,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -218,7 +218,7 @@ To install mlpy
             if trainX.getTypeString() == 'Matrix':
                 transTrainX = trainX.data
             else:
-                transTrainX = trainX.copy(to='numpy matrix')
+                transTrainX = trainX.copy(to='numpy array')
         else:
             transTrainX = None
 
@@ -231,29 +231,35 @@ To install mlpy
             if testX.getTypeString() == 'Matrix':
                 transTestX = testX.data
             else:
-                transTestX = testX.copy(to='numpy matrix')
+                transTestX = testX.copy(to='numpy array')
         else:
             transTestX = None
 
-        if 'kernel' in arguments:
-            if (arguments['kernel'] is None
-                    and trainX is not None
-                    and len(trainX.points) != len(trainX.features)):
-                msg = "For this learner, in the absence of specifying a "
-                msg += "kernel, the trainX parameter must be square "
-                msg += "(representing the inner product space of the features)"
-                raise InvalidArgumentValue(msg)
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if isinstance(val, nimble.Init):
+                val = self._argumentInit(val)
 
-            if isinstance(arguments['kernel'], self.mlpy.KernelExponential):
-                msg = "This interface disallows the use of KernelExponential; "
-                msg = "it is bugged in some versions of mlpy"
-                raise InvalidArgumentValue(msg)
+            if arg == 'kernel':
+                if (val is None and trainX is not None
+                        and len(trainX.points) != len(trainX.features)):
+                    msg = "For this learner, in the absence of specifying a "
+                    msg += "kernel, the trainX parameter must be square "
+                    msg += "(representing the inner product space of the features)"
+                    raise InvalidArgumentValue(msg)
+
+                if isinstance(val, self.mlpy.KernelExponential):
+                    msg = "This interface disallows the use of KernelExponential; "
+                    msg = "it is bugged in some versions of mlpy"
+                    raise InvalidArgumentValue(msg)
+
+            instantiatedArgs[arg] = val
 
         customDict['useT'] = False
         if learnerName == 'MFastHCluster':
             customDict['useT'] = True
 
-        return (transTrainX, transTrainY, transTestX, copy.deepcopy(arguments))
+        return (transTrainX, transTrainY, transTestX, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,

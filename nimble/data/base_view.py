@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import copy
 
 import nimble
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from .base import Base
 from .dataHelpers import readOnlyException
 from .dataHelpers import exceptionDocstringFactory
@@ -229,6 +229,10 @@ class BaseView(Base):
     ###   Subclass implemented numerical operation functions    ###
     ###############################################################
     ###############################################################
+
+    @exceptionDocstring
+    def __imatmul__(self, other):
+        readOnlyException("__imatmul__")
 
     @exceptionDocstring
     def __imul__(self, other):

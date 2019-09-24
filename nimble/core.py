@@ -15,6 +15,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.exceptions import ImproperObjectAction
 from nimble.logger import handleLogging, startTimer, stopTimer
 from nimble.logger import stringToDatetime
 from nimble.helpers import findBestInterface
@@ -37,6 +38,7 @@ from nimble.helpers import createConstantHelper
 from nimble.helpers import computeMetrics
 from nimble.randomness import numpyRandom, generateSubsidiarySeed
 from nimble.randomness import startAlternateControl, endAlternateControl
+from nimble.utility import numpy2DArray
 
 cloudpickle = nimble.importModule('cloudpickle')
 scipy = nimble.importModule('scipy.sparse')
@@ -110,11 +112,11 @@ def createRandomData(
     ...                                  elementType='int')
     >>> random
     Matrix(
-        [[30.000 11.000 93.000 36.000 47.000]
-         [30.000 20.000 54.000 58.000 76.000]
-         [37.000 32.000 10.000 54.000 92.000]
-         [44.000 4.000  32.000 63.000 35.000]
-         [66.000 92.000 86.000 15.000 97.000]]
+        [[22.000 54.000 72.000 91.000 21.000]
+         [32.000 19.000 2.000  46.000 49.000]
+         [86.000 1.000  91.000 91.000 69.000]
+         [30.000 44.000 97.000 39.000 63.000]
+         [42.000 92.000 32.000 55.000 65.000]]
         pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
         )
 
@@ -124,11 +126,11 @@ def createRandomData(
     >>> sparse = nimble.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
-        [[  0      0    0 0 0]
-         [  0      0    0 0 0]
-         [  0      0    0 0 0]
-         [-0.084 -2.296 0 0 0]
-         [  0      0    0 0 0]]
+        [[0   0    0   0    0]
+         [0   0    0 -1.283 0]
+         [0 -0.298 0   0    0]
+         [0   0    0   0    0]
+         [0   0    0   0    0]]
         )
     """
     validateReturnType(returnType)
@@ -467,6 +469,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         Mapping argument names (strings) to their values, to be used
         during training and application.
         Example: {'dimensions':5, 'k':5}
+        If an argument requires its own parameters for instantiation,
+        use a nimble.Init object.
+        Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -989,8 +994,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments`` .
     folds : int
         The number of folds used in the cross validation. Can't exceed
         the number of points in X, Y.
@@ -1151,9 +1158,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         To trigger cross-validation using multiple values for arguments,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        scorevfor  the learner when the learner was passed all three
-        values ofv``k``, separately. These will be merged any
-        kwarguments for the learner.
+        score for  the learner when the learner was passed all three
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
         output wanted: 'label' if we class labels are desired,
@@ -1329,8 +1338,10 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1506,8 +1517,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1695,8 +1708,10 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         specify different values for each parameter using a nimble.CV
         object. eg. {'k': nimble.CV([1,3,5])} will generate an error
         score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
+        values of ``k``, separately. If an argument requires its own
+        parameters for instantiation, use a nimble.Init object.
+        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the createData
@@ -1988,13 +2003,77 @@ def loadTrainedLearner(inputPath, useLog=None):
     return ret
 
 
+class CV(object):
+    """
+    Provide a list of values to an argument for cross-validation.
+
+    Triggers cross-validation to occur for the learner using each of the
+    values provided and scoring each one.
+
+    Parameters
+    ----------
+    argumentList : list
+        A list of values for the argument.
+    """
+    def __init__(self, argumentList):
+        try:
+            self.argumentTuple = tuple(argumentList)
+        except TypeError:
+            msg = "argumentList must be iterable."
+            raise InvalidArgumentValue(msg)
+
+    def __getitem__(self, key):
+        return self.argumentTuple[key]
+
+    def __setitem__(self, key, value):
+        raise ImproperObjectAction("CV objects are immutable")
+
+    def __len__(self):
+        return len(self.argumentTuple)
+
+    def __str__(self):
+        return str(self.argumentTuple)
+
+    def __repr__(self):
+        return "CV(" + str(list(self.argumentTuple)) + ")"
+
+
+class Init(object):
+    """
+    Provide interface-specific objects as learner arguments.
+
+    Triggers the interface to search for object ``name`` and instantiate
+    the object so that it can be used as the argument of the learner.
+    Additional instantiation parameters can be provided as keyword
+    arguments.
+
+    Parameters
+    ----------
+    name : str
+        The name of the object to find within the interface.
+    kwargs
+        Any keyword arguments will be used as instantiation parameters.
+    """
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
+        kwargStr = ", ".join(formatKwargs)
+        return "Init({}, {})".format(repr(self.name), kwargStr)
+
+
 def coo_matrixTodense(origTodense):
     """
     decorator for coo_matrix.todense
     """
     def f(self):
         try:
-            return origTodense(self)
+            return numpy.array(origTodense(self))
         except Exception:
             # flexible dtypes, such as strings, when used in scipy sparse
             # object create an implicitly mixed datatype: some values are
@@ -2004,7 +2083,7 @@ def coo_matrixTodense(origTodense):
             retDType = self.dtype
             if isinstance(retDType, numpy.flexible):
                 retDType = object
-            ret = numpy.matrix(numpy.zeros(self.shape), dtype=retDType)
+            ret = numpy.zeros(self.shape, dtype=retDType)
             nz = (self.row, self.col)
             for (i, j), v in zip(zip(*nz), self.data):
                 ret[i, j] = v

@@ -222,6 +222,7 @@ def testLoadTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "TrainedLearner" in logInfo
     assert "'learnerName': 'KNNClassifier'" in logInfo
+    # all keys and values in learnerArgs are stored as strings
     assert "'learnerArgs': {'k': 1}" in logInfo
 
     # loadData
@@ -845,6 +846,46 @@ def testShowLogToStdOut():
         stdoutContent = out.getvalue().strip()
 
         assert stdoutContent == fileContent
+
+    finally:
+        sys.stdout = saved_stdout
+
+@configSafetyWrapper
+@emptyLogSafetyWrapper
+def testShowLogWithSubobject():
+    class Int_(object):
+        """
+        For the purposes of custom.KNNClassifier, behaves exactly as the
+        integer needed for k , but for the log will cause a failure if
+        not represented in arguments as a string.
+        """
+        def __init__(self, num):
+            self.num = num
+
+        def __index__(self):
+            return self.num
+
+        def __repr__(self):
+            return 'Int_({})'.format(self.num)
+
+    saved_stdout = sys.stdout
+    try:
+        trainX = [[1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0], [0,0,1],
+                  [1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0], [0,0,1]]
+        trainY = [[0], [1], [2], [0], [1], [2], [0], [1], [2], [0], [1], [2]]
+        trainXObj = nimble.createData('Sparse', trainX)
+        trainYObj = nimble.createData('List', trainY)
+        tl = nimble.train('custom.KNNClassifier', trainXObj, trainYObj,
+                          arguments={'k': Int_(1)}, useLog=True)
+        # redirect stdout
+        out = StringIO()
+        sys.stdout = out
+
+        # showLog to stdout with default arguments
+        nimble.showLog()
+        stdoutContent = out.getvalue().strip()
+
+        assert "Arguments: k=Int_(1)" in stdoutContent
 
     finally:
         sys.stdout = saved_stdout

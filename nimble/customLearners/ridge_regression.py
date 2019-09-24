@@ -26,16 +26,16 @@ class RidgeRegression(CustomLearner):
         # in other words: Points x Features.
         # for X data, we want both Points x Features and Features x Points
         # for Y data, we only want Points x Features
-        rawXPxF = trainX.copy(to="numpymatrix")
+        rawXPxF = trainX.copy(to="numpyarray")
         rawXFxP = rawXPxF.transpose()
-        rawYPxF = trainY.copy(to="numpymatrix")
+        rawYPxF = trainY.copy(to="numpyarray")
 
-        featureSpace = rawXFxP * rawXPxF
+        featureSpace = numpy.matmul(rawXFxP, rawXPxF)
         lambdaMatrix = lamb * numpy.identity(len(trainX.features))
         #		lambdaMatrix[len(trainX.features)-1][len(trainX.features)-1] = 0
 
         inv = numpy.linalg.inv(featureSpace + lambdaMatrix)
-        self.w = inv * rawXFxP * rawYPxF
+        self.w = numpy.matmul(numpy.matmul(inv, rawXFxP), rawYPxF)
 
     def apply(self, testX):
     # setup intercept

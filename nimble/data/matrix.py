@@ -13,7 +13,7 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -36,7 +36,7 @@ class Matrix(Base):
     Parameters
     ----------
     data : object
-        Must be a numpy matrix.
+        Must be a two-dimensional numpy array.
     reuseData : bool
     elementType : type
         The numpy dtype of this object.
@@ -46,27 +46,18 @@ class Matrix(Base):
     """
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
-        if not isinstance(data, (numpy.matrix, numpy.ndarray)):
-            msg = "the input data can only be a numpy matrix "
-            msg += "or numpy array."
+        if not is2DArray(data):
+            msg = "the input data can only be a two-dimensional numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
-            if reuseData:
-                self.data = data
-            else:
-                self.data = copy.copy(data)#copy.deepcopy may give messed data
+            data = numpy2DArray(data)
+        if elementType is not None:
+            data = data.astype(elementType)
+        if reuseData:
+            self.data = data
         else:
-            #when data is a np matrix, its dtype has been adjusted in
-            # extractNamesAndConvertData but when data is a ListPassThrough,
-            # we need to do dtype adjustment here
-            if elementType:
-                self.data = numpy.matrix(data, dtype=elementType)
-            else:
-                try:
-                    self.data = numpy.matrix(data, dtype=numpy.float)
-                except ValueError:
-                    self.data = numpy.matrix(data, dtype=object)
+            self.data = data.copy()
 
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -95,7 +86,7 @@ class Matrix(Base):
         This is not an in place operation, a new list of lists is
         constructed.
         """
-        self.data = self.data.getT()
+        self.data = self.data.transpose()
 
     def _getTypeString_implementation(self):
         return 'Matrix'
@@ -155,7 +146,7 @@ class Matrix(Base):
 
         with open(outPath, 'ab') as outFile:#python3 need this.
             if includePointNames:
-                pnames = numpy.matrix(self.points.getNames())
+                pnames = numpy2DArray(self.points.getNames())
                 pnames = pnames.transpose()
 
                 viewData = self.data.view()
@@ -211,9 +202,9 @@ class Matrix(Base):
         if to == 'pythonlist':
             return self.data.tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data)
-        if to == 'numpymatrix':
             return self.data.copy()
+        if to == 'numpymatrix':
+            return numpy.matrix(self.data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
@@ -233,7 +224,7 @@ class Matrix(Base):
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
-        if not isinstance(values, nimble.data.Base):
+        if not isinstance(values, Base):
             values = values * numpy.ones((pointEnd - pointStart + 1,
                                           featureEnd - featureStart + 1))
         else:
@@ -412,7 +403,7 @@ class Matrix(Base):
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
 
-        self.data = numpy.matrix(merged, dtype=numpy.object_)
+        self.data = numpy2DArray(merged, dtype=numpy.object_)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
         toFill = numpy.zeros((len(self.points), len(uniqueVals)))
@@ -450,21 +441,22 @@ class Matrix(Base):
         return 0 in self.data
 
 
-    def _numericBinary_implementation(self, opName, other):
-        if isinstance(other, Matrix):
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Attempt to perform operation with data as is, preserving sparse
+        representations if possible. Otherwise, uses the generic
+        implementation.
+        """
+        if isinstance(other, nimble.data.Sparse) and opName.startswith('__r'):
+            # rhs may return array of sparse matrices so use default
+            return self._defaultArithmeticBinary_implementation(opName, other)
+        try:
             ret = getattr(self.data, opName)(other.data)
-        elif isinstance(other, nimble.data.Base):
-            otherConv = other.copy('Matrix')
-            ret = getattr(self.data, opName)(otherConv.data)
-        else:
-            ret = getattr(self.data, opName)(other)
-        if opName.startswith('__i'):
-            # data modified within object
-            return self
-        return Matrix(ret)
+            return Matrix(ret)
+        except (AttributeError, InvalidArgumentType):
+            return self._defaultArithmeticBinary_implementation(opName, other)
 
-
-    def _matrixMultiply_implementation(self, other):
+    def _matmul__implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -474,195 +466,12 @@ class Matrix(Base):
         as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
-        if isinstance(other, Matrix) or isinstance(other, nimble.data.Sparse):
+        if isinstance(other, Matrix):
+            return Matrix(numpy.matmul(self.data, other.data))
+        elif isinstance(other, nimble.data.Sparse):
+            # '*' is matrix multiplication in scipy
             return Matrix(self.data * other.data)
-        else:
-            return Matrix(self.data * other.copy(to="numpyarray"))
-
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        self.data = self.data * scalar
-
-    def _mul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
-
-    def _add__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data + other.data
-        else:
-            ret = self.data + other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _radd__implementation(self, other):
-        ret = other + self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _iadd__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data + other.data
-        else:
-            ret = self.data + other
-        self.data = ret
-        return self
-
-    def _sub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data - other.data
-        else:
-            ret = self.data - other
-
-        pNames = self.points._getNamesNoGeneration()
-        fNames = self.features._getNamesNoGeneration()
-
-        return Matrix(ret, pointNames=pNames, featureNames=fNames,
-                      reuseData=True)
-
-    def _rsub__implementation(self, other):
-        ret = other - self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _isub__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            ret = self.data - other.data
-        else:
-            ret = self.data - other
-        self.data = ret
-        return self
-
-    def _div__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
-            else:
-                ret = self.data / other.data
-        else:
-            ret = self.data / other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _rdiv__implementation(self, other):
-        ret = other / self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _idiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
-            else:
-                ret = self.data / other.data
-        else:
-            ret = self.data / other
-        self.data = ret
-        return self
-
-    def _truediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.__truediv__(other.data.todense())
-            else:
-                ret = self.data.__truediv__(other.data)
-        else:
-            ret = self.data.__itruediv__(other)
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _rtruediv__implementation(self, other):
-        ret = self.data.__rtruediv__(other)
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _itruediv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.__itruediv__(other.data.todense())
-            else:
-                ret = self.data.__itruediv__(other.data)
-        else:
-            ret = self.data.__itruediv__(other)
-        self.data = ret
-        return self
-
-    def _floordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data // other.data.todense()
-            else:
-                ret = self.data // other.data
-        else:
-            ret = self.data // other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _rfloordiv__implementation(self, other):
-        ret = other // self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-    def _ifloordiv__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data // other.data.todense()
-            else:
-                ret = self.data // other.data
-        else:
-            ret = self.data // other
-        self.data = ret
-        return self
-
-    def _mod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data % other.data.todense()
-            else:
-                ret = self.data % other.data
-        else:
-            ret = self.data % other
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _rmod__implementation(self, other):
-        ret = other % self.data
-        return Matrix(ret, pointNames=self.points._getNamesNoGeneration(),
-                      featureNames=self.features._getNamesNoGeneration(),
-                      reuseData=True)
-
-
-    def _imod__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data % other.data.todense()
-            else:
-                ret = self.data % other.data
-        else:
-            ret = self.data % other
-        self.data = ret
-        return self
+        return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):

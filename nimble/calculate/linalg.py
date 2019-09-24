@@ -138,16 +138,16 @@ def pseudoInverse(aObj, method='svd'):
     ...                                numFeatures=3, sparsity=0.5)
     >>> data
     Matrix(
-        [[-0.824 -0.000 0.000 ]
-         [-1.402 0.000  -0.358]
-         [-0.000 0.000  -0.000]
-         [-0.000 -0.406 -0.911]]
+        [[0.583  -0.000 0.000 ]
+         [-0.000 1.145  0.000 ]
+         [-0.307 -0.047 -0.000]
+         [-0.000 -0.643 -0.000]]
         )
     >>> pseudoInverse(data)
     Matrix(
-        [[ -1.214 0.000  0.000 -0.000]
-         [-10.664 6.269  0.000 -2.461]
-         [ 4.753  -2.794 0.000 0.000 ]]
+        [[1.343  -0.022 -0.708 0.013 ]
+         [-0.011 0.663  -0.022 -0.373]
+         [0.000  0.000  0.000  0.000 ]]
         )
     """
     if scipy is None:
@@ -302,17 +302,17 @@ def _backendSolvers(aObj, bObj, solverFunction):
             aCopy = aObj.copy()
             solution = scipy.sparse.linalg.spsolve(aCopy.data,
                                                    numpy.asarray(bObj.data))
-            solution = numpy.asmatrix(solution)
+            solution = solution
         else:
             if isinstance(aObj, nimble.data.sparse.SparseView): #Sparse View
                 aCopy = aObj.copy()
                 solution = scipy.sparse.linalg.lsqr(aCopy.data,
                                                     numpy.asarray(bObj.data))
-                solution = numpy.asmatrix(solution[0])
+                solution = solution[0]
             else: # Sparse
                 solution = scipy.sparse.linalg.lsqr(aObj.data,
                                                     numpy.asarray(bObj.data))
-                solution = numpy.asmatrix(solution[0])
+                solution = solution[0]
 
     sol = nimble.createData(aOriginalType, solution,
                          featureNames=aObj.features.getNames(),

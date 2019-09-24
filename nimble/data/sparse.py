@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -42,7 +42,7 @@ class Sparse(Base):
     Parameters
     ----------
     data : object
-        A scipy sparse matrix, numpy matrix.
+        A scipy sparse matrix or two-dimensional numpy array.
     reuseData : bool
     elementType : type
         The scipy or numpy dtype of the data.
@@ -55,10 +55,9 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if ((not isinstance(data, numpy.matrix))
-                and (not scipy.sparse.isspmatrix(data))):
+        if not is2DArray(data) and not scipy.sparse.isspmatrix(data):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "numpy matrix"
+            msg += "two-dimensional numpy array"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -69,7 +68,7 @@ class Sparse(Base):
         elif scipy.sparse.isspmatrix(data):
             #data is a spmatrix in other format instead of coo
             self.data = data.tocoo()
-        else:#data is numpy.matrix
+        else:#data is numpy.array
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
@@ -259,9 +258,9 @@ class Sparse(Base):
         if to == 'pythonlist':
             return self.data.todense().tolist()
         if to == 'numpyarray':
-            return numpy.array(self.data.todense())
-        if to == 'numpymatrix':
             return self.data.todense()
+        if to == 'numpymatrix':
+            return numpy.matrix(self.data.todense())
         if 'scipy' in to:
             if to == 'scipycsc':
                 return self.data.tocsc()
@@ -278,7 +277,7 @@ class Sparse(Base):
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
         # sort values or call helper as needed
-        constant = not isinstance(values, nimble.data.Base)
+        constant = not isinstance(values, Base)
         if constant:
             if values == 0:
                 self._fillWith_zeros_implementation(pointStart, featureStart,
@@ -878,28 +877,25 @@ class Sparse(Base):
         return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
 
-    def _numericBinary_implementation(self, opName, other):
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Directs the operation to the best implementation available,
+        preserving the sparse representation whenever possible.
+        """
+        # scipy will perform matrix multiplication with mul operators
+        if 'mul' in opName:
+            return self._genericMul__implementation(opName, other)
         try:
-            if isinstance(other, Sparse):
-                if other.data.data is None:
-                    otherData = other.copy().data
+            if isinstance(other, Base):
+                selfData = self._getSparseData()
+                if isinstance(other, Sparse):
+                    otherData = other._getSparseData()
                 else:
-                    otherData = other.data
+                    otherConv = other.copy('Matrix')
+                    otherData = otherConv.data
                 ret = getattr(selfData, opName)(otherData)
-            elif isinstance(other, nimble.data.Base):
-                otherConv = other.copy('Matrix')
-                ret = getattr(selfData, opName)(otherConv.data)
             else:
-                nonZeroModifying = ['truediv', 'floordiv', 'mod']
-                if any(name in opName for name in nonZeroModifying):
-                    return self._scalarZeroPreservingBinary_implementation(
-                        opName, other)
-                # scalar operations apply to all elements; use dense
-                return self._genericArithmeticBinary_implementation(opName, other)
+                return self._scalarBinary_implementation(opName, other)
 
             if ret is NotImplemented:
                 # most NotImplemented are inplace operations
@@ -907,24 +903,39 @@ class Sparse(Base):
                     return self._inplaceBinary_implementation(opName, other)
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
-                else:
-                    return self._genericArithmeticBinary_implementation(opName,
+                return self._defaultArithmeticBinary_implementation(opName,
                                                                      other)
 
-            if opName.startswith('__i'):
-                # data modified within object
-                return self
             return Sparse(ret)
 
         except AttributeError as ae:
+            if opName.startswith('__i'):
+                return self._inplaceBinary_implementation(opName, other)
             if 'floordiv' in opName:
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
-            raise ae
+            return self._defaultArithmeticBinary_implementation(opName, other)
 
 
-    def _matrixMultiply_implementation(self, other):
+    def _scalarBinary_implementation(self, opName, other):
+        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        if any(name in opName for name in oneSafe) and other == 1:
+            selfData = self._getSparseData()
+            return Sparse(selfData)
+        zeroSafe = ['truediv', 'floordiv', 'mod']
+        zeroPreserved = any(name in opName for name in zeroSafe)
+        if 'pow' in opName and opName != '__rpow__' and other != 0:
+            zeroPreserved = True
+        if zeroPreserved:
+            return self._scalarZeroPreservingBinary_implementation(
+                opName, other)
+        else:
+            # scalar operations apply to all elements; use dense
+            return self._defaultArithmeticBinary_implementation(opName,
+                                                                other)
+
+    def _matmul__implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -943,55 +954,47 @@ class Sparse(Base):
 
         return nimble.createData('Sparse', retData, useLog=False)
 
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        if scalar != 0:
-            self.data.data *= scalar
-        else:
-            self.data = coo_matrix(([], ([], [])),
-                                   (len(self.points), len(self.features)))
-
-    def _mul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
-
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
-        ret = self._numericBinary_implementation(notInplace, other)
+        ret = self._arithmeticBinary_implementation(notInplace, other)
         absPath, relPath = self._absPath, self._relPath
         self.referenceDataFrom(ret, useLog=False)
         self._absPath, self._relPath = absPath, relPath
         return self
 
-    def __rpow__(self, other):
-        return other.__pow__(self)
+    # def __rpow__(self, other):
+    #     return other.__pow__(self)
 
     def _rsub__implementation(self, other):
-        neg = self * -1
-        return neg._numericBinary_implementation('__add__', other)
+        return (self * -1)._arithmeticBinary_implementation('__add__', other)
+
+    def _genericMul__implementation(self, opName, other):
+        if other == 1:
+            return self._scalarBinary_implementation(opName, other)
+        if 'i' in opName:
+            target = self
+        else:
+            target = self.copy()
+        if isinstance(other, Base):
+            target.elements.multiply(other, useLog=False)
+        else:
+            target.data *= other
+            target.data.eliminate_zeros()
+        return target
 
     def _genericFloordiv_implementation(self, opName, other):
         """
         Perform floordiv by modifying the results of truediv.
 
         There is no need for additional conversion when an inplace
-        operation is called because _numericBinary_implementation will
+        operation is called because _arithmeticBinary_implementation will
         return the self object in those cases, so the changes below are
         reflected inplace.
         """
         opSplit = opName.split('floordiv')
         trueDiv = opSplit[0] + 'truediv__'
         # ret is self for inplace operation
-        ret = self._numericBinary_implementation(trueDiv, other)
+        ret = self._arithmeticBinary_implementation(trueDiv, other)
         ret.data.data = numpy.floor(ret.data.data)
         ret.data.eliminate_zeros()
         return ret
@@ -1003,19 +1006,13 @@ class Sparse(Base):
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
         """
-        self._sortInternal('point')
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
-        if isinstance(other, Sparse) and other.data.data is None:
-            other = other.copy()
+        selfData = self._getSparseData()
+        if isinstance(other, Sparse):
+            otherData = other._getSparseData().data
         else: # another Base object type
-            other = other.copy('Sparse')
-        other._sortInternal('point')
-        otherData = other.data.data
+            otherData = other.copy('Sparse').data.data
 
-        if opName.startswith('__r'):
+        if opName == '__rmod__':
             ret = numpy.mod(otherData, selfData.data)
         else:
             ret = numpy.mod(selfData.data, otherData)
@@ -1035,11 +1032,7 @@ class Sparse(Base):
         apply the operation to the data attribute, the row and col
         attributes will remain unchanged.
         """
-        if self.data.data is None:
-            selfData = self.copy().data
-        else:
-            selfData = self.data
-
+        selfData = self._getSparseData()
         ret = getattr(selfData.data, opName)(other)
         coo = coo_matrix((ret, (selfData.row, selfData.col)),
                          shape=self.shape)
@@ -1068,6 +1061,19 @@ class Sparse(Base):
 
         # flag that we are internally sorted
         self._sorted = axis
+
+    def _getSparseData(self):
+        """
+        Get the backend coo_matrix data for this object.
+
+        Since Views set self.data.data to None, we need to copy the view
+        to gain access to the coo_matrix data.
+        """
+        if self.data.data is None:
+            selfData = self.copy().data
+        else:
+            selfData = self.data
+        return selfData
 
 ###################
 # Generic Helpers #
@@ -1314,8 +1320,8 @@ class SparseView(BaseView, Sparse):
 
         return ret
 
-    def _mul__implementation(self, other):
+    def _matmul__implementation(self, other):
         selfConv = self.copy(to="Sparse")
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
-        return selfConv._mul__implementation(other)
+        return selfConv._matmul__implementation(other)

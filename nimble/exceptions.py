@@ -98,7 +98,6 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
 
     """
     ret = ""
-    number = 0
     for i in range(len(inList)):
         value = inList[i]
         if i > 0:
@@ -106,7 +105,7 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
             if useAnd and i == len(inList) - 1:
                 ret += 'and '
         if numberItems:
-            ret += '(' + str(number) + ') '
+            ret += '(' + str(i) + ') '
         ret += itemStr(value)
     return ret
 

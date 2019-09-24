@@ -14,7 +14,7 @@ from six.moves import zip
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -39,7 +39,7 @@ class List(Base):
     Parameters
     ----------
     data : object
-        A list, numpy matrix, or a ListPassThrough.
+        A list, two-dimensional numpy array, or a ListPassThrough.
     reuseData : bool
         Only works when input data is a list.
     shape : tuple
@@ -54,10 +54,10 @@ class List(Base):
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, elementType=None, **kwds):
-        if ((not isinstance(data, (list, numpy.matrix)))
+        if (not (isinstance(data, list) or is2DArray(data))
                 and 'PassThrough' not in str(type(data))):
-            msg = "the input data can only be a list or a numpy matrix "
-            msg += "or ListPassThrough."
+            msg = "the input data can only be a list, a two-dimensional numpy "
+            msg += "array, or ListPassThrough."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
@@ -103,8 +103,8 @@ class List(Base):
                 # Both list and FeatureViewer have a copy method.
                 data = [pt.copy() for pt in data]
 
-        if isinstance(data, numpy.matrix):
-            #case5: data is a numpy matrix. shape is already in np matrix
+        if is2DArray(data):
+            #case5: data is a numpy array. shape is already in np array
             shape = data.shape
             data = data.tolist()
 
@@ -291,11 +291,11 @@ class List(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if isEmpty:
-                data = numpy.matrix(emptyData)
+                data = numpy2DArray(emptyData)
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = numpy.matrix(self.data, dtype=elementType)
+                data = numpy2DArray(self.data, dtype=elementType)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -304,7 +304,7 @@ class List(Base):
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
-            return numpy.array(self.data, dtype=elementType)
+            return numpy2DArray(self.data, dtype=elementType)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
@@ -336,7 +336,7 @@ class List(Base):
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
-        if not isinstance(values, nimble.data.Base):
+        if not isinstance(values, Base):
             values = [values] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
@@ -588,18 +588,15 @@ class List(Base):
         return False
 
 
-    def _numericBinary_implementation(self, opName, other):
-        return self._genericArithmeticBinary_implementation(opName, other)
+    def _arithmeticBinary_implementation(self, opName, other):
+        """
+        Directs operations to use generic (numpy) operations, given that
+        certain operations are implemented differently or not possible
+        for lists.
+        """
+        return self._defaultArithmeticBinary_implementation(opName, other)
 
-    def _mul__implementation(self, other):
-        if isinstance(other, nimble.data.Base):
-            return self._matrixMultiply_implementation(other)
-        else:
-            ret = self.copy()
-            ret._scalarMultiply_implementation(other)
-            return ret
-
-    def _matrixMultiply_implementation(self, other):
+    def _matmul__implementation(self, other):
         """
         Matrix multiply this nimble Base object against the provided
         other nimble Base object. Both object must contain only numeric
@@ -619,27 +616,6 @@ class List(Base):
                 retP.append(runningTotal)
             ret.append(retP)
         return List(ret)
-
-    def _scalarMultiply_implementation(self, scalar):
-        """
-        Multiply every element of this nimble Base object by the
-        provided scalar. This object must contain only numeric data. The
-        'scalar' parameter must be a numeric data type. The returned
-        object will be the inplace modification of the calling object.
-        """
-        for point in self.data:
-            for i in range(len(point)):
-                point[i] *= scalar
-
-    def outputMatrixData(self):
-        """
-        convert self.data to a numpy matrix
-        """
-        if len(self.data) == 0:# in case, self.data is []
-            return numpy.matrix(numpy.empty([len(self.points.getNames()),
-                                             len(self.features.getNames())]))
-
-        return numpy.matrix(self.data)
 
 class ListView(BaseView, List):
     """

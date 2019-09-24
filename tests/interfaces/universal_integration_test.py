@@ -143,14 +143,16 @@ def testRandomnessControl():
 
     for interface in nimble.interfaces.available:
         interfaceName = interface.getCanonicalName()
-        #		if interfaceName != 'shogun':
-        #			continue
+        # if interfaceName != 'shogun':
+        #     continue
 
         listOf = nimble.listLearners(interfaceName)
 
+        shogunIgnore = ['LibLinearRegression', 'SGDQN']
+
         for learner in listOf:
-            if interfaceName == 'shogun':
-                print(learner)
+            if interfaceName == 'shogun' and learner in shogunIgnore:
+                continue
             currType = nimble.learnerType(interfaceName + '.' + learner)
             if currType == 'regression':
                 ((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)

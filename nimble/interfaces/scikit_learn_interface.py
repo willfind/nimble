@@ -21,7 +21,7 @@ from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.docHelpers import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory
 from nimble.importExternalLibraries import importModule
 
 # Contains path to sciKitLearn root directory
@@ -276,7 +276,7 @@ To install scikit-learn
             elif trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copy().data
             else:
-                trainX = trainX.copy(to='numpy matrix')
+                trainX = trainX.copy(to='numpy array')
 
         if trainY is not None:
             if len(trainY.features) > 1:
@@ -297,7 +297,7 @@ To install scikit-learn
             elif testX.getTypeString() == 'Sparse':
                 testX = testX.copy().data
             else:
-                testX = testX.copy(to='numpy matrix')
+                testX = testX.copy(to='numpy array')
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':
@@ -308,7 +308,13 @@ To install scikit-learn
             if testX is not None:
                 testX = numpy.array(testX, numpy.int32)
 
-        return (trainX, trainY, testX, copy.deepcopy(arguments))
+        instantiatedArgs = {}
+        for arg, val in arguments.items():
+            if isinstance(val, nimble.Init):
+                val = self._argumentInit(val)
+            instantiatedArgs[arg] = val
+
+        return (trainX, trainY, testX, instantiatedArgs)
 
 
     def _outputTransformation(self, learnerName, outputValue,

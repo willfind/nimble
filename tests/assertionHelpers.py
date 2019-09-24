@@ -28,7 +28,10 @@ def logCountAssertionFactory(count):
             ret = function(*args, **kwargs)
             endCount = logger.extractFromLog(countQuery)[0][0]
             if startCount + count != endCount:
-                raise LogCountAssertionError
+                nimble.showLog(mostSessionsAgo=1)
+                msg = "Expected an additional {0} logs, but got {1}"
+                msg = msg.format(count, endCount - startCount)
+                raise LogCountAssertionError(msg)
             return ret
         wrapped.__name__ = function.__name__
         wrapped.__doc__ = function.__doc__

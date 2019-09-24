@@ -39,7 +39,7 @@ def testInverseSquareObject():
 
         objInv = inverse(obj)
 
-        assert objNoNames * objInv == identityObj
+        assert objNoNames @ objInv == identityObj
         assert origObj == obj
 
 
@@ -133,9 +133,9 @@ def testPseudoInverseObject():
         objPinv = pseudoInverse(obj, method=method)
 
         if len(obj.points) <= len(obj.features):
-            identityFromPinv = obj * objPinv
+            identityFromPinv = obj @ objPinv
         else:
-            identityFromPinv = objPinv * obj
+            identityFromPinv = objPinv @ obj
         assert identityFromPinv.isApproximatelyEqual(identity)
         assert origObj == obj
 
@@ -215,7 +215,7 @@ def _backendSolverSuccess(solverFunction):
                 aInv = inverse(A)
                 if len(b.features) > 1:
                     b.transpose()
-                reference = (aInv * b)
+                reference = (aInv @ b)
                 reference.transpose()
                 # reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
@@ -241,7 +241,7 @@ def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
                 aPinv = pseudoInverse(A)
                 if len(b.features) > 1:
                     b.transpose()
-                reference = (aPinv * b)
+                reference = (aPinv @ b)
                 reference.transpose()
                 assert sol.isApproximatelyEqual(reference)
                 assert A.features.getNames() == sol.features.getNames()
