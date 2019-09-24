@@ -582,6 +582,9 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
             numFts = pythonRandom.randint(1, 15)
 
         datas = makeAllData(constructor, constructor, numPts, numFts, sparsity)
+        if 'pow' in opName:
+            # map to be positive and > 0 avoids complex numbers and 0 division
+            datas = map(lambda d: abs(d) + 1, datas)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
         # numpy does not have __imatmul__ implemented yet, use __matmul__
         if opName == '__imatmul__':
@@ -657,6 +660,9 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
             numFts = pythonRandom.randint(1, 15)
 
         datas = makeAllData(constructor, maker, numPts, numFts, sparsity)
+        if 'pow' in opName:
+            # map to be positive and > 0 avoids complex numbers and 0 division
+            datas = map(lambda d: abs(d) + 1, datas)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
         # numpy does not have __imatmul__ implemented yet, use __matmul__
         if opName == '__imatmul__':
@@ -1196,68 +1202,10 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __pow__ #
     ###########
-
-    def test_pow_exceptions(self):
+    @noLogEntryExpected
+    def test_pow_fullSuite(self):
         """ __pow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__pow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
-    @noLogEntryExpected
-    def test_pow_autoVsNumpyObj(self):
-        """ Test __pow__ with automated data and a nimble argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            numPts = pythonRandom.randint(1, 15)
-            numFts = pythonRandom.randint(1, 15)
-
-            datas = makeAllData(self.constructor, self.constructor, numPts, numFts, .02)
-            # map abs() to avoid complex numbers
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
-
-            resultf = lhsf ** rhsf
-            resulti = lhsi ** rhsi
-            resfObj = lhsfObj ** rhsfObj
-            resiObj = lhsiObj ** rhsiObj
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-
-    @noLogEntryExpected
-    def test_pow_autoVsNumpyScalar(self):
-        """ Test __pow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            numPts = pythonRandom.randint(1, 15)
-            numFts = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, numPts, numFts, .02)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
-            resfObj = lhsfObj ** scalar
-            resiObj = lhsiObj ** scalar
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
+        run_full_backend(self.constructor, '__pow__', False, 0)
 
     @raises(ZeroDivisionError)
     def test_pow_nimbleObj_zeroDivision_exception(self):
@@ -1306,48 +1254,10 @@ class NumericalDataSafe(DataTestObject):
     # __rpow__ #
     ############
 
-    def test_rpow_exceptions(self):
-        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__rpow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
     @noLogEntryExpected
-    def test_rpow_autoVsNumpyScalar(self):
-        """ Test __rpow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            numPts = pythonRandom.randint(1, 15)
-            numFts = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, numPts, numFts, .02)
-            # map abs() to avoid complex numbers
-            def getAbs(val):
-                if val is not None:
-                    return abs(val)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(getAbs, datas)
-
-            resultf = scalar ** lhsf
-            resulti = scalar ** lhsi
-            resfObj = scalar ** lhsfObj
-            resiObj = scalar ** lhsiObj
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
+    def test_rpow_fullSuite(self):
+        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__rpow__', False, 0)
 
     @raises(ZeroDivisionError)
     def test_rpow_scalar_zeroDivision_exception(self):
@@ -1930,71 +1840,9 @@ class NumericalModifying(DataTestObject):
     # __ipow__ #
     ###########
     @noLogEntryExpected
-    def test_ipow_exceptions(self):
+    def test_ipow_fullSuite(self):
         """ __ipow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__ipow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
-    @noLogEntryExpected
-    def test_ipow_autoVsNumpyObj(self):
-        """ Test __ipow__ with automated data and a nimble argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            numPts = pythonRandom.randint(1, 15)
-            numFts = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, self.constructor, numPts, numFts, .02)
-            # map abs() to avoid complex numbers
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
-
-            resultf = lhsf ** rhsf
-            resulti = lhsi ** rhsi
-            resfObj = lhsfObj.__ipow__(rhsfObj)
-            resiObj = lhsiObj.__ipow__(rhsiObj)
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-            assert resfObj.isIdentical(lhsfObj)
-            assert resiObj.isIdentical(lhsiObj)
-
-    def test_ipow_autoVsNumpyScalar(self):
-        """ Test __ipow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            numPts = pythonRandom.randint(1, 15)
-            numFts = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, numPts, numFts, .02)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
-            resfObj = lhsfObj.__ipow__(scalar)
-            resiObj = lhsiObj.__ipow__(scalar)
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-            assert resfObj.isIdentical(lhsfObj)
-            assert resiObj.isIdentical(lhsiObj)
+        run_full_backend(self.constructor, '__ipow__', True, 0)
 
     @raises(ZeroDivisionError)
     def test_ipow_nimbleObj_zeroDivision_exception(self):

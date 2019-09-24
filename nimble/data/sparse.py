@@ -978,7 +978,7 @@ class Sparse(Base):
             caller = self
             callee = other
         elif 'r' in opName:
-            caller = other.copy()
+            caller = other.copy('Sparse')
             callee = self
         else:
             caller = self.copy()
