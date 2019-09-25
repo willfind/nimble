@@ -551,13 +551,13 @@ def back_byNanException(callerCon, calleeCon, attr1, attr2=None):
     toCall(callee)
 
 
-def makeAllData(constructor, rhsCons, n, sparsity):
-    randomlf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
-    randomrf = nimble.createRandomData('Matrix', n, n, sparsity, useLog=False)
+def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
+    randomlf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
+    randomrf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpyarray")
     rhsf = randomrf.copy(to="numpyarray")
-    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
-    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
+    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)
+    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)
 
     lhsfObj = constructor(lhsf)
     lhsiObj = constructor(lhsi)
@@ -574,9 +574,17 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
     """ Test operation of automated data against numpy operations """
     trials = 5
     for t in range(trials):
-        n = pythonRandom.randint(1, 15)
+        numPts = pythonRandom.randint(1, 15)
+        # use square for matmul so shapes are compatible, otherwise randomize
+        if 'matmul' in opName:
+            numFts = numPts
+        else:
+            numFts = pythonRandom.randint(1, 15)
 
-        datas = makeAllData(constructor, constructor, n, sparsity)
+        datas = makeAllData(constructor, constructor, numPts, numFts, sparsity)
+        if 'pow' in opName:
+            # map to be positive and > 0 avoids complex numbers and 0 division
+            datas = map(lambda d: abs(d) + 1, datas)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
         # numpy does not have __imatmul__ implemented yet, use __matmul__
         if opName == '__imatmul__':
@@ -610,11 +618,12 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
     """ Test operation of automated data with a scalar argument, against numpy operations """
     trials = 5
     for t in range(trials):
-        n = pythonRandom.randint(1, 10)
+        numPts = pythonRandom.randint(1, 10)
+        numFts = pythonRandom.randint(1, 10)
 
         scalar = pythonRandom.randint(1, 4)
 
-        datas = makeAllData(constructor, None, n, sparsity)
+        datas = makeAllData(constructor, None, numPts, numFts, sparsity)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
         resultf = getattr(lhsf, opName)(scalar)
@@ -643,9 +652,17 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
 
     for i in range(len(makers)):
         maker = makers[i]
-        n = pythonRandom.randint(1, 10)
+        numPts = pythonRandom.randint(1, 10)
+        # use square for matmul so shapes are compatible, otherwise randomize
+        if 'matmul' in opName:
+            numFts = numPts
+        else:
+            numFts = pythonRandom.randint(1, 15)
 
-        datas = makeAllData(constructor, maker, n, sparsity)
+        datas = makeAllData(constructor, maker, numPts, numFts, sparsity)
+        if 'pow' in opName:
+            # map to be positive and > 0 avoids complex numbers and 0 division
+            datas = map(lambda d: abs(d) + 1, datas)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
         # numpy does not have __imatmul__ implemented yet, use __matmul__
         if opName == '__imatmul__':
@@ -995,6 +1012,9 @@ class NumericalDataSafe(DataTestObject):
     def test_mul_Sparse_scalarOfOne(self):
         back_sparseScalarOfOne(self.constructor, '__mul__')
 
+    def test_mul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__mul__')
+
     ############
     # __rmul__ #
     ############
@@ -1019,6 +1039,9 @@ class NumericalDataSafe(DataTestObject):
 
     def test_rmul_Sparse_scalarOfOne(self):
         back_sparseScalarOfOne(self.constructor, '__rmul__')
+
+    def test_rmul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rmul__')
 
     ###############
     # __truediv__ #
@@ -1180,66 +1203,10 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __pow__ #
     ###########
-
-    def test_pow_exceptions(self):
+    @noLogEntryExpected
+    def test_pow_fullSuite(self):
         """ __pow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__pow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
-    @noLogEntryExpected
-    def test_pow_autoVsNumpyObj(self):
-        """ Test __pow__ with automated data and a nimble argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            n = pythonRandom.randint(1, 15)
-
-            datas = makeAllData(self.constructor, self.constructor, n, .02)
-            # map abs() to avoid complex numbers
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
-
-            resultf = lhsf ** rhsf
-            resulti = lhsi ** rhsi
-            resfObj = lhsfObj ** rhsfObj
-            resiObj = lhsiObj ** rhsiObj
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-
-    @noLogEntryExpected
-    def test_pow_autoVsNumpyScalar(self):
-        """ Test __pow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            n = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, n, .02)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
-            resfObj = lhsfObj ** scalar
-            resiObj = lhsiObj ** scalar
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
+        run_full_backend(self.constructor, '__pow__', False, 0)
 
     @raises(ZeroDivisionError)
     def test_pow_nimbleObj_zeroDivision_exception(self):
@@ -1288,47 +1255,10 @@ class NumericalDataSafe(DataTestObject):
     # __rpow__ #
     ############
 
-    def test_rpow_exceptions(self):
-        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__rpow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
     @noLogEntryExpected
-    def test_rpow_autoVsNumpyScalar(self):
-        """ Test __rpow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            n = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, n, .02)
-            # map abs() to avoid complex numbers
-            def getAbs(val):
-                if val is not None:
-                    return abs(val)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(getAbs, datas)
-
-            resultf = scalar ** lhsf
-            resulti = scalar ** lhsi
-            resfObj = scalar ** lhsfObj
-            resiObj = scalar ** lhsiObj
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
+    def test_rpow_fullSuite(self):
+        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__rpow__', False, 0)
 
     @raises(ZeroDivisionError)
     def test_rpow_scalar_zeroDivision_exception(self):
@@ -1616,14 +1546,15 @@ class NumericalModifying(DataTestObject):
 
         for i in range(len(makers)):
             maker = makers[i]
-            n = pythonRandom.randint(1, 10)
+            numPts = pythonRandom.randint(1, 10)
+            numFts = pythonRandom.randint(1, 10)
 
-            randomlf = nimble.createRandomData('Matrix', n, n, .2)
-            randomrf = nimble.createRandomData('Matrix', n, n, .2)
+            randomlf = nimble.createRandomData('Matrix', numPts, numFts, .2)
+            randomrf = nimble.createRandomData('Matrix', numPts, numFts, .2)
             lhsf = randomlf.copy(to="numpyarray")
             rhsf = randomrf.copy(to="numpyarray")
-            lhsi = numpy.ones((n, n))
-            rhsi = numpy.ones((n, n))
+            lhsi = numpy.ones((numPts, numFts))
+            rhsi = numpy.ones((numPts, numFts))
 
             lhsfObj = self.constructor(lhsf)
             rhsfObj = maker(rhsf)
@@ -1821,6 +1752,9 @@ class NumericalModifying(DataTestObject):
     def test_imul_Sparse_scalarOfOne(self):
         back_sparseScalarOfOne(self.constructor, '__imul__')
 
+    def test_imul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__imul__')
+
     ################
     # __itruediv__ #
     ################
@@ -1907,69 +1841,9 @@ class NumericalModifying(DataTestObject):
     # __ipow__ #
     ###########
     @noLogEntryExpected
-    def test_ipow_exceptions(self):
+    def test_ipow_fullSuite(self):
         """ __ipow__ Run the full standardized suite of tests for a binary numeric op """
-        constructor = self.constructor
-        nimbleOp = '__ipow__'
-        inputs = (constructor, nimbleOp)
-        wrapAndCall(back_otherObjectExceptions, InvalidArgumentType, *inputs)
-
-        inputs = (constructor, int, nimbleOp)
-        wrapAndCall(back_selfNotNumericException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_pEmptyException, ImproperObjectAction, *inputs)
-
-        inputs = (constructor, constructor, nimbleOp)
-        wrapAndCall(back_fEmptyException, ImproperObjectAction, *inputs)
-
-    @noLogEntryExpected
-    def test_ipow_autoVsNumpyObj(self):
-        """ Test __ipow__ with automated data and a nimble argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            n = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, self.constructor, n, .02)
-            # map abs() to avoid complex numbers
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = map(abs, datas)
-
-            resultf = lhsf ** rhsf
-            resulti = lhsi ** rhsi
-            resfObj = lhsfObj.__ipow__(rhsfObj)
-            resiObj = lhsiObj.__ipow__(rhsiObj)
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-            assert resfObj.isIdentical(lhsfObj)
-            assert resiObj.isIdentical(lhsiObj)
-
-    def test_ipow_autoVsNumpyScalar(self):
-        """ Test __ipow__ with automated data and a scalar argument, against numpy operations """
-        trials = 5
-        for t in range(trials):
-            n = pythonRandom.randint(1, 15)
-            scalar = pythonRandom.randint(0, 5)
-
-            datas = makeAllData(self.constructor, None, n, .02)
-            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
-            resultf = lhsf ** scalar
-            resulti = lhsi ** scalar
-            resfObj = lhsfObj.__ipow__(scalar)
-            resiObj = lhsiObj.__ipow__(scalar)
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(resfObj)
-            assert expiObj.isIdentical(resiObj)
-            assert resfObj.isIdentical(lhsfObj)
-            assert resiObj.isIdentical(lhsiObj)
+        run_full_backend(self.constructor, '__ipow__', True, 0)
 
     @raises(ZeroDivisionError)
     def test_ipow_nimbleObj_zeroDivision_exception(self):
