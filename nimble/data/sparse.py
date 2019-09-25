@@ -874,9 +874,11 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        # scipy will perform matrix multiplication with mul operators
+        # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
-            return self._genericMul__implementation(opName, other)
+            return self._genericMul_implementation(opName, other)
+        if 'pow' in opName:
+            return self._genericPow_implementation(opName, other)
         try:
             if isinstance(other, Base):
                 selfData = self._getSparseData()
@@ -915,7 +917,7 @@ class Sparse(Base):
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['truediv', 'floordiv', 'mod']
+        zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
         if 'pow' in opName and opName != '__rpow__' and other != 0:
             zeroPreserved = True
@@ -957,19 +959,33 @@ class Sparse(Base):
     def _rsub__implementation(self, other):
         return (self * -1)._arithmeticBinary_implementation('__add__', other)
 
-    def _genericMul__implementation(self, opName, other):
-        if other == 1:
+    def _genericMul_implementation(self, opName, other):
+        if not isinstance(other, Base):
             return self._scalarBinary_implementation(opName, other)
         if 'i' in opName:
             target = self
         else:
             target = self.copy()
-        if isinstance(other, Base):
-            target.elements.multiply(other, useLog=False)
-        else:
-            target.data *= other
-            target.data.eliminate_zeros()
+
+        target.elements.multiply(other, useLog=False)
+
         return target
+
+    def _genericPow_implementation(self, opName, other):
+        if not isinstance(other, Base):
+            return self._scalarBinary_implementation(opName, other)
+        if 'i' in opName:
+            caller = self
+            callee = other
+        elif 'r' in opName:
+            caller = other.copy('Sparse')
+            callee = self
+        else:
+            caller = self.copy()
+            callee = other
+
+        caller.elements.power(callee, useLog=False)
+        return caller
 
     def _genericFloordiv_implementation(self, opName, other):
         """
