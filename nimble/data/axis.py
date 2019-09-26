@@ -132,12 +132,12 @@ class Axis(object):
                       self._source.getTypeString(), self._sigFunc('setNames'),
                       assignments)
 
-    def _getIndex(self, identifier):
+    def _getIndex(self, identifier, allowFloats=False):
         num = len(self)
         if num == 0:
             msg = "There are no valid " + self._axis + " identifiers; "
             msg += "this object has 0 " + self._axis + "s"
-            raise ImproperObjectAction(msg)
+            raise IndexError(msg)
         elif isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
@@ -145,14 +145,17 @@ class Axis(object):
                 msg = "The given index " + str(identifier) + " is outside of "
                 msg += "the range of possible indices in the " + self._axis
                 msg += " axis (0 to " + str(num - 1) + ")."
-                raise InvalidArgumentValue(msg)
+                raise IndexError(msg)
         elif isinstance(identifier, six.string_types):
-            try:
-                identifier = self._getIndexByName(identifier)
-            except KeyError:
-                msg = "The " + self._axis + " name '" + identifier
-                msg += "' cannot be found."
-                raise InvalidArgumentValue(msg)
+            identifier = self._getIndexByName(identifier)
+        elif allowFloats and isinstance(identifier, (float, numpy.float)):
+            if identifier % 1: # x!=int(x)
+                idVal = str(identifier)
+                msg = "A float valued key of value x is only accepted if x == "
+                msg += "int(x). The given value was " + idVal + " yet int("
+                msg += idVal + ") = " + str(int(identifier))
+                raise KeyError(msg)
+            identifier = int(identifier)
         else:
             msg = "The identifier must be either a string (a valid "
             msg += self._axis + " name) or an integer (python or numpy) index "
@@ -175,12 +178,12 @@ class Axis(object):
         try:
             self._getIndex(name)
             return True
-        except InvalidArgumentValue:
+        except KeyError:
             return False
 
     def __getitem__(self, key):
         if isinstance(key, (int, float, str, numpy.integer)):
-            key = [self._processSingle(key)]
+            key = [self._getIndex(key, allowFloats=True)]
         else:
             key = self._processMultiple(key)
         if key is None:
@@ -1058,6 +1061,10 @@ class Axis(object):
         else:
             namesDict = self._source.featureNames
 
+        if name not in namesDict:
+            msg = "The " + self._axis + " name '" + name
+            msg += "' cannot be found."
+            raise KeyError(msg)
         return namesDict[name]
 
     def _setName_implementation(self, oldIdentifier, newName):
@@ -1200,32 +1207,6 @@ class Axis(object):
             self._source.featureNames = copy.deepcopy(assignments)
             self._source.featureNamesInverse = reverseMap
 
-    def _processSingle(self, key):
-        """
-        Helper for Base and Axis __getitem__ when given a single value.
-        """
-        length = len(self)
-        if isinstance(key, str):
-            return self.getIndex(key)
-
-        if isinstance(key, (float, numpy.float)):
-            if key % 1: # x!=int(x)
-                msg = "A float valued key of value x is only accepted if x == "
-                msg += "int(x). The given value was " + str(key) + " yet int("
-                msg += str(key) + ") = " + str(int(key))
-                raise InvalidArgumentValue(msg)
-            key = int(key)
-
-        if key < -length or key >= length:
-            msg = "The given index " + str(key) + " is outside of the "
-            msg += "range of possible indices in the point axis (0 to "
-            msg += str(length - 1) + ")."
-            raise IndexError(msg)
-        if key >= 0:
-            return key
-        else:
-            return key + length
-
     def _processMultiple(self, key):
         """
         Helper for Base and Axis __getitem__ when given multiple values.
@@ -1246,8 +1227,8 @@ class Axis(object):
             stop = key.stop if key.stop is not None else length - 1
             step = key.step if key.step is not None else 1
 
-            start = self._processSingle(start)
-            stop = self._processSingle(stop)
+            start = self._getIndex(start, allowFloats=True)
+            stop = self._getIndex(stop, allowFloats=True)
             if start == 0 and stop == length - 1 and step == 1: # full slice
                 return None
             # our stop is inclusive need to adjust for builtin range below
@@ -1265,17 +1246,18 @@ class Axis(object):
                 msg = 'The key provided for {ax}s contains boolean values. '
                 msg += 'Booleans are only permitted if the key contains '
                 msg += 'only boolean type values for every {ax} in this object.'
-                raise InvalidArgumentValue(msg.format(ax=self._axis))
-            key = [self._processSingle(i) for i in key]
+                raise KeyError(msg.format(ax=self._axis))
+            key = [self._getIndex(i, allowFloats=True) for i in key]
             if key == list(range(length)):  # full slice
                 return None
             if len(set(key)) != len(key):
                 duplicates = set(val for val in key if key.count(val) > 1)
-                msg = 'Duplicate key values are not allowed. The following '
-                msg += 'values were duplicated: {dup}. Duplicate {ax}s can '
-                msg += "be generated using an object's {ax}s.repeat() method"
+                msg = 'Duplicate values in the key are not allowed. The '
+                msg += 'following values were duplicated: {dup}. Duplicate '
+                msg += '{ax}s can be generated using the repeat() method of '
+                msg += "this object's {ax}s attribute"
                 msg = msg.format(dup=duplicates, ax=self._axis)
-                raise InvalidArgumentValue(msg)
+                raise KeyError(msg)
             return key
 
     ########################

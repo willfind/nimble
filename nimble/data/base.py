@@ -1223,17 +1223,17 @@ class Base(object):
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
                 msg += "into the axis whose length > 1"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentType(msg)
 
         #process x
         singleX = False
         if isinstance(x, (int, float, str, numpy.integer)):
-            x = self.points._processSingle(x)
+            x = self.points._getIndex(x, allowFloats=True)
             singleX = True
         #process y
         singleY = False
         if isinstance(y, (int, float, str, numpy.integer)):
-            y = self.features._processSingle(y)
+            y = self.features._getIndex(y, allowFloats=True)
             singleY = True
         #if it is the simplest data retrieval such as X[1,2],
         # we'd like to return it back in the fastest way.

@@ -7,7 +7,7 @@ import numpy
 import six
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentType
 
 def missing(value):
     """
@@ -1301,7 +1301,7 @@ def anyAllValuesBackend(quantity, data, match):
     try:
         # 1D data
         return quantity([match(val) for val in data])
-    except InvalidArgumentValue:
+    except InvalidArgumentType:
         # 2D data
         if quantity is any:
             # if any feature contains a match we can return True

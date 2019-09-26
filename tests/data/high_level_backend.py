@@ -1916,7 +1916,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
-    @raises(ImproperObjectAction)
+    @raises(IndexError)
     def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a feature empty object """
         data = [[], []]
@@ -1990,7 +1990,7 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
-    @raises(ImproperObjectAction)
+    @raises(IndexError)
     def test_transformFeatureToIntegers_FemptyException(self):
         """ Test transformFeatureToIntegers() with an feature empty object """
         data = [[], []]

@@ -424,28 +424,28 @@ class QueryBackend(DataTestObject):
     ##############
     # __getitem__#
     ##############
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_duplicateValuesPoint(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
 
         obj[[0, 1, 0], :]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_duplicateValuesFeature(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
 
         obj[:, [1, 0, 1]]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_mixedTypesPoint(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
 
         obj[[False, True, 2], :]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_mixedTypesFeature(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -509,14 +509,14 @@ class QueryBackend(DataTestObject):
 
         assert toTest[1, 'one'] == 4
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_nonIntConvertableFloatSingleKey(self):
         data = [[0, 1, 2, 3]]
         toTest = self.constructor(data)
 
         assert toTest[0.1] == 0
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_nonIntConvertableFloatTupleKey(self):
         data = [[0, 1], [2, 3]]
         toTest = self.constructor(data)
@@ -634,7 +634,7 @@ class QueryBackend(DataTestObject):
         assert list(zip(pv, fv)) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
 
-    @raises(InvalidArgumentValue)
+    @raises(InvalidArgumentType)
     def test_getitem_exception_nimble2D(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -644,7 +644,7 @@ class QueryBackend(DataTestObject):
 
         obj[idxObj]
 
-    @raises(InvalidArgumentValue)
+    @raises(InvalidArgumentType)
     def test_getitem_exception_nimbleBoolean2D(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -653,7 +653,7 @@ class QueryBackend(DataTestObject):
 
         obj[idxObj]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_nimbleBooleanPointVectorShape(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -663,7 +663,7 @@ class QueryBackend(DataTestObject):
 
         obj[idxObjShort, :]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_getitem_exception_nimbleBooleanFeatureVectorShape(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -738,14 +738,14 @@ class QueryBackend(DataTestObject):
         assert toTest.points[['1', '4']].features[[4,3]] == tmp5
         assert toTest.points[[0,1]].features[['gender', 'zero']] == tmp5
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_points_getitem_exception_duplicateValues(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
 
         obj.points[[0, 1, 0]]
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_features_getitem_exception_duplicateValues(self):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
@@ -896,9 +896,9 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(pointEnd=5)
             assert False  # pointEnd > pointCount didn't raise exception
-        except InvalidArgumentValue as iav:
+        except IndexError as ie:
             if textCheck:
-                print(iav)
+                print(ie)
 
         try:
             toTest.view(pointEnd=1.4)
@@ -932,9 +932,9 @@ class QueryBackend(DataTestObject):
         try:
             toTest.view(featureEnd=4)
             assert False  # featureEnd > featureCount didn't raise exception
-        except InvalidArgumentValue as iav:
+        except IndexError as ie:
             if textCheck:
-                print(iav)
+                print(ie)
 
         try:
             toTest.view(featureEnd=1.4)
