@@ -114,12 +114,11 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 features_logged = [
     'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
     'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'splitByParsing',
+    'transform', 'splitByParsing', 'matching',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
     'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
-    'matching' #TODO should log?
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -128,20 +127,20 @@ points_logged = [
     'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
     'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
     'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
+    'matching',
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
     'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
-    'matching' #TODO should log?
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
 
 elements_logged = [
-    'calculate', 'transform', 'multiply', 'power',
+    'calculate', 'transform', 'multiply', 'power', 'matching',
     ]
 elements_notLogged = [
-    'count', 'countUnique', 'matching' #TODO should log?
+    'count', 'countUnique',
     ]
 elements_funcs = elements_logged + elements_notLogged
 elements_tested = list(map(prefixAdder('Elements'), elements_funcs))

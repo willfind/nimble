@@ -3945,7 +3945,7 @@ class Base(object):
     def _genericBinaryOperations(self, opName, other):
         otherNimble = isinstance(other, Base)
         # figure out return obj's point / feature names
-        if opName not in ['__pos__', '__neg__', '__abs__'] and otherNimble:
+        if otherNimble:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)

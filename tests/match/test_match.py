@@ -25,7 +25,7 @@ falseValues = [False, numpy.bool(False), numpy.bool_(False)]
 boolValues = trueValues + falseValues
 
 numericValues = (positiveValues + negativeValues + zeroValues
-                 + infinityValues + [float('nan'), numpy.nan])
+                 + infinityValues + missingValues[1:])
 
 def test_match_missing():
     true = missingValues

@@ -6,7 +6,7 @@ pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
-inverse, solveLinearSystem, __and__, __or__, __xor__
+inverse, solveLinearSystem
 """
 from __future__ import absolute_import
 from __future__ import print_function

@@ -10,7 +10,8 @@ __matmul__, matrixMultiply, __rmatmul__, __imatmul__
 
 In object NumericalModifying:
 elements.power, elements.multiply, __imul__, __iadd__, __isub__,
-__itruediv__, __ifloordiv__,  __imod__, __ipow__, __imatmul__
+__itruediv__, __ifloordiv__,  __imod__, __ipow__, __imatmul__, __and__,
+__or__, __xor__
 
 """
 from __future__ import absolute_import
