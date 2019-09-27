@@ -882,6 +882,11 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
+        # scipy may not raise expected exceptions for truediv
+        # TODO remove once logical operators used in Base for this
+        if 'truediv' in opName:
+            dataHelpers.arithmeticValidation(self, opName, other)
+
         if self._sorted is None:
             self._sortInternal('point')
         # scipy mul and pow operators are not elementwise
@@ -931,7 +936,7 @@ class Sparse(Base):
             return Sparse(selfData)
         zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other != 0:
+        if 'pow' in opName and opName != '__rpow__' and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -967,9 +972,6 @@ class Sparse(Base):
         self.referenceDataFrom(ret, useLog=False)
         self._absPath, self._relPath = absPath, relPath
         return self
-
-    # def __rpow__(self, other):
-    #     return other.__pow__(self)
 
     def _rsub__implementation(self, other):
         return (self * -1)._arithmeticBinary_implementation('__add__', other)

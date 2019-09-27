@@ -130,7 +130,28 @@ class Stretch(object):
         toSet.points.setNames(setPts)
         toSet.features.setNames(setFts)
 
-    def _genericArithmetic_validation(self, opName, other):
+    def _genericArithmeticBinary_validation(self, opName, other):
+        otherNimble = isinstance(other, nimble.data.Base)
+        sBase = self._source
+        if otherNimble:
+            oBase = other
+        else:
+            oBase = other._source
+
+        if self._numPts == 1:
+            fullSelf = sBase.points.repeat(len(oBase.points), True)
+        else:
+            fullSelf = sBase.features.repeat(len(oBase.features), True)
+        if otherNimble:
+            fullOther = other
+        elif other._numPts == 1:
+            fullOther = oBase.points.repeat(self._numPts, True)
+        else:
+            fullOther = oBase.features.repeat(self._numFts, True)
+
+        dataHelpers.arithmeticValidation(fullSelf, opName, fullOther)
+
+    def _genericArithmetic(self, opName, other):
         otherNimble = isinstance(other, nimble.data.Base)
         if not (otherNimble or isinstance(other, Stretch)):
             msg = 'stretch operations can only be performed with nimble '
@@ -145,29 +166,17 @@ class Stretch(object):
                 msg += "other is a single feature"
                 raise ImproperObjectAction(msg)
 
-        if otherNimble:
-            otherSource = other
-        else:
-            otherSource = other._source
+        # mod and floordiv operations do not raise errors for zero division
+        # TODO use logical operations to check for nan and inf after operation
+        if 'floordiv' in opName or 'mod' in opName:
+            self._genericArithmeticBinary_validation(opName, other)
+        try:
+            with numpy.errstate(divide='raise', invalid='raise'):
+                ret = self._arithmetic_implementation(opName, other)
+        except Exception as e:
+            self._genericArithmeticBinary_validation(opName, other)
+            raise # backup, expect arithmeticValidation to raise exception
 
-        if self._numPts == 1:
-            fullSelf = self._source.points.repeat(len(otherSource.points),
-                                                  True)
-        else:
-            fullSelf = self._source.features.repeat(len(otherSource.features),
-                                                    True)
-        if otherNimble:
-            fullOther = other
-        elif other._numPts == 1:
-            fullOther = otherSource.points.repeat(self._numPts, True)
-        else:
-            fullOther = otherSource.features.repeat(self._numFts, True)
-
-        dataHelpers.arithmeticValidation(fullSelf, opName, fullOther)
-
-    def _genericArithmetic(self, opName, other):
-        self._genericArithmetic_validation(opName, other)
-        ret = self._arithmetic_implementation(opName, other)
         self.setOutputNames(ret, other)
 
         return ret

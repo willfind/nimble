@@ -3845,8 +3845,6 @@ class Base(object):
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
-        dataHelpers.arithmeticValidation(self, opName, other)
-
     def _genericArithmeticBinary(self, opName, other):
         isStretch = isinstance(other, nimble.data.stretch.Stretch)
         if isStretch:
@@ -3862,7 +3860,22 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._arithmeticBinary_implementation(opName, other)
+        # mod and floordiv operations do not raise errors for zero division
+        # TODO logical operations to check for new nan and inf after operation
+        if 'floordiv' in opName or 'mod' in opName:
+            dataHelpers.arithmeticValidation(self, opName, other)
+
+        try:
+            useOp = opName
+            if opName.startswith('__i'):
+                # inplace operations will modify the data even if op fails
+                # use not inplace operation, setting to inplace occurs after
+                useOp = opName[:2] + opName[3:]
+            with numpy.errstate(divide='raise', invalid='raise'):
+                ret = self._arithmeticBinary_implementation(useOp, other)
+        except Exception:
+            dataHelpers.arithmeticValidation(self, opName, other)
+            raise # backup, expect arithmeticValidation to raise exception
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath

@@ -770,25 +770,14 @@ def denominatorValidation(obj1, opName, obj2):
     else:
         toCheck = obj2
 
-    if isinstance(toCheck, nimble.data.Base):
-        if toCheck.containsZero():
-            msg = "Cannot perform " + opName + " when the second argument "
-            msg += "contains any zeros"
-            raise ZeroDivisionError(msg)
-        unique = toCheck.elements.countUnique()
-        if any(val != val or numpy.isinf(val) for val in unique):
-            msg = "Cannot perform " + opName + " when the second "
-            msg += "argument contains any NaNs or Infs"
-            raise InvalidArgumentValue(msg)
-    else:
-        if toCheck == 0:
-            msg = "Cannot perform " + opName + " when the second argument "
-            msg += "is zero"
-            raise ZeroDivisionError(msg)
-        if toCheck != toCheck or numpy.isinf(toCheck):
-            msg = "Cannot perform " + opName + " when the second "
-            msg += "argument contains any NaNs or Infs"
-            raise InvalidArgumentValue(msg)
+    if isinstance(toCheck, nimble.data.Base) and toCheck.containsZero():
+        msg = "Cannot perform " + opName + " when the second argument "
+        msg += "contains any zeros"
+        raise ZeroDivisionError(msg)
+    elif toCheck == 0:
+        msg = "Cannot perform " + opName + " when the second argument "
+        msg += "is zero"
+        raise ZeroDivisionError(msg)
 
 
 def powerValidation(obj1, opName, obj2):
