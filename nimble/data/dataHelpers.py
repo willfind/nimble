@@ -18,6 +18,7 @@ import numpy
 import nimble
 from nimble import importModule
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
 
 pd = importModule('pandas')
 
@@ -742,3 +743,110 @@ def denseCountUnique(obj, points=None, features=None):
     intMap = {v: k for k, v in mapping.items()}
     vals, counts = numpy.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}
+
+
+def numericValidation(obj, right=False):
+    """
+    Validate the object elements are all numeric.
+    """
+    try:
+        obj.elements.calculate(_checkNumeric, useLog=False)
+    except ValueError:
+        msg = "The object on the {0} contains non numeric data, "
+        msg += "cannot do this operation"
+        if right:
+            msg = msg.format('right')
+            raise InvalidArgumentValue(msg)
+        msg = msg.format('left')
+        raise ImproperObjectAction(msg)
+
+
+def denominatorValidation(obj1, opName, obj2):
+    """
+    Validate values in divmod operation will not lead to zero division.
+    """
+    if opName.startswith('__r'):
+        toCheck = obj1
+    else:
+        toCheck = obj2
+
+    if isinstance(toCheck, nimble.data.Base):
+        if toCheck.containsZero():
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "contains any zeros"
+            raise ZeroDivisionError(msg)
+        unique = toCheck.elements.countUnique()
+        if any(val != val or numpy.isinf(val) for val in unique):
+            msg = "Cannot perform " + opName + " when the second "
+            msg += "argument contains any NaNs or Infs"
+            raise InvalidArgumentValue(msg)
+    else:
+        if toCheck == 0:
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "is zero"
+            raise ZeroDivisionError(msg)
+        if toCheck != toCheck or numpy.isinf(toCheck):
+            msg = "Cannot perform " + opName + " when the second "
+            msg += "argument contains any NaNs or Infs"
+            raise InvalidArgumentValue(msg)
+
+
+def powerValidation(obj1, opName, obj2):
+    """
+    Validate values in power operation will not lead to zero division or
+    complex numbers.
+    """
+    if opName == '__rpow__':
+        left = obj2
+        right = obj1
+    else:
+        left = obj1
+        right = obj2
+
+    def isComplex(val):
+        # numpy ops may return nan when result is a complex number
+        return numpy.isnan(val) or isinstance(val, complex)
+
+    if all(isinstance(obj, nimble.data.Base) for obj in [left, right]):
+        zipLR = zip(left.elements, right.elements)
+        for l, r in zipLR:
+            if l == 0 and r < 0:
+                msg = 'Zeros cannot be raised to negative exponents'
+                raise ZeroDivisionError(msg)
+            if isComplex(l ** r):
+                msg = "Complex number results are not allowed"
+                raise ImproperObjectAction(msg)
+    elif isinstance(left, nimble.data.Base):
+        for elem in left.elements:
+            if elem == 0 and right < 0:
+                msg = 'Zero cannot be raised to negative exponents'
+                raise ZeroDivisionError(msg)
+            if isComplex(elem ** right):
+                msg = "Complex number results are not allowed"
+                raise ImproperObjectAction(msg)
+    else:
+        for elem in right.elements:
+            if left == 0 and elem < 0:
+                msg = 'Zero cannot be raised to negative exponents'
+                raise ZeroDivisionError(msg)
+            if isComplex(left ** elem):
+                msg = "Complex number results are not allowed"
+                raise ImproperObjectAction(msg)
+
+def arithmeticValidation(obj1, opName, obj2):
+    """
+    Determine if an arithmetic operation can be performed successfully
+    between two objects.
+    """
+    # Test element type self
+    numericValidation(obj1)
+    # test element type other
+    if isinstance(obj2, nimble.data.Base):
+        numericValidation(obj2, right=True)
+    if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
+                  '__floordiv__', '__rfloordiv__', '__ifloordiv__',
+                  '__mod__', '__rmod__', '__imod__',]:
+        denominatorValidation(obj1, opName, obj2)
+
+    if opName in ['__pow__', '__rpow__', '__ipow__']:
+        powerValidation(obj1, opName, obj2)

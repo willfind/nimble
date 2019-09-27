@@ -3607,8 +3607,8 @@ class Base(object):
             ret = caller._matmul__implementation(callee)
         except Exception as e:
             #TODO: improve how the exception is catch
-            self._numericValidation()
-            other._numericValidation(right=True)
+            dataHelpers.numericValidation(self)
+            dataHelpers.numericValidation(other, right=True)
             raise e
 
         if caller._pointNamesCreated():
@@ -3820,20 +3820,6 @@ class Base(object):
         ret._relPath = self.relativePath
         return ret
 
-    def _numericValidation(self, right=False):
-        if self._pointCount > 0:
-            try:
-                self.elements.calculate(dataHelpers._checkNumeric,
-                                        useLog=False)
-            except ValueError:
-                msg = "The object on the {0} contains non numeric data, "
-                msg += "cannot do this operation"
-                if right:
-                    msg = msg.format('right')
-                    raise InvalidArgumentValue(msg)
-                msg = msg.format('left')
-                raise ImproperObjectAction(msg)
-
     def _genericArithmeticBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
@@ -3859,82 +3845,7 @@ class Base(object):
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
-        # Test element type self
-        self._numericValidation()
-
-        # test element type other
-        if otherNimble:
-            other._numericValidation(right=True)
-
-        divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
-                    '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                    '__mod__', '__rmod__', '__imod__', ]
-        powNames = ['__pow__', '__rpow__', '__ipow__']
-        if opName in divNames:
-            self._validateDivMod(opName, other)
-
-        if opName in powNames:
-            self._validatePow(opName, other)
-
-    def _validateDivMod(self, opName, other):
-        if opName.startswith('__r'):
-            toCheck = self
-            toCheckNimble = True
-        else:
-            toCheck = other
-            toCheckNimble = isinstance(toCheck, Base)
-
-        if toCheckNimble:
-            if toCheck.containsZero():
-                msg = "Cannot perform " + opName + " when the second argument "
-                msg += "contains any zeros"
-                raise ZeroDivisionError(msg)
-            unique = toCheck.elements.countUnique()
-            if any(val != val or numpy.isinf(val) for val in unique):
-                msg = "Cannot perform " + opName + " when the second "
-                msg += "argument contains any NaNs or Infs"
-                raise InvalidArgumentValue(msg)
-        else:
-            if toCheck == 0:
-                msg = "Cannot perform " + opName + " when the second argument "
-                msg += "is zero"
-                raise ZeroDivisionError(msg)
-            if toCheck != toCheck or numpy.isinf(toCheck):
-                msg = "Cannot perform " + opName + " when the second "
-                msg += "argument contains any NaNs or Infs"
-                raise InvalidArgumentValue(msg)
-
-
-    def _validatePow(self, opName, other):
-        def isComplex(val):
-            return numpy.isnan(val) or isinstance(val, complex)
-
-        if isinstance(other, Base):
-            zipLR = zip(self.elements, other.elements)
-            for l, r in zipLR:
-                if l == 0 and r < 0:
-                    msg = 'Zeros cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(l ** r):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        elif opName.startswith('__r'):
-            for elem in self.elements:
-                if other == 0 and elem < 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(other ** elem):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        else:
-            for elem in self.elements:
-                if other < 0 and elem == 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(elem ** other):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-
+        dataHelpers.arithmeticValidation(self, opName, other)
 
     def _genericArithmeticBinary(self, opName, other):
         isStretch = isinstance(other, nimble.data.stretch.Stretch)
@@ -3943,7 +3854,7 @@ class Base(object):
         self._genericArithmeticBinary_validation(opName, other)
         # figure out return obj's point / feature names
         otherNimble = isinstance(other, Base)
-        if opName not in ['__pos__', '__neg__', '__abs__'] and otherNimble:
+        if otherNimble:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)

@@ -882,6 +882,8 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
+        if self._sorted is None:
+            self._sortInternal('point')
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -891,6 +893,8 @@ class Sparse(Base):
             if isinstance(other, Base):
                 selfData = self._getSparseData()
                 if isinstance(other, Sparse):
+                    if other._sorted != self._sorted:
+                        other._sortInternal(self._sorted)
                     otherData = other._getSparseData()
                 else:
                     otherConv = other.copy('Matrix')
@@ -977,7 +981,6 @@ class Sparse(Base):
             target = self
         else:
             target = self.copy()
-
         target.elements.multiply(other, useLog=False)
 
         return target
@@ -1327,6 +1330,13 @@ class SparseView(BaseView, Sparse):
                 return True
 
         return False
+
+    def _arithmeticBinary_implementation(self, opName, other):
+        selfConv = self.copy(to="Sparse")
+        if isinstance(other, BaseView):
+            other = other.copy(to=other.getTypeString())
+
+        return selfConv._arithmeticBinary_implementation(opName, other)
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """
