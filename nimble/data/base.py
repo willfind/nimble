@@ -3846,8 +3846,10 @@ class Base(object):
             self._validateEqualNames('feature', 'feature', opName, other)
 
     def _genericArithmeticBinary(self, opName, other):
-        isStretch = isinstance(other, nimble.data.stretch.Stretch)
-        if isStretch:
+        if isinstance(other, nimble.data.stretch.Stretch):
+            # __ipow__ does not work if return NotImplemented
+            if opName == '__ipow__':
+                return pow(self, other)
             return NotImplemented
         self._genericArithmeticBinary_validation(opName, other)
         # figure out return obj's point / feature names

@@ -4,22 +4,30 @@ Tests for using stretch attribute to trigger broadcasting operations
 import operator
 
 from nose.tools import raises
+import numpy
 
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import pythonRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import assertNoNamesGenerated
 
-# TODO
-# point and feature names?
-  # If base has? if stretch has?
- # Chained operations
-
-class StretchBackend(DataTestObject):
+class StretchDataSafe(DataTestObject):
 
     ##############
     # Exceptions #
     ##############
+
+    @raises(ImproperObjectAction)
+    def test_stretch_ptEmpty(self):
+        empty = numpy.empty((0, 3))
+        emptyObj = self.constructor(empty)
+        emptyObj.stretch
+
+    @raises(ImproperObjectAction)
+    def test_stretch_ftEmpty(self):
+        empty = numpy.empty((3, 0))
+        emptyObj = self.constructor(empty)
+        emptyObj.stretch
 
     @raises(ImproperObjectAction)
     def test_2D_stretch_exception(self):
@@ -41,8 +49,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     def test_handmade_Base_Stretch_sub_point(self):
         base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
@@ -54,8 +61,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     def test_handmade_Base_Stretch_mul_point(self):
         base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
@@ -66,8 +72,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     # zero exception
 
@@ -84,8 +89,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 / stretch2.stretch
@@ -111,8 +115,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 // stretch2.stretch
@@ -138,8 +141,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 % stretch2.stretch
@@ -165,8 +167,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 ** stretch2.stretch
@@ -195,8 +196,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     def test_handmade_Base_Stretch_sub_feature(self):
         base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
@@ -208,8 +208,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     def test_handmade_Base_Stretch_mul_feature(self):
         base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
@@ -220,8 +219,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base)
 
     # zero exception
 
@@ -238,8 +236,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 / stretch2.stretch
@@ -265,8 +262,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 // stretch2.stretch
@@ -292,8 +288,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 % stretch2.stretch
@@ -319,8 +314,7 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
+        assertNoNamesGenerated(base1)
 
         try:
             base2 ** stretch2.stretch
@@ -372,8 +366,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
     def test_handmade_Stretch_Stretch_mul(self):
         ft = self.constructor([[0], [1], [2], [-1]])
@@ -384,8 +376,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
     # zero exception
 
@@ -403,8 +393,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
         try:
             ft2.stretch / pt2.stretch
@@ -430,8 +418,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
         try:
             ft2.stretch // pt2.stretch
@@ -457,8 +443,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
         try:
             ft2.stretch % pt2.stretch
@@ -484,8 +468,6 @@ class StretchBackend(DataTestObject):
 
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
-        assertNoNamesGenerated(ret1)
-        assertNoNamesGenerated(ret2)
 
         try:
             ft2.stretch ** pt2.stretch
@@ -624,3 +606,351 @@ class StretchBackend(DataTestObject):
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_MatchPtNames, None, fNames)
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_WithFtName, single3, None)
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_AllNamesPtMatch, None, None)
+
+
+    def test_stretch_chainedOperators(self):
+        raw1 = [[1, 2, 3], [4, 5, 6]]
+        raw2 = [3, 3, 3]
+        raw3 = [[2], [2]]
+        obj1 = self.constructor(raw1)
+        obj2 = self.constructor(raw2)
+        obj3 = self.constructor(raw3)
+
+        exp1 = [[4, 5, 6], [7, 7, 8]]
+        expObj1 = self.constructor(exp1)
+        chain1 = obj1 + obj2.stretch - obj3.stretch * obj1 // obj2.stretch ** obj3.stretch
+
+        assert chain1 == expObj1
+
+        exp2 = [[7, 6, 7], [9, 11, 12]]
+        expObj2 = self.constructor(exp2)
+        chain2 = (obj2.stretch + obj3.stretch) // obj1 + obj3.stretch * obj1
+
+        exp3 = [[4, 14, 30], [52, 80, 114]]
+        expObj3 = self.constructor(exp3)
+        chain3 = obj1 + obj2.stretch * obj1 ** obj3.stretch
+        assert chain3 == expObj3
+
+        exp4 = [[4.5, 4.5, 4.5], [4.5, 4.5, 4.5]]
+        expObj4 = self.constructor(exp4)
+        chain4 = obj2.stretch * obj3.stretch - obj2.stretch / obj3.stretch
+        assert chain4 == expObj4
+
+
+class StretchDataModifying(DataTestObject):
+    ########################
+    # Base / Stretch Point #
+    ########################
+
+    # zero safe
+
+    def test_handmade_Base_Stretch_iadd_point(self):
+        base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        toStretch = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            toStretch.stretch += base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[2, 4, 3, 3], [6, 8, 7, 7], [1, 1, -2, -4]])
+        base += toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_isub_point(self):
+        base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        toStretch = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            toStretch.stretch -= base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[0, 0, 3, 5], [4, 4, 7, 9], [-1, -3, -2, -2]])
+        base -= toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+
+    def test_handmade_Base_Stretch_imul_point(self):
+        base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        toStretch = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            toStretch.stretch *= base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 4, 0, -4], [5, 12, 0, -8], [0, -2, 0, 3]])
+        base *= toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    # zero exception
+
+    def test_handmade_Base_Stretch_itruediv_point(self):
+        base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
+        stretch1 = self.constructor([[1, 2, -1, -2]])
+
+        try:
+            stretch1.stretch /= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 1, -3, -2], [5, 3, -7, -4], [-1, -1, 3, 2]])
+        base1 /= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        stretch2 = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            base2 /= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_ifloordiv_point(self):
+        base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
+        stretch1 = self.constructor([[1, 2, -1, -2]])
+
+        try:
+            stretch1.stretch //= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 1, -3, -2], [5, 3, -7, -4], [-1, -1, 3, 2]])
+        base1 //= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        stretch2 = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            base2 //= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_imod_point(self):
+        base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
+        stretch1 = self.constructor([[1, 2, -1, -2]])
+
+        try:
+            stretch1.stretch %= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        base1 %= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
+        stretch2 = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            base2 %= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_ipow_point(self):
+        base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
+        stretch1 = self.constructor([[1, 2, -1, -2]])
+
+        try:
+            stretch1.stretch **= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 4, (1/3), (1/16)], [5, 36, (1/7), (1/64)], [-1, 4, (-1/3), (1/16)]])
+        base1 **= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, 0]])
+        stretch2 = self.constructor([[1, 2, 0, -1]])
+
+        try:
+            base2 **= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    ##########################
+    # Base / Stretch Feature #
+    ##########################
+
+    # zero safe
+
+    def test_handmade_Base_Stretch_iadd_feature(self):
+        base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        toStretch = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            toStretch.stretch += base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[2, 3, 4], [6, 7, 8], [7, 8, 9], [-1, -2, -3]])
+        base += toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_isub_feature(self):
+        base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        toStretch = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            toStretch.stretch -= base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[0, 1, 2], [2, 3, 4], [7, 8, 9], [1, 0, -1]])
+        base -= toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+
+    def test_handmade_Base_Stretch_imul_feature(self):
+        base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        toStretch = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            toStretch.stretch *= base
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 2, 3], [8, 10, 12], [0, 0, 0], [0, 1, 2]])
+        base *= toStretch.stretch
+
+        assert base.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    # zero exception
+
+    def test_handmade_Base_Stretch_itruediv_feature(self):
+        base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+        stretch1 = self.constructor([[1], [2], [-1], [-2]])
+
+        try:
+            stretch1.stretch /= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 2, 3], [2, (5/2), 3], [-7, -8, -9], [(1/2), 1, (3/2)]])
+        base1 /= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        stretch2 = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            base2 /= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_ifloordiv_feature(self):
+        base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+        stretch1 = self.constructor([[1], [2], [-1], [-2]])
+
+        try:
+            stretch1.stretch //= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        exp = self.constructor([[1, 2, 3], [2, 2, 3], [-7, -8, -9], [0, 1, 1]])
+        base1 //= stretch1.stretch
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        stretch2 = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            base2 //= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_imod_feature(self):
+        base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+        stretch1 = self.constructor([[1], [2], [-1], [-2]])
+
+        try:
+            stretch1.stretch %= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        base1 %= stretch1.stretch
+        exp = self.constructor([[0, 0, 0], [0, 1, 0], [0, 0, 0], [-1, 0, -1]])
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
+        stretch2 = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            base2 %= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+    def test_handmade_Base_Stretch_ipow_feature(self):
+        base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+        stretch1 = self.constructor([[1], [2], [-1], [-2]])
+
+        try:
+            stretch1.stretch **= base1
+            assert False # expected AttributeError
+        except AttributeError:
+            pass
+
+        base1 **= stretch1.stretch
+        exp = self.constructor([[1, 2, 3], [16, 25, 36], [(1/7), (1/8), (1/9)], [1, (1/4), (1/9)]])
+
+        assert base1.isIdentical(exp)
+        assertNoNamesGenerated(base1)
+
+        base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, -1], [0, -1, -2]])
+        stretch2 = self.constructor([[1], [2], [0], [-1]])
+
+        try:
+            base2 **= stretch2.stretch
+            assert False # expected ZeroDivisionError
+        except ZeroDivisionError:
+            pass
+
+class StretchAll(StretchDataSafe, StretchDataModifying):
+    pass

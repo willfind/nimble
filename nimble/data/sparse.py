@@ -897,13 +897,14 @@ class Sparse(Base):
         try:
             if isinstance(other, Base):
                 selfData = self._getSparseData()
+                if isinstance(other, SparseView):
+                    other = other.copy(to='Sparse')
                 if isinstance(other, Sparse):
                     if other._sorted != self._sorted:
                         other._sortInternal(self._sorted)
                     otherData = other._getSparseData()
                 else:
-                    otherConv = other.copy('Matrix')
-                    otherData = otherConv.data
+                    otherData = other.copy('Matrix').data
                 ret = getattr(selfData, opName)(otherData)
             else:
                 return self._scalarBinary_implementation(opName, other)

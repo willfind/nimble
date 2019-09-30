@@ -33,49 +33,50 @@ from .structure_backend import StructureDataSafe
 
 from .view_access_backend import ViewAccess
 
-from .stretch_backend import StretchBackend
+from .stretch_backend import StretchAll
+from .stretch_backend import StretchDataSafe
 
 
 class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                   StructureDataSafe, ViewAccess, StretchBackend):
+                   StructureDataSafe, ViewAccess, StretchDataSafe):
     def __init__(self):
         super(TestListView, self).__init__('ListView')
 
 
 class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                     StructureDataSafe, ViewAccess, StretchBackend):
+                     StructureDataSafe, ViewAccess, StretchDataSafe):
     def __init__(self):
         super(TestMatrixView, self).__init__('MatrixView')
 
 
 class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                     StructureDataSafe, ViewAccess, StretchBackend):
+                     StructureDataSafe, ViewAccess, StretchDataSafe):
     def __init__(self):
         super(TestSparseView, self).__init__('SparseView')
 
 
 class TestDataFrameView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                        StructureDataSafe, ViewAccess, StretchBackend):
+                        StructureDataSafe, ViewAccess, StretchDataSafe):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
 
 
-class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchBackend):
+class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
     def __init__(self):
         super(TestList, self).__init__('List')
 
 
-class TestMatrix(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchBackend):
+class TestMatrix(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
     def __init__(self):
         super(TestMatrix, self).__init__('Matrix')
 
 
-class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchBackend):
+class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
 
 
-class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchBackend):
+class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 
