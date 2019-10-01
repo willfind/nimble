@@ -16,8 +16,6 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-import numpy
-
 from . import configuration
 from .configuration import nimblePath
 # load settings from configuration file

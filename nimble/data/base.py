@@ -35,6 +35,7 @@ from .points import Points
 from .features import Features
 from .axis import Axis
 from .elements import Elements
+from .stretch import Stretch
 from . import dataHelpers
 # the prefix for default point and feature names
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
@@ -3846,7 +3847,7 @@ class Base(object):
             self._validateEqualNames('feature', 'feature', opName, other)
 
     def _genericArithmeticBinary(self, opName, other):
-        if isinstance(other, nimble.data.stretch.Stretch):
+        if isinstance(other, Stretch):
             # __ipow__ does not work if return NotImplemented
             if opName == '__ipow__':
                 return pow(self, other)
@@ -3900,10 +3901,73 @@ class Base(object):
             otherData = other.copy('numpyarray')
         else:
             otherData = other
-        ret = getattr(selfData, opName)(otherData)
-        ret = createDataNoValidation(self.getTypeString(), ret)
+        data = getattr(selfData, opName)(otherData)
+        ret = createDataNoValidation(self.getTypeString(), data)
 
         return ret
+
+    @property
+    def stretch(self):
+        """
+        Extend along a one-dimensional axis to fit another object.
+
+        This attribute allows arithmetic operations to occur between
+        objects of different shapes (sometimes referred to as
+        broadcasting). The operation will pair the point or feature in
+        this object with each point or feature in the other object.
+        Operations can occur with a nimble Base object or a stretched
+        object which is one-dimensional along the opposite axis. Note
+        the operation will always return a Base object of the same type
+        as the left-hand operand.
+
+        Examples
+        --------
+        Nimble Base object with a stretched point.
+
+        >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
+        >>> rawPt = [1, 2, 3]
+        >>> baseObj = nimble.createData('Matrix', rawBase)
+        >>> pointObj = nimble.createData('List', rawPt)
+        >>> baseObj * pointObj.stretch
+        Matrix(
+            [[1.000 4.000  9.000 ]
+             [4.000 10.000 18.000]
+             [0.000 -2.000 -6.000]]
+            )
+
+        Stretched feature with nimble Base object.
+
+        >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
+        >>> rawFt = [[1], [2], [3]]
+        >>> baseObj = nimble.createData('Matrix', rawBase)
+        >>> featObj = nimble.createData('List', rawFt)
+        >>> featObj.stretch + baseObj
+        List(
+            [[2.000 3.000 4.000]
+             [6.000 7.000 8.000]
+             [3.000 2.000 1.000]]
+            )
+
+        Two stretched objects.
+
+        >>> rawPt = [[1, 2, 3]]
+        >>> rawFt = [[1], [2], [3]]
+        >>> pointObj = nimble.createData('Matrix', rawPt)
+        >>> featObj = nimble.createData('List', rawFt)
+        >>> pointObj.stretch - featObj.stretch
+        Matrix(
+            [[0.000  1.000  2.000]
+             [-1.000 0.000  1.000]
+             [-2.000 -1.000 0.000]]
+            )
+        >>> featObj.stretch - pointObj.stretch
+        List(
+            [[0.000 -1.000 -2.000]
+             [1.000 0.000  -1.000]
+             [2.000 1.000  0.000 ]]
+            )
+        """
+        return Stretch(self)
 
 
     ############################

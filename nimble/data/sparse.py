@@ -86,9 +86,6 @@ class Sparse(Base):
 
     @property
     def stretch(self):
-        """
-        TODO
-        """
         return StretchSparse(self)
 
     def plot(self, outPath=None, includeColorbar=False):

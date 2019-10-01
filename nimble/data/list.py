@@ -20,7 +20,6 @@ from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
 from .listElements import ListElements, ListElementsView
-from .stretch import Stretch
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
@@ -128,13 +127,6 @@ class List(Base):
 
     def _getElements(self):
         return ListElements(self)
-
-    @property
-    def stretch(self):
-        """
-        TODO
-        """
-        return Stretch(self)
 
     def _transpose_implementation(self):
         """

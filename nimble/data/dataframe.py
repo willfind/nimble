@@ -18,7 +18,6 @@ from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
 from .dataframeElements import DataFrameElements, DataFrameElementsView
-from .stretch import Stretch
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
@@ -74,10 +73,6 @@ class DataFrame(Base):
 
     def _getElements(self):
         return DataFrameElements(self)
-
-    @property
-    def stretch(self):
-        return Stretch(self)
 
     def _transpose_implementation(self):
         """
