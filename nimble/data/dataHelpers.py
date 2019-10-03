@@ -100,6 +100,33 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
         ret._relPath = None
 
 
+def mergeNames(baseNames, otherNames):
+    """
+    Combine two lists or dicts of names (point or feature) giving
+    priority to non-default names. Names may also be None, the non-None
+    names are returned or None if both are None.
+
+    If both non-None, assumes the objects are of equal length and valid
+    to be merged.
+    """
+    if otherNames is None:
+        return baseNames
+    if baseNames is None:
+        return otherNames
+    ret = {}
+    for i, baseName in enumerate(baseNames):
+        otherName = otherNames[i]
+        baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
+        otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
+
+        if baseIsDefault and not otherIsDefault:
+            ret[otherName] = i
+        else:
+            ret[baseName] = i
+
+    return ret
+
+
 def mergeNonDefaultNames(baseSource, otherSource):
     """
     Merges the point and feature names of the the two source objects,
@@ -113,50 +140,11 @@ def mergeNonDefaultNames(baseSource, otherSource):
     names and feature names of both objects are consistent (any
     non-default names in the same positions are equal)
     """
-    # merge helper
-    def mergeNames(baseNames, otherNames):
-        ret = {}
-        for i in range(len(baseNames)):
-            baseName = baseNames[i]
-            otherName = otherNames[i]
-            baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
-            otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
-
-            if baseIsDefault and not otherIsDefault:
-                ret[otherName] = i
-            else:
-                ret[baseName] = i
-
-        return ret
-
-    (retPNames, retFNames) = (None, None)
-
-    if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
-        retPNames = mergeNames(baseSource.points.getNames(),
-                               otherSource.points.getNames())
-    elif (baseSource._pointNamesCreated()
-          and not otherSource._pointNamesCreated()):
-        retPNames = baseSource.pointNames
-    elif (not baseSource._pointNamesCreated()
-          and otherSource._pointNamesCreated()):
-        retPNames = otherSource.pointNames
-    else:
-        retPNames = None
-
-    if (baseSource._featureNamesCreated()
-            and otherSource._featureNamesCreated()):
-        retFNames = mergeNames(baseSource.features.getNames(),
-                               otherSource.features.getNames())
-    elif (baseSource._featureNamesCreated()
-          and not otherSource._featureNamesCreated()):
-        retFNames = baseSource.featureNames
-    elif (not baseSource._featureNamesCreated()
-          and otherSource._featureNamesCreated()):
-        retFNames = otherSource.featureNames
-    else:
-        retFNames = None
-
-    return (retPNames, retFNames)
+    ptNames = mergeNames(baseSource.points._getNamesNoGeneration(),
+                         otherSource.points._getNamesNoGeneration())
+    ftNames = mergeNames(baseSource.features._getNamesNoGeneration(),
+                         otherSource.features._getNamesNoGeneration())
+    return ptNames, ftNames
 
 
 def reorderToMatchList(dataObject, matchList, axis):
@@ -743,99 +731,3 @@ def denseCountUnique(obj, points=None, features=None):
     intMap = {v: k for k, v in mapping.items()}
     vals, counts = numpy.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}
-
-
-def numericValidation(obj, right=False):
-    """
-    Validate the object elements are all numeric.
-    """
-    try:
-        obj.elements.calculate(_checkNumeric, useLog=False)
-    except ValueError:
-        msg = "The object on the {0} contains non numeric data, "
-        msg += "cannot do this operation"
-        if right:
-            msg = msg.format('right')
-            raise InvalidArgumentValue(msg)
-        msg = msg.format('left')
-        raise ImproperObjectAction(msg)
-
-
-def denominatorValidation(obj1, opName, obj2):
-    """
-    Validate values in divmod operation will not lead to zero division.
-    """
-    if opName.startswith('__r'):
-        toCheck = obj1
-    else:
-        toCheck = obj2
-
-    if isinstance(toCheck, nimble.data.Base) and toCheck.containsZero():
-        msg = "Cannot perform " + opName + " when the second argument "
-        msg += "contains any zeros"
-        raise ZeroDivisionError(msg)
-    elif toCheck == 0:
-        msg = "Cannot perform " + opName + " when the second argument "
-        msg += "is zero"
-        raise ZeroDivisionError(msg)
-
-
-def powerValidation(obj1, opName, obj2):
-    """
-    Validate values in power operation will not lead to zero division or
-    complex numbers.
-    """
-    if opName == '__rpow__':
-        left = obj2
-        right = obj1
-    else:
-        left = obj1
-        right = obj2
-
-    def isComplex(val):
-        # numpy ops may return nan when result is a complex number
-        return numpy.isnan(val) or isinstance(val, complex)
-
-    if all(isinstance(obj, nimble.data.Base) for obj in [left, right]):
-        zipLR = zip(left.elements, right.elements)
-        for l, r in zipLR:
-            if l == 0 and r < 0:
-                msg = 'Zeros cannot be raised to negative exponents'
-                raise ZeroDivisionError(msg)
-            if isComplex(l ** r):
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
-    elif isinstance(left, nimble.data.Base):
-        for elem in left.elements:
-            if elem == 0 and right < 0:
-                msg = 'Zero cannot be raised to negative exponents'
-                raise ZeroDivisionError(msg)
-            if isComplex(elem ** right):
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
-    else:
-        for elem in right.elements:
-            if left == 0 and elem < 0:
-                msg = 'Zero cannot be raised to negative exponents'
-                raise ZeroDivisionError(msg)
-            if isComplex(left ** elem):
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
-
-def arithmeticValidation(obj1, opName, obj2):
-    """
-    Determine if an arithmetic operation can be performed successfully
-    between two objects.
-    """
-    # Test element type self
-    numericValidation(obj1)
-    # test element type other
-    if isinstance(obj2, nimble.data.Base):
-        numericValidation(obj2, right=True)
-    if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
-                  '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                  '__mod__', '__rmod__', '__imod__',]:
-        denominatorValidation(obj1, opName, obj2)
-
-    if opName in ['__pow__', '__rpow__', '__ipow__']:
-        powerValidation(obj1, opName, obj2)

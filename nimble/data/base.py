@@ -3608,8 +3608,8 @@ class Base(object):
             ret = caller._matmul__implementation(callee)
         except Exception as e:
             #TODO: improve how the exception is catch
-            dataHelpers.numericValidation(self)
-            dataHelpers.numericValidation(other, right=True)
+            self._numericValidation()
+            other._numericValidation(right=True)
             raise e
 
         if caller._pointNamesCreated():
@@ -3821,6 +3821,21 @@ class Base(object):
         ret._relPath = self.relativePath
         return ret
 
+    def _numericValidation(self, right=False):
+        """
+        Validate the object elements are all numeric.
+        """
+        try:
+            self.elements.calculate(dataHelpers._checkNumeric, useLog=False)
+        except ValueError:
+            msg = "The object on the {0} contains non numeric data, "
+            msg += "cannot do this operation"
+            if right:
+                msg = msg.format('right')
+                raise InvalidArgumentValue(msg)
+            msg = msg.format('left')
+            raise ImproperObjectAction(msg)
+
     def _genericArithmeticBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
@@ -3835,13 +3850,91 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
+    def _genericArithmeticBinary_dataExamination(self, opName, other):
+        """
+        Determine if an arithmetic operation can be performed successfully
+        between two objects.
+        """
+        # Test element type self
+        self._numericValidation()
+        # test element type other
+        if isinstance(other, Base):
+            other._numericValidation(right=True)
+        if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
+                      '__floordiv__', '__rfloordiv__', '__ifloordiv__',
+                      '__mod__', '__rmod__', '__imod__',]:
+            self._validateDivMod(opName, other)
+
+        if opName in ['__pow__', '__rpow__', '__ipow__']:
+            self._validatePow(opName, other)
+
+    def _validateDivMod(self, opName, other):
+        """
+        Validate values in divmod operation will not lead to zero division.
+        """
+        if opName.startswith('__r'):
+            toCheck = self
+        else:
+            toCheck = other
+
+        if isinstance(toCheck, Base) and toCheck.containsZero():
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "contains any zeros"
+            raise ZeroDivisionError(msg)
+        elif toCheck == 0:
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "is zero"
+            raise ZeroDivisionError(msg)
+
+    def _validatePow(self, opName, other):
+        """
+        Validate values in power operation will not lead to zero division or
+        complex numbers.
+        """
+        if opName == '__rpow__':
+            left = other
+            right = self
+        else:
+            left = self
+            right = other
+
+        def isComplex(val):
+            # numpy ops may return nan when result is a complex number
+            return numpy.isnan(val) or isinstance(val, complex)
+
+        if all(isinstance(obj, Base) for obj in [left, right]):
+            zipLR = zip(left.elements, right.elements)
+            for l, r in zipLR:
+                if l == 0 and r < 0:
+                    msg = 'Zeros cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(l ** r):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+        elif isinstance(left, Base):
+            for elem in left.elements:
+                if elem == 0 and right < 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(elem ** right):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+        else:
+            for elem in right.elements:
+                if left == 0 and elem < 0:
+                    msg = 'Zero cannot be raised to negative exponents'
+                    raise ZeroDivisionError(msg)
+                if isComplex(left ** elem):
+                    msg = "Complex number results are not allowed"
+                    raise ImproperObjectAction(msg)
+
     def _genericArithmeticBinary_validation(self, opName, other):
-        otherNimble = isinstance(other, Base)
-        if not otherNimble and not dataHelpers._looksNumeric(other):
+        otherBase = isinstance(other, Base)
+        if not otherBase and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
-        if otherNimble:
+        if otherBase:
             self._genericArithmeticBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
@@ -3854,8 +3947,8 @@ class Base(object):
             return NotImplemented
         self._genericArithmeticBinary_validation(opName, other)
         # figure out return obj's point / feature names
-        otherNimble = isinstance(other, Base)
-        if otherNimble:
+        otherBase = isinstance(other, Base)
+        if otherBase:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
@@ -3866,7 +3959,7 @@ class Base(object):
         # mod and floordiv operations do not raise errors for zero division
         # TODO logical operations to check for new nan and inf after operation
         if 'floordiv' in opName or 'mod' in opName:
-            dataHelpers.arithmeticValidation(self, opName, other)
+            self._genericArithmeticBinary_dataExamination(opName, other)
 
         try:
             useOp = opName
@@ -3877,8 +3970,8 @@ class Base(object):
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._arithmeticBinary_implementation(useOp, other)
         except Exception:
-            dataHelpers.arithmeticValidation(self, opName, other)
-            raise # backup, expect arithmeticValidation to raise exception
+            self._genericArithmeticBinary_dataExamination(opName, other)
+            raise # backup, expect call above to raise exception
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
@@ -3889,7 +3982,7 @@ class Base(object):
         ret.features.setNames(retFNames, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
-        pathSource = 'merge' if otherNimble else 'self'
+        pathSource = 'merge' if otherBase else 'self'
         dataHelpers.binaryOpNamePathMerge(
             self, other, ret, nameSource, pathSource)
         return ret
@@ -4400,13 +4493,15 @@ class Base(object):
 
         def _validateEqualNames_implementation():
             if leftAxis == 'point':
-                lnames = self.points.getNames()
+                lnames = self.points._getNamesNoGeneration()
             else:
-                lnames = self.features.getNames()
+                lnames = self.features._getNamesNoGeneration()
             if rightAxis == 'point':
-                rnames = other.points.getNames()
+                rnames = other.points._getNamesNoGeneration()
             else:
-                rnames = other.features.getNames()
+                rnames = other.features._getNamesNoGeneration()
+            if lnames is None or rnames is None:
+                return
             inconsistencies = self._inconsistentNames(lnames, rnames)
 
             if inconsistencies != {}:

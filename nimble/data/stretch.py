@@ -5,6 +5,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.importExternalLibraries import importModule
 from . import dataHelpers
 from .dataHelpers import createDataNoValidation
@@ -24,7 +25,6 @@ class Stretch(object):
     """
     def __init__(self, source):
         self._source = source
-        self._type = source.getTypeString()
         self._numPts = len(source.points)
         self._numFts = len(source.features)
         if self._numPts > 1 and self._numFts > 1:
@@ -77,14 +77,12 @@ class Stretch(object):
     def __rpow__(self, other):
         return self._stretchArithmetic('__rpow__', other)
 
-    def setOutputNames(self, toSet, other):
+    def _getOutputNames(self, other):
         """
         Set names of objects output from stretch operations.
         """
         sPtNames = self._source.points._getNamesNoGeneration()
         sFtNames = self._source.features._getNamesNoGeneration()
-        setNumPts = len(toSet.points)
-        setNumFts = len(toSet.features)
         oStretch = isinstance(other, Stretch)
         if oStretch:
             oPtNames = other._source.points._getNamesNoGeneration()
@@ -96,64 +94,43 @@ class Stretch(object):
             oFtNames = other.features._getNamesNoGeneration()
             oNumPts = len(other.points)
             oNumFts = len(other.features)
+        setNumPts = max(self._numPts, oNumPts)
+        setNumFts = max(self._numFts, oNumFts)
 
-        if sPtNames == oPtNames:
-            setPts = sPtNames # includes both names as None
-        elif sPtNames is None and oStretch and oNumPts != setNumPts:
-            oName = oPtNames[0]
-            setPts = [oName + '_' + str(i + 1) for i in range(setNumPts)]
-        elif sPtNames is None:
-            setPts = oPtNames
-        elif oPtNames is None and (self._numPts > 1 or setNumPts == 1):
-            setPts = sPtNames
-        elif oPtNames is None:
-            sName = sPtNames[0]
-            setPts = [sName + '_' + str(i + 1) for i in range(setNumPts)]
-        else:
-            setPts = None
+        def defaultNames(names):
+            if names is None:
+                return True
+            if all(n.startswith(dataHelpers.DEFAULT_PREFIX) for n in names):
+                return True
+            return False
 
-        if sFtNames == oFtNames:
-            setFts = sFtNames # includes both names as None
-        elif sFtNames is None and oStretch and oNumFts != setNumFts:
-            oName = oFtNames[0]
-            setFts = [oName + '_' + str(i + 1) for i in range(setNumFts)]
-        elif sFtNames is None:
-            setFts = oFtNames
-        elif oFtNames is None and (self._numFts > 1 or setNumFts == 1):
-            setFts = sFtNames
-        elif oFtNames is None:
-            sName = sFtNames[0]
-            setFts = [sName + '_' + str(i + 1) for i in range(setNumFts)]
-        else:
-            setFts = None
+        def getNames(sNames, oNames, sNum, oNum, setNum):
+            if sNames == oNames: # includes both names are None
+                return sNames
+            if defaultNames(sNames) and oStretch and oNum != setNum and oNames:
+                oName = oNames[0]
+                return [oName + '_' + str(i + 1) for i in range(setNum)]
+            if sNames and defaultNames(sNames) and not oNames:
+                return sNames
+            if defaultNames(sNames):
+                return oNames
+            if defaultNames(oNames) and (sNum > 1 or setNum == 1):
+                return sNames
+            if defaultNames(oNames):
+                sName = sNames[0]
+                return [sName + '_' + str(i + 1) for i in range(setNum)]
+            if len(sNames) == len(oNames): # some default names present
+                return dataHelpers.mergeNames(sNames, oNames)
+            return None
 
-        toSet.points.setNames(setPts)
-        toSet.features.setNames(setFts)
+        setPts = getNames(sPtNames, oPtNames, self._numPts, oNumPts, setNumPts)
+        setFts = getNames(sFtNames, oFtNames, self._numFts, oNumFts, setNumFts)
+
+        return setPts, setFts
 
     def _stretchArithmetic_validation(self, opName, other):
-        otherNimble = isinstance(other, nimble.data.Base)
-        sBase = self._source
-        if otherNimble:
-            oBase = other
-        else:
-            oBase = other._source
-
-        if self._numPts == 1:
-            fullSelf = sBase.points.repeat(len(oBase.points), True)
-        else:
-            fullSelf = sBase.features.repeat(len(oBase.features), True)
-        if otherNimble:
-            fullOther = other
-        elif other._numPts == 1:
-            fullOther = oBase.points.repeat(self._numPts, True)
-        else:
-            fullOther = oBase.features.repeat(self._numFts, True)
-
-        dataHelpers.arithmeticValidation(fullSelf, opName, fullOther)
-
-    def _stretchArithmetic(self, opName, other):
-        otherNimble = isinstance(other, nimble.data.Base)
-        if not (otherNimble or isinstance(other, Stretch)):
+        otherBase = isinstance(other, nimble.data.Base)
+        if not (otherBase or isinstance(other, Stretch)):
             msg = 'stretch operations can only be performed with nimble '
             msg += 'Base objects or another Stretch object'
             raise ImproperObjectAction(msg)
@@ -165,42 +142,87 @@ class Stretch(object):
                 msg += "performed if one object is a single point and the "
                 msg += "other is a single feature"
                 raise ImproperObjectAction(msg)
+        else:
+            stretchPossible = True
+            if self._numPts == 1 and self._numFts == 1:
+                matchAxis = 'point' if len(other.points) > 1 else 'feature'
+                if not 1 in other.shape:
+                    stretchPossible = False
+            elif self._numPts == 1:
+                matchAxis = 'feature'
+                if self._numFts != len(other.features):
+                    stretchPossible = False
+            else:
+                matchAxis = 'point'
+                if self._numPts != len(other.points):
+                    stretchPossible = False
 
+            if not stretchPossible:
+                msg = "Unable to stretch this object to fit. The lengths of "
+                msg += "one of the axes must align between objects"
+                raise InvalidArgumentValueCombination(msg)
+            self._source._validateEqualNames(matchAxis, matchAxis, opName,
+                                             other)
+
+    def _stretchArithmetic_dataExamination(self, opName, other):
+        sBase = self._source
+        if isinstance(other, Stretch):
+            oBase = other._source
+        else:
+            oBase = other
+
+        if self._numPts == 1:
+            fullSelf = sBase.points.repeat(len(oBase.points), True)
+        else:
+            fullSelf = sBase.features.repeat(len(oBase.features), True)
+        if not isinstance(other, Stretch):
+            fullOther = other
+        elif other._numPts == 1:
+            fullOther = oBase.points.repeat(self._numPts, True)
+        else:
+            fullOther = oBase.features.repeat(self._numFts, True)
+
+        fullSelf._genericArithmeticBinary_dataExamination(opName, fullOther)
+
+    def _stretchArithmetic(self, opName, other):
+        self._stretchArithmetic_validation(opName, other)
         # mod and floordiv operations do not raise errors for zero division
         # TODO use logical operations to check for nan and inf after operation
         if 'floordiv' in opName or 'mod' in opName:
-            self._stretchArithmetic_validation(opName, other)
+            self._stretchArithmetic_dataExamination(opName, other)
         try:
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
         except Exception as e:
-            self._stretchArithmetic_validation(opName, other)
-            raise # backup, expect arithmeticValidation to raise exception
+            self._stretchArithmetic_dataExamination(opName, other)
+            raise # backup, expect dataExamination to raise exception
 
-        self.setOutputNames(ret, other)
+        if (opName.startswith('__r')
+                and ret.getTypeString() != other.getTypeString()):
+            ret = ret.copy(other.getTypeString())
+
+        setPts, setFts = self._getOutputNames(other)
+        ret.points.setNames(setPts)
+        ret.features.setNames(setFts)
 
         return ret
 
     def _stretchArithmetic_implementation(self, opName, other):
-        sourceData = self._source.copy('numpyarray')
-        if isinstance(other, nimble.data.Base):
-            otherData = other.copy('numpyarray')
-        else:
-            otherData = other._source.copy('numpyarray')
-        ret = getattr(sourceData, opName)(otherData)
-        data = numpy.array(ret)
-        ret = createDataNoValidation(self._type, data)
+        if isinstance(other, Stretch):
+            other = other._source
 
-        return ret
+        return self._source._arithmeticBinary_implementation(opName, other)
 
 
 class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):
-        if isinstance(other, nimble.data.Base):
-            if self._source.shape[0] == 1:
+        if not isinstance(other, Stretch):
+            if self._source.shape[0] == 1 and other.shape[0] > 1:
                 lhs = self._source.points.repeat(other.shape[0], True)
-            else:
+            elif self._source.shape[1] == 1 and other.shape[1] > 1:
                 lhs = self._source.features.repeat(other.shape[1], True)
+            else:
+                lhs = self._source
             rhs = other.copy()
         # other is Stretch
         elif self._numPts == 1:
@@ -213,11 +235,14 @@ class StretchSparse(Stretch):
             otherFts = len(other._source.features)
             rhs = other._source.points.repeat(selfPts, True)
             lhs = self._source.features.repeat(otherFts, True)
-        # names may conflict so remove and set later
+        # TODO Sparse uses elements.multiply/power which are revalidating and
+        # can cause a name conflict here; evaluate avoiding the revalidation
+        # For now, removing all names since already stored to be set later
         lhs.points.setNames(None)
         lhs.features.setNames(None)
         rhs.points.setNames(None)
         rhs.features.setNames(None)
-        ret = getattr(lhs, opName)(rhs)
+
+        ret = lhs._arithmeticBinary_implementation(opName, rhs)
 
         return ret

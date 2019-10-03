@@ -6,7 +6,9 @@ import operator
 from nose.tools import raises
 import numpy
 
-from nimble.exceptions import ImproperObjectAction
+import nimble
+from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.randomness import pythonRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import assertNoNamesGenerated
@@ -18,21 +20,60 @@ class StretchDataSafe(DataTestObject):
     ##############
 
     @raises(ImproperObjectAction)
-    def test_stretch_ptEmpty(self):
+    def test_stretch_exception_ptEmpty(self):
         empty = numpy.empty((0, 3))
         emptyObj = self.constructor(empty)
         emptyObj.stretch
 
     @raises(ImproperObjectAction)
-    def test_stretch_ftEmpty(self):
+    def test_stretch_exception_ftEmpty(self):
         empty = numpy.empty((3, 0))
         emptyObj = self.constructor(empty)
         emptyObj.stretch
 
     @raises(ImproperObjectAction)
-    def test_2D_stretch_exception(self):
+    def test_stretch_exception_2D(self):
         toStretch = self.constructor([[1, 2], [3, 4]])
         toStretch.stretch
+
+    @raises(InvalidArgumentValueCombination)
+    def test_stretch_exception_shapeMismatch_point(self):
+        toStretch = self.constructor([1, 1, 1])
+        baseObj = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8]])
+
+        toStretch.stretch + baseObj
+
+    @raises(InvalidArgumentValueCombination)
+    def test_stretch_exception_shapeMismatch_feature(self):
+        toStretch = self.constructor([[1], [1], [1]])
+        baseObj = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8]])
+
+        toStretch.stretch + baseObj
+
+    @raises(InvalidArgumentValueCombination)
+    def test_stretch_exception_1x1(self):
+        toStretch = self.constructor([1])
+        baseObj = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8]])
+
+        toStretch.stretch + baseObj
+
+    ######################
+    # Base / Stretch 1x1 #
+    ######################
+
+    def test_stretch_1x1_withVectors(self):
+        toStretch = self.constructor([1])
+        pointVect = self.constructor([1, 2, 3, 4])
+        exp1 = self.constructor([2, 3, 4, 5])
+
+        ret1 = toStretch.stretch + pointVect
+        assert ret1 == exp1
+
+        featureVect = self.constructor([[1], [2], [3], [4]])
+        exp2 = self.constructor([[0], [-1], [-2], [-3]])
+
+        ret2 = toStretch.stretch - featureVect
+        assert ret2 == exp2
 
     ########################
     # Base / Stretch Point #
@@ -481,6 +522,37 @@ class StretchDataSafe(DataTestObject):
         except ZeroDivisionError:
             pass
 
+    def test_stretch_differentObjectTypes(self):
+        matrixObj = self.constructor([[1, 2, 3], [4, 5, 6]])
+        pointVect = self.constructor([9, 8, 7])
+        featureVect = self.constructor([[8], [9]])
+        otherTypes = [t for t in nimble.data.available if t != matrixObj.getTypeString()]
+        for oType in otherTypes:
+            possibleOps = [operator.add, operator.sub, operator.mul, operator.truediv,
+                           operator.floordiv, operator.mod, operator.pow]
+            randOp = possibleOps[pythonRandom.randint(0, 6)]
+            matDiff = matrixObj.copy(oType)
+            pvDiff = pointVect.copy(oType)
+            fvDiff = featureVect.copy(oType)
+
+            out1 = randOp(matrixObj, pvDiff.stretch)
+            assert out1.getTypeString() == matrixObj.getTypeString()
+
+            out2 = randOp(matrixObj, fvDiff.stretch)
+            assert out2.getTypeString() == matrixObj.getTypeString()
+
+            out3 = randOp(pointVect.stretch, matDiff)
+            assert out3.getTypeString() == pointVect.getTypeString()
+
+            out4 = randOp(featureVect.stretch, matDiff)
+            assert out4.getTypeString() == pointVect.getTypeString()
+
+            out5 = randOp(pointVect.stretch, fvDiff.stretch)
+            assert out5.getTypeString() == pointVect.getTypeString()
+
+            out6 = randOp(featureVect.stretch, pvDiff.stretch)
+            assert out5.getTypeString() == pointVect.getTypeString()
+
     def back_stretchSetNames(self, obj1, obj2, expPts, expFts):
         # random operation for each, the output is not important only the names
         possibleOps = [operator.add, operator.sub, operator.mul, operator.truediv,
@@ -503,6 +575,25 @@ class StretchDataSafe(DataTestObject):
             assert ret1.features.getNames() == expFts
             assert ret2.features.getNames() == expFts
 
+    def back_stretchSetNamesException(self, obj1, obj2):
+        # random operation for each, the output is not important only the names
+        possibleOps = [operator.add, operator.sub, operator.mul, operator.truediv,
+                       operator.floordiv, operator.mod, operator.pow]
+        op1 = possibleOps[pythonRandom.randint(0, 6)]
+        op2 = possibleOps[pythonRandom.randint(0, 6)]
+
+        try:
+            ret1 = op1(obj1, obj2)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
+
+        try:
+            ret2 = op2(obj2, obj1)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
+
     def test_stretchSetNames(self):
         pNames = ['p0', 'p1', 'p2']
         fNames = ['f0', 'f1', 'f2', 'f3']
@@ -520,6 +611,10 @@ class StretchDataSafe(DataTestObject):
 
         stretchPt_Raw = [1, 2, -1, -2]
         stretchPt_NoNames = self.constructor(stretchPt_Raw).stretch
+        pt_DefaultFtNames = self.constructor(stretchPt_Raw)
+        defFtNames = pt_DefaultFtNames.features.getNames()
+        assert pt_DefaultFtNames.features._namesCreated()
+        stretchPt_DefaultFtNames = pt_DefaultFtNames.stretch
         stretchPt_MatchFtNames = self.constructor(stretchPt_Raw, featureNames=fNames).stretch
         stretchPt_NoMatchFtNames = self.constructor(stretchPt_Raw, featureNames=offFNames).stretch
         stretchPt_WithPtName = self.constructor(stretchPt_Raw, pointNames=single).stretch
@@ -530,6 +625,10 @@ class StretchDataSafe(DataTestObject):
 
         stretchFt_Raw = [[1], [2], [-1]]
         stretchFt_NoNames = self.constructor(stretchFt_Raw).stretch
+        ft_DefaultPtNames = self.constructor(stretchFt_Raw)
+        defPtNames = ft_DefaultPtNames.points.getNames()
+        assert ft_DefaultPtNames.points._namesCreated()
+        stretchFt_DefaultPtNames = ft_DefaultPtNames.stretch
         stretchFt_MatchPtNames = self.constructor(stretchFt_Raw, pointNames=pNames).stretch
         stretchFt_NoMatchPtNames = self.constructor(stretchFt_Raw, pointNames=offPNames).stretch
         stretchFt_WithFtName = self.constructor(stretchFt_Raw, featureNames=single).stretch
@@ -541,6 +640,8 @@ class StretchDataSafe(DataTestObject):
         ### Base no names ###
         self.back_stretchSetNames(baseNoNames, stretchPt_NoNames, None, None)
         self.back_stretchSetNames(baseNoNames, stretchFt_NoNames, None, None)
+        self.back_stretchSetNames(baseNoNames, stretchPt_DefaultFtNames, None, defFtNames)
+        self.back_stretchSetNames(baseNoNames, stretchFt_DefaultPtNames, defPtNames, None)
         self.back_stretchSetNames(baseNoNames, stretchPt_MatchFtNames, None, fNames)
         self.back_stretchSetNames(baseNoNames, stretchFt_MatchPtNames, pNames, None)
         self.back_stretchSetNames(baseNoNames, stretchPt_WithPtName, single3, None)
@@ -551,58 +652,68 @@ class StretchDataSafe(DataTestObject):
         ### Base pt names ###
         self.back_stretchSetNames(basePtNames, stretchPt_NoNames, pNames, None)
         self.back_stretchSetNames(basePtNames, stretchFt_NoNames, pNames, None)
+        self.back_stretchSetNames(basePtNames, stretchPt_DefaultFtNames, pNames, defFtNames)
+        self.back_stretchSetNames(basePtNames, stretchFt_DefaultPtNames, pNames, None)
         self.back_stretchSetNames(basePtNames, stretchPt_MatchFtNames, pNames, fNames)
         self.back_stretchSetNames(basePtNames, stretchFt_MatchPtNames, pNames, None)
-        self.back_stretchSetNames(basePtNames, stretchFt_NoMatchPtNames, None, None)
         self.back_stretchSetNames(basePtNames, stretchPt_WithPtName, None, None)
         self.back_stretchSetNames(basePtNames, stretchFt_WithFtName, pNames, single4)
         self.back_stretchSetNames(basePtNames, stretchPt_AllNamesFtMatch, None, fNames)
         self.back_stretchSetNames(basePtNames, stretchFt_AllNamesPtMatch, pNames, single4)
-        self.back_stretchSetNames(basePtNames, stretchFt_AllNamesNoPtMatch, None, single4)
+        self.back_stretchSetNamesException(basePtNames, stretchFt_NoMatchPtNames)
+        self.back_stretchSetNamesException(basePtNames, stretchFt_AllNamesNoPtMatch)
 
         ### Base ft names ###
         self.back_stretchSetNames(baseFtNames, stretchPt_NoNames, None, fNames)
         self.back_stretchSetNames(baseFtNames, stretchFt_NoNames, None, fNames)
+        self.back_stretchSetNames(baseFtNames, stretchPt_DefaultFtNames, None, fNames)
+        self.back_stretchSetNames(baseFtNames, stretchFt_DefaultPtNames, defPtNames, fNames)
         self.back_stretchSetNames(baseFtNames, stretchPt_MatchFtNames, None, fNames)
         self.back_stretchSetNames(baseFtNames, stretchFt_MatchPtNames, pNames, fNames)
-        self.back_stretchSetNames(baseFtNames, stretchPt_NoMatchFtNames, None, None)
         self.back_stretchSetNames(baseFtNames, stretchPt_WithPtName, single3, fNames)
         self.back_stretchSetNames(baseFtNames, stretchFt_WithFtName, None, None)
         self.back_stretchSetNames(baseFtNames, stretchPt_AllNamesFtMatch, single3, fNames)
         self.back_stretchSetNames(baseFtNames, stretchFt_AllNamesPtMatch, pNames, None)
-        self.back_stretchSetNames(baseFtNames, stretchPt_AllNamesNoFtMatch, single3, None)
+        self.back_stretchSetNamesException(baseFtNames, stretchPt_NoMatchFtNames)
+        self.back_stretchSetNamesException(baseFtNames, stretchPt_AllNamesNoFtMatch)
 
         ### Base all names ###
         self.back_stretchSetNames(baseAllNames, stretchPt_NoNames, pNames, fNames)
         self.back_stretchSetNames(baseAllNames, stretchFt_NoNames, pNames, fNames)
+        self.back_stretchSetNames(baseAllNames, stretchPt_DefaultFtNames, pNames, fNames)
+        self.back_stretchSetNames(baseAllNames, stretchFt_DefaultPtNames, pNames, fNames)
         self.back_stretchSetNames(baseAllNames, stretchPt_MatchFtNames, pNames, fNames)
         self.back_stretchSetNames(baseAllNames, stretchFt_MatchPtNames, pNames, fNames)
-        self.back_stretchSetNames(baseAllNames, stretchPt_NoMatchFtNames, pNames, None)
-        self.back_stretchSetNames(baseAllNames, stretchFt_NoMatchPtNames, None, fNames)
         self.back_stretchSetNames(baseAllNames, stretchPt_WithPtName, None, fNames)
         self.back_stretchSetNames(baseAllNames, stretchFt_WithFtName, pNames, None)
         self.back_stretchSetNames(baseAllNames, stretchPt_AllNamesFtMatch, None, fNames)
         self.back_stretchSetNames(baseAllNames, stretchFt_AllNamesPtMatch, pNames, None)
-        self.back_stretchSetNames(baseAllNames, stretchPt_AllNamesNoFtMatch, None, None)
-        self.back_stretchSetNames(baseAllNames, stretchFt_AllNamesNoPtMatch, None, None)
+        self.back_stretchSetNamesException(baseAllNames, stretchPt_NoMatchFtNames)
+        self.back_stretchSetNamesException(baseAllNames, stretchFt_NoMatchPtNames)
+        self.back_stretchSetNamesException(baseAllNames, stretchPt_AllNamesNoFtMatch)
+        self.back_stretchSetNamesException(baseAllNames, stretchFt_AllNamesNoPtMatch)
 
         ### Both Stretch ###
         self.back_stretchSetNames(stretchPt_NoNames, stretchFt_NoNames, None, None)
+        self.back_stretchSetNames(stretchPt_NoNames, stretchFt_DefaultPtNames, defPtNames, None)
         self.back_stretchSetNames(stretchPt_NoNames, stretchFt_MatchPtNames, pNames, None)
         self.back_stretchSetNames(stretchPt_NoNames, stretchFt_WithFtName, None, single4)
         self.back_stretchSetNames(stretchPt_NoNames, stretchFt_AllNamesPtMatch, pNames, single4)
 
         self.back_stretchSetNames(stretchPt_MatchFtNames, stretchFt_NoNames, None, fNames)
+        self.back_stretchSetNames(stretchPt_MatchFtNames, stretchFt_DefaultPtNames, defPtNames, fNames)
         self.back_stretchSetNames(stretchPt_MatchFtNames, stretchFt_MatchPtNames, pNames, fNames)
         self.back_stretchSetNames(stretchPt_MatchFtNames, stretchFt_WithFtName, None, None)
         self.back_stretchSetNames(stretchPt_MatchFtNames, stretchFt_AllNamesPtMatch, pNames, None)
 
         self.back_stretchSetNames(stretchPt_WithPtName, stretchFt_NoNames, single3, None)
+        self.back_stretchSetNames(stretchPt_WithPtName, stretchFt_DefaultPtNames, single3, None)
         self.back_stretchSetNames(stretchPt_WithPtName, stretchFt_MatchPtNames, None, None)
         self.back_stretchSetNames(stretchPt_WithPtName, stretchFt_WithFtName, single3, single4)
         self.back_stretchSetNames(stretchPt_WithPtName, stretchFt_AllNamesPtMatch, None, single4)
 
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_NoNames, single3, fNames)
+        self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_DefaultPtNames, single3, fNames)
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_MatchPtNames, None, fNames)
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_WithFtName, single3, None)
         self.back_stretchSetNames(stretchPt_AllNamesFtMatch, stretchFt_AllNamesPtMatch, None, None)

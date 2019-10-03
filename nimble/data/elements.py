@@ -515,8 +515,8 @@ class Elements(object):
             self._multiply_implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
-            dataHelpers.numericValidation(self._source)
-            dataHelpers.numericValidation(other, right=True)
+            self._source._numericValidation()
+            other._numericValidation(right=True)
             raise e
 
         retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
@@ -593,8 +593,8 @@ class Elements(object):
                 try:
                     return val ** other[pnum, fnum]
                 except Exception as e:
-                    dataHelpers.numericValidation(self._source)
-                    dataHelpers.numericValidation(other, right=True)
+                    self._source._numericValidation()
+                    other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
         else:
@@ -602,8 +602,8 @@ class Elements(object):
                 try:
                     return val ** other
                 except Exception as e:
-                    dataHelpers.numericValidation(self._source)
-                    dataHelpers.numericValidation(other, right=True)
+                    self._source._numericValidation()
+                    other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
 

@@ -882,7 +882,7 @@ class Sparse(Base):
         # scipy may not raise expected exceptions for truediv
         # TODO remove once logical operators used in Base for this
         if 'truediv' in opName:
-            dataHelpers.arithmeticValidation(self, opName, other)
+            self._genericArithmeticBinary_dataExamination(opName, other)
 
         if self._sorted is None:
             self._sortInternal('point')
