@@ -884,8 +884,6 @@ class Sparse(Base):
         if 'truediv' in opName:
             self._genericArithmeticBinary_dataExamination(opName, other)
 
-        if self._sorted is None:
-            self._sortInternal('point')
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -893,6 +891,8 @@ class Sparse(Base):
             return self._genericPow_implementation(opName, other)
         try:
             if isinstance(other, Base):
+                if self._sorted is None:
+                    self._sortInternal('point')
                 selfData = self._getSparseData()
                 if isinstance(other, SparseView):
                     other = other.copy(to='Sparse')
