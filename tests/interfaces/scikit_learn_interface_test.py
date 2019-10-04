@@ -250,10 +250,8 @@ def testSciKitLearnListLearners():
             params = nimble.learnerParameters(toCall(name))
             assert params is not None
             defaults = nimble.learnerDefaultValues(toCall(name))
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+            for key in defaults.keys():
+                assert key in params
 
 @sklSkipDec
 @raises(InvalidArgumentValue)

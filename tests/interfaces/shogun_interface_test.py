@@ -395,10 +395,8 @@ def testShogunListLearners():
         params = nimble.learnerParameters('shogun.' + name)
         assert params is not None
         defaults = nimble.learnerDefaultValues('shogun.' + name)
-        for pSet in params:
-            for dSet in defaults:
-                for key in dSet.keys():
-                    assert key in pSet
+        for key in defaults.keys():
+            assert key in params
 
 
 def toCall(learner):
