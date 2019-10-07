@@ -28,6 +28,7 @@ from nimble import Init
 from nimble.randomness import numpyRandom
 from nimble.randomness import startAlternateControl, endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
@@ -53,7 +54,7 @@ def test_Shogun_findCallable_nameAndDocPreservation():
 
 
 @shogunSkipDec
-@raises(InvalidArgumentValue)
+@raises(InvalidArgumentValueCombination)
 def testShogun_shapemismatchException():
     """ Test shogun raises exception when the shape of the train and test data don't match """
     variables = ["Y", "x1", "x2"]

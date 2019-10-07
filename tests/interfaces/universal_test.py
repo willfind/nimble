@@ -12,6 +12,7 @@ from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.helpers import generateClassificationData
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -527,8 +528,8 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         def wrapped(tl):
             tl.apply(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
     try:
@@ -537,16 +538,16 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         def wrapped(tl):
             tl.test(testX, testY, metric)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         def wrapped(tl):
             tl.getScores(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
 

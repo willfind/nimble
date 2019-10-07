@@ -18,6 +18,7 @@ from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory
 from nimble.exceptions import prettyListString
@@ -1570,7 +1571,7 @@ class TrainedLearner(object):
         msg = msg.format(len(testX.features), self._trainXShape[1])
         if trainXIsSquare:
             msg += "or the testing data must be square-shaped"
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValueCombination(msg)
 
 
 @inheritDocstringsFactory(TrainedLearner)

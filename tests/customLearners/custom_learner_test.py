@@ -7,7 +7,7 @@ from six.moves import range
 import nimble
 from nimble.customLearners import CustomLearner
 from nimble.configuration import configSafetyWrapper
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 
 
 @raises(TypeError)
@@ -351,7 +351,7 @@ def test_retrain_withArg():
     predZeros1 = tl.apply(testObj)
     assert predZeros1 == expZeros
 
-@raises(InvalidArgumentValue)
+@raises(InvalidArgumentValueCombination)
 @configSafetyWrapper
 def test_retrain_invalidArg():
     nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
@@ -369,7 +369,7 @@ def test_retrain_invalidArg():
     predZeros1 = tl.apply(testObj)
     assert predZeros1 == expZeros
 
-@raises(InvalidArgumentValue)
+@raises(InvalidArgumentValueCombination)
 @configSafetyWrapper
 def test_retrain_CVArg():
     nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
