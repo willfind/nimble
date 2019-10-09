@@ -236,17 +236,16 @@ To install mlpy
             transTestX = None
 
         instantiatedArgs = {}
+        validate = 'kernel' in self.getLearnerParameterNames(learnerName)[0]
         for arg, val in arguments.items():
             if isinstance(val, nimble.Init):
                 val = self._argumentInit(val)
 
             if arg == 'kernel':
-                if (val is None and trainX is not None
-                        and len(trainX.points) != len(trainX.features)):
-                    msg = "For this learner, in the absence of specifying a "
-                    msg += "kernel, the trainX parameter must be square "
-                    msg += "(representing the inner product space of the features)"
-                    raise InvalidArgumentValue(msg)
+                if val is None:
+                    validate = True
+                else:
+                    validate = False
 
                 if isinstance(val, self.mlpy.KernelExponential):
                     msg = "This interface disallows the use of KernelExponential; "
@@ -254,6 +253,13 @@ To install mlpy
                     raise InvalidArgumentValue(msg)
 
             instantiatedArgs[arg] = val
+
+        if (validate and trainX is not None
+                and len(trainX.points) != len(trainX.features)):
+            msg = "For this learner, in the absence of specifying a "
+            msg += "kernel, the trainX parameter must be square "
+            msg += "(representing the inner product space of the features)"
+            raise InvalidArgumentValue(msg)
 
         customDict['useT'] = False
         if learnerName == 'MFastHCluster':
@@ -291,17 +297,18 @@ To install mlpy
             customDict['transNames'] = transNames[0]
 
         # pack parameter sets
-        initParams = {}
-        for name in initNames:
-            initParams[name] = arguments[name]
+        initParams = {name: arguments[name] for name in initNames
+                      if name in arguments}
         learnParams = {}
         for name in learnNames:
             if name in self._XDataAliases:
                 value = trainX
             elif name in self._YDataAliases:
                 value = trainY
-            else:
+            elif name in arguments:
                 value = arguments[name]
+            else:
+                continue
             learnParams[name] = value
 
         # use patch if necessary
