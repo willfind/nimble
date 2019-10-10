@@ -216,9 +216,8 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if _looksNumeric(value) and not (value is True or value is False):
-        if isinstance(value, (float, numpy.float)) and sigDigits is not None:
-            return format(value, '.' + str(int(sigDigits)) + 'f')
+    if isinstance(value, (float, numpy.float)) and sigDigits is not None:
+        return format(value, '.' + str(int(sigDigits)) + 'f')
     return str(value)
 
 
