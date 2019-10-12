@@ -1,5 +1,5 @@
-calculate.confidence
-====================
+confidence
+==========
 
 .. automodule:: nimble.calculate.confidence
    :members:

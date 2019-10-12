@@ -1,5 +1,5 @@
-calculate.loss
-==============
+loss
+====
 
 .. automodule:: nimble.calculate.loss
    :members:

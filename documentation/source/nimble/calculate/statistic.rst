@@ -1,5 +1,5 @@
-calculate.statistic
-===================
+statistic
+=========
 
 .. automodule:: nimble.calculate.statistic
    :members:

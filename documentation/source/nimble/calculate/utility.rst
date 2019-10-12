@@ -1,5 +1,5 @@
-calculate.utility
-=================
+utility
+=======
 
 .. automodule:: nimble.calculate.utility
    :members:

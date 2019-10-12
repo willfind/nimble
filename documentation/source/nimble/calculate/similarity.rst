@@ -1,5 +1,5 @@
-calculate.similarity
-====================
+similarity
+==========
 
 .. automodule:: nimble.calculate.similarity
    :members:

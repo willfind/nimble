@@ -1,7 +1,7 @@
-matrix
-======
+nimble.match
+============
 
-.. automodule:: nimble.calculate.matrix
+.. automodule:: nimble.match
    :members:
    :undoc-members:
    :show-inheritance:

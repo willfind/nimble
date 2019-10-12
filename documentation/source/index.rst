@@ -17,6 +17,8 @@ Contents:
    nimble/customLearners
    nimble/data
    nimble/exceptions
+   nimble/fill
+   nimble/match
    nimble/randomness
 
 .. toctree::

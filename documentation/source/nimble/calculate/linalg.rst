@@ -1,5 +1,5 @@
-calculate.linalg
-================
+linalg
+======
 
 .. automodule:: nimble.calculate.linalg
    :members:

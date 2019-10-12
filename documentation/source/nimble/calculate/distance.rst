@@ -1,5 +1,5 @@
-calculate.distance
-==================
+distance
+========
 
 .. automodule:: nimble.calculate.distance
    :members:
