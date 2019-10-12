@@ -556,6 +556,7 @@ class Features(object):
             )
 
         Select a set number to extract, choosing features at random.
+
         >>> data = nimble.identity('List', 3)
         >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.features.extract(number=2,
@@ -881,6 +882,7 @@ class Features(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a feature will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison

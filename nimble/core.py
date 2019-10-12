@@ -450,7 +450,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Modify data according to a produced model.
 
     Calls on the functionality of a package to train on some data and
-    then modify ``trainX`` and ``testX``(if provided) according to the
+    then modify ``trainX`` and ``testX`` (if provided) according to the
     results of the trained model.
 
     Parameters
@@ -774,6 +774,7 @@ def createData(
         either as a string path, or a currently open file-like object.
     pointNames : 'automatic', bool, list, dict
         Specifices the source for point names in the returned object.
+
         * 'automatic' - the default, indicates that this function should
           attempt to detect the presence of pointNames in the data which
           will only be attempted when loading from a file. If no names
@@ -788,6 +789,7 @@ def createData(
           the value mapped to each name will define the point index.
     featureNames : 'automatic', bool, list, dict
         Specifices the source for feature names in the returned object.
+
         * 'automatic' - the default, indicates that this function should
           attempt to detect the presence of featureNames in the data
           which will only be attempted when loading from a file. If no
@@ -855,8 +857,8 @@ def createData(
         Values that will be treated as missing values in the data. These
         values will be replaced with value from replaceMissingWith
         By default this list is [float('nan'), numpy.nan, None, '',
-                                 'None', 'nan'].
-        Set to None or [] to disable replacing missing values.
+        'None', 'nan']. Set to None or [] to disable replacing missing
+        values.
     replaceMissingWith
         A single value with which to replace any value in
         treatAsMissing. By default this value is numpy.nan.
@@ -1856,9 +1858,10 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
 
     Parameters
     ----------
-    levelOfDetail:  int
+    levelOfDetail :  int
         The value for the level of detail from 1, the least detail,
         to 3 (most detail). Default is 2.
+
         * Level 1 - Data loading, data preparation and
           preprocessing, custom user logs.
         * Level 2 - Outputs basic information about learner runs.
@@ -1887,7 +1890,7 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
         Maximum number of entries to allow before stopping the log.
         None will allow all entries provided from the query. Default
         is 100.
-    searchForText :  str, regex
+    searchForText : str, regex
         Search for in each log entry. Default is None.
     saveToFileName : str
         The name of a file to write the human readable log. It will

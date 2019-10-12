@@ -822,6 +822,7 @@ class Points(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a point will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison

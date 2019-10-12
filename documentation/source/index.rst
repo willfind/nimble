@@ -4,21 +4,26 @@
 .. contain the root `toctree` directive.
 
 Welcome to Nimble's documentation!
-===============================
+==================================
 
 Contents:
 
 .. toctree::
-    :maxdepth: 1
-    
-    nimble
-    nimble.calculate
-    nimble.configuration
-    nimble.customLearners
-    nimble.data
-    nimble.examples
-    nimble.exceptions
-    nimble.randomness
+   :maxdepth: 1
+
+   nimble/nimble
+   nimble/calculate
+   nimble/configuration
+   nimble/customLearners
+   nimble/data
+   nimble/exceptions
+   nimble/randomness
+
+.. toctree::
+   :maxdepth: 1
+
+   examples
+   datasets
 
 
 Welcome to the Nimble project's online documentation for users. This
