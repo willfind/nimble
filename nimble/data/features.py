@@ -18,11 +18,12 @@ import six
 
 import nimble
 from nimble.logger import handleLogging
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
+from nimble.exceptions import InvalidArgumentType
+from nimble.exceptions import InvalidArgumentValueCombination
 
 class Features(object):
     """
-    Methods that can be called on the a nimble Base objects feature axis.
+    Methods that can be called on a nimble Base objects feature axis.
     """
     def __init__(self, source):
         self._source = source
@@ -1143,9 +1144,9 @@ class Features(object):
              [3.000 3.000 3.000 3.000 3.000]]
             )
 
-        Apply calculation to all features; apply to certain points. Note
-        that the function recieves a read-only view of each feature, so
-        a copy is necessary to modify any specific data.
+        Apply calculation to all features; function modifies a specific
+        point. Note that the function recieves a read-only view of each
+        feature, so a copy is necessary to modify any specific data.
 
         >>> def changeMiddlePoint(ft):
         ...     ftList = ft.copy(to='python list', outputAs1D=True)
@@ -1175,6 +1176,51 @@ class Features(object):
             )
         """
         return self._calculate(function, features, useLog)
+
+    def matching(self, function, useLog=None):
+        """
+        Return a boolean value object identifying matching features.
+
+        Apply a function returning a boolean value for each feature in
+        this object. Common any/all matching functions can be found in
+        nimble's match module. Note that the pointName in the returned
+        object will be set to the ``__name__`` attribute of ``function``
+        unless it is a ``lambda`` function.
+
+        Parameters
+        ----------
+        function : function
+            * function - in the form of function(featureView) which
+              returns True, False, 0 or 1.
+
+        Returns
+        -------
+        nimble Base object
+            A point vector of boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, 3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> allPositiveFts = data.features.matching(match.allPositive)
+        >>> allPositiveFts
+        Matrix(
+            [[False False True]]
+            pointNames={'allPositive':0}
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, float('nan'), 1], [-3, 3, 3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> ftHasMissing = data.features.matching(match.anyMissing)
+        >>> ftHasMissing
+        Matrix(
+            [[False True False]]
+            pointNames={'anyMissing':0}
+            )
+        """
+        return self._matching(function, useLog)
 
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
@@ -1930,6 +1976,10 @@ class Features(object):
 
     @abstractmethod
     def _calculate(self, function, limitTo, useLog=None):
+        pass
+
+    @abstractmethod
+    def _matching(self, function, useLog=None):
         pass
 
     @abstractmethod

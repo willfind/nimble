@@ -317,14 +317,14 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def test_points_setName_exceptionPrevInvalidIndex(self):
         """ Test points.setName() for InvalidArgumentValue when given an invalid prev index"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=12, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_points_setName_exceptionPrevNotFound(self):
         """ Test points.setName() for InvalidArgumentValue when the prev pointName is not found"""
         origNames = ["zero", "one", "two", "three"]
@@ -388,14 +388,14 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def test_features_setName_exceptionPrevInvalidIndex(self):
         """ Test features.setName() for InvalidArgumentValue when given an invalid prev index"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=12, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_features_setName_exceptionPrevNotFound(self):
         """ Test features.setName() for InvalidArgumentValue when the prev featureName is not found"""
         origFeatureNames = ["zero", "one", "two", "three"]
@@ -1222,7 +1222,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'point', ptIndex)
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def testconstructIndicesList_InvalidIndexInteger(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1232,7 +1232,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', ftIndex)
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def testconstructIndicesList_InvalidIndexString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']

@@ -22,6 +22,7 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
+from .dataHelpers import wrapMatchFunctionFactory
 
 
 class Elements(object):
@@ -309,51 +310,68 @@ class Elements(object):
                                              skipNoneReturnValues,
                                              'toCalculate')
 
-        if points is not None:
-            points = constructIndicesList(self._source, 'point', points)
-        if features is not None:
-            features = constructIndicesList(self._source, 'feature', features)
-
-        if outputType is not None:
-            optType = outputType
-        else:
-            optType = self._source.getTypeString()
-
-        # Use vectorized for functions with oneArg
-        if calculator.oneArg:
-            vectorized = numpy.vectorize(calculator)
-            ret = self._calculate_implementation(vectorized, points, features,
-                                                 preserveZeros, optType)
-
-        else:
-            # if unable to vectorize, iterate over each point
-            if not points:
-                points = list(range(len(self._source.points)))
-            if not features:
-                features = list(range(len(self._source.features)))
-            valueArray = numpy.empty([len(points), len(features)])
-            p = 0
-            for pi in points:
-                f = 0
-                for fj in features:
-                    value = self._source[pi, fj]
-                    if calculator.oneArg:
-                        currRet = calculator(value)
-                    else:
-                        currRet = calculator(value, pi, fj)
-                    valueArray[p, f] = currRet
-                    f += 1
-                p += 1
-
-            ret = nimble.createData(optType, valueArray, useLog=False)
-
-        ret._absPath = self._source.absolutePath
-        ret._relPath = self._source.relativePath
+        ret = self._calculate_backend(calculator, points, features,
+                                      preserveZeros, skipNoneReturnValues,
+                                      outputType)
 
         handleLogging(useLog, 'prep', 'elements.calculate',
                       self._source.getTypeString(), Elements.calculate,
                       toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
+
+        return ret
+
+    def matching(self, toMatch, useLog=None):
+        """
+        Return an object of boolean values identifying matching values.
+
+        Apply a function returning a boolean value for each element in
+        this object. Common matching functions can be found in nimble's
+        match module.
+
+        Parameters
+        ----------
+        toMatch : function
+            * function - in the form of toMatch(elementValue) which
+              returns True, False, 0 or 1.
+
+        Returns
+        -------
+        nimble Base object
+            This object will only contain boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isPositive = data.elements.matching(match.positive)
+        >>> isPositive
+        Matrix(
+            [[ True False  True]
+             [False  True False]]
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, None], [None, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isMissing = data.elements.matching(match.missing)
+        >>> isMissing
+        Matrix(
+            [[False False  True]
+             [ True False False]]
+            )
+        """
+        wrappedMatch = wrapMatchFunctionFactory(toMatch)
+
+        ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+
+        ret.points.setNames(self._source.points._getNamesNoGeneration())
+        ret.features.setNames(self._source.features._getNamesNoGeneration())
+
+        handleLogging(useLog, 'prep', 'elements.matching',
+                      self._source.getTypeString(), Elements.matching,
+                      toMatch)
 
         return ret
 
@@ -614,6 +632,59 @@ class Elements(object):
     # Higher Order Helpers #
     ########################
 
+    def _calculate_backend(self, calculator, points=None, features=None,
+                           preserveZeros=False, skipNoneReturnValues=False,
+                           outputType=None, allowBoolOutput=False):
+        if points is not None:
+            points = constructIndicesList(self._source, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self._source, 'feature', features)
+
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self._source.getTypeString()
+        # Use vectorized for functions with oneArg
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
+            values = self._calculate_implementation(
+                vectorized, points, features, preserveZeros, optType)
+
+        else:
+            if not points:
+                points = list(range(len(self._source.points)))
+            if not features:
+                features = list(range(len(self._source.features)))
+            # if unable to vectorize, iterate over each point
+            values = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self._source[pi, fj]
+                    if calculator.oneArg:
+                        currRet = calculator(value)
+                    else:
+                        currRet = calculator(value, pi, fj)
+                    values[p, f] = currRet
+                    f += 1
+                p += 1
+
+        # check if values has numeric dtype
+        createDataKwargs = {'useLog': False}
+        if allowBoolOutput and numpy.issubdtype(values.dtype, numpy.bool_):
+            createDataKwargs['elementType'] = bool
+        elif not (numpy.issubdtype(values.dtype, numpy.number)
+                  or numpy.issubdtype(values.dtype, numpy.bool_)):
+            createDataKwargs['elementType'] = numpy.object_
+
+        ret = nimble.createData(optType, values, **createDataKwargs)
+
+        ret._absPath = self._source.absolutePath
+        ret._relPath = self._source.relativePath
+
+        return ret
+
     def _calculate_genericVectorized(
             self, function, points, features, outputType):
         # need points/features as arrays for indexing
@@ -629,20 +700,12 @@ class Elements(object):
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:
-            values = function(toCalculate)
-            # check if values has numeric dtype
-            if numpy.issubdtype(values.dtype, numpy.number):
-                return nimble.createData(outputType, values, useLog=False)
-
-            return nimble.createData(outputType, values,
-                                     elementType=numpy.object_, useLog=False)
+            return function(toCalculate)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
-            values = function(toCalculate)
-            return nimble.createData(outputType, values,
-                                     elementType=numpy.object_, useLog=False)
+            return function(toCalculate)
 
     #####################
     # Abstract Methods  #
