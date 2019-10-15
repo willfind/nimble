@@ -79,11 +79,13 @@ fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
 # no match functions should not be logged.
 match_funcs = [
-    'allMissing', 'allNegative', 'allNonNumeric', 'allNonZero', 'allNumeric',
-    'allPositive', 'allValues', 'allZero', 'anyMissing', 'anyNegative',
-    'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive', 'anyValues',
-    'anyZero', 'convertMatchToFunction', 'missing', 'negative', 'nonNumeric',
-    'nonZero', 'numeric', 'positive', 'zero',
+    'allBoolean', 'allFalse', 'allInfinity', 'allMissing', 'allNegative',
+    'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
+    'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyInfinity',
+    'anyMissing', 'anyNegative', 'anyNonNumeric', 'anyNonZero', 'anyNumeric',
+    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean',
+    'convertMatchToFunction', 'false', 'infinity', 'missing', 'negative',
+    'nonNumeric', 'nonZero', 'numeric', 'positive', 'true', 'zero'
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
@@ -112,7 +114,7 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 features_logged = [
     'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
     'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'splitByParsing',
+    'transform', 'splitByParsing', 'matching',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -125,6 +127,7 @@ points_logged = [
     'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
     'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
     'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
+    'matching',
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -134,7 +137,7 @@ points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
 
 elements_logged = [
-    'calculate', 'transform', 'multiply', 'power',
+    'calculate', 'transform', 'multiply', 'power', 'matching',
     ]
 elements_notLogged = [
     'count', 'countUnique',
@@ -318,14 +321,15 @@ for call in classes:
             ALL_DUNDER.append(call.__name__ + '.' + attribute)
 
 baseDunder_tested = [
-    'Base.__abs__', 'Base.__add__', 'Base.__getitem__', 'Base.__floordiv__',
+    'Base.__abs__', 'Base.__add__', 'Base.__and__', 'Base.__copy__',
+    'Base.__deepcopy__', 'Base.__getitem__', 'Base.__floordiv__',
     'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imatmul__',
-    'Base.__imul__', 'Base.__ipow__', 'Base.__isub__', 'Base.__itruediv__',
-    'Base.__len__', 'Base.__matmul__', 'Base.__mod__', 'Base.__mul__',
-    'Base.__neg__', 'Base.__pos__', 'Base.__pow__', 'Base.__radd__',
-    'Base.__rfloordiv__', 'Base.__rmatmul__', 'Base.__rmod__', 'Base.__rmul__',
-    'Base.__rpow__', 'Base.__rsub__', 'Base.__rtruediv__', 'Base.__sub__',
-    'Base.__truediv__', 'Base.__copy__', 'Base.__deepcopy__',
+    'Base.__imul__', 'Base.__invert__', 'Base.__ipow__', 'Base.__isub__',
+    'Base.__itruediv__', 'Base.__len__', 'Base.__matmul__', 'Base.__mod__',
+    'Base.__mul__', 'Base.__neg__', 'Base.__or__', 'Base.__pos__',
+    'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmatmul__',
+    'Base.__rmod__', 'Base.__rmul__', 'Base.__rpow__', 'Base.__rsub__',
+    'Base.__rtruediv__', 'Base.__sub__', 'Base.__truediv__', 'Base.__xor__',
     ]
 axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
 pointsDunder_tested = []
