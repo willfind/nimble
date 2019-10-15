@@ -171,7 +171,7 @@ class Features(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -200,7 +200,7 @@ class Features(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -290,7 +290,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -894,7 +894,8 @@ class Features(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1128,7 +1129,7 @@ class Features(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1391,7 +1392,7 @@ class Features(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------

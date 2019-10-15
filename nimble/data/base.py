@@ -234,6 +234,10 @@ class Base(object):
     def points(self):
         """
         An object handling functions manipulating data by points.
+
+        See Also
+        --------
+        nimble.data.points.Points
         """
         return self._points
 
@@ -247,6 +251,10 @@ class Base(object):
     def features(self):
         """
         An object handling functions manipulating data by features.
+
+        See Also
+        --------
+        nimble.data.features.Features
         """
         return self._features
 
@@ -260,6 +268,10 @@ class Base(object):
     def elements(self):
         """
         An object handling functions manipulating data by each element.
+
+        See Also
+        --------
+        nimble.data.elements.Elements
         """
         return self._elements
 
@@ -2388,7 +2400,8 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, Points.fill, Features.fill
+        fillUsingAllData, nimble.data.points.Points.fill,
+        nimble.data.features.Features.fill
 
         Examples
         --------
@@ -2502,7 +2515,8 @@ class Base(object):
 
         See Also
         --------
-        fillWith, Points.fill, Features.fill
+        fillWith, nimble.data.points.Points.fill,
+        nimble.data.features.Features.fill
 
         Examples
         --------
@@ -3085,7 +3099,7 @@ class Base(object):
 
         See Also
         --------
-        Points.add, Features.add
+        nimble.data.points.Points.add, nimble.data.features.Features.add
 
         Examples
         --------

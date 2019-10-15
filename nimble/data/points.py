@@ -169,7 +169,7 @@ class Points(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -198,7 +198,7 @@ class Points(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -288,7 +288,7 @@ class Points(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -834,7 +834,8 @@ class Points(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1121,7 +1122,7 @@ class Points(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1389,7 +1390,7 @@ class Points(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------

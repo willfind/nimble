@@ -484,7 +484,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.data.Points.normalize, nimble.data.Features.normalize
+    nimble.data.points.Points.normalize,
+    nimble.data.features.Features.normalize
 
     Examples
     --------
