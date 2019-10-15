@@ -24,6 +24,7 @@ from six.moves import range
 from six.moves import zip
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -1223,17 +1224,17 @@ class Base(object):
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
                 msg += "into the axis whose length > 1"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentType(msg)
 
         #process x
         singleX = False
         if isinstance(x, (int, float, str, numpy.integer)):
-            x = self.points._processSingle(x)
+            x = self.points._getIndex(x, allowFloats=True)
             singleX = True
         #process y
         singleY = False
         if isinstance(y, (int, float, str, numpy.integer)):
-            y = self.features._processSingle(y)
+            y = self.features._getIndex(y, allowFloats=True)
             singleY = True
         #if it is the simplest data retrieval such as X[1,2],
         # we'd like to return it back in the fastest way.
@@ -3626,20 +3627,20 @@ class Base(object):
         Perform elementwise multiplication or scalar multiplication,
         depending in the input ``other``.
         """
-        return self._genericArithmeticBinary('__mul__', other)
+        return self._genericBinaryOperations('__mul__', other)
 
     def __rmul__(self, other):
         """
         Perform elementwise multiplication with this object on the right
         """
-        return self._genericArithmeticBinary('__rmul__', other)
+        return self._genericBinaryOperations('__rmul__', other)
 
     def __imul__(self, other):
         """
         Perform in place elementwise multiplication or scalar
         multiplication, depending in the input ``other``.
         """
-        return self._genericArithmeticBinary('__imul__', other)
+        return self._genericBinaryOperations('__imul__', other)
 
     def __add__(self, other):
         """
@@ -3647,13 +3648,13 @@ class Base(object):
         nimble Base object, or element wise with a scalar if other is
         some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__add__', other)
+        return self._genericBinaryOperations('__add__', other)
 
     def __radd__(self, other):
         """
         Perform scalar addition with this object on the right
         """
-        return self._genericArithmeticBinary('__radd__', other)
+        return self._genericBinaryOperations('__radd__', other)
 
     def __iadd__(self, other):
         """
@@ -3661,7 +3662,7 @@ class Base(object):
         ``other`` is a nimble Base object, or element wise with a scalar
         if ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__iadd__', other)
+        return self._genericBinaryOperations('__iadd__', other)
 
     def __sub__(self, other):
         """
@@ -3669,13 +3670,13 @@ class Base(object):
         data object, or element wise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        return self._genericArithmeticBinary('__sub__', other)
+        return self._genericBinaryOperations('__sub__', other)
 
     def __rsub__(self, other):
         """
         Subtract each element of this object from the given scalar.
         """
-        return self._genericArithmeticBinary('__rsub__', other)
+        return self._genericBinaryOperations('__rsub__', other)
 
     def __isub__(self, other):
         """
@@ -3683,7 +3684,7 @@ class Base(object):
         is a nimble Base object, or element wise with a scalar if
         ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__isub__', other)
+        return self._genericBinaryOperations('__isub__', other)
 
     def __truediv__(self, other):
         """
@@ -3691,14 +3692,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__truediv__', other)
+        return self._genericBinaryOperations('__truediv__', other)
 
     def __rtruediv__(self, other):
         """
         Perform element wise true division using this object as the
         denominator, and the given scalar value as the numerator.
         """
-        return self._genericArithmeticBinary('__rtruediv__', other)
+        return self._genericBinaryOperations('__rtruediv__', other)
 
     def __itruediv__(self, other):
         """
@@ -3707,7 +3708,7 @@ class Base(object):
         elementwise by a scalar if ``other`` is some kind of numeric
         value.
         """
-        return self._genericArithmeticBinary('__itruediv__', other)
+        return self._genericBinaryOperations('__itruediv__', other)
 
     def __floordiv__(self, other):
         """
@@ -3715,7 +3716,7 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__floordiv__', other)
+        return self._genericBinaryOperations('__floordiv__', other)
 
     def __rfloordiv__(self, other):
         """
@@ -3723,7 +3724,7 @@ class Base(object):
         denominator, and the given scalar value as the numerator.
 
         """
-        return self._genericArithmeticBinary('__rfloordiv__', other)
+        return self._genericBinaryOperations('__rfloordiv__', other)
 
     def __ifloordiv__(self, other):
         """
@@ -3732,7 +3733,7 @@ class Base(object):
         elementwise by a scalar if ```other``` is some kind of numeric
         value.
         """
-        return self._genericArithmeticBinary('__ifloordiv__', other)
+        return self._genericBinaryOperations('__ifloordiv__', other)
 
     def __mod__(self, other):
         """
@@ -3740,14 +3741,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__mod__', other)
+        return self._genericBinaryOperations('__mod__', other)
 
     def __rmod__(self, other):
         """
         Perform mod using the elements of this object as the divisors,
         and the given scalar value as the dividend.
         """
-        return self._genericArithmeticBinary('__rmod__', other)
+        return self._genericBinaryOperations('__rmod__', other)
 
     def __imod__(self, other):
         """
@@ -3755,7 +3756,7 @@ class Base(object):
         dividends, elementwise if 'other' is a nimble Base object, or
         elementwise by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__imod__', other)
+        return self._genericBinaryOperations('__imod__', other)
 
     @to2args
     def __pow__(self, other, z):
@@ -3765,14 +3766,14 @@ class Base(object):
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        return self._genericArithmeticBinary('__pow__', other)
+        return self._genericBinaryOperations('__pow__', other)
 
     def __rpow__(self, other):
         """
         Perform elementwise exponentiation (iterated __mul__) using the
         ``other`` scalar value as the bases.
         """
-        return self._genericArithmeticBinary('__rpow__', other)
+        return self._genericBinaryOperations('__rpow__', other)
 
     def __ipow__(self, other):
         """
@@ -3781,7 +3782,7 @@ class Base(object):
         is a nimble Base object, or elementwise by a scalar if ``other``
         is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__ipow__', other)
+        return self._genericBinaryOperations('__ipow__', other)
 
     def __pos__(self):
         """
@@ -3836,7 +3837,7 @@ class Base(object):
             msg = msg.format('left')
             raise ImproperObjectAction(msg)
 
-    def _genericArithmeticBinary_sizeValidation(self, opName, other):
+    def _genericBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
             msg += "(self=" + str(self._pointCount) + " vs other="
@@ -3850,7 +3851,7 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
-    def _genericArithmeticBinary_dataExamination(self, opName, other):
+    def _genericBinary_dataExamination(self, opName, other):
         """
         Determine if an arithmetic operation can be performed successfully
         between two objects.
@@ -3928,24 +3929,24 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
 
-    def _genericArithmeticBinary_validation(self, opName, other):
+    def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
         if not otherBase and not dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
         if otherBase:
-            self._genericArithmeticBinary_sizeValidation(opName, other)
+            self._genericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
-    def _genericArithmeticBinary(self, opName, other):
+    def _genericBinaryOperations(self, opName, other):
         if isinstance(other, Stretch):
             # __ipow__ does not work if return NotImplemented
             if opName == '__ipow__':
                 return pow(self, other)
             return NotImplemented
-        self._genericArithmeticBinary_validation(opName, other)
+        self._genericBinary_validation(opName, other)
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
@@ -3959,7 +3960,7 @@ class Base(object):
         # mod and floordiv operations do not raise errors for zero division
         # TODO logical operations to check for new nan and inf after operation
         if 'floordiv' in opName or 'mod' in opName:
-            self._genericArithmeticBinary_dataExamination(opName, other)
+            self._genericBinary_dataExamination(opName, other)
 
         try:
             useOp = opName
@@ -3968,9 +3969,9 @@ class Base(object):
                 # use not inplace operation, setting to inplace occurs after
                 useOp = opName[:2] + opName[3:]
             with numpy.errstate(divide='raise', invalid='raise'):
-                ret = self._arithmeticBinary_implementation(useOp, other)
+                ret = self._binaryOperations_implementation(useOp, other)
         except Exception:
-            self._genericArithmeticBinary_dataExamination(opName, other)
+            self._genericBinary_dataExamination(opName, other)
             raise # backup, expect call above to raise exception
 
         if opName.startswith('__i'):
@@ -3988,7 +3989,7 @@ class Base(object):
         return ret
 
 
-    def _defaultArithmeticBinary_implementation(self, opName, other):
+    def _defaultBinaryOperations_implementation(self, opName, other):
         selfData = self.copy('numpyarray')
         if isinstance(other, Base):
             otherData = other.copy('numpyarray')
@@ -4062,6 +4063,54 @@ class Base(object):
         """
         return Stretch(self)
 
+
+    def __and__(self, other):
+        return self._genericLogicalBinary('__and__', other)
+
+    def __or__(self, other):
+        return self._genericLogicalBinary('__or__', other)
+
+    def __xor__(self, other):
+        return self._genericLogicalBinary('__xor__', other)
+
+    def __invert__(self):
+        boolObj = self._logicalValidationAndConversion()
+        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+        return ret
+
+
+    def _genericLogicalBinary(self, opName, other):
+        if not isinstance(other, Base):
+            msg = 'other must be an instance of a nimble Base object'
+            raise InvalidArgumentType(msg)
+        self._genericBinary_sizeValidation(opName, other)
+        lhsBool = self._logicalValidationAndConversion()
+        rhsBool = other._logicalValidationAndConversion()
+        self._validateEqualNames('point', 'point', opName, other)
+        self._validateEqualNames('feature', 'feature', opName, other)
+
+        return lhsBool._genericBinaryOperations(opName, rhsBool)
+
+    def _logicalValidationAndConversion(self):
+        if (not hasattr(self.data, 'dtype')
+                or self.data.dtype not in [bool, numpy.bool_]):
+            validValues = match.allValues([True, False, 0, 1])
+            if not validValues(self):
+                msg = 'logical operations can only be performed on data '
+                msg += 'containing True, False, 0 and 1 values'
+                raise ImproperObjectAction(msg)
+
+            ret = self.elements.matching(lambda v: bool(v), useLog=False)
+            ret.points.setNames(self.points._getNamesNoGeneration(),
+                                useLog=False)
+            ret.features.setNames(self.features._getNamesNoGeneration(),
+                                  useLog=False)
+            return ret
+
+        return self
 
     ############################
     ############################

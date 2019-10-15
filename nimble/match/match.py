@@ -7,7 +7,7 @@ import numpy
 import six
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentType
 
 def missing(value):
     """
@@ -73,7 +73,8 @@ def numeric(value):
     >>> numeric(None)
     False
     """
-    return isinstance(value, (int, float, complex, numpy.number))
+    return (isinstance(value, (int, float, complex, numpy.number))
+            and not boolean(value))
 
 def nonNumeric(value):
     """
@@ -108,7 +109,7 @@ def nonNumeric(value):
     >>> nonNumeric(float('nan'))
     False
     """
-    return not isinstance(value, (int, float, complex, numpy.number))
+    return not numeric(value)
 
 def zero(value):
     """
@@ -249,6 +250,136 @@ def negative(value):
         return value < 0
     except Exception:
         return False
+
+def infinity(value):
+    """
+    Determine if a value is a float infinity.
+
+    Return True if the value is positive or negative infinity float
+    value, otherwise False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyFalse, allFalse
+
+    Examples
+    --------
+    >>> false(False)
+    True
+    >>> false(0) # False because not boolean type
+    False
+    >>> false(True)
+    False
+    >>> false('False')
+    False
+    """
+    try:
+        return numpy.isinf(value)
+    except Exception:
+        return False
+
+def boolean(value):
+    """
+    Determine if a value is a boolean value.
+
+    Return True if the value is a boolean type, otherwise return False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyTrue, allTrue
+
+    Examples
+    --------
+    >>> boolean(True)
+    True
+    >>> true(1) # False because 1 not boolean type
+    False
+    >>> boolean(False)
+    True
+    >>> boolean('False')
+    False
+    """
+    return isinstance(value, (bool, numpy.bool_))
+
+def true(value):
+    """
+    Determine if a value is a boolean True value.
+
+    Return True if the value is a boolean type equal to True,
+    otherwise return False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyTrue, allTrue
+
+    Examples
+    --------
+    >>> true(True)
+    True
+    >>> true(1) # False because 1 not boolean type
+    False
+    >>> true(False)
+    False
+    >>> true('True')
+    False
+    """
+    return boolean(value) and value == True
+
+def false(value):
+    """
+    Determine if a value is a boolean False value.
+
+    Return True if the value is a boolean type equal to False,
+    otherwise return False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyFalse, allFalse
+
+    Examples
+    --------
+    >>> false(False)
+    True
+    >>> false(0) # False because 0 not boolean type
+    False
+    >>> false(True)
+    False
+    >>> false('False')
+    False
+    """
+    return boolean(value) and value == False
 
 def anyValues(match):
     """
@@ -868,6 +999,296 @@ def allNegative(data):
     """
     return anyAllValuesBackend(all, data, negative)
 
+def anyInfinity(data):
+    """
+    Determine if any values in the data are infinity.
+
+    Return True if one or more value in the data is a positive or
+    negative infinity float value.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allInfinity, infinity
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, float('inf')],
+    ...        [1, -2.0, 0],
+    ...        [2, -3.0, 0]]
+    >>> data = nimble.createData('Matrix', raw)
+    >>> anyInfinity(data)
+    True
+
+    >>> raw = [[0, -1.0, 'infinity'],
+    ...        [1, -2.0, 'zero'],
+    ...        [2, -3.0, 'one']]
+    >>> data = nimble.createData('List', raw)
+    >>> anyInfinity(data)
+    False
+    """
+    return anyAllValuesBackend(any, data, infinity)
+
+def allInfinity(data):
+    """
+    Determine if all values in the data are infinity.
+
+    Return True if every value in the data is a positive or negative
+    infinity float value.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyInfinity, infinity
+
+    Examples
+    --------
+    >>> raw = [[float('inf'), float('inf'), float('inf')],
+    ...        [float('inf'), float('inf'), float('inf')],
+    ...        [float('inf'), float('inf'), float('inf')]]
+    >>> data = nimble.createData('Matrix', raw)
+    >>> allInfinity(data)
+    True
+
+    >>> raw = [[float('inf'), float('inf'), float('inf')],
+    ...        [float('inf'), 0, float('inf')],
+    ...        [float('inf'), float('inf'), float('inf')]]
+    >>> data = nimble.createData('List', raw)
+    >>> allInfinity(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, infinity)
+
+def anyBoolean(data):
+    """
+    Determine if any values in the data are a boolean type.
+
+    Return True if one or more value in the data is a boolean type.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allBoolean, boolean
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, True],
+    ...        [1, -2.0, False],
+    ...        [2, -3.0, False]]
+    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> anyBoolean(data)
+    True
+
+    >>> raw = [[0, -1.0, 'a'],
+    ...        [1, -2.0, 'b'],
+    ...        [2, -3.0, 'c']]
+    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> anyBoolean(data) # Note: 0 and 1 are not boolean type
+    False
+    """
+    return anyAllValuesBackend(any, data, boolean)
+
+def allBoolean(data):
+    """
+    Determine if all values in the data are a boolean type.
+
+    Return True if every value in the data is boolean type.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyBoolean, boolean
+
+    Examples
+    --------
+    >>> raw = [[True, True, False],
+    ...        [True, True, True],
+    ...        [False, True, True]]
+    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> anyBoolean(data)
+    True
+
+    >>> raw = [[0, True, False],
+    ...        [1, True, True],
+    ...        [0, True, True]]
+    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> allBoolean(data) # Note: 0 and 1 are not boolean type
+    False
+    """
+    return anyAllValuesBackend(all, data, boolean)
+
+def anyTrue(data):
+    """
+    Determine if any values in the data are a boolean True.
+
+    Return True if one or more value in the data is boolean True.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allTrue, true
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, True],
+    ...        [1, -2.0, False],
+    ...        [2, -3.0, False]]
+    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> anyTrue(data)
+    True
+
+    >>> raw = [[0, -1.0, False],
+    ...        [1, -2.0, False],
+    ...        [2, -3.0, False]]
+    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> anyTrue(data) # Note: 1 is not boolean type
+    False
+    """
+    return anyAllValuesBackend(any, data, true)
+
+def allTrue(data):
+    """
+    Determine if all values in the data are a boolean True.
+
+    Return True if every value in the data is boolean True.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyTrue, true
+
+    Examples
+    --------
+    >>> raw = [[True, True, True],
+    ...        [True, True, True],
+    ...        [True, True, True]]
+    >>> data = nimble.createData('Matrix', raw, elementType=bool)
+    >>> allTrue(data)
+    True
+
+    >>> raw = [[True, True, True],
+    ...        [True, False, True],
+    ...        [True, True, True]]
+    >>> data = nimble.createData('List', raw, elementType=bool)
+    >>> allTrue(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, true)
+
+def anyFalse(data):
+    """
+    Determine if any values in the data are a boolean False.
+
+    Return True if one or more value in the data is boolean False.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allFalse, false
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, True],
+    ...        [1, -2.0, True],
+    ...        [2, -3.0, False]]
+    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> anyFalse(data)
+    True
+
+    >>> raw = [[0, -1.0, True],
+    ...        [1, -2.0, True],
+    ...        [2, -3.0, True]]
+    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> anyFalse(data) # Note: 0 is not boolean type
+    False
+    """
+    return anyAllValuesBackend(any, data, false)
+
+def allFalse(data):
+    """
+    Determine if all values in the data are a boolean False.
+
+    Return True if every value in the data is boolean False.
+
+    Parameters
+    ----------
+    data : nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyFalse, false
+
+    Examples
+    --------
+    >>> raw = [[False, False, False],
+    ...        [False, False, False],
+    ...        [False, False, False]]
+    >>> data = nimble.createData('Matrix', raw, elementType=bool)
+    >>> allFalse(data)
+    True
+
+    >>> raw = [[False, False, True],
+    ...        [False, False, True],
+    ...        [False, True, False]]
+    >>> data = nimble.createData('List', raw, elementType=bool)
+    >>> allFalse(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, false)
+
 def anyAllValuesBackend(quantity, data, match):
     """
     Backend for functions using any and all.
@@ -880,7 +1301,7 @@ def anyAllValuesBackend(quantity, data, match):
     try:
         # 1D data
         return quantity([match(val) for val in data])
-    except InvalidArgumentValue:
+    except InvalidArgumentType:
         # 2D data
         if quantity is any:
             # if any feature contains a match we can return True

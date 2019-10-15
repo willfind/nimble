@@ -530,26 +530,30 @@ class Sparse(Base):
 
     def _binarySearch(self, x, y):
         if self._sorted == 'point':
-            #binary search
-            start, end = numpy.searchsorted(self.data.row, [x, x+1])
-            if start == end: # x is not in self.data.row
-                return 0
-            k = numpy.searchsorted(self.data.col[start:end], y) + start
-            if k < end and self.data.col[k] == y:
-                return self.data.data[k]
-            return 0
+            axis = self.data.row
+            offAxis = self.data.col
+            axisVal = x
+            offAxisVal = y
         elif self._sorted == 'feature':
-            #binary search
-            start, end = numpy.searchsorted(self.data.col, [y, y+1])
-            if start == end:#x is not in self.data.col
-                return 0
-            k = numpy.searchsorted(self.data.row[start:end], x) + start
-            if k < end and self.data.row[k] == x:
-                return self.data.data[k]
-            return 0
+            axis = self.data.col
+            offAxis = self.data.row
+            axisVal = y
+            offAxisVal = x
         else:
             msg = 'self._sorted is not either point nor feature.'
             raise ImproperObjectAction(msg)
+        #binary search
+        start, end = numpy.searchsorted(axis, [axisVal, axisVal+1])
+        if start == end: # axisVal is not in self.data.row
+            if numpy.issubdtype(self.data.dtype, numpy.bool_):
+                return False
+            return 0
+        k = numpy.searchsorted(offAxis[start:end], offAxisVal) + start
+        if k < end and offAxis[k] == offAxisVal:
+            return self.data.data[k]
+        if numpy.issubdtype(self.data.dtype, numpy.bool_):
+            return False
+        return 0
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -874,7 +878,7 @@ class Sparse(Base):
         return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
 
-    def _arithmeticBinary_implementation(self, opName, other):
+    def _binaryOperations_implementation(self, opName, other):
         """
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
@@ -882,7 +886,7 @@ class Sparse(Base):
         # scipy may not raise expected exceptions for truediv
         # TODO remove once logical operators used in Base for this
         if 'truediv' in opName:
-            self._genericArithmeticBinary_dataExamination(opName, other)
+            self._genericBinary_dataExamination(opName, other)
 
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
@@ -912,7 +916,7 @@ class Sparse(Base):
                     return self._inplaceBinary_implementation(opName, other)
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
-                return self._defaultArithmeticBinary_implementation(opName,
+                return self._defaultBinaryOperations_implementation(opName,
                                                                      other)
 
             return Sparse(ret)
@@ -924,7 +928,7 @@ class Sparse(Base):
                 return self._genericFloordiv_implementation(opName, other)
             if 'mod' in opName:
                 return self._genericMod_implementation(opName, other)
-            return self._defaultArithmeticBinary_implementation(opName, other)
+            return self._defaultBinaryOperations_implementation(opName, other)
 
 
     def _scalarBinary_implementation(self, opName, other):
@@ -941,7 +945,7 @@ class Sparse(Base):
                 opName, other)
         else:
             # scalar operations apply to all elements; use dense
-            return self._defaultArithmeticBinary_implementation(opName,
+            return self._defaultBinaryOperations_implementation(opName,
                                                                 other)
 
     def _matmul__implementation(self, other):
@@ -965,14 +969,14 @@ class Sparse(Base):
 
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
-        ret = self._arithmeticBinary_implementation(notInplace, other)
+        ret = self._binaryOperations_implementation(notInplace, other)
         absPath, relPath = self._absPath, self._relPath
         self.referenceDataFrom(ret, useLog=False)
         self._absPath, self._relPath = absPath, relPath
         return self
 
     def _rsub__implementation(self, other):
-        return (self * -1)._arithmeticBinary_implementation('__add__', other)
+        return (self * -1)._binaryOperations_implementation('__add__', other)
 
     def _genericMul_implementation(self, opName, other):
         if not isinstance(other, Base):
@@ -1006,14 +1010,14 @@ class Sparse(Base):
         Perform floordiv by modifying the results of truediv.
 
         There is no need for additional conversion when an inplace
-        operation is called because _arithmeticBinary_implementation will
+        operation is called because _binaryOperations_implementation will
         return the self object in those cases, so the changes below are
         reflected inplace.
         """
         opSplit = opName.split('floordiv')
         trueDiv = opSplit[0] + 'truediv__'
         # ret is self for inplace operation
-        ret = self._arithmeticBinary_implementation(trueDiv, other)
+        ret = self._binaryOperations_implementation(trueDiv, other)
         ret.data.data = numpy.floor(ret.data.data)
         ret.data.eliminate_zeros()
         return ret
@@ -1331,12 +1335,12 @@ class SparseView(BaseView, Sparse):
 
         return False
 
-    def _arithmeticBinary_implementation(self, opName, other):
+    def _binaryOperations_implementation(self, opName, other):
         selfConv = self.copy(to="Sparse")
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
 
-        return selfConv._arithmeticBinary_implementation(opName, other)
+        return selfConv._binaryOperations_implementation(opName, other)
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """

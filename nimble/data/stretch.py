@@ -182,7 +182,7 @@ class Stretch(object):
         else:
             fullOther = oBase.features.repeat(self._numFts, True)
 
-        fullSelf._genericArithmeticBinary_dataExamination(opName, fullOther)
+        fullSelf._genericBinary_dataExamination(opName, fullOther)
 
     def _stretchArithmetic(self, opName, other):
         self._stretchArithmetic_validation(opName, other)
@@ -211,7 +211,7 @@ class Stretch(object):
         if isinstance(other, Stretch):
             other = other._source
 
-        return self._source._arithmeticBinary_implementation(opName, other)
+        return self._source._binaryOperations_implementation(opName, other)
 
 
 class StretchSparse(Stretch):
@@ -243,6 +243,6 @@ class StretchSparse(Stretch):
         rhs.points.setNames(None)
         rhs.features.setNames(None)
 
-        ret = lhs._arithmeticBinary_implementation(opName, rhs)
+        ret = lhs._binaryOperations_implementation(opName, rhs)
 
         return ret
