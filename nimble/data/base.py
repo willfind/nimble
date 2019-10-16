@@ -3543,7 +3543,7 @@ class Base(object):
             * 'solve' - assumes square matrix.
 
             * 'least squares' - Computes object x such that 2-norm
-              abs(b - Ax) is minimized.
+              determinant of b - A x is minimized.
         """
         if not isinstance(b, Base):
             msg = "b must be an instance of Base."

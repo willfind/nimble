@@ -243,9 +243,9 @@ def leastSquaresSolution(aObj, bObj):
     """
     Compute least-squares solution to equation A x = b
 
-    Compute a vector x such that the 2-norm abs(b - A x) is minimized.
-    The matrix A may be square or rectangular (over-determined or
-    under-determined).
+    Compute a vector x such that the 2-norm determinant of b - Ax is
+    minimized. The matrix A may be square or rectangular
+    (over-determined or under-determined).
 
     Parameters
     ----------
