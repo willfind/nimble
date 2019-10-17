@@ -797,7 +797,7 @@ def createData(
           names are found, or data isn't being loaded from a file, then
           default names are assigned.
         * bool - True indicates that feature names are embedded in the
-          data within the first column. A value of False indicates that
+          data within the first row. A value of False indicates that
           names are not embedded and that default names should be used.
         * list, dict - all features in the data must be assigned a name
           and the names for each feature must be unique. As a list, the

@@ -152,11 +152,13 @@ class Points(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
         The index of a point name.
 
-        Return the index location of the provided point ``name``.
+        Return the index location of the point ``identifier``. The
+        ``identifier`` can be a point name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -177,8 +179,10 @@ class Points(object):
         ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndex('c')
         2
+        >>> data.points.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -1984,7 +1988,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod

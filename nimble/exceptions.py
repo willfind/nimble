@@ -111,7 +111,7 @@ def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
 
 
 def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
-                     delim='=', valueStr=str):
+                      delim='=', valueStr=str):
     """
     Used in the creation of exception messages to display dicts in a more
     appealing way than default.
