@@ -69,6 +69,9 @@ class Axis(object):
         else:
             return self._source._featureCount
 
+    def __bool__(self):
+        return len(self) > 0
+
     ########################
     # Low Level Operations #
     ########################

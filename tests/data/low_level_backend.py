@@ -1100,6 +1100,38 @@ class LowLevelBackend(object):
         assert len(nn.points) == 11
         assert len(nn.features) == 33
 
+    ###########
+    # __bool__ #
+    ###########
+    @noLogEntryExpected
+    def test_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty)
+
+    #######################################
+    # points.__bool__ / features.__bool__ #
+    #######################################
+    @noLogEntryExpected
+    def test_axis_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.points)
+        assert not bool(bothEmpty.features)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.points)
+        assert bool(pointEmpty.features)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert bool(featEmpty.points)
+        assert not bool(featEmpty.features)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.points)
+        assert bool(noEmpty.features)
+
     #########################
     # constructIndicesList #
     #########################
