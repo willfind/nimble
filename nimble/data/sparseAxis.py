@@ -103,18 +103,14 @@ class SparseAxis(Axis):
                     modTarget.append(viewID)
                     modOther.append(i)
 
-        if len(modData) != 0:
-            try:
-                modData = numpy.array(modData, dtype=numpy.float)
-            except Exception:
-                modData = numpy.array(modData, dtype=numpy.object_)
-            shape = (len(self._source.points), len(self._source.features))
-            self._source.data = coo_matrix((modData, (modRow, modCol)),
-                                           shape=shape)
-            self._source._sorted = None
-
-        ret = None
-        return ret
+        try:
+            modData = numpy.array(modData, dtype=numpy.float)
+        except Exception:
+            modData = numpy.array(modData, dtype=numpy.object_)
+        shape = (len(self._source.points), len(self._source.features))
+        self._source.data = coo_matrix((modData, (modRow, modCol)),
+                                       shape=shape)
+        self._source._sorted = None
 
     def _add_implementation(self, toAdd, insertBefore):
         """

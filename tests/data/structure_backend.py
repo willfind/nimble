@@ -7835,6 +7835,25 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_points_transform_zerosReturned(self):
+
+        def returnAllZero(pt):
+            return [0 for val in pt]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.points.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(pt):
+            return [0 if v == 1 else 1 for v in pt]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.points.transform(invert)
+        assert orig2 == exp2
 
     ########################
     # features.transform() #
@@ -7982,6 +8001,25 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_features_transform_zerosReturned(self):
+
+        def returnAllZero(ft):
+            return [0 for val in ft]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.features.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(ft):
+            return [0 if v == 1 else 1 for v in ft]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.features.transform(invert)
+        assert orig2 == exp2
 
     ##########################
     # elements.transform() #
@@ -8232,6 +8270,32 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
+
+    def test_elements_transform_zerosReturned(self):
+
+        def returnAllZero(elem):
+            return 0
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.elements.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(elem):
+            return 0 if elem == 1 else 1
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.elements.transform(invert)
+        assert orig2 == exp2
+
+        orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig3.elements.transform(invert, preserveZeros=True)
+        assert orig3 == exp3
 
     ##############
     # fillWith() #

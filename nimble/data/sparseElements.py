@@ -180,6 +180,8 @@ class SparseElements(Elements):
 
             self._source.data.data[index] = currRet
 
+        self._source.data.eliminate_zeros()
+
 class SparseElementsView(ElementsView, SparseElements):
     """
     Limit functionality of SparseElements to read-only

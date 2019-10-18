@@ -293,6 +293,26 @@ class HighLevelDataSafe(DataTestObject):
 
         assert counts.isIdentical(exp)
 
+    def test_points_calculate_zerosReturned(self):
+
+        def returnAllZero(pt):
+            return [0 for val in pt]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.points.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(pt):
+            return [0 if v == 1 else 1 for v in pt]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.points.calculate(invert)
+        assert ret2 == exp2
+
     ##########################
     # .features.calculate() #
     #########################
@@ -505,6 +525,26 @@ class HighLevelDataSafe(DataTestObject):
 
         assert counts.isIdentical(exp)
 
+    def test_features_calculate_zerosReturned(self):
+
+        def returnAllZero(ft):
+            return [0 for val in ft]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.features.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(ft):
+            return [0 if v == 1 else 1 for v in ft]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.features.calculate(invert)
+        assert ret2 == exp2
+
     #######################
     # .elements.calculate #
     #######################
@@ -673,6 +713,32 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=False)
         exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
         assert ret == exp
+
+    def test_elements_calculate_zerosReturned(self):
+
+        def returnAllZero(elem):
+            return 0
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.elements.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(elem):
+            return 0 if elem == 1 else 1
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.elements.calculate(invert)
+        assert ret2 == exp2
+
+        orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret3 = orig3.elements.calculate(invert, preserveZeros=True)
+        assert ret3 == exp3
 
     ######################
     # points.mapReduce() #
