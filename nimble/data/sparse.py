@@ -113,14 +113,12 @@ class Sparse(Base):
             return other._isIdentical_implementation(self)
         else:
             #let's do internal sort first then compare
-            tmpLeft = self.copy()
-            tmpRight = other.copy()
-            tmpLeft._sortInternal('feature')
-            tmpRight._sortInternal('feature')
+            self._sortInternal('feature')
+            other._sortInternal('feature')
 
-            return (allDataIdentical(tmpLeft.data.data, tmpRight.data.data)
-                    and allDataIdentical(tmpLeft.data.row, tmpRight.data.row)
-                    and allDataIdentical(tmpLeft.data.col, tmpRight.data.col))
+            return (allDataIdentical(self.data.data, other.data.data)
+                    and allDataIdentical(self.data.row, other.data.row)
+                    and allDataIdentical(self.data.col, other.data.col))
 
     def _getTypeString_implementation(self):
         return 'Sparse'
@@ -419,8 +417,7 @@ class Sparse(Base):
         shape = (len(self.points), len(self.features))
         self.data = scipy.sparse.coo_matrix((newData, (newRow, newCol)), shape)
 
-        if len(toAddData) != 0:
-            self._sorted = None
+        self._sorted = None
 
     def _flattenToOnePoint_implementation(self):
         self._sortInternal('point')
@@ -467,7 +464,6 @@ class Sparse(Base):
         row = self.data.row
         col = self.data.col
         self.data = coo_matrix((data, (row, col)), newShape)
-        self._sorted = 'point'
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         # only one feature, so both sorts are the same order
@@ -486,7 +482,6 @@ class Sparse(Base):
         row = self.data.row
         col = self.data.col
         self.data = coo_matrix((data, (row, col)), newShape)
-        self._sorted = 'feature'
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut
@@ -740,6 +735,7 @@ class Sparse(Base):
             binaryData.append(1)
         binaryCoo = coo_matrix((binaryData, (binaryRow, binaryCol)),
                                shape=(len(self.points), len(uniqueVals)))
+        self._sorted = None
         return Sparse(binaryCoo)
 
     def _getitem_implementation(self, x, y):
@@ -749,7 +745,6 @@ class Sparse(Base):
 
         if self._sorted is None:
             self._sortInternal('point')
-            self._sorted = 'point'
 
         return self._binarySearch(x, y)
 
@@ -856,11 +851,14 @@ class Sparse(Base):
 
             assert self.data.dtype.type is not numpy.string_
 
-            if self._sorted == 'point':
-                assert all(self.data.row[:-1] <= self.data.row[1:])
-
-            if self._sorted == 'feature':
-                assert all(self.data.col[:-1] <= self.data.col[1:])
+            row = self.data.row
+            col = self.data.col
+            if self._sorted == 'point' or self._sorted == 'feature':
+                sorted = self._sorted
+                self._sorted = None
+                self._sortInternal(sorted)
+            assert all(self.data.row[:] == row[:]) # _sortInternal incorrect
+            assert all(self.data.col[:] == col[:]) # _sortInternal incorrect
 
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
