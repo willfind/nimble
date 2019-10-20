@@ -45,6 +45,10 @@ class MatrixElements(Elements):
                 currRet = toTransform(currVal, i, j)
 
             self._source.data[i, j] = currRet
+            # numpy modified data due to int dtype
+            if self._source.data[i, j] != currRet:
+                self._source.data = self._source.data.astype(numpy.float)
+                self._source.data[i, j] = currRet
 
     ################################
     # Higher Order implementations #

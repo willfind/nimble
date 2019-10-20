@@ -7855,6 +7855,18 @@ class StructureModifying(StructureShared):
         orig2.points.transform(invert)
         assert orig2 == exp2
 
+    def test_points_transform_conversionWhenIntType(self):
+
+        def addTenth(pt):
+            return [v + 0.1 for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.points.transform(addTenth)
+        assert orig == exp
+
     ########################
     # features.transform() #
     ########################
@@ -8020,6 +8032,18 @@ class StructureModifying(StructureShared):
 
         orig2.features.transform(invert)
         assert orig2 == exp2
+
+    def test_features_transform_conversionWhenIntType(self):
+
+        def addTenth(ft):
+            return [v + 0.1 for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.features.transform(addTenth)
+        assert orig == exp
 
     ##########################
     # elements.transform() #
@@ -8296,6 +8320,18 @@ class StructureModifying(StructureShared):
 
         orig3.elements.transform(invert, preserveZeros=True)
         assert orig3 == exp3
+
+    def test_elements_transform_conversionWhenIntType(self):
+
+        def addTenth(elem):
+            return elem + 0.1
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.elements.transform(addTenth)
+        assert orig == exp
 
     ##############
     # fillWith() #

@@ -313,6 +313,18 @@ class HighLevelDataSafe(DataTestObject):
         ret2 = orig2.points.calculate(invert)
         assert ret2 == exp2
 
+    def test_points_calculate_conversionWhenIntType(self):
+
+        def addTenth(pt):
+            return [v + 0.1 for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.points.calculate(addTenth)
+        assert ret == exp
+
     ##########################
     # .features.calculate() #
     #########################
@@ -545,6 +557,18 @@ class HighLevelDataSafe(DataTestObject):
         ret2 = orig2.features.calculate(invert)
         assert ret2 == exp2
 
+    def test_features_calculate_conversionWhenIntType(self):
+
+        def addTenth(ft):
+            return [v + 0.1 for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.features.calculate(addTenth)
+        assert ret == exp
+
     #######################
     # .elements.calculate #
     #######################
@@ -739,6 +763,18 @@ class HighLevelDataSafe(DataTestObject):
 
         ret3 = orig3.elements.calculate(invert, preserveZeros=True)
         assert ret3 == exp3
+
+    def test_elements_calculate_conversionWhenIntType(self):
+
+        def addTenth(elem):
+            return elem + 0.1
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.elements.calculate(addTenth)
+        assert ret == exp
 
     ######################
     # points.mapReduce() #

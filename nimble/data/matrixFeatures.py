@@ -13,6 +13,7 @@ from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
 from .features_view import FeaturesView
+from .dataHelpers import allDataIdentical
 
 class MatrixFeatures(MatrixAxis, Features):
     """
@@ -56,7 +57,11 @@ class MatrixFeatures(MatrixAxis, Features):
                 if numpy.issubdtype(self._source.data.dtype, numpy.number):
                     self._source.data = self._source.data.astype(numpy.object_)
 
-            self._source.data[:, j] = numpy.array(currRet)
+            self._source.data[:, j] = currRet
+            # numpy modified data due to int dtype
+            if not allDataIdentical(self._source.data[:, j], currRet):
+                self._source.data = self._source.data.astype(numpy.float)
+                self._source.data[:, j] = currRet
 
     # def _flattenToOne_implementation(self):
     #     numElements = len(self._source.points) * len(self._source.features)

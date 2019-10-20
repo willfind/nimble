@@ -15,6 +15,7 @@ from .points import Points
 from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
+from .dataHelpers import allDataIdentical
 
 class MatrixPoints(MatrixAxis, Points):
     """
@@ -57,8 +58,12 @@ class MatrixPoints(MatrixAxis, Points):
                 # need self.data to be object dtype if inserting object dtype
                 if numpy.issubdtype(self._source.data.dtype, numpy.number):
                     self._source.data = self._source.data.astype(numpy.object_)
-            reshape = (1, len(self._source.features))
-            self._source.data[i, :] = numpy.array(currRet).reshape(reshape)
+
+            self._source.data[i, :] = currRet
+            # numpy modified data due to int dtype
+            if not allDataIdentical(self._source.data[i, :], currRet):
+                self._source.data = self._source.data.astype(numpy.float)
+                self._source.data[i, :] = currRet
 
     # def _flattenToOne_implementation(self):
     #     numElements = len(self._source.points) * len(self._source.features)
