@@ -1700,6 +1700,11 @@ class HighLevelDataSafe(DataTestObject):
 
         assert isMissing == expObj
 
+        # None is converted to nan by createData, here we explicitly pass the
+        # value the underlying representation uses, so we avoid making it
+        # look like None is considered a numeric
+        raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
+        obj = self.constructor(raw)
         exp = [[True, False, True], [False, False, False], [False, True, False]]
 
         expObj = self.constructor(exp)
@@ -1789,7 +1794,10 @@ class HighLevelDataSafe(DataTestObject):
 
         assert allMissing == expObj
 
-        raw = [['a', None, 'c'], [numpy.nan, None, -3], [0, 'zero', 0]]
+        # None is converted to nan by createData, here we explicitly pass the
+        # value the underlying representation uses, so we avoid making it
+        # look like None is considered a numeric
+        raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
         obj = self.constructor(raw)
 
         exp = [[True], [False], [True]]
