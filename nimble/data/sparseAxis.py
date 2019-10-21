@@ -191,6 +191,7 @@ class SparseAxis(Axis):
                 startIdx = endIdx
 
         repeated = coo_matrix((repData, (repRow, repCol)), shape=shape)
+        self._source._sorted = None
 
         return repeated
 
@@ -234,7 +235,7 @@ class SparseAxis(Axis):
 
         if structure != 'copy':
             self._source.data = notTargeted.tocoo()
-            self._source._sortInternal(self._axis)
+            self._source._sorted = None
 
         ret = targeted.tocoo()
 
@@ -289,6 +290,7 @@ class SparseAxis(Axis):
             keepData = numpy.array(keepData, dtype=dtype)
             self._source.data = coo_matrix((keepData, (keepRows, keepCols)),
                                            shape=selfShape)
+            self._source._sorted = None
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetData = numpy.array(targetData, dtype=dtype)
         ret = coo_matrix((targetData, (targetRows, targetCols)),

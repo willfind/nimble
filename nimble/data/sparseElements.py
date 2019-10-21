@@ -129,6 +129,7 @@ class SparseElements(Elements):
             self._source.data = raw.tocoo()
         else:
             self._source.data = coo_matrix(raw, shape=self._source.data.shape)
+        self._source._sorted = None
 
     ######################
     # Structural helpers #
@@ -161,6 +162,7 @@ class SparseElements(Elements):
         self._source.referenceDataFrom(ret, useLog=False)
         self._source.points.setNames(pnames, useLog=False)
         self._source.features.setNames(fnames, useLog=False)
+        self._source._sorted = None
 
 
     def _transformEachElement_zeroPreserve_implementation(
