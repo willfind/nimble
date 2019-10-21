@@ -47,6 +47,9 @@ class Elements(object):
     def __iter__(self):
         return ElementIterator(self._source)
 
+    def __bool__(self):
+        return bool(self._source)
+
     #########################
     # Structural Operations #
     #########################

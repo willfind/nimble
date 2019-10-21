@@ -16,7 +16,7 @@ _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
 points.getIndices, features.getIndices, constructIndicesList, copy
-features.hasName, points.hasName
+features.hasName, points.hasName, __bool__
 """
 
 from __future__ import absolute_import
@@ -1100,9 +1100,9 @@ class LowLevelBackend(object):
         assert len(nn.points) == 11
         assert len(nn.features) == 33
 
-    ###########
+    ############
     # __bool__ #
-    ###########
+    ############
     @noLogEntryExpected
     def test_bool_handmade(self):
         bothEmpty = self.constructor(psize=0, fsize=0)
@@ -1131,6 +1131,20 @@ class LowLevelBackend(object):
         noEmpty = self.constructor(psize=4, fsize=4)
         assert bool(noEmpty.points)
         assert bool(noEmpty.features)
+
+    #####################
+    # elements.__bool__ #
+    #####################
+    @noLogEntryExpected
+    def test_elements_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.elements)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.elements)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty.elements)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.elements)
 
     #########################
     # constructIndicesList #

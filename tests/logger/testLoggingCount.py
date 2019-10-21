@@ -333,7 +333,7 @@ axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
                      'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__iter__']
+elementsDunder_tested = ['Elements.__bool__', 'Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 
