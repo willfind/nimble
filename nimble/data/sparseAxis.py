@@ -47,7 +47,7 @@ class SparseAxis(Axis):
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
         # SparseView or object dtype
-        if (self._source.data.data is None
+        if (isinstance(self._source, nimble.data.BaseView)
                 or self._source.data.data.dtype == numpy.object_):
             return self._structuralIterative_implementation(
                 structure, targetList, pointNames, featureNames)

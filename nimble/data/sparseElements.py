@@ -88,7 +88,7 @@ class SparseElements(Elements):
 
     def _countUnique_implementation(self, points, features):
         uniqueCount = {}
-        isView = self._source.data.data is None
+        isView = isinstance(self._source, nimble.data.BaseView)
         if points is None and features is None and not isView:
             source = self._source
         else:
