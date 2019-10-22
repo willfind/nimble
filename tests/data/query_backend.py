@@ -221,6 +221,11 @@ class QueryBackend(DataTestObject):
 
         assertNoNamesGenerated(toWrite)
 
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, fileFormat='csv')
+
+        assertNoNamesGenerated(toWrite)
+
     def test_writeFile_CSVauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
         tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -298,6 +303,30 @@ class QueryBackend(DataTestObject):
 
         excludeAxis('point')
         excludeAxis('feature')
+
+    @noLogEntryExpected
+    def test_writeFile_CSVhandmade_extraCommas(self):
+        """ Test writeFile() when data and names contain commas """
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
+
+        # instantiate object
+        data = [[1, 2, 'a'], [1, 2, 'a,b'], [2, 4, 'a,b,c'], [0, 0, 'd']]
+        pointNames = ['1', 'one,1', '2', '0,zero']
+        featureNames = ['one,1', 'two', '3,three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        # call writeFile
+        toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+
+        # read it back into a different object, then test equality
+        # must specify featureNames=True because 'automatic' will not detect
+        readObj = self.constructor(data=tmpFile.name, featureNames=True)
+
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
+
+        assert toWrite == orig
 
     @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
