@@ -40,46 +40,46 @@ class ListPoints(ListAxis, Points):
         if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore
-            start = self._source.view(pointEnd=breakIdx).copy('pythonlist')
-            end = self._source.view(pointStart=restartIdx).copy('pythonlist')
+            start = self._base.view(pointEnd=breakIdx).copy('pythonlist')
+            end = self._base.view(pointStart=restartIdx).copy('pythonlist')
             allData = start + insert + end
         elif insertBefore == 0:
-            allData = insert + self._source.copy('pythonlist')
+            allData = insert + self._base.copy('pythonlist')
         else:
-            allData = self._source.copy('pythonlist') + insert
-        
-        self._source.data = allData
+            allData = self._base.copy('pythonlist') + insert
+
+        self._base.data = allData
 
     def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
-            if len(currRet) != len(self._source.features):
+            if len(currRet) != len(self._base.features):
                 msg = "function must return an iterable with as many elements "
                 msg += "as features in this object"
                 raise InvalidArgumentValue(msg)
 
-            self._source.data[i] = currRet
+            self._base.data[i] = currRet
 
     # def _flattenToOne_implementation(self):
-    #     onto = self._source.data[0]
-    #     for _ in range(1, len(self._source.points)):
-    #         onto += self._source.data[1]
-    #         del self._source.data[1]
+    #     onto = self._base.data[0]
+    #     for _ in range(1, len(self._base.points)):
+    #         onto += self._base.data[1]
+    #         del self._base.data[1]
     #
-    #     self._source._numFeatures = len(onto)
+    #     self._base._numFeatures = len(onto)
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     result = []
     #     numPoints = divideInto
-    #     numFeatures = len(self._source.features) // numPoints
+    #     numFeatures = len(self._base.features) // numPoints
     #     for i in range(numPoints):
-    #         temp = self._source.data[0][(i*numFeatures):((i+1)*numFeatures)]
+    #         temp = self._base.data[0][(i*numFeatures):((i+1)*numFeatures)]
     #         result.append(temp)
     #
-    #     self._source.data = result
-    #     self._source._numFeatures = numFeatures
+    #     self._base.data = result
+    #     self._base._numFeatures = numFeatures
 
     ################################
     # Higher Order implementations #
@@ -90,7 +90,7 @@ class ListPoints(ListAxis, Points):
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
         collapseData = []
         retainData = []
-        for pt in self._source.data:
+        for pt in self._base.data:
             collapseFeatures = []
             retainFeatures = []
             for idx in collapseIndices:
@@ -104,23 +104,23 @@ class ListPoints(ListAxis, Points):
             featuresToCollapse, retainData, numpy.array(collapseData),
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._source.data = tmpData.tolist()
-        self._source._numFeatures = numRetFeatures
+        self._base.data = tmpData.tolist()
+        self._base._numFeatures = numRetFeatures
 
     def _combineByExpandingFeatures_implementation(
             self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
                                                 uniqueNames, numRetFeatures)
 
-        self._source.data = tmpData.tolist()
-        self._source._numFeatures = numRetFeatures
+        self._base.data = tmpData.tolist()
+        self._base._numFeatures = numRetFeatures
 
     #########################
     # Query implementations #
     #########################
 
     def _nonZeroIterator_implementation(self):
-        return nzIt(self._source)
+        return nzIt(self._base)
 
 class ListPointsView(PointsView, AxisView, ListPoints):
     """
@@ -133,7 +133,7 @@ class nzIt(object):
     Non-zero iterator to return when iterating through each point.
     """
     def __init__(self, source):
-        self._source = source
+        self._base = source
         self._pIndex = 0
         self._pStop = len(source.points)
         self._fIndex = 0
@@ -147,7 +147,7 @@ class nzIt(object):
         Get next non zero value.
         """
         while self._pIndex < self._pStop:
-            value = self._source.data[self._pIndex][self._fIndex]
+            value = self._base.data[self._pIndex][self._fIndex]
 
             self._fIndex += 1
             if self._fIndex >= self._fStop:

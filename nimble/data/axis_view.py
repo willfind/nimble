@@ -23,18 +23,19 @@ class AxisView(Axis):
         passed further up into the hierarchy if needed.
     """
     def _getNames(self):
+        # _base is always a view object
         if isinstance(self, Points):
-            start = self._source._pStart
-            end = self._source._pEnd
+            start = self._base._pStart
+            end = self._base._pEnd
             if not self._namesCreated():
-                self._source._source.points._setAllDefault()
-            namesList = self._source._source.pointNamesInverse
+                self._base._source.points._setAllDefault()
+            namesList = self._base._source.pointNamesInverse
         else:
-            start = self._source._fStart
-            end = self._source._fEnd
+            start = self._base._fStart
+            end = self._base._fEnd
             if not self._namesCreated():
-                self._source._source.features._setAllDefault()
-            namesList = self._source._source.featureNamesInverse
+                self._base._source.features._setAllDefault()
+            namesList = self._base._source.featureNamesInverse
 
         return namesList[start:end]
 
@@ -45,24 +46,26 @@ class AxisView(Axis):
         return [self._getIndex(n) for n in names]
 
     def _getIndexByName(self, name):
+        # _base is always a view object
         if isinstance(self, Points):
-            start = self._source._pStart
-            end = self._source._pEnd
-            possible = self._source._source.points.getIndex(name)
+            start = self._base._pStart
+            end = self._base._pEnd
+            possible = self._base._source.points.getIndex(name)
         else:
-            start = self._source._fStart
-            end = self._source._fEnd
-            possible = self._source._source.features.getIndex(name)
+            start = self._base._fStart
+            end = self._base._fEnd
+            possible = self._base._source.features.getIndex(name)
         if start <= possible < end:
             return possible - start
         else:
             raise KeyError(name)
 
     def _namesCreated(self):
+        # _base is always a view object
         if isinstance(self, Points):
-            return not self._source._source.pointNames is None
+            return not self._base._source.pointNames is None
         else:
-            return not self._source._source.featureNames is None
+            return not self._base._source.featureNames is None
 
     def _getIndices(self, names):
         return [self._getIndex(n) for n in names]

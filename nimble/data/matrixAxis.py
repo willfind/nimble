@@ -44,13 +44,13 @@ class MatrixAxis(Axis):
         pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
             axisVal = 0
-            ret = self._source.data[targetList]
+            ret = self._base.data[targetList]
         else:
             axisVal = 1
-            ret = self._source.data[:, targetList]
+            ret = self._base.data[:, targetList]
 
         if structure != 'copy':
-            self._source.data = numpy.delete(self._source.data,
+            self._base.data = numpy.delete(self._base.data,
                                              targetList, axisVal)
 
         return nimble.data.Matrix(ret, pointNames=pointNames,
@@ -59,9 +59,9 @@ class MatrixAxis(Axis):
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
-            self._source.data = self._source.data[indexPosition, :]
+            self._base.data = self._base.data[indexPosition, :]
         else:
-            self._source.data = self._source.data[:, indexPosition]
+            self._base.data = self._base.data[:, indexPosition]
 
 
     ##############################
@@ -69,12 +69,12 @@ class MatrixAxis(Axis):
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._source,
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
                                                              self._axis)
-        if numpy.array_equal(self._source.data, uniqueData):
-            return self._source.copy()
+        if numpy.array_equal(self._base.data, uniqueData):
+            return self._base.copy()
 
-        axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
+        axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
         if isinstance(self, Points):
             return nimble.createData('Matrix', uniqueData, pointNames=axisNames,
@@ -94,9 +94,9 @@ class MatrixAxis(Axis):
             ptDim = 1
             ftDim = totalCopies
         if copyValueByValue:
-            repeated = numpy.repeat(self._source.data, totalCopies, axis)
+            repeated = numpy.repeat(self._base.data, totalCopies, axis)
         else:
-            repeated = numpy.tile(self._source.data, (ptDim, ftDim))
+            repeated = numpy.tile(self._base.data, (ptDim, ftDim))
         return repeated
 
     ####################

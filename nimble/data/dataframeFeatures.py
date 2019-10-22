@@ -39,33 +39,33 @@ class DataFrameFeatures(DataFrameAxis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self._source.data.iloc[:, :insertBefore]
-        endData = self._source.data.iloc[:, insertBefore:]
-        self._source.data = pd.concat((startData, toAdd.data, endData), axis=1)
-        self._source._updateName(axis='feature')
+        startData = self._base.data.iloc[:, :insertBefore]
+        endData = self._base.data.iloc[:, insertBefore:]
+        self._base.data = pd.concat((startData, toAdd.data, endData), axis=1)
+        self._base._updateName(axis='feature')
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            if len(currRet) != len(self._source.points):
+            if len(currRet) != len(self._base.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise InvalidArgumentValue(msg)
 
-            self._source.data.iloc[:, j] = currRet
+            self._base.data.iloc[:, j] = currRet
 
     # def _flattenToOne_implementation(self):
-    #     numElements = len(self._source.points) * len(self._source.features)
-    #     self._source.data = pd.DataFrame(
-    #         self._source.data.values.reshape((numElements, 1), order='F'))
+    #     numElements = len(self._base.points) * len(self._base.features)
+    #     self._base.data = pd.DataFrame(
+    #         self._base.data.values.reshape((numElements, 1), order='F'))
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numFeatures = divideInto
-    #     numPoints = len(self._source.points) // numFeatures
-    #     self._source.data = pd.DataFrame(
-    #         self._source.data.values.reshape((numPoints, numFeatures),
+    #     numPoints = len(self._base.points) // numFeatures
+    #     self._base.data = pd.DataFrame(
+    #         self._base.data.values.reshape((numPoints, numFeatures),
     #                                         order='F'))
 
     ################################
@@ -74,26 +74,26 @@ class DataFrameFeatures(DataFrameAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
                               dtype=numpy.object_)
 
-        tmpData[:, :featureIndex] = self._source.data.values[:, :featureIndex]
+        tmpData[:, :featureIndex] = self._base.data.values[:, :featureIndex]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = self._source.data.values[:, featureIndex + 1:]
+        existingData = self._base.data.values[:, featureIndex + 1:]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._source.data = pd.DataFrame(tmpData)
+        self._base.data = pd.DataFrame(tmpData)
 
     #########################
     # Query implementations #
     #########################
 
     def _nonZeroIterator_implementation(self):
-        return nzIt(self._source)
+        return nzIt(self._base)
 
 class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):
     """
@@ -106,7 +106,7 @@ class nzIt(object):
     Non-zero iterator to return when iterating through each feature.
     """
     def __init__(self, source):
-        self._source = source
+        self._base = source
         self._pIndex = 0
         self._pStop = len(source.points)
         self._fIndex = 0
@@ -120,7 +120,7 @@ class nzIt(object):
         Get next non zero value.
         """
         while self._fIndex < self._fStop:
-            value = self._source.data.iloc[self._pIndex, self._fIndex]
+            value = self._base.data.iloc[self._pIndex, self._fIndex]
 
             self._pIndex += 1
             if self._pIndex >= self._pStop:

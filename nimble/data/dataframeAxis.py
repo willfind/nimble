@@ -47,9 +47,9 @@ class DataFrameAxis(Axis):
         update self.data.index or self.data.columns
         """
         if isinstance(self, Points):
-            self._source.data.index = range(len(self._source.data.index))
+            self._base.data.index = range(len(self._base.data.index))
         else:
-            self._source.data.columns = range(len(self._source.data.columns))
+            self._base.data.columns = range(len(self._base.data.columns))
 
     ##############################
     # Structural implementations #
@@ -65,7 +65,7 @@ class DataFrameAxis(Axis):
         each function handles the returned value, these are managed
         separately by each frontend function.
         """
-        df = self._source.data
+        df = self._base.data
 
         pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
@@ -89,21 +89,21 @@ class DataFrameAxis(Axis):
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
-            self._source.data = self._source.data.iloc[indexPosition, :]
+            self._base.data = self._base.data.iloc[indexPosition, :]
         else:
-            self._source.data = self._source.data.iloc[:, indexPosition]
+            self._base.data = self._base.data.iloc[:, indexPosition]
 
     ##############################
     # High Level implementations #
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._source,
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
                                                              self._axis)
         uniqueData = pd.DataFrame(uniqueData)
-        if numpy.array_equal(self._source.data.values, uniqueData):
-            return self._source.copy()
-        axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
+        if numpy.array_equal(self._base.data.values, uniqueData):
+            return self._base.copy()
+        axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
 
         if isinstance(self, Points):
@@ -125,10 +125,10 @@ class DataFrameAxis(Axis):
             ptDim = 1
             ftDim = totalCopies
         if copyValueByValue:
-            repeated = numpy.repeat(self._source.data.values, totalCopies,
+            repeated = numpy.repeat(self._base.data.values, totalCopies,
                                     axis)
         else:
-            repeated = numpy.tile(self._source.data.values, (ptDim, ftDim))
+            repeated = numpy.tile(self._base.data.values, (ptDim, ftDim))
         return pd.DataFrame(repeated)
 
     ####################

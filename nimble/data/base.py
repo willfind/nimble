@@ -229,7 +229,7 @@ class Base(object):
         """
         Get the object containing point-based methods for this object.
         """
-        return BasePoints(source=self)
+        return BasePoints(base=self)
 
     @property
     def points(self):
@@ -242,7 +242,7 @@ class Base(object):
         """
         Get the object containing feature-based methods for this object.
         """
-        return BaseFeatures(source=self)
+        return BaseFeatures(base=self)
 
     @property
     def features(self):
@@ -255,7 +255,7 @@ class Base(object):
         """
         Get the object containing element-based methods for this object.
         """
-        return BaseElements(source=self)
+        return BaseElements(base=self)
 
     @property
     def elements(self):
