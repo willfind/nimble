@@ -136,7 +136,7 @@ class Matrix(Base):
 
                 outFile.write(fnamesLine)
 
-        with open(outPath, 'ab') as outFile:#python3 need this.
+        with open(outPath, 'a') as outFile:#python3 need this.
             if includePointNames:
                 pnames = numpy2DArray(self.points.getNames())
                 pnames = pnames.transpose()

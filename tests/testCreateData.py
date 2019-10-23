@@ -186,6 +186,27 @@ def test_createData_CSV_data_ListOnly_noComment():
 
         assert fromList == fromCSV
 
+def test_createData_CSV_data_unicodeCharacters():
+    """ Test of createData() loading a csv file with unicode characters """
+    for t in returnTypes:
+        data = [['P', "\u2119"] ,['Y', "\u01B4" ],['T', "\u2602"],
+                ['H', "\u210C"], ['O', "\u00F8"], ['N', "\u1F24"]]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("P,\u2119\n")
+            tmpCSV.write("Y,\u01B4\n")
+            tmpCSV.write("T,\u2602\n")
+            tmpCSV.write("H,\u210C\n")
+            tmpCSV.write("O,\u00F8\n")
+            tmpCSV.write("N,\u1F24\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
 
 def test_createData_MTXArr_data():
     """ Test of createData() loading a mtx (arr format) file, default params """
