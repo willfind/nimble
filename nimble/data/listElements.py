@@ -16,8 +16,8 @@ class ListElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : List
+        The List instance that will be queried and modified.
     """
 
     ##############################
@@ -79,6 +79,11 @@ class ListElements(Elements):
 
 class ListElementsView(ElementsView, ListElements):
     """
-    Limit functionality of ListElements to read-only
+    Limit functionality of ListElements to read-only.
+
+    Parameters
+    ----------
+    base : ListView
+        The ListView instance that will be queried.
     """
     pass

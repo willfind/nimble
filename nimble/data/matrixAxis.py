@@ -23,8 +23,8 @@ class MatrixAxis(Axis):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Matrix
+        The Matrix instance that will be queried and modified.
     """
 
     ##############################

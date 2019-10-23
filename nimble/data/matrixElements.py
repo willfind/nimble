@@ -20,8 +20,8 @@ class MatrixElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Matrix
+        The Matrix instance that will be queried and modified.
     """
 
     ##############################
@@ -86,6 +86,11 @@ class MatrixElements(Elements):
 
 class MatrixElementsView(ElementsView, MatrixElements):
     """
-    Limit functionality of MatrixElements to read-only
+    Limit functionality of MatrixElements to read-only.
+
+    Parameters
+    ----------
+    base : MatrixView
+        The MatrixView instance that will be queried.
     """
     pass

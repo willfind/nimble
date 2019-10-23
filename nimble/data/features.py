@@ -24,6 +24,11 @@ from nimble.exceptions import InvalidArgumentValueCombination
 class Features(object):
     """
     Methods that can be called on a nimble Base objects feature axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
     def __init__(self, base):
         self._base = base

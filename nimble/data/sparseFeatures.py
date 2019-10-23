@@ -23,8 +23,8 @@ class SparseFeatures(SparseAxis, Features):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Sparse
+        The Sparse instance that will be queried and modified.
     """
 
     ##############################
@@ -97,7 +97,12 @@ class SparseFeatures(SparseAxis, Features):
 
 class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
     """
-    Limit functionality of SparseFeatures to read-only
+    Limit functionality of SparseFeatures to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
     """
 
     #########################

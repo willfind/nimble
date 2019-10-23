@@ -22,8 +22,8 @@ class SparseElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Sparse
+        The Sparse instance that will be queried and modified.
     """
 
     ##############################
@@ -184,6 +184,11 @@ class SparseElements(Elements):
 
 class SparseElementsView(ElementsView, SparseElements):
     """
-    Limit functionality of SparseElements to read-only
+    Limit functionality of SparseElements to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
     """
     pass

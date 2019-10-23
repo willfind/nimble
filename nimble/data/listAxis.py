@@ -25,8 +25,8 @@ class ListAxis(Axis):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : List
+        The List instance that will be queried and modified.
     """
 
     ##############################

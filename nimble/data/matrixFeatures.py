@@ -20,8 +20,8 @@ class MatrixFeatures(MatrixAxis, Features):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Matrix
+        The Matrix instance that will be queried and modified.
     """
 
     ##############################
@@ -99,7 +99,12 @@ class MatrixFeatures(MatrixAxis, Features):
 
 class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     """
-    Limit functionality of MatrixFeatures to read-only
+    Limit functionality of MatrixFeatures to read-only.
+
+    Parameters
+    ----------
+    base : MatrixView
+        The MatrixView instance that will be queried.
     """
     pass
 
@@ -108,7 +113,7 @@ class nzIt(object):
     Non-zero iterator to return when iterating through each feature.
     """
     def __init__(self, source):
-        self._base = source
+        self._source = source
         self._pIndex = 0
         self._pStop = len(source.points)
         self._fIndex = 0
@@ -122,7 +127,7 @@ class nzIt(object):
         Get next non zero value.
         """
         while self._fIndex < self._fStop:
-            value = self._base.data[self._pIndex, self._fIndex]
+            value = self._source.data[self._pIndex, self._fIndex]
 
             self._pIndex += 1
             if self._pIndex >= self._pStop:

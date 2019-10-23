@@ -23,8 +23,8 @@ class DataFrameElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
     """
 
     ##############################
@@ -90,6 +90,11 @@ class DataFrameElements(Elements):
 
 class DataFrameElementsView(ElementsView, DataFrameElements):
     """
-    Limit functionality of DataFrameElements to read-only
+    Limit functionality of DataFrameElements to read-only.
+
+    Parameters
+    ----------
+    base : DataFrameView
+        The DataFrameView instance that will be queried.
     """
     pass

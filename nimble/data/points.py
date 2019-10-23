@@ -21,6 +21,11 @@ from nimble.exceptions import ImproperObjectAction
 class Points(object):
     """
     Methods that can be called on a nimble Base objects point axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
     def __init__(self, base):
         self._base = base

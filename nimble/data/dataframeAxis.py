@@ -25,8 +25,8 @@ class DataFrameAxis(Axis):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
     """
     def _setName_implementation(self, oldIdentifier, newName):
         super(DataFrameAxis, self)._setName_implementation(oldIdentifier,

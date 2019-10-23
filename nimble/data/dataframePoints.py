@@ -27,8 +27,8 @@ class DataFramePoints(DataFrameAxis, Points):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
     """
 
     ##############################
@@ -102,7 +102,12 @@ class DataFramePoints(DataFrameAxis, Points):
 
 class DataFramePointsView(PointsView, AxisView, DataFramePoints):
     """
-    Limit functionality of DataFramePoints to read-only
+    Limit functionality of DataFramePoints to read-only.
+
+    Parameters
+    ----------
+    base : DataFrameView
+        The DataFrameView instance that will be queried.
     """
     pass
 
@@ -111,7 +116,7 @@ class nzIt(object):
     Non-zero iterator to return when iterating through each point.
     """
     def __init__(self, source):
-        self._base = source
+        self._source = source
         self._pIndex = 0
         self._pStop = len(source.points)
         self._fIndex = 0
@@ -125,7 +130,7 @@ class nzIt(object):
         Get next non zero value.
         """
         while self._pIndex < self._pStop:
-            value = self._base.data.iloc[self._pIndex, self._fIndex]
+            value = self._source.data.iloc[self._pIndex, self._fIndex]
 
             self._fIndex += 1
             if self._fIndex >= self._fStop:

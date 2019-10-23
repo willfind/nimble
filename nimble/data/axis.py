@@ -43,13 +43,15 @@ class Axis(object):
     """
     Differentiate how methods act dependent on the axis.
 
-    Also includes abstract methods which will be required to perform
-    data-type and axis specific operations.
+    This class provides backend methods for methods in Points and
+    Features that share a common implementation along both axes and
+    across data-types. Additionally, methods which require data-type
+    specific implementations are defined here as abstract methods.
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Base
+        The Base instance that will be queried or modified.
     """
     def __init__(self, base, **kwargs):
         self._base = base
@@ -196,12 +198,11 @@ class Axis(object):
     def _copy(self, toCopy, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
-        source = self._base
         if isinstance(self, Points):
-            ret.features.setNames(source.features._getNamesNoGeneration(),
+            ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
         else:
-            ret.points.setNames(source.points._getNamesNoGeneration(),
+            ret.points.setNames(self._base.points._getNamesNoGeneration(),
                                 useLog=False)
 
         ret._absPath = self._base.absolutePath
@@ -1893,8 +1894,8 @@ class AxisIterator(object):
     """
     Object providing iteration through each item in the axis.
     """
-    def __init__(self, source):
-        self._base = source
+    def __init__(self, axisObj):
+        self._axisObj = axisObj
         self._position = 0
 
     def __iter__(self):
@@ -1904,11 +1905,11 @@ class AxisIterator(object):
         """
         Get next item
         """
-        if isinstance(self._base, Points):
-            viewer = self._base._base.pointView
+        if isinstance(self._axisObj, Points):
+            viewer = self._axisObj._base.pointView
         else:
-            viewer = self._base._base.featureView
-        if self._position < len(self._base):
+            viewer = self._axisObj._base.featureView
+        if self._position < len(self._axisObj):
             value = viewer(self._position)
             self._position += 1
             return value

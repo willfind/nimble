@@ -34,8 +34,8 @@ class Elements(object):
 
     Parameters
     ----------
-    source : nimble Base object
-        The object containing the elements.
+    base : Base
+        The Base instance that will be queried and modified.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
@@ -781,7 +781,7 @@ class ElementIterator(object):
     Object providing iteration through each item in the axis.
     """
     def __init__(self, source):
-        self._base = source
+        self._source = source
         self._ptPosition = 0
         self._ftPosition = 0
 
@@ -792,9 +792,9 @@ class ElementIterator(object):
         """
         Get next item
         """
-        while self._ptPosition < len(self._base.points):
-            while self._ftPosition < len(self._base.features):
-                value = self._base[self._ptPosition, self._ftPosition]
+        while self._ptPosition < len(self._source.points):
+            while self._ftPosition < len(self._source.features):
+                value = self._source[self._ptPosition, self._ftPosition]
                 self._ftPosition += 1
                 return value
             self._ptPosition += 1
