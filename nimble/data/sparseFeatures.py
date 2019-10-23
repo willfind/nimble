@@ -132,7 +132,7 @@ class nzIt(object):
     #
     # safety: somehow check that your sorting setup hasn't changed
     def __init__(self, source):
-        self._baseIter = iter(source.features)
+        self._sourceIter = iter(source.features)
         self._currGroup = None
         self._index = 0
 
@@ -151,7 +151,7 @@ class nzIt(object):
                 if value != 0:
                     return value
             except Exception:
-                self._currGroup = next(self._baseIter)
+                self._currGroup = next(self._sourceIter)
                 self._index = 0
 
     def __next__(self):

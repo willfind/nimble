@@ -56,7 +56,6 @@ class SparseAxis(Axis):
             structure, targetList, pointNames, featureNames)
 
     def _sort_implementation(self, indexPosition):
-        source = self._base
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
         reverseIdxPosition = numpy.empty(len(indexPosition))
@@ -64,10 +63,10 @@ class SparseAxis(Axis):
             reverseIdxPosition[idxPos] = i
 
         if isinstance(self, Points):
-            source.data.row[:] = reverseIdxPosition[source.data.row]
+            self._base.data.row[:] = reverseIdxPosition[self._base.data.row]
         else:
-            source.data.col[:] = reverseIdxPosition[source.data.col]
-        source._sorted = None
+            self._base.data.col[:] = reverseIdxPosition[self._base.data.col]
+        self._base._sorted = None
 
     def _transform_implementation(self, function, limitTo):
         modData = []
@@ -403,7 +402,7 @@ class nzIt(object):
     is sorted before instantiation.
     """
     def __init__(self, source):
-        self._base = source
+        self._source = source
         self._index = 0
 
     def __iter__(self):
@@ -413,8 +412,8 @@ class nzIt(object):
         """
         Get next non zero value.
         """
-        while self._index < len(self._base.data.data):
-            value = self._base.data.data[self._index]
+        while self._index < len(self._source.data.data):
+            value = self._source.data.data[self._index]
 
             self._index += 1
             if value != 0:
