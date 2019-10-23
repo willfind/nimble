@@ -998,18 +998,20 @@ class Base(object):
         includePointNames = includeNames
         if includePointNames:
             seen = False
-            for name in self.points.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.points._getNamesNoGeneration() is not None:
+                for name in self.points.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includePointNames = False
 
         includeFeatureNames = includeNames
         if includeFeatureNames:
             seen = False
-            for name in self.features.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.features._getNamesNoGeneration() is not None:
+                for name in self.features.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includeFeatureNames = False
 
