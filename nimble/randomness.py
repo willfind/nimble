@@ -8,7 +8,7 @@ import random
 
 import numpy
 
-from .importExternalLibraries import importModule
+from . import importModule
 from .logger import handleLogging
 
 shogun = importModule('shogun')

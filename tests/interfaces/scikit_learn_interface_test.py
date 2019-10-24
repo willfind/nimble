@@ -28,7 +28,7 @@ from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 scipy = nimble.importModule('scipy.sparse')
-sklearn = nimble.importExternalLibraries.importModule("sklearn")
+sklearn = nimble.importModule("sklearn")
 
 packageName = 'sciKitLearn'
 

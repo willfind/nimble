@@ -17,7 +17,7 @@ from nimble.exceptions import InvalidArgumentValue
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
-keras = nimble.importExternalLibraries.importModule("keras")
+keras = nimble.importModule("keras")
 
 keraSkipDec = SkipMissing('Keras')
 

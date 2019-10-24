@@ -16,7 +16,7 @@ from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-mlpy = nimble.importExternalLibraries.importModule("mlpy")
+mlpy = nimble.importModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 
