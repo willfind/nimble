@@ -410,6 +410,9 @@ class Base(object):
         msg += ") are both greater than 1"
         raise TypeError(msg)
 
+    def __bool__(self):
+        return self._pointCount > 0 and self._featureCount > 0
+
     def nameIsDefault(self):
         """
         Returns True if self.name has a default value
