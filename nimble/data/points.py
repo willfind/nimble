@@ -157,11 +157,13 @@ class Points(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
         The index of a point name.
 
-        Return the index location of the provided point ``name``.
+        Return the index location of the point ``identifier``. The
+        ``identifier`` can be a point name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -174,7 +176,7 @@ class Points(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -182,8 +184,10 @@ class Points(object):
         ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndex('c')
         2
+        >>> data.points.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -203,7 +207,7 @@ class Points(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -293,7 +297,7 @@ class Points(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -827,6 +831,7 @@ class Points(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a point will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison
@@ -838,7 +843,8 @@ class Points(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1125,7 +1131,7 @@ class Points(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1442,7 +1448,7 @@ class Points(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------
@@ -1987,7 +1993,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod

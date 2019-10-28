@@ -160,11 +160,13 @@ class Features(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
-        The index of a feature name.
+        The index of a feature.
 
-        Return the index location of the provided feature ``name``.
+        Return the index location of the feature ``identifier``. The
+        ``identifier`` can be a feature name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -177,7 +179,7 @@ class Features(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -185,8 +187,10 @@ class Features(object):
         ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndex('c')
         2
+        >>> data.features.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -206,7 +210,7 @@ class Features(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -296,7 +300,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -562,6 +566,7 @@ class Features(object):
             )
 
         Select a set number to extract, choosing features at random.
+
         >>> data = nimble.identity('List', 3)
         >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.features.extract(number=2,
@@ -887,6 +892,7 @@ class Features(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a feature will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison
@@ -898,7 +904,8 @@ class Features(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1132,7 +1139,7 @@ class Features(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1440,7 +1447,7 @@ class Features(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------
@@ -1932,7 +1939,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod
