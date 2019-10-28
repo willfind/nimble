@@ -48,7 +48,7 @@ class Elements(object):
         return ElementIterator(self._base)
 
     def __bool__(self):
-        return bool(self._source)
+        return bool(self._base)
 
     #########################
     # Structural Operations #
