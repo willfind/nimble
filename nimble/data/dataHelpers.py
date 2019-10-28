@@ -510,9 +510,9 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
     scorer = None
     comparator = None
     if axisAttr == 'points':
-        test = obj._source.pointView(0)
+        test = obj._base.pointView(0)
     else:
-        test = obj._source.featureView(0)
+        test = obj._base.featureView(0)
     try:
         sortHelper(test)
         scorer = sortHelper

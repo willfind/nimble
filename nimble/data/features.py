@@ -24,9 +24,14 @@ from nimble.exceptions import InvalidArgumentValueCombination
 class Features(object):
     """
     Methods that can be called on a nimble Base objects feature axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
-    def __init__(self, source):
-        self._source = source
+    def __init__(self, base):
+        self._base = base
         super(Features, self).__init__()
 
     ########################
@@ -1692,7 +1697,7 @@ class Features(object):
 
         splitList = []
         numResultingFts = len(resultingNames)
-        for i, value in enumerate(self._source[:, feature]):
+        for i, value in enumerate(self._base[:, feature]):
             if isinstance(rule, six.string_types):
                 splitList.append(value.split(rule))
             elif isinstance(rule, (int, numpy.number)):
@@ -1736,11 +1741,11 @@ class Features(object):
         fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
-        self._source._featureCount = numRetFeatures
+        self._base._featureCount = numRetFeatures
         self.setNames(fNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'features.splitByParsing',
-                      self._source.getTypeString(), Features.splitByParsing,
+                      self._base.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
     def repeat(self, totalCopies, copyFeatureByFeature):

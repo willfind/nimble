@@ -1076,7 +1076,7 @@ class Sparse(Base):
         Since Views set self.data.data to None, we need to copy the view
         to gain access to the coo_matrix data.
         """
-        if self.data.data is None:
+        if isinstance(self, BaseView):
             selfData = self.copy().data
         else:
             selfData = self.data

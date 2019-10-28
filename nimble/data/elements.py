@@ -34,18 +34,18 @@ class Elements(object):
 
     Parameters
     ----------
-    source : nimble Base object
-        The object containing the elements.
+    base : Base
+        The Base instance that will be queried and modified.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
+    def __init__(self, base, **kwds):
+        self._base = base
         super(Elements, self).__init__(**kwds)
 
     def __iter__(self):
-        return ElementIterator(self._source)
+        return ElementIterator(self._base)
 
     def __bool__(self):
         return bool(self._source)
@@ -171,9 +171,9 @@ class Elements(object):
             )
         """
         if points is not None:
-            points = constructIndicesList(self._source, 'point', points)
+            points = constructIndicesList(self._base, 'point', points)
         if features is not None:
-            features = constructIndicesList(self._source, 'feature', features)
+            features = constructIndicesList(self._base, 'feature', features)
 
         transformer = validateElementFunction(toTransform, preserveZeros,
                                               skipNoneReturnValues,
@@ -182,7 +182,7 @@ class Elements(object):
         self._transform_implementation(transformer, points, features)
 
         handleLogging(useLog, 'prep', 'elements.transform',
-                      self._source.getTypeString(), Elements.transform,
+                      self._base.getTypeString(), Elements.transform,
                       toTransform, points, features, preserveZeros,
                       skipNoneReturnValues)
 
@@ -318,7 +318,7 @@ class Elements(object):
                                       outputType)
 
         handleLogging(useLog, 'prep', 'elements.calculate',
-                      self._source.getTypeString(), Elements.calculate,
+                      self._base.getTypeString(), Elements.calculate,
                       toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
 
@@ -369,11 +369,11 @@ class Elements(object):
 
         ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
 
-        ret.points.setNames(self._source.points._getNamesNoGeneration())
-        ret.features.setNames(self._source.features._getNamesNoGeneration())
+        ret.points.setNames(self._base.points._getNamesNoGeneration())
+        ret.features.setNames(self._base.features._getNamesNoGeneration())
 
         handleLogging(useLog, 'prep', 'elements.matching',
-                      self._source.getTypeString(), Elements.matching,
+                      self._base.getTypeString(), Elements.matching,
                       toMatch)
 
         return ret
@@ -516,38 +516,38 @@ class Elements(object):
             msg = "'other' must be an instance of a nimble data object"
             raise InvalidArgumentType(msg)
 
-        if len(self._source.points) != len(other.points):
+        if len(self._base.points) != len(other.points):
             msg = "The number of points in each object must be equal."
             raise InvalidArgumentValue(msg)
-        if len(self._source.features) != len(other.features):
+        if len(self._base.features) != len(other.features):
             msg = "The number of features in each object must be equal."
             raise InvalidArgumentValue(msg)
 
-        if len(self._source.points) == 0 or len(self._source.features) == 0:
+        if len(self._base.points) == 0 or len(self._base.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperObjectAction(msg)
 
-        self._source._validateEqualNames('point', 'point',
+        self._base._validateEqualNames('point', 'point',
                                          'elements.multiply', other)
-        self._source._validateEqualNames('feature', 'feature',
+        self._base._validateEqualNames('feature', 'feature',
                                          'elements.multiply', other)
 
         try:
             self._multiply_implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
-            self._source._numericValidation()
+            self._base._numericValidation()
             other._numericValidation(right=True)
             raise e
 
-        retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
+        retNames = dataHelpers.mergeNonDefaultNames(self._base, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self._source.points.setNames(retPNames, useLog=False)
-        self._source.features.setNames(retFNames, useLog=False)
+        self._base.points.setNames(retPNames, useLog=False)
+        self._base.features.setNames(retFNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'elements.multiply',
-                      self._source.getTypeString(), Elements.multiply, other)
+                      self._base.getTypeString(), Elements.multiply, other)
 
 
     def power(self, other, useLog=None):
@@ -598,14 +598,14 @@ class Elements(object):
 
         if isinstance(other, nimble.data.Base):
             # same shape
-            if len(self._source.points) != len(other.points):
+            if len(self._base.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
                 raise InvalidArgumentValue(msg)
-            if len(self._source.features) != len(other.features):
+            if len(self._base.features) != len(other.features):
                 msg = "The number of features in each object must be equal."
                 raise InvalidArgumentValue(msg)
 
-        if len(self._source.points) == 0 or len(self._source.features) == 0:
+        if len(self._base.points) == 0 or len(self._base.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperObjectAction(msg)
 
@@ -614,7 +614,7 @@ class Elements(object):
                 try:
                     return val ** other[pnum, fnum]
                 except Exception as e:
-                    self._source._numericValidation()
+                    self._base._numericValidation()
                     other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
@@ -623,13 +623,13 @@ class Elements(object):
                 try:
                     return val ** other
                 except Exception as e:
-                    self._source._numericValidation()
+                    self._base._numericValidation()
                     other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
 
         handleLogging(useLog, 'prep', 'elements.power',
-                      self._source.getTypeString(), Elements.power, other)
+                      self._base.getTypeString(), Elements.power, other)
 
     ########################
     # Higher Order Helpers #
@@ -639,14 +639,14 @@ class Elements(object):
                            preserveZeros=False, skipNoneReturnValues=False,
                            outputType=None, allowBoolOutput=False):
         if points is not None:
-            points = constructIndicesList(self._source, 'point', points)
+            points = constructIndicesList(self._base, 'point', points)
         if features is not None:
-            features = constructIndicesList(self._source, 'feature', features)
+            features = constructIndicesList(self._base, 'feature', features)
 
         if outputType is not None:
             optType = outputType
         else:
-            optType = self._source.getTypeString()
+            optType = self._base.getTypeString()
         # Use vectorized for functions with oneArg
         if calculator.oneArg:
             vectorized = numpy.vectorize(calculator)
@@ -655,16 +655,16 @@ class Elements(object):
 
         else:
             if not points:
-                points = list(range(len(self._source.points)))
+                points = list(range(len(self._base.points)))
             if not features:
-                features = list(range(len(self._source.features)))
+                features = list(range(len(self._base.features)))
             # if unable to vectorize, iterate over each point
             values = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
                 f = 0
                 for fj in features:
-                    value = self._source[pi, fj]
+                    value = self._base[pi, fj]
                     if calculator.oneArg:
                         currRet = calculator(value)
                     else:
@@ -683,8 +683,8 @@ class Elements(object):
 
         ret = nimble.createData(optType, values, **createDataKwargs)
 
-        ret._absPath = self._source.absolutePath
-        ret._relPath = self._source.relativePath
+        ret._absPath = self._base.absolutePath
+        ret._relPath = self._base.relativePath
 
         return ret
 
@@ -694,12 +694,12 @@ class Elements(object):
         if points:
             points = numpy.array(points)
         else:
-            points = numpy.array(range(len(self._source.points)))
+            points = numpy.array(range(len(self._base.points)))
         if features:
             features = numpy.array(features)
         else:
-            features = numpy.array(range(len(self._source.features)))
-        toCalculate = self._source.copy(to='numpyarray')
+            features = numpy.array(range(len(self._base.features)))
+        toCalculate = self._base.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:
