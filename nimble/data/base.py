@@ -32,6 +32,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
+from nimble.utility import OptionalPackage
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -45,7 +46,7 @@ from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 
-cloudpickle = nimble.importModule('cloudpickle')
+cloudpickle = OptionalPackage('cloudpickle')
 
 mplError = None
 try:

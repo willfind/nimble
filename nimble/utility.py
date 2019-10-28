@@ -7,11 +7,12 @@ without risk of circular imports.
 """
 from __future__ import absolute_import
 import inspect
+import importlib
 
 import numpy
 
 # nimble.exceptions may be imported
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, PackageException
 
 
 def isFunction(func):
@@ -42,14 +43,6 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
-# class Array2D(numpy.ndarray):
-#     def __init__(self, *args, **kwargs):
-#         super(self, Array2D).__init__(*args, **kwargs)
-#         if len(self.shape) == 1:
-#             self.reshape((1, -1))
-#         elif len(self.shape) > 2:
-#             raise InvalidArgumentValue('data cannot exceed two-dimensions')
-
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     ret = numpy.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
                       ndmin=2)
@@ -59,3 +52,51 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
 
 def is2DArray(arr):
     return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
+
+class OptionalPackage(object):
+    def __init__(self, name):
+        self.name = name
+        self.imported = None
+
+    def __bool__(self):
+        self._import()
+        return self.imported is not None
+
+    def _import(self):
+        """
+        Attempt to import package and set the imported attribute, if
+        unsuccessful raise PackageException.
+        """
+        if self.imported is None:
+            try:
+                mod = importlib.import_module(self.name)
+                self.imported = mod
+            except ImportError:
+                pass
+
+    def __getattr__(self, name):
+        """
+        If the attribute is a submodule, return a new OptionalPackage
+        for the submodule, otherwise return the attribute object.  If
+        the module has not been imported before attempted to access this
+        attribute and import fails, a PackageException will be raised,
+        if the module has imported but the attribute does not exist an
+        AttributeError will be raised. In all successful cases,the
+        attribute is set for this object so it is immediately
+        identifiable in the future.
+        """
+        try:
+            asSubmodule = '.'.join([self.name, name])
+            submod = importlib.import_module(asSubmodule)
+            setattr(self, name, OptionalPackage(asSubmodule))
+            return OptionalPackage(asSubmodule)
+        except ImportError:
+            pass
+        self._import()
+        if self.imported is None and name != '__wrapped__':
+            msg = 'This operation requires the {0} package '.format(self.name)
+            msg += 'to be installed'
+            raise PackageException(msg)
+        ret = getattr(self.imported, name)
+        setattr(self, name, ret)
+        return ret

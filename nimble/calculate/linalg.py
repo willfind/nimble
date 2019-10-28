@@ -10,8 +10,9 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.utility import OptionalPackage
 
-scipy = nimble.importModule('scipy')
+scipy = OptionalPackage('scipy')
 
 def inverse(aObj):
     """
@@ -52,7 +53,7 @@ def inverse(aObj):
          [1.500  -0.500]]
         )
     """
-    if scipy is None:
+    if not scipy:
         msg = "scipy must be installed in order to use the inverse function."
         raise PackageException(msg)
     if not isinstance(aObj, nimble.data.Base):
@@ -150,7 +151,7 @@ def pseudoInverse(aObj, method='svd'):
          [0.000  0.000  0.000  0.000 ]]
         )
     """
-    if scipy is None:
+    if not scipy:
         msg = "scipy must be installed in order to use the pseudoInverse function."
         raise PackageException(msg)
     if not isinstance(aObj, nimble.data.Base):

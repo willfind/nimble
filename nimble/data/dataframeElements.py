@@ -9,13 +9,12 @@ import itertools
 import numpy as np
 
 import nimble
+from nimble.utility import OptionalPackage
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
 
-pd = nimble.importModule('pandas')
-if pd:
-    import pandas as pd
+pd = OptionalPackage('pandas')
 
 class DataFrameElements(Elements):
     """

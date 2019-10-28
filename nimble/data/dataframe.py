@@ -13,6 +13,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import OptionalPackage
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -22,8 +23,8 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 
-pd = nimble.importModule('pandas')
-scipy = nimble.importModule('scipy.sparse')
+pd = OptionalPackage('pandas')
+scipy = OptionalPackage('scipy')
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):

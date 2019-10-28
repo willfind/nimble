@@ -8,13 +8,12 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
+from nimble.utility import OptionalPackage
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
+scipy = OptionalPackage('scipy')
 
 class SparseElements(Elements):
     """
@@ -59,7 +58,7 @@ class SparseElements(Elements):
                 function.otypes = [numpy.object_]
                 data = function(data)
             shape = self._source.data.shape
-            values = coo_matrix((data, (row, col)), shape=shape)
+            values = scipy.sparse.coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
             return values
@@ -74,7 +73,8 @@ class SparseElements(Elements):
                     colSubset.append(col[idx])
                     dataSubset.append(val)
             dataSubset = function(dataSubset)
-            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
+            values = scipy.sparse.coo_matrix((dataSubset,
+                                              (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
             return values
@@ -124,11 +124,12 @@ class SparseElements(Elements):
             toMul = other.data
         else:
             toMul = other.copy(to='numpyarray')
-        raw = self._source.data.multiply(coo_matrix(toMul))
+        raw = self._source.data.multiply(scipy.sparse.coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
             self._source.data = raw.tocoo()
         else:
-            self._source.data = coo_matrix(raw, shape=self._source.data.shape)
+            shape = self._source.data.shape
+            self._source.data = scipy.sparse.coo_matrix(raw, shape=shape)
         self._source._sorted = None
 
     ######################

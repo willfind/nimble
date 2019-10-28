@@ -55,12 +55,19 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
-            # each pkg is a tuple (importer, moduleName, isPackage)
-            # we want to ignore anything not in __all__ to prevent trying
-            # to import libraries outside of scikit-learn dependencies
             sklAll = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll
-                    and nimble.importModule(pkg[1]) is not None]
+            ret = []
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # we want to ignore anything not in __all__ and any private
+            # modules to prevent trying to import libraries outside of
+            # scikit-learn dependencies
+            for pkg in packages:
+                nameSplit = pkg[1].split('.')
+                allPublic = all(not n.startswith('_') for n in nameSplit)
+                if nameSplit[1] in sklAll and allPublic:
+                    ret.append(pkg)
+
+            return ret
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:

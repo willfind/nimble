@@ -9,12 +9,13 @@ from abc import abstractmethod
 import numpy
 
 import nimble
+from nimble.utility import OptionalPackage
 from .axis import Axis
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from .points import Points
 
-pd = nimble.importModule('pandas')
+pd = OptionalPackage('pandas')
 
 class DataFrameAxis(Axis):
     """

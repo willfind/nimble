@@ -5,9 +5,9 @@ import numpy
 
 import nimble
 from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.utility import OptionalPackage
 
-scipy = nimble.importModule('scipy.stats')
-
+scipy = OptionalPackage('scipy')
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
     """Helper to calculate the confidence interval, given a vector of errors

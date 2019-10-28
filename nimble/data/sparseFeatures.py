@@ -8,14 +8,13 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
+from nimble.utility import OptionalPackage
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .features import Features
 from .features_view import FeaturesView
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
+scipy = OptionalPackage('scipy')
 
 class SparseFeatures(SparseAxis, Features):
     """
@@ -91,8 +90,8 @@ class SparseFeatures(SparseAxis, Features):
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
         shape = (len(self._source.points), numRetFeatures)
-        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
-                                       shape=shape)
+        self._source.data = scipy.sparse.coo_matrix(
+            (tmpData, (tmpRow, tmpCol)), shape=shape)
         self._source._sorted = None
 
 class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):

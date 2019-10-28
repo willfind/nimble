@@ -16,10 +16,10 @@ from six.moves import range
 import numpy
 
 import nimble
-from nimble import importModule
+from nimble.utility import OptionalPackage
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 
-pd = importModule('pandas')
+pd = OptionalPackage('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
