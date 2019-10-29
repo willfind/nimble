@@ -24,6 +24,7 @@ from .sparseElements import SparseElements, SparseElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
 scipy = nimble.importModule('scipy')
 if scipy is not None:
@@ -132,16 +133,7 @@ class Sparse(Base):
         outFile = open(outPath, 'w')
 
         if includeFeatureNames:
-            def combine(a, b):
-                return a + ',' + b
-
-            fnames = self.features.getNames()
-            fnamesLine = reduce(combine, fnames)
-            fnamesLine += '\n'
-            if includePointNames:
-                outFile.write('pointNames,')
-
-            outFile.write(fnamesLine)
+            self._writeFeatureNamesToCSV(outFile, includePointNames)
 
         # sort by rows first, then columns
         placement = numpy.lexsort((self.data.col, self.data.row))
@@ -153,13 +145,13 @@ class Sparse(Base):
         pmax = len(self.data.data)
         for i in range(len(self.points)):
             if includePointNames:
-                currPname = self.points.getName(i)
+                currPname = csvCommaFormat(self.points.getName(i))
                 outFile.write(currPname)
                 outFile.write(',')
             for j in range(len(self.features)):
                 if (pointer < pmax and i == self.data.row[pointer]
                         and j == self.data.col[pointer]):
-                    value = self.data.data[pointer]
+                    value = csvCommaFormat(self.data.data[pointer])
                     pointer = pointer + 1
                 else:
                     value = 0
@@ -170,29 +162,6 @@ class Sparse(Base):
             outFile.write('\n')
 
         outFile.close()
-
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -1332,3 +1301,15 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
+
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileCSV_implementation(outPath, includePointNames,
+                                              includeFeatureNames)
+
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileMTX_implementation(outPath, includePointNames,
+                                              includeFeatureNames)

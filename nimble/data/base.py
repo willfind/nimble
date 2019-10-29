@@ -44,6 +44,7 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
 cloudpickle = nimble.importModule('cloudpickle')
 
@@ -1030,20 +1031,20 @@ class Base(object):
             if not seen:
                 includeFeatureNames = False
 
-        try:
-            self._writeFile_implementation(
-                outPath, fileFormat, includePointNames, includeFeatureNames)
-        except Exception:
-            if fileFormat.lower() == "csv":
-                toOut = self.copy(to="Matrix")
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
-            if fileFormat.lower() == "mtx":
-                toOut = self.copy(to='Sparse')
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
+        if fileFormat.lower() == "csv":
+            self._writeFileCSV_implementation(
+                outPath, includePointNames, includeFeatureNames)
+        elif fileFormat.lower() == "mtx":
+            self._writeFileMTX_implementation(
+                outPath, includePointNames, includeFeatureNames)
+
+    def _writeFeatureNamesToCSV(self, openFile, includePointNames):
+        fnames = list(map(csvCommaFormat, self.features.getNames()))
+        if includePointNames:
+            fnames.insert(0, 'pointNames')
+        fnamesLine = ','.join(fnames)
+        fnamesLine += '\n'
+        openFile.write(fnamesLine)
 
     def save(self, outputPath):
         """
@@ -4653,8 +4654,13 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        pass
+
+    @abstractmethod
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         pass
 
     @abstractmethod
