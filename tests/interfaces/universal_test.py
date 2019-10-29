@@ -403,6 +403,9 @@ def backend_warningscapture(toCall, prepCall=None):
 
     ignored = [DeprecationWarning, PendingDeprecationWarning, FutureWarning,
                ImportWarning]
+
+    # some warnings should have been captured
+    assert len(warnCall) > 0
     assert not any(c.category in ignored for c in warnCall)
     # some calls capture multiple times but each time 7 should be caught
     assert len(warnCall) % 7 == 0
