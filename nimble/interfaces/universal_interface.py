@@ -11,6 +11,7 @@ import abc
 import functools
 import sys
 import numbers
+import warnings
 
 import numpy
 import six
@@ -38,17 +39,26 @@ cloudpickle = nimble.importModule('cloudpickle')
 
 def captureOutput(toWrap):
     """
-    Decorator which will safely redirect standard error within the
-    wrapped function to the temp file at nimble.capturedErr.
+    Decorator which will safely ignore certain warnings.
+
+    Prevent any warnings from displaying that do not apply directly to
+    the operation being run. This can be overridden by -W options at the
+    command line or the PYTHONWARNINGS environment variable.
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
-        backupErr = sys.stderr
-        sys.stderr = nimble.capturedErr
-        try:
+        # user has not already provided warnings filters
+        if not sys.warnoptions:
+            with warnings.catch_warnings():
+                # filter out warnings that we do not need users to see
+                warnings.simplefilter('ignore', DeprecationWarning)
+                warnings.simplefilter('ignore', FutureWarning)
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
+                warnings.simplefilter('ignore', ImportWarning)
+
+                ret = toWrap(*args, **kwarguments)
+        else:
             ret = toWrap(*args, **kwarguments)
-        finally:
-            sys.stderr = backupErr
         return ret
 
     return wrapped

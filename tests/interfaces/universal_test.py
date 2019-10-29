@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import sys
 import tempfile
 import os
+import warnings
 
 from nose.tools import raises
 
@@ -279,40 +280,44 @@ def test_eachExposedPresent():
 
 class AlwaysWarnInterface(UniversalInterface):
     def __init__(self):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
         super(AlwaysWarnInterface, self).__init__()
 
-    def writeWarningToStdErr(self):
-        try: #py2
-            sys.stderr.write('WARN TEST\n')
-        except TypeError: #py3
-            sys.stderr.write(b'WARN TEST\n')
+    def issueWarnings(self):
+        # Warnings that should not be ignored
+        warnings.warn('Warning is NOT ignored', Warning)
+        warnings.warn('UserWarning is NOT ignored', UserWarning)
+        warnings.warn('SyntaxWarning is NOT ignored', SyntaxWarning)
+        warnings.warn('RuntimeWarning is NOT ignored', RuntimeWarning)
+        warnings.warn('UnicodeWarning is NOT ignored', UnicodeWarning)
+        warnings.warn('BytesWarning is NOT ignored', BytesWarning)
+        warnings.warn('ResourceWarning is NOT ignored', ResourceWarning)
+        # warnings we ignore
+        warnings.warn('DeprecationWarning is ignored', DeprecationWarning)
+        warnings.warn('FutureWarning is ignored', FutureWarning)
+        warnings.warn('ImportWarning is ignored', ImportWarning)
+        warnings.warn('PendingDeprecationWarning is ignored',
+                      PendingDeprecationWarning)
 
     def accessible(self):
         return True
 
     def _listLearnersBackend(self):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return ['foo']
 
     def _findCallableBackend(self, name):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return 'fooCallableBackend'
 
     def _getParameterNamesBackend(self, name):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return [[]]
 
     def _getLearnerParameterNamesBackend(self, name):
         return self._getParameterNames(name)
 
     def _getDefaultValuesBackend(self, name):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return [{}]
 
     def _getLearnerDefaultValuesBackend(self, name):
@@ -323,15 +328,13 @@ class AlwaysWarnInterface(UniversalInterface):
 
     def _getScores(self, learnerName, learner, testX, newArguments,
                    storedArguments, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         num = len(testX.points)
         raw = [0] * num
         return nimble.createData("Matrix", raw, useLog=False)
 
     def _getScoresOrder(self, learner):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return [0, 1]
 
     def isAlias(self, name):
@@ -344,34 +347,28 @@ class AlwaysWarnInterface(UniversalInterface):
         return "AlwaysWarn"
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return (trainX, trainY, testX, arguments)
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return outputValue
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return (learnerName, trainX, trainY, arguments)
 
     def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         pass
 
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         return testX
 
     def _getAttributes(self, learnerBackend):
-        self.writeWarningToStdErr()
-        sys.stderr.flush()
+        self.issueWarnings()
         pass
 
     def _optionDefaults(self, option):
@@ -391,29 +388,24 @@ class AlwaysWarnInterface(UniversalInterface):
 #	AWObject = AlwaysWarnInterface()
 
 def backend_warningscapture(toCall, prepCall=None):
-    tempErr = tempfile.NamedTemporaryFile()
-    backup = sys.stderr
-    sys.stderr = tempErr
+    """
+    Only 7 out of the 11 warnings issued should be captured, the rest
+    are ignored.
+    """
+    if prepCall is not None:
+        AWObject = AlwaysWarnInterface()
+        arg = prepCall(AWObject)
+    else:
+        arg = AlwaysWarnInterface()
 
-    try:
-        if prepCall is not None:
-            AWObject = AlwaysWarnInterface()
-            arg = prepCall(AWObject)
-        else:
-            arg = AlwaysWarnInterface()
-
-        startSizeErr = os.path.getsize(tempErr.name)
-        startSizeCap = os.path.getsize(nimble.capturedErr.name)
-
+    with warnings.catch_warnings(record=True) as warnCall:
         toCall(arg)
 
-        endSizeErr = os.path.getsize(tempErr.name)
-        endSizeCap = os.path.getsize(nimble.capturedErr.name)
-
-        assert startSizeErr == endSizeErr
-        assert startSizeCap != endSizeCap
-    finally:
-        sys.stderr = backup
+    ignored = [DeprecationWarning, PendingDeprecationWarning, FutureWarning,
+               ImportWarning]
+    assert not any(c.category in ignored for c in warnCall)
+    # some calls capture multiple times but each time 7 should be caught
+    assert len(warnCall) % 7 == 0
 
 
 def test_warningscapture_train():
