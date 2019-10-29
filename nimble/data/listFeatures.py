@@ -20,8 +20,8 @@ class ListFeatures(ListAxis, Features):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : List
+        The List instance that will be queried and modified.
     """
 
     ##############################
@@ -38,56 +38,56 @@ class ListFeatures(ListAxis, Features):
         if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore
-            start = self._source.view(featureEnd=breakIdx).copy('pythonlist')
-            end = self._source.view(featureStart=restartIdx).copy('pythonlist')
+            start = self._base.view(featureEnd=breakIdx).copy('pythonlist')
+            end = self._base.view(featureStart=restartIdx).copy('pythonlist')
             zipChunks = zip(start, insert, end)
             allData = list(map(lambda pt: pt[0] + pt[1] + pt[2], zipChunks))
         elif insertBefore == 0:
-            end = self._source.copy('pythonlist')
+            end = self._base.copy('pythonlist')
             allData = list(map(lambda pt: pt[0] + pt[1], zip(insert, end)))
         else:
-            start = self._source.copy('pythonlist')
+            start = self._base.copy('pythonlist')
             allData = list(map(lambda pt: pt[0] + pt[1], zip(start, insert)))
 
-        self._source.data = allData
-        self._source._numFeatures += len(toAdd.features)
+        self._base.data = allData
+        self._base._numFeatures += len(toAdd.features)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            if len(currRet) != len(self._source.points):
+            if len(currRet) != len(self._base.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise InvalidArgumentValue(msg)
 
-            for i in range(len(self._source.points)):
-                self._source.data[i][j] = currRet[i]
+            for i in range(len(self._base.points)):
+                self._base.data[i][j] = currRet[i]
 
     # def _flattenToOne_implementation(self):
     #     result = []
-    #     for i in range(len(self._source.features)):
-    #         for p in self._source.data:
+    #     for i in range(len(self._base.features)):
+    #         for p in self._base.data:
     #             result.append([p[i]])
     #
-    #     self._source.data = result
-    #     self._source._numFeatures = 1
+    #     self._base.data = result
+    #     self._base._numFeatures = 1
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     result = []
     #     numFeatures = divideInto
-    #     numPoints = len(self._source.points) // numFeatures
+    #     numPoints = len(self._base.points) // numFeatures
     #     # reconstruct the shape we want, point by point. We access the
     #     # singleton values from the current data in an out of order iteration
     #     for i in range(numPoints):
     #         temp = []
-    #         for j in range(i, len(self._source.points), numPoints):
-    #             temp += self._source.data[j]
+    #         for j in range(i, len(self._base.points), numPoints):
+    #             temp += self._base.data[j]
     #         result.append(temp)
     #
-    #     self._source.data = result
-    #     self._source._numFeatures = numFeatures
+    #     self._base.data = result
+    #     self._base._numFeatures = numFeatures
 
     ################################
     # Higher Order implementations #
@@ -95,32 +95,37 @@ class ListFeatures(ListAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
                               dtype=numpy.object_)
 
         tmpData[:, :featureIndex] = [ft[:featureIndex] for ft
-                                     in self._source.data]
+                                     in self._base.data]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = [ft[featureIndex + 1:] for ft in self._source.data]
+        existingData = [ft[featureIndex + 1:] for ft in self._base.data]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._source.data = tmpData.tolist()
-        self._source._numFeatures = numRetFeatures
+        self._base.data = tmpData.tolist()
+        self._base._numFeatures = numRetFeatures
 
     #########################
     # Query implementations #
     #########################
 
     def _nonZeroIterator_implementation(self):
-        return nzIt(self._source)
+        return nzIt(self._base)
 
 class ListFeaturesView(FeaturesView, AxisView, ListFeatures):
     """
-    Limit functionality of ListFeatures to read-only
+    Limit functionality of ListFeatures to read-only.
+
+    Parameters
+    ----------
+    base : ListView
+        The ListView instance that will be queried.
     """
     pass
 

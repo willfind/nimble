@@ -229,12 +229,16 @@ class Base(object):
         """
         Get the object containing point-based methods for this object.
         """
-        return BasePoints(source=self)
+        return BasePoints(base=self)
 
     @property
     def points(self):
         """
         An object handling functions manipulating data by points.
+
+        See Also
+        --------
+        nimble.data.points.Points
         """
         return self._points
 
@@ -242,12 +246,16 @@ class Base(object):
         """
         Get the object containing feature-based methods for this object.
         """
-        return BaseFeatures(source=self)
+        return BaseFeatures(base=self)
 
     @property
     def features(self):
         """
         An object handling functions manipulating data by features.
+
+        See Also
+        --------
+        nimble.data.features.Features
         """
         return self._features
 
@@ -255,12 +263,16 @@ class Base(object):
         """
         Get the object containing element-based methods for this object.
         """
-        return BaseElements(source=self)
+        return BaseElements(base=self)
 
     @property
     def elements(self):
         """
         An object handling functions manipulating data by each element.
+
+        See Also
+        --------
+        nimble.data.elements.Elements
         """
         return self._elements
 
@@ -409,6 +421,9 @@ class Base(object):
         msg += str(self._featureCount)
         msg += ") are both greater than 1"
         raise TypeError(msg)
+
+    def __bool__(self):
+        return self._pointCount > 0 and self._featureCount > 0
 
     def nameIsDefault(self):
         """
@@ -1682,6 +1697,9 @@ class Base(object):
                             maxColumnWidth))
 
     def plot(self, outPath=None, includeColorbar=False):
+        """
+        Display a plot of the data.
+        """
         self._plot(outPath, includeColorbar)
 
     def _setupOutFormatForPlotting(self, outPath):
@@ -1863,7 +1881,7 @@ class Base(object):
         yMax: int, float
             The largest value shown on the y axis of teh resultant plot.
         sampleSizeForAverage : int
-            The number of samples to use for the caclulation of the
+            The number of samples to use for the calculation of the
             rolling average.
 
         Returns
@@ -2386,7 +2404,8 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, Points.fill, Features.fill
+        fillUsingAllData, nimble.data.points.Points.fill,
+        nimble.data.features.Features.fill
 
         Examples
         --------
@@ -2500,7 +2519,8 @@ class Base(object):
 
         See Also
         --------
-        fillWith, Points.fill, Features.fill
+        fillWith, nimble.data.points.Points.fill,
+        nimble.data.features.Features.fill
 
         Examples
         --------
@@ -3055,6 +3075,7 @@ class Base(object):
         point, feature : str
             The allowed strings for the point and feature arguments are
             as follows:
+
             * 'strict' - The points/features in the callee exactly match
               the points/features in the caller, however, they may be in
               a different order. If ``onFeature`` is None and no names
@@ -3082,7 +3103,7 @@ class Base(object):
 
         See Also
         --------
-        Points.add, Features.add
+        nimble.data.points.Points.add, nimble.data.features.Features.add
 
         Examples
         --------
@@ -3095,6 +3116,7 @@ class Base(object):
         will be included, ``feature='left'`` will only use the features
         from the left object (not shown, in strict cases 'left' will not
         modify the left object at all).
+
         >>> dataL = [["a", 1, 'X'], ["b", 2, 'Y'], ["c", 3, 'Z']]
         >>> fNamesL = ["f1", "f2", "f3"]
         >>> pNamesL = ["p1", "p2", "p3"]
@@ -3130,6 +3152,7 @@ class Base(object):
         ``"id"`` contains a unique value for each point (just as point
         names do). In the example above we matched based on point names,
         here the ``"id"`` feature will be used to match points.
+
         >>> dataL = [["a", 1, 'id1'], ["b", 2, 'id2'], ["c", 3, 'id3']]
         >>> fNamesL = ["f1", "f2", "id"]
         >>> left = nimble.createData("DataFrame", dataL,
@@ -3512,16 +3535,18 @@ class Base(object):
 
     def solveLinearSystem(self, b, solveFunction='solve'):
         """
-       Solves the linear equation A * x = b for unknown x.
+        Solves the linear equation A * x = b for unknown x.
 
-       Parameters
-       ----------
-       b : nimble Base object.
+        Parameters
+        ----------
+        b : nimble Base object.
         Vector shaped object.
-       solveFuction : str
-        * 'solve' - assumes square matrix.
-        * 'least squares' - Computes object x such that 2-norm |b - Ax|
-          is minimized.
+        solveFuction : str
+
+            * 'solve' - assumes square matrix.
+
+            * 'least squares' - Computes object x such that 2-norm
+              determinant of b - A x is minimized.
         """
         if not isinstance(b, Base):
             msg = "b must be an instance of Base."
@@ -3547,6 +3572,9 @@ class Base(object):
     ###############################################################
 
     def matrixMultiply(self, other):
+        """
+        Perform matrix multiplication.
+        """
         return self.__matmul__(other)
 
     def __matmul__(self, other):

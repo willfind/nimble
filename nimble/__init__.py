@@ -1,6 +1,4 @@
 """
-Nimble
-
 Nimble offers interfaces into other machine learning packages and
 tools for data representation and processing. Available at
 the top level in this package are the functions necessary to
