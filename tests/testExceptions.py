@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from nose.tools import raises
 
-from nimble.exceptions import nimbleException
+from nimble.exceptions import NimbleException
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -13,32 +13,32 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import FileFormatException
 
 @raises(TypeError)
-def test_nimbleException_noMessage():
+def test_NimbleException_noMessage():
     # TypeError raised because value missing for __init__
-    raise nimbleException()
+    raise NimbleException()
     assert False
 
-@raises(nimbleException)
-def test_nimbleException_withMessage():
-    raise nimbleException('message')
+@raises(NimbleException)
+def test_NimbleException_withMessage():
+    raise NimbleException('message')
     assert False
 
-def test_nimbleException_strOutput():
+def test_NimbleException_strOutput():
     try:
-        raise nimbleException('message')
+        raise NimbleException('message')
         assert False
-    except nimbleException as e:
+    except NimbleException as e:
         assert str(e) == 'message'
 
-def test_nimbleException_reprOutput():
+def test_NimbleException_reprOutput():
     try:
-        raise nimbleException('message')
+        raise NimbleException('message')
         assert False
-    except nimbleException as e:
-        assert repr(e) == "nimbleException('message')"
+    except NimbleException as e:
+        assert repr(e) == "NimbleException('message')"
 
-def test_nimbleException_customSubClassInheritance():
-    class CustomException(nimbleException):
+def test_NimbleException_customSubClassInheritance():
+    class CustomException(NimbleException):
         pass
 
     try:
@@ -51,7 +51,7 @@ def test_nimbleException_customSubClassInheritance():
     try:
         raise CustomException('custom message')
         assert False
-    except nimbleException:
+    except NimbleException:
         pass
 
     try:
@@ -61,14 +61,14 @@ def test_nimbleException_customSubClassInheritance():
         pass
 
     try:
-        raise nimbleException('exception')
+        raise NimbleException('exception')
         assert False
     except CustomException:
         assert False
-    except nimbleException:
+    except NimbleException:
         pass
 
-def back_nimbleExceptions(exception, subClassOf=None):
+def back_NimbleExceptions(exception, subClassOf=None):
     try:
         raise exception('exception')
         assert False
@@ -78,7 +78,7 @@ def back_nimbleExceptions(exception, subClassOf=None):
     try:
         raise exception('exception')
         assert False
-    except nimbleException:
+    except NimbleException:
         pass
 
     if subClassOf:
@@ -89,22 +89,22 @@ def back_nimbleExceptions(exception, subClassOf=None):
             pass
 
 def test_ImproperObjectAction():
-    back_nimbleExceptions(ImproperObjectAction, TypeError)
+    back_NimbleExceptions(ImproperObjectAction, TypeError)
 
 def test_InvalidArgumentType():
-    back_nimbleExceptions(InvalidArgumentType, TypeError)
+    back_NimbleExceptions(InvalidArgumentType, TypeError)
 
 def test_InvalidArgumentValue():
-    back_nimbleExceptions(InvalidArgumentValue, ValueError)
+    back_NimbleExceptions(InvalidArgumentValue, ValueError)
 
 def test_InvalidArgumentTypeCombination():
-    back_nimbleExceptions(InvalidArgumentTypeCombination, TypeError)
+    back_NimbleExceptions(InvalidArgumentTypeCombination, TypeError)
 
 def test_InvalidArgumentValueCombination():
-    back_nimbleExceptions(InvalidArgumentValueCombination, ValueError)
+    back_NimbleExceptions(InvalidArgumentValueCombination, ValueError)
 
 def test_PackageException():
-    back_nimbleExceptions(PackageException, ImportError)
+    back_NimbleExceptions(PackageException, ImportError)
 
 def test_FileFormatException():
-    back_nimbleExceptions(FileFormatException, ValueError)
+    back_NimbleExceptions(FileFormatException, ValueError)

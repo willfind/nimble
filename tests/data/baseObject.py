@@ -172,8 +172,8 @@ def getOtherPaths(argList, kwargDict):
 def methodObjectValidation(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        if hasattr(self, '_source'):
-            source = self._source
+        if hasattr(self, '_base'):
+            source = self._base
         else:
             source = self
         assert isinstance(source, nimble.data.Base)

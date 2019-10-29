@@ -272,13 +272,11 @@ def infinity(value):
 
     Examples
     --------
-    >>> false(False)
+    >>> infinity(float('inf'))
     True
-    >>> false(0) # False because not boolean type
+    >>> infinity(0)
     False
-    >>> false(True)
-    False
-    >>> false('False')
+    >>> infinity('inf')
     False
     """
     try:

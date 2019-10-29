@@ -25,8 +25,8 @@ class ListAxis(Axis):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : List
+        The List instance that will be queried and modified.
     """
 
     ##############################
@@ -45,30 +45,30 @@ class ListAxis(Axis):
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
         if isinstance(self, Points):
-            satisfying = [self._source.data[pt] for pt in targetList]
+            satisfying = [self._base.data[pt] for pt in targetList]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
-                self._source.data = [self._source.data[pt] for pt in keepList]
+                self._base.data = [self._base.data[pt] for pt in keepList]
             if satisfying == []:
                 return nimble.data.List(satisfying, pointNames=pointNames,
                                         featureNames=featureNames,
-                                        shape=((0, self._source.shape[1])),
+                                        shape=((0, self._base.shape[1])),
                                         checkAll=False, reuseData=True)
 
         else:
-            if self._source.data == []:
+            if self._base.data == []:
                 # create empty matrix with correct shape
-                shape = (len(self._source.points), len(targetList))
+                shape = (len(self._base.points), len(targetList))
                 satisfying = numpy.empty(shape, dtype=numpy.object_)
             else:
-                satisfying = [[self._source.data[pt][ft] for ft in targetList]
-                              for pt in range(len(self._source.points))]
+                satisfying = [[self._base.data[pt][ft] for ft in targetList]
+                              for pt in range(len(self._base.points))]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
-                self._source.data = [[self._source.data[pt][ft] for ft in keepList]
-                                     for pt in range(len(self._source.points))]
-                remainingFts = self._source._numFeatures - len(targetList)
-                self._source._numFeatures = remainingFts
+                self._base.data = [[self._base.data[pt][ft] for ft in keepList]
+                                     for pt in range(len(self._base.points))]
+                remainingFts = self._base._numFeatures - len(targetList)
+                self._base._numFeatures = remainingFts
 
         return nimble.data.List(satisfying, pointNames=pointNames,
                                 featureNames=featureNames,
@@ -77,12 +77,12 @@ class ListAxis(Axis):
     def _sort_implementation(self, indexPosition):
         # run through target axis and change indices
         if isinstance(self, Points):
-            source = copy.copy(self._source.data)
-            for i in range(len(self._source.data)):
-                self._source.data[i] = source[indexPosition[i]]
+            source = copy.copy(self._base.data)
+            for i in range(len(self._base.data)):
+                self._base.data[i] = source[indexPosition[i]]
         else:
-            for i in range(len(self._source.data)):
-                currPoint = self._source.data[i]
+            for i in range(len(self._base.data)):
+                currPoint = self._base.data[i]
                 temp = copy.copy(currPoint)
                 for j in range(len(indexPosition)):
                     currPoint[j] = temp[indexPosition[j]]
@@ -92,13 +92,13 @@ class ListAxis(Axis):
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._source,
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
                                                              self._axis)
         uniqueData = uniqueData.tolist()
-        if self._source.data == uniqueData:
-            return self._source.copy()
+        if self._base.data == uniqueData:
+            return self._base.copy()
 
-        axisNames, offAxisNames = uniqueNameGetter(self._source, self._axis,
+        axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
         if isinstance(self, Points):
             return nimble.createData('List', uniqueData, pointNames=axisNames,
@@ -110,14 +110,14 @@ class ListAxis(Axis):
     def _repeat_implementation(self, totalCopies, copyValueByValue):
         if isinstance(self, Points):
             if copyValueByValue:
-                repeated = [list(lst) for lst in self._source.data
+                repeated = [list(lst) for lst in self._base.data
                             for _ in range(totalCopies)]
             else:
                 repeated = [list(lst) for _ in range(totalCopies)
-                            for lst in self._source.data]
+                            for lst in self._base.data]
         else:
             repeated = []
-            for lst in self._source.data:
+            for lst in self._base.data:
                 if not isinstance(lst, list): # FeatureViewer
                     lst = list(lst)
                 if copyValueByValue:
