@@ -433,9 +433,10 @@ class SessionLogger(object):
     ### LOG OUTPUT ###
     ##################
 
-    def showLog(self, levelOfDetail, leastSessionsAgo, mostSessionsAgo,
-                startDate, endDate, maximumEntries, searchForText, regex,
-                saveToFileName, append):
+    def showLog(self, levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
+                startDate=None, endDate=None, maximumEntries=100,
+                searchForText=None, regex=False, saveToFileName=None,
+                append=False):
         """
         Output data from the logger.
 

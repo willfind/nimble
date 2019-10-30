@@ -6,7 +6,7 @@ pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
-inverse, solveLinearSystem
+inverse, solveLinearSystem, featureReport, summaryReport
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -2818,6 +2818,59 @@ class QueryBackend(DataTestObject):
         bobj = self.constructor(b)
 
         Aobj.solveLinearSystem(bobj, solveFunction='foo')
+
+
+    #################
+    # featureReport #
+    #################
+
+    def test_featureReport_allNumeric(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
+                               featureNames=fnames)
+
+        ret = obj.featureReport()
+        line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
+        line2 = "        one     1.00      3.00    2.00    2.00           0.82             3.00   "
+        line3 = "        two     0.00      4.00    2.00    2.00           1.63             3.00   "
+        line4 = "      three     8.80      9.20    9.00    9.00           0.16             3.00   "
+        expLines = [line1, line2, line3, line4]
+
+        for retLine, expLine in zip(ret.split('\n'), expLines):
+            assert retLine == expLine
+
+    def test_featureReport_withNonNumeric(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 2, 'a'], [2, 1, 'b'], [3, 3, 'c']],
+                               featureNames=fnames)
+
+        ret = obj.featureReport()
+        line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
+        line2 = "        one     1.00      3.00    2.00    2.00           0.82             3.00   "
+        line3 = "        two     1.00      3.00    2.00    2.00           0.82             3.00   "
+        line4 = "      three     nan       nan     nan     nan            nan              3.00   "
+        expLines = [line1, line2, line3, line4]
+
+        for retLine, expLine in zip(ret.split('\n'), expLines):
+            assert retLine == expLine
+
+
+    #################
+    # summaryReport #
+    #################
+
+    def test_summaryReport(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[0, 2, 'a'], [2, None, 'b'], [0, 3, 'c']],
+                               featureNames=fnames)
+
+        ret = obj.summaryReport()
+        line1 = "proportionZero   proportionMissing   Values   Points   Features"
+        line2 = "     0.22               0.11           9        3         3    "
+        expLines = [line1, line2]
+
+        for retLine, expLine in zip(ret.split('\n'), expLines):
+            assert retLine == expLine
 
 ###########
 # Helpers #
