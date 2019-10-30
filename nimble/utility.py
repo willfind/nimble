@@ -57,6 +57,7 @@ class OptionalPackage(object):
     def __init__(self, name):
         self.name = name
         self.imported = None
+        self.errorMsg = None
 
     def __bool__(self):
         self._import()
@@ -71,8 +72,8 @@ class OptionalPackage(object):
             try:
                 mod = importlib.import_module(self.name)
                 self.imported = mod
-            except ImportError:
-                pass
+            except ImportError as e:
+                self.errorMsg = str(e)
 
     def __getattr__(self, name):
         """
@@ -94,8 +95,11 @@ class OptionalPackage(object):
             pass
         self._import()
         if self.imported is None and name != '__wrapped__':
-            msg = 'This operation requires the {0} package '.format(self.name)
-            msg += 'to be installed'
+            msg = "{0} is required to be installed ".format(self.name)
+            msg += "in order to complete this operation."
+            if self.errorMsg:
+                msg += " However, an ImportError with the following message "
+                msg += "was raised: '{0}'".format(self.errorMsg)
             raise PackageException(msg)
         ret = getattr(self.imported, name)
         setattr(self, name, ret)
