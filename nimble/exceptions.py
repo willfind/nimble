@@ -5,7 +5,7 @@ Module defining exceptions to be used in nimble.
 from __future__ import absolute_import
 from six.moves import range
 
-class nimbleException(Exception):
+class NimbleException(Exception):
     """
     Override Python's Exception, requiring a value upon instantiation.
     """
@@ -14,7 +14,7 @@ class nimbleException(Exception):
             raise TypeError("value must be a string")
         self.value = value
         self.className = self.__class__.__name__
-        super(nimbleException, self).__init__(value)
+        super(NimbleException, self).__init__(value)
 
     def __str__(self):
         return self.value
@@ -22,7 +22,7 @@ class nimbleException(Exception):
     def __repr__(self):
         return "{cls}({val})".format(cls=self.className, val=repr(self.value))
 
-class InvalidArgumentType(nimbleException, TypeError):
+class InvalidArgumentType(NimbleException, TypeError):
     """
     Raised when an argument type causes a failure.
 
@@ -32,7 +32,7 @@ class InvalidArgumentType(nimbleException, TypeError):
     """
     pass
 
-class InvalidArgumentValue(nimbleException, ValueError):
+class InvalidArgumentValue(NimbleException, ValueError):
     """
     Raised when an argument value causes a failure.
 
@@ -44,7 +44,7 @@ class InvalidArgumentValue(nimbleException, ValueError):
     """
     pass
 
-class InvalidArgumentTypeCombination(nimbleException, TypeError):
+class InvalidArgumentTypeCombination(NimbleException, TypeError):
     """
     Raised when the types of two or more arguments causes a failure.
 
@@ -55,7 +55,7 @@ class InvalidArgumentTypeCombination(nimbleException, TypeError):
     """
     pass
 
-class InvalidArgumentValueCombination(nimbleException, ValueError):
+class InvalidArgumentValueCombination(NimbleException, ValueError):
     """
     Raised when the values of two or more arguments causes a failure.
 
@@ -66,7 +66,7 @@ class InvalidArgumentValueCombination(nimbleException, ValueError):
     """
     pass
 
-class ImproperObjectAction(nimbleException, TypeError):
+class ImproperObjectAction(NimbleException, TypeError):
     """
     Raised when the characteristics of the object prevent the operation.
 
@@ -76,7 +76,7 @@ class ImproperObjectAction(nimbleException, TypeError):
     """
     pass
 
-class PackageException(nimbleException, ImportError):
+class PackageException(NimbleException, ImportError):
     """
     Raised when a package is not installed, but needed.
 
@@ -84,14 +84,14 @@ class PackageException(nimbleException, ImportError):
     """
     pass
 
-class FileFormatException(nimbleException, ValueError):
+class FileFormatException(NimbleException, ValueError):
     """
     Raised when the formatting of a file is not as expected.
     """
     pass
 
 
-def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
     Used in the creation of exception messages to display lists in a more
     appealing way than default
@@ -110,8 +110,8 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     return ret
 
 
-def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
-                     delim='=', valueStr=str):
+def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+                      delim='=', valueStr=str):
     """
     Used in the creation of exception messages to display dicts in a more
     appealing way than default.

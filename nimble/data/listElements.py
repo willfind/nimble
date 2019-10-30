@@ -16,8 +16,8 @@ class ListElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : List
+        The List instance that will be queried and modified.
     """
 
     ##############################
@@ -25,10 +25,10 @@ class ListElements(Elements):
     ##############################
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self._source.points)),
-                                range(len(self._source.features)))
+        IDs = itertools.product(range(len(self._base.points)),
+                                range(len(self._base.features)))
         for i, j in IDs:
-            currVal = self._source.data[i][j]
+            currVal = self._base.data[i][j]
 
             if points is not None and i not in points:
                 continue
@@ -40,7 +40,7 @@ class ListElements(Elements):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self._source.data[i][j] = currRet
+            self._base.data[i][j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -56,7 +56,7 @@ class ListElements(Elements):
     #########################
 
     def _countUnique_implementation(self, points, features):
-        return denseCountUnique(self._source, points, features)
+        return denseCountUnique(self._base, points, features)
 
     #############################
     # Numerical implementations #
@@ -71,14 +71,19 @@ class ListElements(Elements):
         different, but the returned object will be the inplace
         modification of the calling object.
         """
-        for pNum in range(len(self._source.points)):
-            for fNum in range(len(self._source.features)):
+        for pNum in range(len(self._base.points)):
+            for fNum in range(len(self._base.features)):
                 # Divided by 1 to make it raise if it involves non-numeric
                 # types ('str')
-                self._source.data[pNum][fNum] *= other[pNum, fNum] / 1
+                self._base.data[pNum][fNum] *= other[pNum, fNum] / 1
 
 class ListElementsView(ElementsView, ListElements):
     """
-    Limit functionality of ListElements to read-only
+    Limit functionality of ListElements to read-only.
+
+    Parameters
+    ----------
+    base : ListView
+        The ListView instance that will be queried.
     """
     pass

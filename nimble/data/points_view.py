@@ -16,14 +16,13 @@ exceptionDocstring = exceptionDocstringFactory(Points)
 @inheritDocstringsFactory(Points)
 class PointsView(Points):
     """
-    Class defining read only view objects, which have the same api as a
-    normal Axis object, but disallow all methods which could change the
-    data.
+    Class limiting the Points class to read-only by disallowing methods
+    which could change the data.
 
     Parameters
     ----------
-    source : nimble data object
-        The nimble object that this is a view into.
+    base : BaseView
+        The BaseView instance that will be queried.
     """
 
     ####################################

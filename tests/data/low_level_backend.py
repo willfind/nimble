@@ -16,7 +16,7 @@ _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
 points.getIndices, features.getIndices, constructIndicesList, copy
-features.hasName, points.hasName
+features.hasName, points.hasName, __bool__
 """
 
 from __future__ import absolute_import
@@ -1099,6 +1099,52 @@ class LowLevelBackend(object):
         nn = self.constructor(psize=11, fsize=33)
         assert len(nn.points) == 11
         assert len(nn.features) == 33
+
+    ############
+    # __bool__ #
+    ############
+    @noLogEntryExpected
+    def test_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty)
+
+    #######################################
+    # points.__bool__ / features.__bool__ #
+    #######################################
+    @noLogEntryExpected
+    def test_axis_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.points)
+        assert not bool(bothEmpty.features)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.points)
+        assert bool(pointEmpty.features)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert bool(featEmpty.points)
+        assert not bool(featEmpty.features)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.points)
+        assert bool(noEmpty.features)
+
+    #####################
+    # elements.__bool__ #
+    #####################
+    @noLogEntryExpected
+    def test_elements_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.elements)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.elements)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty.elements)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.elements)
 
     #########################
     # constructIndicesList #

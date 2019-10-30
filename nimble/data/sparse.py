@@ -852,9 +852,9 @@ class Sparse(Base):
             row = self.data.row
             col = self.data.col
             if self._sorted == 'point' or self._sorted == 'feature':
-                sorted = self._sorted
+                sortedAxis = self._sorted
                 self._sorted = None
-                self._sortInternal(sorted)
+                self._sortInternal(sortedAxis)
             assert all(self.data.row[:] == row[:]) # _sortInternal incorrect
             assert all(self.data.col[:] == col[:]) # _sortInternal incorrect
 
@@ -1074,7 +1074,7 @@ class Sparse(Base):
         Since Views set self.data.data to None, we need to copy the view
         to gain access to the coo_matrix data.
         """
-        if self.data.data is None:
+        if isinstance(self, BaseView):
             selfData = self.copy().data
         else:
             selfData = self.data

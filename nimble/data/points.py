@@ -21,9 +21,14 @@ from nimble.exceptions import ImproperObjectAction
 class Points(object):
     """
     Methods that can be called on a nimble Base objects point axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
-    def __init__(self, source):
-        self._source = source
+    def __init__(self, base):
+        self._base = base
         super(Points, self).__init__()
 
     ########################
@@ -152,11 +157,13 @@ class Points(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
         The index of a point name.
 
-        Return the index location of the provided point ``name``.
+        Return the index location of the point ``identifier``. The
+        ``identifier`` can be a point name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -169,7 +176,7 @@ class Points(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -177,8 +184,10 @@ class Points(object):
         ...                        pointNames=['a', 'b', 'c', 'd'])
         >>> data.points.getIndex('c')
         2
+        >>> data.points.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -198,7 +207,7 @@ class Points(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -288,7 +297,7 @@ class Points(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -822,6 +831,7 @@ class Points(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a point will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison
@@ -833,7 +843,8 @@ class Points(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1120,7 +1131,7 @@ class Points(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1437,7 +1448,7 @@ class Points(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------
@@ -1631,9 +1642,9 @@ class Points(object):
             featureNames={'city':0, 'month':1, 'temp':2}
             )
         """
-        features = self._source.features
+        features = self._base.features
         numCollapsed = len(featuresToCollapse)
-        collapseIndices = [self._source.features.getIndex(ft)
+        collapseIndices = [self._base.features.getIndex(ft)
                            for ft in featuresToCollapse]
         retainIndices = [idx for idx in range(len(features))
                          if idx not in collapseIndices]
@@ -1646,12 +1657,12 @@ class Points(object):
             featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._source._pointCount = numRetPoints
-        self._source._featureCount = numRetFeatures
+        self._base._pointCount = numRetPoints
+        self._base._featureCount = numRetFeatures
         ftNames = [features.getName(idx) for idx in retainIndices]
         ftNames.extend([featureForNames, featureForValues])
         features.setNames(ftNames, useLog=False)
-        if self._source._pointNamesCreated():
+        if self._base._pointNamesCreated():
             appendedPts = []
             for name in self.getNames():
                 for i in range(numCollapsed):
@@ -1659,7 +1670,7 @@ class Points(object):
             self.setNames(appendedPts, useLog=False)
 
         handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
-                      self._source.getTypeString(),
+                      self._base.getTypeString(),
                       Points.splitByCollapsingFeatures, featuresToCollapse,
                       featureForNames, featureForValues)
 
@@ -1753,9 +1764,9 @@ class Points(object):
             featureNames={'athlete':0, '100m':1, '200m':2}
             )
         """
-        namesIdx = self._source.features.getIndex(featureWithFeatureNames)
-        valuesIdx = self._source.features.getIndex(featureWithValues)
-        uncombinedIdx = [i for i in range(len(self._source.features))
+        namesIdx = self._base.features.getIndex(featureWithFeatureNames)
+        valuesIdx = self._base.features.getIndex(featureWithValues)
+        uncombinedIdx = [i for i in range(len(self._base.features))
                          if i not in (namesIdx, valuesIdx)]
 
         # using OrderedDict supports point name setting
@@ -1765,7 +1776,7 @@ class Points(object):
             uncombined = tuple(row[uncombinedIdx])
             if uncombined not in unique:
                 unique[uncombined] = {}
-                if self._source._pointNamesCreated():
+                if self._base._pointNamesCreated():
                     pNames.append(self.getName(idx))
             if row[namesIdx] in unique[uncombined]:
                 msg = "The point at index {0} cannot be combined ".format(idx)
@@ -1776,28 +1787,28 @@ class Points(object):
             unique[uncombined][row[namesIdx]] = row[valuesIdx]
 
         uniqueNames = []
-        for name in self._source[:, featureWithFeatureNames]:
+        for name in self._base[:, featureWithFeatureNames]:
             if name not in uniqueNames:
                 uniqueNames.append(name)
-        numRetFeatures = len(self._source.features) + len(uniqueNames) - 2
+        numRetFeatures = len(self._base.features) + len(uniqueNames) - 2
 
         self._combineByExpandingFeatures_implementation(unique, namesIdx,
                                                         uniqueNames,
                                                         numRetFeatures)
 
-        self._source._featureCount = numRetFeatures
-        self._source._pointCount = len(unique)
+        self._base._featureCount = numRetFeatures
+        self._base._pointCount = len(unique)
 
-        fNames = [self._source.features.getName(i) for i in uncombinedIdx]
+        fNames = [self._base.features.getName(i) for i in uncombinedIdx]
         for name in reversed(uniqueNames):
             fNames.insert(namesIdx, name)
-        self._source.features.setNames(fNames, useLog=False)
+        self._base.features.setNames(fNames, useLog=False)
 
-        if self._source._pointNamesCreated():
+        if self._base._pointNamesCreated():
             self.setNames(pNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
-                      self._source.getTypeString(),
+                      self._base.getTypeString(),
                       Points.combineByExpandingFeatures,
                       featureWithFeatureNames, featureWithValues)
 
@@ -1982,7 +1993,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod

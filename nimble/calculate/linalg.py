@@ -26,17 +26,16 @@ def inverse(aObj):
     Returns
     -------
     aInv : nimble Base object.
-        Inverse of the object `aObj`
+        Inverse of the object ``aObj``
 
     Raises
     ------
-    InvalidArgumentType:
-        If `aObj` is not a nimble Base Object.
-        If `aObj` elements types are not supported.
-
-    InvalidArgumentValue:
-        If `aObj` is not square.
-        If `aObj` is not invertible (Singular).
+    InvalidArgumentType
+        If ``aObj`` is not a nimble Base Object.
+        If ``aObj`` elements types are not supported.
+    InvalidArgumentValue
+        If ``aObj`` is not square.
+        If ``aObj`` is not invertible (Singular).
 
     Examples
     --------
@@ -121,16 +120,15 @@ def pseudoInverse(aObj, method='svd'):
     Returns
     -------
     aPInv : nimble Base object.
-        Pseudo-inverse of the object `aObj`
+        Pseudo-inverse of the object ``aObj``
 
     Raises
     ------
-    InvalidArgumentType:
-        If `aObj` is not a nimble Base Object.
-        If `aObj` elements types are not supported.
-
-    InvalidArgumentValue:
-        If `method` name is not supported.
+    InvalidArgumentType
+        If ``aObj`` is not a nimble Base Object.
+        If ``aObj`` elements types are not supported.
+    InvalidArgumentValue
+        If ``method`` name is not supported.
 
     Examples
     --------
@@ -202,20 +200,19 @@ def solve(aObj, bObj):
     Returns
     -------
     xObj : (M) nimble Base object.
-        Solution to the system A x = b. Shape of `xObj` matches `bObj`.
+        Solution to the system A x = b. Shape of ``xObj`` matches
+        ``bObj``.
 
     Raises
     ------
-    InvalidArgumentType:
-        If `aObj` or `bObj` is not a nimble Base Object.
-        If `aObj` elements types are not supported.
-
-    InvalidArgumentValue:
-        If `aObj` is not squared.
-        If `bObj`is not a vector. 1-D.
-
-    InvalidArgumentValueCombination:
-        If `aObj` and `bObj` have incompatible dimensions.
+    InvalidArgumentType
+        If ``aObj`` or ``bObj`` is not a nimble Base Object.
+        If ``aObj`` elements types are not supported.
+    InvalidArgumentValue
+        If ``aObj`` is not squared.
+        If ``bObj`` is not a vector. 1-D.
+    InvalidArgumentValueCombination
+        If ``aObj`` and ``bObj`` have incompatible dimensions.
 
     Examples
     --------
@@ -247,10 +244,9 @@ def leastSquaresSolution(aObj, bObj):
     """
     Compute least-squares solution to equation A x = b
 
-    Compute a vector x such that the 2-norm |b - A x| is minimized.
-
-    The matrix A may be square or rectangular (over-determined or
-    under-determined).
+    Compute a vector x such that the 2-norm determinant of b - Ax is
+    minimized. The matrix A may be square or rectangular
+    (over-determined or under-determined).
 
     Parameters
     ----------
@@ -266,16 +262,16 @@ def leastSquaresSolution(aObj, bObj):
 
     Raises
     ------
-    InvalidArgumentType:
-        If `aObj` or `bObj` is not a nimble Base Object.
-        If `aObj` elements types are not supported.
+    InvalidArgumentType
+        If ``aObj`` or ``bObj`` is not a nimble Base Object.
+        If ``aObj`` elements types are not supported.
+    InvalidArgumentValue
+        If ``bObj`` is not a vector. 1-D.
+    InvalidArgumentValueCombination
+        If ``aObj`` and ``bObj`` have incompatible dimensions.
 
-    InvalidArgumentValue:
-        If `bObj`is not a vector. 1-D.
-
-    InvalidArgumentValueCombination:
-        If `aObj` and `bObj` have incompatible dimensions.
-
+    Examples
+    --------
     TODO: Example comparable with scipy counterpart.
     """
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
