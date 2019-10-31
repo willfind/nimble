@@ -21,7 +21,6 @@ settings = configuration.loadSettings()
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
-from .importExternalLibraries import importModule
 from . import interfaces
 from . import calculate
 from . import randomness

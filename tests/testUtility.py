@@ -4,11 +4,11 @@ Tests for nimble.utility submodule
 
 from nose.tools import raises
 
-from nimble.utility import OptionalPackage
+from nimble.utility import ImportModule
 from nimble.exceptions import PackageException
 
-def test_OptionalPackage_numpy():
-    optNumpy = OptionalPackage('numpy')
+def test_ImportModule_numpy():
+    optNumpy = ImportModule('numpy')
 
     # use some top level numpy functions
     arr_data = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
@@ -34,22 +34,22 @@ def test_OptionalPackage_numpy():
     assert type(numpy_arr) == type(opt_arr)
     assert numpy.array_equal(inverse, opt_arr)
 
-def test_OptionalPackage_numpy_boolSuccess():
-    optNumpy = OptionalPackage('numpy')
+def test_ImportModule_numpy_boolSuccess():
+    optNumpy = ImportModule('numpy')
     if not optNumpy:
         assert False
 
 @raises(AttributeError)
-def test_OptionalPackage_numpy_bogusAttribute():
-    optNumpy = OptionalPackage('numpy')
+def test_ImportModule_numpy_bogusAttribute():
+    optNumpy = ImportModule('numpy')
     optNumpy.random.bogus
 
 @raises(PackageException)
-def test_OptionalPackage_bogus():
-    bogus = OptionalPackage('bogus')
+def test_ImportModule_bogus():
+    bogus = ImportModule('bogus')
     bogus.foo
 
-def test_OptionalPackage_bogus_boolFailure():
-    bogus = OptionalPackage('bogus')
+def test_ImportModule_bogus_boolFailure():
+    bogus = ImportModule('bogus')
     if bogus:
         assert False

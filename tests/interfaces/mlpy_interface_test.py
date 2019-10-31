@@ -11,12 +11,13 @@ import numpy.testing
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.mlpy_interface import Mlpy
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-mlpy = nimble.importModule("mlpy")
+mlpy = ImportModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 

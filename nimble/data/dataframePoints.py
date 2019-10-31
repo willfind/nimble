@@ -10,7 +10,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import OptionalPackage
+from nimble.utility import ImportModule
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .dataHelpers import fillArrayWithCollapsedFeatures
@@ -18,7 +18,7 @@ from .dataHelpers import fillArrayWithExpandedFeatures
 from .points import Points
 from .points_view import PointsView
 
-pd = OptionalPackage('pandas')
+pd = ImportModule('pandas')
 
 class DataFramePoints(DataFrameAxis, Points):
     """

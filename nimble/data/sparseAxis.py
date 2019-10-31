@@ -10,12 +10,12 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.utility import OptionalPackage
+from nimble.utility import ImportModule
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
 
-scipy = OptionalPackage('scipy')
+scipy = ImportModule('scipy')
 
 class SparseAxis(Axis):
     """

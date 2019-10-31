@@ -10,9 +10,9 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import OptionalPackage
+from nimble.utility import ImportModule
 
-scipy = OptionalPackage('scipy')
+scipy = ImportModule('scipy')
 
 def inverse(aObj):
     """

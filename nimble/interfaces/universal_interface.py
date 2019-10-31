@@ -19,7 +19,7 @@ from six.moves import range
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, OptionalPackage
+from nimble.utility import inheritDocstringsFactory, ImportModule
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.interfaces.interface_helpers import (
@@ -33,7 +33,7 @@ from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
 
-cloudpickle = OptionalPackage('cloudpickle')
+cloudpickle = ImportModule('cloudpickle')
 
 
 def captureOutput(toWrap):

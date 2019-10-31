@@ -53,7 +53,7 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
 def is2DArray(arr):
     return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
 
-class OptionalPackage(object):
+class ImportModule(object):
     def __init__(self, name):
         self.name = name
         self.imported = None
@@ -77,7 +77,7 @@ class OptionalPackage(object):
 
     def __getattr__(self, name):
         """
-        If the attribute is a submodule, return a new OptionalPackage
+        If the attribute is a submodule, return a new ImportModule
         for the submodule, otherwise return the attribute object.  If
         the module has not been imported before attempted to access this
         attribute and import fails, a PackageException will be raised,
@@ -89,8 +89,8 @@ class OptionalPackage(object):
         try:
             asSubmodule = '.'.join([self.name, name])
             submod = importlib.import_module(asSubmodule)
-            setattr(self, name, OptionalPackage(asSubmodule))
-            return OptionalPackage(asSubmodule)
+            setattr(self, name, ImportModule(asSubmodule))
+            return ImportModule(asSubmodule)
         except ImportError:
             pass
         self._import()

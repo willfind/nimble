@@ -32,7 +32,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
-from nimble.utility import OptionalPackage
+from nimble.utility import ImportModule
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -46,8 +46,8 @@ from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 
-cloudpickle = OptionalPackage('cloudpickle')
-matplotlib = OptionalPackage('matplotlib')
+cloudpickle = ImportModule('cloudpickle')
+matplotlib = ImportModule('matplotlib')
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 

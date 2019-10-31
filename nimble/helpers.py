@@ -36,11 +36,11 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray, is2DArray, OptionalPackage
+from nimble.utility import numpy2DArray, is2DArray, ImportModule
 
-scipy = OptionalPackage('scipy')
-pd = OptionalPackage('pandas')
-requests = OptionalPackage('requests')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
+requests = ImportModule('requests')
 
 try:
     intern = sys.intern

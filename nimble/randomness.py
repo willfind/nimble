@@ -8,10 +8,10 @@ import random
 
 import numpy
 
-from .utility import OptionalPackage
+from .utility import ImportModule
 from .logger import handleLogging
 
-shogun = OptionalPackage('shogun')
+shogun = ImportModule('shogun')
 if shogun:
     shogun.Math.init_random(42)
 
