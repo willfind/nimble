@@ -70,7 +70,7 @@ def cooMatrixToArray(cooMatrix):
     """
     try:
         return cooMatrix.toarray()
-    except Exception:
+    except ValueError:
         # flexible dtypes, such as strings, when used in scipy sparse
         # object create an implicitly mixed datatype: some values are
         # strings, but the rest are implicitly zero. In order to match
