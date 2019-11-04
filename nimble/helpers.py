@@ -900,7 +900,7 @@ def createDataFromFile(
                 toPass = BytesIO(content)
                 isMtxFile = isMtxFileChecker(toPass)
         else:
-            toPass = open(data, 'rU')
+            toPass = open(data, 'r')
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:
@@ -921,18 +921,22 @@ def createDataFromFile(
     else:
         directPath = None
 
-    if directPath in globals():
-        loader = globals()[directPath]
-        loaded = loader(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
-    # If we don't know, default to trying to load a value separated file
-    else:
-        loaded = _loadcsvUsingPython(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    # want to make sure we close the file if loading fails
+    try:
+        if directPath in globals():
+            loader = globals()[directPath]
+            loaded = loader(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
+        # If we don't know, default to trying to load a value separated file
+        else:
+            loaded = _loadcsvUsingPython(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
-    (retData, retPNames, retFNames, selectSuccess) = loaded
+        (retData, retPNames, retFNames, selectSuccess) = loaded
+    finally:
+        toPass.close()
 
     # auto set name if unspecified, and is possible
     if isinstance(data, six.string_types):

@@ -5,7 +5,6 @@ Unit tests for the universal interface object.
 
 from __future__ import absolute_import
 import sys
-import tempfile
 import os
 import warnings
 

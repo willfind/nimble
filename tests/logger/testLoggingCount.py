@@ -350,13 +350,12 @@ def testAllClassesDunderFunctions():
 ###########
 
 def captureOutput(toCall):
-    tmpFile = tempfile.TemporaryFile(mode='w')
-    backupOut = sys.stdout
-    sys.stdout = tmpFile
-    try:
-        for rType in nimble.data.available:
-            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
-            ret = toCall(obj)
-    finally:
-        sys.stdout = backupOut
-        tmpFile.close()
+    with tempfile.TemporaryFile(mode='w') as tmpFile:
+        backupOut = sys.stdout
+        sys.stdout = tmpFile
+        try:
+            for rType in nimble.data.available:
+                obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+                ret = toCall(obj)
+        finally:
+            sys.stdout = backupOut
