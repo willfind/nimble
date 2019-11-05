@@ -37,6 +37,6 @@ class MultiOutputRidgeRegression(CustomLearner):
             if results is None:
                 results = curr
             else:
-                results.features.add(curr, useLog=False)
+                results.features.append(curr, useLog=False)
 
         return results

@@ -33,15 +33,16 @@ class DataFrameFeatures(DataFrameAxis, Features):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the features from the toAdd object to the right of the
+        Insert the features from the toInsert object to the right of the
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
         startData = self._base.data.iloc[:, :insertBefore]
         endData = self._base.data.iloc[:, insertBefore:]
-        self._base.data = pd.concat((startData, toAdd.data, endData), axis=1)
+        self._base.data = pd.concat((startData, toInsert.data, endData),
+                                    axis=1)
         self._base._updateName(axis='feature')
 
     def _transform_implementation(self, function, limitTo):

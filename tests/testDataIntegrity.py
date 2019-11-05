@@ -113,9 +113,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     ((cTrainX, cTrainY), (cTestX, cTestY)) = cData
     # data and labels in one object; labels at idx 0
     cTrainCombined = cTrainY.copy()
-    cTrainCombined.features.add(cTrainX)
+    cTrainCombined.features.append(cTrainX)
     cTestCombined = cTestY.copy()
-    cTestCombined.features.add(cTestX)
+    cTestCombined.features.append(cTestX)
 
     backCTrainX = cTrainX.copy()
     backCTrainY = cTrainY.copy()
@@ -128,9 +128,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     ((rTrainX, rTrainY), (rTestX, rTestY)) = rData
     # data and labels in one object; labels at idx 0
     rTrainCombined = rTrainY.copy()
-    rTrainCombined.features.add(rTrainX)
+    rTrainCombined.features.append(rTrainX)
     rTestCombined = rTestY.copy()
-    rTestCombined.features.add(rTestX)
+    rTestCombined.features.append(rTestX)
 
     backRTrainX = rTrainX.copy()
     backRTrainY = rTrainY.copy()
