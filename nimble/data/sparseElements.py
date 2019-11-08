@@ -102,35 +102,6 @@ class SparseElements(Elements):
             uniqueCount[0] = numZeros
         return uniqueCount
 
-    #############################
-    # Numerical implementations #
-    #############################
-
-    def _multiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this nimble Base object
-        against the provided other nimble Base object. Both objects must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different, but the returned object will be the inplace
-        modification of the calling object.
-        """
-        # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
-        # for other.data as any dense or sparse matrix
-        toMul = None
-        directMul = isinstance(other, (nimble.data.Sparse, nimble.data.Matrix))
-        notView = not isinstance(other, nimble.data.BaseView)
-        if directMul and notView:
-            toMul = other.data
-        else:
-            toMul = other.copy(to='numpyarray')
-        raw = self._base.data.multiply(coo_matrix(toMul))
-        if scipy.sparse.isspmatrix(raw):
-            self._base.data = raw.tocoo()
-        else:
-            self._base.data = coo_matrix(raw, shape=self._base.data.shape)
-        self._base._sorted = None
-
     ######################
     # Structural helpers #
     ######################

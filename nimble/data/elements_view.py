@@ -32,11 +32,3 @@ class ElementsView(Elements):
                   preserveZeros=False, skipNoneReturnValues=False,
                   useLog=None):
         readOnlyException("transform")
-
-    @exceptionDocstring
-    def multiply(self, other, useLog=None):
-        readOnlyException("multiply")
-
-    @exceptionDocstring
-    def power(self, other, useLog=None):
-        readOnlyException("power")

@@ -604,16 +604,6 @@ def testPrepTypeFunctionsUseLog():
     dataObj.features.fill(1, nimble.fill.mean, features=[1,2])
     checkLogContents('features.fill', "Matrix", [('match', 1), ('fill', 'mean')])
 
-    # elements.multiply/power
-    dataObj = nimble.ones('Matrix', 5, 5)
-    fives = nimble.ones('Matrix', 5, 5) * 5
-    fives.name = 'fives'
-    dataObj.elements.multiply(fives)
-    checkLogContents('elements.multiply', 'Matrix', [('other', 'fives')])
-    zeros = nimble.zeros('Matrix', 5, 5, name='zeros')
-    dataObj.elements.power(zeros)
-    checkLogContents('elements.power', 'Matrix', [('other', 'zeros')])
-
     # features.splitByParsing
     toSplit = [[1, 'a0', 2], [1, 'a1', 2], [3, 'b0', 4], [5, 'c0', 6]]
     fNames = ['keep1', 'split', 'keep2']

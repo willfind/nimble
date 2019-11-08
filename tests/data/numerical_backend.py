@@ -1583,6 +1583,23 @@ class NumericalModifying(DataTestObject):
     # elements.power #
     ##################
 
+    @patch('nimble.data.Elements.power', calledException)
+    def test_elements_power_callsBasePow(self):
+        caller = self.constructor([[1, 2, 3], [4, 5, 6]])
+        callee = caller.copy()
+
+        try:
+            caller.elements.power(callee)
+            assert False # expected exception
+        except CalledFunctionException:
+            pass
+
+        try:
+            caller.elements.power(callee)
+            assert False # expected exception
+        except CalledFunctionException:
+            pass
+
     @raises(InvalidArgumentType)
     def test_elements_power_otherObjectExceptions(self):
         """ Test elements.power raises exception when param is not a nimble Base object """
@@ -1618,7 +1635,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.power raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
 
-    @logCountAssertionFactory(len(nimble.data.available))
+    @noLogEntryExpected
     def test_elements_power_handmade(self):
         """ Test elements.power on handmade data """
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1626,21 +1643,21 @@ class NumericalModifying(DataTestObject):
         exp1 = [[1, .5], [.5, 25], [49, 2]]
         callerpnames = ['1', '2', '3']
 
-        calleepnames = ['I', 'dont', 'match']
         calleefnames = ['one', 'two']
 
         for retType in nimble.data.available:
             caller = self.constructor(data, pointNames=callerpnames)
-            exponentsObj = nimble.createData(retType, exponents, pointNames=calleepnames,
+            exponentsObj = nimble.createData(retType, exponents,
                                              featureNames=calleefnames, useLog=False)
-            caller.elements.power(exponentsObj)
+            ret = caller.elements.power(exponentsObj)
 
-            exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+            exp1Obj = self.constructor(exp1, pointNames=callerpnames,
+                                       featureNames=calleefnames)
 
-            assert exp1Obj.isIdentical(caller)
+            assert exp1Obj.isIdentical(ret)
 
     def test_elements_power_lazyNameGeneration(self):
-        """ Test elements.power on handmade data """
+        """ Test elements.power lazy name generation """
         data = [[1.0, 2], [4, 5], [7, 4]]
         exponents = [[0, -1], [-.5, 2], [2, .5]]
         exp1 = [[1, .5], [.5, 25], [49, 2]]
@@ -1648,11 +1665,12 @@ class NumericalModifying(DataTestObject):
         for retType in nimble.data.available:
             caller = self.constructor(data)
             exponentsObj = nimble.createData(retType, exponents)
-            caller.elements.power(exponentsObj)
+            ret = caller.elements.power(exponentsObj)
 
             assertNoNamesGenerated(caller)
+            assertNoNamesGenerated(ret)
 
-    @logCountAssertionFactory(len([getattr(nimble.data, retType) for retType in nimble.data.available]))
+    @noLogEntryExpected
     def test_elements_power_handmadeScalar(self):
         """ Test elements.power on handmade data with scalar parameter"""
         data = [[1.0, 2], [4, 5], [7, 4]]
@@ -1664,18 +1682,74 @@ class NumericalModifying(DataTestObject):
 
         for maker in makers:
             caller = self.constructor(data, pointNames=callerpnames)
-            caller.elements.power(exponent)
+            ret = caller.elements.power(exponent)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
 
-            assert exp1Obj.isIdentical(caller)
+            assert exp1Obj.isIdentical(ret)
+
+    def test_elements_power_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elements.power"""
+        data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+        pnames = ['p1', 'p2', 'p3']
+        fnames = ['f1', 'f2', 'f3']
+
+        otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+
+        # names not the same
+        caller = self.constructor(data, pnames, fnames)
+        opnames = pnames
+        ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+        other = self.constructor(otherRaw, opnames, ofnames)
+        try:
+            ret = caller.elements.power(other)
+            assert False
+        except InvalidArgumentValue:
+            pass
+        # if it isn't the exception we expect, pass it on
+        except:
+            einfo = sys.exc_info()
+            six.reraise(einfo[1], None, einfo[2])
+
+        # names interwoven
+        other = self.constructor(otherRaw, pnames, False)
+        caller = self.constructor(data, False, fnames)
+        ret = caller.elements.power(other)
+
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
+
+        # both names same
+        caller = self.constructor(data, pnames, fnames)
+        other = self.constructor(otherRaw, pnames, fnames)
+        ret = caller.elements.power(other)
+
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
     def test_elements_power_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'power')
 
-    ######################
+    #####################
     # elements.multiply #
     #####################
+
+    @patch('nimble.data.Elements.multiply', calledException)
+    def test_elements_multiply_callsBaseMul(self):
+        caller = self.constructor([[1, 2, 3], [4, 5, 6]])
+        callee = caller.copy()
+
+        try:
+            caller.elements.multiply(callee)
+            assert False # expected exception
+        except CalledFunctionException:
+            pass
+
+        try:
+            caller.elements.multiply(callee)
+            assert False # expected exception
+        except CalledFunctionException:
+            pass
 
     @raises(InvalidArgumentType)
     def test_elements_multiply_otherObjectExceptions(self):
@@ -1712,7 +1786,7 @@ class NumericalModifying(DataTestObject):
         """ Test elements.multiply raises exception for feature empty data """
         back_fEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
 
-    @logCountAssertionFactory(2)
+    @noLogEntryExpected
     def test_elements_multiply_handmade(self):
         """ Test elements.multiply on handmade data """
         data = [[1, 2], [4, 5], [7, 8]]
@@ -1722,22 +1796,24 @@ class NumericalModifying(DataTestObject):
 
         caller = self.constructor(data)
         twosObj = self.constructor(twos)
-        caller.elements.multiply(twosObj)
+        ret1 = caller.elements.multiply(twosObj)
 
         exp1Obj = self.constructor(exp1)
 
-        assert exp1Obj.isIdentical(caller)
+        assert exp1Obj.isIdentical(ret1)
         assertNoNamesGenerated(caller)
+        assertNoNamesGenerated(ret1)
 
         halvesObj = self.constructor(halves)
-        caller.elements.multiply(halvesObj)
+        ret2 = ret1.elements.multiply(halvesObj)
 
         exp2Obj = self.constructor(data)
 
-        assert caller.isIdentical(exp2Obj)
+        assert ret2.isIdentical(exp2Obj)
         assertNoNamesGenerated(caller)
+        assertNoNamesGenerated(ret2)
 
-    @logCountAssertionFactory(len(nimble.data.available) * 2)
+    @noLogEntryExpected
     def test_elements_multiply_handmadeDifInputs(self):
         """ Test elements.multiply on handmade data with different input object types"""
         data = [[1, 2], [4, 5], [7, 8]]
@@ -1748,22 +1824,24 @@ class NumericalModifying(DataTestObject):
         for retType in nimble.data.available:
             caller = self.constructor(data)
             twosObj = nimble.createData(retType, twos, useLog=False)
-            caller.elements.multiply(twosObj)
+            ret1 = caller.elements.multiply(twosObj)
 
             exp1Obj = self.constructor(exp1)
 
-            assert exp1Obj.isIdentical(caller)
+            assert exp1Obj.isIdentical(ret1)
             assertNoNamesGenerated(caller)
+            assertNoNamesGenerated(ret1)
 
             halvesObj = nimble.createData(retType, halves, useLog=False)
-            caller.elements.multiply(halvesObj)
+            ret2 = ret1.elements.multiply(halvesObj)
 
             exp2Obj = self.constructor(data)
 
-            assert caller.isIdentical(exp2Obj)
+            assert ret2.isIdentical(exp2Obj)
             assertNoNamesGenerated(caller)
+            assertNoNamesGenerated(ret2)
 
-    def test_elementwiseMultipy_auto(self):
+    def test_elements_multipy_auto(self):
         """ Test elements.multiply on generated data against the numpy op """
         makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
 
@@ -1786,17 +1864,17 @@ class NumericalModifying(DataTestObject):
 
             resultf = numpy.multiply(lhsf, rhsf)
             resulti = numpy.multiply(lhsi, rhsi)
-            lhsfObj.elements.multiply(rhsfObj)
-            lhsiObj.elements.multiply(rhsiObj)
+            resultfObj = lhsfObj.elements.multiply(rhsfObj)
+            resultiObj = lhsiObj.elements.multiply(rhsiObj)
 
             expfObj = self.constructor(resultf)
             expiObj = self.constructor(resulti)
 
-            assert expfObj.isApproximatelyEqual(lhsfObj)
-            assert expiObj.isIdentical(lhsiObj)
+            assert expfObj.isApproximatelyEqual(resultfObj)
+            assert expiObj.isIdentical(resultiObj)
 
-    def test_elementwiseMultipy_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwiseMultipy"""
+    def test_elements_multipy_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elements.multiply"""
         data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2', 'f3']
@@ -1809,8 +1887,7 @@ class NumericalModifying(DataTestObject):
         ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
         other = self.constructor(otherRaw, opnames, ofnames)
         try:
-            toCall = getattr(getattr(caller, 'elements'), 'multiply')
-            ret = toCall(other)
+            ret = caller.elements.multiply(other)
             assert False
         except InvalidArgumentValue:
             pass
@@ -1822,23 +1899,20 @@ class NumericalModifying(DataTestObject):
         # names interwoven
         other = self.constructor(otherRaw, pnames, False)
         caller = self.constructor(data, False, fnames)
-        toCall = getattr(getattr(caller, 'elements'), 'multiply')
-        ret = toCall(other)
+        ret = caller.elements.multiply(other)
 
-        assert ret is None
-        assert caller.points.getNames() == pnames
-        assert caller.features.getNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
         # both names same
         caller = self.constructor(data, pnames, fnames)
         other = self.constructor(otherRaw, pnames, fnames)
-        toCall = getattr(getattr(caller, 'elements'), 'multiply')
-        ret = toCall(other)
+        ret = caller.elements.multiply(other)
 
-        assert caller.points.getNames() == pnames
-        assert caller.features.getNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
-    def test_elementwiseMultipy_NamePath_preservations(self):
+    def test_elements_multipy_NamePath_preservations(self):
         back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'multiply')
 
 

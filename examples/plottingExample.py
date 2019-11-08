@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir):
-        plotObj.elements.power(2)
+        plotObj **= 2
         plotObj.features.setName(0, "N(0,1) squared")
 
         outPath = None

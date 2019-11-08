@@ -476,7 +476,7 @@ class Elements(object):
     # Numerical Operations #
     ########################
 
-    def multiply(self, other, useLog=None):
+    def multiply(self, other):
         """
         Multiply objects element-wise.
 
@@ -509,51 +509,15 @@ class Elements(object):
         >>> data1 = nimble.createData('Matrix', raw1)
         >>> data2 = nimble.createData('Matrix', raw2)
         >>> data1.elements.multiply(data2)
-        >>> data1
         Matrix(
             [[12.000 12.000]
              [12.000 12.000]]
             )
         """
-        if not isinstance(other, nimble.data.Base):
-            msg = "'other' must be an instance of a nimble data object"
-            raise InvalidArgumentType(msg)
-
-        if len(self._base.points) != len(other.points):
-            msg = "The number of points in each object must be equal."
-            raise InvalidArgumentValue(msg)
-        if len(self._base.features) != len(other.features):
-            msg = "The number of features in each object must be equal."
-            raise InvalidArgumentValue(msg)
-
-        if len(self._base.points) == 0 or len(self._base.features) == 0:
-            msg = "Cannot do elements.multiply with empty points or features"
-            raise ImproperObjectAction(msg)
-
-        self._base._validateEqualNames('point', 'point',
-                                         'elements.multiply', other)
-        self._base._validateEqualNames('feature', 'feature',
-                                         'elements.multiply', other)
-
-        try:
-            self._multiply_implementation(other)
-        except Exception as e:
-            #TODO: improve how the exception is catch
-            self._base._numericValidation()
-            other._numericValidation(right=True)
-            raise e
-
-        retNames = dataHelpers.mergeNonDefaultNames(self._base, other)
-        retPNames = retNames[0]
-        retFNames = retNames[1]
-        self._base.points.setNames(retPNames, useLog=False)
-        self._base.features.setNames(retFNames, useLog=False)
-
-        handleLogging(useLog, 'prep', 'elements.multiply',
-                      self._base.getTypeString(), Elements.multiply, other)
+        return self._base.__mul__(other)
 
 
-    def power(self, other, useLog=None):
+    def power(self, other):
         """
         Raise the elements of this object to a power.
 
@@ -586,53 +550,12 @@ class Elements(object):
         >>> data1 = nimble.createData('Matrix', raw1)
         >>> data2 = nimble.createData('Matrix', raw2)
         >>> data1.elements.power(data2)
-        >>> data1
         Matrix(
             [[64.000 64.000]
              [64.000 64.000]]
             )
         """
-        # other is nimble or single numerical value
-        singleValue = dataHelpers._looksNumeric(other)
-        if not singleValue and not isinstance(other, nimble.data.Base):
-            msg = "'other' must be an instance of a nimble Base object "
-            msg += "or a single numeric value"
-            raise InvalidArgumentType(msg)
-
-        if isinstance(other, nimble.data.Base):
-            # same shape
-            if len(self._base.points) != len(other.points):
-                msg = "The number of points in each object must be equal."
-                raise InvalidArgumentValue(msg)
-            if len(self._base.features) != len(other.features):
-                msg = "The number of features in each object must be equal."
-                raise InvalidArgumentValue(msg)
-
-        if len(self._base.points) == 0 or len(self._base.features) == 0:
-            msg = "Cannot do elements.power when points or features is emtpy"
-            raise ImproperObjectAction(msg)
-
-        if isinstance(other, nimble.data.Base):
-            def powFromRight(val, pnum, fnum):
-                try:
-                    return val ** other[pnum, fnum]
-                except Exception as e:
-                    self._base._numericValidation()
-                    other._numericValidation(right=True)
-                    raise e
-            self.transform(powFromRight, useLog=False)
-        else:
-            def powFromRight(val, pnum, fnum):
-                try:
-                    return val ** other
-                except Exception as e:
-                    self._base._numericValidation()
-                    other._numericValidation(right=True)
-                    raise e
-            self.transform(powFromRight, useLog=False)
-
-        handleLogging(useLog, 'prep', 'elements.power',
-                      self._base.getTypeString(), Elements.power, other)
+        return self._base.__pow__(other)
 
     ########################
     # Higher Order Helpers #

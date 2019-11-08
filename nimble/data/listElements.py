@@ -58,24 +58,6 @@ class ListElements(Elements):
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self._base, points, features)
 
-    #############################
-    # Numerical implementations #
-    #############################
-
-    def _multiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this nimble Base object
-        against the provided other nimble Base object. Both objects must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different, but the returned object will be the inplace
-        modification of the calling object.
-        """
-        for pNum in range(len(self._base.points)):
-            for fNum in range(len(self._base.features)):
-                # Divided by 1 to make it raise if it involves non-numeric
-                # types ('str')
-                self._base.data[pNum][fNum] *= other[pNum, fNum] / 1
 
 class ListElementsView(ElementsView, ListElements):
     """

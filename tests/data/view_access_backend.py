@@ -365,16 +365,4 @@ class ViewAccess(DataTestObject):
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
 
-        try:
-            testObject.elements.multiply(2)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
-        try:
-            testObject.elements.power(2)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
 # get retType TODO -- still not sure what is correct functionality.

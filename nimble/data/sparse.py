@@ -969,8 +969,20 @@ class Sparse(Base):
         else:
             target = self.copy()
 
-        target.elements.multiply(other, useLog=False)
-
+        # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
+        # for other.data as any dense or sparse matrix
+        directMul = isinstance(other, (Sparse, nimble.data.Matrix))
+        notView = not isinstance(other, BaseView)
+        if directMul and notView:
+            toMul = other.data
+        else:
+            toMul = other.copy(to='numpyarray')
+        raw = target.data.multiply(coo_matrix(toMul))
+        if scipy.sparse.isspmatrix(raw):
+            raw = raw.tocoo()
+        else:
+            raw = coo_matrix(raw, shape=self.data.shape)
+        target.data = raw
         return target
 
     def _genericPow_implementation(self, opName, other):
@@ -986,8 +998,15 @@ class Sparse(Base):
             caller = self.copy()
             callee = other
 
-        caller.elements.power(callee, useLog=False)
-        return caller
+        def powFromRight(val, pnum, fnum):
+            try:
+                return val ** callee[pnum, fnum]
+            except Exception:
+                self._numericValidation()
+                other._numericValidation(right=True)
+                raise
+
+        return caller.elements.calculate(powFromRight, useLog=False)
 
     def _genericFloordiv_implementation(self, opName, other):
         """

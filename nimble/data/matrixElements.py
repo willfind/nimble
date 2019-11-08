@@ -62,27 +62,6 @@ class MatrixElements(Elements):
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self._base, points, features)
 
-    #############################
-    # Numerical implementations #
-    #############################
-
-    def _multiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this nimble Base object
-        against the provided other nimble Base object. Both objects must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different, but the returned object will be the inplace
-        modification of the calling object.
-        """
-        if isinstance(other, nimble.data.Sparse):
-            result = other.data.multiply(self._base.data)
-            if hasattr(result, 'todense'):
-                result = result.todense()
-        else:
-            result = numpy.multiply(self._base.data, other.data)
-        self._base.data = numpy2DArray(result)
-
 
 class MatrixElementsView(ElementsView, MatrixElements):
     """

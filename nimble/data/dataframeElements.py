@@ -66,27 +66,6 @@ class DataFrameElements(Elements):
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self._base, points, features)
 
-    #############################
-    # Numerical implementations #
-    #############################
-
-    def _multiply_implementation(self, other):
-        """
-        Perform element wise multiplication of this nimble Base object
-        against the provided other nimble Base object. Both objects must
-        contain only numeric data. The pointCount and featureCount of
-        both objects must be equal. The types of the two objects may be
-        different, but the returned object will be the inplace
-        modification of the calling object.
-        """
-        if isinstance(other, nimble.data.Sparse):
-            result = other.data.multiply(self._base.data.values)
-            if hasattr(result, 'todense'):
-                result = result.todense()
-            self._base.data = pd.DataFrame(result)
-        else:
-            self._base.data = pd.DataFrame(
-                np.multiply(self._base.data.values, other.data))
 
 class DataFrameElementsView(ElementsView, DataFrameElements):
     """
