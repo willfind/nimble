@@ -105,7 +105,7 @@ class SparseAxis(Axis):
         if len(modData) != 0:
             try:
                 modData = numpy.array(modData, dtype=numpy.float)
-            except Exception:
+            except (TypeError, ValueError):
                 modData = numpy.array(modData, dtype=numpy.object_)
             shape = (len(self._base.points), len(self._base.features))
             self._base.data = coo_matrix((modData, (modRow, modCol)),

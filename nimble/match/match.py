@@ -210,7 +210,7 @@ def positive(value):
         # will raise exception for strings
         value + 0
         return value > 0
-    except Exception:
+    except TypeError:
         return False
 
 def negative(value):
@@ -248,7 +248,7 @@ def negative(value):
         # raise exception for None
         value + 0
         return value < 0
-    except Exception:
+    except TypeError:
         return False
 
 def infinity(value):
@@ -281,7 +281,7 @@ def infinity(value):
     """
     try:
         return numpy.isinf(value)
-    except Exception:
+    except TypeError:
         return False
 
 def boolean(value):

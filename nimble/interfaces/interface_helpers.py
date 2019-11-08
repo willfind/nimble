@@ -494,7 +494,7 @@ def collectAttributes(obj, generators, checkers, recursive=True):
                     ret[k] = val
                 # safety against any sort of error someone may have in their
                 # property code.
-                except Exception:
+                except AttributeError:
                     pass
             return ret
 

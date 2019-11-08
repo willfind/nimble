@@ -537,11 +537,11 @@ class Elements(object):
 
         try:
             self._multiply_implementation(other)
-        except Exception as e:
-            #TODO: improve how the exception is catch
+        except TypeError:
+            # help determine the source of the error
             self._base._numericValidation()
             other._numericValidation(right=True)
-            raise e
+            raise # exception should be raised above, but just in case
 
         retNames = dataHelpers.mergeNonDefaultNames(self._base, other)
         retPNames = retNames[0]
@@ -612,24 +612,18 @@ class Elements(object):
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperObjectAction(msg)
 
-        if isinstance(other, nimble.data.Base):
-            def powFromRight(val, pnum, fnum):
-                try:
+        def powFromRight(val, pnum, fnum):
+            try:
+                if isinstance(other, nimble.data.Base):
                     return val ** other[pnum, fnum]
-                except Exception as e:
-                    self._base._numericValidation()
-                    other._numericValidation(right=True)
-                    raise e
-            self.transform(powFromRight, useLog=False)
-        else:
-            def powFromRight(val, pnum, fnum):
-                try:
-                    return val ** other
-                except Exception as e:
-                    self._base._numericValidation()
-                    other._numericValidation(right=True)
-                    raise e
-            self.transform(powFromRight, useLog=False)
+                return val ** other
+            except TypeError:
+                # help determine the source of the error
+                self._base._numericValidation()
+                other._numericValidation(right=True)
+                raise # exception should be raised above, but just in case
+
+        self.transform(powFromRight, useLog=False)
 
         handleLogging(useLog, 'prep', 'elements.power',
                       self._base.getTypeString(), Elements.power, other)
@@ -707,7 +701,7 @@ class Elements(object):
         toCalculate = toCalculate[points[:, None], features]
         try:
             return function(toCalculate)
-        except Exception:
+        except (TypeError, ValueError):
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]

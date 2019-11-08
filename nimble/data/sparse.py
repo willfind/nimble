@@ -845,7 +845,7 @@ class Sparse(Base):
                 #numpy may say: elementwise comparison failed; returning
                 # scalar instead, but in the future will perform
                 # elementwise comparison
-            except Exception:
+            except ValueError:
                 noZerosInData = all(i != 0 for i in self.data.data)
             assert noZerosInData
 

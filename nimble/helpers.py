@@ -42,30 +42,6 @@ scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
 requests = nimble.importModule('requests')
 
-try:
-    intern = sys.intern
-    class Py2Key:
-        """
-        Key for python3.
-        """
-        __slots__ = ("value", "typestr")
-
-        def __init__(self, value):
-            self.value = value
-            self.typestr = intern(type(value).__name__)
-
-        def __lt__(self, other):
-            try:
-                return self.value < other.value
-            except TypeError:
-                return self.typestr < other.typestr
-except Exception:
-    Py2Key = None # for python2
-
-#in python3, itertools.ifilter is not there anymore. it is filter.
-if not hasattr(itertools, 'ifilter'):
-    itertools.ifilter = filter
-
 
 def findBestInterface(package):
     """
@@ -1000,13 +976,13 @@ def _loadmtxForAuto(
 
     openFile.seek(startPosition)
     try:
-        data = scipy.io.mmread(openFile)#python 2
-    except Exception:
+        data = scipy.io.mmread(openFile)
+    except TypeError:
         if hasattr(openFile, 'name'):
             tempName = openFile.name
         else:
             tempName = openFile.inner.name
-        data = scipy.io.mmread(tempName)#for python3, it may need this.
+        data = scipy.io.mmread(tempName)
 
     temp = (data, None, None)
 
@@ -1659,7 +1635,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # how many are skipped
     skippedLines = _advancePastComments(openFile)
     # remake the file iterator to ignore empty lines
-    filtered = itertools.ifilter(_filterCSVRow, openFile)
+    filtered = filter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
