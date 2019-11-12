@@ -21,6 +21,7 @@ from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
+from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
@@ -82,6 +83,10 @@ class Sparse(Base):
 
     def _getElements(self):
         return SparseElements(self)
+
+    @property
+    def stretch(self):
+        return StretchSparse(self)
 
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
@@ -876,6 +881,11 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
+        # scipy may not raise expected exceptions for truediv
+        # TODO remove once logical operators used in Base for this
+        if 'truediv' in opName:
+            self._genericBinary_dataExamination(opName, other)
+
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -883,12 +893,17 @@ class Sparse(Base):
             return self._genericPow_implementation(opName, other)
         try:
             if isinstance(other, Base):
+                if self._sorted is None:
+                    self._sortInternal('point')
                 selfData = self._getSparseData()
+                if isinstance(other, SparseView):
+                    other = other.copy(to='Sparse')
                 if isinstance(other, Sparse):
+                    if other._sorted != self._sorted:
+                        other._sortInternal(self._sorted)
                     otherData = other._getSparseData()
                 else:
-                    otherConv = other.copy('Matrix')
-                    otherData = otherConv.data
+                    otherData = other.copy('Matrix').data
                 ret = getattr(selfData, opName)(otherData)
             else:
                 return self._scalarBinary_implementation(opName, other)
@@ -921,7 +936,7 @@ class Sparse(Base):
             return Sparse(selfData)
         zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other != 0:
+        if 'pow' in opName and opName != '__rpow__' and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -968,7 +983,6 @@ class Sparse(Base):
             target = self
         else:
             target = self.copy()
-
         target.elements.multiply(other, useLog=False)
 
         return target
@@ -1318,6 +1332,13 @@ class SparseView(BaseView, Sparse):
                 return True
 
         return False
+
+    def _binaryOperations_implementation(self, opName, other):
+        selfConv = self.copy(to="Sparse")
+        if isinstance(other, BaseView):
+            other = other.copy(to=other.getTypeString())
+
+        return selfConv._binaryOperations_implementation(opName, other)
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """

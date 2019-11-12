@@ -513,44 +513,6 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
         toCall = getattr(toCall, attr2)
     toCall(callee)
 
-def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
-    """ Test operation when other data contains an infinity """
-    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
-    data2 = [[1, 2, 3], [5, numpy.Inf, 10], [6, 7, 8]]
-    if attr1.startswith('__r'):
-        # put inf in lhs
-        data1, data2 = data2, data1
-        callee = calleeConstructor(data2, calleeCon)
-    elif calleeCon is None:
-        callee = numpy.Inf
-    else:
-        callee = calleeConstructor(data2, calleeCon)
-    caller = callerCon(data1)
-
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    toCall(callee)
-
-def back_byNanException(callerCon, calleeCon, attr1, attr2=None):
-    """ Test operation when other data contains an infinity """
-    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
-    data2 = [[1, 2, 3], [5, numpy.nan, 10], [6, 7, 8]]
-    if attr1.startswith('__r'):
-        # put inf in lhs
-        data1, data2 = data2, data1
-        callee = calleeConstructor(data2, calleeCon)
-    elif calleeCon is None:
-        callee = numpy.nan
-    else:
-        callee = calleeConstructor(data2, calleeCon)
-    caller = callerCon(data1)
-
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    toCall(callee)
-
 
 def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
     randomlf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
@@ -710,10 +672,6 @@ def wrapAndCall(toWrap, expected, *args):
 def run_full_backendDivMod(constructor, opName, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, opName))
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, None, opName))
-    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, opName))
-    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, None, opName))
-    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, constructor, opName))
-    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, None, opName))
 
     run_full_backend(constructor, opName, inplace, sparsity)
 
