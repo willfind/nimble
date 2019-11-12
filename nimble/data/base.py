@@ -543,9 +543,9 @@ class Base(object):
         {0: 'a', 1: 'b', 2: 'c'}
         >>> data
         Matrix(
-            [[1 0.000 1]
-             [2 1.000 2]
-             [3 2.000 3]]
+            [[1 0 1]
+             [2 1 2]
+             [3 2 3]]
             featureNames={'keep1':0, 'transform':1, 'keep2':2}
             )
         """

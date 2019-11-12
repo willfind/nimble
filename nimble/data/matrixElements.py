@@ -9,6 +9,7 @@ import itertools
 import numpy
 
 import nimble
+from nimble import match
 from nimble.utility import numpy2DArray
 from .elements import Elements
 from .elements_view import ElementsView
@@ -47,7 +48,10 @@ class MatrixElements(Elements):
             self._base.data[i, j] = currRet
             # numpy modified data due to int dtype
             if self._base.data[i, j] != currRet:
-                self._base.data = self._base.data.astype(numpy.float)
+                if match.nonNumeric(currRet) and currRet is not None:
+                    self._base.data = self._base.data.astype(numpy.object_)
+                else:
+                    self._base.data = self._base.data.astype(numpy.float)
                 self._base.data[i, j] = currRet
 
     ################################

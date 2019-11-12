@@ -72,6 +72,7 @@ class SparseAxis(Axis):
         modData = []
         modRow = []
         modCol = []
+        dtypes = []
 
         if isinstance(self, Points):
             modTarget = modRow
@@ -102,13 +103,31 @@ class SparseAxis(Axis):
                     modTarget.append(viewID)
                     modOther.append(i)
 
-        try:
-            modData = numpy.array(modData, dtype=numpy.float)
-        except Exception:
-            modData = numpy.array(modData, dtype=numpy.object_)
+            retArray = numpy.array(modData)
+            if not numpy.issubdtype(retArray.dtype, numpy.number):
+                dtypes.append(numpy.dtype(object))
+            else:
+                dtypes.append(retArray.dtype)
+
+        # if any non-numeric dtypes were returned use object dtype
+        if any(dt == numpy.object_ for dt in dtypes):
+            retDtype = numpy.object
+        # if transformations to an object dtype returned numeric dtypes and
+        # applied to all data we will convert to a float dtype.
+        elif (self._base.data.dtype == numpy.object_ and limitTo is None
+                and all(numpy.issubdtype(dt, numpy.number) for dt in dtypes)):
+            retDtype = numpy.float
+        # int dtype will covert floats to ints unless we convert it
+        elif self._base.data.dtype == numpy.int and numpy.float in dtypes:
+            retDtype = numpy.float
+        else:
+            retDtype = self._base.data.dtype
+
+
+        modData = numpy.array(modData, dtype=retDtype)
         shape = (len(self._base.points), len(self._base.features))
         self._base.data = coo_matrix((modData, (modRow, modCol)),
-                                       shape=shape)
+                                     shape=shape)
         self._base._sorted = None
 
     def _add_implementation(self, toAdd, insertBefore):

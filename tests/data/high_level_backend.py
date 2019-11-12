@@ -325,6 +325,19 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(addTenth)
         assert ret == exp
 
+    def test_points_calculate_stringReturnsPreserved(self):
+
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.points.calculate(toString)
+        assert ret == exp
+
     ##########################
     # .features.calculate() #
     #########################
@@ -569,6 +582,19 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(addTenth)
         assert ret == exp
 
+    def test_features_calculate_stringReturnsPreserved(self):
+
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.features.calculate(toString)
+        assert ret == exp
+
     #######################
     # .elements.calculate #
     #######################
@@ -774,6 +800,19 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.elements.calculate(addTenth)
+        assert ret == exp
+
+    def test_elements_calculate_stringReturnsPreserved(self):
+
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.elements.calculate(toString)
         assert ret == exp
 
     ######################

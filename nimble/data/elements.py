@@ -17,6 +17,7 @@ import numpy
 import six
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.logger import handleLogging
@@ -668,10 +669,10 @@ class Elements(object):
                 f = 0
                 for fj in features:
                     value = self._base[pi, fj]
-                    if calculator.oneArg:
-                        currRet = calculator(value)
-                    else:
-                        currRet = calculator(value, pi, fj)
+                    currRet = calculator(value, pi, fj)
+                    if (match.nonNumeric(currRet) and currRet is not None
+                            and values.dtype != numpy.object_):
+                        values = values.astype(numpy.object_)
                     values[p, f] = currRet
                     f += 1
                 p += 1

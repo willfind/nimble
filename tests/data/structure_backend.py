@@ -7867,6 +7867,19 @@ class StructureModifying(StructureShared):
         orig.points.transform(addTenth)
         assert orig == exp
 
+    def test_points_transform_stringReturnsPreserved(self):
+
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.points.transform(toString)
+        assert orig == exp
+
     ########################
     # features.transform() #
     ########################
@@ -8043,6 +8056,19 @@ class StructureModifying(StructureShared):
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         orig.features.transform(addTenth)
+        assert orig == exp
+
+    def test_features_transform_stringReturnsPreserved(self):
+
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.features.transform(toString)
         assert orig == exp
 
     ##########################
@@ -8331,6 +8357,19 @@ class StructureModifying(StructureShared):
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         orig.elements.transform(addTenth)
+        assert orig == exp
+
+    def test_elements_transform_stringReturnsPreserved(self):
+
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.elements.transform(toString)
         assert orig == exp
 
     ##############
