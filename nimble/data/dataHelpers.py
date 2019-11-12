@@ -18,6 +18,7 @@ import numpy
 import nimble
 from nimble import importModule
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import ImproperObjectAction
 
 pd = importModule('pandas')
 
@@ -99,6 +100,33 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
         ret._relPath = None
 
 
+def mergeNames(baseNames, otherNames):
+    """
+    Combine two lists or dicts of names (point or feature) giving
+    priority to non-default names. Names may also be None, the non-None
+    names are returned or None if both are None.
+
+    If both non-None, assumes the objects are of equal length and valid
+    to be merged.
+    """
+    if otherNames is None:
+        return baseNames
+    if baseNames is None:
+        return otherNames
+    ret = {}
+    for i, baseName in enumerate(baseNames):
+        otherName = otherNames[i]
+        baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
+        otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
+
+        if baseIsDefault and not otherIsDefault:
+            ret[otherName] = i
+        else:
+            ret[baseName] = i
+
+    return ret
+
+
 def mergeNonDefaultNames(baseSource, otherSource):
     """
     Merges the point and feature names of the the two source objects,
@@ -112,50 +140,11 @@ def mergeNonDefaultNames(baseSource, otherSource):
     names and feature names of both objects are consistent (any
     non-default names in the same positions are equal)
     """
-    # merge helper
-    def mergeNames(baseNames, otherNames):
-        ret = {}
-        for i in range(len(baseNames)):
-            baseName = baseNames[i]
-            otherName = otherNames[i]
-            baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
-            otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
-
-            if baseIsDefault and not otherIsDefault:
-                ret[otherName] = i
-            else:
-                ret[baseName] = i
-
-        return ret
-
-    (retPNames, retFNames) = (None, None)
-
-    if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
-        retPNames = mergeNames(baseSource.points.getNames(),
-                               otherSource.points.getNames())
-    elif (baseSource._pointNamesCreated()
-          and not otherSource._pointNamesCreated()):
-        retPNames = baseSource.pointNames
-    elif (not baseSource._pointNamesCreated()
-          and otherSource._pointNamesCreated()):
-        retPNames = otherSource.pointNames
-    else:
-        retPNames = None
-
-    if (baseSource._featureNamesCreated()
-            and otherSource._featureNamesCreated()):
-        retFNames = mergeNames(baseSource.features.getNames(),
-                               otherSource.features.getNames())
-    elif (baseSource._featureNamesCreated()
-          and not otherSource._featureNamesCreated()):
-        retFNames = baseSource.featureNames
-    elif (not baseSource._featureNamesCreated()
-          and otherSource._featureNamesCreated()):
-        retFNames = otherSource.featureNames
-    else:
-        retFNames = None
-
-    return (retPNames, retFNames)
+    ptNames = mergeNames(baseSource.points._getNamesNoGeneration(),
+                         otherSource.points._getNamesNoGeneration())
+    ftNames = mergeNames(baseSource.features._getNamesNoGeneration(),
+                         otherSource.features._getNamesNoGeneration())
+    return ptNames, ftNames
 
 
 def reorderToMatchList(dataObject, matchList, axis):
@@ -216,9 +205,8 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if _looksNumeric(value):
-        if not isinstance(value, int) and sigDigits is not None:
-            return format(value, '.' + str(int(sigDigits)) + 'f')
+    if isinstance(value, (float, numpy.float)) and sigDigits is not None:
+        return format(value, '.' + str(int(sigDigits)) + 'f')
     return str(value)
 
 
@@ -511,9 +499,9 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
     scorer = None
     comparator = None
     if axisAttr == 'points':
-        test = obj._source.pointView(0)
+        test = obj._base.pointView(0)
     else:
-        test = obj._source.featureView(0)
+        test = obj._base.featureView(0)
     try:
         sortHelper(test)
         scorer = sortHelper
@@ -688,8 +676,10 @@ def createDataNoValidation(returnType, data, pointNames=None,
     to default values.
     """
     if hasattr(data, 'dtype'):
-        if not issubclass(data.dtype.type, (numpy.number, numpy.object_)):
-            raise InvalidArgumentType("data must have numeric or object dtype")
+        accepted = (numpy.number, numpy.object_, numpy.bool_)
+        if not issubclass(data.dtype.type, accepted):
+            msg = "data must have numeric, boolean, or object dtype"
+            raise InvalidArgumentType(msg)
     initMethod = getattr(nimble.data, returnType)
     if returnType == 'List':
         return initMethod(data, pointNames=pointNames,
@@ -742,3 +732,18 @@ def denseCountUnique(obj, points=None, features=None):
     intMap = {v: k for k, v in mapping.items()}
     vals, counts = numpy.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}
+
+
+def wrapMatchFunctionFactory(matchFunc):
+    def wrappedMatch(value):
+        ret = matchFunc(value)
+        # in [True, False] also covers 0 and 1 and numpy number and bool types
+        if ret not in [True, False]:
+            msg = 'toMatch function must return True, False, 0 or 1'
+            raise InvalidArgumentValue(msg)
+        return bool(ret) # converts 1 and 0 to True and False
+    wrappedMatch.oneArg = True
+    wrappedMatch.__name__ = matchFunc.__name__
+    wrappedMatch.__doc__ = matchFunc.__doc__
+
+    return wrappedMatch

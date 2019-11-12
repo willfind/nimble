@@ -495,11 +495,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             msg += "(numbered) parameter set, the following parameter names "
             msg += "were missing "
             msg += prettyListString(missing, numberItems=True,
-                                    itemStr=prettyListString)
+                                     itemStr=prettyListString)
             msg += ". The following lists the required names in each of the "
             msg += "possible (numbered) parameter sets: "
             msg += prettyListString(nonDefaults, numberItems=True,
-                                    itemStr=prettyListString)
+                                     itemStr=prettyListString)
             if len(arguments) == 0:
                 msg += ". However, no arguments were inputed."
             else:

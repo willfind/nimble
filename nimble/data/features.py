@@ -18,14 +18,20 @@ import six
 
 import nimble
 from nimble.logger import handleLogging
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValueCombination
+from nimble.exceptions import InvalidArgumentType
+from nimble.exceptions import InvalidArgumentValueCombination
 
 class Features(object):
     """
-    Methods that can be called on the a nimble Base objects feature axis.
+    Methods that can be called on a nimble Base objects feature axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
-    def __init__(self, source):
-        self._source = source
+    def __init__(self, base):
+        self._base = base
         super(Features, self).__init__()
 
     ########################
@@ -154,11 +160,13 @@ class Features(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
-        The index of a feature name.
+        The index of a feature.
 
-        Return the index location of the provided feature ``name``.
+        Return the index location of the feature ``identifier``. The
+        ``identifier`` can be a feature name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -171,7 +179,7 @@ class Features(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -179,8 +187,10 @@ class Features(object):
         ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndex('c')
         2
+        >>> data.features.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -200,7 +210,7 @@ class Features(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -290,7 +300,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -556,6 +566,7 @@ class Features(object):
             )
 
         Select a set number to extract, choosing features at random.
+
         >>> data = nimble.identity('List', 3)
         >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.features.extract(number=2,
@@ -881,6 +892,7 @@ class Features(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a feature will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison
@@ -892,7 +904,8 @@ class Features(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1126,7 +1139,7 @@ class Features(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1143,9 +1156,9 @@ class Features(object):
              [3.000 3.000 3.000 3.000 3.000]]
             )
 
-        Apply calculation to all features; apply to certain points. Note
-        that the function recieves a read-only view of each feature, so
-        a copy is necessary to modify any specific data.
+        Apply calculation to all features; function modifies a specific
+        point. Note that the function recieves a read-only view of each
+        feature, so a copy is necessary to modify any specific data.
 
         >>> def changeMiddlePoint(ft):
         ...     ftList = ft.copy(to='python list', outputAs1D=True)
@@ -1175,6 +1188,51 @@ class Features(object):
             )
         """
         return self._calculate(function, features, useLog)
+
+    def matching(self, function, useLog=None):
+        """
+        Return a boolean value object identifying matching features.
+
+        Apply a function returning a boolean value for each feature in
+        this object. Common any/all matching functions can be found in
+        nimble's match module. Note that the pointName in the returned
+        object will be set to the ``__name__`` attribute of ``function``
+        unless it is a ``lambda`` function.
+
+        Parameters
+        ----------
+        function : function
+            * function - in the form of function(featureView) which
+              returns True, False, 0 or 1.
+
+        Returns
+        -------
+        nimble Base object
+            A point vector of boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, 3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> allPositiveFts = data.features.matching(match.allPositive)
+        >>> allPositiveFts
+        Matrix(
+            [[False False True]]
+            pointNames={'allPositive':0}
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, float('nan'), 1], [-3, 3, 3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> ftHasMissing = data.features.matching(match.anyMissing)
+        >>> ftHasMissing
+        Matrix(
+            [[False True False]]
+            pointNames={'anyMissing':0}
+            )
+        """
+        return self._matching(function, useLog)
 
     def add(self, toAdd, insertBefore=None, useLog=None):
         """
@@ -1389,7 +1447,7 @@ class Features(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------
@@ -1646,7 +1704,7 @@ class Features(object):
 
         splitList = []
         numResultingFts = len(resultingNames)
-        for i, value in enumerate(self._source[:, feature]):
+        for i, value in enumerate(self._base[:, feature]):
             if isinstance(rule, six.string_types):
                 splitList.append(value.split(rule))
             elif isinstance(rule, (int, numpy.number)):
@@ -1690,11 +1748,11 @@ class Features(object):
         fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
-        self._source._featureCount = numRetFeatures
+        self._base._featureCount = numRetFeatures
         self.setNames(fNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'features.splitByParsing',
-                      self._source.getTypeString(), Features.splitByParsing,
+                      self._base.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
     def repeat(self, totalCopies, copyFeatureByFeature):
@@ -1881,7 +1939,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod
@@ -1930,6 +1988,10 @@ class Features(object):
 
     @abstractmethod
     def _calculate(self, function, limitTo, useLog=None):
+        pass
+
+    @abstractmethod
+    def _matching(self, function, useLog=None):
         pass
 
     @abstractmethod

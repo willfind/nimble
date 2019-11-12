@@ -16,12 +16,13 @@ exceptionDocstring = exceptionDocstringFactory(Elements)
 @inheritDocstringsFactory(Elements)
 class ElementsView(Elements):
     """
-    Class defining read only view objects, which have the same api as a
-    normal Elements object, but disallow all methods which could change
-    the data.
+    Class limiting the Elements class to read-only by disallowing
+    methods which could change the data.
 
     Parameters
     ----------
+    base : BaseView
+        The BaseView instance that will be queried.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.

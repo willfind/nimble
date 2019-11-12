@@ -22,6 +22,7 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.logger import handleLogging
 from . import dataHelpers
 from .dataHelpers import valuesToPythonList, constructIndicesList
+from .dataHelpers import wrapMatchFunctionFactory
 
 
 class Elements(object):
@@ -33,18 +34,21 @@ class Elements(object):
 
     Parameters
     ----------
-    source : nimble Base object
-        The object containing the elements.
+    base : Base
+        The Base instance that will be queried and modified.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, source, **kwds):
-        self._source = source
+    def __init__(self, base, **kwds):
+        self._base = base
         super(Elements, self).__init__(**kwds)
 
     def __iter__(self):
-        return ElementIterator(self._source)
+        return ElementIterator(self._base)
+
+    def __bool__(self):
+        return bool(self._base)
 
     #########################
     # Structural Operations #
@@ -90,7 +94,8 @@ class Elements(object):
 
         See Also
         --------
-        calculate, Points.transform, Features.transform
+        calculate, nimble.data.points.Points.transform,
+        nimble.data.features.Features.transform
 
         Examples
         --------
@@ -167,9 +172,9 @@ class Elements(object):
             )
         """
         if points is not None:
-            points = constructIndicesList(self._source, 'point', points)
+            points = constructIndicesList(self._base, 'point', points)
         if features is not None:
-            features = constructIndicesList(self._source, 'feature', features)
+            features = constructIndicesList(self._base, 'feature', features)
 
         transformer = validateElementFunction(toTransform, preserveZeros,
                                               skipNoneReturnValues,
@@ -178,7 +183,7 @@ class Elements(object):
         self._transform_implementation(transformer, points, features)
 
         handleLogging(useLog, 'prep', 'elements.transform',
-                      self._source.getTypeString(), Elements.transform,
+                      self._base.getTypeString(), Elements.transform,
                       toTransform, points, features, preserveZeros,
                       skipNoneReturnValues)
 
@@ -229,9 +234,10 @@ class Elements(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
-        transform, Points.calculate, Features.calculate
+        transform, nimble.data.points.Points.calculate,
+        nimble.data.features.Features.calculate
 
         Examples
         --------
@@ -309,51 +315,68 @@ class Elements(object):
                                              skipNoneReturnValues,
                                              'toCalculate')
 
-        if points is not None:
-            points = constructIndicesList(self._source, 'point', points)
-        if features is not None:
-            features = constructIndicesList(self._source, 'feature', features)
-
-        if outputType is not None:
-            optType = outputType
-        else:
-            optType = self._source.getTypeString()
-
-        # Use vectorized for functions with oneArg
-        if calculator.oneArg:
-            vectorized = numpy.vectorize(calculator)
-            ret = self._calculate_implementation(vectorized, points, features,
-                                                 preserveZeros, optType)
-
-        else:
-            # if unable to vectorize, iterate over each point
-            if not points:
-                points = list(range(len(self._source.points)))
-            if not features:
-                features = list(range(len(self._source.features)))
-            valueArray = numpy.empty([len(points), len(features)])
-            p = 0
-            for pi in points:
-                f = 0
-                for fj in features:
-                    value = self._source[pi, fj]
-                    if calculator.oneArg:
-                        currRet = calculator(value)
-                    else:
-                        currRet = calculator(value, pi, fj)
-                    valueArray[p, f] = currRet
-                    f += 1
-                p += 1
-
-            ret = nimble.createData(optType, valueArray, useLog=False)
-
-        ret._absPath = self._source.absolutePath
-        ret._relPath = self._source.relativePath
+        ret = self._calculate_backend(calculator, points, features,
+                                      preserveZeros, skipNoneReturnValues,
+                                      outputType)
 
         handleLogging(useLog, 'prep', 'elements.calculate',
-                      self._source.getTypeString(), Elements.calculate,
+                      self._base.getTypeString(), Elements.calculate,
                       toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
+
+        return ret
+
+    def matching(self, toMatch, useLog=None):
+        """
+        Return an object of boolean values identifying matching values.
+
+        Apply a function returning a boolean value for each element in
+        this object. Common matching functions can be found in nimble's
+        match module.
+
+        Parameters
+        ----------
+        toMatch : function
+            * function - in the form of toMatch(elementValue) which
+              returns True, False, 0 or 1.
+
+        Returns
+        -------
+        nimble Base object
+            This object will only contain boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isPositive = data.elements.matching(match.positive)
+        >>> isPositive
+        Matrix(
+            [[ True False  True]
+             [False  True False]]
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, None], [None, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isMissing = data.elements.matching(match.missing)
+        >>> isMissing
+        Matrix(
+            [[False False  True]
+             [ True False False]]
+            )
+        """
+        wrappedMatch = wrapMatchFunctionFactory(toMatch)
+
+        ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+
+        ret.points.setNames(self._base.points._getNamesNoGeneration())
+        ret.features.setNames(self._base.features._getNamesNoGeneration())
+
+        handleLogging(useLog, 'prep', 'elements.matching',
+                      self._base.getTypeString(), Elements.matching,
+                      toMatch)
 
         return ret
 
@@ -376,7 +399,8 @@ class Elements(object):
 
         See Also
         --------
-        Points.count, Features.count
+        nimble.data.points.Points.count,
+        nimble.data.features.Features.count
 
         Examples
         --------
@@ -427,7 +451,7 @@ class Elements(object):
 
         See Also
         --------
-        nimble.calculate.uniqueCount
+        nimble.calculate.statistic.uniqueCount
 
         Examples
         --------
@@ -495,38 +519,38 @@ class Elements(object):
             msg = "'other' must be an instance of a nimble data object"
             raise InvalidArgumentType(msg)
 
-        if len(self._source.points) != len(other.points):
+        if len(self._base.points) != len(other.points):
             msg = "The number of points in each object must be equal."
             raise InvalidArgumentValue(msg)
-        if len(self._source.features) != len(other.features):
+        if len(self._base.features) != len(other.features):
             msg = "The number of features in each object must be equal."
             raise InvalidArgumentValue(msg)
 
-        if len(self._source.points) == 0 or len(self._source.features) == 0:
+        if len(self._base.points) == 0 or len(self._base.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperObjectAction(msg)
 
-        self._source._validateEqualNames('point', 'point',
+        self._base._validateEqualNames('point', 'point',
                                          'elements.multiply', other)
-        self._source._validateEqualNames('feature', 'feature',
+        self._base._validateEqualNames('feature', 'feature',
                                          'elements.multiply', other)
 
         try:
             self._multiply_implementation(other)
         except Exception as e:
             #TODO: improve how the exception is catch
-            self._source._numericValidation()
+            self._base._numericValidation()
             other._numericValidation(right=True)
             raise e
 
-        retNames = dataHelpers.mergeNonDefaultNames(self._source, other)
+        retNames = dataHelpers.mergeNonDefaultNames(self._base, other)
         retPNames = retNames[0]
         retFNames = retNames[1]
-        self._source.points.setNames(retPNames, useLog=False)
-        self._source.features.setNames(retFNames, useLog=False)
+        self._base.points.setNames(retPNames, useLog=False)
+        self._base.features.setNames(retFNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'elements.multiply',
-                      self._source.getTypeString(), Elements.multiply, other)
+                      self._base.getTypeString(), Elements.multiply, other)
 
 
     def power(self, other, useLog=None):
@@ -577,14 +601,14 @@ class Elements(object):
 
         if isinstance(other, nimble.data.Base):
             # same shape
-            if len(self._source.points) != len(other.points):
+            if len(self._base.points) != len(other.points):
                 msg = "The number of points in each object must be equal."
                 raise InvalidArgumentValue(msg)
-            if len(self._source.features) != len(other.features):
+            if len(self._base.features) != len(other.features):
                 msg = "The number of features in each object must be equal."
                 raise InvalidArgumentValue(msg)
 
-        if len(self._source.points) == 0 or len(self._source.features) == 0:
+        if len(self._base.points) == 0 or len(self._base.features) == 0:
             msg = "Cannot do elements.power when points or features is emtpy"
             raise ImproperObjectAction(msg)
 
@@ -593,7 +617,7 @@ class Elements(object):
                 try:
                     return val ** other[pnum, fnum]
                 except Exception as e:
-                    self._source._numericValidation()
+                    self._base._numericValidation()
                     other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
@@ -602,17 +626,70 @@ class Elements(object):
                 try:
                     return val ** other
                 except Exception as e:
-                    self._source._numericValidation()
+                    self._base._numericValidation()
                     other._numericValidation(right=True)
                     raise e
             self.transform(powFromRight, useLog=False)
 
         handleLogging(useLog, 'prep', 'elements.power',
-                      self._source.getTypeString(), Elements.power, other)
+                      self._base.getTypeString(), Elements.power, other)
 
     ########################
     # Higher Order Helpers #
     ########################
+
+    def _calculate_backend(self, calculator, points=None, features=None,
+                           preserveZeros=False, skipNoneReturnValues=False,
+                           outputType=None, allowBoolOutput=False):
+        if points is not None:
+            points = constructIndicesList(self._base, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self._base, 'feature', features)
+
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self._base.getTypeString()
+        # Use vectorized for functions with oneArg
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
+            values = self._calculate_implementation(
+                vectorized, points, features, preserveZeros, optType)
+
+        else:
+            if not points:
+                points = list(range(len(self._base.points)))
+            if not features:
+                features = list(range(len(self._base.features)))
+            # if unable to vectorize, iterate over each point
+            values = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self._base[pi, fj]
+                    if calculator.oneArg:
+                        currRet = calculator(value)
+                    else:
+                        currRet = calculator(value, pi, fj)
+                    values[p, f] = currRet
+                    f += 1
+                p += 1
+
+        # check if values has numeric dtype
+        createDataKwargs = {'useLog': False}
+        if allowBoolOutput and numpy.issubdtype(values.dtype, numpy.bool_):
+            createDataKwargs['elementType'] = bool
+        elif not (numpy.issubdtype(values.dtype, numpy.number)
+                  or numpy.issubdtype(values.dtype, numpy.bool_)):
+            createDataKwargs['elementType'] = numpy.object_
+
+        ret = nimble.createData(optType, values, **createDataKwargs)
+
+        ret._absPath = self._base.absolutePath
+        ret._relPath = self._base.relativePath
+
+        return ret
 
     def _calculate_genericVectorized(
             self, function, points, features, outputType):
@@ -620,29 +697,21 @@ class Elements(object):
         if points:
             points = numpy.array(points)
         else:
-            points = numpy.array(range(len(self._source.points)))
+            points = numpy.array(range(len(self._base.points)))
         if features:
             features = numpy.array(features)
         else:
-            features = numpy.array(range(len(self._source.features)))
-        toCalculate = self._source.copy(to='numpyarray')
+            features = numpy.array(range(len(self._base.features)))
+        toCalculate = self._base.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
         try:
-            values = function(toCalculate)
-            # check if values has numeric dtype
-            if numpy.issubdtype(values.dtype, numpy.number):
-                return nimble.createData(outputType, values, useLog=False)
-
-            return nimble.createData(outputType, values,
-                                     elementType=numpy.object_, useLog=False)
+            return function(toCalculate)
         except Exception:
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
-            values = function(toCalculate)
-            return nimble.createData(outputType, values,
-                                     elementType=numpy.object_, useLog=False)
+            return function(toCalculate)
 
     #####################
     # Abstract Methods  #

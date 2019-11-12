@@ -18,9 +18,8 @@ exceptionDocstring = exceptionDocstringFactory(Base)
 @inheritDocstringsFactory(Base)
 class BaseView(Base):
     """
-    Class defining read only view objects, which have the same api as a
-    normal data object, but disallow all methods which could change the
-    data.
+    Class limiting the Base class to read-only by disallowing methods
+    which could change the data.
 
     Parameters
     ----------

@@ -16,7 +16,7 @@ _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
 points.getIndices, features.getIndices, constructIndicesList, copy
-features.hasName, points.hasName
+features.hasName, points.hasName, __bool__
 """
 
 from __future__ import absolute_import
@@ -317,14 +317,14 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def test_points_setName_exceptionPrevInvalidIndex(self):
         """ Test points.setName() for InvalidArgumentValue when given an invalid prev index"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setName(oldIdentifier=12, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_points_setName_exceptionPrevNotFound(self):
         """ Test points.setName() for InvalidArgumentValue when the prev pointName is not found"""
         origNames = ["zero", "one", "two", "three"]
@@ -388,14 +388,14 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=0.3, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def test_features_setName_exceptionPrevInvalidIndex(self):
         """ Test features.setName() for InvalidArgumentValue when given an invalid prev index"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setName(oldIdentifier=12, newName="New!")
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def test_features_setName_exceptionPrevNotFound(self):
         """ Test features.setName() for InvalidArgumentValue when the prev featureName is not found"""
         origFeatureNames = ["zero", "one", "two", "three"]
@@ -1100,6 +1100,52 @@ class LowLevelBackend(object):
         assert len(nn.points) == 11
         assert len(nn.features) == 33
 
+    ############
+    # __bool__ #
+    ############
+    @noLogEntryExpected
+    def test_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty)
+
+    #######################################
+    # points.__bool__ / features.__bool__ #
+    #######################################
+    @noLogEntryExpected
+    def test_axis_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.points)
+        assert not bool(bothEmpty.features)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.points)
+        assert bool(pointEmpty.features)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert bool(featEmpty.points)
+        assert not bool(featEmpty.features)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.points)
+        assert bool(noEmpty.features)
+
+    #####################
+    # elements.__bool__ #
+    #####################
+    @noLogEntryExpected
+    def test_elements_bool_handmade(self):
+        bothEmpty = self.constructor(psize=0, fsize=0)
+        assert not bool(bothEmpty.elements)
+        pointEmpty = self.constructor(psize=0, fsize=4)
+        assert not bool(pointEmpty.elements)
+        featEmpty = self.constructor(psize=4, fsize=0)
+        assert not bool(featEmpty.elements)
+        noEmpty = self.constructor(psize=4, fsize=4)
+        assert bool(noEmpty.elements)
+
     #########################
     # constructIndicesList #
     #########################
@@ -1222,7 +1268,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'point', ptIndex)
 
-    @raises(InvalidArgumentValue)
+    @raises(IndexError)
     def testconstructIndicesList_InvalidIndexInteger(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1232,7 +1278,7 @@ class LowLevelBackend(object):
 
         constructIndicesList(toTest, 'feature', ftIndex)
 
-    @raises(InvalidArgumentValue)
+    @raises(KeyError)
     def testconstructIndicesList_InvalidIndexString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']

@@ -20,8 +20,8 @@ class MatrixFeatures(MatrixAxis, Features):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Matrix
+        The Matrix instance that will be queried and modified.
     """
 
     ##############################
@@ -34,9 +34,9 @@ class MatrixFeatures(MatrixAxis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self._source.data[:, :insertBefore]
-        endData = self._source.data[:, insertBefore:]
-        self._source.data = numpy.concatenate((startData, toAdd.data, endData),
+        startData = self._base.data[:, :insertBefore]
+        endData = self._base.data[:, insertBefore:]
+        self._base.data = numpy.concatenate((startData, toAdd.data, endData),
                                               1)
 
     def _transform_implementation(self, function, limitTo):
@@ -44,7 +44,7 @@ class MatrixFeatures(MatrixAxis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            if len(currRet) != len(self._source.points):
+            if len(currRet) != len(self._base.points):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise InvalidArgumentValue(msg)
@@ -53,20 +53,20 @@ class MatrixFeatures(MatrixAxis, Features):
             except ValueError:
                 currRet = numpy.array(currRet, dtype=numpy.object_)
                 # need self.data to be object dtype if inserting object dtype
-                if numpy.issubdtype(self._source.data.dtype, numpy.number):
-                    self._source.data = self._source.data.astype(numpy.object_)
+                if numpy.issubdtype(self._base.data.dtype, numpy.number):
+                    self._base.data = self._base.data.astype(numpy.object_)
 
-            self._source.data[:, j] = numpy.array(currRet)
+            self._base.data[:, j] = numpy.array(currRet)
 
     # def _flattenToOne_implementation(self):
-    #     numElements = len(self._source.points) * len(self._source.features)
-    #     self._source.data = self._source.data.reshape((numElements, 1),
+    #     numElements = len(self._base.points) * len(self._base.features)
+    #     self._base.data = self._base.data.reshape((numElements, 1),
     #                                                 order='F')
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     numFeatures = divideInto
-    #     numPoints = len(self._source.points) // numFeatures
-    #     self._source.data = self._source.data.reshape((numPoints,
+    #     numPoints = len(self._base.points) // numFeatures
+    #     self._base.data = self._base.data.reshape((numPoints,
     #                                                    numFeatures),
     #                                                 order='F')
 
@@ -76,30 +76,35 @@ class MatrixFeatures(MatrixAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._source.points), numRetFeatures),
+        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
                               dtype=numpy.object_)
 
-        tmpData[:, :featureIndex] = self._source.data[:, :featureIndex]
+        tmpData[:, :featureIndex] = self._base.data[:, :featureIndex]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = self._source.data[:, featureIndex + 1:]
+        existingData = self._base.data[:, featureIndex + 1:]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._source.data = numpy2DArray(tmpData)
+        self._base.data = numpy2DArray(tmpData)
 
     #########################
     # Query implementations #
     #########################
 
     def _nonZeroIterator_implementation(self):
-        return nzIt(self._source)
+        return nzIt(self._base)
 
 class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     """
-    Limit functionality of MatrixFeatures to read-only
+    Limit functionality of MatrixFeatures to read-only.
+
+    Parameters
+    ----------
+    base : MatrixView
+        The MatrixView instance that will be queried.
     """
     pass
 

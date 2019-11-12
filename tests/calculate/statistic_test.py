@@ -53,7 +53,7 @@ def testQuartilesAPI():
     assert ret == (2, 4, 6)
 
 #the following tests will test both None/NaN ignoring and calculation correctness
-testDataTypes = ['List', 'DataFrame']#'Matrix','Sparse'
+testDataTypes = nimble.data.available
 
 @noLogEntryExpected
 def testProportionMissing():
