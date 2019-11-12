@@ -24,8 +24,8 @@ class DataFrameElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
     """
 
     ##############################
@@ -33,10 +33,10 @@ class DataFrameElements(Elements):
     ##############################
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self._source.points)),
-                                range(len(self._source.features)))
+        IDs = itertools.product(range(len(self._base.points)),
+                                range(len(self._base.features)))
         for i, j in IDs:
-            currVal = self._source.data.values[i, j]
+            currVal = self._base.data.values[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -48,7 +48,7 @@ class DataFrameElements(Elements):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self._source.data.iloc[i, j] = currRet
+            self._base.data.iloc[i, j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -65,7 +65,7 @@ class DataFrameElements(Elements):
     #########################
 
     def _countUnique_implementation(self, points, features):
-        return denseCountUnique(self._source, points, features)
+        return denseCountUnique(self._base, points, features)
 
     #############################
     # Numerical implementations #
@@ -81,16 +81,21 @@ class DataFrameElements(Elements):
         modification of the calling object.
         """
         if isinstance(other, nimble.data.Sparse):
-            result = other.data.multiply(self._source.data.values)
+            result = other.data.multiply(self._base.data.values)
             if hasattr(result, 'toarray'):
                 result = cooMatrixToArray(result)
-            self._source.data = pd.DataFrame(result)
+            self._base.data = pd.DataFrame(result)
         else:
-            self._source.data = pd.DataFrame(
-                np.multiply(self._source.data.values, other.data))
+            self._base.data = pd.DataFrame(
+                np.multiply(self._base.data.values, other.data))
 
 class DataFrameElementsView(ElementsView, DataFrameElements):
     """
-    Limit functionality of DataFrameElements to read-only
+    Limit functionality of DataFrameElements to read-only.
+
+    Parameters
+    ----------
+    base : DataFrameView
+        The DataFrameView instance that will be queried.
     """
     pass

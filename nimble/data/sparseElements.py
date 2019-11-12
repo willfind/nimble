@@ -22,8 +22,8 @@ class SparseElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Sparse
+        The Sparse instance that will be queried and modified.
     """
 
     ##############################
@@ -44,10 +44,10 @@ class SparseElements(Elements):
 
     def _calculate_implementation(self, function, points, features,
                                   preserveZeros, outputType):
-        if not isinstance(self._source, nimble.data.BaseView):
-            data = self._source.data.data
-            row = self._source.data.row
-            col = self._source.data.col
+        if not isinstance(self._base, nimble.data.BaseView):
+            data = self._base.data.data
+            row = self._base.data.row
+            col = self._base.data.col
         else:
             # initiate generic implementation for view types
             preserveZeros = False
@@ -58,7 +58,7 @@ class SparseElements(Elements):
             except Exception:
                 function.otypes = [numpy.object_]
                 data = function(data)
-            shape = self._source.data.shape
+            shape = self._base.data.shape
             values = coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
@@ -88,13 +88,13 @@ class SparseElements(Elements):
 
     def _countUnique_implementation(self, points, features):
         uniqueCount = {}
-        isView = self._source.data.data is None
+        isView = isinstance(self._base, nimble.data.BaseView)
         if points is None and features is None and not isView:
-            source = self._source
+            source = self._base
         else:
             pWanted = points if points is not None else slice(None)
             fWanted = features if features is not None else slice(None)
-            source = self._source[pWanted, fWanted]
+            source = self._base[pWanted, fWanted]
         uniqueCount = denseCountUnique(source.data.data)
         totalValues = (len(source.points) * len(source.features))
         numZeros = totalValues - len(source.data.data)
@@ -124,11 +124,12 @@ class SparseElements(Elements):
             toMul = other.data
         else:
             toMul = other.copy(to='numpyarray')
-        raw = self._source.data.multiply(coo_matrix(toMul))
+        raw = self._base.data.multiply(coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
-            self._source.data = raw.tocoo()
+            self._base.data = raw.tocoo()
         else:
-            self._source.data = coo_matrix(raw, shape=self._source.data.shape)
+            self._base.data = coo_matrix(raw, shape=self._base.data.shape)
+        self._base._sorted = None
 
     ######################
     # Structural helpers #
@@ -156,18 +157,19 @@ class SparseElements(Elements):
         ret = self.calculate(wrapper, None, None, preserveZeros=False,
                              skipNoneReturnValues=True, useLog=False)
 
-        pnames = self._source.points._getNamesNoGeneration()
-        fnames = self._source.features._getNamesNoGeneration()
-        self._source.referenceDataFrom(ret, useLog=False)
-        self._source.points.setNames(pnames, useLog=False)
-        self._source.features.setNames(fnames, useLog=False)
+        pnames = self._base.points._getNamesNoGeneration()
+        fnames = self._base.features._getNamesNoGeneration()
+        self._base.referenceDataFrom(ret, useLog=False)
+        self._base.points.setNames(pnames, useLog=False)
+        self._base.features.setNames(fnames, useLog=False)
+        self._base._sorted = None
 
 
     def _transformEachElement_zeroPreserve_implementation(
             self, toTransform, points, features):
-        for index, val in enumerate(self._source.data.data):
-            pID = self._source.data.row[index]
-            fID = self._source.data.col[index]
+        for index, val in enumerate(self._base.data.data):
+            pID = self._base.data.row[index]
+            fID = self._base.data.col[index]
             if points is not None and pID not in points:
                 continue
             if features is not None and fID not in features:
@@ -178,10 +180,15 @@ class SparseElements(Elements):
             else:
                 currRet = toTransform(val, pID, fID)
 
-            self._source.data.data[index] = currRet
+            self._base.data.data[index] = currRet
 
 class SparseElementsView(ElementsView, SparseElements):
     """
-    Limit functionality of SparseElements to read-only
+    Limit functionality of SparseElements to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
     """
     pass

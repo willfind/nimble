@@ -24,9 +24,14 @@ from nimble.exceptions import InvalidArgumentValueCombination
 class Features(object):
     """
     Methods that can be called on a nimble Base objects feature axis.
+
+    Parameters
+    ----------
+    base : Base
+        The Base instance that will be queried and modified.
     """
-    def __init__(self, source):
-        self._source = source
+    def __init__(self, base):
+        self._base = base
         super(Features, self).__init__()
 
     ########################
@@ -155,11 +160,13 @@ class Features(object):
         """
         self._setNames(assignments, useLog)
 
-    def getIndex(self, name):
+    def getIndex(self, identifier):
         """
-        The index of a feature name.
+        The index of a feature.
 
-        Return the index location of the provided feature ``name``.
+        Return the index location of the feature ``identifier``. The
+        ``identifier`` can be a feature name or integer (including
+        negative integers).
 
         Parameters
         ----------
@@ -172,7 +179,7 @@ class Features(object):
 
         See Also
         --------
-        indices
+        getIndices
 
         Examples
         --------
@@ -180,8 +187,10 @@ class Features(object):
         ...                        featureNames=['a', 'b', 'c', 'd'])
         >>> data.features.getIndex('c')
         2
+        >>> data.features.getIndex(-1)
+        3
         """
-        return self._getIndex(name)
+        return self._getIndex(identifier)
 
     def getIndices(self, names):
         """
@@ -201,7 +210,7 @@ class Features(object):
 
         See Also
         --------
-        index
+        getIndex
 
         Examples
         --------
@@ -291,7 +300,7 @@ class Features(object):
 
         See Also
         --------
-        Base.copy
+        nimble.data.base.Base.copy
 
         Examples
         --------
@@ -557,6 +566,7 @@ class Features(object):
             )
 
         Select a set number to extract, choosing features at random.
+
         >>> data = nimble.identity('List', 3)
         >>> data.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.features.extract(number=2,
@@ -882,6 +892,7 @@ class Features(object):
         ----------
         condition : function
             May take two forms:
+
             * a function that when given a feature will return True if
               it is to be counted
             * a filter function, as a string, containing a comparison
@@ -893,7 +904,8 @@ class Features(object):
 
         See Also
         --------
-        Elements.count, Elements.countEachUniqueValue
+        nimble.data.elements.Elements.count,
+        nimble.data.elements.Elements.countUnique
 
         Examples
         --------
@@ -1127,7 +1139,7 @@ class Features(object):
         -------
         nimble Base object
 
-        See also
+        See Also
         --------
         transform
 
@@ -1435,7 +1447,7 @@ class Features(object):
 
         See Also
         --------
-        match, fill
+        nimble.match, nimble.fill
 
         Examples
         --------
@@ -1692,7 +1704,7 @@ class Features(object):
 
         splitList = []
         numResultingFts = len(resultingNames)
-        for i, value in enumerate(self._source[:, feature]):
+        for i, value in enumerate(self._base[:, feature]):
             if isinstance(rule, six.string_types):
                 splitList.append(value.split(rule))
             elif isinstance(rule, (int, numpy.number)):
@@ -1736,11 +1748,11 @@ class Features(object):
         fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
-        self._source._featureCount = numRetFeatures
+        self._base._featureCount = numRetFeatures
         self.setNames(fNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'features.splitByParsing',
-                      self._source.getTypeString(), Features.splitByParsing,
+                      self._base.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
     def repeat(self, totalCopies, copyFeatureByFeature):
@@ -1927,7 +1939,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, name):
+    def _getIndex(self, identifier):
         pass
 
     @abstractmethod
