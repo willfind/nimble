@@ -20,8 +20,8 @@ class MatrixElements(Elements):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Matrix
+        The Matrix instance that will be queried and modified.
     """
 
     ##############################
@@ -29,10 +29,10 @@ class MatrixElements(Elements):
     ##############################
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self._source.points)),
-                                range(len(self._source.features)))
+        IDs = itertools.product(range(len(self._base.points)),
+                                range(len(self._base.features)))
         for i, j in IDs:
-            currVal = self._source.data[i, j]
+            currVal = self._base.data[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -44,11 +44,11 @@ class MatrixElements(Elements):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self._source.data[i, j] = currRet
+            self._base.data[i, j] = currRet
             # numpy modified data due to int dtype
-            if self._source.data[i, j] != currRet:
-                self._source.data = self._source.data.astype(numpy.float)
-                self._source.data[i, j] = currRet
+            if self._base.data[i, j] != currRet:
+                self._base.data = self._base.data.astype(numpy.float)
+                self._base.data[i, j] = currRet
 
     ################################
     # Higher Order implementations #
@@ -64,7 +64,7 @@ class MatrixElements(Elements):
     #########################
 
     def _countUnique_implementation(self, points, features):
-        return denseCountUnique(self._source, points, features)
+        return denseCountUnique(self._base, points, features)
 
     #############################
     # Numerical implementations #
@@ -80,16 +80,21 @@ class MatrixElements(Elements):
         modification of the calling object.
         """
         if isinstance(other, nimble.data.Sparse):
-            result = other.data.multiply(self._source.data)
+            result = other.data.multiply(self._base.data)
             if hasattr(result, 'todense'):
                 result = result.todense()
         else:
-            result = numpy.multiply(self._source.data, other.data)
-        self._source.data = numpy2DArray(result)
+            result = numpy.multiply(self._base.data, other.data)
+        self._base.data = numpy2DArray(result)
 
 
 class MatrixElementsView(ElementsView, MatrixElements):
     """
-    Limit functionality of MatrixElements to read-only
+    Limit functionality of MatrixElements to read-only.
+
+    Parameters
+    ----------
+    base : MatrixView
+        The MatrixView instance that will be queried.
     """
     pass

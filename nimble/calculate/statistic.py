@@ -66,6 +66,8 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     """
     Given a 1D vector of values, find the minimum or maximum value.
     """
+    if not _isNumericalFeatureGuesser(values):
+        return None
     if minmax == 'min':
         compStr = '__lt__'
         func1 = lambda x, y: x > y
@@ -265,17 +267,10 @@ def _isMissing(point):
 
 def _isNumericalFeatureGuesser(featureVector):
     """
-    Returns true if the vector only contains primitive numerical non-complex values,
-    returns false otherwise.
+    Returns true if the vector only contains primitive numerical
+    non-complex values, returns false otherwise.
     """
-    try:
-        if featureVector.getTypeString() in ['Matrix']:
-            return True
-    except AttributeError:
-        pass
-
-    #if all items in featureVector are numerical or None/NaN, return True; otherwise, False.
-    return all([isinstance(item, numericalTypes) for item in featureVector if item])
+    return all(isinstance(val, numericalTypes) for val in featureVector if val)
 
 
 def _isNumericalPoint(point):

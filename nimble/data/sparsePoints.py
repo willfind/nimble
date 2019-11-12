@@ -23,8 +23,8 @@ class SparsePoints(SparseAxis, Points):
 
     Parameters
     ----------
-    source : nimble data object
-        The object containing point and feature data.
+    base : Sparse
+        The Sparse instance that will be queried and modified.
     """
 
     ##############################
@@ -32,37 +32,37 @@ class SparsePoints(SparseAxis, Points):
     ##############################
 
     # def _flattenToOne_implementation(self):
-    #     self._source._sortInternal('point')
-    #     pLen = len(self._source.features)
-    #     numElem = len(self._source.points) * len(self._source.features)
-    #     data = self._source.data.data
-    #     row = self._source.data.row
-    #     col = self._source.data.col
+    #     self._base._sortInternal('point')
+    #     pLen = len(self._base.features)
+    #     numElem = len(self._base.points) * len(self._base.features)
+    #     data = self._base.data.data
+    #     row = self._base.data.row
+    #     col = self._base.data.col
     #     for i in range(len(data)):
     #         if row[i] > 0:
     #             col[i] += (row[i] * pLen)
     #             row[i] = 0
     #
-    #     self._source.data = coo_matrix((data, (row, col)), (1, numElem))
+    #     self._base.data = coo_matrix((data, (row, col)), (1, numElem))
     #
     # def _unflattenFromOne_implementation(self, divideInto):
     #     # only one feature, so both sorts are the same order
-    #     if self._source._sorted is None:
-    #         self._source._sortInternal('point')
+    #     if self._base._sorted is None:
+    #         self._base._sortInternal('point')
     #
     #     numPoints = divideInto
-    #     numFeatures = len(self._source.features) // numPoints
+    #     numFeatures = len(self._base.features) // numPoints
     #     newShape = (numPoints, numFeatures)
-    #     data = self._source.data.data
-    #     row = self._source.data.row
-    #     col = self._source.data.col
+    #     data = self._base.data.data
+    #     row = self._base.data.row
+    #     col = self._base.data.col
     #     for i in range(len(data)):
     #         # must change the row entry before modifying the col entry
     #         row[i] = col[i] / numFeatures
     #         col[i] = col[i] % numFeatures
     #
-    #     self._source.data = coo_matrix((data, (row, col)), newShape)
-    #     self._source._sorted = 'point'
+    #     self._base.data = coo_matrix((data, (row, col)), newShape)
+    #     self._base._sorted = 'point'
 
     ################################
     # Higher Order implementations #
@@ -71,15 +71,15 @@ class SparsePoints(SparseAxis, Points):
     def _splitByCollapsingFeatures_implementation(
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        if self._source._sorted is None:
-            self._source._sortInternal('point')
-        data = self._source.data.data
-        row = self._source.data.row
-        col = self._source.data.col
+        if self._base._sorted is None:
+            self._base._sortInternal('point')
+        data = self._base.data.data
+        row = self._base.data.row
+        col = self._base.data.col
         tmpData = []
         tmpRow = []
         tmpCol = []
-        collapseNames = [self._source.features.getName(idx)
+        collapseNames = [self._base.features.getName(idx)
                          for idx in collapseIndices]
         for ptIdx in range(len(self)):
             inRetain = [val in retainIndices for val in col]
@@ -102,9 +102,9 @@ class SparsePoints(SparseAxis, Points):
                 tmpCol.append(numRetFeatures - 1)
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+        self._base.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
                                        shape=(numRetPoints, numRetFeatures))
-        self._source._sorted = None
+        self._base._sorted = None
 
     def _combineByExpandingFeatures_implementation(
             self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
@@ -124,13 +124,18 @@ class SparsePoints(SparseAxis, Points):
             tmpCol.extend([i for i in range(numRetFeatures)])
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self._source.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+        self._base.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
                                        shape=(len(uniqueDict), numRetFeatures))
-        self._source._sorted = None
+        self._base._sorted = None
 
 class SparsePointsView(PointsView, AxisView, SparsePoints):
     """
-    Limit functionality of SparsePoints to read-only
+    Limit functionality of SparsePoints to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
     """
 
     #########################
@@ -138,14 +143,14 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
     #########################
 
     def _nonZeroIterator_implementation(self):
-        return nzIt(self._source)
+        return nzIt(self._base)
 
     def _unique_implementation(self):
-        unique = self._source.copy(to='Sparse')
+        unique = self._base.copy(to='Sparse')
         return unique.points._unique_implementation()
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
-        copy = self._source.copy(to='Sparse')
+        copy = self._base.copy(to='Sparse')
         return copy.points._repeat_implementation(totalCopies,
                                                   copyValueByValue)
 

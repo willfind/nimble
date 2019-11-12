@@ -320,21 +320,20 @@ for call in classes:
                 and attribute not in ignore):
             ALL_DUNDER.append(call.__name__ + '.' + attribute)
 
-baseDunder_tested = [
-    'Base.__abs__', 'Base.__add__', 'Base.__and__', 'Base.__copy__',
-    'Base.__deepcopy__', 'Base.__getitem__', 'Base.__floordiv__',
-    'Base.__iadd__', 'Base.__ifloordiv__', 'Base.__imod__', 'Base.__imatmul__',
-    'Base.__imul__', 'Base.__invert__', 'Base.__ipow__', 'Base.__isub__',
-    'Base.__itruediv__', 'Base.__len__', 'Base.__matmul__', 'Base.__mod__',
-    'Base.__mul__', 'Base.__neg__', 'Base.__or__', 'Base.__pos__',
-    'Base.__pow__', 'Base.__radd__', 'Base.__rfloordiv__', 'Base.__rmatmul__',
-    'Base.__rmod__', 'Base.__rmul__', 'Base.__rpow__', 'Base.__rsub__',
-    'Base.__rtruediv__', 'Base.__sub__', 'Base.__truediv__', 'Base.__xor__',
-    ]
-axisDunder_tested = ['Axis.__iter__', 'Axis.__len__', 'Axis.__getitem__']
+baseDunder_tested = list(map(prefixAdder('Base'),
+    ['__abs__', '__add__', '__and__', '__bool__', '__copy__', '__deepcopy__',
+     '__getitem__', '__floordiv__', '__iadd__', '__ifloordiv__', '__imod__',
+     '__imatmul__', '__imul__', '__invert__', '__ipow__', '__isub__',
+     '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__', '__neg__',
+     '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
+     '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
+     '__rtruediv__', '__sub__', '__truediv__', '__xor__',
+    ]))
+axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
+                     'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__iter__']
+elementsDunder_tested = ['Elements.__bool__', 'Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 
