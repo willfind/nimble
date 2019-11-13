@@ -3981,14 +3981,19 @@ class Base(object):
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
+            # div and mod ops do not always raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                infLoc = (self.elements.matching(match.infinity, False)
+                          | self.elements.matching(match.infinity, False))
+                nanLoc = (self.elements.matching(match.missing, False)
+                          | self.elements.matching(match.missing, False))
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
-
-        # mod and floordiv operations do not raise errors for zero division
-        # TODO logical operations to check for new nan and inf after operation
-        if 'floordiv' in opName or 'mod' in opName:
-            self._genericBinary_dataExamination(opName, other)
+            # div and mod ops do not always raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                infLoc = self.elements.matching(match.infinity, False)
+                nanLoc = self.elements.matching(match.missing, False)
 
         try:
             useOp = opName
@@ -4001,6 +4006,13 @@ class Base(object):
         except Exception:
             self._genericBinary_dataExamination(opName, other)
             raise # backup, expect call above to raise exception
+        if 'div' in opName or 'mod' in opName:
+            retInf = ret.elements.matching(match.infinity, False)
+            retNan = ret.elements.matching(match.missing, False)
+            # check if any unexpected nan or inf values were introduced
+            if not (retInf.isIdentical(infLoc) and retNan.isIdentical(nanLoc)):
+                # identify source of unexpected nan and raise exception
+                self._genericBinary_dataExamination(opName, other)
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
@@ -4027,6 +4039,58 @@ class Base(object):
         ret = createDataNoValidation(self.getTypeString(), data)
 
         return ret
+
+
+    def __and__(self, other):
+        return self._genericLogicalBinary('__and__', other)
+
+    def __or__(self, other):
+        return self._genericLogicalBinary('__or__', other)
+
+    def __xor__(self, other):
+        return self._genericLogicalBinary('__xor__', other)
+
+    def __invert__(self):
+        boolObj = self._logicalValidationAndConversion()
+        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+        return ret
+
+
+    def _genericLogicalBinary(self, opName, other):
+        if isinstance(other, Stretch):
+            return NotImplemented
+        if not isinstance(other, Base):
+            msg = 'other must be an instance of a nimble Base object'
+            raise InvalidArgumentType(msg)
+        self._genericBinary_sizeValidation(opName, other)
+        lhsBool = self._logicalValidationAndConversion()
+        rhsBool = other._logicalValidationAndConversion()
+        self._validateEqualNames('point', 'point', opName, other)
+        self._validateEqualNames('feature', 'feature', opName, other)
+
+        return lhsBool._genericBinaryOperations(opName, rhsBool)
+
+    def _logicalValidationAndConversion(self):
+        if (not hasattr(self.data, 'dtype')
+                or self.data.dtype not in [bool, numpy.bool_]):
+            validValues = match.allValues([True, False, 0, 1])
+            if not validValues(self):
+                msg = 'logical operations can only be performed on data '
+                msg += 'containing True, False, 0 and 1 values'
+                raise ImproperObjectAction(msg)
+
+            ret = self.elements.matching(lambda v: bool(v), useLog=False)
+            ret.points.setNames(self.points._getNamesNoGeneration(),
+                                useLog=False)
+            ret.features.setNames(self.features._getNamesNoGeneration(),
+                                  useLog=False)
+            return ret
+
+        return self
+
 
     @property
     def stretch(self):
@@ -4090,55 +4154,6 @@ class Base(object):
             )
         """
         return Stretch(self)
-
-
-    def __and__(self, other):
-        return self._genericLogicalBinary('__and__', other)
-
-    def __or__(self, other):
-        return self._genericLogicalBinary('__or__', other)
-
-    def __xor__(self, other):
-        return self._genericLogicalBinary('__xor__', other)
-
-    def __invert__(self):
-        boolObj = self._logicalValidationAndConversion()
-        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
-        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
-        ret.features.setNames(self.features._getNamesNoGeneration(),
-                              useLog=False)
-        return ret
-
-
-    def _genericLogicalBinary(self, opName, other):
-        if not isinstance(other, Base):
-            msg = 'other must be an instance of a nimble Base object'
-            raise InvalidArgumentType(msg)
-        self._genericBinary_sizeValidation(opName, other)
-        lhsBool = self._logicalValidationAndConversion()
-        rhsBool = other._logicalValidationAndConversion()
-        self._validateEqualNames('point', 'point', opName, other)
-        self._validateEqualNames('feature', 'feature', opName, other)
-
-        return lhsBool._genericBinaryOperations(opName, rhsBool)
-
-    def _logicalValidationAndConversion(self):
-        if (not hasattr(self.data, 'dtype')
-                or self.data.dtype not in [bool, numpy.bool_]):
-            validValues = match.allValues([True, False, 0, 1])
-            if not validValues(self):
-                msg = 'logical operations can only be performed on data '
-                msg += 'containing True, False, 0 and 1 values'
-                raise ImproperObjectAction(msg)
-
-            ret = self.elements.matching(lambda v: bool(v), useLog=False)
-            ret.points.setNames(self.points._getNamesNoGeneration(),
-                                useLog=False)
-            ret.features.setNames(self.features._getNamesNoGeneration(),
-                                  useLog=False)
-            return ret
-
-        return self
 
     ############################
     ############################

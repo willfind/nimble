@@ -371,8 +371,9 @@ class Elements(object):
 
         ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
 
-        ret.points.setNames(self._base.points._getNamesNoGeneration())
-        ret.features.setNames(self._base.features._getNamesNoGeneration())
+        ret.points.setNames(self._base.points._getNamesNoGeneration(), False)
+        ret.features.setNames(self._base.features._getNamesNoGeneration(),
+                              False)
 
         handleLogging(useLog, 'prep', 'elements.matching',
                       self._base.getTypeString(), Elements.matching,

@@ -4,6 +4,7 @@ Stretch object to allow for broadcasting operations.
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.importExternalLibraries import importModule
@@ -186,16 +187,32 @@ class Stretch(object):
 
     def _stretchArithmetic(self, opName, other):
         self._stretchArithmetic_validation(opName, other)
-        # mod and floordiv operations do not raise errors for zero division
-        # TODO use logical operations to check for nan and inf after operation
-        if 'floordiv' in opName or 'mod' in opName:
-            self._stretchArithmetic_dataExamination(opName, other)
+        # divmod operations do not raise errors for zero division
+        if 'div' in opName or 'mod' in opName:
+            # self._stretchArithmetic_dataExamination(opName, other)
+            sMatchInf = self._source.elements.matching(match.infinity)
+            sMatchNan = self._source.elements.matching(match.missing)
+            if isinstance(other, Stretch):
+                oMatchInf = other._source.elements.matching(match.infinity)
+                oMatchNan = other._source.elements.matching(match.missing)
+                infLoc = sMatchInf.stretch | oMatchInf.stretch
+                nanLoc = sMatchNan.stretch | oMatchNan.stretch
+            else:
+                oMatchInf = other.elements.matching(match.infinity)
+                oMatchNan = other.elements.matching(match.missing)
+                infLoc = sMatchInf.stretch | oMatchInf
+                nanLoc = sMatchNan.stretch | oMatchNan
         try:
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
         except Exception as e:
             self._stretchArithmetic_dataExamination(opName, other)
             raise # backup, expect dataExamination to raise exception
+        if 'div' in opName or 'mod' in opName:
+            retInf = ret.elements.matching(match.infinity)
+            retNan = ret.elements.matching(match.missing)
+            if not (retInf.isIdentical(infLoc) and retNan.isIdentical(nanLoc)):
+                self._stretchArithmetic_dataExamination(opName, other)
 
         if (opName.startswith('__r')
                 and ret.getTypeString() != other.getTypeString()):
@@ -213,6 +230,27 @@ class Stretch(object):
 
         return self._source._binaryOperations_implementation(opName, other)
 
+    def __and__(self, other):
+        return self._stretchLogical('__and__', other)
+
+    def __or__(self, other):
+        return self._stretchLogical('__or__', other)
+
+    def __xor__(self, other):
+        return self._stretchLogical('__xor__', other)
+
+    def _stretchLogical(self, opName, other):
+        self._stretchArithmetic_validation(opName, other)
+        if isinstance(other, Stretch):
+            oBase = other._source
+        else:
+            oBase = other
+        lhsBool = self._source._logicalValidationAndConversion()
+        rhsBool = oBase._logicalValidationAndConversion()
+        # self._source._validateEqualNames('point', 'point', opName, oBase)
+        # self._source._validateEqualNames('feature', 'feature', opName, oBase)
+
+        return lhsBool._binaryOperations_implementation(opName, rhsBool)
 
 class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):

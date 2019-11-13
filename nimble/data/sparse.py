@@ -12,6 +12,7 @@ from six.moves import range
 from six.moves import zip
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
@@ -116,6 +117,9 @@ class Sparse(Base):
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
+        # not equal if number of non zero values differs
+        elif self.data.nnz != other.data.nnz:
+            return False
         else:
             #let's do internal sort first then compare
             self._sortInternal('feature')
@@ -881,11 +885,6 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        # scipy may not raise expected exceptions for truediv
-        # TODO remove once logical operators used in Base for this
-        if 'truediv' in opName:
-            self._genericBinary_dataExamination(opName, other)
-
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -930,13 +929,14 @@ class Sparse(Base):
 
 
     def _scalarBinary_implementation(self, opName, other):
-        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        oneSafe = ['mul', '__truediv__', '__itruediv__', '__pow__', '__ipow__']
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
+        zeroSafe = ['mul', '__truediv__', '__itruediv__', '__floordiv__',
+                    '__ifloordiv__', '__mod__', '__imod__']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other > 0:
+        if opName in ['__pow__', '__ipow__'] and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -1027,6 +1027,14 @@ class Sparse(Base):
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
         """
+        # check for possible zero division
+        if opName == '__rmod__':
+            right = self
+        else:
+            right = other
+        if match.anyZero(right):
+            self._genericBinary_dataExamination(opName, other)
+
         selfData = self._getSparseData()
         if isinstance(other, Sparse):
             otherData = other._getSparseData().data
