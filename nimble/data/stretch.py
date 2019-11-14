@@ -187,7 +187,7 @@ class Stretch(object):
 
     def _stretchArithmetic(self, opName, other):
         self._stretchArithmetic_validation(opName, other)
-        # divmod operations do not raise errors for zero division
+        # divmod operations do not consistently raise errors for zero division
         if 'div' in opName or 'mod' in opName:
             # self._stretchArithmetic_dataExamination(opName, other)
             sMatchInf = self._source.elements.matching(match.infinity)
@@ -247,40 +247,15 @@ class Stretch(object):
             oBase = other
         lhsBool = self._source._logicalValidationAndConversion()
         rhsBool = oBase._logicalValidationAndConversion()
-        # self._source._validateEqualNames('point', 'point', opName, oBase)
-        # self._source._validateEqualNames('feature', 'feature', opName, oBase)
 
-        return lhsBool._binaryOperations_implementation(opName, rhsBool)
+        return lhsBool.stretch._stretchArithmetic_implementation(opName,
+                                                                 rhsBool)
 
 class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):
-        if not isinstance(other, Stretch):
-            if self._source.shape[0] == 1 and other.shape[0] > 1:
-                lhs = self._source.points.repeat(other.shape[0], True)
-            elif self._source.shape[1] == 1 and other.shape[1] > 1:
-                lhs = self._source.features.repeat(other.shape[1], True)
-            else:
-                lhs = self._source
-            rhs = other.copy()
-        # other is Stretch
-        elif self._numPts == 1:
-            selfFts = len(self._source.features)
-            otherPts = len(other._source.points)
-            lhs = self._source.points.repeat(otherPts, True)
-            rhs = other._source.features.repeat(selfFts, True)
-        else:
-            selfPts = len(self._source.points)
-            otherFts = len(other._source.features)
-            rhs = other._source.points.repeat(selfPts, True)
-            lhs = self._source.features.repeat(otherFts, True)
-        # TODO Sparse uses elements.multiply/power which are revalidating and
-        # can cause a name conflict here; evaluate avoiding the revalidation
-        # For now, removing all names since already stored to be set later
-        lhs.points.setNames(None)
-        lhs.features.setNames(None)
-        rhs.points.setNames(None)
-        rhs.features.setNames(None)
-
-        ret = lhs._binaryOperations_implementation(opName, rhs)
-
-        return ret
+        if isinstance(other, Stretch):
+            other = other._source
+        # scipy will not perform broadcasting so use the default implementation
+        # which allows numpy to perform the broadcasting
+        return self._source._defaultBinaryOperations_implementation(opName,
+                                                                    other)

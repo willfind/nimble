@@ -222,6 +222,53 @@ class StretchDataSafe(DataTestObject):
         except ZeroDivisionError:
             pass
 
+    # logical
+
+    def test_handmade_Base_Stretch_and_point(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False]])
+        toStretch = self.constructor([[True, False, False, True]])
+        exp = self.constructor([[True, False, False, False],
+                                [True, False, False, True],
+                                [False, False, False, False]])
+        ret1 = base & toStretch.stretch
+        ret2 = toStretch.stretch & base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_or_point(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False]])
+        toStretch = self.constructor([[True, False, False, True]])
+        exp = self.constructor([[True, False, True, True],
+                                [True, True, True, True],
+                                [True, False, False, True]])
+        ret1 = base | toStretch.stretch
+        ret2 = toStretch.stretch | base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_xor_point(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False]])
+        toStretch = self.constructor([[True, False, False, True]])
+        exp = self.constructor([[False, False, True, True],
+                                [False, True, True, False],
+                                [True, False, False, True]])
+        ret1 = base ^ toStretch.stretch
+        ret2 = toStretch.stretch ^ base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
     ##########################
     # Base / Stretch Feature #
     ##########################
@@ -368,6 +415,59 @@ class StretchDataSafe(DataTestObject):
             assert False # expected ZeroDivisionError
         except ZeroDivisionError:
             pass
+
+    # logical
+
+    def test_handmade_Base_Stretch_and_feature(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False],
+                                 [False, True, True, False]])
+        toStretch = self.constructor([[True], [False], [False], [True]])
+        exp = self.constructor([[True, False, True, False],
+                                [False, False, False, False],
+                                [False, False, False, False],
+                                [False, True, True, False]])
+        ret1 = base & toStretch.stretch
+        ret2 = toStretch.stretch & base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_or_feature(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False],
+                                 [False, True, True, False]])
+        toStretch = self.constructor([[True], [False], [False], [True]])
+        exp = self.constructor([[True, True, True, True],
+                                [True, True, True, True],
+                                [False, False, False, False],
+                                [True, True, True, True]])
+        ret1 = base | toStretch.stretch
+        ret2 = toStretch.stretch | base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
+
+    def test_handmade_Base_Stretch_xor_feature(self):
+        base = self.constructor([[True, False, True, False],
+                                 [True, True, True, True],
+                                 [False, False, False, False],
+                                 [False, True, True, False]])
+        toStretch = self.constructor([[True], [False], [False], [True]])
+        exp = self.constructor([[False, True, False, True],
+                                [True, True, True, True],
+                                [False, False, False, False],
+                                [True, False, False, True]])
+        ret1 = base ^ toStretch.stretch
+        ret2 = toStretch.stretch ^ base
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+        assertNoNamesGenerated(base)
 
     #####################
     # Stretch / Stretch #
@@ -521,6 +621,48 @@ class StretchDataSafe(DataTestObject):
             assert False # expected ZeroDivisionError
         except ZeroDivisionError:
             pass
+
+    # logical
+
+    def test_handmade_Stretch_Stretch_and(self):
+        ft = self.constructor([[True], [False], [False], [True]])
+        pt = self.constructor([[True, False, True, False]])
+        exp = self.constructor([[True, False, True, False],
+                                [False, False, False, False],
+                                [False, False, False, False],
+                                [True, False, True, False]])
+        ret1 = ft.stretch & pt.stretch
+        ret2 = pt.stretch & ft.stretch
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+
+    def test_handmade_Stretch_Stretch_or(self):
+        ft = self.constructor([[True], [False], [False], [True]])
+        pt = self.constructor([[True, False, True, False]])
+        exp = self.constructor([[True, True, True, True],
+                                [True, False, True, False],
+                                [True, False, True, False],
+                                [True, True, True, True]])
+        ret1 = ft.stretch | pt.stretch
+        ret2 = pt.stretch | ft.stretch
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+
+    def test_handmade_Stretch_Stretch_xor(self):
+        ft = self.constructor([[True], [False], [False], [True]])
+        pt = self.constructor([[True, False, True, False]])
+        exp = self.constructor([[False, True, False, True],
+                                [True, False, True, False],
+                                [True, False, True, False],
+                                [False, True, False, True]])
+        ret1 = ft.stretch ^ pt.stretch
+        ret2 = pt.stretch ^ ft.stretch
+
+        assert ret1.isIdentical(exp)
+        assert ret2.isIdentical(exp)
+
 
     def test_stretch_differentObjectTypes(self):
         matrixObj = self.constructor([[1, 2, 3], [4, 5, 6]])

@@ -3981,7 +3981,7 @@ class Base(object):
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
-            # div and mod ops do not always raise errors for zero division
+            # need known locations of nan and inf values for divmod validation
             if 'div' in opName or 'mod' in opName:
                 infLoc = (self.elements.matching(match.infinity, False)
                           | self.elements.matching(match.infinity, False))
@@ -3990,7 +3990,7 @@ class Base(object):
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
-            # div and mod ops do not always raise errors for zero division
+            # need known locations of nan and inf values for divmod validation
             if 'div' in opName or 'mod' in opName:
                 infLoc = self.elements.matching(match.infinity, False)
                 nanLoc = self.elements.matching(match.missing, False)
@@ -4006,12 +4006,16 @@ class Base(object):
         except Exception:
             self._genericBinary_dataExamination(opName, other)
             raise # backup, expect call above to raise exception
+
+        # divmod operations do not always raise exceptions for unwanted values
+        # check returned nan and inf locations against expected locations
         if 'div' in opName or 'mod' in opName:
             retInf = ret.elements.matching(match.infinity, False)
             retNan = ret.elements.matching(match.missing, False)
-            # check if any unexpected nan or inf values were introduced
             if not (retInf.isIdentical(infLoc) and retNan.isIdentical(nanLoc)):
-                # identify source of unexpected nan and raise exception
+                # examine the data to determine if an invalid operation led to
+                # the unexpected nan or inf value and raised an exception.
+                # These can be unidentical for a valid reason like 1/inf = 0
                 self._genericBinary_dataExamination(opName, other)
 
         if opName.startswith('__i'):
@@ -4061,7 +4065,7 @@ class Base(object):
 
     def _genericLogicalBinary(self, opName, other):
         if isinstance(other, Stretch):
-            return NotImplemented
+            return getattr(other, opName)(self)
         if not isinstance(other, Base):
             msg = 'other must be an instance of a nimble Base object'
             raise InvalidArgumentType(msg)
