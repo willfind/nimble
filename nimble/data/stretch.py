@@ -4,7 +4,6 @@ Stretch object to allow for broadcasting operations.
 import numpy
 
 import nimble
-from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.importExternalLibraries import importModule

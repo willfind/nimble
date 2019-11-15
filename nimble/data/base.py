@@ -3936,7 +3936,7 @@ class Base(object):
             return NotImplemented
 
         self._genericBinary_validation(opName, other)
-        # divmod operations inconsistently raise exceptions for unwanted values
+        # divmod operations inconsistently raise exceptions for zero division
         # it is more efficient to validate now than validate after operation
         if 'div' in opName or 'mod' in opName:
             self._validateDivMod(opName, other)

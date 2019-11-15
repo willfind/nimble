@@ -12,7 +12,6 @@ from six.moves import range
 from six.moves import zip
 
 import nimble
-from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
@@ -930,8 +929,7 @@ class Sparse(Base):
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['mul', '__truediv__', '__itruediv__', '__floordiv__',
-                    '__ifloordiv__', '__mod__', '__imod__']
+        zeroSafe = ['mul', 'div', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
         if opName in ['__pow__', '__ipow__'] and other > 0:
             zeroPreserved = True
