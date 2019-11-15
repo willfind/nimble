@@ -143,6 +143,9 @@ class Stretch(object):
                 msg += "performed if one object is a single point and the "
                 msg += "other is a single feature"
                 raise ImproperObjectAction(msg)
+            # divmod operations inconsistently raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                self._source._validateDivMod(opName, other._source)
         else:
             stretchPossible = True
             if self._numPts == 1 and self._numFts == 1:
@@ -164,55 +167,19 @@ class Stretch(object):
                 raise InvalidArgumentValueCombination(msg)
             self._source._validateEqualNames(matchAxis, matchAxis, opName,
                                              other)
-
-    def _stretchArithmetic_dataExamination(self, opName, other):
-        sBase = self._source
-        if isinstance(other, Stretch):
-            oBase = other._source
-        else:
-            oBase = other
-
-        if self._numPts == 1:
-            fullSelf = sBase.points.repeat(len(oBase.points), True)
-        else:
-            fullSelf = sBase.features.repeat(len(oBase.features), True)
-        if not isinstance(other, Stretch):
-            fullOther = other
-        elif other._numPts == 1:
-            fullOther = oBase.points.repeat(self._numPts, True)
-        else:
-            fullOther = oBase.features.repeat(self._numFts, True)
-
-        fullSelf._genericBinary_dataExamination(opName, fullOther)
+            # divmod operations inconsistently raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                self._source._validateDivMod(opName, other)
 
     def _stretchArithmetic(self, opName, other):
         self._stretchArithmetic_validation(opName, other)
-        # divmod operations do not consistently raise errors for zero division
-        if 'div' in opName or 'mod' in opName:
-            # self._stretchArithmetic_dataExamination(opName, other)
-            sMatchInf = self._source.elements.matching(match.infinity)
-            sMatchNan = self._source.elements.matching(match.missing)
-            if isinstance(other, Stretch):
-                oMatchInf = other._source.elements.matching(match.infinity)
-                oMatchNan = other._source.elements.matching(match.missing)
-                infLoc = sMatchInf.stretch | oMatchInf.stretch
-                nanLoc = sMatchNan.stretch | oMatchNan.stretch
-            else:
-                oMatchInf = other.elements.matching(match.infinity)
-                oMatchNan = other.elements.matching(match.missing)
-                infLoc = sMatchInf.stretch | oMatchInf
-                nanLoc = sMatchNan.stretch | oMatchNan
+
         try:
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
-        except Exception as e:
-            self._stretchArithmetic_dataExamination(opName, other)
-            raise # backup, expect dataExamination to raise exception
-        if 'div' in opName or 'mod' in opName:
-            retInf = ret.elements.matching(match.infinity)
-            retNan = ret.elements.matching(match.missing)
-            if not (retInf.isIdentical(infLoc) and retNan.isIdentical(nanLoc)):
-                self._stretchArithmetic_dataExamination(opName, other)
+        except (TypeError, ValueError, FloatingPointError) as error:
+            self._source._diagnoseFailureAndRaiseException(opName, other,
+                                                           error)
 
         if (opName.startswith('__r')
                 and ret.getTypeString() != other.getTypeString()):
@@ -253,9 +220,31 @@ class Stretch(object):
 
 class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):
-        if isinstance(other, Stretch):
-            other = other._source
-        # scipy will not perform broadcasting so use the default implementation
-        # which allows numpy to perform the broadcasting
-        return self._source._defaultBinaryOperations_implementation(opName,
-                                                                    other)
+        if not isinstance(other, Stretch):
+            if self._source.shape[0] == 1 and other.shape[0] > 1:
+                lhs = self._source.points.repeat(other.shape[0], True)
+            elif self._source.shape[1] == 1 and other.shape[1] > 1:
+                lhs = self._source.features.repeat(other.shape[1], True)
+            else:
+                lhs = self._source
+            rhs = other.copy()
+        # other is Stretch
+        elif self._numPts == 1:
+            selfFts = len(self._source.features)
+            otherPts = len(other._source.points)
+            lhs = self._source.points.repeat(otherPts, True)
+            rhs = other._source.features.repeat(selfFts, True)
+        else:
+            selfPts = len(self._source.points)
+            otherFts = len(other._source.features)
+            rhs = other._source.points.repeat(selfPts, True)
+            lhs = self._source.features.repeat(otherFts, True)
+        # TODO Sparse uses elements.multiply/power which are revalidating and
+        # can cause a name conflict here; evaluate avoiding the revalidation
+        # For now, removing all names since already stored to be set later
+        lhs.points.setNames(None)
+        lhs.features.setNames(None)
+        rhs.points.setNames(None)
+        rhs.features.setNames(None)
+
+        return lhs._binaryOperations_implementation(opName, rhs)

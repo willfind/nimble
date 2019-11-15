@@ -3879,27 +3879,9 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
-    def _genericBinary_dataExamination(self, opName, other):
-        """
-        Determine if an arithmetic operation can be performed successfully
-        between two objects.
-        """
-        # Test element type self
-        self._numericValidation()
-        # test element type other
-        if isinstance(other, Base):
-            other._numericValidation(right=True)
-        if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
-                      '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                      '__mod__', '__rmod__', '__imod__',]:
-            self._validateDivMod(opName, other)
-
-        if opName in ['__pow__', '__rpow__', '__ipow__']:
-            self._validatePow(opName, other)
-
     def _validateDivMod(self, opName, other):
         """
-        Validate values in divmod operation will not lead to zero division.
+        Validate values will not lead to zero division.
         """
         if opName.startswith('__r'):
             toCheck = self
@@ -3915,47 +3897,25 @@ class Base(object):
             msg += "is zero"
             raise ZeroDivisionError(msg)
 
-    def _validatePow(self, opName, other):
+    def _diagnoseFailureAndRaiseException(self, opName, other, error):
         """
-        Validate values in power operation will not lead to zero division or
-        complex numbers.
+        Raise exceptions explaining why an arithmetic operation could
+        not be performed successfully between two objects.
         """
-        if opName == '__rpow__':
-            left = other
-            right = self
-        else:
-            left = self
-            right = other
-
-        def isComplex(val):
-            # numpy ops may return nan when result is a complex number
-            return numpy.isnan(val) or isinstance(val, complex)
-
-        if all(isinstance(obj, Base) for obj in [left, right]):
-            zipLR = zip(left.elements, right.elements)
-            for l, r in zipLR:
-                if l == 0 and r < 0:
-                    msg = 'Zeros cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(l ** r):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        elif isinstance(left, Base):
-            for elem in left.elements:
-                if elem == 0 and right < 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(elem ** right):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        else:
-            for elem in right.elements:
-                if left == 0 and elem < 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(left ** elem):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
+        if 'pow' in opName and isinstance(error, FloatingPointError):
+            if 'divide by zero' in str(error):
+                msg = 'Zeros cannot be raised to negative exponents'
+                raise ZeroDivisionError(msg)
+            else:
+                msg = "Complex number results are not allowed"
+                raise ImproperObjectAction(msg)
+        # Test element type self
+        self._numericValidation()
+        # test element type other
+        if isinstance(other, Base):
+            other._numericValidation(right=True)
+        # backup, above unable to identify source of error
+        raise
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
@@ -3974,26 +3934,22 @@ class Base(object):
             if opName == '__ipow__':
                 return pow(self, other)
             return NotImplemented
+
         self._genericBinary_validation(opName, other)
+        # divmod operations inconsistently raise exceptions for unwanted values
+        # it is more efficient to validate now than validate after operation
+        if 'div' in opName or 'mod' in opName:
+            self._validateDivMod(opName, other)
+
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
-            # need known locations of nan and inf values for divmod validation
-            if 'div' in opName or 'mod' in opName:
-                infLoc = (self.elements.matching(match.infinity, False)
-                          | self.elements.matching(match.infinity, False))
-                nanLoc = (self.elements.matching(match.missing, False)
-                          | self.elements.matching(match.missing, False))
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
-            # need known locations of nan and inf values for divmod validation
-            if 'div' in opName or 'mod' in opName:
-                infLoc = self.elements.matching(match.infinity, False)
-                nanLoc = self.elements.matching(match.missing, False)
 
         try:
             useOp = opName
@@ -4003,20 +3959,8 @@ class Base(object):
                 useOp = opName[:2] + opName[3:]
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._binaryOperations_implementation(useOp, other)
-        except Exception:
-            self._genericBinary_dataExamination(opName, other)
-            raise # backup, expect call above to raise exception
-
-        # divmod operations do not always raise exceptions for unwanted values
-        # check returned nan and inf locations against expected locations
-        if 'div' in opName or 'mod' in opName:
-            retInf = ret.elements.matching(match.infinity, False)
-            retNan = ret.elements.matching(match.missing, False)
-            if not (retInf.isIdentical(infLoc) and retNan.isIdentical(nanLoc)):
-                # examine the data to determine if an invalid operation led to
-                # the unexpected nan or inf value and raised an exception.
-                # These can be unidentical for a valid reason like 1/inf = 0
-                self._genericBinary_dataExamination(opName, other)
+        except (TypeError, ValueError, FloatingPointError) as error:
+            self._diagnoseFailureAndRaiseException(opName, other, error)
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath

@@ -1024,14 +1024,6 @@ class Sparse(Base):
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
         """
-        # check for possible zero division
-        if opName == '__rmod__':
-            right = self
-        else:
-            right = other
-        if match.anyZero(right):
-            self._genericBinary_dataExamination(opName, other)
-
         selfData = self._getSparseData()
         if isinstance(other, Sparse):
             otherData = other._getSparseData().data

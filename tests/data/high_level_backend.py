@@ -1674,7 +1674,7 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
-    @logCountAssertionFactory(4)
+    @logCountAssertionFactory(5)
     def test_elements_matching_varietyOfFuncs(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -1711,6 +1711,20 @@ class HighLevelDataSafe(DataTestObject):
         isNonNumeric = obj.elements.matching(match.nonNumeric)
 
         assert isNonNumeric == expObj
+
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+        otherRaw = [[1, 2, 3], [0, 0, 0], [9, 8, 7]]
+        otherObj = self.constructor(otherRaw)
+        exp = [[True, True, True], [False, False, False], [False, True, False]]
+        expObj = self.constructor(exp)
+
+        def inOther(val, i, j):
+            return val == otherObj[i, j]
+
+        sameAsOther = obj.elements.matching(inOther)
+
+        assert sameAsOther == expObj
 
     def test_elements_matching_pfname_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
