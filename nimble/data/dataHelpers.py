@@ -623,6 +623,8 @@ def allDataIdentical(arr1, arr2):
     containing NaN values in the same positions will also be considered
     equal.
     """
+    if arr1.shape != arr2.shape:
+        return False
     try:
         # check the values that are not equal
         checkPos = arr1 != arr2
