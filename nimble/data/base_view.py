@@ -106,9 +106,6 @@ class BaseView(Base):
         else:
             return True
 
-    def _getData(self):
-        return self._source.data
-
     # TODO: retType
 
     ############################
@@ -150,11 +147,6 @@ class BaseView(Base):
     ###########################
     # Higher Order Operations #
     ###########################
-
-    @exceptionDocstring
-    def fillUsingAllData(self, match, fill, points=None, features=None,
-                         returnModified=False, useLog=None, **kwarguments):
-        readOnlyException("fillUsingAllData")
 
     @exceptionDocstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
@@ -244,10 +236,6 @@ class BaseView(Base):
     @exceptionDocstring
     def __isub__(self, other):
         readOnlyException("__isub__")
-
-    @exceptionDocstring
-    def __idiv__(self, other):
-        readOnlyException("__idiv__")
 
     @exceptionDocstring
     def __itruediv__(self, other):

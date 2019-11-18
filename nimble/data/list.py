@@ -697,14 +697,6 @@ class FeatureViewer(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def copy(self):
-        """
-        Create a copy of this FeatureViewer.
-        """
-        ret = FeatureViewer(self.source, self.fStart, self.fRange)
-        ret.setLimit(self.limit)
-        return ret
-
 class ListPassThrough(object):
     """
     Pass through to support View.

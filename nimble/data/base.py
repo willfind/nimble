@@ -4431,39 +4431,6 @@ class Base(object):
         return (six.viewkeys(self.featureNames)
                 - six.viewkeys(other.featureNames))
 
-    def _pointNameIntersection(self, other):
-        """
-        Returns a set containing only those pointNames that are shared
-        by this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "pointName intersection"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
-
-        return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
-
-    def _featureNameIntersection(self, other):
-        """
-        Returns a set containing only those featureNames that are shared
-        by this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "featureName intersection"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
-
-        return (six.viewkeys(self.featureNames)
-                & six.viewkeys(other.featureNames))
-
     def _pointNameSymmetricDifference(self, other):
         """
         Returns a set containing only those pointNames not shared
@@ -4819,14 +4786,3 @@ class BaseElements(Elements):
     Access for element-based methods.
     """
     pass
-
-def cmp(x, y):
-    """
-    Comparison function.
-    """
-    if x < y:
-        return -1
-    elif x > y:
-        return 1
-    else:
-        return 0

@@ -400,14 +400,13 @@ To install mlpy
             ignore = []
         namedModule = self._searcher.findInPackage(parent, name)
 
-        # for python 3
         # in python 3, inspectArguments(mlpy.KNN.__init__) works,
         # but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
         excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc',
                        'KernelAdatron'.lower(), 'ClassTree'.lower(),
                        'MFastHCluster'.lower(), 'kmeans']
-        if sys.version_info.major > 2 and 'kernel' not in name.lower():
+        if 'kernel' not in name.lower():
             if parent is None or parent.lower() in excludeList:
                 return self._paramQueryHardCoded(name, parent, ignore)
 

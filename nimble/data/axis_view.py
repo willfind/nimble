@@ -67,6 +67,3 @@ class AxisView(Axis):
             return not self._base._source.pointNames is None
         else:
             return not self._base._source.featureNames is None
-
-    def _getIndices(self, names):
-        return [self._getIndex(n) for n in names]

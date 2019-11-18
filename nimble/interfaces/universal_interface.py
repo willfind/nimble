@@ -1245,13 +1245,7 @@ class TrainedLearner(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
-        # print('session_' + outputFilename)
-        # print(globals())
-        # dill.dump_session('session_' + outputFilename)
+            cloudpickle.dump(self, file)
 
     @captureOutput
     def retrain(self, trainX, trainY=None, arguments=None, useLog=None,

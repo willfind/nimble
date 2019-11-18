@@ -42,31 +42,6 @@ scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
 requests = nimble.importModule('requests')
 
-try:
-    intern = sys.intern
-    class Py2Key:
-        """
-        Key for python3.
-        """
-        __slots__ = ("value", "typestr")
-
-        def __init__(self, value):
-            self.value = value
-            self.typestr = intern(type(value).__name__)
-
-        def __lt__(self, other):
-            try:
-                return self.value < other.value
-            except TypeError:
-                return self.typestr < other.typestr
-except Exception:
-    Py2Key = None # for python2
-
-#in python3, itertools.ifilter is not there anymore. it is filter.
-if not hasattr(itertools, 'ifilter'):
-    itertools.ifilter = filter
-
-
 def findBestInterface(package):
     """
     Attempt to determine the interface.
@@ -788,45 +763,6 @@ def initDataObject(
     return ret
 
 
-def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
-    """
-    Extracts and sets (if needed) the point and feature names from the
-    given nimble Base object, returning the modified object.
-    pointNamesID may be either None, or an integer ID corresponding to a
-    feature in the data object. featureNamesID may b either None, or an
-    integer ID corresponding to a point in the data object.
-    """
-    ret = data
-    praw = None
-    if pointNamesID is not None:
-        # extract the feature of point names
-        pnames = ret.features.extract(pointNamesID)
-        if featureNamesID is not None:
-            # discard the point of feature names that pulled along since we
-            # extracted these first
-            pnames.points.extract(featureNamesID)
-        praw = pnames.copy(to='numpyarray', outputAs1D=True)
-        praw = numpy.vectorize(str)(praw)
-
-    fraw = None
-    if featureNamesID is not None:
-        # extract the point of feature names
-        fnames = ret.points.extract(featureNamesID)
-        # extracted point names first, so if they existed, they aren't in
-        # ret anymore. So we DON'T need to extract them from this object
-        fraw = fnames.copy(to='numpyarray', outputAs1D=True)
-        fraw = numpy.vectorize(str)(fraw)
-
-    # have to wait for everything to be extracted before we add the names,
-    # because otherwise the lenths won't be correct
-    if praw is not None:
-        ret.points.setNames(list(praw))
-    if fraw is not None:
-        ret.features.setNames(list(fraw))
-
-    return ret
-
-
 def createDataFromFile(
         returnType, data, pointNames, featureNames, name,
         ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
@@ -884,21 +820,12 @@ def createDataFromFile(
                 msg += "Reason: {0}".format(response.reason)
                 raise InvalidArgumentValue(msg)
 
-            # check python version
-            py3 = sys.version_info[0] == 3
-            if py3:
-                toPass = StringIO(response.text, newline=None)
-                isMtxFile = isMtxFileChecker(toPass)
-                # scipy.io.mmreader needs bytes object
-                if isMtxFile:
-                    toPass = BytesIO(bytes(response.content,
-                                           response.apparent_encoding))
-            # in python 2, we can just always use BytesIO
-            else:
-                # handle universal newline
-                content = "\n".join(response.content.splitlines())
-                toPass = BytesIO(content)
-                isMtxFile = isMtxFileChecker(toPass)
+            toPass = StringIO(response.text, newline=None)
+            isMtxFile = isMtxFileChecker(toPass)
+            # scipy.io.mmreader needs bytes object
+            if isMtxFile:
+                toPass = BytesIO(bytes(response.content,
+                                       response.apparent_encoding))
         else:
             toPass = open(data, 'rU')
             isMtxFile = isMtxFileChecker(toPass)
@@ -1093,50 +1020,9 @@ def extractNamesFromScipySparse(rawData, pointNames, featureNames):
     -------
     a triple : coo_matrix; None or a pointnames; None or featureNames
     """
-#    try:
-#        ret = extractNamesFromScipyConversion(rawData, pointNames,
-#                                              featureNames)
-#    except (NotImplementedError, TypeError):
     ret = extractNamesFromCooDirect(rawData, pointNames, featureNames)
 
     return ret
-
-def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
-    """
-    Extract names from a scipy sparse csr or csc matrix.
-    """
-    if not isinstance(rawData, scipy.sparse.csr_matrix):
-        rawData = scipy.sparse.csr_matrix(rawData)
-
-    if rawData.shape[0] > 0:
-        firstRow = rawData[0].toarray().flatten().tolist()
-    else:
-        firstRow = None
-    if rawData.shape[0] > 1:
-        secondRow = rawData[1].toarray().flatten().tolist()
-    else:
-        secondRow = None
-    pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
-                                                      firstRow, secondRow)
-    pointNames = 0 if pointNames is True else None
-    featureNames = 0 if featureNames is True else None
-
-    retFNames = None
-    if featureNames == 0:
-        retFNames = rawData[0].toarray().flatten().tolist()
-        retFNames = list(map(str, retFNames))
-        rawData = rawData[1:]
-
-    retPNames = None
-    if pointNames == 0:
-        rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = rawData[:, 0].toarray().flatten().tolist()
-        retPNames = list(map(str, retPNames))
-        rawData = rawData[:, 1:]
-        retFNames = retFNames[1:]
-
-    rawData = scipy.sparse.coo_matrix(rawData)
-    return rawData, retPNames, retFNames
 
 def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     """
@@ -1659,7 +1545,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # how many are skipped
     skippedLines = _advancePastComments(openFile)
     # remake the file iterator to ignore empty lines
-    filtered = itertools.ifilter(_filterCSVRow, openFile)
+    filtered = filter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
@@ -2009,240 +1895,6 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
     return scoreMap
 
 
-def copyLabels(dataSet, dependentVar):
-    """
-    A helper function to simplify the process of obtaining a
-    1-dimensional matrix of class labels from a data matrix.  Useful in
-    functions which have an argument that may be a column index or a
-    1-dimensional matrix.  If 'dependentVar' is an index, this function
-    will return a copy of the column in 'dataSet' indexed by
-    'dependentVar'.  If 'dependentVar' is itself a column (1-dimensional
-    matrix w/shape (nx1)), dependentVar will be returned.
-
-    Parameters
-    ----------
-    dataSet : matrix
-        Contains labels and, possibly, features.  May be empty if
-        'dependentVar' is a 1-column matrix containing labels.
-    dependentVar: int, matrix
-        Either a column index indicating which column in dataSet
-        contains class labels, or a matrix containing 1 column of class
-        labels.
-
-    Returns
-    -------
-    matrix
-        A 1-column matrix of class labels.
-    """
-    if isinstance(dependentVar, Base):
-        #The known Indicator argument already contains all known
-        #labels, so we do not need to do any further processing
-        labels = dependentVar
-    elif isinstance(dependentVar, (str, six.text_type, int)):
-        #known Indicator is an index; we extract the column it indicates
-        #from knownValues
-        labels = dataSet.features.copy([dependentVar])
-    else:
-        msg = "Missing or improperly formatted indicator for known labels "
-        msg += "in computeMetrics"
-        raise InvalidArgumentType(msg)
-
-    return labels
-
-
-def applyCodeVersions(functionTextList, inputHash):
-    """
-    Applies all the different various versions of code that can be
-    generated from functionText to each of the variables specified in
-    inputHash, where data is plugged into the variable with name
-    inputVariableName. Returns the result of each application as a list.
-    functionTextList is a list of text objects, each of which defines a
-    python function inputHash is of the form:
-    {variable1Name:variable1Value, variable2Name:variable2Value, ...}.
-    """
-    results = []
-    for codeText in functionTextList:
-        results.append(executeCode(codeText, inputHash))
-    return results
-
-
-def executeCode(code, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of EITHER an entire function definition OR a single
-    line of code with statements seperated by semi-colons OR as a python
-    function object.
-    """
-    #make a copy so we don't modify it... but it doesn't seem necessary
-    #inputHash = inputHash.copy()
-    if isSingleLineOfCode(code):
-        #it's one line of text (with ;'s to separate statements)
-        return executeOneLinerCode(code, inputHash)
-    elif isinstance(code, (str, six.text_type)):
-        #it's the text of a function definition
-        return executeFunctionCode(code, inputHash)
-    else:
-        # assume it's a function itself
-        return code(**inputHash)
-
-
-def executeOneLinerCode(codeText, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of just one line (with multiple statements seperated
-    by semi-colons.
-    Note: if the last statement in the line starts X=... then the X=
-    gets stripped off (to prevent it from getting broken by A=(X=...)).
-    """
-    if not isSingleLineOfCode(codeText):
-        msg = "The code text was not just one line of code."
-        raise InvalidArgumentValue(msg)
-    codeText = codeText.strip()
-    localVariables = inputHash.copy()
-    pieces = codeText.split(";")
-    lastPiece = pieces[-1].strip()
-    # remove 'X =' if the last statement begins with something like X = ...
-    lastPiece = re.sub(r"\A([\w])+[\s]*=", "", lastPiece)
-    lastPiece = lastPiece.strip()
-    pieces[-1] = "RESULTING_VALUE_ZX7_ = (" + lastPiece + ")"
-    codeText = ";".join(pieces)
-    #oneLiner = True
-
-    #	print "Code text: "+str(codeText)
-    exec(codeText, globals(), localVariables)    #apply the code
-    return localVariables["RESULTING_VALUE_ZX7_"]
-
-
-def executeFunctionCode(codeText, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of an entire function definition.
-    """
-    if not "def" in codeText:
-        msg = "No function definition was found in this code!"
-        raise InvalidArgumentValue(msg)
-    localVariables = {}
-    # apply the code, which declares the function definition
-    exec(codeText, globals(), localVariables)
-    #foundFunc = False
-    #result = None
-    for varValue in six.itervalues(localVariables):
-        if "function" in str(type(varValue)):
-            return varValue(**inputHash)
-    return None
-
-
-def isSingleLineOfCode(codeText):
-    """
-    Determine if a code string is a single line.
-    """
-    if not isinstance(codeText, (str, six.text_type)):
-        return False
-    codeText = codeText.strip()
-    try:
-        codeText.strip().index("\n")
-        return False
-    except ValueError:
-        return True
-
-
-def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize,
-                           maxTrainSize, stepSize, gap, minTestSize,
-                           maxTestSize):
-    """
-    Helper which will calculate the start and end of the training and
-    testing sizes given the current position in the full data set.
-    """
-    #	set_trace()
-    # determine the location of endTrain.
-    if currEndTrain is None:
-    # points are zero indexed, thus -1 for the num of points case
-    #		set_trace()
-        endTrain = _jumpForward(allData, orderedFeature, 0, minTrainSize, -1)
-    else:
-        endTrain = _jumpForward(allData, orderedFeature, currEndTrain,
-                                stepSize)
-
-    # the value we don't want to split from the training set
-    nonSplit = allData[endTrain, orderedFeature]
-    # we're doing a lookahead here, thus -1 from the last possible index,
-    # and  +1 to our lookup
-    while (endTrain < len(allData.points) - 1
-           and allData[endTrain + 1, orderedFeature] == nonSplit):
-        endTrain += 1
-
-    if endTrain == len(allData.points) - 1:
-        return None
-
-    # we get the start for training by counting back from endTrain
-    startTrain = _jumpBack(allData, orderedFeature, endTrain, maxTrainSize, -1)
-    if startTrain < 0:
-        startTrain = 0
-
-    # we get the start and end of the test set by counting forward from
-    # endTrain speciffically, we go forward by one, and as much more forward
-    # as specified by gap
-    startTest = _jumpForward(allData, orderedFeature, endTrain + 1, gap)
-    if startTest >= len(allData.points):
-        return None
-
-    endTest = _jumpForward(allData, orderedFeature, startTest, maxTestSize, -1)
-    if endTest >= len(allData.points):
-        endTest = len(allData.points) - 1
-    if _diffLessThan(allData, orderedFeature, startTest, endTest, minTestSize):
-        return None
-
-    return (startTrain, endTrain, startTest, endTest)
-
-
-def _jumpBack(allData, orderedFeature, start, delta, intCaseOffset=0):
-    if isinstance(delta, datetime.timedelta):
-        endPoint = start
-        startVal = datetime.timedelta(float(allData[start, orderedFeature]))
-        # loop as long as we don't run off the end of the data
-        while endPoint > 0:
-            prevVal = float(allData[endPoint - 1, orderedFeature])
-            if (startVal - datetime.timedelta(prevVal)) > delta:
-                break
-            endPoint = endPoint - 1
-    else:
-        endPoint = start - (delta + intCaseOffset)
-
-    return endPoint
-
-
-def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
-    if isinstance(delta, datetime.timedelta):
-        endPoint = start
-        startVal = datetime.timedelta(float(allData[start, orderedFeature]))
-        # loop as long as we don't run off the end of the data
-        while endPoint < (len(allData.points) - 1):
-            nextVal = float(allData[endPoint + 1, orderedFeature])
-            if (datetime.timedelta(nextVal) - startVal) > delta:
-                break
-            endPoint = endPoint + 1
-    else:
-        endPoint = start + (delta + intCaseOffset)
-
-    return endPoint
-
-
-def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
-    if isinstance(delta, datetime.timedelta):
-        startFloat = float(allData[startPoint, orderedFeature])
-        startVal = datetime.timedelta(startFloat)
-        endFloat = float(allData[endPoint, orderedFeature])
-        endVal = datetime.timedelta(endFloat)
-        return (endVal - startVal) < delta
-    else:
-        return (endPoint - startPoint + 1) < delta
-
-
-#def evaluate(metric, knownData, knownLabels, predictedLabels)
-
 def computeMetrics(dependentVar, knownData, predictedData,
                    performanceFunction):
     """
@@ -2295,82 +1947,6 @@ def computeMetrics(dependentVar, knownData, predictedData,
     result = performanceFunction(knownLabels, predictedData)
 
     return result
-
-
-def confusion_matrix_generator(knownY, predictedY):
-    """
-    Given two vectors, one of known class labels (as strings) and one of
-    predicted labels, compute the confusion matrix.  Returns a
-    2-dimensional dictionary in which outer label is keyed by known
-    label, inner label is keyed by predicted label, and the value stored
-    is the count of instances for each combination.  Works for an
-    indefinite number of class labels.
-    """
-    confusionCounts = {}
-    for known, predicted in zip(knownY, predictedY):
-        if confusionCounts[known] is None:
-            confusionCounts[known] = {predicted: 1}
-        elif confusionCounts[known][predicted] is None:
-            confusionCounts[known][predicted] = 1
-        else:
-            confusionCounts[known][predicted] += 1
-
-    #if there are any entries in the square matrix confusionCounts,
-    #then there value must be 0.  Go through and fill them in.
-    for knownY in confusionCounts:
-        if confusionCounts[knownY][knownY] is None:
-            confusionCounts[knownY][knownY] = 0
-
-    return confusionCounts
-
-
-def print_confusion_matrix(confusionMatrix):
-    """
-    Print a confusion matrix in human readable form, with rows indexed
-    by known labels, and columns indexed by predictedlabels.
-    confusionMatrix is a 2-dimensional dictionary, that is also
-    primarily indexed by known labels, and secondarily indexed by
-    predicted labels, with the value at
-    confusionMatrix[knownLabel][predictedLabel] being the count of posts
-    that fell into that slot.  Does not need to be sorted.
-    """
-    #print heading
-    print("*" * 30 + "Confusion Matrix" + "*" * 30)
-    print("\n\n")
-
-    #print top line - just the column headings for
-    #predicted labels
-    spacer = " " * 15
-    sortedLabels = sorted(confusionMatrix.iterKeys())
-    for knownLabel in sortedLabels:
-        spacer += " " * (6 - len(knownLabel)) + knownLabel
-
-    print(spacer)
-    totalPostCount = 0
-    for knownLabel in sortedLabels:
-        outputBuffer = knownLabel + " " * (15 - len(knownLabel))
-        for predictedLabel in sortedLabels:
-            count = confusionMatrix[knownLabel][predictedLabel]
-            totalPostCount += count
-            outputBuffer += " " * (6 - len(count)) + count
-        print(outputBuffer)
-
-    print("Total post count: " + totalPostCount)
-
-
-def checkPrintConfusionMatrix():
-    """
-    Check print ouptut of confusion matrix.
-    """
-    X = {"classLabel": ["A", "B", "C", "C", "B", "C", "A", "B", "C", "C",
-                        "B", "C", "A", "B", "C", "C", "B", "C"]}
-    Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A",
-         "C", "C", "A", "B", "C"]
-    functions = [confusion_matrix_generator]
-    classLabelIndex = "classLabel"
-    confusionMatrixResults = computeMetrics(classLabelIndex, X, Y, functions)
-    confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
-    print_confusion_matrix(confusionMatrix)
 
 
 def generateAllPairs(items):
@@ -4039,7 +3615,6 @@ def inspectArguments(func):
     Return is the tuple (args, varargs, keywords, defaults)
     """
     try:
-        # py>=3.3
         # in py>=3.5 inspect.signature can extract the original signature
         # of wrapped functions
         sig = inspect.signature(func)
@@ -4065,8 +3640,6 @@ def inspectArguments(func):
         d = tuple(d)
         argspec = tuple([a, v, k , d])
     except AttributeError:
-        try:
-            argspec = inspect.getfullargspec(func)[:4] # p>=3
-        except AttributeError:
-            argspec = inspect.getargspec(func) # py2
+        argspec = inspect.getfullargspec(func)[:4] # py>=3
+
     return argspec

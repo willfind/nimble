@@ -11,15 +11,6 @@ for Shogun ML.
 
 from __future__ import absolute_import
 from __future__ import print_function
-from six.moves import range
-try:
-    import clang
-    import clang.cindex
-
-    clangAvailable = True
-except ImportError:
-    clangAvailable = False
-
 import importlib
 import numpy
 import copy
@@ -30,6 +21,8 @@ import distutils.version
 import multiprocessing
 import re
 import warnings
+
+from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -359,12 +352,6 @@ To install shogun
         if outputFormat == 'label' and 'remap' in customDict:
             remap = customDict['remap']
             if remap is not None:
-                def makeInverseMapper(inverseMappingParam):
-                    def inverseMapper(value):
-                        return inverseMappingParam[int(value)]
-
-                    return inverseMapper
-
                 ret.elements.transform(remap, useLog=False)
 
         return ret

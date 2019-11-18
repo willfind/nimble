@@ -147,42 +147,6 @@ def mergeNonDefaultNames(baseSource, otherSource):
     return ptNames, ftNames
 
 
-def reorderToMatchList(dataObject, matchList, axis):
-    """
-    Helper which will reorder the data object along the specified axis
-    so that instead of being in an order corresponding to a sorted
-    version of matchList, it will be in the order of the given
-    matchList.
-
-    matchList must contain only indices, not name based identifiers.
-    """
-    if axis.lower() == "point":
-        sortFunc = dataObject.points.sort
-    else:
-        sortFunc = dataObject.features.sort
-
-    sortedList = copy.copy(matchList)
-    sortedList.sort()
-    mappedOrig = {}
-    for i in range(len(matchList)):
-        mappedOrig[matchList[i]] = i
-
-    if axis == 'point':
-        def indexGetter(x):
-            return dataObject.points.getIndex(x.points.getName(0))
-    else:
-        def indexGetter(x):
-            return dataObject.features.getIndex(x.features.getName(0))
-
-    def scorer(viewObj):
-        index = indexGetter(viewObj)
-        return mappedOrig[sortedList[index]]
-
-    sortFunc(sortHelper=scorer, useLog=False)
-
-    return dataObject
-
-
 def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of
@@ -370,19 +334,15 @@ def exceptionDocstringFactory(cls):
     """
     def exceptionDocstring(func):
         name = func.__name__
-        try:
-            baseDoc = getattr(cls, name).__doc__
-            if baseDoc is not None:
-                viewMsg = "The {0} method is object modifying ".format(name)
-                viewMsg += "and will always raise an exception for view "
-                viewMsg += "objects.\n\n"
-                viewMsg += "For reference, the docstring for this method "
-                viewMsg += "when objects can be modified is below:\n"
-                func.__doc__ = viewMsg + baseDoc
-        except AttributeError:
-            # ignore built-in functions that differ between py2 and py3
-            # (__idiv__ vs __itruediv__, __ifloordiv__)
-            pass
+        baseDoc = getattr(cls, name).__doc__
+        if baseDoc is not None:
+            viewMsg = "The {0} method is object modifying ".format(name)
+            viewMsg += "and will always raise an exception for view "
+            viewMsg += "objects.\n\n"
+            viewMsg += "For reference, the docstring for this method "
+            viewMsg += "when objects can be modified is below:\n"
+            func.__doc__ = viewMsg + baseDoc
+
         return func
     return exceptionDocstring
 

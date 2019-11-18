@@ -502,9 +502,5 @@ To install scikit-learn
             return None
         else:
             (args, _, _, d) = inspectArguments(getattr(namedModule, name))
-            if 'random_state' in args:
-                index = args.index('random_state')
-                negdex = index - len(args)
-                d[negdex] = nimble.randomness.generateSubsidiarySeed()
             (args, d) = removeFromTailMatchedLists(args, d, ignore)
             return (args, d)

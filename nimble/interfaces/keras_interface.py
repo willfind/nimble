@@ -433,23 +433,10 @@ To install keras
 
         try:
             (args, v, k, d) = inspectArguments(namedModule)
-            (args, d) = removeFromTailMatchedLists(args, d, ignore)
-            if 'random_state' in args:
-                index = args.index('random_state')
-                negdex = index - len(args)
-                d[negdex] = nimble.randomness.generateSubsidiarySeed()
+            args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:
-            try:
-                (args, v, k, d) = inspectArguments(namedModule.__init__)
-                (args, d) = removeFromTailMatchedLists(args, d, ignore)
-                if 'random_state' in args:
-                    index = args.index('random_state')
-                    negdex = index - len(args)
-                    d[negdex] = nimble.randomness.generateSubsidiarySeed()
-                return (args, v, k, d)
-            except TypeError:
-                return self._paramQueryHardCoded(name, parent, ignore)
+            return self._paramQueryHardCoded(name, parent, ignore)
 
 
     def _paramQueryHardCoded(self, name, parent, ignore):
@@ -458,44 +445,4 @@ To install keras
         have hard coded, under the assumption that it is difficult or
         impossible to find that data automatically.
         """
-        #if needed, this function should be rewritten for keras.
-        if parent is not None and parent.lower() == 'KernelCenterer'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
-        if parent is not None and parent.lower() == 'LabelEncoder'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
-        if parent is not None and parent.lower() == 'DummyRegressor'.lower():
-            if name == '__init__':
-            #	ret = (['strategy', 'constant'], None, None, ['mean', None])
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-        if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
-            if name == '__init__':
-                return ([], None, None, [])
-
-        if parent is not None and parent.lower() == 'GaussianNB'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            elif name == 'fit':
-                ret = (['X', 'y'], None, None, [])
-            elif name == 'predict':
-                ret = (['X'], None, None, [])
-            else:
-                return None
-
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
-        return None
+        pass
