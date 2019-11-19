@@ -36,7 +36,7 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import numpy2DArray, is2DArray, cooMatrixToArray
 
 scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
@@ -483,7 +483,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = elementTypeConvert(rawData.todense(), elementType)
+        rawData = elementTypeConvert(cooMatrixToArray(rawData), elementType)
 
     if (returnType == 'Sparse'
             and is2DArray(rawData)

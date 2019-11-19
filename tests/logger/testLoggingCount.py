@@ -96,17 +96,18 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
     'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matrixMultiply', 'merge',
+    'flattenToOnePoint', 'groupByFeature', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
-    'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
-    'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
-    'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',
-    'show', 'solveLinearSystem', 'toString', 'validate', 'view', 'writeFile',
+    'inverse', 'isApproximatelyEqual', 'isIdentical', 'matrixMultiply',
+    'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
+    'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
+    'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
+    'toString', 'validate', 'view', 'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))

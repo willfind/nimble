@@ -3650,6 +3650,45 @@ class Base(object):
 
         return ret
 
+    def matrixPower(self, power):
+        if not isinstance(power, (int, numpy.int)):
+            msg = 'power must be an integer'
+            raise InvalidArgumentType(msg)
+        if not len(self.points) == len(self.features):
+            msg = 'Cannot perform matrix power operations with this object. '
+            msg += 'Matrix power operations require square objects '
+            msg += '(number of points is equal to number of features)'
+            raise ImproperObjectAction(msg)
+        if power == 0:
+            operand = nimble.identity(self.getTypeString(), len(self.points))
+        elif power > 0:
+            operand = self.copy()
+            # avoid name conflict in matrixMultiply; names set later
+            operand.points.setNames(None, useLog=False)
+            operand.features.setNames(None, useLog=False)
+        else:
+            try:
+                operand = nimble.calculate.inverse(self)
+            except (InvalidArgumentType, InvalidArgumentValue) as e:
+                exceptionType = type(e)
+                msg = "Failed to calculate the matrix inverse using "
+                msg += "nimble.calculate.inverse. For safety and efficiency, "
+                msg += "matrixPower does not attempt to use pseudoInverse but "
+                msg += "it is available to users in nimble.calculate. "
+                msg += "The inverse operation failed because: " + e.value
+                raise exceptionType(msg)
+
+        ret = operand
+        # loop only applies when abs(power) > 1
+        for _ in range(abs(power) - 1):
+            ret = ret.matrixMultiply(operand)
+
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+
+        return ret
+
     def __mul__(self, other):
         """
         Perform elementwise multiplication or scalar multiplication,

@@ -17,6 +17,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
+from nimble.utility import cooMatrixToArray
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 
@@ -948,7 +949,8 @@ def test_names_dataUnmodified():
         if isinstance(rawData, list):
             rawData == rawDataCopy
         elif scipy.sparse.isspmatrix(rawData):
-            numpy.testing.assert_array_equal(rawData.todense(), rawDataCopy.todense())
+            numpy.testing.assert_array_equal(cooMatrixToArray(rawData),
+                                             cooMatrixToArray(rawDataCopy))
         else:
             numpy.testing.assert_array_equal(rawData, rawDataCopy)
 
