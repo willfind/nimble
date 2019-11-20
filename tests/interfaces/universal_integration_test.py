@@ -109,8 +109,6 @@ def testGetScoresFormat():
 
         learners = interface.listLearners()
         for lName in learners:
-            if interfaceName == 'shogun':
-                print(lName)
 
             fullName = interfaceName + '.' + lName
             if nimble.learnerType(fullName) == 'classification':
