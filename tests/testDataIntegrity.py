@@ -64,12 +64,14 @@ def wrappedTrainAndApply(learnerName, trainX, trainY, testX, testY):
 
 def wrappedTrainAndApplyOvO(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return nimble.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
+    return nimble.trainAndApply(learnerName, trainX, trainY, testX,
+                                multiClassStrategy='OneVsOne')
 
 
 def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return nimble.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
+    return nimble.trainAndApply(learnerName, trainX, trainY, testX,
+                                multiClassStrategy='OneVsAll')
 
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
@@ -79,13 +81,15 @@ def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
 
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-    return nimble.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
-                                               performanceFunction=nimble.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                               performanceFunction=nimble.calculate.fractionIncorrect,
+                               multiClassStrategy='OneVsOne')
 
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-    return nimble.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
-                                               performanceFunction=nimble.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                               performanceFunction=nimble.calculate.fractionIncorrect,
+                               multiClassStrategy='OneVsAll')
 
 
 def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
