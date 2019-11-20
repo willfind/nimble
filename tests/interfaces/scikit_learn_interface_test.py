@@ -243,17 +243,14 @@ def testSciKitLearnListLearners():
     assert 'KMeans' in ret
     assert 'LinearRegression' in ret
 
-    toExclude = []
-
     for name in ret:
-        if name not in toExclude:
-            params = nimble.learnerParameters(toCall(name))
-            assert params is not None
-            defaults = nimble.learnerDefaultValues(toCall(name))
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+        params = nimble.learnerParameters(toCall(name))
+        assert params is not None
+        defaults = nimble.learnerDefaultValues(toCall(name))
+        for pSet in params:
+            for dSet in defaults:
+                for key in dSet.keys():
+                    assert key in pSet
 
 @sklSkipDec
 @raises(InvalidArgumentValue)

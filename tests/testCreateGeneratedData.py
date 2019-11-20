@@ -159,24 +159,18 @@ def back_constant_sizeChecking(toTest):
         assert False  # expected InvalidArgumentValue for negative numPoints
     except InvalidArgumentValue:
         pass
-    except Exception:
-        assert False  # expected InvalidArgumentValue for negative numPoints
 
     try:
         toTest("Matrix", 4, -3)
         assert False  # expected InvalidArgumentValue for negative numFeatures
     except InvalidArgumentValue:
         pass
-    except Exception:
-        assert False  # expected InvalidArgumentValue for negative numFeatures
 
     try:
         toTest("Matrix", 0, 0)
         assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
     except InvalidArgumentValueCombination:
         pass
-    except Exception:
-        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
 
 
 def back_constant_emptyCreation(toTest):
@@ -332,16 +326,12 @@ def test_identity_sizeChecking():
         assert False  # expected InvalidArgumentValue for negative size
     except InvalidArgumentValue:
         pass
-    except Exception:
-        assert False  # expected InvalidArgumentValue for negative size
 
     try:
         nimble.identity("Matrix", 0)
         assert False  # expected InvalidArgumentValue for 0 valued size
     except InvalidArgumentValue:
         pass
-    except Exception:
-        assert False  # expected InvalidArgumentValue for 0 valued size
 
 
 def test_identity_correctSizeAndContents():

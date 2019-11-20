@@ -22,7 +22,7 @@ import os.path
 import copy
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 import numpy
@@ -8249,16 +8249,12 @@ class StructureModifying(StructureShared):
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
-        except Exception:
-            assert False  # expected InvalidArgumentType
 
         try:
             toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
-        except Exception:
-            assert False  # expected InvalidArgumentType
 
 
     def test_fillWith_sizeMismatch(self):
@@ -8273,8 +8269,6 @@ class StructureModifying(StructureShared):
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
-        except Exception as e:
-            assert False  # expected InvalidArgumentValueCombination
 
         val.transpose()
 
@@ -8283,8 +8277,6 @@ class StructureModifying(StructureShared):
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
-        except Exception as e:
-            assert False  # expected InvalidArgumentValueCombination
 
 
     def test_fillWith_invalidID(self):
@@ -8326,15 +8318,11 @@ class StructureModifying(StructureShared):
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
-        except Exception:
-            assert False  # expected InvalidArgumentValueCombination
         try:
             toTest.fillWith(val, 0, 1, 1, 0)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
-        except Exception:
-            assert False  # expected InvalidArgumentValueCombination
 
     @oneLogEntryExpected
     def test_fillWith_fullObjectFill(self):
@@ -8553,7 +8541,7 @@ class StructureModifying(StructureShared):
     # unflattenFromOnePoint | unflattenFromOneFeature #
     ###################################################
 
-    # excpetion: either axis empty
+    # exception: either axis empty
     def test_unflattenFromOnePoint_empty(self):
         self.back_unflatten_empty('point')
 
@@ -8591,7 +8579,7 @@ class StructureModifying(StructureShared):
         exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
 
 
-    # excpetion: numPoints / numFeatures does not divide length of mega P/F
+    # exception: numPoints / numFeatures does not divide length of mega P/F
     def test_unflattenFromOnePoint_doesNotDivide(self):
         self.back_unflatten_doesNotDivide('point')
 
@@ -8900,7 +8888,7 @@ class StructureModifying(StructureShared):
 #     # points.unflattenFromOne | features.unflattenFromOne #
 #     ###################################################
 #
-#     # excpetion: either axis empty
+#     # exception: either axis empty
 #     def test_points_unflattenFromOne_empty(self):
 #         self.back_unflatten_empty('point')
 #
@@ -8938,7 +8926,7 @@ class StructureModifying(StructureShared):
 #         exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
 #
 #
-#     # excpetion: numPoints / numFeatures does not divide length of mega P/F
+#     # exception: numPoints / numFeatures does not divide length of mega P/F
 #     def test_points_unflattenFromOne_doesNotDivide(self):
 #         self.back_unflatten_doesNotDivide('point')
 #
@@ -10648,20 +10636,6 @@ class StructureModifying(StructureShared):
     def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
         dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4], ['d', -7, -8]]
-        fNamesL = ['id', 'f1', 'f2']
-        fNamesR = ['id', 'f3', 'f4']
-        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-        rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
-        expData = [['a'], ['b'], ['c'], ['d']]
-        fNamesExp = ['id']
-        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
-        leftObj.merge(rightObj, point='union', feature='intersection')
-        assert leftObj == exp
-
-    #TODO what if nans in one object are the only thing causing differences in feature
-    def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
-        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-        dataR = [['a',3, 4], [None, 7, 8], [None, -3, -4], ['d', -7, -8]]
         fNamesL = ['id', 'f1', 'f2']
         fNamesR = ['id', 'f3', 'f4']
         leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)

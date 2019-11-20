@@ -48,6 +48,5 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 
         #score in bestScore >= every score in allScores
         for value in currAll:
-            if not value <= currBest[1]:
-                assert value <= currBest[1]
+            assert value <= currBest[1]
 

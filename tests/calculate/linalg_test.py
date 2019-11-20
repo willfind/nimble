@@ -45,7 +45,7 @@ def testInverseSquareObject():
 
 def testInverseEmptyObject():
     """
-        Test inverse for an empty object.
+    Test inverse for an empty object.
     """
     data = []
 
@@ -54,30 +54,36 @@ def testInverseEmptyObject():
         objInv = inverse(obj)
         assert objInv == obj
 
-@raises(InvalidArgumentValue)
+
 def testInverseNonSquareObject():
     """
-        Test inverse for non square object.
+    Test inverse for non square object.
     """
     data = [[1, 2, 3], [4, 5, 6]]
 
     for dataType in nimble.data.available:
         obj = createData(dataType, data)
+        try:
+            inverse(obj)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
-        inverse(obj)
 
-
-@raises(InvalidArgumentValue)
 def testNonInvertibleObject():
     """
-        Test inverse for non invertible object.
+    Test inverse for non invertible object.
     """
     data = [[1, 1], [1, 1]]
 
     for dataType in nimble.data.available:
         obj = createData(dataType, data)
 
-        inverse(obj)
+        try:
+            inverse(obj)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
 
 #################

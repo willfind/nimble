@@ -321,7 +321,7 @@ def readOnlyException(name):
     """
     msg = "The " + name + " method is disallowed for View objects. View "
     msg += "objects are read only, yet this method modifies the object"
-    raise TypeError(msg)
+    raise ImproperObjectAction(msg)
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exceptionDocstringFactory(cls):
@@ -425,7 +425,6 @@ def constructIndicesList(obj, axis, values, argName=None):
     Construct a list of indices from a valid integer (python or numpy) or
     string, or an iterable, list-like container of valid integers and/or
     strings
-
     """
     if argName is None:
         argName = axis + 's'

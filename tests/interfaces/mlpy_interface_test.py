@@ -136,7 +136,6 @@ def testMlpyHandmadeInnerProductTrainingPCAException():
 
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={'k': 1})
 
-    assert ret is not None
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -346,7 +345,6 @@ def testMlpyKernelExponentialDisallowed():
     kernel = nimble.Init("KernelExponential")
     ret = nimble.trainAndApply("mlpy.KFDA", trainingObj2d, trainY="Y", testX=testObj, output=None,
                             arguments={'kernel': kernel})
-    assert ret is not None
 
 @mlpySkipDec
 @logCountAssertionFactory(2)
@@ -372,17 +370,14 @@ def testMlpyListLearners():
     assert "LibLinear" in ret
     assert "LibSvm" in ret
 
-    toExclude = []
-
     for name in ret:
-        if name not in toExclude:
-            params = nimble.learnerParameters('mlpy.' + name)
-            assert params is not None
-            defaults = nimble.learnerDefaultValues('mlpy.' + name)
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+        params = nimble.learnerParameters('mlpy.' + name)
+        assert params is not None
+        defaults = nimble.learnerDefaultValues('mlpy.' + name)
+        for pSet in params:
+            for dSet in defaults:
+                for key in dSet.keys():
+                    assert key in pSet
 
 @mlpySkipDec
 @logCountAssertionFactory(8)

@@ -466,31 +466,27 @@ def test_frontend_CV_triggering():
 
     # confirm that the calls are being made
     try:
-        try:
-            train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                  performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
+        train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+              performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
-        try:
-            trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                          performanceFunction=fractionIncorrect, testX=trainObj,
-                          k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
+    try:
+        trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+                      performanceFunction=fractionIncorrect, testX=trainObj,
+                      k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
-        try:
-            trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                         testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
-    except Exception:
-        einfo = sys.exc_info()
-        six.reraise(*einfo)
+    try:
+        trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+                     testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
+                     k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
 def test_frontend_CV_triggering_success():
     #with small data set

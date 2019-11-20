@@ -34,7 +34,7 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 import nimble

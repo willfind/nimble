@@ -357,7 +357,7 @@ def test_retrain_invalidArg():
     nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
     trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 
@@ -366,8 +366,6 @@ def test_retrain_invalidArg():
     assert predOnes1 == expOnes
 
     tl.retrain(trainObj, 0, foo=True)
-    predZeros1 = tl.apply(testObj)
-    assert predZeros1 == expZeros
 
 @raises(InvalidArgumentValue)
 @configSafetyWrapper
@@ -375,7 +373,7 @@ def test_retrain_CVArg():
     nimble.registerCustomLearner("Custom", OneOrZeroClassifier)
 
     trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0, 0], [1, 1, 1]])
+    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 
@@ -384,5 +382,3 @@ def test_retrain_CVArg():
     assert predOnes1 == expOnes
 
     tl.retrain(trainObj, 0, predictZero=nimble.CV([True, False]))
-    predZeros1 = tl.apply(testObj)
-    assert predZeros1 == expZeros

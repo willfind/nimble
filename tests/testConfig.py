@@ -443,7 +443,7 @@ def test_settings_setInterfaceOptionsChanges():
     # check that the temp value for testOther is unaffected
     assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
 
-
+@configSafetyWrapper
 @raises(InvalidArgumentValue)
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """

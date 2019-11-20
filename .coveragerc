@@ -14,9 +14,8 @@ ignore_errors = True
 skip_covered = True
 exclude_lines =
     # ignore lines that do nothing
-    pass
-    # ignore lines for optional packages
-    if .* (pd|scipy|cloudpickle|requests):
+    pass$
+    # ignore lines for failing to import packages
     except ImportError:
     # ignore test lines not intended to be reached
     assert False

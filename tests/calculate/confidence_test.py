@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 import numpy
