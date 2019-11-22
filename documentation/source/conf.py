@@ -26,6 +26,12 @@ NimbleParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePa
 sys.path.insert(0, NimbleParentDirPath)
 
 # -- General configuration ------------------------------------------------
+def process_docstring(app, what, name, obj, options, lines):
+    if what == 'module' and options.get('noindex', False):
+        del lines[:]
+
+def setup(app):
+    app.connect('autodoc-process-docstring', process_docstring)
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'

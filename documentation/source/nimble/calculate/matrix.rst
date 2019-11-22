@@ -1,7 +1,8 @@
-matrix
+Matrix
 ======
 
-.. automodule:: nimble.calculate.matrix
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: elementwiseMultiply, elementwisePower
    :undoc-members:
    :show-inheritance:
