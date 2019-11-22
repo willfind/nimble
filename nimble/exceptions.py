@@ -91,7 +91,7 @@ class FileFormatException(NimbleException, ValueError):
     pass
 
 
-def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
     Used in the creation of exception messages to display lists in a more
     appealing way than default
@@ -110,7 +110,7 @@ def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     return ret
 
 
-def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
                       delim='=', valueStr=str):
     """
     Used in the creation of exception messages to display dicts in a more

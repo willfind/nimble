@@ -1,7 +1,5 @@
-distance
+Distance
 ========
 
-.. automodule:: nimble.calculate.distance
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. automodule:: nimble.calculate
+   :noindex:
