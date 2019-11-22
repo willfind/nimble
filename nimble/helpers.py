@@ -36,7 +36,7 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import numpy2DArray, is2DArray, cooMatrixToArray
 
 scipy = nimble.importModule('scipy.io')
 pd = nimble.importModule('pandas')
@@ -512,7 +512,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = elementTypeConvert(rawData.todense(), elementType)
+        rawData = elementTypeConvert(cooMatrixToArray(rawData), elementType)
 
     if (returnType == 'Sparse'
             and is2DArray(rawData)
@@ -1113,11 +1113,12 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
         rawData = scipy.sparse.csr_matrix(rawData)
 
     if rawData.shape[0] > 0:
-        firstRow = rawData[0].toarray().flatten().tolist()
+
+        firstRow = cooMatrixToArray(rawData[0]).flatten().tolist()
     else:
         firstRow = None
     if rawData.shape[0] > 1:
-        secondRow = rawData[1].toarray().flatten().tolist()
+        secondRow = cooMatrixToArray(rawData[1]).flatten().tolist()
     else:
         secondRow = None
     pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
@@ -1127,14 +1128,14 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
 
     retFNames = None
     if featureNames == 0:
-        retFNames = rawData[0].toarray().flatten().tolist()
+        retFNames = cooMatrixToArray(rawData[0]).flatten().tolist()
         retFNames = list(map(str, retFNames))
         rawData = rawData[1:]
 
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = rawData[:, 0].toarray().flatten().tolist()
+        retPNames = cooMatrixToArray(rawData[:, 0]).flatten().tolist()
         retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]

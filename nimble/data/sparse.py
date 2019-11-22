@@ -15,6 +15,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import cooMatrixToArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -246,16 +247,16 @@ class Sparse(Base):
                 except ValueError:
                     data = self.data.copy()
             else:
-                data = self.data.todense()
+                data = cooMatrixToArray(self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
         if to == 'pythonlist':
-            return self.data.todense().tolist()
+            return cooMatrixToArray(self.data).tolist()
         if to == 'numpyarray':
-            return self.data.todense()
+            return cooMatrixToArray(self.data)
         if to == 'numpymatrix':
-            return numpy.matrix(self.data.todense())
+            return numpy.matrix(cooMatrixToArray(self.data))
         if 'scipy' in to:
             if to == 'scipycsc':
                 return self.data.tocsc()
@@ -267,7 +268,7 @@ class Sparse(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(self.data.todense())
+            return pd.DataFrame(cooMatrixToArray(self.data))
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -1293,7 +1294,8 @@ class SparseView(BaseView, Sparse):
         if to == 'numpyarray':
             pStart, pEnd = self._pStart, self._pEnd
             fStart, fEnd = self._fStart, self._fEnd
-            limited = self._source.data.todense()[pStart:pEnd, fStart:fEnd]
+            asArray = cooMatrixToArray(self._source.data)
+            limited = asArray[pStart:pEnd, fStart:fEnd]
             return numpy.array(limited)
 
         limited = self._source.points.copy(start=self._pStart,

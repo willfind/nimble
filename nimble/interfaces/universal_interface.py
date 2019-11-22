@@ -360,6 +360,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     msg += "possible parameter sets: "
                     msg += prettyListString(possibleParams, numberItems=True,
                                             itemStr=prettyListString)
+
                 if len(availableDefaults) == 0:
                     msg += ". All of the allowed parameters must be specified "
                     msg += "by the user"
@@ -391,6 +392,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 msg += "possible parameter sets: "
                 msg += prettyListString(possibleParams, numberItems=True,
                                     itemStr=prettyListString)
+
             msg += ". The full mapping of inputs actually provided was: "
             msg += prettyDictString(arguments) + ". "
             msg += "If extra parameters were intended to be passed to one of "
