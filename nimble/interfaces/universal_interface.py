@@ -1070,6 +1070,10 @@ class TrainedLearner(object):
         nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
                                           None)
 
+        if not isinstance(testY, nimble.data.Base):
+            testX = testX.copy()
+            testY = testX.features.extract(testY)
+
         mergedArguments = _mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)

@@ -105,3 +105,96 @@ def rSquared(knownValues, predictedValues):
 
 
 rSquared.optimal = 'max'
+
+
+def confusionMatrix(knownValues, predictedValues, labels=None,
+                    outputFractions=False):
+    """
+    Confusion Matrix
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    See Also
+    --------
+
+    Examples
+    --------
+    """
+    if not (isinstance(knownValues, nimble.data.Base)
+            and isinstance(predictedValues, nimble.data.Base)):
+        msg = 'knownValues and predictedValues must be a nimble data objects'
+        raise InvalidArgumentType(msg)
+    if not knownValues.shape[1] == predictedValues.shape[1] == 1:
+        msg = 'knownValues and predictedValues must each be a single feature'
+        raise InvalidArgumentValue(msg)
+    if knownValues.shape[0] != predictedValues.shape[0]:
+        msg = 'knownValues and predictedValues must have the same number of '
+        msg += 'points'
+        raise InvalidArgumentValue(msg)
+    if not isinstance(labels, (type(None), dict, list)):
+        msg = 'labels must be a dictionary mapping values from knownValues to '
+        msg += 'a label or a list if the unique values in knownValues are in '
+        msg += 'the range 0 to len(labels)'
+        raise InvalidArgumentType(msg)
+
+    knownLabels = set()
+    confusionDict = {}
+    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+        knownLabels.add(kVal)
+        if (kVal, pVal) in confusionDict:
+            confusionDict[(kVal, pVal)] += 1
+        else:
+            confusionDict[(kVal, pVal)] = 1
+
+    knownLabels = sorted(list(knownLabels))
+    confusionMtx = []
+    for pLabel in knownLabels:
+        point = []
+        for kLabel in knownLabels:
+            try:
+                val = confusionDict[(kLabel, pLabel)]
+                if outputFractions:
+                    point.append(val / len(knownValues.points))
+                else:
+                    point.append(val)
+            except KeyError:
+                point.append(0)
+        confusionMtx.append(point)
+
+    asType = knownValues.getTypeString()
+    if labels is not None and len(labels) != len(knownLabels):
+        msg = 'labels contained {0} labels '.format(len(labels))
+        msg += 'but knownValues contained {0}. '.format(len(knownLabels))
+        msg += 'The labels identified in knownValues were '
+        msg += str(knownLabels)
+        raise InvalidArgumentValue(msg)
+    if isinstance(labels, dict):
+        try:
+            knownLabels = [labels[l] for l in knownLabels]
+        except KeyError:
+            msg = 'labels contained keys which were not identified in '
+            msg += 'knownValues. The labels identified in knownValues were '
+            msg += str(knownLabels)
+            raise KeyError(msg)
+    elif isinstance(labels, list):
+        if knownLabels != list(range(len(knownLabels))):
+            msg = 'A list can only be used for labels if the labels in '
+            msg += 'knownValues represent index values (they are in range '
+            msg += '0 to len(labels)) for the labels list . The labels '
+            msg += 'identified in knownValues were ' + str(knownLabels)
+            raise IndexError(msg)
+        knownLabels = labels
+
+    fNames = ['known_' + str(label) for label in knownLabels]
+    pNames = ['predicted_' + str(label) for label in knownLabels]
+    if outputFractions:
+        eType = float
+    else:
+        eType = int
+
+    return nimble.createData(asType, confusionMtx, pNames, fNames,
+                             elementType=eType)
