@@ -10,6 +10,7 @@ from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.helpers import generateClassificationData
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -151,40 +152,6 @@ class TestInterface(UniversalInterface):
 
 
 TestObject = TestInterface()
-
-
-###########################
-### _getAllArguments() ###
-##########################
-
-@raises(InvalidArgumentValue)
-def test_getAllArguments_ArgumentsIsNone():
-    learner = 'l0'
-    TestObject._getAllArguments(learner, None)
-
-@raises(InvalidArgumentValue)
-def test_getAllArguments_MissingArgument():
-    learner = 'l0'
-    arguments = {'l0a0': 1}
-    TestObject._getAllArguments(learner, arguments)
-
-@raises(InvalidArgumentValue)
-def test_getAllArguments_ExtraArgument():
-    learner = 'l1'
-    arguments = {'l1a0': 1, 'l5a100': 11}
-    TestObject._getAllArguments(learner, arguments)
-
-def test_getAllArguments_Working():
-    # passed argument
-    learner = 'l1'
-    arguments = {'l1a0': 1}
-    ret = TestObject._getAllArguments(learner, arguments)
-    assert ret == {'l1a0': 1}
-    # default argument
-    learner = 'foo'
-    ret = TestObject._getAllArguments(learner, None)
-    assert ret == {'estimator': Initable()}
-
 
 ###################
 ### nimble.Init ###
@@ -525,8 +492,8 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         def wrapped(tl):
             tl.apply(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
     try:
@@ -535,16 +502,16 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         def wrapped(tl):
             tl.test(testX, testY, metric)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
     try:
         def wrapped(tl):
             tl.getScores(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
+        assert False # expected InvalidArgumentValueCombination
+    except InvalidArgumentValueCombination:
         pass
 
 

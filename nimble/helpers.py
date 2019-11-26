@@ -79,7 +79,11 @@ def _learnerQuery(name, queryType):
         raise InvalidArgumentValue("Unrecognized queryType: " + queryType)
 
     interface = findBestInterface(package)
-    return getattr(interface, toCallName)(learnerName)
+    ret = getattr(interface, toCallName)(learnerName)
+
+    if len(ret) == 1:
+        return ret[0]
+    return ret
 
 
 def isAllowedRaw(data, allowLPT=False):

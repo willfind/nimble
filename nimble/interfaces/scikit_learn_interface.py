@@ -336,14 +336,17 @@ To install scikit-learn
             msg += "sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
-        # get parameter names
+        # init learner
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+        initParams = {name: arguments[name] for name in initNames
+                      if name in arguments}
+        defaults = self.getLearnerDefaultValues(learnerName)[0]
+        if 'random_state' in defaults and 'random_state' not in arguments:
+            initParams['random_state'] = defaults['random_state']
+        learner = self.findCallable(learnerName)(**initParams)
 
-        # pack parameter sets
-        initParams = {}
-        for name in initNames:
-            initParams[name] = arguments[name]
+        # fit learner
+        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
         fitParams = {}
         for name in fitNames:
             if name.lower() == 'x' or name.lower() == 'obs':
@@ -352,11 +355,12 @@ To install scikit-learn
                 value = trainY
             elif name.lower() == 'raw_documents':
                 value = trainX.tolist()[0] #1D list
-            else:
+            elif name in arguments:
                 value = arguments[name]
+            else:
+                continue
             fitParams[name] = value
 
-        learner = self.findCallable(learnerName)(**initParams)
         try:
             learner.fit(**fitParams)
         except ValueError as ve:
@@ -494,7 +498,8 @@ To install scikit-learn
             if 'random_state' in initParams:
                 index = initParams.index('random_state')
                 negdex = index - len(initParams)
-                initValues[negdex] = nimble.randomness.generateSubsidiarySeed()
+                seed = nimble.randomness.generateSubsidiarySeed()
+                initValues[negdex] = seed
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
             return None

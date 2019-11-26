@@ -1,7 +1,8 @@
-similarity
+Similarity
 ==========
 
-.. automodule:: nimble.calculate.similarity
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: correlation, cosineSimilarity, covariance, fractionCorrect, rSquared
    :undoc-members:
    :show-inheritance:
