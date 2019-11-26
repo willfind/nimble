@@ -116,7 +116,7 @@ def test_TrainedLearnerTest_dataInputs():
 
     learner = 'Custom.KNNClassifier'
     tl = nimble.train(learner, trainObjData, trainObjLabels)
-    # Expected outcomes
+    # Expected outcome
     exp = nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
                               testObjLabels, fractionIncorrect)
     # testX contains labels
@@ -127,19 +127,6 @@ def test_TrainedLearnerTest_dataInputs():
     # testX no labels
     out3 = tl.test(testObjData, testObjLabels, fractionIncorrect)
     assert out3 == exp
-
-    # TODO should we add this?
-    # # learner prestored performanceFunction
-    # tl_withPerf = nimble.train(learner, trainObjData, trainObjLabels,
-    #                            performanceFunction=fractionIncorrect)
-    # out1 = tl_withPerf.test(testObj, 3)
-    # out2 = tl_withPerf.test(testObj, 'label')
-    # assert out1 == exp
-    # assert out2 == exp
-    # # testX no labels
-    # out3 = tl_withPerf.test(testObjData, testObjLabels)
-    # assert out3 == exp
-
 
 #todo set seed and verify that you can regenerate error several times with
 #crossValidate.bestArguments, trainAndApply, and your own computeMetrics
