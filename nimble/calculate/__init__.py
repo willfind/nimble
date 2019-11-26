@@ -1,6 +1,6 @@
 """
 This loosely groups together functions which perform calculations on
-data objects and other nimble from .binary importined objects, including functions which
+data objects and other nimble defined objects, including functions which
 can be used as performance functions in the nimble testing and cross
 validation API. Some of these are also available as methods off of data
 objects; the versions here are functions, and take any inputs as

@@ -1084,7 +1084,7 @@ class TrainedLearner(object):
 
         if not isinstance(testY, nimble.data.Base):
             testX = testX.copy()
-            testY = testX.features.extract(testY)
+            testY = testX.features.extract(testY, useLog=False)
 
         mergedArguments = _mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,

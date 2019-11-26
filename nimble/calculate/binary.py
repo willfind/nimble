@@ -1,6 +1,7 @@
 """
-
+Metrics available for binary classification.
 """
+
 from nimble.exceptions import InvalidArgumentValue
 from .similarity import confusionMatrix
 
