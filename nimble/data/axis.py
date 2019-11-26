@@ -10,16 +10,12 @@ generic to axis and object subtype should be included here with abstract
 methods defined for axis and object subtype specific implementations.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
 import copy
 from abc import abstractmethod
 import inspect
 import sys
 import operator
 
-import six
 import numpy
 
 import nimble
@@ -151,7 +147,7 @@ class Axis(object):
                 msg += "the range of possible indices in the " + self._axis
                 msg += " axis (0 to " + str(num - 1) + ")."
                 raise IndexError(msg)
-        elif isinstance(identifier, six.string_types):
+        elif isinstance(identifier, str):
             identifier = self._getIndexByName(identifier)
         elif allowFloats and isinstance(identifier, (float, numpy.float)):
             if identifier % 1: # x!=int(x)
@@ -281,7 +277,7 @@ class Axis(object):
             otherCount = self._base._pointCount
 
         sortByArg = copy.copy(sortBy)
-        if sortBy is not None and isinstance(sortBy, six.string_types):
+        if sortBy is not None and isinstance(sortBy, str):
             axisObj = self._base._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
 
@@ -672,7 +668,7 @@ class Axis(object):
         divIsVec = False
 
         # check it is within the desired types
-        allowedTypes = (int, float, six.string_types, nimble.data.Base)
+        allowedTypes = (int, float, str, nimble.data.Base)
         if subtract is not None:
             if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
@@ -691,9 +687,9 @@ class Axis(object):
             'std', 'population std', 'population standard deviation',
             'sample std', 'sample standard deviation'
             ]
-        if isinstance(subtract, six.string_types):
+        if isinstance(subtract, str):
             validateInputString(subtract, accepted, 'subtract')
-        if isinstance(divide, six.string_types):
+        if isinstance(divide, str):
             validateInputString(divide, accepted, 'divide')
 
         # arg generic helper to check that objects are of the
@@ -801,18 +797,18 @@ class Axis(object):
 
         if isinstance(self, Points):
             indexGetter = lambda x: x._pStart
-            if isinstance(subtract, six.string_types):
+            if isinstance(subtract, str):
                 subtract = self._statistics(subtract)
                 subIsVec = True
-            if isinstance(divide, six.string_types):
+            if isinstance(divide, str):
                 divide = self._statistics(divide)
                 divIsVec = True
         else:
             indexGetter = lambda x: x._fStart
-            if isinstance(subtract, six.string_types):
+            if isinstance(subtract, str):
                 subtract = self._statistics(subtract)
                 subIsVec = True
-            if isinstance(divide, six.string_types):
+            if isinstance(divide, str):
                 divide = self._statistics(divide)
                 divIsVec = True
 
@@ -1081,7 +1077,7 @@ class Axis(object):
 
         index = self._getIndex(oldIdentifier)
         if newName is not None:
-            if not isinstance(newName, six.string_types):
+            if not isinstance(newName, str):
                 msg = "The new name must be either None or a string"
                 raise InvalidArgumentType(msg)
 
@@ -1131,7 +1127,7 @@ class Axis(object):
             raise InvalidArgumentValue(msg)
 
         for name in assignments:
-            if name is not None and not isinstance(name, six.string_types):
+            if name is not None and not isinstance(name, str):
                 msg = 'assignments must contain only string values'
                 raise InvalidArgumentValue(msg)
             if name is not None and name.startswith(DEFAULT_PREFIX):
@@ -1185,7 +1181,7 @@ class Axis(object):
         # at this point, the input must be a dict
         #check input before performing any action
         for name in assignments.keys():
-            if not None and not isinstance(name, six.string_types):
+            if not None and not isinstance(name, str):
                 raise InvalidArgumentValue("Names must be strings")
             if not isinstance(assignments[name], int):
                 raise InvalidArgumentValue("Indices must be integers")
@@ -1277,7 +1273,7 @@ class Axis(object):
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
         targetList = []
-        if target is not None and isinstance(target, six.string_types):
+        if target is not None and isinstance(target, str):
             # check if target is a valid name
             if self._hasName(target):
                 target = self._getIndex(target)
@@ -1599,11 +1595,11 @@ class Axis(object):
         axis = self._axis
         self._base._defaultNamesGeneration_NamesSetOperations(other, axis)
         if axis == 'point':
-            return (six.viewkeys(self._base.pointNames)
-                    & six.viewkeys(other.pointNames))
+            return (self._base.pointNames.keys()
+                    & other.pointNames.keys())
         else:
-            return (six.viewkeys(self._base.featureNames)
-                    & six.viewkeys(other.featureNames))
+            return (self._base.featureNames.keys()
+                    & other.featureNames.keys())
 
     def _validateReorderedNames(self, axis, callSym, other):
         """

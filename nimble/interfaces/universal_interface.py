@@ -4,7 +4,7 @@ various python packages or custom learners. Also contains the objects
 which store trained learner models and provide functionality for
 applying and testing learners.
 """
-from __future__ import absolute_import
+
 import inspect
 import copy
 import abc
@@ -13,8 +13,6 @@ import sys
 import numbers
 
 import numpy
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -54,7 +52,7 @@ def captureOutput(toWrap):
     return wrapped
 
 
-class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
+class UniversalInterface(metaclass=abc.ABCMeta):
     """
     Metaclass defining methods and abstract methods for specific
     package or custom interfaces.
@@ -254,7 +252,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
@@ -1379,7 +1377,7 @@ class TrainedLearner(object):
             self.transformedArguments[arg] = value
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 

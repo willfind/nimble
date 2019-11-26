@@ -2,14 +2,11 @@
 Utility functions that could be useful in multiple interfaces
 """
 
-from __future__ import absolute_import
 import sys
 import importlib
 import configparser
 
 import numpy
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue

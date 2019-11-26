@@ -10,11 +10,9 @@ defined for object subtype specific implementations. Additionally, the
 wrapping of function calls for the logger takes place in here.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
-import six
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -421,7 +419,7 @@ class Elements(object):
         """
         if hasattr(condition, '__call__'):
             ret = self.calculate(condition, outputType='Matrix', useLog=False)
-        elif isinstance(condition, six.string_types):
+        elif isinstance(condition, str):
             func = lambda x: eval('x'+condition)
             ret = self.calculate(func, outputType='Matrix', useLog=False)
         else:

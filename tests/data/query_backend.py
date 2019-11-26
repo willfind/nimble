@@ -8,8 +8,7 @@ features.statistics, points.__iter__, features.__iter__,
 elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
 inverse, solveLinearSystem, featureReport, summaryReport
 """
-from __future__ import absolute_import
-from __future__ import print_function
+
 import math
 import tempfile
 import os
@@ -23,9 +22,6 @@ from unittest.mock import patch
 import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble import loadData

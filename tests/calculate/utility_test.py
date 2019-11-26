@@ -1,10 +1,3 @@
-"""
-Tests for the functions defined in nimble.calculate.utility
-
-"""
-
-from __future__ import absolute_import
-
 import numpy
 from nose.tools import *
 

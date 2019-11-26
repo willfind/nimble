@@ -2,10 +2,8 @@
 tests for functions relating to ArgumentIterator class
 """
 
-from __future__ import absolute_import
 import sys
 import copy
-from six.moves import range
 from functools import reduce
 
 sys.path.append('../..')

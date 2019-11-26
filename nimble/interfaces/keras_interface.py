@@ -2,14 +2,12 @@
 Relies on being keras 2.0.8
 """
 
-from __future__ import absolute_import
 import copy
 import os
 import sys
 import logging
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface

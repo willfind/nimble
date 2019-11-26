@@ -1,13 +1,8 @@
 """
 Functions that could be useful accross multple interface test suites
-
 """
 
-from __future__ import absolute_import
 import numpy
-
-from six.moves import range
-
 
 from nimble.data import Base
 from nimble.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores

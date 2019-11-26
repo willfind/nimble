@@ -1,6 +1,7 @@
 """
 Tests for using stretch attribute to trigger broadcasting operations
 """
+
 import operator
 
 from nose.tools import raises

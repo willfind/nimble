@@ -1,9 +1,7 @@
 """
 Unit tests for scikit_learn_interface.py
-
 """
 
-from __future__ import absolute_import
 import importlib
 import inspect
 import tempfile

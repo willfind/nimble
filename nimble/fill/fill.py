@@ -1,7 +1,6 @@
 """
 Variety of functions to replace values in data with other values
 """
-from __future__ import absolute_import
 
 import numpy
 

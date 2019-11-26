@@ -14,7 +14,7 @@ __itruediv__, __ifloordiv__,  __imod__, __ipow__, __imatmul__, __and__,
 __or__, __xor__
 
 """
-from __future__ import absolute_import
+
 import sys
 import numpy
 import os
@@ -22,8 +22,6 @@ import os.path
 from unittest.mock import patch
 
 from nose.tools import *
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue

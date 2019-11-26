@@ -2,13 +2,10 @@
 Class extending Base, using a numpy dense matrix to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 from functools import reduce
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue

@@ -3,16 +3,12 @@ Any method, object, or constant that might be used by multiple tests or
 the main data wrapper objects defined in this module
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 import math
 import numbers
 import inspect
 import re
 
-import six
-from six.moves import range
 import numpy
 
 import nimble
@@ -36,7 +32,7 @@ def isAllowedSingleElement(x):
     This function is to determine if an element is an allowed single
     element.
     """
-    if isinstance(x, (numbers.Number, six.string_types)):
+    if isinstance(x, (numbers.Number, str)):
         return True
 
     if hasattr(x, '__len__'):#not a single element
@@ -151,7 +147,7 @@ def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of
     # the numpy string implementation.
-    if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
+    if not hasattr(val, '__truediv__') or isinstance(val, str):
         return False
     return True
 
@@ -303,7 +299,7 @@ def validateInputString(string, accepted, paramName):
     msg += "' was given instead. Note: casing and whitespace is "
     msg += "ignored when checking the " + paramName
 
-    if not isinstance(string, six.string_types):
+    if not isinstance(string, str):
         raise InvalidArgumentType(msg)
 
     cleanFuncName = cleanKeywordInput(string)
@@ -407,7 +403,7 @@ def valuesToPythonList(values, argName):
     """
     if isinstance(values, list):
         return values
-    if isinstance(values, (int, numpy.integer, six.string_types)):
+    if isinstance(values, (int, numpy.integer, str)):
         return [values]
     valuesList = []
     try:

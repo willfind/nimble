@@ -6,7 +6,6 @@ as possible
 
 """
 
-from __future__ import absolute_import
 from nose.plugins.attrib import attr
 
 import nimble

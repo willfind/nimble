@@ -3,8 +3,6 @@ Defines a subclass of the base data object, which serves as the primary
 base class for read only views of data objects.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 
 import nimble

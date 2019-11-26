@@ -10,7 +10,6 @@ leading underscore added to the method name. Additionally, the wrapping
 of function calls for the logger takes place in here.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 

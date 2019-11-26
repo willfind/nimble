@@ -3,13 +3,9 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 from functools import reduce
 
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue

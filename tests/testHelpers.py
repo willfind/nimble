@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import math
 from math import fabs
 
 import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
-from six.moves import range
 
 import nimble
 from nimble import learnerType

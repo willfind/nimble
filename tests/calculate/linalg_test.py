@@ -3,10 +3,7 @@ Tests for linear algebra functions part of the calculate module.
 
 Functions tested in this file:
 inverse, pseudoInverse, solve, leastSquaresSolution.
-
 """
-
-from __future__ import absolute_import
 
 import numpy
 from nose.tools import raises

@@ -3,14 +3,13 @@ Tests to check the loading, writing, and usage of nimble.settings, along
 with the undlying structures being used.
 """
 
-from __future__ import absolute_import
 import tempfile
 import copy
 import os
 
 from nose.tools import raises
 from unittest import mock
-import six.moves.configparser
+import configparser
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -321,7 +320,7 @@ def test_settings_savingSection():
     try:
         val = temp.get('TestSec2', "op1")
         assert False
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 
@@ -347,12 +346,12 @@ def test_settings_savingOption():
     try:
         val = temp.get('TestSec2', "op1")
         assert False
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
     try:
         val = temp.get('TestSec1', "op1") == '1'
         assert False
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
 
@@ -436,7 +435,7 @@ def test_settings_setInterfaceOptionsChanges():
     try:
         nimble.settings.get('Test', 'Temp1')
         assert False
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
     assert nimble.settings.get('Test', 'NotTemp1') == ''
 
@@ -454,7 +453,7 @@ def test_settings_allowedNames():
 
 
 @configSafetyWrapper
-@raises(six.moves.configparser.NoSectionError)
+@raises(configparser.NoSectionError)
 # test that set without save is temporary
 def test_settings_set_without_save():
     # make some change via nimble.settings.
@@ -482,7 +481,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
@@ -495,7 +494,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     nimble.settings.saveChanges()
@@ -505,7 +504,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
@@ -524,12 +523,12 @@ def test_settings_deleteThenSaveASection():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
     # change isn't reflected in file
@@ -541,12 +540,12 @@ def test_settings_deleteThenSaveASection():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
     nimble.settings.saveChanges()
@@ -556,12 +555,12 @@ def test_settings_deleteThenSaveASection():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 
@@ -579,7 +578,7 @@ def test_settings_setThenDeleteCycle_value():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     # change should now be reflected in file
@@ -587,7 +586,7 @@ def test_settings_setThenDeleteCycle_value():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 
@@ -603,7 +602,7 @@ def test_settings_setThenDeleteCycle_section():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
     # change never saved, shouldn't be in file
@@ -611,7 +610,7 @@ def test_settings_setThenDeleteCycle_section():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 
@@ -620,7 +619,7 @@ def test_settings_setDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
     nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
@@ -633,7 +632,7 @@ def test_settings_setDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
@@ -657,7 +656,7 @@ def test_settings_deleteDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
@@ -667,7 +666,7 @@ def test_settings_deleteDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 

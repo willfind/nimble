@@ -1,9 +1,6 @@
-from __future__ import absolute_import
 import sys
 from unittest import mock
 
-import six
-from six.moves import range
 from nose.tools import raises
 
 import nimble

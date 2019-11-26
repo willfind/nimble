@@ -2,7 +2,6 @@
 Unit tests for functionality of the SessionLogger
 """
 
-from __future__ import absolute_import
 import os
 import shutil
 import time
@@ -13,11 +12,10 @@ import tempfile
 import re
 import functools
 from unittest.mock import patch
+from io import StringIO
 
 from nose import with_setup
 from nose.tools import raises
-import six
-from six import StringIO
 import numpy
 
 import nimble

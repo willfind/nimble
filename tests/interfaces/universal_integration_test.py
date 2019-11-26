@@ -2,11 +2,8 @@
 Integration tests to demonstrate consistency between output of different methods
 of a single interface. All tests are general, testing knowledge guaranteed by
 the UniversalInterface api.
-
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import importlib

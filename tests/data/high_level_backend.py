@@ -21,15 +21,12 @@ fillUsingAllData, points.splitByCollapsingFeatures,
 points.combineByExpandingFeatures, features.splitByParsing
 """
 
-from __future__ import absolute_import
 from copy import deepcopy
 import os.path
 import tempfile
 import inspect
 
 import numpy
-import six
-from six.moves import range
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:

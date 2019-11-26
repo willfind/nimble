@@ -19,7 +19,6 @@ points.getIndices, features.getIndices, constructIndicesList, copy
 features.hasName, points.hasName, __bool__
 """
 
-from __future__ import absolute_import
 import numpy
 import pandas
 try:
@@ -27,7 +26,6 @@ try:
 except ImportError:
     import mock
 
-from six.moves import range
 from nose.tools import *
 
 from nimble import createData

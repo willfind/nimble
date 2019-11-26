@@ -7,8 +7,6 @@ the distraction of helpers
 
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import csv
 import inspect
 import importlib
@@ -21,9 +19,6 @@ import sys
 import itertools
 
 import numpy
-import six
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.logger import handleLogging
@@ -669,7 +664,7 @@ def initDataObject(
                          featureNames=useFNames, name=name,
                          paths=pathsToPass, elementType=elementType,
                          reuseData=reuseData, **kwargs)
-    except Exception:
+    except Exception as origErr:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
@@ -682,7 +677,7 @@ def initDataObject(
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except Exception:
-            six.reraise(einfo[0], einfo[1], einfo[2])
+            raise origErr
 
 
     def makeCmp(keepList, outerObj, axis):
@@ -774,7 +769,7 @@ def createDataFromFile(
     createData's parameters with the same names).
     """
     # try to find an extension for possible optimizations
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         path = data
     else:
         # try getting name attribute from file
@@ -807,7 +802,7 @@ def createDataFromFile(
     toPass = data
     # Case: string value means we need to open the file, either directly or
     # through an http request
-    if isinstance(toPass, six.string_types):
+    if isinstance(toPass, str):
         if toPass[:4] == 'http':
             if requests is None:
                 msg = "To load data from a webpage, the requests module must "
@@ -862,7 +857,7 @@ def createDataFromFile(
     (retData, retPNames, retFNames, selectSuccess) = loaded
 
     # auto set name if unspecified, and is possible
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         path = data
     elif hasattr(data, 'name'):
         path = data.name
@@ -1204,11 +1199,11 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
 
     if ((pointNames is True or pointNames == 'automatic')
             and firstValues[0] == 'pointNames'):
-        allText = all(map(lambda x: isinstance(x, six.string_types),
+        allText = all(map(lambda x: isinstance(x, str),
                           firstValues[1:]))
         allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x, six.string_types),
+        allText = all(map(lambda x: isinstance(x, str),
                           firstValues))
         allDiff = all(map(teq, zip(firstValues, secondValues)))
 
@@ -1830,7 +1825,7 @@ def extractWinningPredictionLabel(predictions):
 
     #get the class that won the most tournaments
     #TODO: what if there are ties?
-    return max(six.iterkeys(predictionCounts),
+    return max(predictionCounts.keys(),
                key=(lambda key: predictionCounts[key]))
 
 
@@ -2091,11 +2086,11 @@ class KFoldCrossValidator():
         if not isinstance(X, Base):
             raise InvalidArgumentType("X must be a Base object")
         if Y is not None:
-            if not isinstance(Y, (Base, int, six.string_types, list)):
+            if not isinstance(Y, (Base, int, str, list)):
                 msg = "Y must be a Base object or an index (int) from X where "
                 msg += "Y's data can be found"
                 raise InvalidArgumentType(msg)
-            if isinstance(Y, (int, six.string_types, list)):
+            if isinstance(Y, (int, str, list)):
                 X = X.copy()
                 Y = X.features.extract(Y, useLog=False)
 
@@ -2803,7 +2798,7 @@ class LearnerInspector:
         run on.
         Example output: 'classification', 'regression', 'other'
         """
-        if not isinstance(learnerName, six.string_types):
+        if not isinstance(learnerName, str):
             raise InvalidArgumentType("learnerName must be a string")
         return self._classifyAlgorithmDecisionTree(learnerName)
 
@@ -3078,7 +3073,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         raise InvalidArgumentType(msg)
 
     if trainY is not None:
-        if not isinstance(trainY, (Base, six.string_types, int, numpy.int64)):
+        if not isinstance(trainY, (Base, str, int, numpy.int64)):
             msg = "trainY may only be an object derived from Base, or an "
             msg += "ID of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
@@ -3105,7 +3100,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
     if testRequired[1] and testY is None:
         raise InvalidArgumentType("testY must be provided")
     if testY is not None:
-        if not isinstance(testY, (Base, six.string_types, int, int)):
+        if not isinstance(testY, (Base, str, int, int)):
             msg = "testY may only be an object derived from Base, or an ID "
             msg += "of the feature containing labels in testX"
             raise InvalidArgumentType(msg)

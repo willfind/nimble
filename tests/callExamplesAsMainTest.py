@@ -1,7 +1,6 @@
 """
 Defines a single test to check the functionality of all of the
 scripts contained in the examples folder.
-
 """
 
 import os

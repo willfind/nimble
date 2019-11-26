@@ -7,8 +7,6 @@ Tests for nimble.calculate.statistics
 # in nimble.logger.tests.data_set_analyzier_tests and in the data
 # hierarchy in nimble.data.tests.query_backend
 
-
-from __future__ import absolute_import
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -16,7 +14,6 @@ except ImportError:
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from six.moves import range
 from nose.tools import raises
 from nose.tools import assert_almost_equal
 

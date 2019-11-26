@@ -5,7 +5,7 @@ Functions here do not import from nimble (except for Exceptions),
 allowing for each function to be imported into any file within nimble
 without risk of circular imports.
 """
-from __future__ import absolute_import
+
 import inspect
 
 import numpy

@@ -1,8 +1,6 @@
 """
 Test the nimble exception hierarchy, output and catching
 """
-from __future__ import absolute_import
-
 from nose.tools import raises
 
 from nimble.exceptions import NimbleException

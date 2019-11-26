@@ -5,12 +5,10 @@ nimble.createRandomData, nimble.ones, nimble.zeros, nimble.identity
 
 """
 
-from __future__ import absolute_import
 import numpy
 import copy
 
 from nose.tools import *
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue

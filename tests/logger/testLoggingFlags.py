@@ -3,7 +3,6 @@ Group of tests which checks that use controlled local and global
 mechanisms for controlling logging are functioning as expected.
 """
 
-from __future__ import absolute_import
 import os
 import tempfile
 

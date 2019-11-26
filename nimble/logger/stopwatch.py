@@ -4,7 +4,6 @@ classifiers, testing classifiers) within the nimble code.  Can time any
 generic task based on task name.
 """
 
-from __future__ import absolute_import
 import time
 
 class Stopwatch(object):

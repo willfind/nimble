@@ -9,8 +9,6 @@ for Shogun ML.
 # * different feature types (streaming, for other problem types)
 # *
 
-from __future__ import absolute_import
-from __future__ import print_function
 import importlib
 import numpy
 import copy
@@ -21,8 +19,6 @@ import distutils.version
 import multiprocessing
 import re
 import warnings
-
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface

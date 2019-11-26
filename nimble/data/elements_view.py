@@ -3,8 +3,6 @@ Defines a subclass of the Elements object, which serves as the primary
 base class for read only elements views of data objects.
 """
 
-from __future__ import absolute_import
-
 import nimble
 from nimble.utility import inheritDocstringsFactory
 from .elements import Elements

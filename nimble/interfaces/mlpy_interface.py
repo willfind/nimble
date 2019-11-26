@@ -7,13 +7,11 @@ not allowed as a Kernel.
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import importlib
 import copy
 import sys
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue

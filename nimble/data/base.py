@@ -6,9 +6,6 @@ common functions.
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import math
 import numbers
@@ -18,10 +15,6 @@ from multiprocessing import Process
 from abc import abstractmethod
 
 import numpy
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble import match
@@ -195,7 +188,7 @@ class Base(object):
             self._name = name
 
         # Set up paths
-        if paths[0] is not None and not isinstance(paths[0], six.string_types):
+        if paths[0] is not None and not isinstance(paths[0], str):
             msg = "paths[0] must be None, an absolute path or web link to "
             msg += "the file from which the data originates"
             raise InvalidArgumentType(msg)
@@ -205,7 +198,7 @@ class Base(object):
             raise InvalidArgumentValue("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
-        if paths[1] is not None and not isinstance(paths[1], six.string_types):
+        if paths[1] is not None and not isinstance(paths[1], str):
             msg = "paths[1] must be None or a relative path to the file from "
             msg += "which the data originates"
             raise InvalidArgumentType(msg)
@@ -290,7 +283,7 @@ class Base(object):
         if value is None:
             self._name = dataHelpers.nextDefaultObjectName()
         else:
-            if not isinstance(value, six.string_types):
+            if not isinstance(value, str):
                 msg = "The name of an object may only be a string or None"
                 raise ValueError(msg)
             self._name = value
@@ -651,7 +644,7 @@ class Base(object):
             return tuple([point[i] for i in by])
 
         #if by is a list, then use findKey2; o.w. use findKey1
-        if isinstance(by, (six.string_types, numbers.Number)):
+        if isinstance(by, (str, numbers.Number)):
             findKey = findKey1
         else:
             findKey = findKey2
@@ -1705,7 +1698,7 @@ class Base(object):
 
     def _setupOutFormatForPlotting(self, outPath):
         outFormat = None
-        if isinstance(outPath, six.string_types):
+        if isinstance(outPath, str):
             (_, ext) = os.path.splitext(outPath)
             if len(ext) == 0:
                 outFormat = 'png'
@@ -2274,7 +2267,7 @@ class Base(object):
         # format is one of the accepted nimble data types
         if to is None:
             to = self.getTypeString()
-        if not isinstance(to, six.string_types):
+        if not isinstance(to, str):
             raise InvalidArgumentType("'to' must be a string")
         if to not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
             to = to.lower()
@@ -2461,7 +2454,7 @@ class Base(object):
                 values = values.copy(to=self.getTypeString())
 
         elif (dataHelpers._looksNumeric(values)
-              or isinstance(values, six.string_types)):
+              or isinstance(values, str)):
             pass  # no modifications needed
         else:
             msg = "values may only be a nimble Base object, or a single "
@@ -4451,7 +4444,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
+        return self.pointNames.keys() - other.pointNames.keys()
 
     def _featureNameDifference(self, other):
         """
@@ -4467,8 +4460,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                - six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                - other.featureNames.keys())
 
     def _pointNameSymmetricDifference(self, other):
         """
@@ -4484,7 +4477,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
+        return self.pointNames.keys() ^ other.pointNames.keys()
 
     def _featureNameSymmetricDifference(self, other):
         """
@@ -4500,8 +4493,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                ^ six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                ^ other.featureNames.keys())
 
     def _pointNameUnion(self, other):
         """
@@ -4517,7 +4510,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
+        return self.pointNames.keys() | other.pointNames.keys()
 
     def _featureNameUnion(self, other):
         """
@@ -4533,8 +4526,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                | six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                | other.featureNames.keys())
 
     def _equalPointNames(self, other):
         if other is None or not isinstance(other, Base):

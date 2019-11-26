@@ -2,14 +2,10 @@
 Class extending Base, using a list of lists to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 from functools import reduce
 
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
