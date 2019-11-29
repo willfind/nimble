@@ -94,8 +94,8 @@ class Elements(object):
 
         See Also
         --------
-        calculate, nimble.data.points.Points.transform,
-        nimble.data.features.Features.transform
+        calculate, nimble.data.Points.transform,
+        nimble.data.Features.transform
 
         Examples
         --------
@@ -236,8 +236,8 @@ class Elements(object):
 
         See Also
         --------
-        transform, nimble.data.points.Points.calculate,
-        nimble.data.features.Features.calculate
+        transform, nimble.data.Points.calculate,
+        nimble.data.Features.calculate
 
         Examples
         --------
@@ -399,8 +399,7 @@ class Elements(object):
 
         See Also
         --------
-        nimble.data.points.Points.count,
-        nimble.data.features.Features.count
+        nimble.data.Points.count, nimble.data.Features.count
 
         Examples
         --------

@@ -3,3 +3,5 @@
 .DS_Store
 *logs-nimble
 configuration.ini
+documentation/doctrees
+documentation/html

@@ -2,6 +2,7 @@ nimble.calculate
 ================
 
 .. automodule:: nimble.calculate
+   :no-members:
 
    .. toctree::
       :maxdepth: 1

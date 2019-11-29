@@ -239,7 +239,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points
+        nimble.data.Points
         """
         return self._points
 
@@ -256,7 +256,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.features.Features
+        nimble.data.Features
         """
         return self._features
 
@@ -273,7 +273,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.elements.Elements
+        nimble.data.Elements
         """
         return self._elements
 
@@ -2405,8 +2405,8 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillUsingAllData, nimble.data.Points.fill,
+        nimble.data.Features.fill
 
         Examples
         --------
@@ -2520,8 +2520,7 @@ class Base(object):
 
         See Also
         --------
-        fillWith, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillWith, nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -3104,7 +3103,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points.add, nimble.data.features.Features.add
+        nimble.data.Points.add, nimble.data.Features.add
 
         Examples
         --------

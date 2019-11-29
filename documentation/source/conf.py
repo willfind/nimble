@@ -26,15 +26,15 @@ NimbleParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePa
 sys.path.insert(0, NimbleParentDirPath)
 
 # -- General configuration ------------------------------------------------
+# If your documentation needs a minimal Sphinx version, state it here.
+needs_sphinx = '2.2'
+
 def process_docstring(app, what, name, obj, options, lines):
     if what == 'module' and options.get('noindex', False):
         del lines[:]
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -45,6 +45,14 @@ extensions = [
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]
+
+autodoc_default_options = {
+    'undoc-members': True,
+    'show-inheritance': True
+}
+
+# prevents autoclass from adding an autosummary table which leads to a warning
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -128,7 +136,11 @@ html_theme = 'alabaster'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+    'fixed_sidebar': True,
+    'page_width': '85%',
+    'body_max_width': '85%'
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []

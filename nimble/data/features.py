@@ -904,8 +904,7 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.elements.Elements.count,
-        nimble.data.elements.Elements.countUnique
+        nimble.data.Elements.count, nimble.data.Elements.countUnique
 
         Examples
         --------

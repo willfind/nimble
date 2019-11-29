@@ -1415,10 +1415,9 @@ class TrainedLearner(object):
         trainX: nimble Base object
             Additional data to be used for training.
         trainY : identifier, nimble Base object
-            * identifier - The name or index of the feature in
-            ``trainX`` containing the labels.
-            * nimble Base object - contains the labels that correspond
-              to ``trainX``.
+            A name or index of the feature in ``trainX`` containing the
+            labels or another nimble Base object containing the labels
+            that correspond to ``trainX``.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the

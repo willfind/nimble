@@ -85,9 +85,9 @@ configuration.setAndSaveAvailableInterfaceOptions()
 # initialize the logging file
 logger.active = logger.initLoggerAndLogConfig()
 
-__all__ = ['createData', 'createRandomData', 'crossValidate',
+__all__ = ['createData', 'createRandomData', 'crossValidate', 'CV',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-           'identity', 'learnerDefaultValues', 'learnerParameters',
+           'identity', 'Init', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
            'log', 'normalizeData', 'ones', 'registerCustomLearner',
            'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
