@@ -1,4 +1,6 @@
 CustomLearner
 =============
 
-.. autoclass:: nimble.customLearners.CustomLearner
+.. automodule:: nimble.customLearners
+   :noindex:
+   :members: CustomLearner

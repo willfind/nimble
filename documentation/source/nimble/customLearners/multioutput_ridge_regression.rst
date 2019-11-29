@@ -1,4 +1,6 @@
 Custom.MultiOutputRidgeRegression
 =================================
 
-.. autoclass:: nimble.customLearners.MultiOutputRidgeRegression
+.. automodule:: nimble.customLearners
+   :noindex:
+   :members: MultiOutputRidgeRegression
