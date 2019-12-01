@@ -43,6 +43,7 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
+from nimble.utility import cooMatrixToArray
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
@@ -328,13 +329,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -386,13 +387,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -442,13 +443,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -610,13 +611,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             out = orig.copy(to='scipycsr', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
             out = orig.copy(to='scipycsc', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
             out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
         if pd:
             out = orig.copy(to='pandasdataframe', rowsArePoints=False)

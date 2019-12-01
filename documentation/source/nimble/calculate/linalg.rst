@@ -1,7 +1,8 @@
-linalg
-======
+Linear Algebra
+==============
 
-.. automodule:: nimble.calculate.linalg
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: inverse, pseudoInverse, solve, leastSquaresSolution
    :undoc-members:
    :show-inheritance:

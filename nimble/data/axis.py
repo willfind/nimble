@@ -1589,7 +1589,7 @@ class Axis(object):
             msg = "The argument named " + argName + " must not share any "
             msg += self._axis + "Names with the calling object, yet the "
             msg += "following names occured in both: "
-            msg += nimble.exceptions._prettyListString(shared)
+            msg += nimble.exceptions.prettyListString(shared)
             if truncated:
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
