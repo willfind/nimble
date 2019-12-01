@@ -7836,6 +7836,50 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_points_transform_zerosReturned(self):
+
+        def returnAllZero(pt):
+            return [0 for val in pt]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.points.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(pt):
+            return [0 if v == 1 else 1 for v in pt]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.points.transform(invert)
+        assert orig2 == exp2
+
+    def test_points_transform_conversionWhenIntType(self):
+
+        def addTenth(pt):
+            return [v + 0.1 for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.points.transform(addTenth)
+        assert orig == exp
+
+    def test_points_transform_stringReturnsPreserved(self):
+
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.points.transform(toString)
+        assert orig == exp
 
     ########################
     # features.transform() #
@@ -7983,6 +8027,50 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_features_transform_zerosReturned(self):
+
+        def returnAllZero(ft):
+            return [0 for val in ft]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.features.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(ft):
+            return [0 if v == 1 else 1 for v in ft]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.features.transform(invert)
+        assert orig2 == exp2
+
+    def test_features_transform_conversionWhenIntType(self):
+
+        def addTenth(ft):
+            return [v + 0.1 for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.features.transform(addTenth)
+        assert orig == exp
+
+    def test_features_transform_stringReturnsPreserved(self):
+
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.features.transform(toString)
+        assert orig == exp
 
     ##########################
     # elements.transform() #
@@ -8233,6 +8321,57 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
+
+    def test_elements_transform_zerosReturned(self):
+
+        def returnAllZero(elem):
+            return 0
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.elements.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(elem):
+            return 0 if elem == 1 else 1
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.elements.transform(invert)
+        assert orig2 == exp2
+
+        orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig3.elements.transform(invert, preserveZeros=True)
+        assert orig3 == exp3
+
+    def test_elements_transform_conversionWhenIntType(self):
+
+        def addTenth(elem):
+            return elem + 0.1
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.elements.transform(addTenth)
+        assert orig == exp
+
+    def test_elements_transform_stringReturnsPreserved(self):
+
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.elements.transform(toString)
+        assert orig == exp
 
     ##############
     # fillWith() #
