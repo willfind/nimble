@@ -14,7 +14,7 @@ class Stretch(object):
     """
     Stretch a one-dimensional Base object along one axis.
 
-    The stretched axis is detemined by the other object being used in
+    The stretched axis is determined by the other object being used in
     conjunction with operation being called. All operations return a
     nimble Base subclass.
 

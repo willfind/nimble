@@ -3650,6 +3650,16 @@ class Base(object):
         return ret
 
     def matrixPower(self, power):
+        """
+        Perform matrix power operations on a square matrix.
+
+        For positive power values, return the result of repeated matrix
+        multiplication over this object. For power of zero, return an
+        identity matrix. For negative power values, return the result of
+        repeated matrix multiplication over the inverse of this object,
+        provided the object can be inverted using
+        nimble.calculate.inverse.
+        """
         if not isinstance(power, (int, numpy.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)
