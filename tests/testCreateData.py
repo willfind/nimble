@@ -998,7 +998,7 @@ def test_createData_CSV_passedOpen():
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            openFile = open(tmpCSV.name, 'rU')
+            openFile = open(tmpCSV.name, 'r')
             fromCSV = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1008,10 +1008,12 @@ def test_createData_CSV_passedOpen():
             assert fromCSV.absolutePath == openFile.name
             assert fromCSV.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(openFile.name, 'rU')
+            openFile = open(openFile.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromCSV = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromCSV.name.startswith(nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
@@ -1031,7 +1033,7 @@ def test_createData_MTXArr_passedOpen():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            openFile = open(tmpMTXArr.name, 'rU')
+            openFile = open(tmpMTXArr.name, 'r')
             fromMTXArr = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1044,10 +1046,12 @@ def test_createData_MTXArr_passedOpen():
             assert fromMTXArr.absolutePath == openFile.name
             assert fromMTXArr.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXArr.name, 'rU')
+            openFile = open(tmpMTXArr.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXArr = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromMTXArr.name.startswith(
                 nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
@@ -1068,7 +1072,7 @@ def test_createData_MTXCoo_passedOpen():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            openFile = open(tmpMTXCoo.name, 'rU')
+            openFile = open(tmpMTXCoo.name, 'r')
             fromMTXCoo = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1081,10 +1085,12 @@ def test_createData_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath == openFile.name
             assert fromMTXCoo.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXCoo.name, 'rU')
+            openFile = open(tmpMTXCoo.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXCoo = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromMTXCoo.name.startswith(
                 nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None

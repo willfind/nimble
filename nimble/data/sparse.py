@@ -135,47 +135,44 @@ class Sparse(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        outFile = open(outPath, 'w')
+        with open(outPath, 'w') as outFile:
+            if includeFeatureNames:
+                def combine(a, b):
+                    return a + ',' + b
 
-        if includeFeatureNames:
-            def combine(a, b):
-                return a + ',' + b
+                fnames = self.features.getNames()
+                fnamesLine = reduce(combine, fnames)
+                fnamesLine += '\n'
+                if includePointNames:
+                    outFile.write('pointNames,')
 
-            fnames = self.features.getNames()
-            fnamesLine = reduce(combine, fnames)
-            fnamesLine += '\n'
-            if includePointNames:
-                outFile.write('pointNames,')
+                outFile.write(fnamesLine)
 
-            outFile.write(fnamesLine)
+            # sort by rows first, then columns
+            placement = numpy.lexsort((self.data.col, self.data.row))
+            self.data.data[placement]
+            self.data.row[placement]
+            self.data.col[placement]
 
-        # sort by rows first, then columns
-        placement = numpy.lexsort((self.data.col, self.data.row))
-        self.data.data[placement]
-        self.data.row[placement]
-        self.data.col[placement]
-
-        pointer = 0
-        pmax = len(self.data.data)
-        for i in range(len(self.points)):
-            if includePointNames:
-                currPname = self.points.getName(i)
-                outFile.write(currPname)
-                outFile.write(',')
-            for j in range(len(self.features)):
-                if (pointer < pmax and i == self.data.row[pointer]
-                        and j == self.data.col[pointer]):
-                    value = self.data.data[pointer]
-                    pointer = pointer + 1
-                else:
-                    value = 0
-
-                if j != 0:
+            pointer = 0
+            pmax = len(self.data.data)
+            for i in range(len(self.points)):
+                if includePointNames:
+                    currPname = self.points.getName(i)
+                    outFile.write(currPname)
                     outFile.write(',')
-                outFile.write(str(value))
-            outFile.write('\n')
+                for j in range(len(self.features)):
+                    if (pointer < pmax and i == self.data.row[pointer]
+                            and j == self.data.col[pointer]):
+                        value = self.data.data[pointer]
+                        pointer = pointer + 1
+                    else:
+                        value = 0
 
-        outFile.close()
+                    if j != 0:
+                        outFile.write(',')
+                    outFile.write(str(value))
+                outFile.write('\n')
 
     def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):

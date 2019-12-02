@@ -2355,30 +2355,30 @@ class StructureModifying(StructureShared):
         fromList = self.constructor(data=[[1, 2, 3]])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
-        tmpCSV.write("1,2,3\n")
-        tmpCSV.flush()
-        fromCSV = self.constructor(data=tmpCSV.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.flush()
+            fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("1 3\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.flush()
-        fromMTXArr = self.constructor(data=tmpMTXArr.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.write("1 1 1\n")
-        tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -2394,37 +2394,37 @@ class StructureModifying(StructureShared):
         fromList = self.constructor(data=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("pointNames,one,two,three\n")
-        tmpCSV.write("1P,1,2,3\n")
-        tmpCSV.flush()
-        fromCSV = self.constructor(data=tmpCSV.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("pointNames,one,two,three\n")
+            tmpCSV.write("1P,1,2,3\n")
+            tmpCSV.flush()
+            fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx file
-        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("%#1P\n")
-        tmpMTXArr.write("%#one,two,three\n")
-        tmpMTXArr.write("1 3\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.flush()
-        fromMTXArr = self.constructor(data=tmpMTXArr.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("%#1P\n")
+            tmpMTXArr.write("%#one,two,three\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("%#1P\n")
-        tmpMTXCoo.write("%#one,two,three\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.write("1 1 1\n")
-        tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("%#1P\n")
+            tmpMTXCoo.write("%#one,two,three\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)

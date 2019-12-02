@@ -1234,35 +1234,35 @@ class HighLevelDataSafe(DataTestObject):
     def test_trainAndTestSets_nameAppend_PathPreserve(self):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
         toTest = self.constructor(data, )
-        tmpFile = tempfile.NamedTemporaryFile(suffix='.csv')
-        toTest.writeFile(tmpFile.name, fileFormat='csv')
+        with tempfile.NamedTemporaryFile(suffix='.csv') as tmpFile:
+            toTest.writeFile(tmpFile.name, fileFormat='csv')
 
-        toTest = self.constructor(tmpFile.name, name='toTest')
+            toTest = self.constructor(tmpFile.name, name='toTest')
 
-        trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+            trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
-        assert trX.name == 'toTest trainX'
-        assert trX.path == tmpFile.name
-        assert trX.absolutePath == tmpFile.name
-        assert trX.relativePath == os.path.relpath(tmpFile.name)
+            assert trX.name == 'toTest trainX'
+            assert trX.path == tmpFile.name
+            assert trX.absolutePath == tmpFile.name
+            assert trX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert trY.name == 'toTest trainY'
-        assert trY.path == tmpFile.name
-        assert trY.path == tmpFile.name
-        assert trY.absolutePath == tmpFile.name
-        assert trY.relativePath == os.path.relpath(tmpFile.name)
+            assert trY.name == 'toTest trainY'
+            assert trY.path == tmpFile.name
+            assert trY.path == tmpFile.name
+            assert trY.absolutePath == tmpFile.name
+            assert trY.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teX.name == 'toTest testX'
-        assert teX.path == tmpFile.name
-        assert teX.path == tmpFile.name
-        assert teX.absolutePath == tmpFile.name
-        assert teX.relativePath == os.path.relpath(tmpFile.name)
+            assert teX.name == 'toTest testX'
+            assert teX.path == tmpFile.name
+            assert teX.path == tmpFile.name
+            assert teX.absolutePath == tmpFile.name
+            assert teX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teY.name == 'toTest testY'
-        assert teY.path == tmpFile.name
-        assert teY.path == tmpFile.name
-        assert teY.absolutePath == tmpFile.name
-        assert teY.relativePath == os.path.relpath(tmpFile.name)
+            assert teY.name == 'toTest testY'
+            assert teY.path == tmpFile.name
+            assert teY.path == tmpFile.name
+            assert teY.absolutePath == tmpFile.name
+            assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
     def test_trainAndTestSets_PandFnamesPerserved(self):
