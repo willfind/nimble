@@ -113,6 +113,7 @@ class ImportModule(object):
             raise PackageException(msg)
         ret = getattr(self.imported, name)
         setattr(self, name, ret)
+        return ret
 
 def cooMatrixToArray(cooMatrix):
     """
