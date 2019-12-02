@@ -9,10 +9,6 @@ data, and do package level configuration and information querying.
 from __future__ import absolute_import
 import os
 import inspect
-import tempfile
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from . import configuration
 from .configuration import nimblePath
@@ -56,8 +52,6 @@ from .core import loadData
 from .core import loadTrainedLearner
 from .core import CV
 from .core import Init
-
-capturedErr = tempfile.NamedTemporaryFile()
 
 # now finish out with any other configuration that needs to be done
 

@@ -1,7 +1,8 @@
-confidence
+Confidence
 ==========
 
-.. automodule:: nimble.calculate.confidence
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: confidenceIntervalHelper
    :undoc-members:
    :show-inheritance:

@@ -44,6 +44,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
 from nimble.utility import ImportModule
+from nimble.utility import cooMatrixToArray
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
@@ -329,13 +330,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -387,13 +388,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -443,13 +444,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(scipyCsr.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(scipyCsc.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(scipyCoo.todense(), data)
+            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -611,13 +612,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             out = orig.copy(to='scipycsr', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
             out = orig.copy(to='scipycsc', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
             out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-            assert numpy.array_equal(out.toarray(), dataT)
+            assert numpy.array_equal(cooMatrixToArray(out), dataT)
 
         if pd:
             out = orig.copy(to='pandasdataframe', rowsArePoints=False)
@@ -2355,30 +2356,30 @@ class StructureModifying(StructureShared):
         fromList = self.constructor(data=[[1, 2, 3]])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
-        tmpCSV.write("1,2,3\n")
-        tmpCSV.flush()
-        fromCSV = self.constructor(data=tmpCSV.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.flush()
+            fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("1 3\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.flush()
-        fromMTXArr = self.constructor(data=tmpMTXArr.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.write("1 1 1\n")
-        tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -2394,37 +2395,37 @@ class StructureModifying(StructureShared):
         fromList = self.constructor(data=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
-        tmpCSV.write("\n")
-        tmpCSV.write("\n")
-        tmpCSV.write("pointNames,one,two,three\n")
-        tmpCSV.write("1P,1,2,3\n")
-        tmpCSV.flush()
-        fromCSV = self.constructor(data=tmpCSV.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+            tmpCSV.write("\n")
+            tmpCSV.write("\n")
+            tmpCSV.write("pointNames,one,two,three\n")
+            tmpCSV.write("1P,1,2,3\n")
+            tmpCSV.flush()
+            fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx file
-        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-        tmpMTXArr.write("%#1P\n")
-        tmpMTXArr.write("%#one,two,three\n")
-        tmpMTXArr.write("1 3\n")
-        tmpMTXArr.write("1\n")
-        tmpMTXArr.write("2\n")
-        tmpMTXArr.write("3\n")
-        tmpMTXArr.flush()
-        fromMTXArr = self.constructor(data=tmpMTXArr.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("%#1P\n")
+            tmpMTXArr.write("%#one,two,three\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
-        tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-        tmpMTXCoo.write("%#1P\n")
-        tmpMTXCoo.write("%#one,two,three\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.write("1 1 1\n")
-        tmpMTXCoo.write("1 2 2\n")
-        tmpMTXCoo.write("1 3 3\n")
-        tmpMTXCoo.flush()
-        fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("%#1P\n")
+            tmpMTXCoo.write("%#one,two,three\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -7836,6 +7837,50 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_points_transform_zerosReturned(self):
+
+        def returnAllZero(pt):
+            return [0 for val in pt]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.points.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(pt):
+            return [0 if v == 1 else 1 for v in pt]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.points.transform(invert)
+        assert orig2 == exp2
+
+    def test_points_transform_conversionWhenIntType(self):
+
+        def addTenth(pt):
+            return [v + 0.1 for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.points.transform(addTenth)
+        assert orig == exp
+
+    def test_points_transform_stringReturnsPreserved(self):
+
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.points.transform(toString)
+        assert orig == exp
 
     ########################
     # features.transform() #
@@ -7983,6 +8028,50 @@ class StructureModifying(StructureShared):
 
         assert origObj.isIdentical(exp)
 
+    def test_features_transform_zerosReturned(self):
+
+        def returnAllZero(ft):
+            return [0 for val in ft]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.features.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(ft):
+            return [0 if v == 1 else 1 for v in ft]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.features.transform(invert)
+        assert orig2 == exp2
+
+    def test_features_transform_conversionWhenIntType(self):
+
+        def addTenth(ft):
+            return [v + 0.1 for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.features.transform(addTenth)
+        assert orig == exp
+
+    def test_features_transform_stringReturnsPreserved(self):
+
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.features.transform(toString)
+        assert orig == exp
 
     ##########################
     # elements.transform() #
@@ -8233,6 +8322,57 @@ class StructureModifying(StructureShared):
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
+
+    def test_elements_transform_zerosReturned(self):
+
+        def returnAllZero(elem):
+            return 0
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig1.elements.transform(returnAllZero)
+        assert orig1 == exp1
+
+        def invert(elem):
+            return 0 if elem == 1 else 1
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        orig2.elements.transform(invert)
+        assert orig2 == exp2
+
+        orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        orig3.elements.transform(invert, preserveZeros=True)
+        assert orig3 == exp3
+
+    def test_elements_transform_conversionWhenIntType(self):
+
+        def addTenth(elem):
+            return elem + 0.1
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        orig.elements.transform(addTenth)
+        assert orig == exp
+
+    def test_elements_transform_stringReturnsPreserved(self):
+
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        orig.elements.transform(toString)
+        assert orig == exp
 
     ##############
     # fillWith() #

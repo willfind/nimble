@@ -20,6 +20,7 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.exceptions import InvalidArgumentValue, prettyListString
 
 
 # Contains path to keras root directory
@@ -137,7 +138,6 @@ To install keras
         compile_ = self._paramQuery('compile', learnerName, ignore)
 
         ret = init[0] + fit[0] + fitGenerator[0] + compile_[0] + predict[0]
-        ret = list(set(ret)) # remove duplicates
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
@@ -199,15 +199,44 @@ To install keras
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder()
 
+    def _validateFitArguments(self, dataType, learnerName, arguments):
+        fitArgs = self._paramQuery('fit', learnerName)[0]
+        fitGenArgs = self._paramQuery('fit_generator', learnerName)[0]
+        if dataType == 'Sparse':
+            useArgs = fitGenArgs
+            ignoreArgs = fitArgs
+        else:
+            useArgs = fitArgs
+            ignoreArgs = fitGenArgs
+
+        invalid = frozenset(ignoreArgs) - frozenset(useArgs)
+        extra = []
+        for arg in invalid:
+            if arg in arguments:
+                extra.append(arg)
+        if extra:
+            msg = "EXTRA LEARNER PARAMETER! "
+            msg += "When trying to validate arguments for "
+            msg += learnerName + ", the following list of parameter "
+            msg += "names were not matched: "
+            msg += prettyListString(extra, useAnd=True)
+            msg += ". Those parameters are only suitable for "
+            if dataType == 'Sparse':
+                msg += "dense types (List, Matrix, DataFrame) and this object "
+                msg += "is Sparse"
+            else:
+                msg += "Sparse objects and this a " + dataType
+            raise InvalidArgumentValue(msg)
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
 
         if trainX is not None:
-            if trainX.getTypeString() != 'Sparse':
+            dataType = trainX.getTypeString()
+            self._validateFitArguments(dataType, learnerName, arguments)
+            if dataType != 'Sparse':
             #for sparse cases, keep it untouched here.
                 trainX = trainX.copy(to='numpy array')
-
         if trainY is not None:
             if len(trainY.features) > 1:
                 trainY = (trainY.copy(to='numpy array'))
@@ -264,14 +293,12 @@ To install keras
         fitNames = self._paramQuery(param, learnerName, ['self'])[0]
 
         # pack parameter sets
-        initParams = {}
-        for name in initNames:
-            initParams[name] = arguments[name]
+        initParams = {name: arguments[name] for name in initNames
+                      if name in arguments}
         learner = self.findCallable(learnerName)(**initParams)
 
-        compileParams = {}
-        for name in compileNames:
-            compileParams[name] = arguments[name]
+        compileParams = {name: arguments[name] for name in compileNames
+                         if name in arguments}
         learner.compile(**compileParams)
 
         fitParams = {}
@@ -280,8 +307,10 @@ To install keras
                 value = trainX
             elif name.lower() == 'y':
                 value = trainY
-            else:
+            elif name in arguments:
                 value = arguments[name]
+            else:
+                continue
             fitParams[name] = value
 
         if isinstance(trainX, nimble.data.Sparse):
@@ -458,44 +487,4 @@ To install keras
         have hard coded, under the assumption that it is difficult or
         impossible to find that data automatically.
         """
-        #if needed, this function should be rewritten for keras.
-        if parent is not None and parent.lower() == 'KernelCenterer'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
-        if parent is not None and parent.lower() == 'LabelEncoder'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
-        if parent is not None and parent.lower() == 'DummyRegressor'.lower():
-            if name == '__init__':
-            #	ret = (['strategy', 'constant'], None, None, ['mean', None])
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-        if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
-            if name == '__init__':
-                return ([], None, None, [])
-
-        if parent is not None and parent.lower() == 'GaussianNB'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            elif name == 'fit':
-                ret = (['X', 'y'], None, None, [])
-            elif name == 'predict':
-                ret = (['X'], None, None, [])
-            else:
-                return None
-
-            (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
-                                                                ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-
         return None

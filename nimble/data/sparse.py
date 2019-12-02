@@ -16,12 +16,14 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble.utility import ImportModule
+from nimble.utility import cooMatrixToArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .sparseElements import SparseElements, SparseElementsView
+from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
@@ -80,6 +82,10 @@ class Sparse(Base):
     def _getElements(self):
         return SparseElements(self)
 
+    @property
+    def stretch(self):
+        return StretchSparse(self)
+
     def plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
         toPlot.plot(outPath, includeColorbar)
@@ -126,47 +132,44 @@ class Sparse(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        outFile = open(outPath, 'w')
+        with open(outPath, 'w') as outFile:
+            if includeFeatureNames:
+                def combine(a, b):
+                    return a + ',' + b
 
-        if includeFeatureNames:
-            def combine(a, b):
-                return a + ',' + b
+                fnames = self.features.getNames()
+                fnamesLine = reduce(combine, fnames)
+                fnamesLine += '\n'
+                if includePointNames:
+                    outFile.write('pointNames,')
 
-            fnames = self.features.getNames()
-            fnamesLine = reduce(combine, fnames)
-            fnamesLine += '\n'
-            if includePointNames:
-                outFile.write('pointNames,')
+                outFile.write(fnamesLine)
 
-            outFile.write(fnamesLine)
+            # sort by rows first, then columns
+            placement = numpy.lexsort((self.data.col, self.data.row))
+            self.data.data[placement]
+            self.data.row[placement]
+            self.data.col[placement]
 
-        # sort by rows first, then columns
-        placement = numpy.lexsort((self.data.col, self.data.row))
-        self.data.data[placement]
-        self.data.row[placement]
-        self.data.col[placement]
-
-        pointer = 0
-        pmax = len(self.data.data)
-        for i in range(len(self.points)):
-            if includePointNames:
-                currPname = self.points.getName(i)
-                outFile.write(currPname)
-                outFile.write(',')
-            for j in range(len(self.features)):
-                if (pointer < pmax and i == self.data.row[pointer]
-                        and j == self.data.col[pointer]):
-                    value = self.data.data[pointer]
-                    pointer = pointer + 1
-                else:
-                    value = 0
-
-                if j != 0:
+            pointer = 0
+            pmax = len(self.data.data)
+            for i in range(len(self.points)):
+                if includePointNames:
+                    currPname = self.points.getName(i)
+                    outFile.write(currPname)
                     outFile.write(',')
-                outFile.write(str(value))
-            outFile.write('\n')
+                for j in range(len(self.features)):
+                    if (pointer < pmax and i == self.data.row[pointer]
+                            and j == self.data.col[pointer]):
+                        value = self.data.data[pointer]
+                        pointer = pointer + 1
+                    else:
+                        value = 0
 
-        outFile.close()
+                    if j != 0:
+                        outFile.write(',')
+                    outFile.write(str(value))
+                outFile.write('\n')
 
     def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
                                   includeFeatureNames):
@@ -238,16 +241,16 @@ class Sparse(Base):
                 except ValueError:
                     data = self.data.copy()
             else:
-                data = self.data.todense()
+                data = cooMatrixToArray(self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
         if to == 'pythonlist':
-            return self.data.todense().tolist()
+            return cooMatrixToArray(self.data).tolist()
         if to == 'numpyarray':
-            return self.data.todense()
+            return cooMatrixToArray(self.data)
         if to == 'numpymatrix':
-            return numpy.matrix(self.data.todense())
+            return numpy.matrix(cooMatrixToArray(self.data))
         if 'scipy' in to:
             if to == 'scipycsc':
                 return self.data.tocsc()
@@ -259,7 +262,7 @@ class Sparse(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(self.data.todense())
+            return pd.DataFrame(cooMatrixToArray(self.data))
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -874,6 +877,11 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
+        # scipy may not raise expected exceptions for truediv
+        # TODO remove once logical operators used in Base for this
+        if 'truediv' in opName:
+            self._genericBinary_dataExamination(opName, other)
+
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -881,12 +889,17 @@ class Sparse(Base):
             return self._genericPow_implementation(opName, other)
         try:
             if isinstance(other, Base):
+                if self._sorted is None:
+                    self._sortInternal('point')
                 selfData = self._getSparseData()
+                if isinstance(other, SparseView):
+                    other = other.copy(to='Sparse')
                 if isinstance(other, Sparse):
+                    if other._sorted != self._sorted:
+                        other._sortInternal(self._sorted)
                     otherData = other._getSparseData()
                 else:
-                    otherConv = other.copy('Matrix')
-                    otherData = otherConv.data
+                    otherData = other.copy('Matrix').data
                 ret = getattr(selfData, opName)(otherData)
             else:
                 return self._scalarBinary_implementation(opName, other)
@@ -919,7 +932,7 @@ class Sparse(Base):
             return Sparse(selfData)
         zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other != 0:
+        if 'pow' in opName and opName != '__rpow__' and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -966,7 +979,6 @@ class Sparse(Base):
             target = self
         else:
             target = self.copy()
-
         target.elements.multiply(other, useLog=False)
 
         return target
@@ -1278,7 +1290,8 @@ class SparseView(BaseView, Sparse):
         if to == 'numpyarray':
             pStart, pEnd = self._pStart, self._pEnd
             fStart, fEnd = self._fStart, self._fEnd
-            limited = self._source.data.todense()[pStart:pEnd, fStart:fEnd]
+            asArray = cooMatrixToArray(self._source.data)
+            limited = asArray[pStart:pEnd, fStart:fEnd]
             return numpy.array(limited)
 
         limited = self._source.points.copy(start=self._pStart,
@@ -1317,6 +1330,13 @@ class SparseView(BaseView, Sparse):
                 return True
 
         return False
+
+    def _binaryOperations_implementation(self, opName, other):
+        selfConv = self.copy(to="Sparse")
+        if isinstance(other, BaseView):
+            other = other.copy(to=other.getTypeString())
+
+        return selfConv._binaryOperations_implementation(opName, other)
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """

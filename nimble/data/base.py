@@ -37,6 +37,7 @@ from .points import Points
 from .features import Features
 from .axis import Axis
 from .elements import Elements
+from .stretch import Stretch
 from . import dataHelpers
 # the prefix for default point and feature names
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
@@ -525,9 +526,9 @@ class Base(object):
         {0: 'a', 1: 'b', 2: 'c'}
         >>> data
         Matrix(
-            [[1 0.000 1]
-             [2 1.000 2]
-             [3 2.000 3]]
+            [[1 0 1]
+             [2 1 2]
+             [3 2 3]]
             featureNames={'keep1':0, 'transform':1, 'keep2':2}
             )
         """
@@ -3595,7 +3596,6 @@ class Base(object):
     def _genericMatMul_implementation(self, opName, other):
         if not isinstance(other, Base):
             return NotImplemented
-
         # Test element type self
         if self._pointCount == 0 or self._featureCount == 0:
             msg = "Cannot do a multiplication when points or features is empty"
@@ -3643,25 +3643,64 @@ class Base(object):
 
         return ret
 
+    def matrixPower(self, power):
+        if not isinstance(power, (int, numpy.int)):
+            msg = 'power must be an integer'
+            raise InvalidArgumentType(msg)
+        if not len(self.points) == len(self.features):
+            msg = 'Cannot perform matrix power operations with this object. '
+            msg += 'Matrix power operations require square objects '
+            msg += '(number of points is equal to number of features)'
+            raise ImproperObjectAction(msg)
+        if power == 0:
+            operand = nimble.identity(self.getTypeString(), len(self.points))
+        elif power > 0:
+            operand = self.copy()
+            # avoid name conflict in matrixMultiply; names set later
+            operand.points.setNames(None, useLog=False)
+            operand.features.setNames(None, useLog=False)
+        else:
+            try:
+                operand = nimble.calculate.inverse(self)
+            except (InvalidArgumentType, InvalidArgumentValue) as e:
+                exceptionType = type(e)
+                msg = "Failed to calculate the matrix inverse using "
+                msg += "nimble.calculate.inverse. For safety and efficiency, "
+                msg += "matrixPower does not attempt to use pseudoInverse but "
+                msg += "it is available to users in nimble.calculate. "
+                msg += "The inverse operation failed because: " + e.value
+                raise exceptionType(msg)
+
+        ret = operand
+        # loop only applies when abs(power) > 1
+        for _ in range(abs(power) - 1):
+            ret = ret.matrixMultiply(operand)
+
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+
+        return ret
+
     def __mul__(self, other):
         """
         Perform elementwise multiplication or scalar multiplication,
         depending in the input ``other``.
         """
-        return self._genericArithmeticBinary('__mul__', other)
+        return self._genericBinaryOperations('__mul__', other)
 
     def __rmul__(self, other):
         """
         Perform elementwise multiplication with this object on the right
         """
-        return self._genericArithmeticBinary('__rmul__', other)
+        return self._genericBinaryOperations('__rmul__', other)
 
     def __imul__(self, other):
         """
         Perform in place elementwise multiplication or scalar
         multiplication, depending in the input ``other``.
         """
-        return self._genericArithmeticBinary('__imul__', other)
+        return self._genericBinaryOperations('__imul__', other)
 
     def __add__(self, other):
         """
@@ -3669,13 +3708,13 @@ class Base(object):
         nimble Base object, or element wise with a scalar if other is
         some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__add__', other)
+        return self._genericBinaryOperations('__add__', other)
 
     def __radd__(self, other):
         """
         Perform scalar addition with this object on the right
         """
-        return self._genericArithmeticBinary('__radd__', other)
+        return self._genericBinaryOperations('__radd__', other)
 
     def __iadd__(self, other):
         """
@@ -3683,7 +3722,7 @@ class Base(object):
         ``other`` is a nimble Base object, or element wise with a scalar
         if ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__iadd__', other)
+        return self._genericBinaryOperations('__iadd__', other)
 
     def __sub__(self, other):
         """
@@ -3691,13 +3730,13 @@ class Base(object):
         data object, or element wise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        return self._genericArithmeticBinary('__sub__', other)
+        return self._genericBinaryOperations('__sub__', other)
 
     def __rsub__(self, other):
         """
         Subtract each element of this object from the given scalar.
         """
-        return self._genericArithmeticBinary('__rsub__', other)
+        return self._genericBinaryOperations('__rsub__', other)
 
     def __isub__(self, other):
         """
@@ -3705,7 +3744,7 @@ class Base(object):
         is a nimble Base object, or element wise with a scalar if
         ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__isub__', other)
+        return self._genericBinaryOperations('__isub__', other)
 
     def __truediv__(self, other):
         """
@@ -3713,14 +3752,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__truediv__', other)
+        return self._genericBinaryOperations('__truediv__', other)
 
     def __rtruediv__(self, other):
         """
         Perform element wise true division using this object as the
         denominator, and the given scalar value as the numerator.
         """
-        return self._genericArithmeticBinary('__rtruediv__', other)
+        return self._genericBinaryOperations('__rtruediv__', other)
 
     def __itruediv__(self, other):
         """
@@ -3729,7 +3768,7 @@ class Base(object):
         elementwise by a scalar if ``other`` is some kind of numeric
         value.
         """
-        return self._genericArithmeticBinary('__itruediv__', other)
+        return self._genericBinaryOperations('__itruediv__', other)
 
     def __floordiv__(self, other):
         """
@@ -3737,7 +3776,7 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if ``other`` is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__floordiv__', other)
+        return self._genericBinaryOperations('__floordiv__', other)
 
     def __rfloordiv__(self, other):
         """
@@ -3745,7 +3784,7 @@ class Base(object):
         denominator, and the given scalar value as the numerator.
 
         """
-        return self._genericArithmeticBinary('__rfloordiv__', other)
+        return self._genericBinaryOperations('__rfloordiv__', other)
 
     def __ifloordiv__(self, other):
         """
@@ -3754,7 +3793,7 @@ class Base(object):
         elementwise by a scalar if ```other``` is some kind of numeric
         value.
         """
-        return self._genericArithmeticBinary('__ifloordiv__', other)
+        return self._genericBinaryOperations('__ifloordiv__', other)
 
     def __mod__(self, other):
         """
@@ -3762,14 +3801,14 @@ class Base(object):
         elementwise if ``other`` is a nimble Base object, or elementwise
         by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__mod__', other)
+        return self._genericBinaryOperations('__mod__', other)
 
     def __rmod__(self, other):
         """
         Perform mod using the elements of this object as the divisors,
         and the given scalar value as the dividend.
         """
-        return self._genericArithmeticBinary('__rmod__', other)
+        return self._genericBinaryOperations('__rmod__', other)
 
     def __imod__(self, other):
         """
@@ -3777,7 +3816,7 @@ class Base(object):
         dividends, elementwise if 'other' is a nimble Base object, or
         elementwise by a scalar if other is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__imod__', other)
+        return self._genericBinaryOperations('__imod__', other)
 
     @to2args
     def __pow__(self, other, z):
@@ -3787,14 +3826,14 @@ class Base(object):
         data object, or elementwise by a scalar if ``other`` is some
         kind of numeric value.
         """
-        return self._genericArithmeticBinary('__pow__', other)
+        return self._genericBinaryOperations('__pow__', other)
 
     def __rpow__(self, other):
         """
         Perform elementwise exponentiation (iterated __mul__) using the
         ``other`` scalar value as the bases.
         """
-        return self._genericArithmeticBinary('__rpow__', other)
+        return self._genericBinaryOperations('__rpow__', other)
 
     def __ipow__(self, other):
         """
@@ -3803,7 +3842,7 @@ class Base(object):
         is a nimble Base object, or elementwise by a scalar if ``other``
         is some kind of numeric value.
         """
-        return self._genericArithmeticBinary('__ipow__', other)
+        return self._genericBinaryOperations('__ipow__', other)
 
     def __pos__(self):
         """
@@ -3844,18 +3883,19 @@ class Base(object):
         return ret
 
     def _numericValidation(self, right=False):
-        if self._pointCount > 0:
-            try:
-                self.elements.calculate(dataHelpers._checkNumeric,
-                                        useLog=False)
-            except ValueError:
-                msg = "The object on the {0} contains non numeric data, "
-                msg += "cannot do this operation"
-                if right:
-                    msg = msg.format('right')
-                    raise InvalidArgumentValue(msg)
-                msg = msg.format('left')
-                raise ImproperObjectAction(msg)
+        """
+        Validate the object elements are all numeric.
+        """
+        try:
+            self.elements.calculate(dataHelpers._checkNumeric, useLog=False)
+        except ValueError:
+            msg = "The object on the {0} contains non numeric data, "
+            msg += "cannot do this operation"
+            if right:
+                msg = msg.format('right')
+                raise InvalidArgumentValue(msg)
+            msg = msg.format('left')
+            raise ImproperObjectAction(msg)
 
     def _genericBinary_sizeValidation(self, opName, other):
         if self._pointCount != len(other.points):
@@ -3871,69 +3911,60 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
-    def _genericArithmeticBinary_validation(self, opName, other):
-        otherNimble = isinstance(other, Base)
-        if not otherNimble and not dataHelpers._looksNumeric(other):
-            msg = "'other' must be an instance of a nimble Base object or a "
-            msg += "scalar"
-            raise InvalidArgumentType(msg)
-        if otherNimble:
-            self._genericBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
-
+    def _genericBinary_dataExamination(self, opName, other):
+        """
+        Determine if an arithmetic operation can be performed successfully
+        between two objects.
+        """
         # Test element type self
         self._numericValidation()
-
         # test element type other
-        if otherNimble:
+        if isinstance(other, Base):
             other._numericValidation(right=True)
-
-        divNames = ['__truediv__', '__rtruediv__', '__itruediv__',
-                    '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                    '__mod__', '__rmod__', '__imod__', ]
-        powNames = ['__pow__', '__rpow__', '__ipow__']
-        if opName in divNames:
+        if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
+                      '__floordiv__', '__rfloordiv__', '__ifloordiv__',
+                      '__mod__', '__rmod__', '__imod__',]:
             self._validateDivMod(opName, other)
 
-        if opName in powNames:
+        if opName in ['__pow__', '__rpow__', '__ipow__']:
             self._validatePow(opName, other)
 
     def _validateDivMod(self, opName, other):
+        """
+        Validate values in divmod operation will not lead to zero division.
+        """
         if opName.startswith('__r'):
             toCheck = self
-            toCheckNimble = True
         else:
             toCheck = other
-            toCheckNimble = isinstance(toCheck, Base)
 
-        if toCheckNimble:
-            if toCheck.containsZero():
-                msg = "Cannot perform " + opName + " when the second argument "
-                msg += "contains any zeros"
-                raise ZeroDivisionError(msg)
-            unique = toCheck.elements.countUnique()
-            if any(val != val or numpy.isinf(val) for val in unique):
-                msg = "Cannot perform " + opName + " when the second "
-                msg += "argument contains any NaNs or Infs"
-                raise InvalidArgumentValue(msg)
-        else:
-            if toCheck == 0:
-                msg = "Cannot perform " + opName + " when the second argument "
-                msg += "is zero"
-                raise ZeroDivisionError(msg)
-            if toCheck != toCheck or numpy.isinf(toCheck):
-                msg = "Cannot perform " + opName + " when the second "
-                msg += "argument contains any NaNs or Infs"
-                raise InvalidArgumentValue(msg)
-
+        if isinstance(toCheck, Base) and toCheck.containsZero():
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "contains any zeros"
+            raise ZeroDivisionError(msg)
+        elif toCheck == 0:
+            msg = "Cannot perform " + opName + " when the second argument "
+            msg += "is zero"
+            raise ZeroDivisionError(msg)
 
     def _validatePow(self, opName, other):
+        """
+        Validate values in power operation will not lead to zero division or
+        complex numbers.
+        """
+        if opName == '__rpow__':
+            left = other
+            right = self
+        else:
+            left = self
+            right = other
+
         def isComplex(val):
+            # numpy ops may return nan when result is a complex number
             return numpy.isnan(val) or isinstance(val, complex)
 
-        if isinstance(other, Base):
-            zipLR = zip(self.elements, other.elements)
+        if all(isinstance(obj, Base) for obj in [left, right]):
+            zipLR = zip(left.elements, right.elements)
             for l, r in zipLR:
                 if l == 0 and r < 0:
                     msg = 'Zeros cannot be raised to negative exponents'
@@ -3941,32 +3972,44 @@ class Base(object):
                 if isComplex(l ** r):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
-        elif opName.startswith('__r'):
-            for elem in self.elements:
-                if other == 0 and elem < 0:
+        elif isinstance(left, Base):
+            for elem in left.elements:
+                if elem == 0 and right < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
-                if isComplex(other ** elem):
+                if isComplex(elem ** right):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         else:
-            for elem in self.elements:
-                if other < 0 and elem == 0:
+            for elem in right.elements:
+                if left == 0 and elem < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
-                if isComplex(elem ** other):
+                if isComplex(left ** elem):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
 
-
-    def _genericArithmeticBinary(self, opName, other):
-        self._genericArithmeticBinary_validation(opName, other)
-        return self._genericBinaryOperations(opName, other)
+    def _genericBinary_validation(self, opName, other):
+        otherBase = isinstance(other, Base)
+        if not otherBase and not dataHelpers._looksNumeric(other):
+            msg = "'other' must be an instance of a nimble Base object or a "
+            msg += "scalar"
+            raise InvalidArgumentType(msg)
+        if otherBase:
+            self._genericBinary_sizeValidation(opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
     def _genericBinaryOperations(self, opName, other):
-        otherNimble = isinstance(other, Base)
+        if isinstance(other, Stretch):
+            # __ipow__ does not work if return NotImplemented
+            if opName == '__ipow__':
+                return pow(self, other)
+            return NotImplemented
+        self._genericBinary_validation(opName, other)
         # figure out return obj's point / feature names
-        if otherNimble:
+        otherBase = isinstance(other, Base)
+        if otherBase:
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
@@ -3974,7 +4017,22 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        ret = self._binaryOperations_implementation(opName, other)
+        # mod and floordiv operations do not raise errors for zero division
+        # TODO logical operations to check for new nan and inf after operation
+        if 'floordiv' in opName or 'mod' in opName:
+            self._genericBinary_dataExamination(opName, other)
+
+        try:
+            useOp = opName
+            if opName.startswith('__i'):
+                # inplace operations will modify the data even if op fails
+                # use not inplace operation, setting to inplace occurs after
+                useOp = opName[:2] + opName[3:]
+            with numpy.errstate(divide='raise', invalid='raise'):
+                ret = self._binaryOperations_implementation(useOp, other)
+        except Exception:
+            self._genericBinary_dataExamination(opName, other)
+            raise # backup, expect call above to raise exception
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
@@ -3985,7 +4043,7 @@ class Base(object):
         ret.features.setNames(retFNames, useLog=False)
 
         nameSource = 'self' if opName.startswith('__i') else None
-        pathSource = 'merge' if otherNimble else 'self'
+        pathSource = 'merge' if otherBase else 'self'
         dataHelpers.binaryOpNamePathMerge(
             self, other, ret, nameSource, pathSource)
         return ret
@@ -3997,10 +4055,73 @@ class Base(object):
             otherData = other.copy('numpyarray')
         else:
             otherData = other
-        ret = getattr(selfData, opName)(otherData)
-        ret = createDataNoValidation(self.getTypeString(), ret)
+        data = getattr(selfData, opName)(otherData)
+        ret = createDataNoValidation(self.getTypeString(), data)
 
         return ret
+
+    @property
+    def stretch(self):
+        """
+        Extend along a one-dimensional axis to fit another object.
+
+        This attribute allows arithmetic operations to occur between
+        objects of different shapes (sometimes referred to as
+        broadcasting). The operation will pair the point or feature in
+        this object with each point or feature in the other object.
+        Operations can occur with a nimble Base object or a stretched
+        object which is one-dimensional along the opposite axis. Note
+        the operation will always return a Base object of the same type
+        as the left-hand operand.
+
+        Examples
+        --------
+        Nimble Base object with a stretched point.
+
+        >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
+        >>> rawPt = [1, 2, 3]
+        >>> baseObj = nimble.createData('Matrix', rawBase)
+        >>> pointObj = nimble.createData('List', rawPt)
+        >>> baseObj * pointObj.stretch
+        Matrix(
+            [[1.000 4.000  9.000 ]
+             [4.000 10.000 18.000]
+             [0.000 -2.000 -6.000]]
+            )
+
+        Stretched feature with nimble Base object.
+
+        >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
+        >>> rawFt = [[1], [2], [3]]
+        >>> baseObj = nimble.createData('Matrix', rawBase)
+        >>> featObj = nimble.createData('List', rawFt)
+        >>> featObj.stretch + baseObj
+        List(
+            [[2.000 3.000 4.000]
+             [6.000 7.000 8.000]
+             [3.000 2.000 1.000]]
+            )
+
+        Two stretched objects.
+
+        >>> rawPt = [[1, 2, 3]]
+        >>> rawFt = [[1], [2], [3]]
+        >>> pointObj = nimble.createData('Matrix', rawPt)
+        >>> featObj = nimble.createData('List', rawFt)
+        >>> pointObj.stretch - featObj.stretch
+        Matrix(
+            [[0.000  1.000  2.000]
+             [-1.000 0.000  1.000]
+             [-2.000 -1.000 0.000]]
+            )
+        >>> featObj.stretch - pointObj.stretch
+        List(
+            [[0.000 -1.000 -2.000]
+             [1.000 0.000  -1.000]
+             [2.000 1.000  0.000 ]]
+            )
+        """
+        return Stretch(self)
 
 
     def __and__(self, other):
@@ -4481,13 +4602,15 @@ class Base(object):
 
         def _validateEqualNames_implementation():
             if leftAxis == 'point':
-                lnames = self.points.getNames()
+                lnames = self.points._getNamesNoGeneration()
             else:
-                lnames = self.features.getNames()
+                lnames = self.features._getNamesNoGeneration()
             if rightAxis == 'point':
-                rnames = other.points.getNames()
+                rnames = other.points._getNamesNoGeneration()
             else:
-                rnames = other.features.getNames()
+                rnames = other.features._getNamesNoGeneration()
+            if lnames is None or rnames is None:
+                return
             inconsistencies = self._inconsistentNames(lnames, rnames)
 
             if inconsistencies != {}:

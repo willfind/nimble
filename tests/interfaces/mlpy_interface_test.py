@@ -380,10 +380,8 @@ def testMlpyListLearners():
             params = nimble.learnerParameters('mlpy.' + name)
             assert params is not None
             defaults = nimble.learnerDefaultValues('mlpy.' + name)
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+            for key in defaults.keys():
+                assert key in params
 
 @mlpySkipDec
 @logCountAssertionFactory(8)

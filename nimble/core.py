@@ -2069,32 +2069,3 @@ class Init(object):
         formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
         kwargStr = ", ".join(formatKwargs)
         return "Init({}, {})".format(repr(self.name), kwargStr)
-
-
-def coo_matrixTodense(origTodense):
-    """
-    decorator for coo_matrix.todense
-    """
-    def f(self):
-        try:
-            return numpy.array(origTodense(self))
-        except Exception:
-            # flexible dtypes, such as strings, when used in scipy sparse
-            # object create an implicitly mixed datatype: some values are
-            # strings, but the rest are implicitly zero. In order to match
-            # that, we must explicitly specify a mixed type for our destination
-            # matrix
-            retDType = self.dtype
-            if isinstance(retDType, numpy.flexible):
-                retDType = object
-            ret = numpy.zeros(self.shape, dtype=retDType)
-            nz = (self.row, self.col)
-            for (i, j), v in zip(zip(*nz), self.data):
-                ret[i, j] = v
-            return ret
-    return f
-
-if scipy:
-    #monkey patch for coo_matrix.todense
-    denseMatrix = coo_matrixTodense(scipy.sparse.coo_matrix.todense)
-    scipy.sparse.coo_matrix.todense = denseMatrix
