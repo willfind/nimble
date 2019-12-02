@@ -36,11 +36,12 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray, is2DArray, cooMatrixToArray
+from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import ImportModule, cooMatrixToArray
 
-scipy = nimble.importModule('scipy.io')
-pd = nimble.importModule('pandas')
-requests = nimble.importModule('requests')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
+requests = ImportModule('requests')
 
 try:
     intern = sys.intern
@@ -878,7 +879,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
-            if requests is None:
+            if not requests:
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)

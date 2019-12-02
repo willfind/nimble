@@ -22,7 +22,6 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory
-from nimble.importExternalLibraries import importModule
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -56,12 +55,19 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
-            # each pkg is a tuple (importer, moduleName, isPackage)
-            # we want to ignore anything not in __all__ to prevent trying
-            # to import libraries outside of scikit-learn dependencies
             sklAll = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll
-                    and importModule(pkg[1]) is not None]
+            ret = []
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # we want to ignore anything not in __all__ and any private
+            # modules to prevent trying to import libraries outside of
+            # scikit-learn dependencies
+            for pkg in packages:
+                nameSplit = pkg[1].split('.')
+                allPublic = all(not n.startswith('_') for n in nameSplit)
+                if nameSplit[1] in sklAll and allPublic:
+                    ret.append(pkg)
+
+            return ret
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:
@@ -334,8 +340,8 @@ To install scikit-learn
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         if self._versionSplit[1] < 19:
-            msg = "nimble was tested using sklearn 0.19 and above, we cannot be "
-            msg += "sure of success for version {0}".format(self.version())
+            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
+            msg += "be sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
         # init learner

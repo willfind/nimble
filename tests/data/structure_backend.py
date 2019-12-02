@@ -43,6 +43,7 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
+from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
 
 from .baseObject import DataTestObject
@@ -51,8 +52,8 @@ from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
 
-scipy = nimble.importModule('scipy.sparse')
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")

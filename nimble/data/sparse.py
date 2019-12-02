@@ -15,6 +15,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
 from . import dataHelpers
 from .base import Base
@@ -27,12 +28,8 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
-    from scipy.io import mmwrite
-
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -222,9 +219,9 @@ class Sparse(Base):
             header += '#\n'
 
         if header != '':
-            mmwrite(target=outPath, a=self.data, comment=header)
+            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
         else:
-            mmwrite(target=outPath, a=self.data)
+            scipy.io.mmwrite(target=outPath, a=self.data)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -434,7 +431,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), (1, numElem))
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), (1, numElem))
 
     def _flattenToOneFeature_implementation(self):
         self._sortInternal('feature')
@@ -448,7 +445,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), (numElem, 1))
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), (numElem, 1))
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         # only one feature, so both sorts are the same order
@@ -466,7 +463,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         # only one feature, so both sorts are the same order
@@ -484,7 +481,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut
@@ -720,8 +717,8 @@ class Sparse(Base):
         self._featureCount = numFts
         self._pointCount = numPts
 
-        self.data = coo_matrix((mergedData, (mergedRow, mergedCol)),
-                               shape=(numPts, numFts))
+        self.data = scipy.sparse.coo_matrix(
+            (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
 
         self._sorted = None
 
@@ -736,8 +733,9 @@ class Sparse(Base):
             binaryRow.append(ptIdx)
             binaryCol.append(ftIdx)
             binaryData.append(1)
-        binaryCoo = coo_matrix((binaryData, (binaryRow, binaryCol)),
-                               shape=(len(self.points), len(uniqueVals)))
+        shape = (len(self.points), len(uniqueVals))
+        binaryCoo = scipy.sparse.coo_matrix(
+            (binaryData, (binaryRow, binaryCol)), shape=shape)
         self._sorted = None
         return Sparse(binaryCoo)
 
@@ -1035,8 +1033,8 @@ class Sparse(Base):
             ret = numpy.mod(otherData, selfData.data)
         else:
             ret = numpy.mod(selfData.data, otherData)
-        coo = coo_matrix((ret, (selfData.row, selfData.col)),
-                         shape=self.shape)
+        coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
+                                      shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
         if opName.startswith('__i'):
             self.data = coo
@@ -1053,8 +1051,8 @@ class Sparse(Base):
         """
         selfData = self._getSparseData()
         ret = getattr(selfData.data, opName)(other)
-        coo = coo_matrix((ret, (selfData.row, selfData.col)),
-                         shape=self.shape)
+        coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
+                                      shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
         if opName.startswith('__i'):
             self.data = coo
@@ -1199,7 +1197,8 @@ def removeDuplicatesNative(coo_obj):
     # happened and use the object dtype instead.
     if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
         dataNP = numpy.array(data, dtype='O')
-    new_coo = coo_matrix((dataNP, (rows, cols)), shape=coo_obj.shape)
+    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
+                                      shape=coo_obj.shape)
 
     return new_coo
 
@@ -1271,9 +1270,9 @@ class SparseView(BaseView, Sparse):
                 keepRow = list(map(lambda x: x - self._pStart, keepRow))
             if self._fStart > 0:
                 keepCol = list(map(lambda x: x - self._fStart, keepCol))
-
-            coo = coo_matrix((keepData, (keepRow, keepCol)),
-                             shape=(len(self.points), len(self.features)))
+            shape = (len(self.points), len(self.features))
+            coo = scipy.sparse.coo_matrix((keepData, (keepRow, keepCol)),
+                                          shape=shape)
             pNames = None
             fNames = None
             if self._pointNamesCreated():

@@ -17,12 +17,14 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
+from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
+
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 returnTypes = copy.copy(nimble.data.available)
 returnTypes.append(None)

@@ -21,7 +21,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, ImportModule
 from nimble.exceptions import prettyListString
 from nimble.exceptions import prettyDictString
 from nimble.interfaces.interface_helpers import (
@@ -35,7 +35,7 @@ from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
 
-cloudpickle = nimble.importModule('cloudpickle')
+cloudpickle = ImportModule('cloudpickle')
 
 
 def captureOutput(toWrap):

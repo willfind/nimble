@@ -10,13 +10,12 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.utility import ImportModule
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
+scipy = ImportModule('scipy')
 
 class SparseAxis(Axis):
     """
@@ -123,11 +122,10 @@ class SparseAxis(Axis):
         else:
             retDtype = self._base.data.dtype
 
-
         modData = numpy.array(modData, dtype=retDtype)
         shape = (len(self._base.points), len(self._base.features))
-        self._base.data = coo_matrix((modData, (modRow, modCol)),
-                                     shape=shape)
+        self._base.data = scipy.sparse.coo_matrix(
+            (modData, (modRow, modCol)), shape=shape)
         self._base._sorted = None
 
     def _add_implementation(self, toAdd, insertBefore):
@@ -166,7 +164,8 @@ class SparseAxis(Axis):
         else:
             rowColTuple = (newOffAxis, newAxis)
 
-        self._base.data = coo_matrix((newData, rowColTuple), shape=shape)
+        self._base.data = scipy.sparse.coo_matrix((newData, rowColTuple),
+                                                  shape=shape)
         self._base._sorted = None
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
@@ -204,7 +203,8 @@ class SparseAxis(Axis):
                 fillDup[startIdx:endIdx] = toRepeat + (numRepeatd * i)
                 startIdx = endIdx
 
-        repeated = coo_matrix((repData, (repRow, repCol)), shape=shape)
+        repeated = scipy.sparse.coo_matrix((repData, (repRow, repCol)),
+                                           shape=shape)
         self._base._sorted = None
 
         return repeated
@@ -302,13 +302,13 @@ class SparseAxis(Axis):
                                              targetLength, self._axis)
         if structure != 'copy':
             keepData = numpy.array(keepData, dtype=dtype)
-            self._base.data = coo_matrix((keepData, (keepRows, keepCols)),
-                                           shape=selfShape)
+            self._base.data = scipy.sparse.coo_matrix(
+                (keepData, (keepRows, keepCols)), shape=selfShape)
             self._base._sorted = None
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetData = numpy.array(targetData, dtype=dtype)
-        ret = coo_matrix((targetData, (targetRows, targetCols)),
-                         shape=targetShape)
+        ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
+                                      shape=targetShape)
 
         return nimble.data.Sparse(ret, pointNames=pointNames,
                                   featureNames=featureNames, reuseData=True)
@@ -368,14 +368,14 @@ class SparseAxis(Axis):
         uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
         if isinstance(self, Points):
             shape = (axisCount, len(self._base.features))
-            uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
-                                   shape=shape)
+            uniqueCoo = scipy.sparse.coo_matrix(
+                (uniqueData, (uniqueAxis, uniqueOffAxis)), shape=shape)
             return nimble.createData('Sparse', uniqueCoo, pointNames=axisNames,
                                      featureNames=offAxisNames, useLog=False)
         else:
             shape = (len(self._base.points), axisCount)
-            uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
-                                   shape=shape)
+            uniqueCoo = scipy.sparse.coo_matrix(
+                (uniqueData, (uniqueOffAxis, uniqueAxis)), shape=shape)
             return nimble.createData('Sparse', uniqueCoo, pointNames=offAxisNames,
                                      featureNames=axisNames, useLog=False)
 

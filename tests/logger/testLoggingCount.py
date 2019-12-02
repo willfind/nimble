@@ -42,7 +42,7 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
+#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
@@ -50,8 +50,8 @@ nimble_logged = [
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'importModule', 'listLearners', 'learnerParameters',
-    'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
+    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
+    'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
@@ -205,10 +205,6 @@ def test_showLog_logCount():
     def wrapped(obj):
         return nimble.showLog()
     captureOutput(wrapped)
-
-@noLogEntryExpected
-def test_importModule_logCount():
-    pd = nimble.importModule('pandas')
 
 @noLogEntryExpected
 def test_CV_logCount():

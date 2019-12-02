@@ -22,13 +22,14 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
-sklearn = nimble.importExternalLibraries.importModule("sklearn")
+scipy = ImportModule('scipy')
+sklearn = ImportModule("sklearn")
 
 packageName = 'sciKitLearn'
 

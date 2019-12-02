@@ -32,6 +32,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
+from nimble.utility import ImportModule
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -46,26 +47,8 @@ from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 
-cloudpickle = nimble.importModule('cloudpickle')
-
-mplError = None
-try:
-    import matplotlib
-    import __main__ as main
-    # for .show() to work in interactive sessions
-    # a backend different than Agg needs to be use
-    # The interactive session can choose by default e.g.,
-    # in jupyter-notebook inline is the default.
-    if hasattr(main, '__file__'):
-        # It must be agg  for non-interactive sessions
-        # otherwise the combination of matplotlib and multiprocessing
-        # produces a segfault.
-        # Open matplotlib issue here:
-        # https://github.com/matplotlib/matplotlib/issues/8795
-        # It applies for both for python 2 and 3
-        matplotlib.use('Agg')
-except ImportError as e:
-    mplError = e
+cloudpickle = ImportModule('cloudpickle')
+matplotlib = ImportModule('matplotlib')
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
@@ -1712,9 +1695,22 @@ class Base(object):
         return outFormat
 
     def _matplotlibBackendHandling(self, outPath, plotter, **kwargs):
+        import __main__ as main
+        # for .show() to work in interactive sessions
+        # a backend different than Agg needs to be use
+        # The interactive session can choose by default e.g.,
+        # in jupyter-notebook inline is the default.
+        if hasattr(main, '__file__'):
+            # It must be agg  for non-interactive sessions
+            # otherwise the combination of matplotlib and multiprocessing
+            # produces a segfault.
+            # Open matplotlib issue here:
+            # https://github.com/matplotlib/matplotlib/issues/8795
+            # It applies for both for python 2 and 3
+            matplotlib.use('Agg')
         if outPath is None:
             if matplotlib.get_backend() == 'agg':
-                import matplotlib.pyplot as plt
+                plt = matplotlib.pyplot
                 plt.switch_backend('TkAgg')
                 plotter(**kwargs)
                 plt.switch_backend('agg')
@@ -1728,11 +1724,10 @@ class Base(object):
         return p
 
     def _plot(self, outPath=None, includeColorbar=False):
-        self._validateMatPlotLibImport(mplError, 'plot')
         outFormat = self._setupOutFormatForPlotting(outPath)
 
         def plotter(d):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
 
             plt.matshow(d, cmap=matplotlib.cm.gray)
 
@@ -1791,7 +1786,6 @@ class Base(object):
 
     def _plotFeatureDistribution(self, feature, outPath=None, xMin=None,
                                  xMax=None):
-        self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
         return self._plotDistribution('feature', feature, outPath, xMin, xMax)
 
     def _plotDistribution(self, axis, identifier, outPath, xMin, xMax):
@@ -1826,7 +1820,7 @@ class Base(object):
             binCount = int(math.ceil((valMax - valMin) / binWidth))
 
         def plotter(d, xLim):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
 
             plt.hist(d, binCount)
 
@@ -1932,7 +1926,6 @@ class Base(object):
     def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
                                    xMax=None, yMin=None, yMax=None,
                                    sampleSizeForAverage=None):
-        self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
         return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax,
                                yMin, yMax, sampleSizeForAverage)
 
@@ -1991,7 +1984,7 @@ class Base(object):
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
         def plotter(inX, inY, xLim, yLim, sampleSizeForAverage):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
@@ -4741,15 +4734,6 @@ class Base(object):
                 if nameNum >= self._nextDefaultValueFeature:
                     self._nextDefaultValueFeature = nameNum + 1
 
-    def _validateMatPlotLibImport(self, error, name):
-        if error is not None:
-            msg = "The module matplotlib is required to be installed "
-            msg += "in order to call the " + name + "() method. "
-            msg += "However, when trying to import, an ImportError with "
-            msg += "the following message was raised: '"
-            msg += str(error) + "'"
-
-            raise ImportError(msg)
 
     def _validateRangeOrder(self, startName, startVal, endName, endVal):
         """
