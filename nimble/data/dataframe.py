@@ -38,14 +38,12 @@ class DataFrame(Base):
         pandas DataFrame or two-dimensional numpy array.
     reuseData : bool
         Only used when data is a pandas DataFrame.
-    elementType : type
-        The pandas dtype of the data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not pd:
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)

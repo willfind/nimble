@@ -42,13 +42,11 @@ class Sparse(Base):
     data : object
         A scipy sparse matrix or two-dimensional numpy array.
     reuseData : bool
-    elementType : type
-        The scipy or numpy dtype of the data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not scipy:
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)

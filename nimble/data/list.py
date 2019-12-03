@@ -53,7 +53,7 @@ class List(Base):
     """
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
-                 checkAll=True, elementType=None, **kwds):
+                 checkAll=True, **kwds):
         if (not (isinstance(data, list) or is2DArray(data))
                 and 'PassThrough' not in str(type(data))):
             msg = "the input data can only be a list, a two-dimensional numpy "
@@ -114,7 +114,6 @@ class List(Base):
 
         self._numFeatures = shape[1]
         self.data = data
-        self._elementType = elementType
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -270,13 +269,6 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
-        elementType = self._elementType
-        if elementType is None:
-            arr = numpy.array(self.data)
-            if issubclass(arr.dtype.type, numpy.number):
-                elementType = arr.dtype
-            else:
-                elementType = numpy.object_
         if to in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
@@ -285,7 +277,7 @@ class List(Base):
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = numpy2DArray(self.data, dtype=elementType)
+                data = convertList(numpy2DArray, self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -294,16 +286,16 @@ class List(Base):
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
-            return numpy2DArray(self.data, dtype=elementType)
+            return convertList(numpy2DArray, self.data)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
-            return numpy.matrix(self.data, dtype=elementType)
+            return convertList(numpy.matrix, self.data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            asArray = numpy.array(self.data, dtype=elementType)
+            asArray = convertList(numpy2DArray, self.data)
             if to == 'scipycsc':
                 if isEmpty:
                     return scipy.sparse.csc_matrix(emptyData)
@@ -322,7 +314,7 @@ class List(Base):
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(self.data, dtype=elementType)
+            return pd.DataFrame(self.data)
 
     def _fillWith_implementation(self, values, pointStart, featureStart,
                                  pointEnd, featureEnd):
@@ -733,3 +725,9 @@ class ListPassThrough(object):
     def __array__(self, dtype=None):
         tmpArray = numpy.array(self.source.data, dtype=dtype)
         return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
+
+def convertList(constructor, data):
+    convert = constructor(data)
+    if not convert.dtype in [int, float, bool, object]:
+        convert = constructor(data, dtype=object)
+    return convert

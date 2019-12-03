@@ -38,22 +38,18 @@ class Matrix(Base):
     data : object
         Must be a two-dimensional numpy array.
     reuseData : bool
-    elementType : type
-        The numpy dtype of this object.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not is2DArray(data):
             msg = "the input data can only be a two-dimensional numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
             data = numpy2DArray(data)
-        if elementType is not None:
-            data = data.astype(elementType)
         if reuseData:
             self.data = data
         else:

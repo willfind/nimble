@@ -697,8 +697,7 @@ def initDataObject(
         useFNames = True if featureNames is True else None
     try:
         ret = initMethod(rawData, pointNames=usePNames,
-                         featureNames=useFNames, name=name,
-                         paths=pathsToPass, elementType=elementType,
+                         featureNames=useFNames, name=name, paths=pathsToPass,
                          reuseData=reuseData, **kwargs)
     except Exception:
         einfo = sys.exc_info()
@@ -707,8 +706,7 @@ def initDataObject(
             autoMethod = getattr(nimble.data, autoType)
             ret = autoMethod(rawData, pointNames=usePNames,
                              featureNames=useFNames, name=name,
-                             paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData, **kwargs)
+                             paths=pathsToPass, reuseData=reuseData, **kwargs)
             ret = ret.copy(to=returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
