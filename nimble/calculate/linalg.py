@@ -43,8 +43,8 @@ def inverse(aObj):
     >>> data = nimble.createData('Matrix', raw)
     >>> data
     Matrix(
-        [[1.000 2.000]
-         [3.000 4.000]]
+        [[1 2]
+         [3 4]]
         )
     >>> inverse(data)
     Matrix(
@@ -223,13 +223,13 @@ def solve(aObj, bObj):
     >>> bObj = nimble.createData('Matrix', bData)
     >>> aObj
     Matrix(
-        [[3.000 2.000  0.000]
-         [1.000 -1.000 0.000]
-         [0.000 5.000  1.000]]
+        [[3 2  0]
+         [1 -1 0]
+         [0 5  1]]
         )
     >>> bObj
     Matrix(
-        [[2.000 4.000 -1.000]]
+        [[2 4 -1]]
         )
     >>> xObj = solve(aObj, bObj)
     >>> xObj

@@ -112,11 +112,11 @@ def createRandomData(
     ...                                  elementType='int')
     >>> random
     Matrix(
-        [[22.000 54.000 72.000 91.000 21.000]
-         [32.000 19.000 2.000  46.000 49.000]
-         [86.000 1.000  91.000 91.000 69.000]
-         [30.000 44.000 97.000 39.000 63.000]
-         [42.000 92.000 32.000 55.000 65.000]]
+        [[22 54 72 91 21]
+         [32 19 2  46 49]
+         [86 1  91 91 69]
+         [30 44 97 39 63]
+         [42 92 32 55 65]]
         pointNames={'a':0, 'b':1, 'c':2, 'd':3, 'e':4}
         )
 
@@ -892,8 +892,8 @@ def createData(
     >>> asList = nimble.createData('List', data, name='simple')
     >>> asList
     List(
-        [[1.000 2.000 3.000]
-         [4.000 5.000 6.000]]
+        [[1 2 3]
+         [4 5 6]]
         name="simple"
         )
 
@@ -904,8 +904,8 @@ def createData(
     >>> fromFile = nimble.createData('Matrix', 'createData.csv')
     >>> fromFile # doctest: +ELLIPSIS
     Matrix(
-        [[1.000 2.000 3.000]
-         [4.000 5.000 6.000]]
+        [[1 2 3]
+         [4 5 6]]
         name="createData.csv"
         path="...createData.csv"
         )
@@ -918,8 +918,8 @@ def createData(
     ...                              featureNames=True)
     >>> asSparse
     Sparse(
-        [[  0   0 1.000]
-         [1.000 0   0  ]]
+        [[0 0 1]
+         [1 0 0]]
         pointNames={'1':0, '2':1}
         featureNames={'a':0, 'b':1, 'c':2}
         )
@@ -934,8 +934,8 @@ def createData(
     ...                                 replaceMissingWith=-1)
     >>> asDataFrame
     DataFrame(
-        [[1.000 -1.000 -1.000]
-         [4.000 -1.000 6.000 ]]
+        [[1 -1 -1]
+         [4 -1 6 ]]
         featureNames={'a':0, 'b':1, 'c':2}
         )
     """

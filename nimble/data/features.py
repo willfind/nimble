@@ -314,60 +314,60 @@ class Features(object):
         >>> single = data.features.copy('1')
         >>> single
         Matrix(
-            [[1.000]
-             [1.000]
-             [1.000]
-             [1.000]]
+            [[1]
+             [1]
+             [1]
+             [1]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0}
             )
         >>> multiple = data.features.copy(['1', 3])
         >>> multiple
         Matrix(
-            [[1.000 4.000]
-             [1.000 4.000]
-             [1.000 4.000]
-             [1.000 4.000]]
+            [[1 4]
+             [1 4]
+             [1 4]
+             [1 4]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '4':1}
             )
         >>> func = data.features.copy(lambda ft: sum(ft) < 10)
         >>> func
         Matrix(
-            [[1.000 2.000]
-             [1.000 2.000]
-             [1.000 2.000]
-             [1.000 2.000]]
+            [[1 2]
+             [1 2]
+             [1 2]
+             [1 2]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
         >>> strFunc = data.features.copy("a>=3")
         >>> strFunc
         Matrix(
-            [[3.000 4.000]
-             [3.000 4.000]
-             [3.000 4.000]
-             [3.000 4.000]]
+            [[3 4]
+             [3 4]
+             [3 4]
+             [3 4]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'3':0, '4':1}
             )
         >>> startEnd = data.features.copy(start=1, end=2)
         >>> startEnd
         Matrix(
-            [[2.000 3.000]
-             [2.000 3.000]
-             [2.000 3.000]
-             [2.000 3.000]]
+            [[2 3]
+             [2 3]
+             [2 3]
+             [2 3]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'2':0, '3':1}
             )
         >>> numberNoRandom = data.features.copy(number=2)
         >>> numberNoRandom
         Matrix(
-            [[1.000 2.000]
-             [1.000 2.000]
-             [1.000 2.000]
-             [1.000 2.000]]
+            [[1 2]
+             [1 2]
+             [1 2]
+             [1 2]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
@@ -375,10 +375,10 @@ class Features(object):
         >>> numberRandom = data.features.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
-            [[1.000 4.000]
-             [1.000 4.000]
-             [1.000 4.000]
-             [1.000 4.000]]
+            [[1 4]
+             [1 4]
+             [1 4]
+             [1 4]]
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '4':1}
             )
@@ -1291,8 +1291,8 @@ class Features(object):
         >>> data.features.add(toAdd)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000 4.000]
-             [5.000 6.000 7.000 8.000]]
+            [[1 2 3 4]
+             [5 6 7 8]]
             pointNames={'a':0, 'b':1}
             )
 
@@ -1307,8 +1307,8 @@ class Features(object):
         >>> data.features.add(toAdd, insertBefore='4')
         >>> data
         Matrix(
-            [[1.000 2.000 3.000 4.000]
-             [5.000 6.000 7.000 8.000]]
+            [[1 2 3 4]
+             [5 6 7 8]]
             featureNames={'1':0, '2':1, '3':2, '4':3}
             )
         """
@@ -1393,10 +1393,10 @@ class Features(object):
         >>> data.features.shuffle()
         >>> data
         DataFrame(
-            [[3.000 2.000 4.000 1.000]
-             [3.000 2.000 4.000 1.000]
-             [3.000 2.000 4.000 1.000]
-             [3.000 2.000 4.000 1.000]]
+            [[3 2 4 1]
+             [3 2 4 1]
+             [3 2 4 1]
+             [3 2 4 1]]
             )
         """
         self._shuffle(useLog)
@@ -1483,11 +1483,11 @@ class Features(object):
         >>> data.features.fill(match.missing, fill.mean, features=0)
         >>> data
         Matrix(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]
-             [1.000 1.000  nan ]
-             [2.000 2.000 2.000]
-             [1.250 2.000 2.000]]
+            [[1.000 1  1 ]
+             [1.000 1  1 ]
+             [1.000 1 nan]
+             [2.000 2  2 ]
+             [1.250 2  2 ]]
             )
         """
         return self._fill(match, fill, features, returnModified, useLog,
@@ -1792,9 +1792,9 @@ class Features(object):
         >>> data.features.repeat(totalCopies=3,
         ...                      copyFeatureByFeature=False)
         Matrix(
-            [[1.000 1.000 1.000]
-             [2.000 2.000 2.000]
-             [3.000 3.000 3.000]]
+            [[1 1 1]
+             [2 2 2]
+             [3 3 3]]
             featureNames={'a_1':0, 'a_2':1, 'a_3':2}
             )
 
@@ -1805,9 +1805,9 @@ class Features(object):
         >>> data.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=False)
         Matrix(
-            [[1.000 2.000 1.000 2.000]
-             [3.000 4.000 3.000 4.000]
-             [5.000 6.000 5.000 6.000]]
+            [[1 2 1 2]
+             [3 4 3 4]
+             [5 6 5 6]]
             featureNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
             )
 
@@ -1818,9 +1818,9 @@ class Features(object):
         >>> data.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=True)
         Matrix(
-            [[1.000 1.000 2.000 2.000]
-             [3.000 3.000 4.000 4.000]
-             [5.000 5.000 6.000 6.000]]
+            [[1 1 2 2]
+             [3 3 4 4]
+             [5 5 6 6]]
             featureNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """

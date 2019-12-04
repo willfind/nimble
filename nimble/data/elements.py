@@ -167,9 +167,9 @@ class Elements(object):
         ...                         skipNoneReturnValues=True)
         >>> skip
         Matrix(
-            [[1.000  12.000 3.000 ]
-             [14.000 5.000  16.000]
-             [7.000  18.000 9.000 ]]
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
             )
         """
         if points is not None:
@@ -299,17 +299,17 @@ class Elements(object):
         >>> dontSkip = data.elements.calculate(addTenToEvens)
         >>> dontSkip
         Matrix(
-            [[ nan   12.000  nan  ]
-             [14.000  nan   16.000]
-             [ nan   18.000  nan  ]]
+            [[nan  12 nan]
+             [ 14 nan  16]
+             [nan  18 nan]]
             )
         >>> skip = data.elements.calculate(addTenToEvens,
         ...                                skipNoneReturnValues=True)
         >>> skip
         Matrix(
-            [[1.000  12.000 3.000 ]
-             [14.000 5.000  16.000]
-             [7.000  18.000 9.000 ]]
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
             )
         """
         calculator = validateElementFunction(toCalculate, preserveZeros,
@@ -512,8 +512,8 @@ class Elements(object):
         >>> data1.elements.multiply(data2)
         >>> data1
         Matrix(
-            [[12.000 12.000]
-             [12.000 12.000]]
+            [[12 12]
+             [12 12]]
             )
         """
         if not isinstance(other, nimble.data.Base):
@@ -589,8 +589,8 @@ class Elements(object):
         >>> data1.elements.power(data2)
         >>> data1
         Matrix(
-            [[64.000 64.000]
-             [64.000 64.000]]
+            [[64 64]
+             [64 64]]
             )
         """
         # other is nimble or single numerical value
@@ -742,8 +742,10 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         if preserveZeros and value == 0:
             return float(0)
         ret = func(value, *args)
-        if skipNoneReturnValues and ret is None:
-            return value
+        if ret is None:
+            if skipNoneReturnValues:
+                return value
+            return numpy.nan
         if not dataHelpers.isAllowedSingleElement(ret):
             msg = funcName + " can only return numeric, boolean, or string "
             msg += "values, but the returned value was " + str(type(ret))

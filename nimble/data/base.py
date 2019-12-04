@@ -782,16 +782,16 @@ class Base(object):
         >>> trainData, testData = data.trainAndTestSets(.34)
         >>> trainData
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]
-             [0.000 0.000 1.000]
-             [0.000 0.000 1.000]]
+            [[1 0 0]
+             [0 1 0]
+             [0 0 1]
+             [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testData
         Matrix(
-            [[0.000 1.000 0.000]
-             [1.000 0.000 0.000]]
+            [[0 1 0]
+             [1 0 0]]
             pointNames={'e':0, 'd':1}
             )
 
@@ -811,30 +811,30 @@ class Base(object):
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]
-             [0.000 0.000 1.000]
-             [0.000 0.000 1.000]]
+            [[1 0 0]
+             [0 1 0]
+             [0 0 1]
+             [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> trainY
         Matrix(
-            [[1.000]
-             [2.000]
-             [3.000]
-             [3.000]]
+            [[1]
+             [2]
+             [3]
+             [3]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testX
         Matrix(
-            [[0.000 1.000 0.000]
-             [1.000 0.000 0.000]]
+            [[0 1 0]
+             [1 0 0]]
             pointNames={'e':0, 'd':1}
             )
         >>> testY
         Matrix(
-            [[2.000]
-             [1.000]]
+            [[2]
+             [1]]
             pointNames={'e':0, 'd':1}
             )
         """
@@ -2061,15 +2061,15 @@ class Base(object):
         >>> data = nimble.createData('List', raw)
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [4 5 6]]
             )
         >>> data.transpose()
         >>> data
         List(
-            [[1.000 4.000]
-             [2.000 5.000]
-             [3.000 6.000]]
+            [[1 4]
+             [2 5]
+             [3 6]]
             )
         """
         self._transpose_implementation()
@@ -2098,14 +2098,14 @@ class Base(object):
         >>> data = nimble.createData('List', raw)
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [4 5 6]]
             )
         >>> data.T
         List(
-            [[1.000 4.000]
-             [2.000 5.000]
-             [3.000 6.000]]
+            [[1 4]
+             [2 5]
+             [3 6]]
             )
         """
         ret = self.copy()
@@ -2227,16 +2227,16 @@ class Base(object):
         ...                          name="odd&even")
         >>> data
         List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
+            [[1 3 5]
+             [2 4 6]]
             pointNames={'odd':0, 'even':1}
             name="odd&even"
             )
         >>> dataCopy = data.copy()
         >>> dataCopy
         List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
+            [[1 3 5]
+             [2 4 6]]
             pointNames={'odd':0, 'even':1}
             name="odd&even"
             )
@@ -2635,7 +2635,7 @@ class Base(object):
         >>> data.flattenToOnePoint()
         >>> data
         Matrix(
-            [[1.000 2.000 3.000 4.000]]
+            [[1 2 3 4]]
             pointNames={'Flattened':0}
             featureNames={'a | 1':0, 'b | 1':1, 'a | 4':2, 'b | 4':3}
             )
@@ -2708,10 +2708,10 @@ class Base(object):
         >>> data.flattenToOneFeature()
         >>> data
         Matrix(
-            [[1.000]
-             [3.000]
-             [2.000]
-             [4.000]]
+            [[1]
+             [3]
+             [2]
+             [4]]
             pointNames={'1 | a':0, '4 | a':1, '1 | b':2, '4 | b':3}
             featureNames={'Flattened':0}
             )
@@ -2891,9 +2891,9 @@ class Base(object):
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             )
 
         With names consistent with call to ``flattenToOnePoint``.
@@ -2908,9 +2908,9 @@ class Base(object):
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             pointNames={'1':0, '4':1, '7':2}
             featureNames={'a':0, 'b':1, 'c':2}
             )
@@ -2988,9 +2988,9 @@ class Base(object):
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             )
 
         With names consistent with call to ``flattenToOneFeature``.
@@ -3005,9 +3005,9 @@ class Base(object):
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             pointNames={'1':0, '4':1, '7':2}
             featureNames={'a':0, 'b':1, 'c':2}
             )
@@ -4084,9 +4084,9 @@ class Base(object):
         >>> pointObj = nimble.createData('List', rawPt)
         >>> baseObj * pointObj.stretch
         Matrix(
-            [[1.000 4.000  9.000 ]
-             [4.000 10.000 18.000]
-             [0.000 -2.000 -6.000]]
+            [[1 4  9 ]
+             [4 10 18]
+             [0 -2 -6]]
             )
 
         Stretched feature with nimble Base object.
@@ -4097,9 +4097,9 @@ class Base(object):
         >>> featObj = nimble.createData('List', rawFt)
         >>> featObj.stretch + baseObj
         List(
-            [[2.000 3.000 4.000]
-             [6.000 7.000 8.000]
-             [3.000 2.000 1.000]]
+            [[2 3 4]
+             [6 7 8]
+             [3 2 1]]
             )
 
         Two stretched objects.
@@ -4110,15 +4110,15 @@ class Base(object):
         >>> featObj = nimble.createData('List', rawFt)
         >>> pointObj.stretch - featObj.stretch
         Matrix(
-            [[0.000  1.000  2.000]
-             [-1.000 0.000  1.000]
-             [-2.000 -1.000 0.000]]
+            [[0  1  2]
+             [-1 0  1]
+             [-2 -1 0]]
             )
         >>> featObj.stretch - pointObj.stretch
         List(
-            [[0.000 -1.000 -2.000]
-             [1.000 0.000  -1.000]
-             [2.000 1.000  0.000 ]]
+            [[0 -1 -2]
+             [1 0  -1]
+             [2 1  0 ]]
             )
         """
         return Stretch(self)
