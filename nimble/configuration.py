@@ -621,13 +621,10 @@ def configSafetyWrapper(toWrap):
     to wrap unit tests which intersect with configuration functionality.
     """
     def wrapped(*args, **kwargs):
-        backupFile = tempfile.TemporaryFile()
+        backupFile = tempfile.TemporaryFile('w+')
         configFilePath = os.path.join(nimble.nimblePath, 'configuration.ini')
         configurationFile = open(configFilePath, 'r')
-        if sys.version_info.major < 3:
-            backupFile.write(configurationFile.read())
-        else:
-            backupFile.write(bytes(configurationFile.read(), 'utf-8'))#python 3
+        backupFile.write(configurationFile.read())
         configurationFile.close()
 
         backupChanges = copy.copy(nimble.settings.changes)
@@ -639,11 +636,9 @@ def configSafetyWrapper(toWrap):
         finally:
             backupFile.seek(0)
             configurationFile = open(configFilePath, 'w')
-            if sys.version_info.major < 3:
-                configurationFile.write(backupFile.read())
-            else:
-                configurationFile.write(backupFile.read().decode()) # python3
+            configurationFile.write(backupFile.read())
             configurationFile.close()
+            backupFile.close()
 
             nimble.settings = nimble.configuration.loadSettings()
             nimble.settings.changes = backupChanges

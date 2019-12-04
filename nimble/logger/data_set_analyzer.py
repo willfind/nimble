@@ -207,10 +207,10 @@ def featurewiseFunctionGenerator():
     calculateForEachFeature function.  Includes: min(), max(), mean(),
     median(), standardDeviation(), numUniqueValues()
     """
-    functions = [nimble.calculate.minimum, nimble.calculate.maximum,
+    functions = (nimble.calculate.minimum, nimble.calculate.maximum,
                  nimble.calculate.mean, nimble.calculate.median,
                  nimble.calculate.standardDeviation,
-                 nimble.calculate.uniqueCount]
+                 nimble.calculate.uniqueCount)
     return functions
 
 
@@ -223,8 +223,8 @@ def aggregateFunctionGenerator():
     the proportion of entries that are equal to zero and the proportion
     of entries that are missing (i.e. are None or NaN).
     """
-    functions = [nimble.calculate.proportionZero,
-                 nimble.calculate.proportionMissing]
+    functions = (nimble.calculate.proportionZero,
+                 nimble.calculate.proportionMissing)
     return functions
 
 

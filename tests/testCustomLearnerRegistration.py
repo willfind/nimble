@@ -124,9 +124,9 @@ def testMultipleCustomPackages():
     assert nimble.listLearners("Bar") == ["RidgeRegression"]
     assert nimble.listLearners("Baz") == ["UncallableLearner"]
 
-    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
-    assert nimble.learnerParameters("Bar.RidgeRegression") == [['lamb']]
-    assert nimble.learnerParameters("Baz.UncallableLearner") == [['foo']]
+    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == set()
+    assert nimble.learnerParameters("Bar.RidgeRegression") == {'lamb'}
+    assert nimble.learnerParameters("Baz.UncallableLearner") == {'foo'}
 
     nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
     nimble.deregisterCustomLearner("Bar", 'RidgeRegression')
@@ -153,9 +153,9 @@ def testMultipleLearnersSinglePackage():
     assert "RidgeRegression" in learners
     assert "UncallableLearner" in learners
 
-    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == [[]]
-    assert nimble.learnerParameters("Foo.RidgeRegression") == [['lamb']]
-    assert nimble.learnerParameters("Foo.UncallableLearner") == [['foo']]
+    assert nimble.learnerParameters("Foo.LoveAtFirstSightClassifier") == set()
+    assert nimble.learnerParameters("Foo.RidgeRegression") == {'lamb'}
+    assert nimble.learnerParameters("Foo.UncallableLearner") == {'foo'}
 
     nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
 

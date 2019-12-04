@@ -1,14 +1,16 @@
 from __future__ import division
 from __future__ import absolute_import
 import math
+import collections
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.utility import ImportModule
 
-scipy = nimble.importModule('scipy')
+scipy = ImportModule('scipy')
 
 numericalTypes = (int, float, int, numpy.number)
 
@@ -66,6 +68,8 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     """
     Given a 1D vector of values, find the minimum or maximum value.
     """
+    if not _isNumericalFeatureGuesser(values):
+        return None
     if minmax == 'min':
         compStr = '__lt__'
         func1 = lambda x, y: x > y
@@ -162,7 +166,6 @@ def mode(values):
     """
     Given a 1D vector of values, find the most frequent value.
     """
-    collections = nimble.importModule('collections')
     nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
@@ -265,17 +268,10 @@ def _isMissing(point):
 
 def _isNumericalFeatureGuesser(featureVector):
     """
-    Returns true if the vector only contains primitive numerical non-complex values,
-    returns false otherwise.
+    Returns true if the vector only contains primitive numerical
+    non-complex values, returns false otherwise.
     """
-    try:
-        if featureVector.getTypeString() in ['Matrix']:
-            return True
-    except AttributeError:
-        pass
-
-    #if all items in featureVector are numerical or None/NaN, return True; otherwise, False.
-    return all([isinstance(item, numericalTypes) for item in featureVector if item])
+    return all(isinstance(val, numericalTypes) for val in featureVector if val)
 
 
 def _isNumericalPoint(point):
@@ -311,7 +307,7 @@ def residuals(toPredict, controlVars):
     or features and InvalidArgumentValueCombination if they have a different
     number of points.
     """
-    if scipy is None:
+    if not scipy:
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 
