@@ -680,10 +680,10 @@ class Elements(object):
         # check if values has numeric dtype
         createDataKwargs = {'useLog': False}
         if allowBoolOutput and numpy.issubdtype(values.dtype, numpy.bool_):
-            createDataKwargs['elementType'] = bool
+            createDataKwargs['convertToType'] = bool
         elif not (numpy.issubdtype(values.dtype, numpy.number)
                   or numpy.issubdtype(values.dtype, numpy.bool_)):
-            createDataKwargs['elementType'] = numpy.object_
+            createDataKwargs['convertToType'] = numpy.object_
 
         ret = nimble.createData(optType, values, **createDataKwargs)
 

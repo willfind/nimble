@@ -4019,7 +4019,7 @@ class Base(object):
 
         # mod and floordiv operations do not raise errors for zero division
         # TODO logical operations to check for new nan and inf after operation
-        if 'floordiv' in opName or 'mod' in opName:
+        if 'floordiv' in opName or 'mod' in opName or 'mul' in opName:
             self._genericBinary_dataExamination(opName, other)
 
         try:

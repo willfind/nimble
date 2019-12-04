@@ -37,7 +37,7 @@ from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
-from nimble.utility import ImportModule, cooMatrixToArray
+from nimble.utility import ImportModule, sparseMatrixToArray
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -442,112 +442,112 @@ def extractNames(rawData, pointNames, featureNames):
 
 
 def convertData(returnType, rawData, pointNames, featureNames,
-                elementType):
+                convertToType):
     """
     Convert data to an object type which is compliant with the
     initializion for the given returnType. Additionally, ensure the data
-    is converted to the elementType. If elementType is None an attempt
-    will be made to convert all the data to floats, if unsuccessful, the
-    data will remain the same object type.
+    is converted to the convertToType. If convertToType is None an
+    attempt will be made to convert all the data to floats, if
+    unsuccessful, the data will remain the same object type.
     """
-    # If type(data) doesn't match returnType, then convert data to numpy
-    # matrix or coo_matrix. If elementType is not None, then convert each
-    # element in data to elementType.
-    if (elementType is None
-            and isinstance(rawData, list)
-            and returnType == 'List'
-            and len(rawData) != 0
-            and (
-                # this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'],
-                # [4,5,'b']] otherwise, we need to covert the list to matrix,
-                # such [np.array([1,2]), np.array(3,4)]
-                isAllowedSingleElement(rawData[0])
-                or isinstance(rawData[0], list)
-                or hasattr(rawData[0], 'setLimit'))):
-       # attempt to convert the list to floats to remain consistent with other
-       # nimble types if unsuccessful we will keep the list as is
+    typeMatch = {'List': list,
+                 'Matrix': numpy.ndarray}
+    if scipy:
+        typeMatch['Sparse'] = scipy.sparse.spmatrix
+    if pd:
+        typeMatch['DataFrame'] = pd.DataFrame
+
+    # perform type conversion if necessary
+    # this also guarantees data is in an acceptable format
+    rawData = elementTypeConvert(rawData, convertToType)
+    try:
+        typeMatchesReturn = isinstance(rawData, typeMatch[returnType])
+    except KeyError:
+        if returnType == 'Sparse':
+            package = 'scipy'
+        if returnType == 'DataFrame':
+            package = 'pandas'
+        msg = "{0} must be installed to create a {1} object"
+        raise PackageException(msg.format(package, returnType))
+
+    # if the data can be used to instantiate the object we pass it as-is
+    # otherwise a 2D array is needed as they are accepted by all init methods
+    if typeMatchesReturn:
+        if returnType == 'List':
+            lenFts = len(featureNames) if featureNames else 0
+            if len(rawData) == 0:
+                lenPts = len(pointNames) if pointNames else 0
+                return numpy.empty([lenPts, lenFts])
+            if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
+                return numpy.empty([len(rawData), lenFts])
+        if returnType == 'Matrix' and len(rawData.shape) == 1:
+            rawData = numpy2DArray(rawData)
+        return rawData
+    return convertToArray(rawData, pointNames, featureNames)
+
+def convertToArray(rawData, pointNames, featureNames):
+    if pd and isinstance(rawData, pd.DataFrame):
+        return rawData.values
+    if pd and isinstance(rawData, pd.Series):
+        if rawData.empty:
+            return numpy.empty((0, rawData.shape[0]))
+        return numpy2DArray(rawData.values)
+    if scipy and scipy.sparse.isspmatrix(rawData):
+        return sparseMatrixToArray(rawData)
+    if isinstance(rawData, numpy.ndarray):
+        if not is2DArray(rawData):
+            rawData = numpy2DArray(rawData)
+        return rawData
+    # lists (or other similar objects)
+    lenFts = len(featureNames) if featureNames else 0
+    if len(rawData) == 0:
+        lenPts = len(pointNames) if pointNames else 0
+        return numpy.empty([lenPts, lenFts])
+    if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
+        return numpy.empty([len(rawData), lenFts])
+    arr = numpy2DArray(rawData)
+    # for lists we cannot be confident the array generated will use an
+    # accepted dtype so we need to check and change if necessary
+    if arr.dtype not in [int, float, bool, object]:
+        arr = numpy2DArray(rawData, dtype=numpy.object_)
+    return arr
+
+def elementTypeConvert(rawData, convertToType=None):
+    """
+    Attempt to convert rawData to the specified convertToType.
+    """
+    allowedElemTypes = [int, float, bool, object]
+    if convertToType is None:
+        if hasattr(rawData, 'dtype') and rawData.dtype not in allowedElemTypes:
+            rawData = rawData.astype(numpy.object_)
+        return rawData
+    if (isinstance(rawData, numpy.ndarray)
+            or (scipy and isinstance(rawData, scipy.sparse.spmatrix))
+            or (pd and isinstance(rawData, (pd.DataFrame, pd.Series)))):
         try:
-            # 1D list
-            rawData = list(map(numpy.float, rawData))
-        except (TypeError, ValueError):
-            try:
-                #2D list
-                convertedData = []
-                for point in rawData:
-                    convertedData.append(list(map(numpy.float, point)))
-                rawData = convertedData
-            except (ValueError, TypeError):
-                pass
-    elif (elementType is None and
-          pd and isinstance(rawData, pd.DataFrame) and
-          not isinstance(rawData, pd.SparseDataFrame) and
-          returnType == 'DataFrame'):
-        pass
-    elif (elementType is None and
-          scipy and scipy.sparse.isspmatrix(rawData) and
-          returnType == 'Sparse'):
-        pass
-    elif isinstance(rawData, numpy.ndarray):
-        # if the input data is a np array, then convert it anyway to make sure
-        # try dtype=float 1st.
-        rawData = elementTypeConvert(rawData, elementType)
-    elif pd and isinstance(rawData, pd.SparseDataFrame):
-        #from sparse to sparse, instead of via np matrix
-        rawData = elementTypeConvert(rawData, elementType)
-        rawData = scipy.sparse.coo_matrix(rawData)
-
-    elif isinstance(rawData, (list, tuple)):
-        # when rawData = [], or feature empty [[]], we need to use pointNames
-        # and featureNamesto determine its shape
-        lenFts = len(featureNames) if featureNames else 0
-        if len(rawData) == 0:
-            lenPts = len(pointNames) if pointNames else 0
-            rawData = numpy.empty([lenPts, lenFts], dtype=elementType)
-        elif isinstance(rawData[0], list) and len(rawData[0]) == 0:
-            rawData = numpy.empty([len(rawData), lenFts], dtype=elementType)
-        # if there are actually elements, we attempt to convert them
-        else:
-            rawData = elementTypeConvert(rawData, elementType)
-
-    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
-        rawData = elementTypeConvert(rawData, elementType)
-
-    elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = elementTypeConvert(cooMatrixToArray(rawData), elementType)
-
-    if (returnType == 'Sparse'
-            and is2DArray(rawData)
-            and rawData.shape[0]*rawData.shape[1] > 0
-            and rawData.dtype is numpy.object_):
-        #replace None to np.NaN, o.w. coo_matrix will convert None to 0
-        numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
-                    numpy.NaN)
-
-    return rawData
-
-
-def elementTypeConvert(rawData, elementType):
-    """
-    Convert rawData to numpy array with dtype = elementType, or try
-    dtype=float then try dtype=object.
-    """
-    if pd and isinstance(rawData, pd.Series) and len(rawData) == 0:
-        # make sure pd.Series() converted to matrix([], shape=(0, 0))
-        rawData = numpy.empty([0, 0])
-    elif pd and isinstance(rawData, pd.DataFrame):
-        #for pd.DataFrame, convert it to np.ndarray first then to matrix
-        #o.w. copy.deepcopy may generate messed data
-        rawData = rawData.values
-
-    if elementType:
-        return numpy2DArray(rawData, dtype=elementType)
+            converted = rawData.astype(convertToType)
+            if converted.dtype not in allowedElemTypes:
+                converted = rawData.astype(numpy.object_)
+            return converted
+        except (TypeError, ValueError) as err:
+            error = err
+    # otherwise we assume data follows conventions of a list
+    if convertToType not in [object, numpy.object_] and len(rawData) > 0:
+        if not hasattr(rawData[0], '__len__'):
+            rawData = [rawData] # make 2D
+        try:
+            convertedData = []
+            for point in rawData:
+                convertedData.append(list(map(convertToType, point)))
+            return convertedData
+        except (ValueError, TypeError) as err:
+            error = err
     else:
-        try:
-            data = numpy2DArray(rawData, dtype=numpy.float)
-        except ValueError:
-            data = numpy2DArray(rawData, dtype=object)
-        return data
-
+        return rawData
+    # if nothing has been returned, we cannot convert to the convertToType
+    msg = 'Unable to convert the data to convertToType '
+    msg += "'{0}'. ".format(convertToType) + str(error)
+    raise InvalidArgumentValue(msg)
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
@@ -626,7 +626,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
-        keepPoints='all', keepFeatures='all', elementType=None,
+        keepPoints='all', keepFeatures='all', convertToType=None,
         reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
                                          'None', 'nan', 'NULL', 'NA'),
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
@@ -663,9 +663,9 @@ def initDataObject(
     if treatAsMissing is not None and not skipDataProcessing:
         rawData = replaceMissingData(rawData, treatAsMissing,
                                      replaceMissingWith)
-    # convert to elementType, if None convert to best possible
+    # convert to convertToType, if necessary
     rawData = convertData(returnType, rawData, pointNames, featureNames,
-                          elementType)
+                          convertToType)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -1118,11 +1118,11 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
 
     if rawData.shape[0] > 0:
 
-        firstRow = cooMatrixToArray(rawData[0]).flatten().tolist()
+        firstRow = sparseMatrixToArray(rawData[0]).flatten().tolist()
     else:
         firstRow = None
     if rawData.shape[0] > 1:
-        secondRow = cooMatrixToArray(rawData[1]).flatten().tolist()
+        secondRow = sparseMatrixToArray(rawData[1]).flatten().tolist()
     else:
         secondRow = None
     pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
@@ -1132,14 +1132,14 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
 
     retFNames = None
     if featureNames == 0:
-        retFNames = cooMatrixToArray(rawData[0]).flatten().tolist()
+        retFNames = sparseMatrixToArray(rawData[0]).flatten().tolist()
         retFNames = list(map(str, retFNames))
         rawData = rawData[1:]
 
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = cooMatrixToArray(rawData[:, 0]).flatten().tolist()
+        retPNames = sparseMatrixToArray(rawData[:, 0]).flatten().tolist()
         retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]

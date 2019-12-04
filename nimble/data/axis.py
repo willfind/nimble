@@ -484,9 +484,9 @@ class Axis(object):
 
         createDataKwargs = {'useLog': False}
         if matching:
-            createDataKwargs['elementType'] = bool
+            createDataKwargs['convertToType'] = bool
         elif convert:
-            createDataKwargs['elementType'] = numpy.object_
+            createDataKwargs['convertToType'] = numpy.object_
 
         ret = nimble.createData(self._base.getTypeString(), retData,
                                 **createDataKwargs)

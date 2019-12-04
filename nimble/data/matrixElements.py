@@ -10,7 +10,7 @@ import numpy
 
 import nimble
 from nimble import match
-from nimble.utility import numpy2DArray, cooMatrixToArray
+from nimble.utility import numpy2DArray, sparseMatrixToArray
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
@@ -86,7 +86,7 @@ class MatrixElements(Elements):
         if isinstance(other, nimble.data.Sparse):
             result = other.data.multiply(self._base.data)
             if hasattr(result, 'toarray'):
-                result = cooMatrixToArray(result)
+                result = sparseMatrixToArray(result)
         else:
             result = numpy.multiply(self._base.data, other.data)
         self._base.data = numpy2DArray(result)

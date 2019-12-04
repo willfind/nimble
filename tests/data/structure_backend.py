@@ -44,7 +44,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
 from nimble.utility import ImportModule
-from nimble.utility import cooMatrixToArray
+from nimble.utility import sparseMatrixToArray
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
@@ -330,13 +330,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -388,13 +388,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -444,13 +444,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsr), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
             scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(cooMatrixToArray(scipyCsc), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
             scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(cooMatrixToArray(scipyCoo), data)
+            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
@@ -612,13 +612,13 @@ class StructureDataSafe(StructureShared):
 
         if scipy:
             out = orig.copy(to='scipycsr', rowsArePoints=False)
-            assert numpy.array_equal(cooMatrixToArray(out), dataT)
+            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
             out = orig.copy(to='scipycsc', rowsArePoints=False)
-            assert numpy.array_equal(cooMatrixToArray(out), dataT)
+            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
             out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-            assert numpy.array_equal(cooMatrixToArray(out), dataT)
+            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
         if pd:
             out = orig.copy(to='pandasdataframe', rowsArePoints=False)
@@ -2229,6 +2229,10 @@ class StructureModifying(StructureShared):
             orig7 = self.constructor(pd.Series())
             orig8 = self.constructor(pd.SparseDataFrame())
 
+        print(orig1)
+        print(orig7)
+        print(orig1.data)
+        print(orig7.data)
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -2327,9 +2331,9 @@ class StructureModifying(StructureShared):
         """
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, elementType=object)
+        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
         orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
@@ -7862,8 +7866,7 @@ class StructureModifying(StructureShared):
         def addTenth(pt):
             return [v + 0.1 for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         orig.points.transform(addTenth)
@@ -7874,10 +7877,8 @@ class StructureModifying(StructureShared):
         def toString(pt):
             return [str(v) for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         orig.points.transform(toString)
         assert orig == exp
@@ -8053,8 +8054,7 @@ class StructureModifying(StructureShared):
         def addTenth(ft):
             return [v + 0.1 for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         orig.features.transform(addTenth)
@@ -8065,10 +8065,8 @@ class StructureModifying(StructureShared):
         def toString(ft):
             return [str(v) for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         orig.features.transform(toString)
         assert orig == exp
@@ -8354,8 +8352,7 @@ class StructureModifying(StructureShared):
         def addTenth(elem):
             return elem + 0.1
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         orig.elements.transform(addTenth)
@@ -8366,10 +8363,8 @@ class StructureModifying(StructureShared):
         def toString(e):
             return str(e)
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         orig.elements.transform(toString)
         assert orig == exp

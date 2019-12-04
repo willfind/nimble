@@ -115,7 +115,7 @@ class ImportModule(object):
         setattr(self, name, ret)
         return ret
 
-def cooMatrixToArray(cooMatrix):
+def sparseMatrixToArray(sparseMatrix):
     """
     Helper for coo_matrix.toarray.
 
@@ -123,18 +123,21 @@ def cooMatrixToArray(cooMatrix):
     numeric, so in that case we generate the array.
     """
     try:
-        return cooMatrix.toarray()
+        return sparseMatrix.toarray()
     except ValueError:
         # flexible dtypes, such as strings, when used in scipy sparse
         # object create an implicitly mixed datatype: some values are
         # strings, but the rest are implicitly zero. In order to match
         # that, we must explicitly specify a mixed type for our destination
         # matrix
-        retDType = cooMatrix.dtype
+        scipy = ImportModule('scipy')
+        if not scipy.sparse.isspmatrix_coo(sparseMatrix):
+            sparseMatrix = sparseMatrix.tocoo()
+        retDType = sparseMatrix.dtype
         if isinstance(retDType, numpy.flexible):
             retDType = object
-        ret = numpy.zeros(cooMatrix.shape, dtype=retDType)
-        nz = (cooMatrix.row, cooMatrix.col)
-        for (i, j), v in zip(zip(*nz), cooMatrix.data):
+        ret = numpy.zeros(sparseMatrix.shape, dtype=retDType)
+        nz = (sparseMatrix.row, sparseMatrix.col)
+        for (i, j), v in zip(zip(*nz), sparseMatrix.data):
             ret[i, j] = v
         return ret

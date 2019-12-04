@@ -1471,7 +1471,7 @@ class NumericalDataSafe(DataTestObject):
         rhsObj = self.constructor(rhs)
 
         exp = self.getLogicalExpectedOutput(logicOp)
-        expObj = self.constructor(exp, elementType=bool)
+        expObj = self.constructor(exp, convertToType=bool)
 
         assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 
@@ -1483,7 +1483,7 @@ class NumericalDataSafe(DataTestObject):
         lhsObj = self.constructor(lhs)
 
         exp = self.getLogicalExpectedOutput(logicOp)
-        expObj = self.constructor(exp, elementType=bool)
+        expObj = self.constructor(exp, convertToType=bool)
         for rType in [t for t in nimble.data.available if t != lhsObj.getTypeString()]:
             rhsObj = nimble.createData(rType, rhs, useLog=False)
 
@@ -1569,7 +1569,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[True, True], [False, False]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, elementType=bool)
+        expObj = self.constructor(exp, convertToType=bool)
 
         assert ~boolsObj == expObj
 
@@ -1578,7 +1578,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[1, 1], [0, 0]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, elementType=bool)
+        expObj = self.constructor(exp, convertToType=bool)
 
         assert ~boolsObj == expObj
 
@@ -1587,7 +1587,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[1.0, 1.0], [0.0, 0.0]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, elementType=bool)
+        expObj = self.constructor(exp, convertToType=bool)
 
         assert ~boolsObj == expObj
 

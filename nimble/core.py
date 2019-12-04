@@ -744,7 +744,7 @@ def listLearners(package=None):
 
 def createData(
         returnType, data, pointNames='automatic', featureNames='automatic',
-        elementType=None, name=None, path=None, keepPoints='all',
+        convertToType=None, name=None, path=None, keepPoints='all',
         keepFeatures='all', ignoreNonNumericalFeatures=False,
         reuseData=False, inputSeparator='automatic',
         treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
@@ -803,6 +803,13 @@ def createData(
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
+    convertToType : type
+        A one-time conversion of all the data to this type. If unable to
+        convert every value to the given type, an exception will be
+        raised. The default, None, will retain the object types as is
+        when creating the object. Note: This only applies during the
+        creation process, nimble will modify types on the backend,
+        whenever necessary.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -943,7 +950,7 @@ def createData(
     if isAllowedRaw(data, allowLPT=True):
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
-            featureNames=featureNames, elementType=elementType, name=name,
+            featureNames=featureNames, convertToType=convertToType, name=name,
             path=path, keepPoints=keepPoints, keepFeatures=keepFeatures,
             reuseData=reuseData, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)

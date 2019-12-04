@@ -1307,7 +1307,6 @@ class QueryBackend(DataTestObject):
             ret, widths, fNames = data._arrangeDataWithLimits(
                 maxW, maxH, includeFNames=includeFNames, colSep=colSep)
 
-
             if includeFNames:
                 assert len(fNames) == len(widths)
                 for name, width in zip(fNames, widths):
@@ -1325,8 +1324,10 @@ class QueryBackend(DataTestObject):
                 assert lenSum <= (maxW - ((len(pRep) - 1) * len(colSep)))
 
             if len(ret) > 0:
+                # the longest string value, which could be the feature name,
+                # should be equal to the value in widths at that index
                 for fIndex in range(len(ret[0])):
-                    widthBound = 0
+                    widthBound = len(fNames[fIndex]) if fNames else 0
                     for pRep in ret:
                         val = pRep[fIndex]
                         if len(val) > widthBound:

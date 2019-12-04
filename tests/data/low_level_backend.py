@@ -1190,7 +1190,7 @@ class LowLevelBackend(object):
     def testconstructIndicesList_NimbleObjects(self):
         for retType in available:
             self.constructIndicesList_backend(
-                lambda lst: createData(retType, lst, elementType=object))
+                lambda lst: createData(retType, lst, convertToType=object))
 
     def testconstructIndicesList_numpyArray(self):
         self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
