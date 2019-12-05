@@ -160,6 +160,7 @@ class Stretch(object):
                 msg = "Unable to stretch this object to fit. The lengths of "
                 msg += "one of the axes must align between objects"
                 raise InvalidArgumentValueCombination(msg)
+
             self._source._validateEqualNames(matchAxis, matchAxis, opName,
                                              other)
 
@@ -184,7 +185,25 @@ class Stretch(object):
         fullSelf._genericBinary_dataExamination(opName, fullOther)
 
     def _stretchArithmetic(self, opName, other):
+        if 'pow' in opName:
+            usableTypes = (float,)
+        else:
+            usableTypes = (int, float, bool)
+        try:
+            self._source._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            self._source._numericValidation()
         self._stretchArithmetic_validation(opName, other)
+        if isinstance(other, Stretch):
+            try:
+                other._source._convertUnusableTypes(float, usableTypes, False)
+            except ImproperObjectAction:
+                other._source._numericValidation(right=True)
+        else:
+            try:
+                other._convertUnusableTypes(float, usableTypes, False)
+            except ImproperObjectAction:
+                other._numericValidation(right=True)
         # mod and floordiv operations do not raise errors for zero division
         # TODO use logical operations to check for nan and inf after operation
         if 'floordiv' in opName or 'mod' in opName:

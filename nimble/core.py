@@ -1412,9 +1412,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...                                testX=testX)
     >>> predict
     Matrix(
-        [[1.000]
-         [2.000]
-         [3.000]]
+        [[1]
+         [2]
+         [3]]
         )
 
     Passing arguments to the learner. Both the arguments parameter and

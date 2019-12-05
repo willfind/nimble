@@ -299,9 +299,9 @@ class Elements(object):
         >>> dontSkip = data.elements.calculate(addTenToEvens)
         >>> dontSkip
         Matrix(
-            [[nan  12 nan]
-             [ 14 nan  16]
-             [nan  18 nan]]
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
             )
         >>> skip = data.elements.calculate(addTenToEvens,
         ...                                skipNoneReturnValues=True)
@@ -512,8 +512,8 @@ class Elements(object):
         >>> data1.elements.multiply(data2)
         >>> data1
         Matrix(
-            [[12 12]
-             [12 12]]
+            [[12.000 12.000]
+             [12.000 12.000]]
             )
         """
         if not isinstance(other, nimble.data.Base):
@@ -530,6 +530,16 @@ class Elements(object):
         if len(self._base.points) == 0 or len(self._base.features) == 0:
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperObjectAction(msg)
+
+        try:
+            self._base._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            self._base._numericValidation()
+
+        try:
+            other._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            other._numericValidation(right=True)
 
         self._base._validateEqualNames('point', 'point',
                                          'elements.multiply', other)

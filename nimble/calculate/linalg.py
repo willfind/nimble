@@ -69,12 +69,11 @@ def inverse(aObj):
         if re.match('.*singular.*', str(exception), re.I):
             msg = 'Object non-invertible (Singular)'
             raise InvalidArgumentValue(msg)
-        else:
-            raise exception
+        raise exception
 
     if aObj.getTypeString() in ['Matrix', 'DataFrame', 'List']:
-        invObj = aObj.copy(to='Matrix')
         try:
+            invObj = aObj.copy(to='numpy array').astype(numpy.float)
             invData = scipy.linalg.inv(invObj.data)
         except scipy.linalg.LinAlgError as exception:
             _handleSingularCase(exception)
@@ -82,22 +81,22 @@ def inverse(aObj):
             if re.match('.*object arrays.*', str(exception), re.I):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
-            elif re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
+            if re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
                 msg = 'Infs or NaNs values are not supported.'
                 raise InvalidArgumentValue(msg)
-            else:
-                raise exception
+            raise exception
 
     else:
-        invObj = aObj.copy(to='Sparse')
         try:
-            invData = scipy.sparse.linalg.inv(invObj.data.tocsc())
+            invObj = aObj.copy(to='scipy coo').astype(numpy.float).tocsc()
+            invData = scipy.sparse.linalg.inv(invObj)
         except RuntimeError as exception:
             _handleSingularCase(exception)
         except TypeError as exception:
             if re.match('.*no supported conversion*', str(exception), re.I):
                 msg = 'Elements types in object data are not supported.'
                 raise InvalidArgumentType(msg)
+            raise exception
 
     return nimble.createData(aObj.getTypeString(), invData, useLog=False)
 
@@ -171,15 +170,15 @@ def pseudoInverse(aObj, method='svd'):
         else:
             raise exception
 
-    pinvObj = aObj.copy(to='Matrix')
+    pinvObj = aObj.copy(to='numpy array').astype(numpy.float)
     if method == 'svd':
         try:
-            pinvData = scipy.linalg.pinv2(pinvObj.data)
+            pinvData = scipy.linalg.pinv2(pinvObj)
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
     else:
         try:
-            pinvData = scipy.linalg.pinv(pinvObj.data)
+            pinvData = scipy.linalg.pinv(pinvObj)
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
 
@@ -287,29 +286,25 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
     # Solve
     if aObj.getTypeString() == 'Matrix':
+        aData = aObj.data.astype(numpy.float)
+        bData = bObj.data.astype(numpy.float)
         if solverFunction.__name__ == 'solve':
-            solution = scipy.linalg.solve(aObj.data, bObj.data)
+            solution = scipy.linalg.solve(aData, bData)
             solution = solution.T
         else:
-            solution = scipy.linalg.lstsq(aObj.data, bObj.data)
+            solution = scipy.linalg.lstsq(aData, bData)
             solution = solution[0].T
 
     elif aObj.getTypeString() == 'Sparse':
+        aCopy = aObj.copy()
+        aData = aCopy.data.astype(numpy.float)
+        bData = numpy.asarray(bObj.data).astype(numpy.float)
         if solverFunction.__name__ == 'solve':
-            aCopy = aObj.copy()
-            solution = scipy.sparse.linalg.spsolve(aCopy.data,
-                                                   numpy.asarray(bObj.data))
+            solution = scipy.sparse.linalg.spsolve(aData, bData)
             solution = solution
         else:
-            if isinstance(aObj, nimble.data.sparse.SparseView): #Sparse View
-                aCopy = aObj.copy()
-                solution = scipy.sparse.linalg.lsqr(aCopy.data,
-                                                    numpy.asarray(bObj.data))
-                solution = solution[0]
-            else: # Sparse
-                solution = scipy.sparse.linalg.lsqr(aObj.data,
-                                                    numpy.asarray(bObj.data))
-                solution = solution[0]
+            solution = scipy.sparse.linalg.lsqr(aData, bData)
+            solution = solution[0]
 
     sol = nimble.createData(aOriginalType, solution,
                          featureNames=aObj.features.getNames(),

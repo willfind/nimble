@@ -216,10 +216,8 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        if header != '':
-            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
-        else:
-            scipy.io.mmwrite(target=outPath, a=self.data)
+        scipy.io.mmwrite(target=outPath, a=self.data.astype(numpy.float),
+                         comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -250,12 +248,17 @@ class Sparse(Base):
         if to == 'numpymatrix':
             return numpy.matrix(sparseMatrixToArray(self.data))
         if 'scipy' in to:
-            if to == 'scipycsc':
-                return self.data.tocsc()
-            if to == 'scipycsr':
-                return self.data.tocsr()
             if to == 'scipycoo':
                 return self.data.copy()
+            try:
+                ret = self.data.astype(numpy.float)
+            except ValueError:
+                msg = 'Can only create scipy {0} matrix from numeric data'
+                raise ValueError(msg.format(to[-3:]))
+            if to == 'scipycsc':
+                return ret.tocsc()
+            if to == 'scipycsr':
+                return ret.tocsr()
         if to == 'pandasdataframe':
             if not pd:
                 msg = "pandas is not available"
@@ -1090,6 +1093,12 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        if self.data.dtype not in usableTypes:
+            self._sorted = None
+            return self.data.astype(convertTo)
+        return self.data
+
 ###################
 # Generic Helpers #
 ###################
@@ -1349,3 +1358,18 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        # We do not want to change the SparseView objects data attribute!
+        # This converts the data types of the source object's data attribute
+        # This process maintains equality only data types may change
+        try:
+            ret = self._source._convertUnusableTypes_implementation(
+                convertTo, usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self._source.data = ret

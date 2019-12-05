@@ -554,7 +554,9 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
             npOp = '__matmul__'
         else:
             npOp = opName
-
+        print(opName)
+        print(lhsf)
+        print(rhsf)
         resultf = getattr(lhsf, npOp)(rhsf)
         resulti = getattr(lhsi, npOp)(rhsi)
         resfObj = getattr(lhsfObj, opName)(rhsfObj)

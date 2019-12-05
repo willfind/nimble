@@ -1745,11 +1745,11 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        # toPlot = self.copy(to='numpyarray')
+        toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandling(outPath, plotter, d=self.data)
+        p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot)
         return p
 
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
@@ -3607,6 +3607,15 @@ class Base(object):
             msg += "empty"
             raise ImproperObjectAction(msg)
 
+        try:
+            self._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            self._numericValidation()
+        try:
+            other._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            other._numericValidation(right=True)
+
         if opName.startswith('__r'):
             caller = other
             callee = self
@@ -4000,7 +4009,34 @@ class Base(object):
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        """
+        Convert the data if necessary.
+
+        Convert any type not in usableTypes to the convertTo type.
+        Conversion is done inplace if returnCopy is set to False
+        """
+        try:
+            ret = self._convertUnusableTypes_implementation(convertTo,
+                                                            usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self.data = ret
+
     def _genericBinaryOperations(self, opName, other):
+        if 'pow' in opName:
+            usableTypes = (float,)
+        else:
+            usableTypes = (int, float, bool)
+        try:
+            self._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            self._numericValidation()
         if isinstance(other, Stretch):
             # __ipow__ does not work if return NotImplemented
             if opName == '__ipow__':
@@ -4010,6 +4046,10 @@ class Base(object):
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
+            try:
+                other._convertUnusableTypes(float, usableTypes, False)
+            except ImproperObjectAction:
+                other._numericValidation(right=True)
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
@@ -4084,9 +4124,9 @@ class Base(object):
         >>> pointObj = nimble.createData('List', rawPt)
         >>> baseObj * pointObj.stretch
         Matrix(
-            [[1 4  9 ]
-             [4 10 18]
-             [0 -2 -6]]
+            [[1.000 4.000  9.000 ]
+             [4.000 10.000 18.000]
+             [0.000 -2.000 -6.000]]
             )
 
         Stretched feature with nimble Base object.
@@ -4097,9 +4137,9 @@ class Base(object):
         >>> featObj = nimble.createData('List', rawFt)
         >>> featObj.stretch + baseObj
         List(
-            [[2 3 4]
-             [6 7 8]
-             [3 2 1]]
+            [[2.000 3.000 4.000]
+             [6.000 7.000 8.000]
+             [3.000 2.000 1.000]]
             )
 
         Two stretched objects.
@@ -4110,15 +4150,15 @@ class Base(object):
         >>> featObj = nimble.createData('List', rawFt)
         >>> pointObj.stretch - featObj.stretch
         Matrix(
-            [[0  1  2]
-             [-1 0  1]
-             [-2 -1 0]]
+            [[0.000  1.000  2.000]
+             [-1.000 0.000  1.000]
+             [-2.000 -1.000 0.000]]
             )
         >>> featObj.stretch - pointObj.stretch
         List(
-            [[0 -1 -2]
-             [1 0  -1]
-             [2 1  0 ]]
+            [[0.000 -1.000 -2.000]
+             [1.000 0.000  -1.000]
+             [2.000 1.000  0.000 ]]
             )
         """
         return Stretch(self)
@@ -4823,6 +4863,10 @@ class Base(object):
 
     @abstractmethod
     def _mul__implementation(self, other):
+        pass
+
+    @abstractmethod
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
         pass
 
 class BasePoints(Axis, Points):

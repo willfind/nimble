@@ -13,7 +13,7 @@ from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import PackageException
+from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble.utility import ImportModule
 from .base import Base
@@ -599,6 +599,20 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        def needConversion(val):
+            return type(val) not in usableTypes
+
+        def convertType(val):
+            if type(val) in usableTypes:
+                return val
+            return convertTo(val)
+
+        if any(any(needConversion(v) for v in ft) for ft in self.features):
+            return [list(map(convertType, pt)) for pt in self.points]
+        return self.data
+
+
 class ListView(BaseView, List):
     """
     Read only access to a List object.
@@ -644,6 +658,21 @@ class ListView(BaseView, List):
                         featureNames=ftNames, shape=self.shape)
         else:
             return listForm
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        # We do not want to change the ListView objects data attribute!
+        # This converts the data types of the source object's data attribute
+        # This process maintains equality only data types may change
+        try:
+            ret = self._source._convertUnusableTypes_implementation(
+                convertTo, usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self._source.data = ret
 
 class FeatureViewer(object):
     """
@@ -725,6 +754,10 @@ class ListPassThrough(object):
     def __array__(self, dtype=None):
         tmpArray = numpy.array(self.source.data, dtype=dtype)
         return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
+
+###########
+# Helpers #
+###########
 
 def convertList(constructor, data):
     convert = constructor(data)

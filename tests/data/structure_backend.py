@@ -8315,7 +8315,7 @@ class StructureModifying(StructureShared):
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
         transformMapping = {1: None}
-        expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
+        expData = [[0, 0, 0], [numpy.nan, numpy.nan, numpy.nan], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 

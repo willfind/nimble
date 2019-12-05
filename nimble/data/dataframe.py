@@ -59,7 +59,7 @@ class DataFrame(Base):
             else:
                 self.data = data.copy()
         else:
-            self.data = pd.DataFrame(data)
+            self.data = pd.DataFrame(data, copy=True)
 
         kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
@@ -199,12 +199,17 @@ class DataFrame(Base):
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            if to == 'scipycsc':
-                return scipy.sparse.csc_matrix(self.data.values)
-            if to == 'scipycsr':
-                return scipy.sparse.csr_matrix(self.data.values)
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(self.data.values)
+            try:
+                ret = self.data.values.astype(numpy.float)
+            except ValueError:
+                msg = 'Can only create scipy {0} matrix from numeric data'
+                raise ValueError(msg.format(to[-3:]))
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(ret)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
             if not pd:
                 msg = "pandas is not available"
@@ -406,6 +411,11 @@ class DataFrame(Base):
         else:
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
+
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        if not all(dtype in usableTypes for dtype in self.data.dtypes):
+            return self.data.astype(convertTo)
+        return self.data
 
 
 class DataFrameView(BaseView, DataFrame):

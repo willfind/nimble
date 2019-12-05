@@ -505,12 +505,14 @@ def convertToArray(rawData, pointNames, featureNames):
         return numpy.empty([lenPts, lenFts])
     if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
         return numpy.empty([len(rawData), lenFts])
-
-    # for lists we cannot be confident the array will not convert objects
-    # so we always use object dtype
+    # The bool dtype is acceptable, but others run the risk of transforming the
+    # data so we default to object dtype.
+    arr = numpy2DArray(rawData)
+    if arr.dtype == bool:
+        return arr
     return numpy2DArray(rawData, dtype=numpy.object_)
 
-def elementTypeConvert(rawData, convertToType=None):
+def elementTypeConvert(rawData, convertToType):
     """
     Attempt to convert rawData to the specified convertToType.
     """

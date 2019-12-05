@@ -1358,14 +1358,14 @@ class TrainedLearner(object):
         ...                   k=1)
         >>> tl.apply(testX)
         Matrix(
-            [[1.000]
-             [3.000]]
+            [[1]
+             [3]]
             )
         >>> tl.retrain(trainX, trainY, k=3)
         >>> tl.apply(testX)
         Matrix(
-            [[3.000]
-             [3.000]]
+            [[3]
+             [3]]
             )
         """
         has2dOutput = False
