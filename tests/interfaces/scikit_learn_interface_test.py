@@ -814,7 +814,7 @@ def test_getScores_acceptsNewArguments():
     # Need to set convertToType b/c conversion will not be done when check_input=False
     trainObj = nimble.createData('Matrix', train, convertToType=numpy.float32, useLog=False)
     testObj = nimble.createData('Matrix', testX, convertToType=numpy.float32, useLog=False)
-
+    
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
     assert 'check_input' not in tl.transformedArguments

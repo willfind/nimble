@@ -554,9 +554,7 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
             npOp = '__matmul__'
         else:
             npOp = opName
-        print(opName)
-        print(lhsf)
-        print(rhsf)
+
         resultf = getattr(lhsf, npOp)(rhsf)
         resulti = getattr(lhsi, npOp)(rhsi)
         resfObj = getattr(lhsfObj, opName)(rhsfObj)
@@ -1473,7 +1471,7 @@ class NumericalDataSafe(DataTestObject):
         rhsObj = self.constructor(rhs)
 
         exp = self.getLogicalExpectedOutput(logicOp)
-        expObj = self.constructor(exp, convertToType=bool)
+        expObj = self.constructor(exp)
 
         assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 
@@ -1485,7 +1483,7 @@ class NumericalDataSafe(DataTestObject):
         lhsObj = self.constructor(lhs)
 
         exp = self.getLogicalExpectedOutput(logicOp)
-        expObj = self.constructor(exp, convertToType=bool)
+        expObj = self.constructor(exp)
         for rType in [t for t in nimble.data.available if t != lhsObj.getTypeString()]:
             rhsObj = nimble.createData(rType, rhs, useLog=False)
 
@@ -1571,7 +1569,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[True, True], [False, False]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, convertToType=bool)
+        expObj = self.constructor(exp)
 
         assert ~boolsObj == expObj
 
@@ -1580,7 +1578,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[1, 1], [0, 0]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, convertToType=bool)
+        expObj = self.constructor(exp)
 
         assert ~boolsObj == expObj
 
@@ -1589,7 +1587,7 @@ class NumericalDataSafe(DataTestObject):
         bools = [[1.0, 1.0], [0.0, 0.0]]
         boolsObj = self.constructor(bools)
         exp = [[False, False], [True, True]]
-        expObj = self.constructor(exp, convertToType=bool)
+        expObj = self.constructor(exp)
 
         assert ~boolsObj == expObj
 

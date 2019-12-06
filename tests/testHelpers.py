@@ -457,16 +457,16 @@ def testtrainAndApplyOneVsOne():
     results2 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
     results3 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
 
-    assert results1.data[0][0] == 1.0
-    assert results1.data[1][0] == 2.0
-    assert results1.data[2][0] == 3.0
+    assert results1.data[0][0] == 1
+    assert results1.data[1][0] == 2
+    assert results1.data[2][0] == 3
     assert len(results1.data) == 3
 
-    assert results2.data[0][0] == 1.0
+    assert results2.data[0][0] == 1
     assert results2.data[0][1] == 2
-    assert results2.data[1][0] == 2.0
+    assert results2.data[1][0] == 2
     assert results2.data[1][1] == 2
-    assert results2.data[2][0] == 3.0
+    assert results2.data[2][0] == 3
     assert results2.data[2][1] == 2
 
     results3FeatureMap = results3.features.getNames()
@@ -478,13 +478,13 @@ def testtrainAndApplyOneVsOne():
             # as they would have been generated from float data
             if i == 0:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(float(1))
+                    assert results3FeatureMap[j] == str(1)
             elif i == 1:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(float(2))
+                    assert results3FeatureMap[j] == str(2)
             else:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(float(3))
+                    assert results3FeatureMap[j] == str(3)
 
 
 @raises(InvalidArgumentValueCombination)

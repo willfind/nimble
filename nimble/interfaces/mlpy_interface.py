@@ -23,7 +23,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, dtypeConvert
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -219,11 +219,13 @@ To install mlpy
                 transTrainX = trainX.data
             else:
                 transTrainX = trainX.copy(to='numpy array')
+            transTrainX = dtypeConvert(transTrainX)
         else:
             transTrainX = None
 
         if trainY is not None:
             transTrainY = trainY.copy(to='numpy array', outputAs1D=True)
+            transTrainY = dtypeConvert(transTrainY)
         else:
             transTrainY = None
 
@@ -232,6 +234,7 @@ To install mlpy
                 transTestX = testX.data
             else:
                 transTestX = testX.copy(to='numpy array')
+            transTestX = dtypeConvert(transTestX)
         else:
             transTestX = None
 

@@ -808,8 +808,8 @@ def createData(
         convert every value to the given type, an exception will be
         raised. The default, None, will retain the object types as is
         when creating the object. Note: This only applies during the
-        creation process, nimble will modify types on the backend,
-        whenever necessary.
+        creation process, nimble will modify types on the backend as
+        necessary.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.

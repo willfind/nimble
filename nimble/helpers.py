@@ -483,9 +483,9 @@ def convertData(returnType, rawData, pointNames, featureNames,
         if returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
-    return convertToArray(rawData, pointNames, featureNames)
+    return convertToArray(rawData, convertToType, pointNames, featureNames)
 
-def convertToArray(rawData, pointNames, featureNames):
+def convertToArray(rawData, convertToType, pointNames, featureNames):
     if pd and isinstance(rawData, pd.DataFrame):
         return rawData.values
     if pd and isinstance(rawData, pd.Series):
@@ -505,9 +505,14 @@ def convertToArray(rawData, pointNames, featureNames):
         return numpy.empty([lenPts, lenFts])
     if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
         return numpy.empty([len(rawData), lenFts])
+    if convertToType is not None:
+        arr = numpy2DArray(rawData, dtype=convertToType)
+        # run through elementType to convert to object if not accepted type
+        return elementTypeConvert(arr, None)
+    else:
+        arr = numpy2DArray(rawData)
     # The bool dtype is acceptable, but others run the risk of transforming the
     # data so we default to object dtype.
-    arr = numpy2DArray(rawData)
     if arr.dtype == bool:
         return arr
     return numpy2DArray(rawData, dtype=numpy.object_)
@@ -516,9 +521,13 @@ def elementTypeConvert(rawData, convertToType):
     """
     Attempt to convert rawData to the specified convertToType.
     """
-    allowedElemTypes = [int, float, bool, object]
+
+    def allowedElemType(elemType):
+        return (elemType in [int, float, bool, object]
+                or numpy.issubdtype(elemType, numpy.number))
+
     if convertToType is None:
-        if hasattr(rawData, 'dtype') and rawData.dtype not in allowedElemTypes:
+        if hasattr(rawData, 'dtype') and not allowedElemType(rawData.dtype):
             rawData = rawData.astype(numpy.object_)
         return rawData
     if (isinstance(rawData, numpy.ndarray)
@@ -526,7 +535,7 @@ def elementTypeConvert(rawData, convertToType):
             or (pd and isinstance(rawData, (pd.DataFrame, pd.Series)))):
         try:
             converted = rawData.astype(convertToType)
-            if converted.dtype not in allowedElemTypes:
+            if not allowedElemType(converted.dtype):
                 converted = rawData.astype(numpy.object_)
             return converted
         except (TypeError, ValueError) as err:
@@ -3134,18 +3143,21 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
             pointsList.append(curFeatureVector)
             clusterNoiselessLabelList.append([float(curCluster)])
 
-
+    pointsArray = numpy.array(pointsList, dtype=numpy.float)
+    labelsArray = numpy.array(labelsList, dtype=numpy.float)
+    clusterNoiselessLabelArray = numpy.array(clusterNoiselessLabelList,
+                                             dtype=numpy.float)
     # todo verify that your list of lists is valid initializer for all
     # datatypes, not just matrix
     # then convert
     # finally make matrix object out of the list of points w/ labels in last
     # column of each vector/entry:
-    pointsObj = nimble.createData('Matrix', pointsList, useLog=False)
+    pointsObj = nimble.createData('Matrix', pointsArray, useLog=False)
 
-    labelsObj = nimble.createData('Matrix', labelsList, useLog=False)
+    labelsObj = nimble.createData('Matrix', labelsArray, useLog=False)
 
     # todo change actuallavels to something like associatedClusterCentroid
-    noiselessLabelsObj = nimble.createData('Matrix', clusterNoiselessLabelList,
+    noiselessLabelsObj = nimble.createData('Matrix', clusterNoiselessLabelArray,
                                            useLog=False)
 
     # convert datatype if not matrix

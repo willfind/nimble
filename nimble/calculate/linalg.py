@@ -10,7 +10,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule
+from nimble.utility import ImportModule, dtypeConvert
 
 scipy = ImportModule('scipy')
 
@@ -73,7 +73,7 @@ def inverse(aObj):
 
     if aObj.getTypeString() in ['Matrix', 'DataFrame', 'List']:
         try:
-            invObj = aObj.copy(to='numpy array').astype(numpy.float)
+            invObj = dtypeConvert(aObj.copy(to='numpy array'))
             invData = scipy.linalg.inv(invObj.data)
         except scipy.linalg.LinAlgError as exception:
             _handleSingularCase(exception)
@@ -88,7 +88,7 @@ def inverse(aObj):
 
     else:
         try:
-            invObj = aObj.copy(to='scipy coo').astype(numpy.float).tocsc()
+            invObj = aObj.copy(to='scipy csc')
             invData = scipy.sparse.linalg.inv(invObj)
         except RuntimeError as exception:
             _handleSingularCase(exception)
@@ -170,7 +170,7 @@ def pseudoInverse(aObj, method='svd'):
         else:
             raise exception
 
-    pinvObj = aObj.copy(to='numpy array').astype(numpy.float)
+    pinvObj = dtypeConvert(aObj.copy(to='numpy array'))
     if method == 'svd':
         try:
             pinvData = scipy.linalg.pinv2(pinvObj)
@@ -286,8 +286,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
     # Solve
     if aObj.getTypeString() == 'Matrix':
-        aData = aObj.data.astype(numpy.float)
-        bData = bObj.data.astype(numpy.float)
+        aData = dtypeConvert(aObj.data)
+        bData = dtypeConvert(bObj.data)
         if solverFunction.__name__ == 'solve':
             solution = scipy.linalg.solve(aData, bData)
             solution = solution.T
@@ -297,8 +297,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
     elif aObj.getTypeString() == 'Sparse':
         aCopy = aObj.copy()
-        aData = aCopy.data.astype(numpy.float)
-        bData = numpy.asarray(bObj.data).astype(numpy.float)
+        aData = dtypeConvert(aCopy.data)
+        bData = dtypeConvert(numpy.asarray(bObj.data))
         if solverFunction.__name__ == 'solve':
             solution = scipy.sparse.linalg.spsolve(aData, bData)
             solution = solution

@@ -21,7 +21,7 @@ from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, dtypeConvert
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -283,17 +283,14 @@ To install scikit-learn
                 trainX = trainX.copy().data
             else:
                 trainX = trainX.copy(to='numpy array')
+            trainX = dtypeConvert(trainX)
 
         if trainY is not None:
             if len(trainY.features) > 1:
                 trainY = (trainY.copy(to='numpy array'))
             else:
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
-            if trainY.dtype == numpy.object_:
-                try:
-                    trainY = trainY.astype(numpy.float)
-                except ValueError:
-                    pass
+            trainY = dtypeConvert(trainY)
 
         if testX is not None:
             mustCopyTestX = ['StandardScaler']
@@ -304,6 +301,7 @@ To install scikit-learn
                 testX = testX.copy().data
             else:
                 testX = testX.copy(to='numpy array')
+            testX = dtypeConvert(testX)
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':

@@ -660,9 +660,10 @@ class ListView(BaseView, List):
             return listForm
 
     def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # We do not want to change the ListView objects data attribute!
+        # We do not want to change the data attribute for ListView!
         # This converts the data types of the source object's data attribute
-        # This process maintains equality only data types may change
+        # Note: Though this is a view object, we allow this modification since
+        # all the values remain equal and only the types change.
         try:
             ret = self._source._convertUnusableTypes_implementation(
                 convertTo, usableTypes)

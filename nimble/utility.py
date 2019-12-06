@@ -141,3 +141,15 @@ def sparseMatrixToArray(sparseMatrix):
         for (i, j), v in zip(zip(*nz), sparseMatrix.data):
             ret[i, j] = v
         return ret
+
+def dtypeConvert(obj):
+    """
+    Most learners need numeric dtypes so attempt to convert from
+    object dtype if possible, otherwise return object as-is.
+    """
+    if hasattr(obj, 'dtype') and obj.dtype == numpy.object_:
+        try:
+            obj = obj.astype(numpy.float)
+        except ValueError:
+            pass
+    return obj

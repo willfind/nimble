@@ -8,7 +8,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule
+from nimble.utility import ImportModule, dtypeConvert
 
 scipy = ImportModule('scipy')
 
@@ -248,7 +248,7 @@ def quartiles(values, ignoreNoneOrNan=True):
 
     if isinstance(values, nimble.data.Base):
         #conver to a horizontal array
-        values = values.copy(to="numpyarray").flatten()
+        values = dtypeConvert(values.copy(to="numpyarray").flatten())
 
     if ignoreNoneOrNan:
         values = [v for v in values if not _isMissing(v)]
@@ -339,8 +339,8 @@ def residuals(toPredict, controlVars):
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
     workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
-    workingCV = workingCV.copy(to="numpy array")
-    workingTP = toPredict.copy(to="numpy array")
+    workingCV = dtypeConvert(workingCV.copy(to="numpy array"))
+    workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 
     x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
     pred = numpy.matmul(workingCV, x)

@@ -1801,7 +1801,7 @@ class TrainedLearners(TrainedLearner):
                                                      useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
-                colHeaders = sorted([str(i) for i in self.labelSet])
+                colHeaders = sorted([str(float(i)) for i in self.labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
                 predictionMatrix = rawPredictions.copy(to="python list")

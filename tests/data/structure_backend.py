@@ -2229,10 +2229,6 @@ class StructureModifying(StructureShared):
             orig7 = self.constructor(pd.Series())
             orig8 = self.constructor(pd.SparseDataFrame())
 
-        print(orig1)
-        print(orig7)
-        print(orig1.data)
-        print(orig7.data)
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -8315,8 +8311,8 @@ class StructureModifying(StructureShared):
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
         transformMapping = {1: None}
-        expData = [[0, 0, 0], [numpy.nan, numpy.nan, numpy.nan], [0, 0, 0]]
-        expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
+        expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=[None])
         toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)

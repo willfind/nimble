@@ -62,16 +62,29 @@ class GetItemOnly(object):
 # Data values correctness #
 ###########################
 
-def test_createData_raw_stringConversion():
+def test_createData_raw_stringConversion_float():
     """
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                                   convertToType=float)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
+
+def test_createData_raw_stringConversion_int():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                                   convertToType=int)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, (int, numpy.integer)) for val in values)
 
 def test_createData_raw_noStringConversion():
     """
@@ -83,6 +96,30 @@ def test_createData_raw_noStringConversion():
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_numericConversion_str():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                   convertToType=str)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_numericConversion_float():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                   convertToType=float)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, float) for val in values)
 
 def test_createData_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
@@ -2521,8 +2558,8 @@ def test_DataOutputWithMissingDataTypes1D():
         orig3.features.sort(sortBy=orig3.points.getName(0))
         orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = nimble.createData(t, numpy.array([1,2,"None"]))
-        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"]))
+        orig5 = nimble.createData(t, numpy.array([1,2,"None"], dtype=object))
+        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"], dtype=object))
         if pd:
             orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
             orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
