@@ -1,7 +1,8 @@
-utility
+Utility
 =======
 
-.. automodule:: nimble.calculate.utility
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: detectBestResult
    :undoc-members:
    :show-inheritance:

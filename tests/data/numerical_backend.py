@@ -6,7 +6,7 @@ In object NumericalDataSafe:
 __mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__,
 __truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
 __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__,
-__matmul__, matrixMultiply, __rmatmul__, __imatmul__
+__matmul__, matrixMultiply, __rmatmul__, __imatmul__, matrixPower
 
 In object NumericalModifying:
 elements.power, elements.multiply, __imul__, __iadd__, __isub__,
@@ -513,44 +513,6 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
         toCall = getattr(toCall, attr2)
     toCall(callee)
 
-def back_byInfException(callerCon, calleeCon, attr1, attr2=None):
-    """ Test operation when other data contains an infinity """
-    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
-    data2 = [[1, 2, 3], [5, numpy.Inf, 10], [6, 7, 8]]
-    if attr1.startswith('__r'):
-        # put inf in lhs
-        data1, data2 = data2, data1
-        callee = calleeConstructor(data2, calleeCon)
-    elif calleeCon is None:
-        callee = numpy.Inf
-    else:
-        callee = calleeConstructor(data2, calleeCon)
-    caller = callerCon(data1)
-
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    toCall(callee)
-
-def back_byNanException(callerCon, calleeCon, attr1, attr2=None):
-    """ Test operation when other data contains an infinity """
-    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
-    data2 = [[1, 2, 3], [5, numpy.nan, 10], [6, 7, 8]]
-    if attr1.startswith('__r'):
-        # put inf in lhs
-        data1, data2 = data2, data1
-        callee = calleeConstructor(data2, calleeCon)
-    elif calleeCon is None:
-        callee = numpy.nan
-    else:
-        callee = calleeConstructor(data2, calleeCon)
-    caller = callerCon(data1)
-
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
-    toCall(callee)
-
 
 def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
     randomlf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
@@ -710,10 +672,6 @@ def wrapAndCall(toWrap, expected, *args):
 def run_full_backendDivMod(constructor, opName, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, opName))
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, None, opName))
-    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, constructor, opName))
-    wrapAndCall(back_byInfException, InvalidArgumentValue, *(constructor, None, opName))
-    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, constructor, opName))
-    wrapAndCall(back_byNanException, InvalidArgumentValue, *(constructor, None, opName))
 
     run_full_backend(constructor, opName, inplace, sparsity)
 
@@ -762,6 +720,86 @@ def back_sparseScalarOfOne(constructor, nimbleOp):
 
 
 class NumericalDataSafe(DataTestObject):
+
+    ###############
+    # matrixPower #
+    ###############
+
+    @raises(ImproperObjectAction)
+    def test_matrixPower_notSquare(self):
+        raw = [[1, 2, 3], [4, 5, 6]]
+        obj = self.constructor(raw)
+
+        ret = obj.matrixPower(2)
+
+    @raises(InvalidArgumentType)
+    def test_matrixPower_invalidPower(self):
+        raw = [[1, 2], [3, 4]]
+        obj = self.constructor(raw)
+
+        ret = obj.matrixPower(2.3)
+
+    @noLogEntryExpected
+    def test_matrixPower_powerOfZero(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(0)
+
+        expRaw = [[1, 0], [0, 1]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        assert ret == exp
+
+    @noLogEntryExpected
+    def test_matrixPower_positivePower(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(3)
+
+        expRaw = [[37,  54], [81, 118]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        assert ret == exp
+
+    @noLogEntryExpected
+    def test_matrixPower_negativePower(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
+
+        expRaw = [[-14.75 , 6.75], [10.125, -4.625]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        # can be small differences due to inverse calculation
+        assert ret.isApproximatelyEqual(exp)
+
+    @raises(CalledFunctionException)
+    @patch('nimble.calculate.inverse', calledException)
+    def test_matrixPower_callsNimbleCalculateInverse(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
+
+    @raises(InvalidArgumentValue)
+    def test_matrixPower_notInvertable(self):
+        raw = [[1, 1], [1, 1]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
 
     ###############################
     # __matmul__ / matrixMultiply #

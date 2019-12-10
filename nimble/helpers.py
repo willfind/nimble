@@ -37,10 +37,11 @@ from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import ImportModule, cooMatrixToArray
 
-scipy = nimble.importModule('scipy.io')
-pd = nimble.importModule('pandas')
-requests = nimble.importModule('requests')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
+requests = ImportModule('requests')
 
 
 def findBestInterface(package):
@@ -85,7 +86,11 @@ def _learnerQuery(name, queryType):
         raise InvalidArgumentValue("Unrecognized queryType: " + queryType)
 
     interface = findBestInterface(package)
-    return getattr(interface, toCallName)(learnerName)
+    ret = getattr(interface, toCallName)(learnerName)
+
+    if len(ret) == 1:
+        return ret[0]
+    return ret
 
 
 def isAllowedRaw(data, allowLPT=False):
@@ -484,12 +489,13 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = elementTypeConvert(rawData.todense(), elementType)
+        rawData = elementTypeConvert(cooMatrixToArray(rawData), elementType)
 
     if (returnType == 'Sparse'
             and is2DArray(rawData)
-            and rawData.shape[0]*rawData.shape[1] > 0):
-    #replace None to np.NaN, o.w. coo_matrix will convert None to 0
+            and rawData.shape[0]*rawData.shape[1] > 0
+            and rawData.dtype is numpy.object_):
+        #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
 
@@ -849,7 +855,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
-            if requests is None:
+            if not requests:
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)
@@ -876,7 +882,7 @@ def createDataFromFile(
                 toPass = BytesIO(content)
                 isMtxFile = isMtxFileChecker(toPass)
         else:
-            toPass = open(data, 'rU')
+            toPass = open(data, 'r')
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:
@@ -897,18 +903,22 @@ def createDataFromFile(
     else:
         directPath = None
 
-    if directPath in globals():
-        loader = globals()[directPath]
-        loaded = loader(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
-    # If we don't know, default to trying to load a value separated file
-    else:
-        loaded = _loadcsvUsingPython(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    # want to make sure we close the file if loading fails
+    try:
+        if directPath in globals():
+            loader = globals()[directPath]
+            loaded = loader(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
+        # If we don't know, default to trying to load a value separated file
+        else:
+            loaded = _loadcsvUsingPython(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
-    (retData, retPNames, retFNames, selectSuccess) = loaded
+        (retData, retPNames, retFNames, selectSuccess) = loaded
+    finally:
+        toPass.close()
 
     # auto set name if unspecified, and is possible
     if isinstance(data, six.string_types):
@@ -1085,11 +1095,12 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
         rawData = scipy.sparse.csr_matrix(rawData)
 
     if rawData.shape[0] > 0:
-        firstRow = rawData[0].toarray().flatten().tolist()
+
+        firstRow = cooMatrixToArray(rawData[0]).flatten().tolist()
     else:
         firstRow = None
     if rawData.shape[0] > 1:
-        secondRow = rawData[1].toarray().flatten().tolist()
+        secondRow = cooMatrixToArray(rawData[1]).flatten().tolist()
     else:
         secondRow = None
     pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
@@ -1099,14 +1110,14 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
 
     retFNames = None
     if featureNames == 0:
-        retFNames = rawData[0].toarray().flatten().tolist()
+        retFNames = cooMatrixToArray(rawData[0]).flatten().tolist()
         retFNames = list(map(str, retFNames))
         rawData = rawData[1:]
 
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = rawData[:, 0].toarray().flatten().tolist()
+        retPNames = cooMatrixToArray(rawData[:, 0]).flatten().tolist()
         retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]

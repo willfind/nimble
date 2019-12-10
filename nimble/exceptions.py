@@ -91,15 +91,13 @@ class FileFormatException(NimbleException, ValueError):
     pass
 
 
-def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
-    Used in the creation of exception messages to display lists in a more
-    appealing way than default
-
+    Used in the creation of exception messages to display lists in a
+    more appealing way than default.
     """
     ret = ""
-    for i in range(len(inList)):
-        value = inList[i]
+    for i, value in enumerate(inList):
         if i > 0:
             ret += ', '
             if useAnd and i == len(inList) - 1:
@@ -110,24 +108,19 @@ def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     return ret
 
 
-def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
                       delim='=', valueStr=str):
     """
-    Used in the creation of exception messages to display dicts in a more
-    appealing way than default.
-
+    Used in the creation of exception messages to display dicts in a
+    more appealing way than default.
     """
     ret = ""
-    number = 0
-    keyList = list(inDict.keys())
-    for i in range(len(keyList)):
-        key = keyList[i]
-        value = inDict[key]
+    for i, (key, value) in enumerate(inDict.items()):
         if i > 0:
             ret += ', '
-            if useAnd and i == len(keyList) - 1:
+            if useAnd and i == len(inDict) - 1:
                 ret += 'and '
         if numberItems:
-            ret += '(' + str(number) + ') '
+            ret += '(' + str(i) + ') '
         ret += keyStr(key) + delim + valueStr(value)
     return ret

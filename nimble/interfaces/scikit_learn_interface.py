@@ -22,7 +22,6 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory
-from nimble.importExternalLibraries import importModule
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -56,12 +55,19 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
-            # each pkg is a tuple (importer, moduleName, isPackage)
-            # we want to ignore anything not in __all__ to prevent trying
-            # to import libraries outside of scikit-learn dependencies
             sklAll = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll
-                    and importModule(pkg[1]) is not None]
+            ret = []
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # we want to ignore anything not in __all__ and any private
+            # modules to prevent trying to import libraries outside of
+            # scikit-learn dependencies
+            for pkg in packages:
+                nameSplit = pkg[1].split('.')
+                allPublic = all(not n.startswith('_') for n in nameSplit)
+                if nameSplit[1] in sklAll and allPublic:
+                    ret.append(pkg)
+
+            return ret
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:
@@ -334,18 +340,21 @@ To install scikit-learn
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         if self._versionSplit[1] < 19:
-            msg = "nimble was tested using sklearn 0.19 and above, we cannot be "
-            msg += "sure of success for version {0}".format(self.version())
+            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
+            msg += "be sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
-        # get parameter names
+        # init learner
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+        initParams = {name: arguments[name] for name in initNames
+                      if name in arguments}
+        defaults = self.getLearnerDefaultValues(learnerName)[0]
+        if 'random_state' in defaults and 'random_state' not in arguments:
+            initParams['random_state'] = defaults['random_state']
+        learner = self.findCallable(learnerName)(**initParams)
 
-        # pack parameter sets
-        initParams = {}
-        for name in initNames:
-            initParams[name] = arguments[name]
+        # fit learner
+        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
         fitParams = {}
         for name in fitNames:
             if name.lower() == 'x' or name.lower() == 'obs':
@@ -354,11 +363,12 @@ To install scikit-learn
                 value = trainY
             elif name.lower() == 'raw_documents':
                 value = trainX.tolist()[0] #1D list
-            else:
+            elif name in arguments:
                 value = arguments[name]
+            else:
+                continue
             fitParams[name] = value
 
-        learner = self.findCallable(learnerName)(**initParams)
         try:
             learner.fit(**fitParams)
         except ValueError as ve:
@@ -496,15 +506,12 @@ To install scikit-learn
             if 'random_state' in initParams:
                 index = initParams.index('random_state')
                 negdex = index - len(initParams)
-                initValues[negdex] = nimble.randomness.generateSubsidiarySeed()
+                seed = nimble.randomness.generateSubsidiarySeed()
+                initValues[negdex] = seed
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
             return None
         else:
             (args, _, _, d) = inspectArguments(getattr(namedModule, name))
-            if 'random_state' in args:
-                index = args.index('random_state')
-                negdex = index - len(args)
-                d[negdex] = nimble.randomness.generateSubsidiarySeed()
             (args, d) = removeFromTailMatchedLists(args, d, ignore)
             return (args, d)
