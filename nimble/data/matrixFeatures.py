@@ -13,6 +13,7 @@ from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
 from .features_view import FeaturesView
+from .dataHelpers import allDataIdentical
 
 class MatrixFeatures(MatrixAxis, Features):
     """
@@ -37,9 +38,10 @@ class MatrixFeatures(MatrixAxis, Features):
         startData = self._base.data[:, :insertBefore]
         endData = self._base.data[:, insertBefore:]
         self._base.data = numpy.concatenate((startData, toAdd.data, endData),
-                                              1)
+                                            1)
 
     def _transform_implementation(self, function, limitTo):
+        dtypes = []
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
@@ -48,15 +50,28 @@ class MatrixFeatures(MatrixAxis, Features):
                 msg = "function must return an iterable with as many elements "
                 msg += "as points in this object"
                 raise InvalidArgumentValue(msg)
-            try:
-                currRet = numpy.array(currRet, dtype=numpy.float)
-            except ValueError:
-                currRet = numpy.array(currRet, dtype=numpy.object_)
-                # need self.data to be object dtype if inserting object dtype
-                if numpy.issubdtype(self._base.data.dtype, numpy.number):
-                    self._base.data = self._base.data.astype(numpy.object_)
 
-            self._base.data[:, j] = numpy.array(currRet)
+            retArray = numpy.array(currRet)
+            if not numpy.issubdtype(retArray.dtype, numpy.number):
+                retArray = numpy.array(currRet, dtype=numpy.object_)
+            dtypes.append(retArray.dtype)
+            if self._base.data.dtype == numpy.object_:
+                self._base.data[:, j] = retArray
+            elif self._base.data.dtype == numpy.int:
+                if retArray.dtype == numpy.float:
+                    self._base.data = self._base.data.astype(numpy.float)
+                elif retArray.dtype != numpy.int:
+                    self._base.data = self._base.data.astype(numpy.object_)
+                self._base.data[:, j] = retArray
+            else:
+                if retArray.dtype not in [numpy.float, numpy.int]:
+                    self._base.data = self._base.data.astype(numpy.object_)
+                self._base.data[:, j] = retArray
+        # if transformations to an object dtype returned numeric dtypes and
+        # applied to all data we will convert to a float dtype.
+        if (self._base.data.dtype == numpy.object_ and limitTo is None
+                and all(numpy.issubdtype(dt, numpy.number) for dt in dtypes)):
+            self._base.data = self._base.data.astype(numpy.float)
 
     # def _flattenToOne_implementation(self):
     #     numElements = len(self._base.points) * len(self._base.features)

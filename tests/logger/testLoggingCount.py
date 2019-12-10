@@ -42,7 +42,7 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
+#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
@@ -50,8 +50,8 @@ nimble_logged = [
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'importModule', 'listLearners', 'learnerParameters',
-    'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
+    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
+    'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
@@ -209,10 +209,6 @@ def test_showLog_logCount():
     captureOutput(wrapped)
 
 @noLogEntryExpected
-def test_importModule_logCount():
-    pd = nimble.importModule('pandas')
-
-@noLogEntryExpected
 def test_CV_logCount():
     k = nimble.CV([1, 3, 5])
 
@@ -353,13 +349,12 @@ def testAllClassesDunderFunctions():
 ###########
 
 def captureOutput(toCall):
-    tmpFile = tempfile.TemporaryFile(mode='w')
-    backupOut = sys.stdout
-    sys.stdout = tmpFile
-    try:
-        for rType in nimble.data.available:
-            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
-            ret = toCall(obj)
-    finally:
-        sys.stdout = backupOut
-        tmpFile.close()
+    with tempfile.TemporaryFile(mode='w') as tmpFile:
+        backupOut = sys.stdout
+        sys.stdout = tmpFile
+        try:
+            for rType in nimble.data.available:
+                obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+                ret = toCall(obj)
+        finally:
+            sys.stdout = backupOut

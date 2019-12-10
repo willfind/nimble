@@ -36,11 +36,12 @@ from nimble.data.dataHelpers import isAllowedSingleElement
 from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
-from nimble.utility import numpy2DArray, is2DArray, cooMatrixToArray
+from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import ImportModule, cooMatrixToArray
 
-scipy = nimble.importModule('scipy.io')
-pd = nimble.importModule('pandas')
-requests = nimble.importModule('requests')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
+requests = ImportModule('requests')
 
 try:
     intern = sys.intern
@@ -517,8 +518,8 @@ def convertData(returnType, rawData, pointNames, featureNames,
     if (returnType == 'Sparse'
             and is2DArray(rawData)
             and rawData.shape[0]*rawData.shape[1] > 0
-            and rawData.dtype != int):
-    #replace None to np.NaN, o.w. coo_matrix will convert None to 0
+            and rawData.dtype == object):
+        #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
 
@@ -878,7 +879,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
-            if requests is None:
+            if not requests:
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)
@@ -905,7 +906,7 @@ def createDataFromFile(
                 toPass = BytesIO(content)
                 isMtxFile = isMtxFileChecker(toPass)
         else:
-            toPass = open(data, 'rU')
+            toPass = open(data, 'r')
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:
@@ -926,18 +927,22 @@ def createDataFromFile(
     else:
         directPath = None
 
-    if directPath in globals():
-        loader = globals()[directPath]
-        loaded = loader(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
-    # If we don't know, default to trying to load a value separated file
-    else:
-        loaded = _loadcsvUsingPython(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    # want to make sure we close the file if loading fails
+    try:
+        if directPath in globals():
+            loader = globals()[directPath]
+            loaded = loader(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
+        # If we don't know, default to trying to load a value separated file
+        else:
+            loaded = _loadcsvUsingPython(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
-    (retData, retPNames, retFNames, selectSuccess) = loaded
+        (retData, retPNames, retFNames, selectSuccess) = loaded
+    finally:
+        toPass.close()
 
     # auto set name if unspecified, and is possible
     if isinstance(data, six.string_types):

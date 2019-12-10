@@ -15,6 +15,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import ImportModule
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -24,8 +25,8 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 
-scipy = nimble.importModule('scipy.io')
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class List(Base):
@@ -194,34 +195,32 @@ class List(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        outFile = open(outPath, 'w')
+        with open(outPath, 'w') as outFile:
+            if includeFeatureNames:
+                def combine(a, b):
+                    return a + ',' + b
 
-        if includeFeatureNames:
-            def combine(a, b):
-                return a + ',' + b
+                fnames = self.features.getNames()
+                fnamesLine = reduce(combine, fnames)
+                fnamesLine += '\n'
+                if includePointNames:
+                    outFile.write('pointNames,')
 
-            fnames = self.features.getNames()
-            fnamesLine = reduce(combine, fnames)
-            fnamesLine += '\n'
-            if includePointNames:
-                outFile.write('pointNames,')
+                outFile.write(fnamesLine)
 
-            outFile.write(fnamesLine)
+            for point in self.points:
+                first = True
+                if includePointNames:
+                    currPname = point.points.getName(0)
+                    outFile.write(currPname)
+                    first = False
 
-        for point in self.points:
-            first = True
-            if includePointNames:
-                currPname = point.points.getName(0)
-                outFile.write(currPname)
-                first = False
-
-            for value in point:
-                if not first:
-                    outFile.write(',')
-                outFile.write(str(value))
-                first = False
-            outFile.write('\n')
-        outFile.close()
+                for value in point:
+                    if not first:
+                        outFile.write(',')
+                    outFile.write(str(value))
+                    first = False
+                outFile.write('\n')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -229,34 +228,33 @@ class List(Base):
         Function to write the data in this object to a matrix market
         file at the designated path.
         """
-        outFile = open(outPath, 'w')
-        outFile.write("%%MatrixMarket matrix array real general\n")
+        with open(outPath, 'w') as outFile:
+            outFile.write("%%MatrixMarket matrix array real general\n")
 
-        def writeNames(nameList):
-            for i, n in enumerate(nameList):
-                if i == 0:
-                    outFile.write('%#')
-                else:
-                    outFile.write(',')
-                outFile.write(n)
-            outFile.write('\n')
+            def writeNames(nameList):
+                for i, n in enumerate(nameList):
+                    if i == 0:
+                        outFile.write('%#')
+                    else:
+                        outFile.write(',')
+                    outFile.write(n)
+                outFile.write('\n')
 
-        if includePointNames:
-            writeNames(self.points.getNames())
-        else:
-            outFile.write('%#\n')
-        if includeFeatureNames:
-            writeNames(self.features.getNames())
-        else:
-            outFile.write('%#\n')
+            if includePointNames:
+                writeNames(self.points.getNames())
+            else:
+                outFile.write('%#\n')
+            if includeFeatureNames:
+                writeNames(self.features.getNames())
+            else:
+                outFile.write('%#\n')
 
-        outFile.write("{0} {1}\n".format(len(self.points), len(self.features)))
+            outFile.write("{0} {1}\n".format(len(self.points), len(self.features)))
 
-        for j in range(len(self.features)):
-            for i in range(len(self.points)):
-                value = self.data[i][j]
-                outFile.write(str(value) + '\n')
-        outFile.close()
+            for j in range(len(self.features)):
+                for i in range(len(self.points)):
+                    value = self.data[i][j]
+                    outFile.write(str(value) + '\n')
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, List):

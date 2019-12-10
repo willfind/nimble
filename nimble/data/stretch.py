@@ -6,7 +6,6 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.importExternalLibraries import importModule
 from . import dataHelpers
 from .dataHelpers import createDataNoValidation
 

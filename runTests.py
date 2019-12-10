@@ -223,6 +223,7 @@ class LoggerControl(object):
         nimble.settings.set("logger", "enableCrossValidationDeepLogging",
                             self._crossValBackupEnabled)
         nimble.settings.saveChanges("logger")
+        self.logDir.cleanup()
 
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose
@@ -242,5 +243,7 @@ if __name__ == '__main__':
         # causing ALOT of annoying warnings.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
+            # need to turn on warnings for tests/interfaces/universal_test
+            warnings.filterwarnings('always', module=r'.*universal_test')
             nose.run(addplugins=plugins, argv=args)
     exit(0)
