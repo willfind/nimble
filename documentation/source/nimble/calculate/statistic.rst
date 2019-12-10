@@ -1,7 +1,8 @@
-statistic
+Statistic
 =========
 
-.. automodule:: nimble.calculate.statistic
-   :members:
+.. automodule:: nimble.calculate
+   :noindex:
+   :members: maximum, mean, median, mode, minimum, uniqueCount, proportionMissing, proportionZero, quartiles, residuals, standardDeviation
    :undoc-members:
    :show-inheritance:

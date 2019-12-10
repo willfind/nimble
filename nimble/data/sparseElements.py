@@ -8,13 +8,12 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
+from nimble.utility import ImportModule
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
+scipy = ImportModule('scipy')
 
 class SparseElements(Elements):
     """
@@ -59,7 +58,7 @@ class SparseElements(Elements):
                 function.otypes = [numpy.object_]
                 data = function(data)
             shape = self._base.data.shape
-            values = coo_matrix((data, (row, col)), shape=shape)
+            values = scipy.sparse.coo_matrix((data, (row, col)), shape=shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
             return values
@@ -74,7 +73,8 @@ class SparseElements(Elements):
                     colSubset.append(col[idx])
                     dataSubset.append(val)
             dataSubset = function(dataSubset)
-            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
+            values = scipy.sparse.coo_matrix((dataSubset,
+                                              (rowSubset, colSubset)))
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
             return values
@@ -152,6 +152,8 @@ class SparseElements(Elements):
                 currRet = toTransform(val, pID, fID)
 
             self._base.data.data[index] = currRet
+
+        self._base.data.eliminate_zeros()
 
 class SparseElementsView(ElementsView, SparseElements):
     """

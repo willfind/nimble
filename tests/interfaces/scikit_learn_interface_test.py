@@ -22,13 +22,14 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
-sklearn = nimble.importExternalLibraries.importModule("sklearn")
+scipy = ImportModule('scipy')
+sklearn = ImportModule("sklearn")
 
 packageName = 'sciKitLearn'
 
@@ -250,10 +251,8 @@ def testSciKitLearnListLearners():
             params = nimble.learnerParameters(toCall(name))
             assert params is not None
             defaults = nimble.learnerDefaultValues(toCall(name))
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+            for key in defaults.keys():
+                assert key in params
 
 @sklSkipDec
 @raises(InvalidArgumentValue)
@@ -771,7 +770,7 @@ def test_applier_acceptsNewArguments():
 
     # StandardScaler.transform takes a 'copy' argument. Default is None.
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
-    assert tl.transformedArguments['copy'] is None
+    assert 'copy' not in tl.transformedArguments
     # using arguments parameter
     transformed = tl.apply(dataObj, arguments={'copy':True})
 
@@ -818,7 +817,7 @@ def test_getScores_acceptsNewArguments():
 
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
-    assert tl.transformedArguments['check_input'] is True
+    assert 'check_input' not in tl.transformedArguments
     # using arguments parameter
     transformed = tl.apply(testObj, arguments={'check_input':False})
 
