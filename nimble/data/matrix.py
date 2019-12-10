@@ -13,6 +13,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import ImportModule
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -23,8 +24,8 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 
-scipy = nimble.importModule('scipy')
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):

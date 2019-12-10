@@ -42,6 +42,7 @@ def test_callAllAsMain():
         env['PYTHONPATH'] = os.getcwd()
         cp = subprocess.run(cmd, stdout=spP, stderr=spP, cwd=os.getcwd(), env=env)
         results[script] = cp
+        tempOutDir.cleanup()
 
     print("")
     print("*** Results ***")

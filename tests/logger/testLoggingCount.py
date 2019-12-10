@@ -42,7 +42,7 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
+#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
@@ -50,8 +50,8 @@ nimble_logged = [
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'importModule', 'listLearners', 'learnerParameters',
-    'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
+    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
+    'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
@@ -96,17 +96,18 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
     'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matrixMultiply', 'merge',
+    'flattenToOnePoint', 'groupByFeature', 'merge',
     'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
-    'inverse', 'isApproximatelyEqual', 'isIdentical', 'nameIsDefault', 'plot',
-    'plotFeatureAgainstFeature', 'plotFeatureAgainstFeatureRollingAverage',
-    'plotFeatureDistribution', 'pointView', 'referenceDataFrom', 'save',
-    'show', 'solveLinearSystem', 'toString', 'validate', 'view', 'writeFile',
+    'inverse', 'isApproximatelyEqual', 'isIdentical', 'matrixMultiply',
+    'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
+    'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
+    'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
+    'toString', 'validate', 'view', 'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -204,10 +205,6 @@ def test_showLog_logCount():
     def wrapped(obj):
         return nimble.showLog()
     captureOutput(wrapped)
-
-@noLogEntryExpected
-def test_importModule_logCount():
-    pd = nimble.importModule('pandas')
 
 @noLogEntryExpected
 def test_CV_logCount():
@@ -350,13 +347,12 @@ def testAllClassesDunderFunctions():
 ###########
 
 def captureOutput(toCall):
-    tmpFile = tempfile.TemporaryFile(mode='w')
-    backupOut = sys.stdout
-    sys.stdout = tmpFile
-    try:
-        for rType in nimble.data.available:
-            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
-            ret = toCall(obj)
-    finally:
-        sys.stdout = backupOut
-        tmpFile.close()
+    with tempfile.TemporaryFile(mode='w') as tmpFile:
+        backupOut = sys.stdout
+        sys.stdout = tmpFile
+        try:
+            for rType in nimble.data.available:
+                obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+                ret = toCall(obj)
+        finally:
+            sys.stdout = backupOut

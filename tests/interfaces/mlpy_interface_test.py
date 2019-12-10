@@ -11,12 +11,13 @@ import numpy.testing
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.mlpy_interface import Mlpy
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-mlpy = nimble.importExternalLibraries.importModule("mlpy")
+mlpy = ImportModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 
@@ -379,10 +380,8 @@ def testMlpyListLearners():
             params = nimble.learnerParameters('mlpy.' + name)
             assert params is not None
             defaults = nimble.learnerDefaultValues('mlpy.' + name)
-            for pSet in params:
-                for dSet in defaults:
-                    for key in dSet.keys():
-                        assert key in pSet
+            for key in defaults.keys():
+                assert key in params
 
 @mlpySkipDec
 @logCountAssertionFactory(8)
