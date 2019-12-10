@@ -117,6 +117,10 @@ class Shogun(PredefinedInterface, UniversalInterface):
     #######################################
 
     def accessible(self):
+        try:
+            import shogun
+        except ImportError:
+            return False
         return True
 
 

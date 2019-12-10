@@ -7,14 +7,12 @@ import random
 
 import numpy
 
-from .importExternalLibraries import importModule
+from .utility import ImportModule
 from .logger import handleLogging
 
-shogun = importModule('shogun')
-shogunRandom = None
-if shogun is not None:
-    shogunRandom = shogun.Math
-    shogunRandom.init_random(42)
+shogun = ImportModule('shogun')
+if shogun:
+    shogun.Math.init_random(42)
 
 pythonRandom = random.Random(42)
 numpyRandom = numpy.random.RandomState(42)
@@ -39,11 +37,11 @@ def setRandomSeed(seed, useLog=None):
     global _stillDefault
     pythonRandom.seed(seed)
     numpyRandom.seed(seed)
-    if shogun is not None:
+    if shogun:
         if seed is None:
             # use same seed as numpy used
             seed = int(numpyRandom.get_state()[1][0])
-        shogunRandom.init_random(seed)
+        shogun.Math.init_random(seed)
     if _saved != (None, None, None):
         _stillDefault = False
 
@@ -108,8 +106,8 @@ def startAlternateControl(seed=None):
     """
     global _saved
 
-    if shogun is not None:
-        shogunSeed = shogunRandom.get_seed()
+    if shogun:
+        shogunSeed = shogun.Math.get_seed()
     else:
         shogunSeed = None
 
@@ -131,6 +129,6 @@ def endAlternateControl():
     if _saved != (None, None, None):
         pythonRandom.setstate(_saved[0])
         numpyRandom.set_state(_saved[1])
-        if shogun is not None:
-            shogunRandom.init_random(_saved[2])
+        if shogun:
+            shogun.Math.init_random(_saved[2])
         _saved = (None, None, None)

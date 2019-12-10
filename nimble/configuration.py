@@ -634,6 +634,7 @@ def configSafetyWrapper(toWrap):
             configurationFile = open(configFilePath, 'w')
             configurationFile.write(backupFile.read())
             configurationFile.close()
+            backupFile.close()
 
             nimble.settings = nimble.configuration.loadSettings()
             nimble.settings.changes = backupChanges

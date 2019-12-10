@@ -12,11 +12,11 @@ import re
 import numpy
 
 import nimble
-from nimble import importModule
+from nimble.utility import ImportModule
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
-pd = importModule('pandas')
+pd = ImportModule('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"

@@ -290,6 +290,51 @@ class HighLevelDataSafe(DataTestObject):
 
         assert counts.isIdentical(exp)
 
+    def test_points_calculate_zerosReturned(self):
+
+        def returnAllZero(pt):
+            return [0 for val in pt]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.points.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(pt):
+            return [0 if v == 1 else 1 for v in pt]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.points.calculate(invert)
+        assert ret2 == exp2
+
+    def test_points_calculate_conversionWhenIntType(self):
+
+        def addTenth(pt):
+            return [v + 0.1 for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.points.calculate(addTenth)
+        assert ret == exp
+
+    def test_points_calculate_stringReturnsPreserved(self):
+
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.points.calculate(toString)
+        assert ret == exp
+
     ##########################
     # .features.calculate() #
     #########################
@@ -502,6 +547,51 @@ class HighLevelDataSafe(DataTestObject):
 
         assert counts.isIdentical(exp)
 
+    def test_features_calculate_zerosReturned(self):
+
+        def returnAllZero(ft):
+            return [0 for val in ft]
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.features.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(ft):
+            return [0 if v == 1 else 1 for v in ft]
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.features.calculate(invert)
+        assert ret2 == exp2
+
+    def test_features_calculate_conversionWhenIntType(self):
+
+        def addTenth(ft):
+            return [v + 0.1 for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.features.calculate(addTenth)
+        assert ret == exp
+
+    def test_features_calculate_stringReturnsPreserved(self):
+
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.features.calculate(toString)
+        assert ret == exp
+
     #######################
     # .elements.calculate #
     #######################
@@ -669,6 +759,57 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=False)
         exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
+        assert ret == exp
+
+    def test_elements_calculate_zerosReturned(self):
+
+        def returnAllZero(elem):
+            return 0
+
+        orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
+        exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret1 = orig1.elements.calculate(returnAllZero)
+        assert ret1 == exp1
+
+        def invert(elem):
+            return 0 if elem == 1 else 1
+
+        orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
+
+        ret2 = orig2.elements.calculate(invert)
+        assert ret2 == exp2
+
+        orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
+        exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        ret3 = orig3.elements.calculate(invert, preserveZeros=True)
+        assert ret3 == exp3
+
+    def test_elements_calculate_conversionWhenIntType(self):
+
+        def addTenth(elem):
+            return elem + 0.1
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
+
+        ret = orig.elements.calculate(addTenth)
+        assert ret == exp
+
+    def test_elements_calculate_stringReturnsPreserved(self):
+
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
+                                elementType=int)
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
+                               elementType=object)
+
+        ret = orig.elements.calculate(toString)
         assert ret == exp
 
     ######################
@@ -1090,35 +1231,35 @@ class HighLevelDataSafe(DataTestObject):
     def test_trainAndTestSets_nameAppend_PathPreserve(self):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
         toTest = self.constructor(data, )
-        tmpFile = tempfile.NamedTemporaryFile(suffix='.csv')
-        toTest.writeFile(tmpFile.name, fileFormat='csv')
+        with tempfile.NamedTemporaryFile(suffix='.csv') as tmpFile:
+            toTest.writeFile(tmpFile.name, fileFormat='csv')
 
-        toTest = self.constructor(tmpFile.name, name='toTest')
+            toTest = self.constructor(tmpFile.name, name='toTest')
 
-        trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+            trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
-        assert trX.name == 'toTest trainX'
-        assert trX.path == tmpFile.name
-        assert trX.absolutePath == tmpFile.name
-        assert trX.relativePath == os.path.relpath(tmpFile.name)
+            assert trX.name == 'toTest trainX'
+            assert trX.path == tmpFile.name
+            assert trX.absolutePath == tmpFile.name
+            assert trX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert trY.name == 'toTest trainY'
-        assert trY.path == tmpFile.name
-        assert trY.path == tmpFile.name
-        assert trY.absolutePath == tmpFile.name
-        assert trY.relativePath == os.path.relpath(tmpFile.name)
+            assert trY.name == 'toTest trainY'
+            assert trY.path == tmpFile.name
+            assert trY.path == tmpFile.name
+            assert trY.absolutePath == tmpFile.name
+            assert trY.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teX.name == 'toTest testX'
-        assert teX.path == tmpFile.name
-        assert teX.path == tmpFile.name
-        assert teX.absolutePath == tmpFile.name
-        assert teX.relativePath == os.path.relpath(tmpFile.name)
+            assert teX.name == 'toTest testX'
+            assert teX.path == tmpFile.name
+            assert teX.path == tmpFile.name
+            assert teX.absolutePath == tmpFile.name
+            assert teX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teY.name == 'toTest testY'
-        assert teY.path == tmpFile.name
-        assert teY.path == tmpFile.name
-        assert teY.absolutePath == tmpFile.name
-        assert teY.relativePath == os.path.relpath(tmpFile.name)
+            assert teY.name == 'toTest testY'
+            assert teY.path == tmpFile.name
+            assert teY.path == tmpFile.name
+            assert teY.absolutePath == tmpFile.name
+            assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
     def test_trainAndTestSets_PandFnamesPerserved(self):

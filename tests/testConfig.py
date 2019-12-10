@@ -56,17 +56,16 @@ def fileEqualObjOutput(fp, obj):
     """
     fp must be readable
     """
-    resultFile = tempfile.NamedTemporaryFile('w')
-    obj.write(resultFile)
+    with tempfile.NamedTemporaryFile('w+') as resultFile:
+        obj.write(resultFile)
 
-    fp.seek(0)
-    resultFile.seek(0)
+        fp.seek(0)
+        resultFile.seek(0)
 
-    origRet = fp.read()
-    resultFile = open(resultFile.name, 'r')
-    objRet = resultFile.read()
+        origRet = fp.read()
+        objRet = resultFile.read()
 
-    assert origRet == objRet
+        assert origRet == objRet
 
 
 def makeDefaultTemplate():
@@ -95,43 +94,43 @@ def makeDefaultTemplate():
 
 def testSCPCP_simple():
     """ Test that the ConfigParser subclass works with some simple data """
-    fp = tempfile.NamedTemporaryFile('w')
-    template = makeDefaultTemplate()
-    for line in template:
-        fp.write(line)
-    fp.seek(0)
+    with tempfile.NamedTemporaryFile('w') as fp:
+        template = makeDefaultTemplate()
+        for line in template:
+            fp.write(line)
+        fp.seek(0)
 
-    obj = nimble.configuration.SortedCommentPreservingConfigParser()
-    fp = open(fp.name, 'r')
-    obj.readfp(fp)
+        obj = nimble.configuration.SortedCommentPreservingConfigParser()
+        with open(fp.name, 'r') as fp:
+            obj.readfp(fp)
 
-    fileEqualObjOutput(fp, obj)
+            fileEqualObjOutput(fp, obj)
+
 
 
 def testSCPCP_newOption():
     """ Test that comments are bound correctly after adding a new option """
     template = makeDefaultTemplate()
 
-    fp = tempfile.NamedTemporaryFile('w')
-    for line in template:
-        fp.write(line)
-    fp.seek(0)
+    with tempfile.NamedTemporaryFile('w+') as fp:
+        for line in template:
+            fp.write(line)
+        fp.seek(0)
 
-    obj = nimble.configuration.SortedCommentPreservingConfigParser()
-    fp = open(fp.name, 'r')
-    obj.readfp(fp)
+        obj = nimble.configuration.SortedCommentPreservingConfigParser()
+        with open(fp.name, 'r') as fp:
+            obj.readfp(fp)
 
-    obj.set("SectionName", "option2", '1')
+            obj.set("SectionName", "option2", '1')
 
-    wanted = tempfile.NamedTemporaryFile('w')
-    template = makeDefaultTemplate()
-    template.insert(8, "option2 = 1\n")
-    for line in template:
-        wanted.write(line)
-    wanted.seek(0)
+            with tempfile.NamedTemporaryFile('w+') as wanted:
+                template = makeDefaultTemplate()
+                template.insert(8, "option2 = 1\n")
+                for line in template:
+                    wanted.write(line)
+                wanted.seek(0)
 
-    wanted = open(wanted.name, 'r')
-    fileEqualObjOutput(wanted, obj)
+                fileEqualObjOutput(wanted, obj)
 
 
 def testSCPCP_multilineComments():
@@ -140,17 +139,17 @@ def testSCPCP_multilineComments():
     template.insert(5, "#SectionComment line 2\n")
     template.insert(6, "; Another comment, after an empty line\n")
 
-    fp = tempfile.NamedTemporaryFile('w')
-    for line in template:
-        fp.write(line)
-    fp.seek(0)
+    with tempfile.NamedTemporaryFile('w') as fp:
+        for line in template:
+            fp.write(line)
+        fp.seek(0)
 
-    obj = nimble.configuration.SortedCommentPreservingConfigParser()
-    fp = open(fp.name, 'r')
-    obj.readfp(fp)
+        obj = nimble.configuration.SortedCommentPreservingConfigParser()
+        with open(fp.name, 'r') as fp:
+            obj.readfp(fp)
 
-    fp.seek(0)
-    fileEqualObjOutput(fp, obj)
+            fp.seek(0)
+            fileEqualObjOutput(fp, obj)
 
 
 def testSCPCP_whitespaceIgnored():
@@ -190,6 +189,8 @@ def testSCPCP_whitespaceIgnored():
     except AssertionError:
         pass
 
+    fpWanted.close()
+    fpSpaced.close()
 
 def test_settings_GetSet():
     """ Test nimble.settings getters and setters """

@@ -5,6 +5,7 @@ Utility functions that could be useful in multiple interfaces
 import sys
 import importlib
 import configparser
+import warnings
 
 import numpy
 
@@ -480,19 +481,21 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
 
 def modifyImportPathAndImport(directory, package):
     sysPathBackup = sys.path.copy()
-    try:
-        if directory is not None:
-            sys.path.insert(0, directory)
-
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
         try:
-            location = nimble.settings.get(package, 'location')
-            if location:
-                sys.path.insert(0, location)
-        except configparser.Error:
-            pass
+            if directory is not None:
+                sys.path.insert(0, directory)
 
-        if package == 'sciKitLearn':
-            package = 'sklearn'
-        return importlib.import_module(package)
-    finally:
-        sys.path = sysPathBackup
+            try:
+                location = nimble.settings.get(package, 'location')
+                if location:
+                    sys.path.insert(0, location)
+            except configparser.Error:
+                pass
+
+            if package == 'sciKitLearn':
+                package = 'sklearn'
+            return importlib.import_module(package)
+        finally:
+            sys.path = sysPathBackup

@@ -20,6 +20,7 @@ import numpy
 
 import nimble
 from nimble import fill
+from nimble import match
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
@@ -475,11 +476,13 @@ class Axis(object):
         else:
             limitTo = [i for i in range(len(self))]
 
-        retData = self._calculate_implementation(function, limitTo)
+        retData, convert = self._calculate_implementation(function, limitTo)
 
         createDataKwargs = {'useLog': False}
         if matching:
             createDataKwargs['elementType'] = bool
+        elif convert:
+            createDataKwargs['elementType'] = numpy.object_
 
         ret = nimble.createData(self._base.getTypeString(), retData,
                                 **createDataKwargs)
@@ -511,6 +514,9 @@ class Axis(object):
 
     def _calculate_implementation(self, function, limitTo):
         retData = []
+        # signal to convert to object elementType if function is returning
+        # non-numeric values.
+        convertType = False
         for axisID in limitTo:
             if isinstance(self, Points):
                 view = self._base.pointView(axisID)
@@ -520,12 +526,16 @@ class Axis(object):
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
+                if match.nonNumeric(currOut) and currOut is not None:
+                    convertType = True
                 retData.append([currOut])
             else:
                 try:
                     toCopyInto = []
                     for value in currOut:
                         if isAllowedSingleElement(value):
+                            if match.nonNumeric(value) and value is not None:
+                                convertType = True
                             toCopyInto.append(value)
                         else:
                             msg = "The return of 'function' contains an "
@@ -541,7 +551,7 @@ class Axis(object):
                     msg += "container of valid values"
                     raise InvalidArgumentValue(msg)
 
-        return retData
+        return retData, convertType
 
 
     def _add(self, toAdd, insertBefore, useLog=None):

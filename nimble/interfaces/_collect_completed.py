@@ -47,7 +47,6 @@ def collect(modulePath):
     Collect the interfaces which import properly.
     """
     predefinedInterfaces = collectPredefinedInterfaces(modulePath)
-
     # now have a list of predefined interfaces, which we try to instantiate
     instantiated = []
     for toInstantiate in predefinedInterfaces:

@@ -1,6 +1,7 @@
 """
 Variety of functions to replace values in data with other values
 """
+import functools
 
 import numpy
 
@@ -73,9 +74,11 @@ def factory(match, fill, **kwarguments):
         fill = constant
         kwarguments['constantValue'] = value
     if kwarguments:
+        @functools.wraps(fill)
         def fillFunction(vector):
             return fill(vector, match, **kwarguments)
     else:
+        @functools.wraps(fill)
         def fillFunction(vector):
             return fill(vector, match)
 
