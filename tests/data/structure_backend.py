@@ -9,7 +9,7 @@ In object StructureModifying:
 __init__,  transpose, T, points.add, features.add, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
-points.transform, features.transform, elements.transform, fillWith,
+points.transform, features.transform, transformElements, fillWith,
 flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
 unflattenFromOneFeature
 """
@@ -177,7 +177,6 @@ class StructureDataSafe(StructureShared):
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
         assert hasattr(nimble.data.Base, 'objectValidation')
-        assert hasattr(nimble.data.Elements, 'objectValidation')
         assert hasattr(nimble.data.Features, 'objectValidation')
         assert hasattr(nimble.data.Points, 'objectValidation')
 
@@ -8073,42 +8072,42 @@ class StructureModifying(StructureShared):
         orig.features.transform(toString)
         assert orig == exp
 
-    ##########################
-    # elements.transform() #
-    ##########################
+    #######################
+    # transformElements() #
+    #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_transform_calls_constructIndicesList1(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_transformElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.elements.transform(noChange, points=['a', 'b'])
+        toTest.transformElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_transform_calls_constructIndicesList2(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_transformElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.elements.transform(noChange, features=['a', 'b'])
+        toTest.transformElements(noChange, features=['a', 'b'])
 
     @raises(InvalidArgumentValue)
-    def test_elements_transform_invalidElementReturned(self):
+    def test_transformElements_invalidElementReturned(self):
         data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
         toTest = self.constructor(data)
-        toTest.elements.transform(lambda e: [e])
+        toTest.transformElements(lambda e: [e])
 
     @oneLogEntryExpected
-    def test_elements_transform_passthrough(self):
+    def test_transformElements_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        ret = toTest.elements.transform(passThrough)  # RET CHECK
+        ret = toTest.transformElements(passThrough)  # RET CHECK
         assert ret is None
         retRaw = toTest.copy(to="python list")
 
@@ -8118,7 +8117,7 @@ class StructureModifying(StructureShared):
         assertNoNamesGenerated(toTest)
 
 
-    def test_elements_transform_NamePath_preservation(self):
+    def test_transformElements_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -8126,18 +8125,18 @@ class StructureModifying(StructureShared):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.elements.transform(passThrough)
+        toTest.transformElements(passThrough)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOnePreserve(self):
+    def test_transformElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
 
-        toTest.elements.transform(plusOne, preserveZeros=True)
+        toTest.transformElements(plusOne, preserveZeros=True)
         retRaw = toTest.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
@@ -8145,11 +8144,11 @@ class StructureModifying(StructureShared):
         assert [8, 0, 10] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOneExclude(self):
+    def test_transformElements_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.elements.transform(plusOneOnlyEven, skipNoneReturnValues=True)
+        toTest.transformElements(plusOneOnlyEven, skipNoneReturnValues=True)
         retRaw = toTest.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
@@ -8157,13 +8156,13 @@ class StructureModifying(StructureShared):
         assert [7, 9, 9] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOneLimited(self):
+    def test_transformElements_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
+        toTest.transformElements(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
         retRaw = toTest.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
@@ -8171,7 +8170,7 @@ class StructureModifying(StructureShared):
         assert [7, 8, 9] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_DictionaryAllMapped(self):
+    def test_transformElements_DictionaryAllMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8180,12 +8179,12 @@ class StructureModifying(StructureShared):
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
     @oneLogEntryExpected
-    def test_elements_transform_DictionaryAllMappedStrings(self):
+    def test_transformElements_DictionaryAllMappedStrings(self):
         data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8194,12 +8193,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionarySomeMapped(self):
+    def test_transformElements_DictionarySomeMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8208,12 +8207,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 8, 3], [4, 5, 6], [7, 2, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryMappedNotInPoints(self):
+    def test_transformElements_DictionaryMappedNotInPoints(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8222,12 +8221,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, points=1)
+        toTest.transformElements(transformMapping, points=1)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryMappedNotInFeatures(self):
+    def test_transformElements_DictionaryMappedNotInFeatures(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8236,12 +8235,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, features=0)
+        toTest.transformElements(transformMapping, features=0)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosNoZeroMap(self):
+    def test_transformElements_DictionaryPreserveZerosNoZeroMap(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8250,12 +8249,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosZeroMapZero(self):
+    def test_transformElements_DictionaryPreserveZerosZeroMapZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8264,12 +8263,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosZeroMapNonZero(self):
+    def test_transformElements_DictionaryPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8278,12 +8277,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
+    def test_transformElements_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8292,12 +8291,12 @@ class StructureModifying(StructureShared):
         expData = [[100, 100, 100], [1, 1, 1], [100, 100, 100]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=False)
+        toTest.transformElements(transformMapping, preserveZeros=False)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionarySkipNoneReturn(self):
+    def test_transformElements_DictionarySkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8306,12 +8305,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, skipNoneReturnValues=True)
+        toTest.transformElements(transformMapping, skipNoneReturnValues=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryDoNotSkipNoneReturn(self):
+    def test_transformElements_DictionaryDoNotSkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8319,11 +8318,11 @@ class StructureModifying(StructureShared):
         transformMapping = {1: None}
         expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
-        toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
+        toTest.transformElements(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
 
-    def test_elements_transform_zerosReturned(self):
+    def test_transformElements_zerosReturned(self):
 
         def returnAllZero(elem):
             return 0
@@ -8331,7 +8330,7 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
         exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        orig1.elements.transform(returnAllZero)
+        orig1.transformElements(returnAllZero)
         assert orig1 == exp1
 
         def invert(elem):
@@ -8340,16 +8339,16 @@ class StructureModifying(StructureShared):
         orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
 
-        orig2.elements.transform(invert)
+        orig2.transformElements(invert)
         assert orig2 == exp2
 
         orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        orig3.elements.transform(invert, preserveZeros=True)
+        orig3.transformElements(invert, preserveZeros=True)
         assert orig3 == exp3
 
-    def test_elements_transform_conversionWhenIntType(self):
+    def test_transformElements_conversionWhenIntType(self):
 
         def addTenth(elem):
             return elem + 0.1
@@ -8358,10 +8357,10 @@ class StructureModifying(StructureShared):
                                 elementType=int)
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
-        orig.elements.transform(addTenth)
+        orig.transformElements(addTenth)
         assert orig == exp
 
-    def test_elements_transform_stringReturnsPreserved(self):
+    def test_transformElements_stringReturnsPreserved(self):
 
         def toString(e):
             return str(e)
@@ -8371,7 +8370,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
                                elementType=object)
 
-        orig.elements.transform(toString)
+        orig.transformElements(toString)
         assert orig == exp
 
     ##############

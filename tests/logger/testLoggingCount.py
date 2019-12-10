@@ -21,14 +21,13 @@ from nimble.data import Base
 from nimble.data import Axis
 from nimble.data import Points
 from nimble.data import Features
-from nimble.data import Elements
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
 modules = [nimble, calculate, fill, match]
-classes = [Base, Axis, Points, Features, Elements, UniversalInterface,
+classes = [Base, Axis, Points, Features, UniversalInterface,
            TrainedLearner]
 modulesAndClasses = modules + classes
 for call in modulesAndClasses:
@@ -95,15 +94,17 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
+    'calculateTODO', 'fillUsingAllData', 'featureReport', 'fillWith',
+    'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature',
+    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
+    'summaryReport', 'trainAndTestSets', 'transformElements',
     'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
     'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
-    'inverse', 'isApproximatelyEqual', 'isIdentical', 'matrixMultiply',
+    'containsZero', 'copy', 'countElements', 'countUniqueElements',
+    'featureView', 'getTypeString', 'hashCode', 'inverse',
+    'isApproximatelyEqual', 'isIdentical', 'iterElements', 'matrixMultiply',
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
@@ -137,15 +138,6 @@ points_notLogged = [
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
 
-elements_logged = [
-    'calculate', 'transform', 'multiply', 'power', 'matching',
-    ]
-elements_notLogged = [
-    'count', 'countUnique',
-    ]
-elements_funcs = elements_logged + elements_notLogged
-elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
-
 ui_logged = [
     'train',
     ]
@@ -168,8 +160,7 @@ tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
 USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
                       + match_tested + base_tested + features_tested
-                      + points_tested + elements_tested + ui_tested
-                      + tl_tested)
+                      + points_tested + ui_tested + tl_tested)
 
 ##############
 # All tested #
@@ -330,13 +321,11 @@ axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
                      'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__bool__', 'Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 
 ALL_DUNDER_TESTED = (baseDunder_tested + axisDunder_tested
                      + pointsDunder_tested + featuresDunder_tested
-                     + elementsDunder_tested
                      + uiDunder_tested + tlDunder_tested)
 
 def testAllClassesDunderFunctions():

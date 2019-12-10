@@ -5,6 +5,7 @@ Class extending Base, using a list of lists to store data.
 from __future__ import division
 from __future__ import absolute_import
 import copy
+import itertools
 from functools import reduce
 
 import numpy
@@ -20,10 +21,10 @@ from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
-from .listElements import ListElements, ListElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import denseCountUnique
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -126,8 +127,31 @@ class List(Base):
     def _getFeatures(self):
         return ListFeatures(self)
 
-    def _getElements(self):
-        return ListElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data[i][j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data[i][j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -619,9 +643,6 @@ class ListView(BaseView, List):
 
     def _getFeatures(self):
         return ListFeaturesView(self)
-
-    def _getElements(self):
-        return ListElementsView(self)
 
     def _copy_implementation(self, to):
         # we only want to change how List and pythonlist copying is

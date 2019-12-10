@@ -8,11 +8,11 @@ objects provided.
 Methods tested in this file:
 
 In object HighLevelDataSafe:
-points.calculate, features.calculate, elements.calculate, points.count,
-features.count, elements.count, elements.countUnique, points.unique,
+points.calculate, features.calculate, calculateTODO, points.count,
+features.count, countElements, countUniqueElements, points.unique,
 features.unique, points.mapReduce, features.mapReduce,
 isApproximatelyEqual, trainAndTestSets, points.repeat,
-features.repeat, points.matching, features.matching, elements.matching
+features.repeat, points.matching, features.matching, matchingElements
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
@@ -595,41 +595,41 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(toString)
         assert ret == exp
 
-    #######################
-    # .elements.calculate #
-    #######################
+    ##################
+    # .calculateTODO #
+    ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_calculate_calls_constructIndicesList1(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_calculateTODO_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        ret = toTest.elements.calculate(noChange, points=['a', 'b'])
+        ret = toTest.calculateTODO(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_calculate_calls_constructIndicesList2(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_calculateTODO_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        ret = toTest.elements.calculate(noChange, features=['a', 'b'])
+        ret = toTest.calculateTODO(noChange, features=['a', 'b'])
 
     @raises(InvalidArgumentValue)
-    def test_elements_calculate_invalidElementReturned(self):
+    def test_calculateTODO_invalidElementReturned(self):
         data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
         toTest = self.constructor(data)
-        toTest.elements.calculate(lambda e: [e])
+        toTest.calculateTODO(lambda e: [e])
 
-    def test_elements_calculate_NamePath_preservation(self):
+    def test_calculateTODO_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, name=preserveName, path=preservePair)
 
-        ret = toTest.elements.calculate(passThrough)
+        ret = toTest.calculateTODO(passThrough)
 
         assert toTest.name == preserveName
         assert toTest.absolutePath == preserveAPath
@@ -640,10 +640,10 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.relativePath == preserveRPath
 
     @oneLogEntryExpected
-    def test_elements_calculate_passthrough(self):
+    def test_calculateTODO_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(passThrough)
+        ret = toTest.calculateTODO(passThrough)
         retRaw = ret.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
@@ -652,10 +652,10 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
 
-    def test_elements_calculate_plusOnePreserve(self):
+    def test_calculateTODO_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(plusOne, preserveZeros=True)
+        ret = toTest.calculateTODO(plusOne, preserveZeros=True)
         retRaw = ret.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
@@ -664,40 +664,40 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
 
-    def test_elements_calculate_plusOneExclude(self):
+    def test_calculateTODO_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(plusOneOnlyEven, skipNoneReturnValues=True)
+        ret = toTest.calculateTODO(plusOneOnlyEven, skipNoneReturnValues=True)
         retRaw = ret.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
         assert [5, 5, 7] in retRaw
         assert [7, 9, 9] in retRaw
 
-    def test_elements_calculate_plusOneLimited(self):
+    def test_calculateTODO_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-        ret = toTest.elements.calculate(plusOneOnlyEven, points='4', features=[1, 'three'],
+        ret = toTest.calculateTODO(plusOneOnlyEven, points='4', features=[1, 'three'],
                                              skipNoneReturnValues=True)
         retRaw = ret.copy(to="python list")
 
         assert [5, 7] in retRaw
 
-    def test_elements_calculate_All_zero(self):
+    def test_calculateTODO_All_zero(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret1 = toTest.elements.calculate(lambda x: 0)
-        ret2 = toTest.elements.calculate(lambda x: 0, preserveZeros=True)
+        ret1 = toTest.calculateTODO(lambda x: 0)
+        ret2 = toTest.calculateTODO(lambda x: 0, preserveZeros=True)
 
         expData = [[0,0,0],[0,0,0],[0,0,0]]
         expObj = self.constructor(expData)
         assert ret1 == expObj
         assert ret2 == expObj
 
-    def test_elements_calculate_String_conversion_manipulations(self):
+    def test_calculateTODO_String_conversion_manipulations(self):
         def allString(val):
             return str(val)
 
@@ -711,43 +711,43 @@ class HighLevelDataSafe(DataTestObject):
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, elementType=object)
-        ret0A = toTest.elements.calculate(allString)
-        ret0B = toTest.elements.calculate(allString, preserveZeros=True)
+        ret0A = toTest.calculateTODO(allString)
+        ret0B = toTest.calculateTODO(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
         exp0Obj = self.constructor(exp0Data, elementType=object)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
-        ret1 = toTest.elements.calculate(f1)
+        ret1 = toTest.calculateTODO(f1)
 
         exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
         exp1Obj = self.constructor(exp1Data)
 
         assert ret1 == exp1Obj
 
-        ret2 = ret1.elements.calculate(f2)
+        ret2 = ret1.calculateTODO(f2)
 
         exp2Obj = self.constructor(data)
 
         assert ret2 == exp2Obj
 
-    def test_elements_calculate_dictionaryMapping(self):
+    def test_calculateTODO_dictionaryMapping(self):
         data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         reverseMap = {k: v for k, v in zip(range(9), range(8, -1, -1))}
 
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(reverseMap)
+        ret = toTest.calculateTODO(reverseMap)
         exp = self.constructor([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(reverseMap, points=[0, 2], features=[1, 2])
+        ret = toTest.calculateTODO(reverseMap, points=[0, 2], features=[1, 2])
         exp = self.constructor([[7, 6], [1, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(reverseMap, preserveZeros=True)
+        ret = toTest.calculateTODO(reverseMap, preserveZeros=True)
         exp = self.constructor([[0, 7, 6], [5, 4, 3], [2, 1, 0]])
         assert ret == exp
 
@@ -755,16 +755,16 @@ class HighLevelDataSafe(DataTestObject):
         reverseMap[7] = None
 
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=True)
+        ret = toTest.calculateTODO(reverseMap, skipNoneReturnValues=True)
         exp = self.constructor([[8, 7, 2], [5, 4, 3], [2, 7, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.elements.calculate(reverseMap, skipNoneReturnValues=False)
+        ret = toTest.calculateTODO(reverseMap, skipNoneReturnValues=False)
         exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
         assert ret == exp
 
-    def test_elements_calculate_zerosReturned(self):
+    def test_calculateTODO_zerosReturned(self):
 
         def returnAllZero(elem):
             return 0
@@ -772,7 +772,7 @@ class HighLevelDataSafe(DataTestObject):
         orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
         exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        ret1 = orig1.elements.calculate(returnAllZero)
+        ret1 = orig1.calculateTODO(returnAllZero)
         assert ret1 == exp1
 
         def invert(elem):
@@ -781,16 +781,16 @@ class HighLevelDataSafe(DataTestObject):
         orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
 
-        ret2 = orig2.elements.calculate(invert)
+        ret2 = orig2.calculateTODO(invert)
         assert ret2 == exp2
 
         orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        ret3 = orig3.elements.calculate(invert, preserveZeros=True)
+        ret3 = orig3.calculateTODO(invert, preserveZeros=True)
         assert ret3 == exp3
 
-    def test_elements_calculate_conversionWhenIntType(self):
+    def test_calculateTODO_conversionWhenIntType(self):
 
         def addTenth(elem):
             return elem + 0.1
@@ -799,10 +799,10 @@ class HighLevelDataSafe(DataTestObject):
                                 elementType=int)
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
-        ret = orig.elements.calculate(addTenth)
+        ret = orig.calculateTODO(addTenth)
         assert ret == exp
 
-    def test_elements_calculate_stringReturnsPreserved(self):
+    def test_calculateTODO_stringReturnsPreserved(self):
 
         def toString(e):
             return str(e)
@@ -812,7 +812,7 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
                                elementType=object)
 
-        ret = orig.elements.calculate(toString)
+        ret = orig.calculateTODO(toString)
         assert ret == exp
 
     ######################
@@ -1026,17 +1026,17 @@ class HighLevelDataSafe(DataTestObject):
         assert (ret.isIdentical(exp))
         assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
 
-    ####################
-    # elements.count() #
-    ####################
+    ###################
+    # countElements() #
+    ###################
     @noLogEntryExpected
-    def test_elements_count(self):
+    def test_countElements(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.elements.count('>=5')
+        ret = toTest.countElements('>=5')
         assert ret == 5
 
-        ret = toTest.elements.count(lambda x: x % 2 == 1)
+        ret = toTest.countElements(lambda x: x % 2 == 1)
         assert ret == 5
 
     ##################
@@ -1548,14 +1548,14 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret == exp
 
-    ########################
-    # elements.countUnique #
-    ########################
+    #######################
+    # countUniqueElements #
+    #######################
     @noLogEntryExpected
-    def test_elements_countUnique_allPtsAndFtrs(self):
+    def test_countUniqueElements_allPtsAndFtrs(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         toTest = self.constructor(data)
-        unique = toTest.elements.countUnique()
+        unique = toTest.countUniqueElements()
 
         assert len(unique) == 6
         assert unique[1] == 2
@@ -1569,50 +1569,50 @@ class HighLevelDataSafe(DataTestObject):
         assert 0 not in unique
         assertNoNamesGenerated(toTest)
 
-    def test_elements_countUnique_limitPoints(self):
+    def test_countUniqueElements_limitPoints(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         pNames = ['p1', 'p2', 'p3']
         toTest = self.constructor(data, pointNames=pNames)
-        unique = toTest.elements.countUnique(points=0)
+        unique = toTest.countUniqueElements(points=0)
 
         assert len(unique) == 3
         assert unique[1] == 1
         assert unique[2] == 1
         assert unique[3] == 1
 
-        unique = toTest.elements.countUnique(points='p1')
+        unique = toTest.countUniqueElements(points='p1')
 
         assert len(unique) == 3
         assert unique[1] == 1
         assert unique[2] == 1
         assert unique[3] == 1
 
-        unique = toTest.elements.countUnique(points=[0,'p3'])
+        unique = toTest.countUniqueElements(points=[0,'p3'])
 
         assert len(unique) == 3
         assert unique[1] == 2
         assert unique[2] == 2
         assert unique[3] == 2
 
-    def test_elements_countUnique_limitFeatures(self):
+    def test_countUniqueElements_limitFeatures(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         fNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(data, featureNames=fNames)
-        unique = toTest.elements.countUnique(features=0)
+        unique = toTest.countUniqueElements(features=0)
 
         assert len(unique) == 3
         assert unique[1] == 1
         assert unique[3] == 1
         assert unique['a'] == 1
 
-        unique = toTest.elements.countUnique(features='f1')
+        unique = toTest.countUniqueElements(features='f1')
 
         assert len(unique) == 3
         assert unique[1] == 1
         assert unique[3] == 1
         assert unique['a'] == 1
 
-        unique = toTest.elements.countUnique(features=[0,'f3'])
+        unique = toTest.countUniqueElements(features=[0,'f3'])
 
         assert len(unique) == 4
         assert unique[1] == 2
@@ -1621,22 +1621,22 @@ class HighLevelDataSafe(DataTestObject):
         assert unique['c'] == 1
 
     @noLogEntryExpected
-    def test_elements_countUnique_limitPointsAndFeatures_cornercase(self):
+    def test_countUniqueElements_limitPointsAndFeatures_cornercase(self):
         data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
         fNames = ['f1', 'f2', 'f3']
         pNames = ['p1', 'p2', 'p3']
         toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
 
-        unique = toTest.elements.countUnique(features=[0,'f3'], points=[0,'p3'])
+        unique = toTest.countUniqueElements(features=[0,'f3'], points=[0,'p3'])
 
         assert len(unique) == 2
         assert unique[1] == 2
         assert unique[3] == 2
 
-    def test_elements_countUnique_zeroCount(self):
+    def test_countUniqueElements_zeroCount(self):
         data = [[0, 0, 0, 0, 1], [2, 0, 0, 0, 0], [0, 0, 3, 0, 0]]
         toTest = self.constructor(data)
-        unique = toTest.elements.countUnique()
+        unique = toTest.countUniqueElements()
 
         assert 0 in unique
         assert unique[0] == 12
@@ -1789,24 +1789,24 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         repeated = toTest.features.repeat(-1, copyFeatureByFeature=False)
 
-    #####################
-    # elements.matching #
-    #####################
+    ####################
+    # matchingElements #
+    ####################
 
     @raises(InvalidArgumentValue)
-    def test_elements_matching_funcDoesNotReturnBoolean(self):
+    def test_matchingElements_funcDoesNotReturnBoolean(self):
         def returnVal(val):
             return val
 
         raw = [[1, 2, 3], [-1, -2, -3]]
         obj = self.constructor(raw)
-        obj.elements.matching(returnVal)
+        obj.matchingElements(returnVal)
 
     @oneLogEntryExpected
-    def test_elements_matching_allElementsAreBool(self):
+    def test_matchingElements_allElementsAreBool(self):
         raw = [[1, 2, 3], [-1, -2, -3]]
         obj = self.constructor(raw)
-        matches = obj.elements.matching(lambda x: x > 0)
+        matches = obj.matchingElements(lambda x: x > 0)
 
         assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
         assert matches[0, 1] is True or matches[0, 1] is numpy.bool_(True)
@@ -1816,19 +1816,19 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
     @logCountAssertionFactory(4)
-    def test_elements_matching_varietyOfFuncs(self):
+    def test_matchingElements_varietyOfFuncs(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
 
         exp = [[True, True, True], [False, False, False], [False, False, False]]
         expObj = self.constructor(exp)
-        matchPositive = obj.elements.matching(match.positive)
+        matchPositive = obj.matchingElements(match.positive)
 
         assert matchPositive == expObj
 
         exp = [[True, True, True], [True, False, False], [True, True, True]]
         expObj = self.constructor(exp)
-        greaterEqualToNeg1 = obj.elements.matching(lambda x: x >= -1)
+        greaterEqualToNeg1 = obj.matchingElements(lambda x: x >= -1)
 
         assert greaterEqualToNeg1 == expObj
 
@@ -1837,7 +1837,7 @@ class HighLevelDataSafe(DataTestObject):
 
         exp = [[False, True, False], [True, True, False], [False, False, True]]
         expObj = self.constructor(exp)
-        isMissing = obj.elements.matching(match.missing)
+        isMissing = obj.matchingElements(match.missing)
 
         assert isMissing == expObj
 
@@ -1849,22 +1849,22 @@ class HighLevelDataSafe(DataTestObject):
         exp = [[True, False, True], [False, False, False], [False, True, False]]
 
         expObj = self.constructor(exp)
-        isNonNumeric = obj.elements.matching(match.nonNumeric)
+        isNonNumeric = obj.matchingElements(match.nonNumeric)
 
         assert isNonNumeric == expObj
 
-    def test_elements_matching_pfname_preservation(self):
+    def test_matchingElements_pfname_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         pnames = ['pos', 'neg', 'zero']
         fnames = ['1', '2', '3']
 
         obj = self.constructor(raw, pointNames=pnames, featureNames=fnames)
-        matchPositive = obj.elements.matching(match.positive)
+        matchPositive = obj.matchingElements(match.positive)
 
         assert matchPositive.points.getNames() == pnames
         assert matchPositive.features.getNames() == fnames
 
-    def test_elements_matching_namePath_preservation(self):
+    def test_matchingElements_namePath_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
 
         preserveName = "PreserveTestName"
@@ -1873,7 +1873,7 @@ class HighLevelDataSafe(DataTestObject):
         preservePair = (preserveAPath, preserveRPath)
 
         obj = self.constructor(raw, name=preserveName, path=preservePair)
-        matchPositive = obj.elements.matching(match.positive)
+        matchPositive = obj.matchingElements(match.positive)
 
         assert matchPositive.absolutePath == preserveAPath
         assert matchPositive.relativePath == preserveRPath

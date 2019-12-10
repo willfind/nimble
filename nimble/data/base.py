@@ -36,16 +36,17 @@ from nimble.utility import ImportModule
 from .points import Points
 from .features import Features
 from .axis import Axis
-from .elements import Elements
 from .stretch import Stretch
 from . import dataHelpers
 # the prefix for default point and feature names
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
-from .dataHelpers import valuesToPythonList
+from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
+from .dataHelpers import getDictionaryMappingFunction
 
 cloudpickle = ImportModule('cloudpickle')
 matplotlib = ImportModule('matplotlib')
@@ -114,8 +115,6 @@ class Base(object):
         An object handling functions manipulating data by points.
     features : Axis object
         An object handling functions manipulating data by features.
-    elements : Elements object
-        An object handling functions manipulating data by each element.
     name : str
         A name to call this object when printing or logging.
     absolutePath : str
@@ -143,7 +142,6 @@ class Base(object):
 
         self._points = self._getPoints()
         self._features = self._getFeatures()
-        self._elements = self._getElements()
 
         # Set up point names
         self._nextDefaultValuePoint = 0
@@ -242,23 +240,6 @@ class Base(object):
         nimble.data.features.Features
         """
         return self._features
-
-    def _getElements(self):
-        """
-        Get the object containing element-based methods for this object.
-        """
-        return BaseElements(base=self)
-
-    @property
-    def elements(self):
-        """
-        An object handling functions manipulating data by each element.
-
-        See Also
-        --------
-        nimble.data.elements.Elements
-        """
-        return self._elements
 
     def _setpointCount(self, value):
         self._pointCount = value
@@ -409,6 +390,9 @@ class Base(object):
     def __bool__(self):
         return self._pointCount > 0 and self._featureCount > 0
 
+    def iterElements(self):
+        return ElementIterator(self)
+
     def nameIsDefault(self):
         """
         Returns True if self.name has a default value
@@ -468,7 +452,7 @@ class Base(object):
 
         replace = self.features.extract([index], useLog=False)
 
-        uniqueVals = list(replace.elements.countUnique().keys())
+        uniqueVals = list(replace.countUniqueElements().keys())
 
         binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
             uniqueVals)
@@ -540,7 +524,7 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
-            uniqueVals = ft.elements.countUnique()
+            uniqueVals = ft.countUniqueElements()
             integerValue = 0
             if 0 in uniqueVals:
                 mapping[0] = 0
@@ -565,6 +549,496 @@ class Base(object):
 
         return {v: k for k, v in mapping.items()}
 
+
+    def transformElements(self, toTransform, points=None, features=None,
+                          preserveZeros=False, skipNoneReturnValues=False,
+                          useLog=None):
+        """
+        Modify each element using a function or mapping.
+
+        Perform an inplace modification of the elements or subset of
+        elements in this object.
+
+        Parameters
+        ----------
+        toTransform : function, dict
+            * function - in the form of toTransform(elementValue)
+              or toTransform(elementValue, pointIndex, featureIndex)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
+        points : identifier, list of identifiers
+            May be a single point name or index, an iterable,
+            container of point names and/or indices. None indicates
+            application to all points.
+        features : identifier, list of identifiers
+            May be a single feature name or index, an iterable,
+            container of feature names and/or indices. None indicates
+            application to all features.
+        preserveZeros : bool
+            If True it does not apply toTransform to elements in the
+            data that are 0, and that 0 is not modified.
+        skipNoneReturnValues : bool
+            If True, any time toTransform() returns None, the value
+            originally in the data will remain unmodified.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        See Also
+        --------
+        calculate, nimble.data.points.Points.transform,
+        nimble.data.features.Features.transform
+
+        Examples
+        --------
+        Simple transformation to all elements.
+
+        >>> data = nimble.ones('Matrix', 5, 5)
+        >>> data.transformElements(lambda elem: elem + 1)
+        >>> data
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Transform while preserving zero values.
+
+        >>> data = nimble.identity('Sparse', 5)
+        >>> data.transformElements(lambda elem: elem + 10,
+        ...                         preserveZeros=True)
+        >>> data
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Transforming a subset of points and features.
+
+        >>> data = nimble.ones('List', 4, 4)
+        >>> data.transformElements(lambda elem: elem + 1,
+        ...                         points=[0, 1], features=[0, 2])
+        >>> data
+        List(
+            [[2.000 1.000 2.000 1.000]
+             [2.000 1.000 2.000 1.000]
+             [1.000 1.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000]]
+            )
+
+        Transforming with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> dontSkip = nimble.createData('Matrix', raw)
+        >>> dontSkip.transformElements(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
+            )
+        >>> skip = nimble.createData('Matrix', raw)
+        >>> skip.transformElements(addTenToEvens,
+        ...                         skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1.000  12.000 3.000 ]
+             [14.000 5.000  16.000]
+             [7.000  18.000 9.000 ]]
+            )
+        """
+        if points is not None:
+            points = constructIndicesList(self, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self, 'feature', features)
+
+        transformer = validateElementFunction(toTransform, preserveZeros,
+                                              skipNoneReturnValues,
+                                              'toTransform')
+
+        self._transform_implementation(transformer, points, features)
+
+        handleLogging(useLog, 'prep', 'transformElements',
+                      self.getTypeString(), Base.transformElements,
+                      toTransform, points, features, preserveZeros,
+                      skipNoneReturnValues)
+
+    def calculateTODO(self, toCalculate, points=None, features=None,
+                  preserveZeros=False, skipNoneReturnValues=False,
+                  outputType=None, useLog=None):
+        """
+        Return a new object with a calculation applied to each element.
+
+        Apply a function or mapping to each element in this object or
+        subset of points and features in this  object.
+
+        Parameters
+        ----------
+        toCalculate : function, dict
+            * function - in the form of toCalculate(elementValue)
+              or toCalculate(elementValue, pointIndex, featureIndex)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
+        points : point, list of points
+            The subset of points to limit the calculation to. If None,
+            the calculation will apply to all points.
+        features : feature, list of features
+            The subset of features to limit the calculation to. If None,
+            the calculation will apply to all features.
+        preserveZeros : bool
+            Bypass calculation on zero values
+        skipNoneReturnValues : bool
+            Bypass values when ``toCalculate`` returns None. If False,
+            the value None will replace the value if None is returned.
+        outputType: nimble data type
+            Return an object of the specified type. If None, the
+            returned object will have the same type as the calling
+            object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        Returns
+        -------
+        nimble Base object
+
+        See Also
+        --------
+        transform, nimble.data.points.Points.calculate,
+        nimble.data.features.Features.calculate
+
+        Examples
+        --------
+        Simple calculation on all elements.
+
+        >>> data = nimble.ones('Matrix', 5, 5)
+        >>> twos = data.calculateTODO(lambda elem: elem + 1)
+        >>> twos
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Calculate while preserving zero values.
+
+        >>> data = nimble.identity('Sparse', 5)
+        >>> addTenDiagonal = data.calculateTODO(lambda x: x + 10,
+        ...                                          preserveZeros=True)
+        >>> addTenDiagonal
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Calculate on a subset of points and features.
+
+        >>> data = nimble.ones('List', 4, 4)
+        >>> calc = data.calculateTODO(lambda elem: elem + 1,
+        ...                                points=[0, 1],
+        ...                                features=[0, 2])
+        >>> calc
+        List(
+            [[2.000 2.000]
+             [2.000 2.000]]
+            )
+
+        Calculating with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> dontSkip = data.calculateTODO(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
+            )
+        >>> skip = data.calculateTODO(addTenToEvens,
+        ...                                skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1.000  12.000 3.000 ]
+             [14.000 5.000  16.000]
+             [7.000  18.000 9.000 ]]
+            )
+        """
+        calculator = validateElementFunction(toCalculate, preserveZeros,
+                                             skipNoneReturnValues,
+                                             'toCalculate')
+
+        ret = self._calculate_backend(calculator, points, features,
+                                      preserveZeros, skipNoneReturnValues,
+                                      outputType)
+
+        handleLogging(useLog, 'prep', 'calculateTODO',
+                      self.getTypeString(), Base.calculateTODO,
+                      toCalculate, points, features, preserveZeros,
+                      skipNoneReturnValues, outputType)
+
+        return ret
+
+    def matchingElements(self, toMatch, useLog=None):
+        """
+        Return an object of boolean values identifying matching values.
+
+        Apply a function returning a boolean value for each element in
+        this object. Common matching functions can be found in nimble's
+        match module.
+
+        Parameters
+        ----------
+        toMatch : function
+            * function - in the form of toMatch(elementValue) which
+              returns True, False, 0 or 1.
+
+        Returns
+        -------
+        nimble Base object
+            This object will only contain boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isPositive = data.matchingElements(match.positive)
+        >>> isPositive
+        Matrix(
+            [[ True False  True]
+             [False  True False]]
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, None], [None, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isMissing = data.matchingElements(match.missing)
+        >>> isMissing
+        Matrix(
+            [[False False  True]
+             [ True False False]]
+            )
+        """
+        wrappedMatch = wrapMatchFunctionFactory(toMatch)
+
+        ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+
+        handleLogging(useLog, 'prep', 'matchingElements',
+                      self.getTypeString(), Base.matchingElements,
+                      toMatch)
+
+        return ret
+
+    def _calculate_backend(self, calculator, points=None, features=None,
+                           preserveZeros=False, skipNoneReturnValues=False,
+                           outputType=None, allowBoolOutput=False):
+        if points is not None:
+            points = constructIndicesList(self, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self, 'feature', features)
+
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self.getTypeString()
+        # Use vectorized for functions with oneArg
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
+            values = self._calculate_implementation(
+                vectorized, points, features, preserveZeros, optType)
+
+        else:
+            if not points:
+                points = list(range(len(self.points)))
+            if not features:
+                features = list(range(len(self.features)))
+            # if unable to vectorize, iterate over each point
+            values = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    currRet = calculator(value, pi, fj)
+                    if (match.nonNumeric(currRet) and currRet is not None
+                            and values.dtype != numpy.object_):
+                        values = values.astype(numpy.object_)
+                    values[p, f] = currRet
+                    f += 1
+                p += 1
+
+        # check if values has numeric dtype
+        createDataKwargs = {'useLog': False}
+        if allowBoolOutput and numpy.issubdtype(values.dtype, numpy.bool_):
+            createDataKwargs['elementType'] = bool
+        elif not (numpy.issubdtype(values.dtype, numpy.number)
+                  or numpy.issubdtype(values.dtype, numpy.bool_)):
+            createDataKwargs['elementType'] = numpy.object_
+
+        ret = nimble.createData(optType, values, **createDataKwargs)
+
+        ret._absPath = self.absolutePath
+        ret._relPath = self.relativePath
+
+        return ret
+
+    def _calculate_genericVectorized(
+            self, function, points, features, outputType):
+        # need points/features as arrays for indexing
+        if points:
+            points = numpy.array(points)
+        else:
+            points = numpy.array(range(len(self.points)))
+        if features:
+            features = numpy.array(features)
+        else:
+            features = numpy.array(range(len(self.features)))
+        toCalculate = self.copy(to='numpyarray')
+        # array with only desired points and features
+        toCalculate = toCalculate[points[:, None], features]
+        try:
+            return function(toCalculate)
+        except Exception:
+            # change output type of vectorized function to object to handle
+            # nonnumeric data
+            function.otypes = [numpy.object_]
+            return function(toCalculate)
+
+    def countElements(self, condition):
+        """
+        The number of values which satisfy the condition.
+
+        Parameters
+        ----------
+        condition : function
+            function - may take two forms:
+            a) a function that accepts an element value as input and
+            will return True if it is to be counted
+            b) a filter function, as a string, containing a comparison
+            operator and a value
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        nimble.data.points.Points.count,
+        nimble.data.features.Features.count
+
+        Examples
+        --------
+        Using a python function.
+
+        >>> def greaterThanZero(elem):
+        ...     return elem > 0
+        >>> data = nimble.identity('Matrix', 5)
+        >>> numGreaterThanZero = data.countElements(greaterThanZero)
+        >>> numGreaterThanZero
+        5
+
+        Using a string filter function.
+
+        >>> numLessThanOne = data.countElements("<1")
+        >>> numLessThanOne
+        20
+        """
+        if hasattr(condition, '__call__'):
+            ret = self.calculateTODO(condition, outputType='Matrix', useLog=False)
+        elif isinstance(condition, six.string_types):
+            func = lambda x: eval('x'+condition)
+            ret = self.calculateTODO(func, outputType='Matrix', useLog=False)
+        else:
+            msg = 'function can only be a function or string containing a '
+            msg += 'comparison operator and a value'
+            raise InvalidArgumentType(msg)
+        return int(numpy.sum(ret.data))
+
+    def countUniqueElements(self, points=None, features=None):
+        """
+        Count of each unique value in the data.
+
+        Parameters
+        ----------
+        points : identifier, list of identifiers
+            May be None indicating application to all points, a single
+            name or index or an iterable of points and/or indices.
+        features : identifier, list of identifiers
+            May be None indicating application to all features, a single
+            name or index or an iterable of names and/or indices.
+
+        Returns
+        -------
+        dict
+            Each unique value as keys and the number of times that
+            value occurs as values.
+
+        See Also
+        --------
+        nimble.calculate.statistic.uniqueCount
+
+        Examples
+        --------
+        Count for all elements.
+
+        >>> data = nimble.identity('Matrix', 5)
+        >>> unique = data.countUniqueElements()
+        >>> unique
+        {0.0: 20, 1.0: 5}
+
+        Count for a subset of elements.
+
+        >>> data = nimble.identity('Matrix', 5)
+        >>> unique = data.countUniqueElements(points=0,
+        ...                                   features=[0, 1, 2])
+        >>> unique
+        {0.0: 2, 1.0: 1}
+        """
+        return self._countUnique_implementation(points, features)
 
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
@@ -680,7 +1154,7 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
+        valueObj = self.calculateTODO(hashCodeFunc, preserveZeros=True,
                                            outputType='Matrix', useLog=False)
         valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
@@ -2540,7 +3014,7 @@ class Base(object):
             )
         """
         if returnModified:
-            modified = self.elements.calculate(match, points=points,
+            modified = self.calculateTODO(match, points=points,
                                                features=features, useLog=False)
             modNames = [name + "_modified" for name
                         in modified.features.getNames()]
@@ -2565,7 +3039,7 @@ class Base(object):
         else:
             def transform(value, i, j):
                 return tmpData[i, j]
-            self.elements.transform(transform, points, features, useLog=False)
+            self.transformElements(transform, points, features, useLog=False)
 
         handleLogging(useLog, 'prep', "fillUsingAllData",
                       self.getTypeString(), Base.fillUsingAllData, match, fill,
@@ -3867,7 +4341,7 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.elements.calculate(abs, useLog=False)
+        ret = self.calculateTODO(abs, useLog=False)
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -3887,7 +4361,7 @@ class Base(object):
         Validate the object elements are all numeric.
         """
         try:
-            self.elements.calculate(dataHelpers._checkNumeric, useLog=False)
+            self.calculateTODO(dataHelpers._checkNumeric, useLog=False)
         except ValueError:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
@@ -3964,7 +4438,7 @@ class Base(object):
             return numpy.isnan(val) or isinstance(val, complex)
 
         if all(isinstance(obj, Base) for obj in [left, right]):
-            zipLR = zip(left.elements, right.elements)
+            zipLR = zip(left.iterElements(), right.iterElements())
             for l, r in zipLR:
                 if l == 0 and r < 0:
                     msg = 'Zeros cannot be raised to negative exponents'
@@ -3973,7 +4447,7 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         elif isinstance(left, Base):
-            for elem in left.elements:
+            for elem in left.iterElements():
                 if elem == 0 and right < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
@@ -3981,7 +4455,7 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         else:
-            for elem in right.elements:
+            for elem in right.iterElements():
                 if left == 0 and elem < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
@@ -4135,7 +4609,7 @@ class Base(object):
 
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
-        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
+        ret = boolObj.matchingElements(lambda v: not v, useLog=False)
         ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
         ret.features.setNames(self.features._getNamesNoGeneration(),
                               useLog=False)
@@ -4163,7 +4637,7 @@ class Base(object):
                 msg += 'containing True, False, 0 and 1 values'
                 raise ImproperObjectAction(msg)
 
-            ret = self.elements.matching(lambda v: bool(v), useLog=False)
+            ret = self.matchingElements(lambda v: bool(v), useLog=False)
             ret.points.setNames(self.points._getNamesNoGeneration(),
                                 useLog=False)
             ret.features.setNames(self.features._getNamesNoGeneration(),
@@ -4837,12 +5311,6 @@ class BaseFeatures(Axis, Features):
     """
     pass
 
-class BaseElements(Elements):
-    """
-    Access for element-based methods.
-    """
-    pass
-
 def cmp(x, y):
     """
     Comparison function.
@@ -4853,3 +5321,31 @@ def cmp(x, y):
         return 1
     else:
         return 0
+
+class ElementIterator(object):
+    """
+    Object providing iteration through each item in the axis.
+    """
+    def __init__(self, source):
+        self._source = source
+        self._ptPosition = 0
+        self._ftPosition = 0
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """
+        Get next item
+        """
+        while self._ptPosition < len(self._source.points):
+            while self._ftPosition < len(self._source.features):
+                value = self._source[self._ptPosition, self._ftPosition]
+                self._ftPosition += 1
+                return value
+            self._ptPosition += 1
+            self._ftPosition = 0
+        raise StopIteration
+
+    def __next__(self):
+        return self.next()

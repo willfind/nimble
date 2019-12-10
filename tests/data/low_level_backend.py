@@ -1132,20 +1132,6 @@ class LowLevelBackend(object):
         assert bool(noEmpty.points)
         assert bool(noEmpty.features)
 
-    #####################
-    # elements.__bool__ #
-    #####################
-    @noLogEntryExpected
-    def test_elements_bool_handmade(self):
-        bothEmpty = self.constructor(psize=0, fsize=0)
-        assert not bool(bothEmpty.elements)
-        pointEmpty = self.constructor(psize=0, fsize=4)
-        assert not bool(pointEmpty.elements)
-        featEmpty = self.constructor(psize=4, fsize=0)
-        assert not bool(featEmpty.elements)
-        noEmpty = self.constructor(psize=4, fsize=4)
-        assert bool(noEmpty.elements)
-
     #########################
     # constructIndicesList #
     #########################

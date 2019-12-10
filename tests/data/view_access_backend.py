@@ -10,8 +10,6 @@ from nimble.data.points import Points
 from nimble.data.points_view import PointsView
 from nimble.data.features import Features
 from nimble.data.features_view import FeaturesView
-from nimble.data.elements import Elements
-from nimble.data.elements_view import ElementsView
 from .baseObject import DataTestObject
 
 
@@ -53,19 +51,6 @@ class ViewAccess(DataTestObject):
         assert len(viewLines) == len(baseLines) + 3
         assert viewLines[3:] == baseLines
 
-    def test_exceptionDocstring_decorator_Elements(self):
-        """ test wrapper prepends view object information to Base docstring
-        when for a method that raises an exception"""
-        viewDoc = getattr(ElementsView, 'transform').__doc__
-        baseDoc = getattr(Elements, 'transform').__doc__
-
-        viewLines = viewDoc.split('\n')
-        baseLines = baseDoc.split('\n')
-
-        assert len(viewLines) == len(baseLines) + 3
-        assert viewLines[3:] == baseLines
-
-
     def test_BaseView_exceptionsForModifying(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         testObject = self.constructor(data)
@@ -84,6 +69,12 @@ class ViewAccess(DataTestObject):
 
         try:
             testObject.transformFeatureToIntegers(0)
+            assert False # expected TypeError
+        except TypeError as e:
+            assert "disallowed for View objects" in str(e)
+
+        try:
+            testObject.transformElements(lambda elem: elem + 1)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -350,17 +341,6 @@ class ViewAccess(DataTestObject):
 
         try:
             testObject.features.splitByParsing(0, lambda v: [1, 1], ['new1', 'new2'])
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
-
-    def test_ElementsView_exceptionsForModifying(self):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        testObject = self.constructor(data)
-
-        try:
-            testObject.elements.transform(lambda elem: elem + 1)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

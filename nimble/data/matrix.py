@@ -5,12 +5,14 @@ Class extending Base, using a numpy dense matrix to store data.
 from __future__ import division
 from __future__ import absolute_import
 import copy
+import itertools
 from functools import reduce
 
 import numpy
 from six.moves import range
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
@@ -19,10 +21,10 @@ from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
-from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import denseCountUnique
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -68,8 +70,38 @@ class Matrix(Base):
     def _getFeatures(self):
         return MatrixFeatures(self)
 
-    def _getElements(self):
-        return MatrixElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data[i, j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data[i, j] = currRet
+            # numpy modified data due to int dtype
+            if self.data[i, j] != currRet:
+                if match.nonNumeric(currRet) and currRet is not None:
+                    self.data = self.data.astype(numpy.object_)
+                else:
+                    self.data = self.data.astype(numpy.float)
+                self.data[i, j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -531,6 +563,3 @@ class MatrixView(BaseView, Matrix):
 
     def _getFeatures(self):
         return MatrixFeaturesView(self)
-
-    def _getElements(self):
-        return MatrixElementsView(self)

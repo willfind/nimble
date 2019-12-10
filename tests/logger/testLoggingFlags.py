@@ -457,9 +457,31 @@ def test_merge():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-############################
-# Points/Features/Elements #
-############################
+def test_transformElements():
+    def wrapped(obj, useLog):
+        ret = obj.transformElements(lambda elm: elm, features=0, useLog=useLog)
+        return ret
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_calculateTODO():
+    def wrapped(obj, useLog):
+        return obj.calculateTODO(lambda x: len(x), features=0, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_matchingElements():
+    def wrapped(obj, useLog):
+        return obj.matchingElements(lambda x: True, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+###################
+# Points/Features #
+###################
 
 def simpleMapper(vector):
     vID = vector[0]
@@ -489,13 +511,6 @@ def test_features_mapReduce():
         # transpose data to make use of same mapper and reducer
         obj.transpose(useLog=False)
         return obj.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
-
-    for rType in nimble.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
-def test_elements_calculate():
-    def wrapped(obj, useLog):
-        return obj.elements.calculate(lambda x: len(x), features=0, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
@@ -637,14 +652,6 @@ def test_points_transform():
 def test_features_transform():
     def wrapped(obj, useLog):
         return obj.features.transform(lambda ft: [val for val in ft], features=0, useLog=useLog)
-
-    for rType in nimble.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
-def test_elements_transform():
-    def wrapped(obj, useLog):
-        ret = obj.elements.transform(lambda elm: elm, features=0, useLog=useLog)
-        return ret
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

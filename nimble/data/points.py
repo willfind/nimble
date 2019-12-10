@@ -843,8 +843,8 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.elements.Elements.count,
-        nimble.data.elements.Elements.countUnique
+        nimble.data.Base.countElements,
+        nimble.data.Base.countUniqueElements
 
         Examples
         --------

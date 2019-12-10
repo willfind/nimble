@@ -17,7 +17,7 @@ def elementwiseMultiply(left, right):
         msg = "'left' must be an instance of a nimble data object"
         raise InvalidArgumentType(msg)
 
-    return left.elements.multiply(right)
+    return left * right
 
 def elementwisePower(left, right):
     """
@@ -31,4 +31,4 @@ def elementwisePower(left, right):
         msg = "'left' must be an instance of a nimble data object"
         raise InvalidArgumentType(msg)
 
-    return left.elements.power(right)
+    return left ** right

@@ -185,6 +185,12 @@ class BaseView(Base):
     ##################################################################
 
     @exceptionDocstring
+    def transformElements(self, toTransform, points=None, features=None,
+                          preserveZeros=False, skipNoneReturnValues=False,
+                          useLog=None):
+        readOnlyException("transform")
+
+    @exceptionDocstring
     def transpose(self, useLog=None):
         readOnlyException("transpose")
 

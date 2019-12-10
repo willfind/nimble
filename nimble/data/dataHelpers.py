@@ -747,3 +747,50 @@ def wrapMatchFunctionFactory(matchFunc):
     wrappedMatch.__doc__ = matchFunc.__doc__
 
     return wrappedMatch
+
+def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
+                            funcName):
+    def elementValidated(value, *args):
+        if preserveZeros and value == 0:
+            return float(0)
+        ret = func(value, *args)
+        if skipNoneReturnValues and ret is None:
+            return value
+        if not isAllowedSingleElement(ret):
+            msg = funcName + " can only return numeric, boolean, or string "
+            msg += "values, but the returned value was " + str(type(ret))
+            raise InvalidArgumentValue(msg)
+        return ret
+
+    if isinstance(func, dict):
+        func = getDictionaryMappingFunction(func)
+    try:
+        func(0, 0, 0)
+        oneArg = False
+
+        def wrappedElementFunction(value, i, j):
+            return elementValidated(value, i, j)
+
+    except TypeError:
+        oneArg = True
+        # see if we can preserve zeros even if not explicitly set
+        try:
+            if not preserveZeros and func(0) == 0:
+                preserveZeros = True
+        except TypeError:
+            pass
+
+        def wrappedElementFunction(value):
+            return elementValidated(value)
+
+    wrappedElementFunction.oneArg = oneArg
+    wrappedElementFunction.preserveZeros = preserveZeros
+
+    return wrappedElementFunction
+
+def getDictionaryMappingFunction(dictionary):
+    def valueMappingFunction(value):
+        if value in dictionary:
+            return dictionary[value]
+        return value
+    return valueMappingFunction

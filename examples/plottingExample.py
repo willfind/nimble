@@ -75,7 +75,7 @@ if __name__ == "__main__":
         else:
             return 1
 
-    checkObj.elements.transform(makeCheckered)
+    checkObj.transformElements(makeCheckered)
 
     def addGradient(vector):
         n = len(vector)

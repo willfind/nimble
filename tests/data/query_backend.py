@@ -5,7 +5,7 @@ pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
-elements.__iter__, points.nonZeroIterator, features.nonZeroIterator,
+iterElements, points.nonZeroIterator, features.nonZeroIterator,
 inverse, solveLinearSystem, featureReport, summaryReport
 """
 from __future__ import absolute_import
@@ -639,7 +639,7 @@ class QueryBackend(DataTestObject):
         raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         obj = self.constructor(raw)
 
-        idxObj = obj.elements.matching(lambda x: x % 2 == 0)
+        idxObj = obj.matchingElements(lambda x: x % 2 == 0)
 
         obj[idxObj]
 
@@ -2541,28 +2541,28 @@ class QueryBackend(DataTestObject):
         assert toCheck[7][1] == 0
         assert toCheck[7][2] == 0
 
-    #####################
-    # elements.__iter__ #
-    #####################
+    ################
+    # iterElements #
+    ################
     @noLogEntryExpected
-    def test_elements_iter_noNextPempty(self):
+    def test_iterElements_noNextPempty(self):
         """ test .elements() has no next value when object is point empty """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
-        viewIter = iter(toTest.elements)
+        viewIter = iter(toTest.iterElements())
         try:
             next(viewIter)
         except StopIteration:
             return
         assert False
 
-    def test_elements_iter_noNextFempty(self):
+    def test_iterElements_noNextFempty(self):
         """ test .elements() has no next value when object is feature empty """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        viewIter = iter(toTest.elements)
+        viewIter = iter(toTest.iterElements())
         try:
             next(viewIter)
         except StopIteration:
@@ -2570,13 +2570,13 @@ class QueryBackend(DataTestObject):
         assert False
 
     @noLogEntryExpected
-    def test_elements_iter_exactValueViaFor(self):
+    def test_iterElements_exactValueViaFor(self):
         """ Test .elements() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        viewIter = toTest.elements
+        viewIter = toTest.iterElements()
 
         toCheck = []
         for v in viewIter:
@@ -2584,12 +2584,12 @@ class QueryBackend(DataTestObject):
 
         assert toCheck == list(range(1, 10))
 
-    def test_elements_iter_allZeroPoints(self):
+    def test_iterElements_allZeroPoints(self):
         """ Test .elements() works when there are all zero points """
         data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.elements
+        viewIter = toTest.iterElements()
         toCheck = []
         for v in viewIter:
             toCheck.append(v)
@@ -2620,12 +2620,12 @@ class QueryBackend(DataTestObject):
         assert toCheck[16] == 0
         assert toCheck[17] == 0
 
-    def test_elements_iter_allZeroVectors(self):
+    def test_iterElements_allZeroVectors(self):
         """ Test .elements() works when there are all zero features """
         data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.elements
+        viewIter = toTest.iterElements()
         toCheck = []
         for v in viewIter:
             toCheck.append(v)

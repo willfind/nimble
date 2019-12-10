@@ -4,6 +4,7 @@ Class extending Base, using a pandas DataFrame to store data.
 
 from __future__ import division
 from __future__ import absolute_import
+import itertools
 
 import numpy
 from six.moves import range
@@ -18,10 +19,10 @@ from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
-from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import denseCountUnique
 
 pd = ImportModule('pandas')
 scipy = ImportModule('scipy')
@@ -72,8 +73,31 @@ class DataFrame(Base):
     def _getFeatures(self):
         return DataFrameFeatures(self)
 
-    def _getElements(self):
-        return DataFrameElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data.values[i, j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data.iloc[i, j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -422,9 +446,6 @@ class DataFrameView(BaseView, DataFrame):
 
     def _getFeatures(self):
         return DataFrameFeaturesView(self)
-
-    def _getElements(self):
-        return DataFrameElementsView(self)
 
     def _setAllDefault(self, axis):
         super(DataFrameView, self)._setAllDefault(axis)

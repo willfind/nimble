@@ -621,7 +621,7 @@ def kNeighborsBackend(method, data, match, **kwarguments):
         except KeyError:
             return value
 
-    data.elements.transform(transform, useLog=False)
+    data.transformElements(transform, useLog=False)
 
     return data
 
