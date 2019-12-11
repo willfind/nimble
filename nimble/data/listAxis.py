@@ -134,7 +134,7 @@ class ListAxis(Axis):
     ####################
 
     @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         pass
 
     # @abstractmethod

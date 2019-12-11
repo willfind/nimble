@@ -338,7 +338,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
+    workingCV.features.append(nimble.ones(workingType, cvP, 1), useLog=False)
     workingCV = workingCV.copy(to="numpy array")
     workingTP = toPredict.copy(to="numpy array")
 

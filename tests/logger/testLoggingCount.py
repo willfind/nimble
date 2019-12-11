@@ -113,9 +113,9 @@ base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
-    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
-    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'splitByParsing', 'matching',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
+    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
+    'shuffle', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -125,10 +125,10 @@ features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
-    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
-    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
-    'matching',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
+    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
+    'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'splitByCollapsingFeatures',
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
