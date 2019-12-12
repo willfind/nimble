@@ -53,7 +53,7 @@ if __name__ == "__main__":
         scaled = (raw1 * 3) + raw2
         obj1 = nimble.createData("Matrix", raw1)
         obj2 = nimble.createData("Matrix", scaled)
-        obj1.features.add(obj2)
+        obj1.features.append(obj2)
 
         #obj1.features.setName(0, "[0, 1) random noise")
         obj1.features.setName(1, "(Feature 0 * 3) + noise")

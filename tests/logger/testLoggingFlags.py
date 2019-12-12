@@ -656,20 +656,39 @@ def test_features_transform():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_points_add():
+def test_points_insert():
     def wrapped(obj, useLog):
-        appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toAppend = nimble.createData("Matrix", appendData, useLog=False)
-        return obj.points.add(toAppend, useLog=useLog)
+        insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        toInsert = nimble.createData("Matrix", insertData, useLog=False)
+        return obj.points.insert(0, toInsert, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_features_add():
+def test_features_insert():
+    def wrapped(obj, useLog):
+        insertData = numpy.zeros((18,1))
+        toInsert = nimble.createData("Matrix", insertData, useLog=False)
+        return obj.features.insert(0, toInsert, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_points_append():
+
+    def wrapped(obj, useLog):
+        appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        toAppend = nimble.createData("Matrix", appendData, useLog=False)
+        return obj.points.append(toAppend, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_features_append():
     def wrapped(obj, useLog):
         appendData = numpy.zeros((18,1))
         toAppend = nimble.createData("Matrix", appendData, useLog=False)
-        return obj.features.add(toAppend, useLog=useLog)
+        return obj.features.append(toAppend, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

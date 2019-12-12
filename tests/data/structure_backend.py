@@ -6,12 +6,12 @@ In object StructureDataSafe:
 copy, points.copy, features.copy
 
 In object StructureModifying:
-__init__,  transpose, T, points.add, features.add, points.sort,
+__init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
 points.transform, features.transform, transformElements, fillWith,
 flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
-unflattenFromOneFeature
+unflattenFromOneFeature, points.append, features.append,
 """
 
 from __future__ import absolute_import
@@ -2629,143 +2629,12 @@ class StructureModifying(StructureShared):
         assert dataObj1.absolutePath == "TestAbsPath"
         assert dataObj1.relativePath == 'testRelPath'
 
-
-    #####################################
-    # points.add() / features.add() #
-    #####################################
-
-    def backend_add_exceptionNone(self, axis):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-
-        if axis == 'point':
-            toTest.points.add(None)
-        else:
-            toTest.features.add(None)
-
-    @raises(InvalidArgumentType)
-    def test_points_add_exceptionNone(self):
-        """ Test points.add() for InvalidArgumentType when toInsert is None """
-        self.backend_add_exceptionNone('point')
-
-    @raises(InvalidArgumentType)
-    def test_features_add_exceptionNone(self):
-        """ Test features.add() for InvalidArgumentType when toInsert is None """
-        self.backend_add_exceptionNone('feature')
-
-
-    def backend_add_exceptionWrongSize(self, axis):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-        toInsert = self.constructor([[2, 3, 4, 5, 6]])
-
-        if axis == 'point':
-            toTest.points.add(toInsert)
-        else:
-            toInsert.transpose()
-            toTest.features.add(toInsert)
-
-    @raises(InvalidArgumentValue)
-    def test_points_add_exceptionWrongSize(self):
-        """ Test points.add() for InvalidArgumentValue when toInsert has too many features """
-        self.backend_add_exceptionWrongSize('point')
-
-    @raises(InvalidArgumentValue)
-    def test_features_add_exceptionWrongSize(self):
-        """ Test features.add() for InvalidArgumentValue when toInsert has too many points """
-        self.backend_add_exceptionWrongSize('feature')
-
-
-    def backend_add_exception_extendAxis_SameName(self, axis):
-        toTest1 = self.constructor([[1, 2]], pointNames=["hello"])
-        toTest2 = self.constructor([[1, 2], [5, 6]], pointNames=["hello", "goodbye"])
-
-        if axis == 'point':
-            toTest2.points.add(toTest1)
-        else:
-            toTest1.transpose()
-            toTest2.transpose()
-            toTest2.features.add(toTest1)
-
-    @raises(InvalidArgumentValue)
-    def test_points_add_exceptionSamePointName(self):
-        """ Test points.add() for InvalidArgumentValue when toInsert and self have a pointName in common """
-        self.backend_add_exception_extendAxis_SameName('point')
-
-    @raises(InvalidArgumentValue)
-    def test_features_add_exceptionSameFeatureName(self):
-        """ Test features.add() for InvalidArgumentValue when toInsert and self have a featureName in common """
-        self.backend_add_exception_extendAxis_SameName('feature')
-
-
-    def backend_add_exception_sharedAxis_unsharedName(self, axis):
-        toTest1 = self.constructor([[1, 2]], featureNames=['1', '2'])
-        toTest2 = self.constructor([[2, 1], [6, 5]], featureNames=['6', '1'])
-
-        if axis == 'point':
-            toTest2.points.add(toTest1)
-        else:
-            toTest1.transpose()
-            toTest2.transpose()
-            toTest2.features.add(toTest1)
-
-    @raises(InvalidArgumentValue)
-    def test_points_add_exception_unsharedFeatureName(self):
-        """ Test points.add() for InvalidArgumentValue when toInsert and self have a featureName not in common """
-        self.backend_add_exception_sharedAxis_unsharedName('point')
-
-    @raises(InvalidArgumentValue)
-    def test_features_add_exception_unsharedPointName(self):
-        """ Test features.add() for InvalidArgumentValue when toInsert and self have a pointName not in common """
-        self.backend_add_exception_sharedAxis_unsharedName('feature')
-
-
-    def backend_add_exceptionNonNimbleDataType(self, axis):
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-
-        if axis == 'point':
-            toTest.points.add([[1, 1, 1]])
-        else:
-            toTest.features.add([[1], [1], [1]])
-
-    @raises(InvalidArgumentType)
-    def test_points_add_exceptionNonNimbleDataType(self):
-        self.backend_add_exceptionNonNimbleDataType('point')
-
-    @raises(InvalidArgumentType)
-    def test_features_add_exceptionNonNimbleDataType(self):
-        self.backend_add_exceptionNonNimbleDataType('feature')
-
-
-    def backend_add_exception_outOfOrder_with_defaults(self, axis):
-        toTest1 = self.constructor([[1, 2, 3]])
-        toTest2 = self.constructor([[1, 3, 2]])
-
-        toTest1.features.setName(1, '2')
-        toTest1.features.setName(2, '3')
-        toTest2.features.setName(1, '3')
-        toTest2.features.setName(2, '2')
-
-        if axis == 'point':
-            toTest1.points.add(toTest2)
-        else:
-            toTest1.transpose()
-            toTest2.transpose()
-            toTest1.features.add(toTest2)
-
-    @raises(ImproperObjectAction)
-    def test_points_add_exception_outOfOrder_with_defaults(self):
-        """ Test points.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
-        self.backend_add_exception_outOfOrder_with_defaults('point')
-
-    @raises(ImproperObjectAction)
-    def test_features_add_exception_outOfOrder_with_defaults(self):
-        """ Test features.add() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
-        self.backend_add_exception_outOfOrder_with_defaults('feature')
+    ##################################
+    # common backends insert/append #
+    #################################
 
     @oneLogEntryExpected
-    def backend_add_emptyObject(self, axis, insertBefore=None):
+    def backend_insert_emptyObject(self, axis, funcName):
         empty = [[], []]
 
         if axis == 'point':
@@ -2780,39 +2649,27 @@ class StructureModifying(StructureShared):
         toExp = self.constructor(data)
 
         if axis == 'point':
-            toTest.points.add(toInsert, insertBefore)
+            if funcName == 'insert':
+                toTest.points.insert(0, toInsert)
+            else:
+                toTest.points.append(toInsert)
         else:
-            toTest.features.add(toInsert, insertBefore)
+            if funcName == 'insert':
+                toTest.features.insert(0, toInsert)
+            else:
+                toTest.features.append(toInsert)
 
         assert toTest.isIdentical(toExp)
 
-    def test_points_add_fromEmpty_bottom(self):
-        """ Test points.add() to bottom when the calling object is point empty """
-        self.backend_add_emptyObject('point')
-
-    def test_features_add_fromEmpty_right(self):
-        """ Test features.add() to right when the calling object is feature empty """
-        self.backend_add_emptyObject('feature')
-
-    @raises(IndexError)
-    def test_points_add_fromEmpty_top(self):
-        """ Test points.add() with an insertBefore ID when the calling object is point empty raises exception """
-        self.backend_add_emptyObject('point', 0)
-
-    @raises(IndexError)
-    def test_features_add_fromEmpty_left(self):
-        """ Test features.add() with an insertBefore ID when the calling object is feature empty raises exception """
-        self.backend_add_emptyObject('feature', 0)
-
     @oneLogEntryExpected
-    def backend_add_handmadeSingle(self, axis, insertBefore=None):
+    def backend_insert_handmadeSingle(self, axis, insertBefore):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
         addName = ['new']
 
         if axis == 'point':
-            if insertBefore is None:
+            if insertBefore in [None, 3]:
                 dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
                 namesExp = ['one', 'two', 'three', 'new']
             elif insertBefore == 0:
@@ -2824,9 +2681,12 @@ class StructureModifying(StructureShared):
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
             toInsert = self.constructor([[-1, -2, -3]], pointNames=addName, featureNames=offNames)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            ret = toTest.points.add(toInsert, insertBefore)  # RET CHECK
-        else:
             if insertBefore is None:
+                ret = toTest.points.append(toInsert) # RET CHECK
+            else:
+                ret = toTest.points.insert(insertBefore, toInsert)  # RET CHECK
+        else:
+            if insertBefore in [None, 3]:
                 dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
                 namesExp = ['one', 'two', 'three', 'new']
             elif insertBefore == 0:
@@ -2838,37 +2698,16 @@ class StructureModifying(StructureShared):
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
             toInsert = self.constructor([[-1], [-2], [-3]], pointNames=offNames, featureNames=addName)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            ret = toTest.features.add(toInsert, insertBefore)  # RET CHECK
+            if insertBefore is None:
+                ret = toTest.features.append(toInsert) # RET CHECK
+            else:
+                ret = toTest.features.insert(insertBefore, toInsert)  # RET CHECK
 
         assert toTest.isIdentical(expected)
         assert ret is None
 
-    def test_points_add_handmadeSingle_bottom(self):
-        """ Test points.add() against handmade output for a single added point to the bottom"""
-        self.backend_add_handmadeSingle('point')
-
-    def test_features_add_handmadeSingle_right(self):
-        """ Test features.add() against handmade output for a single added feature to the right"""
-        self.backend_add_handmadeSingle('feature')
-
-    def test_points_add_handmadeSingle_top(self):
-        """ Test points.add() against handmade output for a single added point the the top"""
-        self.backend_add_handmadeSingle('point', 0)
-
-    def test_features_add_handmadeSingle_left(self):
-        """ Test features.add() against handmade output for a single added feature to the left"""
-        self.backend_add_handmadeSingle('feature', 0)
-
-    def test_points_add_handmadeSingle_mid(self):
-        """ Test points.add() against handmade output for a single added point in the middle"""
-        self.backend_add_handmadeSingle('point', 1)
-
-    def test_features_add_handmadeSingle_mid(self):
-        """ Test features.add() against handmade output for a single added feature in the middle"""
-        self.backend_add_handmadeSingle('feature', 1)
-
     @logCountAssertionFactory(4)
-    def backend_add_handmadeSequence(self, axis, insertBefore=None):
+    def backend_insert_handmadeSequence(self, axis, insertBefore):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['o1', 'o2', 'o3']
         names = ['one', 'two', 'three']
@@ -2889,9 +2728,16 @@ class StructureModifying(StructureShared):
                 dataExpected = [[1, 2, 3], [10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03],
                                 [0.1, 0.2, 0.3], [4, 5, 6], [7, 8, 9]]
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
+            elif insertBefore == 3:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03],
+                                [0.1, 0.2, 0.3]]
+                namesExp = names + list(reversed(newNames))
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            for nextAdd in toInsert.points:
-                toTest.points.add(nextAdd, insertBefore)
+            for nextInsert in toInsert.points:
+                if insertBefore is None:
+                    toTest.points.append(nextInsert)
+                else:
+                    toTest.points.insert(insertBefore, nextInsert)
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
         else:
             if insertBefore is None:
@@ -2903,40 +2749,22 @@ class StructureModifying(StructureShared):
             elif insertBefore == 1:
                 dataExpected = [[1, 10, 0, 0.01, 0.1, 2, 3], [4, 11, 0, 0.02, 0.2, 5, 6], [7, 12, 0, 0.03, 0.3, 8, 9]]
                 namesExp = names[:1] + list(reversed(newNames)) + names[1:]
+            elif insertBefore == 3:
+                dataExpected = [[1, 2, 3, 10, 0, 0.01, 0.1], [4, 5, 6, 11, 0, 0.02, 0.2], [7, 8, 9, 12, 0, 0.03, 0.3]]
+                namesExp = names + list(reversed(newNames))
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
             toInsert.transpose(useLog=False)
-            for nextAdd in toInsert.features:
-                toTest.features.add(nextAdd, insertBefore)
+            for nextInsert in toInsert.features:
+                if insertBefore is None:
+                    toTest.features.append(nextInsert)
+                else:
+                    toTest.features.insert(insertBefore, nextInsert)
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
 
         assert toTest.isIdentical(expected)
 
-    def test_points_add_handmadeSequence_bottom(self):
-        """ Test points.add() against handmade output for a sequence of additions to the bottom"""
-        self.backend_add_handmadeSequence('point')
-
-    def test_features_add_handmadeSequence_right(self):
-        """ Test features.add() against handmade output for a sequence of additions to the right"""
-        self.backend_add_handmadeSequence('feature')
-
-    def test_points_add_handmadeSequence_top(self):
-        """ Test points.add() against handmade output for a sequence of additions to the top"""
-        self.backend_add_handmadeSequence('point', 0)
-
-    def test_features_add_handmadeSequence_left(self):
-        """ Test features.add() against handmade output for a sequence of additions to the left"""
-        self.backend_add_handmadeSequence('feature', 0)
-
-    def test_points_add_handmadeSequence_mid(self):
-        """ Test points.add() against handmade output for a sequence of additions in the middle"""
-        self.backend_add_handmadeSequence('point', 1)
-
-    def test_features_add_handmadeSequence_mid(self):
-        """ Test features.add() against handmade output for a sequence of additions in the middle"""
-        self.backend_add_handmadeSequence('feature', 1)
-
     @oneLogEntryExpected
-    def backend_add_selfInsert(self, axis, insertBefore=None):
+    def backend_insert_selfInsert(self, axis, insertBefore):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
 
@@ -2951,9 +2779,12 @@ class StructureModifying(StructureShared):
             dupNames = dup.points.getNames()
             assert orig.points.getNames() == dupNames
 
-            orig.points.add(orig, insertBefore)
+            if insertBefore is None:
+                orig.points.append(orig)
+            else:
+                orig.points.insert(insertBefore, orig)
 
-            if insertBefore is None or insertBefore == 0:
+            if insertBefore in [3, 0, None]:
                 dataExp = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
             elif insertBefore == 1:
                 dataExp = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [7, 8, 9], [4, 5, 6], [7, 8, 9]]
@@ -2962,9 +2793,12 @@ class StructureModifying(StructureShared):
             dupNames = dup.features.getNames()
             assert orig.features.getNames() == dupNames
 
-            orig.features.add(orig, insertBefore)
+            if insertBefore is None:
+                orig.features.append(orig)
+            else:
+                orig.features.insert(insertBefore, orig)
 
-            if insertBefore is None or insertBefore == 0:
+            if insertBefore in [3, 0, None]:
                 dataExp = [[1, 2, 3, 1, 2, 3], [4, 5, 6, 4, 5, 6], [7, 8, 9, 7, 8, 9]]
             elif insertBefore == 1:
                 dataExp = [[1, 1, 2, 3, 2, 3], [4, 4, 5, 6, 5, 6], [7, 7, 8, 9, 8, 9]]
@@ -2974,7 +2808,7 @@ class StructureModifying(StructureShared):
 
         checkNames = orig.points.getNames() if axis == 'point' else orig.features.getNames()
         lastDefIndex = int(dupNames[2][-1])
-        if insertBefore is None:
+        if insertBefore in [3, None]:
             assert checkNames[:3] == dupNames
             # indexes of inserted data
             idx1, idx2, idx3 = 3, 4, 5
@@ -2991,26 +2825,7 @@ class StructureModifying(StructureShared):
         assert checkNames[idx2] == DEFAULT_PREFIX + str(lastDefIndex + 2)
         assert checkNames[idx3] == DEFAULT_PREFIX + str(lastDefIndex + 3)
 
-    def test_points_add_selfInsert_bottom(self):
-        self.backend_add_selfInsert('point')
-
-    def test_features_add_selfInsert_right(self):
-        self.backend_add_selfInsert('feature')
-
-    def test_points_add_selfInsert_top(self):
-        self.backend_add_selfInsert('point', 0)
-
-    def test_features_add_selfInsert_left(self):
-        self.backend_add_selfInsert('feature', 0)
-
-    def test_points_add_selfInsert_mid(self):
-        self.backend_add_selfInsert('point', 1)
-
-    def test_features_add_selfInsert_mid(self):
-        self.backend_add_selfInsert('feature', 1)
-
-
-    def backend_add_automaticReorder(self, axis, defPrimaryNames, insertBefore=None):
+    def backend_insert_automaticReorder(self, axis, defPrimaryNames, insertBefore):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         offNames = ['off1', 'off2', 'off3']
         addOffName = ['off3', 'off2', 'off1']
@@ -3021,7 +2836,7 @@ class StructureModifying(StructureShared):
         else:
             names = ['one', 'two', 'three']
             addName = ['new']
-            if insertBefore is None:
+            if insertBefore in [3, None]:
                 namesExp = ['one', 'two', 'three', 'new']
             elif insertBefore == 0:
                 namesExp = ['new', 'one', 'two', 'three']
@@ -3029,73 +2844,289 @@ class StructureModifying(StructureShared):
                 namesExp = ['one', 'new', 'two', 'three']
 
         if axis == 'point':
-            toAddData = [[-3, -2, -1]]
-            if insertBefore is None:
+            toInsertData = [[-3, -2, -1]]
+            if insertBefore in [3, None]:
                 dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
             elif insertBefore == 0:
                 dataExpected = [[-1, -2, -3], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
             elif insertBefore == 1:
                 dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
-            toInsert = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+            toInsert = self.constructor(toInsertData, pointNames=addName, featureNames=addOffName)
             expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
-            toTest.points.add(toInsert, insertBefore)
-        else:
-            toAddData = [[-3], [-2], [-1]]
             if insertBefore is None:
+                toTest.points.append(toInsert)
+            else:
+                toTest.points.insert(insertBefore, toInsert)
+        else:
+            toInsertData = [[-3], [-2], [-1]]
+            if insertBefore in [3, None]:
                 dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
             elif insertBefore == 0:
                 dataExpected = [[-1, 1, 2, 3], [-2, 4, 5, 6], [-3, 7, 8, 9]]
             elif insertBefore == 1:
                 dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
-            toInsert = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+            toInsert = self.constructor(toInsertData, pointNames=addOffName, featureNames=addName)
             expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
-            toTest.features.add(toInsert, insertBefore)
+            if insertBefore is None:
+                toTest.features.append(toInsert)
+            else:
+                toTest.features.insert(insertBefore, toInsert)
         # check that toInsert object was not modified when reordering occurred
         assert toInsert.isIdentical(expInsert)
         assert toTest.isIdentical(expected)
 
+    #######################################
+    # points.insert() / features.insert() #
+    #######################################
 
-    def test_points_add_automaticReorder_fullySpecifiedNames_bottom(self):
-        self.backend_add_automaticReorder('point', False)
+    def backend_insert_exceptionInsertBeforeNone(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[2, 3, 4, 5, 6]])
 
-    def test_features_add_automaticReorder_fullySpecifiedNames_right(self):
-        self.backend_add_automaticReorder('feature', False)
+        if axis == 'point':
+            toTest.points.insert(None, toInsert)
+        else:
+            toInsert.transpose()
+            toTest.features.insert(None, toInsert)
 
-    def test_points_add_automaticReorder_defaultPointNames_bottom(self):
-        self.backend_add_automaticReorder('point', True)
+    @raises(InvalidArgumentType)
+    def test_points_insert_exceptionInsertBeforeNone(self):
+        """ Test points.insert() for InvalidArgumentType when insertBefore is None """
+        self.backend_insert_exceptionInsertBeforeNone('point')
 
-    def test_features_add_automaticReorder_defaultFeatureNames_right(self):
-        self.backend_add_automaticReorder('feature', True)
+    @raises(InvalidArgumentType)
+    def test_features_insert_exceptionInsertBeforeNone(self):
+        """ Test features.insert() for InvalidArgumentType when insertBefore is None """
+        self.backend_insert_exceptionInsertBeforeNone('feature')
 
-    def test_points_add_automaticReorder_fullySpecifiedNames_top(self):
-        self.backend_add_automaticReorder('point', False, 0)
+    def backend_insert_exceptionWrongSize(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[2, 3, 4, 5, 6]])
 
-    def test_features_add_automaticReorder_fullySpecifiedNames_left(self):
-        self.backend_add_automaticReorder('feature', False, 0)
+        if axis == 'point':
+            toTest.points.insert(len(toTest.points), toInsert)
+        else:
+            toInsert.transpose()
+            toTest.features.insert(len(toTest.features), toInsert)
 
-    def test_points_add_automaticReorder_defaultPointNames_top(self):
-        self.backend_add_automaticReorder('point', True, 0)
+    @raises(InvalidArgumentValue)
+    def test_points_insert_exceptionWrongSize(self):
+        """ Test points.insert() for InvalidArgumentValue when toInsert has too many features """
+        self.backend_insert_exceptionWrongSize('point')
 
-    def test_features_add_automaticReorder_defaultFeatureNames_left(self):
-        self.backend_add_automaticReorder('feature', True, 0)
+    @raises(InvalidArgumentValue)
+    def test_features_insert_exceptionWrongSize(self):
+        """ Test features.insert() for InvalidArgumentValue when toInsert has too many points """
+        self.backend_insert_exceptionWrongSize('feature')
 
-    def test_points_add_automaticReorder_fullySpecifiedNames_mid(self):
-        self.backend_add_automaticReorder('point', False, 1)
 
-    def test_features_add_automaticReorder_fullySpecifiedNames_mid(self):
-        self.backend_add_automaticReorder('feature', False, 1)
+    def backend_insert_exception_extendAxis_SameName(self, axis):
+        toTest1 = self.constructor([[1, 2]], pointNames=["hello"])
+        toTest2 = self.constructor([[1, 2], [5, 6]], pointNames=["hello", "goodbye"])
 
-    def test_points_add_automaticReorder_defaultPointNames_mid(self):
-        self.backend_add_automaticReorder('point', True, 1)
+        if axis == 'point':
+            toTest2.points.insert(len(toTest2.points), toTest1)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest2.features.insert(len(toTest2.features), toTest1)
 
-    def test_features_add_automaticReorder_defaultFeatureNames_mid(self):
-        self.backend_add_automaticReorder('feature', True, 1)
+    @raises(InvalidArgumentValue)
+    def test_points_insert_exceptionSamePointName(self):
+        """ Test points.insert() for InvalidArgumentValue when toInsert and self have a pointName in common """
+        self.backend_insert_exception_extendAxis_SameName('point')
 
-    def backend_add_allPossibleNimbleDataType(self, axis):
+    @raises(InvalidArgumentValue)
+    def test_features_insert_exceptionSameFeatureName(self):
+        """ Test features.insert() for InvalidArgumentValue when toInsert and self have a featureName in common """
+        self.backend_insert_exception_extendAxis_SameName('feature')
+
+
+    def backend_insert_exception_sharedAxis_unsharedName(self, axis):
+        toTest1 = self.constructor([[1, 2]], featureNames=['1', '2'])
+        toTest2 = self.constructor([[2, 1], [6, 5]], featureNames=['6', '1'])
+
+        if axis == 'point':
+            toTest2.points.insert(len(toTest2.points), toTest1)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest2.features.insert(len(toTest2.features), toTest1)
+
+    @raises(InvalidArgumentValue)
+    def test_points_insert_exception_unsharedFeatureName(self):
+        """ Test points.insert() for InvalidArgumentValue when toInsert and self have a featureName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('point')
+
+    @raises(InvalidArgumentValue)
+    def test_features_insert_exception_unsharedPointName(self):
+        """ Test features.insert() for InvalidArgumentValue when toInsert and self have a pointName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('feature')
+
+
+    def backend_insert_exceptionNonNimbleDataType(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+
+        if axis == 'point':
+            toTest.points.insert(len(toTest.points), [[1, 1, 1]])
+        else:
+            toTest.features.insert(len(toTest.features), [[1], [1], [1]])
+
+    @raises(InvalidArgumentType)
+    def test_points_insert_exceptionNonNimbleDataType(self):
+        self.backend_insert_exceptionNonNimbleDataType('point')
+
+    @raises(InvalidArgumentType)
+    def test_features_insert_exceptionNonNimbleDataType(self):
+        self.backend_insert_exceptionNonNimbleDataType('feature')
+
+
+    def backend_insert_exception_outOfOrder_with_defaults(self, axis):
+        toTest1 = self.constructor([[1, 2, 3]])
+        toTest2 = self.constructor([[1, 3, 2]])
+
+        toTest1.features.setName(1, '2')
+        toTest1.features.setName(2, '3')
+        toTest2.features.setName(1, '3')
+        toTest2.features.setName(2, '2')
+
+        if axis == 'point':
+            toTest1.points.insert(len(toTest1.points), toTest2)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest1.features.insert(len(toTest1.features), toTest2)
+
+    @raises(ImproperObjectAction)
+    def test_points_insert_exception_outOfOrder_with_defaults(self):
+        """ Test points.insert() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('point')
+
+    @raises(ImproperObjectAction)
+    def test_features_insert_exception_outOfOrder_with_defaults(self):
+        """ Test features.insert() for ImproperObjectAction when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('feature')
+
+    @raises(IndexError)
+    def test_points_insert_fromEmpty_top(self):
+        """ Test points.insert() with an insertBefore ID when the calling object is point empty raises exception """
+        self.backend_insert_emptyObject('point', 'insert')
+
+    @raises(IndexError)
+    def test_features_insert_fromEmpty_left(self):
+        """ Test features.insert() with an insertBefore ID when the calling object is feature empty raises exception """
+        self.backend_insert_emptyObject('feature', 'insert')
+
+    def test_points_insert_handmadeSingle_bottom(self):
+        """ Test points.insert() against handmade output for a single added point to the bottom"""
+        self.backend_insert_handmadeSingle('point', 3)
+
+    def test_features_insert_handmadeSingle_right(self):
+        """ Test features.insert() against handmade output for a single added feature to the right"""
+        self.backend_insert_handmadeSingle('feature', 3)
+
+    def test_points_insert_handmadeSingle_top(self):
+        """ Test points.insert() against handmade output for a single added point the the top"""
+        self.backend_insert_handmadeSingle('point', 0)
+
+    def test_features_insert_handmadeSingle_left(self):
+        """ Test features.insert() against handmade output for a single added feature to the left"""
+        self.backend_insert_handmadeSingle('feature', 0)
+
+    def test_points_insert_handmadeSingle_mid(self):
+        """ Test points.insert() against handmade output for a single added point in the middle"""
+        self.backend_insert_handmadeSingle('point', 1)
+
+    def test_features_insert_handmadeSingle_mid(self):
+        """ Test features.insert() against handmade output for a single added feature in the middle"""
+        self.backend_insert_handmadeSingle('feature', 1)
+
+    def test_points_insert_handmadeSequence_bottom(self):
+        """ Test points.insert() against handmade output for a sequence of additions to the bottom"""
+        self.backend_insert_handmadeSequence('point', 3)
+
+    def test_features_insert_handmadeSequence_right(self):
+        """ Test features.insert() against handmade output for a sequence of additions to the right"""
+        self.backend_insert_handmadeSequence('feature', 3)
+
+    def test_points_insert_handmadeSequence_top(self):
+        """ Test points.insert() against handmade output for a sequence of additions to the top"""
+        self.backend_insert_handmadeSequence('point', 0)
+
+    def test_features_insert_handmadeSequence_left(self):
+        """ Test features.insert() against handmade output for a sequence of additions to the left"""
+        self.backend_insert_handmadeSequence('feature', 0)
+
+    def test_points_insert_handmadeSequence_mid(self):
+        """ Test points.insert() against handmade output for a sequence of additions to the middle"""
+        self.backend_insert_handmadeSequence('point', 1)
+
+    def test_features_insert_handmadeSequence_mid(self):
+        """ Test features.insert() against handmade output for a sequence of additions to the middle"""
+        self.backend_insert_handmadeSequence('feature', 1)
+
+    def test_points_insert_selfInsert_bottom(self):
+        self.backend_insert_selfInsert('point', 3)
+
+    def test_features_insert_selfInsert_right(self):
+        self.backend_insert_selfInsert('feature', 3)
+
+    def test_points_insert_selfInsert_top(self):
+        self.backend_insert_selfInsert('point', 0)
+
+    def test_features_insert_selfInsert_left(self):
+        self.backend_insert_selfInsert('feature', 0)
+
+    def test_points_insert_selfInsert_mid(self):
+        self.backend_insert_selfInsert('point', 1)
+
+    def test_features_insert_selfInsert_mid(self):
+        self.backend_insert_selfInsert('feature', 1)
+
+    def test_points_insert_automaticReorder_fullySpecifiedNames_bottom(self):
+        self.backend_insert_automaticReorder('point', False, 3)
+
+    def test_features_insert_automaticReorder_fullySpecifiedNames_right(self):
+        self.backend_insert_automaticReorder('feature', False, 3)
+
+    def test_points_insert_automaticReorder_defaultPointNames_bottom(self):
+        self.backend_insert_automaticReorder('point', True, 3)
+
+    def test_features_insert_automaticReorder_defaultFeatureNames_right(self):
+        self.backend_insert_automaticReorder('feature', True, 3)
+
+    def test_points_insert_automaticReorder_fullySpecifiedNames_top(self):
+        self.backend_insert_automaticReorder('point', False, 0)
+
+    def test_features_insert_automaticReorder_fullySpecifiedNames_left(self):
+        self.backend_insert_automaticReorder('feature', False, 0)
+
+    def test_points_insert_automaticReorder_defaultPointNames_top(self):
+        self.backend_insert_automaticReorder('point', True, 0)
+
+    def test_features_insert_automaticReorder_defaultFeatureNames_left(self):
+        self.backend_insert_automaticReorder('feature', True, 0)
+
+    def test_points_insert_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('point', False, 1)
+
+    def test_features_insert_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('feature', False, 1)
+
+    def test_points_insert_automaticReorder_defaultPointNames_mid(self):
+        self.backend_insert_automaticReorder('point', True, 1)
+
+    def test_features_insert_automaticReorder_defaultFeatureNames_mid(self):
+        self.backend_insert_automaticReorder('feature', True, 1)
+
+    def backend_insert_allPossibleNimbleDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         currType = self.constructor([]).getTypeString()
@@ -3108,25 +3139,25 @@ class StructureModifying(StructureShared):
                 insertData = [[-1, -2, -3]]
                 otherTest = nimble.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
-                toTest.points.add(otherTest)
+                toTest.points.insert(len(toTest.points), otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
                 otherTest = nimble.createData(other, insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
-                toTest.features.add(otherTest)
+                toTest.features.insert(len(toTest.features), otherTest)
                 inserted.append(toTest)
 
         assert all(exp == obj for obj in inserted)
 
-    def test_points_add_allPossibleNimbleDataType(self):
-        self.backend_add_allPossibleNimbleDataType('point')
+    def test_points_insert_allPossibleNimbleDataType(self):
+        self.backend_insert_allPossibleNimbleDataType('point')
 
-    def test_features_add_allPossibleNimbleDataType(self):
-        self.backend_add_allPossibleNimbleDataType('feature')
+    def test_features_insert_allPossibleNimbleDataType(self):
+        self.backend_insert_allPossibleNimbleDataType('feature')
 
 
-    def backend_add_noReorderWithAllDefaultNames(self, axis):
+    def backend_insert_noReorderWithAllDefaultNames(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         if axis == 'point':
@@ -3137,7 +3168,7 @@ class StructureModifying(StructureShared):
             assert toTest.features.getNames() != toInsert.features.getNames()
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
-            toTest.points.add(toInsert)
+            toTest.points.insert(len(toTest.points), toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
@@ -3147,17 +3178,17 @@ class StructureModifying(StructureShared):
             assert toTest.points.getNames() != toInsert.points.getNames()
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
-            toTest.features.add(toInsert)
+            toTest.features.insert(len(toTest.features), toInsert)
 
         assert toTest == exp
 
-    def test_points_add_noReorderWithAllDefaultNames(self):
-        self.backend_add_noReorderWithAllDefaultNames('point')
+    def test_points_insert_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('point')
 
-    def test_features_add_noReorderWithAllDefaultNames(self):
-        self.backend_add_noReorderWithAllDefaultNames('feature')
+    def test_features_insert_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('feature')
 
-    def backend_add_noReorderAddedHasDefaultNames(self, axis):
+    def backend_insert_noReorderInsertedHasDefaultNames(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         pNames = ['1', '4', '7']
         fNames = ['a', 'b', 'c']
@@ -3173,7 +3204,7 @@ class StructureModifying(StructureShared):
             exp.points.setName(0, '1')
             exp.points.setName(1, '4')
             exp.points.setName(2, '7')
-            toTest.points.add(toInsert)
+            toTest.points.insert(len(toTest.points), toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
@@ -3186,41 +3217,41 @@ class StructureModifying(StructureShared):
             exp.features.setName(0, 'a')
             exp.features.setName(1, 'b')
             exp.features.setName(2, 'c')
-            toTest.features.add(toInsert)
+            toTest.features.insert(len(toTest.features), toInsert)
 
         assert toTest == exp
 
-    def test_addPoints_noReorderAddedHasDefaultNames(self):
-        self.backend_add_noReorderAddedHasDefaultNames('point')
+    def test_addPoints_noReorderInsertedHasDefaultNames(self):
+        self.backend_insert_noReorderInsertedHasDefaultNames('point')
 
-    def test_addFeatures_noReorderAddedHasDefaultNames(self):
-        self.backend_add_noReorderAddedHasDefaultNames('feature')
+    def test_addFeatures_noReorderInsertedHasDefaultNames(self):
+        self.backend_insert_noReorderInsertedHasDefaultNames('feature')
 
-    def backend_add_lazyNameGeneration(self, axis):
+    def backend_insert_lazyNameGeneration(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         if axis == 'point':
             insertData = [[-1, -2, -3]]
             # toInsert has default names
             toInsert = self.constructor(insertData)
-            toTest.points.add(toInsert)
+            toTest.points.insert(len(toTest.points), toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
             # toInsert has default names
             toInsert = self.constructor(insertData)
-            toTest.features.add(toInsert)
+            toTest.features.insert(len(toTest.features), toInsert)
 
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(toInsert)
 
     def test_addPoints_lazyNameGeneration(self):
-        self.backend_add_lazyNameGeneration('point')
+        self.backend_insert_lazyNameGeneration('point')
 
     def test_addFeatures_lazyNameGeneration(self):
-        self.backend_add_lazyNameGeneration('feature')
+        self.backend_insert_lazyNameGeneration('feature')
 
-    def backend_add_NamePath_preservation(self, axis):
+    def backend_insert_NamePath_preservation(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         names = ['one', 'two', 'three']
@@ -3241,42 +3272,105 @@ class StructureModifying(StructureShared):
         toInsert._relPath = "testRelPathOther"
 
         if axis == 'point':
-            toTest.points.add(toInsert)
+            toTest.points.insert(len(toTest.points), toInsert)
         else:
-            toTest.features.add(toInsert)
+            toTest.features.insert(len(toTest.features), toInsert)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-    def test_points_add_NamePath_preservation(self):
-        self.backend_add_NamePath_preservation('point')
+    def test_points_insert_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('point')
 
-    def test_features_add_NamePath_preservation(self):
-        self.backend_add_NamePath_preservation('feature')
+    def test_features_insert_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('feature')
 
-    def test_points_add_noNamesCreated(self):
+    def test_points_insert_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toInsert = self.constructor([[-1, -2, -3]])
-        toTest.points.add(toInsert)
+        toTest.points.insert(len(toTest.points), toInsert)
 
         assert not toTest._pointNamesCreated()
         assert not toTest._featureNamesCreated()
 
-    def test_features_add_noNamesCreated(self):
+    def test_features_insert_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toInsert = self.constructor([[-1], [-2], [-3]])
-        toTest.features.add(toInsert)
+        toTest.features.insert(len(toTest.features), toInsert)
 
         assert not toTest._featureNamesCreated()
         assert not toTest._pointNamesCreated()
 
 
-    ##############
+    #######################################
+    # points.append() / features.append() #
+    #######################################
+
+    @mock.patch('nimble.data.axis.Axis._insert', calledException)
+    def test_append_callsInsertBackend(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toAppend = self.constructor([[-1], [-2], [-3]])
+        try:
+            toTest.points.append(toAppend)
+            assert False
+        except CalledFunctionException:
+            pass
+
+        try:
+            toTest.features.append(toAppend)
+            assert False
+        except CalledFunctionException:
+            pass
+
+    def test_points_append_fromEmpty(self):
+        """ Test points.append() to bottom when the calling object is point empty """
+        self.backend_insert_emptyObject('point', 'append')
+
+    def test_features_append_fromEmpty(self):
+        """ Test features.append() to right when the calling object is feature empty """
+        self.backend_insert_emptyObject('feature', 'append')
+
+    def test_points_append_handmadeSingle(self):
+        """ Test points.append() against handmade output for a single appended point"""
+        self.backend_insert_handmadeSingle('point', None)
+
+    def test_features_append_handmadeSingle(self):
+        """ Test features.append() against handmade output for a single appended feature"""
+        self.backend_insert_handmadeSingle('feature', None)
+
+    def test_points_append_handmadeSequence(self):
+        """ Test points.append() against handmade output for a sequence of additions"""
+        self.backend_insert_handmadeSequence('point', None)
+
+    def test_features_append_handmadeSequence(self):
+        """ Test features.append() against handmade output for a sequence of additions"""
+        self.backend_insert_handmadeSequence('feature', None)
+
+    def test_points_append_selfAppend(self):
+        self.backend_insert_selfInsert('point', None)
+
+    def test_features_append_selfAppend(self):
+        self.backend_insert_selfInsert('feature', None)
+
+    def test_points_append_automaticReorder_fullySpecifiedNames(self):
+        self.backend_insert_automaticReorder('point', False, None)
+
+    def test_features_append_automaticReorder_fullySpecifiedNames(self):
+        self.backend_insert_automaticReorder('feature', False, None)
+
+    def test_points_append_automaticReorder_defaultPointNames(self):
+        self.backend_insert_automaticReorder('point', True, None)
+
+    def test_features_append_automaticReorder_defaultFeatureNames(self):
+        self.backend_insert_automaticReorder('feature', True, None)
+
+    #################
     # points.sort() #
-    ##############
+    #################
 
     @raises(InvalidArgumentTypeCombination)
     def test_points_sort_exceptionAtLeastOne(self):
