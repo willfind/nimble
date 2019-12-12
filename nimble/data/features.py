@@ -1830,17 +1830,6 @@ class Features(object):
     # Query functions #
     ###################
 
-    def nonZeroIterator(self):
-        """
-        Iterate through each non-zero value following the feature order.
-
-        Return an iterator for all non-zero elements contained in this
-        object, where the values in the same feature will be
-        contiguous, with the earlier indexed features coming
-        before the later indexed features.
-        """
-        return self._nonZeroIterator()
-
     def unique(self):
         """
         Only the unique features from this object.
@@ -2022,10 +2011,6 @@ class Features(object):
 
     @abstractmethod
     def _repeat(self, totalCopies, copyValueByValue):
-        pass
-
-    @abstractmethod
-    def _nonZeroIterator(self):
         pass
 
     @abstractmethod

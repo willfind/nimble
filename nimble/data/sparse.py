@@ -27,6 +27,7 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
+from .dataHelpers import SparseElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -1222,6 +1223,9 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
+    def _iterElements_implementation(self, order, only):
+        return SparseElementIterator(self, order, only)
+
 ###################
 # Generic Helpers #
 ###################
@@ -1475,3 +1479,6 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
+
+    def _iterElements_implementation(self, order, only):
+        return SparseElementIterator(self.copy(), order, only)

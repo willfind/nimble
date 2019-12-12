@@ -47,6 +47,7 @@ from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from .dataHelpers import getDictionaryMappingFunction
+from .dataHelpers import ElementIterator1D
 
 cloudpickle = ImportModule('cloudpickle')
 matplotlib = ImportModule('matplotlib')
@@ -385,13 +386,56 @@ class Base(object):
         msg += ") and the number of features ("
         msg += str(self._featureCount)
         msg += ") are both greater than 1"
-        raise TypeError(msg)
+        raise ImproperObjectAction(msg)
+
+    def __iter__(self):
+        if self._pointCount in [0, 1] or self._featureCount in [0, 1]:
+            return ElementIterator1D(self)
+
+        msg = "Cannot iterate over two-dimensional objects because the "
+        msg = "iteration order is arbitrary. Try the iterElements() method."
+        raise ImproperObjectAction(msg)
 
     def __bool__(self):
         return self._pointCount > 0 and self._featureCount > 0
 
-    def iterElements(self):
-        return ElementIterator(self)
+    def iterElements(self, order='point', only=None):
+        """
+        Iterate over each element in this object.
+
+        Provide an iterator which returns elements in the designated
+        ``order``. Optionally, the output of the iterator can be
+        restricted to certain elements by the ``only`` function.
+
+        Parameters
+        ----------
+        order : str
+           'point' or 'feature' to indicate how the iterator will access
+           the elements in this object.
+        only : function, None
+           If None, the default, all elements will be returned by the
+           iterator. If a function, it must return True or False
+           indicating whether the iterator should return the element.
+
+        See Also
+        --------
+        self.data.Points, self.data.Features
+
+        Examples
+        --------
+        >>> from nimble.match import nonZero, positive
+        >>> rawData = [[0, 1, 2], [-2, -1, 0]]
+        >>> data = nimble.createData('Matrix', rawData)
+        >>> list(data.iterElements(order='point'))
+        [0.0, 1.0, 2.0, -2.0, -1.0, 0.0]
+        >>> list(data.iterElements(order='feature'))
+        [0.0, -2.0, 1.0, -1.0, 2.0, 0.0]
+        >>> list(data.iterElements(order='point', only=nonZero))
+        [1.0, 2.0, -2.0, -1.0]
+        >>> list(data.iterElements(order='feature', only=positive))
+        [1.0, 2.0]
+        """
+        return self._iterElements_implementation(order, only)
 
     def nameIsDefault(self):
         """
@@ -5321,31 +5365,3 @@ def cmp(x, y):
         return 1
     else:
         return 0
-
-class ElementIterator(object):
-    """
-    Object providing iteration through each item in the axis.
-    """
-    def __init__(self, source):
-        self._source = source
-        self._ptPosition = 0
-        self._ftPosition = 0
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next item
-        """
-        while self._ptPosition < len(self._source.points):
-            while self._ftPosition < len(self._source.features):
-                value = self._source[self._ptPosition, self._ftPosition]
-                self._ftPosition += 1
-                return value
-            self._ptPosition += 1
-            self._ftPosition = 0
-        raise StopIteration
-
-    def __next__(self):
-        return self.next()

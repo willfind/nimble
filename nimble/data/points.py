@@ -1886,17 +1886,6 @@ class Points(object):
     # Query functions #
     ###################
 
-    def nonZeroIterator(self):
-        """
-        Iterate through each non-zero value following the point order.
-
-        Returns an iterator for all non-zero elements contained in this
-        object, where the values in the same point will be
-        contiguous, with the earlier indexed points coming
-        before the later indexed points.
-        """
-        return self._nonZeroIterator()
-
     def unique(self):
         """
         Only the unique points from this object.
@@ -2082,10 +2071,6 @@ class Points(object):
 
     @abstractmethod
     def _repeat(self, totalCopies, copyValueByValue):
-        pass
-
-    @abstractmethod
-    def _nonZeroIterator(self):
         pass
 
     @abstractmethod

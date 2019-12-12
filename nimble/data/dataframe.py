@@ -23,6 +23,7 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
+from .dataHelpers import DenseElementIterator
 
 pd = ImportModule('pandas')
 scipy = ImportModule('scipy')
@@ -433,6 +434,8 @@ class DataFrame(Base):
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
 
+    def _iterElements_implementation(self, order, only):
+        return DenseElementIterator(self, order, only)
 
 class DataFrameView(BaseView, DataFrame):
     """

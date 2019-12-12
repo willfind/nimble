@@ -6,6 +6,7 @@ import collections
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.utility import ImportModule
@@ -40,7 +41,7 @@ def proportionZero(values):
     """
     totalNum = len(values)
     nonZeroCount = 0
-    nonZeroItr = values.points.nonZeroIterator()
+    nonZeroItr = values.iterElements(only=match.nonZero)
     for value in nonZeroItr:
         nonZeroCount += 1
 
@@ -80,7 +81,7 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
         func2 = lambda x, y: x > y
 
     first = True
-    nonZeroValues = values.points.nonZeroIterator()
+    nonZeroValues = values.iterElements(only=match.nonZero)
     count = 0
 
     #if data types are mixed and some data are not numerical, such as [1,'a']
@@ -119,7 +120,7 @@ def mean(values):
     nonZeroCount = 0
     runningSum = 0
     totalCount = len(values)
-    nonZeroValues = values.points.nonZeroIterator()
+    nonZeroValues = values.iterElements(only=match.nonZero)
 
     for value in nonZeroValues:
         nonZeroCount += 1
@@ -183,7 +184,7 @@ def standardDeviation(values, sample=False):
     meanRet = mean(values)
     nonZeroCount = 0
     numericalCount = 0
-    nonZeroValues = values.points.nonZeroIterator()
+    nonZeroValues = values.iterElements(only=match.nonZero)
 
     squaredDifferenceTotal = 0
     for value in nonZeroValues:

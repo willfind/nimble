@@ -105,12 +105,6 @@ class MatrixFeatures(MatrixAxis, Features):
 
         self._base.data = numpy2DArray(tmpData)
 
-    #########################
-    # Query implementations #
-    #########################
-
-    def _nonZeroIterator_implementation(self):
-        return nzIt(self._base)
 
 class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     """
@@ -122,37 +116,3 @@ class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
         The MatrixView instance that will be queried.
     """
     pass
-
-class nzIt(object):
-    """
-    Non-zero iterator to return when iterating through each feature.
-    """
-    def __init__(self, source):
-        self._source = source
-        self._pIndex = 0
-        self._pStop = len(source.points)
-        self._fIndex = 0
-        self._fStop = len(source.features)
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next non zero value.
-        """
-        while self._fIndex < self._fStop:
-            value = self._source.data[self._pIndex, self._fIndex]
-
-            self._pIndex += 1
-            if self._pIndex >= self._pStop:
-                self._pIndex = 0
-                self._fIndex += 1
-
-            if value != 0:
-                return value
-
-        raise StopIteration
-
-    def __next__(self):
-        return self.next()

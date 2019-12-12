@@ -25,6 +25,7 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
+from .dataHelpers import DenseElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -498,6 +499,8 @@ class Matrix(Base):
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
+    def _iterElements_implementation(self, order, only):
+        return DenseElementIterator(self, order, only)
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):
     """

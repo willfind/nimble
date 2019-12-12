@@ -120,7 +120,7 @@ features_logged = [
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'hasName', 'similarities', 'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -133,7 +133,7 @@ points_logged = [
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'hasName', 'similarities', 'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
@@ -312,8 +312,8 @@ baseDunder_tested = list(map(prefixAdder('Base'),
     ['__abs__', '__add__', '__and__', '__bool__', '__copy__', '__deepcopy__',
      '__getitem__', '__floordiv__', '__iadd__', '__ifloordiv__', '__imod__',
      '__imatmul__', '__imul__', '__invert__', '__ipow__', '__isub__',
-     '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__', '__neg__',
-     '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
+     '__iter__', '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__',
+     '__neg__', '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
      '__rtruediv__', '__sub__', '__truediv__', '__xor__',
     ]))

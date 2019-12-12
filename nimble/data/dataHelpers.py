@@ -794,3 +794,73 @@ def getDictionaryMappingFunction(dictionary):
             return dictionary[value]
         return value
     return valueMappingFunction
+
+class ElementIterator1D(object):
+    """
+    Object providing iteration through each item in the axis.
+    """
+    def __init__(self, source):
+        self.source = source
+        self.position = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.position < len(self.source):
+            value = self.source[self.position]
+            self.position += 1
+            return value
+        raise StopIteration
+
+class DenseElementIterator(object):
+
+    def __init__(self, source, order='point', only=None):
+        self.source = source
+        if order not in ['point', 'feature']:
+            raise InvalidArgumentValue('order must be point or feature')
+        if only is not None and not callable(only):
+            msg = 'only must be a function returning a boolean value'
+            raise InvalidArgumentType(msg)
+        self.order = order
+        if order == 'point':
+            self.outerAxis = source.points
+            self.innerAxis = source.features
+        else:
+            self.outerAxis = source.features
+            self.innerAxis = source.points
+        self.only = only
+        self.outerIdx = 0
+        self.innerIdx = 0
+
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.outerIdx < len(self.outerAxis):
+            while self.innerIdx < len(self.innerAxis):
+                if self.order == 'point':
+                    value = self.source[self.outerIdx, self.innerIdx]
+                else:
+                    value = self.source[self.innerIdx, self.outerIdx]
+                self.innerIdx += 1
+                if self.only is None or self.only(value):
+                    return value
+            self.innerIdx = 0
+            self.outerIdx += 1
+        raise StopIteration
+
+class SparseElementIterator(DenseElementIterator):
+
+    def __next__(self):
+        if self.only is not None and not self.only(0):
+            self.source._sortInternal(self.order)
+            while self.outerIdx < self.source.data.nnz:
+                value = self.source.data.data[self.outerIdx]
+                self.outerIdx += 1
+                if self.only(value):
+                    return value
+            raise StopIteration
+        else:
+            return super(SparseElementIterator, self).__next__()

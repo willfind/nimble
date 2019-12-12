@@ -25,6 +25,7 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
+from .dataHelpers import DenseElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -630,6 +631,9 @@ class List(Base):
                 retP.append(runningTotal)
             ret.append(retP)
         return List(ret)
+
+    def _iterElements_implementation(self, order, only):
+        return DenseElementIterator(self, order, only)
 
 class ListView(BaseView, List):
     """

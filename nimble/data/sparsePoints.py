@@ -142,9 +142,6 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
     # Query implementations #
     #########################
 
-    def _nonZeroIterator_implementation(self):
-        return nzIt(self._base)
-
     def _unique_implementation(self):
         unique = self._base.copy(to='Sparse')
         return unique.points._unique_implementation()
@@ -153,39 +150,3 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
         copy = self._base.copy(to='Sparse')
         return copy.points._repeat_implementation(totalCopies,
                                                   copyValueByValue)
-
-class nzIt(object):
-    """
-    Non-zero iterator to return when iterating through each feature.
-    """
-    # IDEA: check if sorted in the way you want.
-    # if yes, iterate through
-    # if no, use numpy argsort? this gives you indices that
-    # would sort it, iterate through those indices to do access?
-    #
-    # safety: somehow check that your sorting setup hasn't changed
-    def __init__(self, source):
-        self._sourceIter = iter(source.points)
-        self._currGroup = None
-        self._index = 0
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next non zero value.
-        """
-        while True:
-            try:
-                value = self._currGroup[self._index]
-                self._index += 1
-
-                if value != 0:
-                    return value
-            except Exception:
-                self._currGroup = next(self._sourceIter)
-                self._index = 0
-
-    def __next__(self):
-        return self.next()

@@ -5,8 +5,7 @@ pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
-iterElements, points.nonZeroIterator, features.nonZeroIterator,
-inverse, solveLinearSystem, featureReport, summaryReport
+iterElements, inverse, solveLinearSystem, featureReport, summaryReport
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -28,6 +27,7 @@ from six.moves import range
 from six.moves import zip
 
 import nimble
+from nimble import match
 from nimble import loadData
 from nimble.data import BaseView
 from nimble.data.dataHelpers import formatIfNeeded
@@ -2541,12 +2541,68 @@ class QueryBackend(DataTestObject):
         assert toCheck[7][1] == 0
         assert toCheck[7][2] == 0
 
+    ############
+    # __iter__ #
+    ############
+    @noLogEntryExpected
+    def test_iter_noNextPempty(self):
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        viewIter = iter(toTest)
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    def test_iter_noNextFempty(self):
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        viewIter = iter(toTest.iterElements())
+        try:
+            next(viewIter)
+        except StopIteration:
+            return
+        assert False
+
+    @noLogEntryExpected
+    def test_iter_exactValueViaFor_pt(self):
+        data = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        toTest = self.constructor(data)
+
+        toCheck = []
+        for v in toTest:
+            toCheck.append(v)
+
+        assert toCheck == list(range(1, 10))
+
+    @noLogEntryExpected
+    def test_iter_exactValueViaFor_ft(self):
+        data = [[1], [2], [3], [4], [5], [6], [7], [8], [9]]
+        toTest = self.constructor(data)
+
+        toCheck = []
+        for v in toTest:
+            toCheck.append(v)
+
+        assert toCheck == list(range(1, 10))
+
+    @raises(ImproperObjectAction)
+    def test_iter_exactValueViaFor_2D(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+
+        for v in toTest:
+            pass
+
     ################
     # iterElements #
     ################
     @noLogEntryExpected
     def test_iterElements_noNextPempty(self):
-        """ test .elements() has no next value when object is point empty """
+        """ test iterElements() has no next value when object is point empty """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
@@ -2558,7 +2614,7 @@ class QueryBackend(DataTestObject):
         assert False
 
     def test_iterElements_noNextFempty(self):
-        """ test .elements() has no next value when object is feature empty """
+        """ test iterElements() has no next value when object is feature empty """
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
@@ -2571,27 +2627,24 @@ class QueryBackend(DataTestObject):
 
     @noLogEntryExpected
     def test_iterElements_exactValueViaFor(self):
-        """ Test .elements() gives views that contain exactly the correct data """
+        """ Test iterElements() gives views that contain exactly the correct data """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
 
-        viewIter = toTest.iterElements()
-
         toCheck = []
-        for v in viewIter:
+        for v in toTest.iterElements():
             toCheck.append(v)
 
         assert toCheck == list(range(1, 10))
 
     def test_iterElements_allZeroPoints(self):
-        """ Test .elements() works when there are all zero points """
+        """ Test iterElements() works when there are all zero points """
         data = [[0, 0, 0], [4, 5, 6], [0, 0, 0], [7, 8, 9], [0, 0, 0], [0, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.iterElements()
         toCheck = []
-        for v in viewIter:
+        for v in toTest.iterElements():
             toCheck.append(v)
 
         assert len(toCheck) == len(toTest.points) * len(toTest.features)
@@ -2621,13 +2674,12 @@ class QueryBackend(DataTestObject):
         assert toCheck[17] == 0
 
     def test_iterElements_allZeroVectors(self):
-        """ Test .elements() works when there are all zero features """
+        """ Test iterElements() works when there are all zero features """
         data = [[0, 1, 0, 2, 0, 3, 0, 0], [0, 4, 0, 5, 0, 6, 0, 0], [0, 7, 0, 8, 0, 9, 0, 0]]
         toTest = self.constructor(data)
 
-        viewIter = toTest.iterElements()
         toCheck = []
-        for v in viewIter:
+        for v in toTest.iterElements():
             toCheck.append(v)
 
         assert len(toCheck) == len(toTest.features) * len(toTest.points)
@@ -2658,49 +2710,46 @@ class QueryBackend(DataTestObject):
         assert toCheck[22] == 0
         assert toCheck[23] == 0
 
-    #####################################################
-    # points.nonZeroIterator / features.nonZeroIterator #
-    #####################################################
     @noLogEntryExpected
-    def test_points_nonZeroIterator_handmade(self):
+    def test_iterElements_orderPt_onlyNonZero(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.points.nonZeroIterator():
+        for val in obj.iterElements(only=match.nonZero):
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
         assertNoNamesGenerated(obj)
 
-    def test_points_nonZeroIterator_empty(self):
+    def test_iterElements_orderPt_onlyNonZero_empty(self):
         data = []
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.points.nonZeroIterator():
+        for val in obj.iterElements(only=match.nonZero):
             ret.append(val)
 
         assert ret == []
 
     @noLogEntryExpected
-    def test_features_nonZeroIterator_handmade(self):
+    def test_iterElements_orderFt_onlyNonZero(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.features.nonZeroIterator():
+        for val in obj.iterElements(order='feature', only=match.nonZero):
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
         assertNoNamesGenerated(obj)
 
-    def test_features_nonZeroIterator_empty(self):
+    def test_iterElements_orderFt_onlyNonZero_empty(self):
         data = []
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.features.nonZeroIterator():
+        for val in obj.iterElements(order='feature', only=match.nonZero):
             ret.append(val)
 
         assert ret == []

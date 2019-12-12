@@ -918,12 +918,6 @@ class Axis(object):
     # Query functions #
     ###################
 
-    def _nonZeroIterator(self):
-        if self._base._pointCount == 0 or self._base._featureCount == 0:
-            return EmptyIt()
-
-        return self._nonZeroIterator_implementation()
-
     def _unique(self):
         ret = self._unique_implementation()
 
@@ -1793,10 +1787,6 @@ class Axis(object):
     def _unique_implementation(self):
         pass
 
-    @abstractmethod
-    def _nonZeroIterator_implementation(self):
-        pass
-
 ###########
 # Helpers #
 ###########
@@ -1928,22 +1918,6 @@ class AxisIterator(object):
             return value
         else:
             raise StopIteration
-
-    def __next__(self):
-        return self.next()
-
-class EmptyIt(object):
-    """
-    Non-zero iterator to return when object is point or feature empty.
-    """
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Raise StopIteration since this object is point or feature empty.
-        """
-        raise StopIteration
 
     def __next__(self):
         return self.next()
