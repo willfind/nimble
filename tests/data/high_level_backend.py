@@ -2574,7 +2574,8 @@ class HighLevelModifying(DataTestObject):
         assert ret is None
         assert expObj == obj
         assert expAlso == also
-
+        assertNoNamesGenerated(obj)
+        assertNoNamesGenerated(also)
 
     # successful stats-string valued inputs
     def test_points_normalize_success_stat_string_inputs(self):

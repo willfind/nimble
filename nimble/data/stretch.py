@@ -202,8 +202,8 @@ class Stretch(object):
             ret = ret.copy(other.getTypeString())
 
         setPts, setFts = self._getOutputNames(other)
-        ret.points.setNames(setPts)
-        ret.features.setNames(setFts)
+        ret.points.setNames(setPts, useLog=False)
+        ret.features.setNames(setFts, useLog=False)
 
         return ret
 
