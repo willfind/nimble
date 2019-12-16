@@ -719,33 +719,25 @@ class Axis(object):
             objOffLen = objFC if self._axis == 'point' else objPC
 
             if inMainLen != objMainLen or inOffLen != objOffLen:
-                vecErr = argname + " "
-                vecErr += "was a nimble object in the shape of a "
-                vecErr += "vector (" + str(inPC) + " x "
-                vecErr += str(inFC) + "), "
-                vecErr += "but the length of long axis did not match "
-                vecErr += "the number of " + self._axis + "s in this object ("
-                vecErr += str(self._base._pointCount) + ")."
-                # treat it as a vector
-                if inMainLen == 1:
-                    if inOffLen != objMainLen:
-                        raise InvalidArgumentValue(vecErr)
-                    argval.transpose(useLog=False)
+                # valid vector
+                if inOffLen == 1 and inMainLen == objMainLen:
                     return True
-                # treat it as a vector
-                elif inOffLen == 1:
-                    if inMainLen != objMainLen:
-                        raise InvalidArgumentValue(vecErr)
-                    return True
-                # treat it as a mis-sized object
-                else:
-                    msg = argname + " "
-                    msg += "was a nimble object with a shape of ("
-                    msg += str(inPC) + " x " + str(inFC) + "), "
-                    msg += "but it doesn't match the shape of the calling"
-                    msg += "object (" + str(objPC) + " x "
-                    msg += str(objFC) + ")"
-                    raise InvalidArgumentValue(msg)
+                msg = ""
+                if inOffLen == 1 or inMainLen == 1:
+                    msg += "{argname} "
+                    offAxis = 'feature' if self._axis == 'point' else 'point'
+                    vecErr = 'is an invalid vector. The vector must be one-'
+                    vecErr += 'dimensional along the {offAxis} axis and '
+                    vecErr += 'contain the same number of {selfAxis}s as the '
+                    vecErr += 'calling object. '
+                    msg += vecErr.format(offAxis=offAxis, selfAxis=self._axis)
+                # mis-sized object
+                msg += "{argname} has a shape of ({inPC} x {inFC}), which "
+                msg += "does not align with the shape of the calling object "
+                msg += "({objPC} x {objFC})"
+                msg = msg.format(argname=argname, inPC=inPC, inFC=inFC,
+                                 objPC=objPC, objFC=objFC)
+                raise InvalidArgumentValue(msg)
             return False
 
         def checkAlsoShape(also, objIn):
