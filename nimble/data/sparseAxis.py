@@ -127,29 +127,29 @@ class SparseAxis(Axis):
             (modData, (modRow, modCol)), shape=shape)
         self._base._sorted = None
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the points/features from the toAdd object below the
+        Insert the points/features from the toInsert object below the
         provided index in this object, the remaining points/features
         from this object will continue below the inserted
         points/features.
         """
         selfData = self._base.data.data
-        addData = toAdd.data.data
+        addData = toInsert.data.data
         newData = numpy.concatenate((selfData, addData))
         if isinstance(self, Points):
             selfAxis = self._base.data.row.copy()
             selfOffAxis = self._base.data.col
-            addAxis = toAdd.data.row.copy()
-            addOffAxis = toAdd.data.col
-            addLength = len(toAdd.points)
+            addAxis = toInsert.data.row.copy()
+            addOffAxis = toInsert.data.col
+            addLength = len(toInsert.points)
             shape = (len(self) + addLength, len(self._base.features))
         else:
             selfAxis = self._base.data.col.copy()
             selfOffAxis = self._base.data.row
-            addAxis = toAdd.data.col.copy()
-            addOffAxis = toAdd.data.row
-            addLength = len(toAdd.features)
+            addAxis = toInsert.data.col.copy()
+            addOffAxis = toInsert.data.row
+            addLength = len(toInsert.features)
             shape = (len(self._base.points), len(self) + addLength)
 
         selfAxis[selfAxis >= insertBefore] += addLength

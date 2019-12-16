@@ -230,7 +230,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 # want data and labels together in one object for this method
                 trainX = trainX.copy()
                 if isinstance(trainY, nimble.data.Base):
-                    trainX.features.add(trainY, useLog=False)
+                    trainX.features.append(trainY, useLog=False)
                     trainY = len(trainX.features) - 1
 
                 # Get set of unique class labels, then generate list of all
@@ -257,8 +257,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                             learnerName, pairData.copy(),
                             pairTrueLabels.copy(), arguments=arguments)
                         )
-                    pairData.features.add(pairTrueLabels, useLog=False)
-                    trainX.points.add(pairData, useLog=False)
+                    pairData.features.append(pairTrueLabels, useLog=False)
+                    trainX.points.append(pairData, useLog=False)
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
@@ -1232,7 +1232,7 @@ class TrainedLearner(object):
                 return row[rowIndex]
 
             scoreVector = scores.points.calculate(grabValue, useLog=False)
-            labels.features.add(scoreVector, useLog=False)
+            labels.features.append(scoreVector, useLog=False)
 
             ret = labels
 
@@ -1699,7 +1699,7 @@ class TrainedLearners(TrainedLearner):
                     # as it's added to results object,
                     # rename each column with its corresponding class label
                     oneLabelResults.features.setName(0, str(label), useLog=False)
-                    rawPredictions.features.add(oneLabelResults, useLog=False)
+                    rawPredictions.features.append(oneLabelResults, useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
@@ -1776,7 +1776,7 @@ class TrainedLearners(TrainedLearner):
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
                     partialResults.features.setName(0, predictionName, useLog=False)
-                    rawPredictions.features.add(partialResults, useLog=False)
+                    rawPredictions.features.append(partialResults, useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():

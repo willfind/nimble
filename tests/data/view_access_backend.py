@@ -227,7 +227,7 @@ class ViewAccess(DataTestObject):
 
         try:
             new = self.constructor([[0, 0, 0]])
-            testObject.points.add(new)
+            testObject.points.append(new)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -311,7 +311,7 @@ class ViewAccess(DataTestObject):
 
         try:
             new = self.constructor([[0], [0], [0]])
-            testObject.features.add(new)
+            testObject.features.append(new)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

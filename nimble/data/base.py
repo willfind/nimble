@@ -476,10 +476,11 @@ class Base(object):
 
         # by default, put back in same place
         insertBefore = index
-        # if extracted last feature, None will append
-        if insertBefore == len(self.features):
-            insertBefore = None
-        self.features.add(binaryObj, insertBefore=insertBefore, useLog=False)
+        # must use append if the object is now feature empty
+        if len(self.features) == 0:
+            self.features.append(binaryObj, useLog=False)
+        else:
+            self.features.insert(insertBefore, binaryObj, useLog=False)
 
         handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
                       self.getTypeString(),

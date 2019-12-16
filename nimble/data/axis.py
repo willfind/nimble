@@ -554,26 +554,36 @@ class Axis(object):
         return retData, convertType
 
 
-    def _add(self, toAdd, insertBefore, useLog=None):
-        self._validateInsertableData(toAdd)
-        if self._base.getTypeString() != toAdd.getTypeString():
-            toAdd = toAdd.copy(to=self._base.getTypeString())
-
+    def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+        if not append and insertBefore is None:
+            msg = "insertBefore must be an index in range 0 to "
+            msg += "{l} or {ax} name".format(l=len(self), ax=self._axis)
+            raise InvalidArgumentType(msg)
         if insertBefore is None:
             insertBefore = len(self)
-        else:
+        elif insertBefore != len(self) or len(self) == 0:
             insertBefore = self._getIndex(insertBefore)
 
+        self._validateInsertableData(toInsert, append)
+        if self._base.getTypeString() != toInsert.getTypeString():
+            toInsert = toInsert.copy(to=self._base.getTypeString())
+
         offAxis = 'feature' if self._axis == 'point' else 'point'
-        toAdd = self._alignNames(offAxis, toAdd)
-        self._add_implementation(toAdd, insertBefore)
+        toInsert = self._alignNames(offAxis, toInsert)
+        self._insert_implementation(insertBefore, toInsert)
 
-        self._setAddedCountAndNames(toAdd, insertBefore)
+        self._setInsertedCountAndNames(toInsert, insertBefore)
 
-        handleLogging(useLog, 'prep',
-                      '{ax}s.add'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('add'),
-                      toAdd, insertBefore)
+        if append:
+            handleLogging(useLog, 'prep',
+                          '{ax}s.append'.format(ax=self._axis),
+                          self._base.getTypeString(), self._sigFunc('append'),
+                          toInsert)
+        else:
+            handleLogging(useLog, 'prep',
+                          '{ax}s.insert'.format(ax=self._axis),
+                          self._base.getTypeString(), self._sigFunc('insert'),
+                          insertBefore, toInsert)
 
 
     def _mapReduce(self, mapper, reducer, useLog=None):
@@ -1513,59 +1523,63 @@ class Axis(object):
     #  Higher Order Helpers  #
     ##########################
 
-    def _validateInsertableData(self, toAdd):
+    def _validateInsertableData(self, toInsert, append):
         """
         Required validation before inserting an object
         """
-        if toAdd is None:
-            msg = "The argument 'toAdd' must not have a value of None"
-            raise InvalidArgumentType(msg)
-        if not isinstance(toAdd, nimble.data.Base):
-            msg = "The argument 'toAdd' must be an instance of the "
-            msg += "nimble.data.Base  class. The value we recieved was "
-            msg += str(toAdd) + ", had the type " + str(type(toAdd))
+        if append:
+            argName = 'toAppend'
+            func = 'append'
+        else:
+            argName = 'toInsert'
+            func = 'insert'
+        if not isinstance(toInsert, nimble.data.Base):
+            msg = "The argument '{arg}' must be an instance of the "
+            msg += "nimble.data.Base class. The value we received was "
+            msg += str(toInsert) + ", had the type " + str(type(toInsert))
             msg += ", and a method resolution order of "
-            msg += str(inspect.getmro(toAdd.__class__))
-            raise InvalidArgumentType(msg)
+            msg += str(inspect.getmro(toInsert.__class__))
+            raise InvalidArgumentType(msg.format(arg=argName))
 
         if isinstance(self, Points):
             objOffAxisLen = self._base._featureCount
-            addOffAxisLen = len(toAdd.features)
+            insertOffAxisLen = len(toInsert.features)
             objHasAxisNames = self._base._pointNamesCreated()
-            addHasAxisNames = toAdd._pointNamesCreated()
+            insertHasAxisNames = toInsert._pointNamesCreated()
             objHasOffAxisNames = self._base._featureNamesCreated()
-            addHasOffAxisNames = toAdd._featureNamesCreated()
+            insertHasOffAxisNames = toInsert._featureNamesCreated()
             offAxis = 'feature'
-            funcName = 'points.add'
+            funcName = 'points.' + func
         else:
             objOffAxisLen = self._base._pointCount
-            addOffAxisLen = len(toAdd.points)
+            insertOffAxisLen = len(toInsert.points)
             objHasAxisNames = self._base._featureNamesCreated()
-            addHasAxisNames = toAdd._featureNamesCreated()
+            insertHasAxisNames = toInsert._featureNamesCreated()
             objHasOffAxisNames = self._base._pointNamesCreated()
-            addHasOffAxisNames = toAdd._pointNamesCreated()
+            insertHasOffAxisNames = toInsert._pointNamesCreated()
             offAxis = 'point'
-            funcName = 'features.add'
+            funcName = 'features.' + func
 
-        if objOffAxisLen != addOffAxisLen:
-            msg = "The argument 'toAdd' must have the same number of "
+        if objOffAxisLen != insertOffAxisLen:
+            msg = "The argument '{arg}' must have the same number of "
             msg += "{offAxis}s as the caller object. This object contains "
-            msg += "{objCount} {offAxis}s and toAdd contains {addCount} "
+            msg += "{objCount} {offAxis}s and {arg} contains {insertCount} "
             msg += "{offAxis}s."
-            msg = msg.format(offAxis=offAxis, objCount=objOffAxisLen,
-                             addCount=addOffAxisLen)
+            msg = msg.format(arg=argName, offAxis=offAxis,
+                             objCount=objOffAxisLen,
+                             insertCount=insertOffAxisLen)
             raise InvalidArgumentValue(msg)
 
         # this helper ignores default names - so we can only have an
         # intersection of names when BOTH objects have names created.
-        if objHasAxisNames and addHasAxisNames:
-            self._validateEmptyNamesIntersection('toAdd', toAdd)
+        if objHasAxisNames and insertHasAxisNames:
+            self._validateEmptyNamesIntersection(argName, toInsert)
         # helper looks for name inconsistency that can be resolved by
         # reordering - definitionally, if one object has all default names,
         # there can be no inconsistency, so both objects must have names
         # assigned for this to be relevant.
-        if objHasOffAxisNames and addHasOffAxisNames:
-            self._validateReorderedNames(offAxis, funcName, toAdd)
+        if objHasOffAxisNames and insertHasOffAxisNames:
+            self._validateReorderedNames(offAxis, funcName, toInsert)
 
     def _validateEmptyNamesIntersection(self, argName, argValue):
         intersection = self._nameIntersection(argValue)
@@ -1664,7 +1678,7 @@ class Axis(object):
 
                 raise InvalidArgumentValue(msg)
 
-    def _alignNames(self, axis, toAdd):
+    def _alignNames(self, axis, toInsert):
         """
         Sort the point or feature names of the passed object to match
         this object. If sorting is necessary, a copy will be returned to
@@ -1674,61 +1688,61 @@ class Axis(object):
         """
         if axis == 'point':
             objNamesCreated = self._base._pointNamesCreated()
-            toAddNamesCreated = toAdd._pointNamesCreated()
+            toInsertNamesCreated = toInsert._pointNamesCreated()
             objNames = self._base.points.getNames
-            toAddNames = toAdd.points.getNames
+            toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
                 return obj.points.sort(sortHelper=names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
-            toAddNamesCreated = toAdd._featureNamesCreated()
+            toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
-            toAddNames = toAdd.features.getNames
+            toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
                 return obj.features.sort(sortHelper=names)
 
         # This may not look exhaustive, but because of the previous call to
-        # _validateInsertableData before this helper, most of the toAdd cases
-        # will have already caused an exception
-        if objNamesCreated and toAddNamesCreated:
+        # _validateInsertableData before this helper, most of the toInsert
+        # cases will have already caused an exception
+        if objNamesCreated and toInsertNamesCreated:
             objAllDefault = all(n.startswith(DEFAULT_PREFIX)
                                 for n in objNames())
-            toAddAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                  for n in toAddNames())
-            reorder = objNames() != toAddNames()
-            if not (objAllDefault or toAddAllDefault) and reorder:
-                # use copy when reordering so toAdd object is not modified
-                toAdd = toAdd.copy()
-                sorter(toAdd, objNames())
+            toInsertAllDefault = all(n.startswith(DEFAULT_PREFIX)
+                                  for n in toInsertNames())
+            reorder = objNames() != toInsertNames()
+            if not (objAllDefault or toInsertAllDefault) and reorder:
+                # use copy when reordering so toInsert object is not modified
+                toInsert = toInsert.copy()
+                sorter(toInsert, objNames())
 
-        return toAdd
+        return toInsert
 
-    def _setAddedCountAndNames(self, addedObj, insertedBefore):
+    def _setInsertedCountAndNames(self, insertedObj, insertedBefore):
         """
-        Modify the point or feature count to include the addedObj. If
+        Modify the point or feature count to include the insertedObj. If
         one or both objects have names, names will be set as well.
         """
         if isinstance(self, Points):
-            newPtCount = len(self) + len(addedObj.points)
+            newPtCount = len(self) + len(insertedObj.points)
             # only need to adjust names if names are present
             if not (self._namesCreated()
-                    or addedObj.points._namesCreated()):
+                    or insertedObj.points._namesCreated()):
                 self._base._setpointCount(newPtCount)
                 return
             objNames = self._getNames()
-            insertedNames = addedObj.points.getNames()
+            insertedNames = insertedObj.points.getNames()
             # must change point count AFTER getting names
             self._base._setpointCount(newPtCount)
             setObjNames = self._setNames
         else:
-            newFtCount = len(self) + len(addedObj.features)
+            newFtCount = len(self) + len(insertedObj.features)
             # only need to adjust names if names are present
             if not (self._base._featureNamesCreated()
-                    or addedObj._featureNamesCreated()):
+                    or insertedObj._featureNamesCreated()):
                 self._base._setfeatureCount(newFtCount)
                 return
             objNames = self._getNames()
-            insertedNames = addedObj.features.getNames()
+            insertedNames = insertedObj.features.getNames()
             # must change point count AFTER getting names
             self._base._setfeatureCount(newFtCount)
             setObjNames = self._setNames
@@ -1766,7 +1780,7 @@ class Axis(object):
         pass
 
     @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         pass
 
     # @abstractmethod

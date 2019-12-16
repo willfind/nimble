@@ -578,19 +578,35 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('elements.transform', "Matrix",
                      [('toTransform', 'lambda x: x'), ('features', [0])])
 
-    # points.add
+    # points.insert
+    dataObj = nimble.createData("Matrix", data, useLog=False)
+    insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+    toInsert = nimble.createData("Matrix", insertData, useLog=False)
+    dataObj.points.insert(0, toInsert)
+    checkLogContents('points.insert', "Matrix", [('insertBefore', 0),
+                                                 ('toInsert', toInsert.name)])
+
+    # features.insert
+    dataObj = nimble.createData("Matrix", data, useLog=False)
+    insertData = numpy.zeros((18,1))
+    toInsert = nimble.createData("Matrix", insertData, useLog=False)
+    dataObj.features.insert(0, toInsert)
+    checkLogContents('features.insert', "Matrix", [('insertBefore', 0),
+                                                   ('toInsert', toInsert.name)])
+
+    # points.append
     dataObj = nimble.createData("Matrix", data, useLog=False)
     appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
     toAppend = nimble.createData("Matrix", appendData, useLog=False)
-    dataObj.points.add(toAppend)
-    checkLogContents('points.add', "Matrix", [('toAdd', toAppend.name)])
+    dataObj.points.append(toAppend)
+    checkLogContents('points.append', "Matrix", [('toAppend', toAppend.name)])
 
-    # features.add
+    # features.append
     dataObj = nimble.createData("Matrix", data, useLog=False)
     appendData = numpy.zeros((18,1))
     toAppend = nimble.createData("Matrix", appendData, useLog=False)
-    dataObj.features.add(toAppend)
-    checkLogContents('features.add', "Matrix", [('toAdd', toAppend.name)])
+    dataObj.features.append(toAppend)
+    checkLogContents('features.append', "Matrix", [('toAppend', toAppend.name)])
 
     # points.fill
     dataObj = nimble.createData("Matrix", data, useLog=False)

@@ -2180,7 +2180,7 @@ class KFoldCrossValidator():
                 if collectedY is None:
                     collectedY = curTestingY
                 else:
-                    collectedY.points.add(curTestingY, useLog=False)
+                    collectedY.points.append(curTestingY, useLog=False)
 
             # setup for next iteration
             argumentCombinationIterator.reset()
@@ -2195,7 +2195,7 @@ class KFoldCrossValidator():
             # combine the results objects into one, and then calc performance
             else:
                 for resultIndex in range(1, len(results)):
-                    results[0].points.add(results[resultIndex], useLog=False)
+                    results[0].points.append(results[resultIndex], useLog=False)
 
                 # TODO raise RuntimeError(
                 #     "How do we guarantee Y and results are in same order?")
