@@ -890,23 +890,15 @@ def createDataFromFile(
                 msg += "Reason: {0}".format(response.reason)
                 raise InvalidArgumentValue(msg)
 
-            # check python version
-            py3 = sys.version_info[0] == 3
-            if py3:
-                toPass = StringIO(response.text, newline=None)
-                isMtxFile = isMtxFileChecker(toPass)
-                # scipy.io.mmreader needs bytes object
-                if isMtxFile:
-                    toPass = BytesIO(bytes(response.content,
-                                           response.apparent_encoding))
-            # in python 2, we can just always use BytesIO
-            else:
-                # handle universal newline
-                content = "\n".join(response.content.splitlines())
-                toPass = BytesIO(content)
-                isMtxFile = isMtxFileChecker(toPass)
+            toPass = StringIO(response.text, newline=None)
+            isMtxFile = isMtxFileChecker(toPass)
+            # scipy.io.mmreader needs bytes object
+            if isMtxFile:
+                toPass = BytesIO(bytes(response.content,
+                                       response.apparent_encoding))
+
         else:
-            toPass = open(data, 'r')
+            toPass = open(data, 'r', newline=None)
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:

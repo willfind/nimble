@@ -747,3 +747,9 @@ def wrapMatchFunctionFactory(matchFunc):
     wrappedMatch.__doc__ = matchFunc.__doc__
 
     return wrappedMatch
+
+
+def csvCommaFormat(name):
+    if isinstance(name, str) and ',' in name:
+        return '"{0}"'.format(name)
+    return name

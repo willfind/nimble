@@ -19,6 +19,7 @@ from copy import deepcopy
 import re
 import textwrap
 from unittest.mock import patch
+from contextlib import contextmanager
 
 import numpy
 from nose.tools import *
@@ -40,6 +41,7 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
+from ..assertionHelpers import blockOperation
 
 
 preserveName = "PreserveTestName"
@@ -186,6 +188,20 @@ class QueryBackend(DataTestObject):
     ############
     # writeFile #
     ############
+    @contextmanager
+    def writeFileDisableAutoConvert(self, rType, fileType):
+        """
+        Raise BlockedOperationException if auto conversion is triggered.
+        """
+        if rType != 'Matrix' and fileType == 'csv':
+            with patch('nimble.data.Matrix.writeFile', blockOperation):
+                yield
+        elif rType != 'Sparse' and fileType == 'mtx':
+            with patch('nimble.data.Sparse.writeFile', blockOperation):
+                yield
+        else:
+            yield
+
     @noLogEntryExpected
     def test_writeFile_CSVhandmade(self):
         """ Test writeFile() for csv extension with both data and featureNames """
@@ -197,7 +213,7 @@ class QueryBackend(DataTestObject):
             toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
             orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-            # call writeFile
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
             toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
@@ -214,8 +230,13 @@ class QueryBackend(DataTestObject):
             data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
             toWrite = self.constructor(data)
 
-            # call writeFile
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
             toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
+
+        assertNoNamesGenerated(toWrite)
+
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+            toWrite.writeFile(tmpFile.name, fileFormat='csv')
 
             assertNoNamesGenerated(toWrite)
 
@@ -273,8 +294,8 @@ class QueryBackend(DataTestObject):
                 while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
                     setter(None)
 
-                # call writeFile
-                exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+                with self.writeFileDisableAutoConvert(exclude.getTypeString(), 'csv'):
+                    exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
                 # read it back into a different object, then test equality
                 if axis == 'point':
@@ -293,8 +314,32 @@ class QueryBackend(DataTestObject):
                     assert getDefNameIndex(origName) > 100
                     assert getDefNameIndex(readName) < 10
 
-            excludeAxis('point')
-            excludeAxis('feature')
+        excludeAxis('point')
+        excludeAxis('feature')
+
+    @noLogEntryExpected
+    def test_writeFile_CSVhandmade_extraCommas(self):
+        """ Test writeFile() when data and names contain commas """
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
+
+        # instantiate object
+        data = [[1, 2, 'a'], [1, 2, 'a,b'], [2, 4, 'a,b,c'], [0, 0, 'd']]
+        pointNames = ['1', 'one,1', '2', '0,zero']
+        featureNames = ['one,1', 'two', '3,three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+
+        # read it back into a different object, then test equality
+        # must specify featureNames=True because 'automatic' will not detect
+        readObj = self.constructor(data=tmpFile.name, featureNames=True)
+
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
+
+        assert toWrite == orig
 
     @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
@@ -306,7 +351,7 @@ class QueryBackend(DataTestObject):
             pointNames = ['1', 'one', '2', '0']
             toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-            # call writeFile
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
             toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
@@ -321,7 +366,7 @@ class QueryBackend(DataTestObject):
             data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
             toWrite = self.constructor(data)
 
-            # call writeFile
+        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
             toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
 
             assertNoNamesGenerated(toWrite)

@@ -55,3 +55,12 @@ class CalledFunctionException(Exception):
 
 def calledException(*args, **kwargs):
     raise CalledFunctionException()
+
+
+class BlockedOperationException(Exception):
+    pass
+
+def blockOperation(*args, **kwargs):
+    msg = 'This test has executed a branch of the code that was not '
+    msg += 'intended to be utilized for the purposes of this test'
+    raise BlockedOperationException(msg)

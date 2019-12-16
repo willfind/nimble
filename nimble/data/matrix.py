@@ -5,7 +5,6 @@ Class extending Base, using a numpy dense matrix to store data.
 from __future__ import division
 from __future__ import absolute_import
 import copy
-from functools import reduce
 
 import numpy
 from six.moves import range
@@ -23,6 +22,7 @@ from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -94,28 +94,6 @@ class Matrix(Base):
 
         return allDataIdentical(self.data, other.data)
 
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -124,27 +102,18 @@ class Matrix(Base):
         designated path.
         """
         with open(outPath, 'w') as outFile:
-
             if includeFeatureNames:
-                def combine(a, b):
-                    return a + ',' + b
-
-                fnames = self.features.getNames()
-                fnamesLine = reduce(combine, fnames)
-                fnamesLine += '\n'
-                if includePointNames:
-                    outFile.write('pointNames,')
-
-                outFile.write(fnamesLine)
-
-        with open(outPath, 'ab') as outFile:#python3 need this.
+                self._writeFeatureNamesToCSV(outFile, includePointNames)
             if includePointNames:
-                pnames = numpy2DArray(self.points.getNames())
-                pnames = pnames.transpose()
-
-                viewData = self.data.view()
+                pnames = list(map(csvCommaFormat, self.points.getNames()))
+                pnames = numpy2DArray(pnames).transpose()
+                if not numpy.issubdtype(self.data.dtype, numpy.number):
+                    vectorizeCommas = numpy.vectorize(csvCommaFormat,
+                                                      otypes=[object])
+                    viewData = vectorizeCommas(self.data).view()
+                else:
+                    viewData = self.data.view()
                 toWrite = numpy.concatenate((pnames, viewData), 1)
-
                 numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
             else:
                 numpy.savetxt(outFile, self.data, delimiter=',')
