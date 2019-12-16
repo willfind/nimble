@@ -30,13 +30,13 @@ class ListPoints(ListAxis, Points):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the points from the toAdd object below the provided index
-        in this object, the remaining points from this object will
+        Insert the points from the toInsert object below the provided
+        index in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        insert = toAdd.copy('pythonlist')
+        insert = toInsert.copy('pythonlist')
         if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore

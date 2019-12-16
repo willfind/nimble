@@ -73,7 +73,7 @@ class KNNClassifier(CustomLearner):
             if ret is None:
                 ret = scores
             else:
-                ret.points.add(scores, useLog=False)
+                ret.points.append(scores, useLog=False)
         return ret
 
 
