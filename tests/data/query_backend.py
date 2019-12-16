@@ -205,40 +205,38 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_writeFile_CSVhandmade(self):
         """ Test writeFile() for csv extension with both data and featureNames """
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            pointNames = ['1', 'one', '2', '0']
-            featureNames = ['one', 'two', 'three']
-            toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-            orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        pointNames = ['1', 'one', '2', '0']
+        featureNames = ['one', 'two', 'three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
             readObj = self.constructor(data=tmpFile.name)
 
-            assert readObj.isIdentical(toWrite)
-            assert toWrite.isIdentical(readObj)
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
 
-            assert toWrite == orig
+        assert toWrite == orig
 
     def test_writeFile_CSVhandmade_lazyNameGeneration(self):
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            toWrite = self.constructor(data)
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
+                assertNoNamesGenerated(toWrite)
 
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
-
-        assertNoNamesGenerated(toWrite)
-
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-            toWrite.writeFile(tmpFile.name, fileFormat='csv')
-
-            assertNoNamesGenerated(toWrite)
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+                toWrite.writeFile(tmpFile.name, fileFormat='csv')
+                assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSVauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
@@ -261,39 +259,37 @@ class QueryBackend(DataTestObject):
             assert readObj.isIdentical(toWrite)
             assert toWrite.isIdentical(readObj)
 
-
     def test_writeFile_CSV_excludeDefaultNames(self):
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+        def getDefNameIndex(name):
+            return int(name[len(DEFAULT_PREFIX):])
 
-            def getDefNameIndex(name):
-                return int(name[len(DEFAULT_PREFIX):])
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        pointNames = ['1', 'one', '2', '0']
+        featureNames = ['one', 'two', 'three']
 
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            pointNames = ['1', 'one', '2', '0']
-            featureNames = ['one', 'two', 'three']
-
-            def excludeAxis(axis):
-                if axis == 'point':
-                    exclude = self.constructor(data, featureNames=featureNames)
-                    if isinstance(exclude, nimble.data.BaseView):
-                        setter = exclude._source.points.setNames
-                    else:
-                        setter = exclude.points.setNames
-                    count = len(exclude.points)
+        def excludeAxis(axis):
+            if axis == 'point':
+                exclude = self.constructor(data, featureNames=featureNames)
+                if isinstance(exclude, nimble.data.BaseView):
+                    setter = exclude._source.points.setNames
                 else:
-                    exclude = self.constructor(data, pointNames=pointNames)
-                    if isinstance(exclude, nimble.data.BaseView):
-                        setter = exclude._source.features.setNames
-                    else:
-                        setter = exclude.features.setNames
-                    count = len(exclude.features)
+                    setter = exclude.points.setNames
+                count = len(exclude.points)
+            else:
+                exclude = self.constructor(data, pointNames=pointNames)
+                if isinstance(exclude, nimble.data.BaseView):
+                    setter = exclude._source.features.setNames
+                else:
+                    setter = exclude.features.setNames
+                count = len(exclude.features)
 
-                # increase the index of the default point name so that it will be
-                # recognizable when we read in from the file.
-                axisExclude = getattr(exclude, axis + 's')
-                while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
-                    setter(None)
+            # increase the index of the default point name so that it will be
+            # recognizable when we read in from the file.
+            axisExclude = getattr(exclude, axis + 's')
+            while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
+                setter(None)
 
+            with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
                 with self.writeFileDisableAutoConvert(exclude.getTypeString(), 'csv'):
                     exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
@@ -302,17 +298,17 @@ class QueryBackend(DataTestObject):
                     readObj = self.constructor(data=tmpFile.name, featureNames=True)
                 else:
                     readObj = self.constructor(data=tmpFile.name, pointNames=True)
-                axisRead = getattr(readObj, axis + 's')
-                # isIdentical will ignore default names, but we still want to
-                # ensure everything else is a match
-                assert readObj.isIdentical(exclude)
-                assert exclude.isIdentical(readObj)
+            axisRead = getattr(readObj, axis + 's')
+            # isIdentical will ignore default names, but we still want to
+            # ensure everything else is a match
+            assert readObj.isIdentical(exclude)
+            assert exclude.isIdentical(readObj)
 
-                for i in range(count):
-                    origName = getattr(axisExclude, 'getName')(i)
-                    readName = getattr(axisRead, 'getName')(i)
-                    assert getDefNameIndex(origName) > 100
-                    assert getDefNameIndex(readName) < 10
+            for i in range(count):
+                origName = getattr(axisExclude, 'getName')(i)
+                readName = getattr(axisRead, 'getName')(i)
+                assert getDefNameIndex(origName) > 100
+                assert getDefNameIndex(readName) < 10
 
         excludeAxis('point')
         excludeAxis('feature')
@@ -320,8 +316,6 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_writeFile_CSVhandmade_extraCommas(self):
         """ Test writeFile() when data and names contain commas """
-        tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
-
         # instantiate object
         data = [[1, 2, 'a'], [1, 2, 'a,b'], [2, 4, 'a,b,c'], [0, 0, 'd']]
         pointNames = ['1', 'one,1', '2', '0,zero']
@@ -329,12 +323,13 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
+                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
-        # read it back into a different object, then test equality
-        # must specify featureNames=True because 'automatic' will not detect
-        readObj = self.constructor(data=tmpFile.name, featureNames=True)
+            # read it back into a different object, then test equality
+            # must specify featureNames=True because 'automatic' will not detect
+            readObj = self.constructor(data=tmpFile.name, featureNames=True)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -344,32 +339,32 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
         """ Test writeFile() for mtx extension with both data and featureNames """
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            featureNames = ['one', 'two', 'three']
-            pointNames = ['1', 'one', '2', '0']
-            toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
-            toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
+        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
+                toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
             readObj = self.constructor(data=tmpFile.name)
 
-            assert readObj.isIdentical(toWrite)
-            assert toWrite.isIdentical(readObj)
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
 
     def test_writeFile_MTXhandmade_lazyNameGeneration(self):
+        # instantiate object
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toWrite = self.constructor(data)
+
         with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            toWrite = self.constructor(data)
+            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
+                toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
 
-        with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
-            toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
-
-            assertNoNamesGenerated(toWrite)
+        assertNoNamesGenerated(toWrite)
 
     def test_writeFile_MTXauto(self):
         """ Test writeFile() will (if needed) autoconvert to Matrix to use its MTX output """
@@ -398,34 +393,34 @@ class QueryBackend(DataTestObject):
     #################
 
     def test_save(self):
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
         with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            featureNames = ['one', 'two', 'three']
-            pointNames = ['1', 'one', '2', '0']
-            toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
             toSave.save(tmpFile.name)
-
             LoadObj = loadData(tmpFile.name)
-            assert toSave.isIdentical(LoadObj)
-            assert LoadObj.isIdentical(toSave)
+
+        assert toSave.isIdentical(LoadObj)
+        assert LoadObj.isIdentical(toSave)
 
     def test_save_lazyNameGeneration(self):
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            toSave = self.constructor(data)
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        toSave = self.constructor(data)
 
+        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
             toSave.save(tmpFile.name)
 
-            assertNoNamesGenerated(toSave)
+        assertNoNamesGenerated(toSave)
 
     def test_save_extensionHandling(self):
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            featureNames = ['one', 'two', 'three']
-            pointNames = ['1', 'one', '2', '0']
-            toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
+        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
             # save without extension to ensure the .nimd extension is added
             fileNameWithoutExtension = tmpFile.name[:-5]
             # it is important that the saved object has the same name as the
@@ -447,12 +442,12 @@ class QueryBackend(DataTestObject):
 
     @oneLogEntryExpected
     def test_saveAndLoad_logCount(self):
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            featureNames = ['one', 'two', 'three']
-            pointNames = ['1', 'one', '2', '0']
-            toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
+        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
             toSave.save(tmpFile.name)
             LoadObj = loadData(tmpFile.name)
 
