@@ -479,7 +479,7 @@ def test_warningscapture_TL_exceptions_featureMismatch():
     cData = generateClassificationData(2, 10, 5)
     ((trainX, trainY), (testX, testY)) = cData
     # add an extra testX feature to raise exception
-    testX.features.add(testX[:, -1])
+    testX.features.append(testX[:, -1])
 
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)

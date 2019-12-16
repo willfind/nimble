@@ -57,8 +57,12 @@ class PointsView(Points):
         readOnlyException('retain')
 
     @exceptionDocstring
-    def add(self, toAdd, insertBefore=None, useLog=None):
-        readOnlyException('add')
+    def insert(self, insertBefore, toInsert, useLog=None):
+        readOnlyException('insert')
+
+    @exceptionDocstring
+    def append(self, toAppend, useLog=None):
+        readOnlyException('append')
 
     @exceptionDocstring
     def shuffle(self, useLog=None):

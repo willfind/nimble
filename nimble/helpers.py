@@ -2617,7 +2617,7 @@ class KFoldCrossValidator():
                 if collectedY is None:
                     collectedY = curTestingY
                 else:
-                    collectedY.points.add(curTestingY, useLog=False)
+                    collectedY.points.append(curTestingY, useLog=False)
 
             # setup for next iteration
             argumentCombinationIterator.reset()
@@ -2632,7 +2632,7 @@ class KFoldCrossValidator():
             # combine the results objects into one, and then calc performance
             else:
                 for resultIndex in range(1, len(results)):
-                    results[0].points.add(results[resultIndex], useLog=False)
+                    results[0].points.append(results[resultIndex], useLog=False)
 
                 # TODO raise RuntimeError(
                 #     "How do we guarantee Y and results are in same order?")
@@ -3642,7 +3642,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     # we want the data and the labels together in one object or this method
     trainX = trainX.copy()
     if isinstance(trainY, Base):
-        trainX.features.add(trainY)
+        trainX.features.append(trainY)
         trainY = len(trainX.features) - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations
@@ -3673,9 +3673,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         else:
             predName = 'predictions-' + str(predictionFeatureID)
             partialResults.features.setName(0, predName)
-            rawPredictions.features.add(partialResults.copy(to="List"))
-        pairData.features.add(pairTrueLabels)
-        trainX.points.add(pairData)
+            rawPredictions.features.append(partialResults.copy(to="List"))
+        pairData.features.append(pairTrueLabels)
+        trainX.points.append(pairData)
         predictionFeatureID += 1
 
     #set up the return data based on which format has been requested
@@ -3815,7 +3815,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
             # as it's added to results object, rename each column with its
             # corresponding class label
             oneLabelResults.features.setName(0, str(label))
-            rawPredictions.features.add(oneLabelResults)
+            rawPredictions.features.append(oneLabelResults)
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.points.calculate(

@@ -21,7 +21,7 @@ class RidgeRegression(CustomLearner):
         #		ones = nimble.createData("Matrix", numpy.ones(len(trainX.points)))
         #		ones.transpose()
         #		trainX = trainX.copy()
-        #		trainX.features.add(ones)
+        #		trainX.features.append(ones)
 
         # trainX and trainY are input as points in rows, features in columns
         # in other words: Points x Features.
@@ -43,7 +43,7 @@ class RidgeRegression(CustomLearner):
     #		ones = nimble.createData("Matrix", numpy.ones(len(testX.points)))
     #		ones.transpose()
     #		testX = testX.copy()
-    #		testX.features.add(ones)
+    #		testX.features.append(ones)
 
         # testX input as points in rows, features in columns
         rawXPxF = dtypeConvert(testX.copy(to="numpyarray"))
