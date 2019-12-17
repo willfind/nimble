@@ -4,7 +4,6 @@ import os
 import sys
 import copy
 import itertools
-from contextlib import contextmanager
 try:
     from unittest import mock #python >=3.3
 except:
@@ -22,7 +21,7 @@ from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
 
 # from .. import logger
-from .assertionHelpers import oneLogEntryExpected, blockOperation
+from .assertionHelpers import oneLogEntryExpected
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -59,22 +58,6 @@ class GetItemOnly(object):
     def __getitem__(self, key):
         return self.vals[key]
 
-@contextmanager
-def createDataDisableAutoConvert(rType, rawData):
-    """
-    Raise BlockedOperationException if auto conversion is triggered.
-    """
-    if (((scipy and scipy.sparse.issparse(rawData))
-            or (pd and isinstance(rawData, pd.SparseDataFrame)))
-            and (rType not in ['Sparse', None])):
-        with mock.patch('nimble.data.Sparse', blockOperation):
-            yield
-    elif rType not in ['Matrix', None]:
-        with mock.patch('nimble.data.Matrix', blockOperation):
-            yield
-    else:
-        yield
-
 ###########################
 # Data values correctness #
 ###########################
@@ -85,8 +68,7 @@ def test_createData_raw_stringConversion():
     for t in returnTypes:
         values = []
         rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
-        with createDataDisableAutoConvert(t, rawData):
-            toTest = nimble.createData(t, rawData)
+        toTest = nimble.createData(t, rawData)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
@@ -96,8 +78,7 @@ def test_createData_raw_noStringConversion():
     for t in returnTypes:
         values = []
         rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
-        with createDataDisableAutoConvert(t, rawData):
-            toTest = nimble.createData(t, rawData, elementType=object)
+        toTest = nimble.createData(t, rawData, elementType=object)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
@@ -124,16 +105,14 @@ def test_createData_raw_pointAndFeatureIterators():
         pNames = IterNext(['1', '4'])
         fNames = IterNext(['a', 'b', 'c'])
         rawData = [[1,2,3], [4,5,6]]
-        with createDataDisableAutoConvert(t, rawData):
-            toTest1 = nimble.createData(t, rawData, pointNames=pNames,
+        toTest1 = nimble.createData(t, rawData, pointNames=pNames,
                                         featureNames=fNames)
         assert toTest1.points.getNames() == ['1', '4']
         assert toTest1.features.getNames() == ['a', 'b', 'c']
 
         pNames = GetItemOnly(['1', '4'])
         fNames = GetItemOnly(['a', 'b', 'c'])
-        with createDataDisableAutoConvert(t, rawData):
-            toTest2 = nimble.createData(t, rawData, pointNames=pNames,
+        toTest2 = nimble.createData(t, rawData, pointNames=pNames,
                                         featureNames=fNames)
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
@@ -678,11 +657,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # pNames and fNames triggered for automatic
         raw1 = [['pointNames', 'fname0','fname1','fname2'],
                 ['pname0', 0, 1, 2]]
-        with createDataDisableAutoConvert(t, raw1):
-            testAuto = nimble.createData(t, raw1, pointNames='automatic', featureNames='automatic')
-            testTrue = nimble.createData(t, raw1, pointNames=True, featureNames=True)
-            testFalse = nimble.createData(t, raw1, pointNames=False, featureNames=False)
-            testNone = nimble.createData(t, raw1, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw1, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw1, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw1, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw1, pointNames=None, featureNames=None)
 
         assert testAuto == testTrue
         assert testAuto != testFalse
@@ -691,11 +669,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # pNames not triggered, fNames triggered for automatic
         raw2 = [['either', 'fname0','fname1','fname2'],
                 [99, 0, 1, 2]]
-        with createDataDisableAutoConvert(t, raw2):
-            testAuto = nimble.createData(t, raw2, pointNames='automatic', featureNames='automatic')
-            testTrue = nimble.createData(t, raw2, pointNames=True, featureNames=True)
-            testFalse = nimble.createData(t, raw2, pointNames=False, featureNames=False)
-            testNone = nimble.createData(t, raw2, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw2, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw2, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw2, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw2, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto != testFalse
@@ -705,11 +682,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # no names triggered for automatic
         raw3 = [[-1, 9, 8, 7],
                 [99, 0, 1, 2]]
-        with createDataDisableAutoConvert(t, raw3):
-            testAuto = nimble.createData(t, raw3, pointNames='automatic', featureNames='automatic')
-            testTrue = nimble.createData(t, raw3, pointNames=True, featureNames=True)
-            testFalse = nimble.createData(t, raw3, pointNames=False, featureNames=False)
-            testNone = nimble.createData(t, raw3, pointNames=None, featureNames=None)
+        testAuto = nimble.createData(t, raw3, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.createData(t, raw3, pointNames=True, featureNames=True)
+        testFalse = nimble.createData(t, raw3, pointNames=False, featureNames=False)
+        testNone = nimble.createData(t, raw3, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto == testFalse
@@ -858,9 +834,8 @@ def test_csv_roundtrip_autonames():
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
 
-        with createDataDisableAutoConvert(retType, data):
-            withFnames = nimble.createData(retType, data, featureNames=fnames)
-            withBoth = nimble.createData(retType, data, featureNames=fnames, pointNames=pnames)
+        withFnames = nimble.createData(retType, data, featureNames=fnames)
+        withBoth = nimble.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
             withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
@@ -886,11 +861,10 @@ def test_extractNames_pythonList():
     for t in returnTypes:
         inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
         specRaw = [[1, -1, -3]]
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
@@ -902,11 +876,10 @@ def test_extractNames_NPArray():
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.array([[1, -1, -3]])
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
@@ -918,11 +891,10 @@ def test_extractNames_NPMatrix():
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.matrix([[1, -1, -3]])
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
@@ -939,11 +911,10 @@ def test_extractNames_CooSparse():
         inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.coo_matrix(specRaw)
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
@@ -960,11 +931,10 @@ def test_extractNames_CscSparse():
         inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
@@ -975,11 +945,10 @@ def test_extractNames_pandasDataFrame():
     for t in returnTypes:
         inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
         specRaw = pd.DataFrame([[1, -1, -3]])
-        with createDataDisableAutoConvert(t, inDataRaw):
-            inData = nimble.createData(
-                returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-            specified = nimble.createData(
-                returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+        inData = nimble.createData(
+            returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.createData(
+            returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 

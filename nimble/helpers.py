@@ -671,26 +671,11 @@ def initDataObject(
         useFNames = featureNames
     else:
         useFNames = True if featureNames is True else None
-    try:
-        ret = initMethod(rawData, pointNames=usePNames,
-                         featureNames=useFNames, name=name,
-                         paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData, **kwargs)
-    except Exception:
-        einfo = sys.exc_info()
-        #something went wrong. instead, try to auto load and then convert
-        try:
-            autoMethod = getattr(nimble.data, autoType)
-            ret = autoMethod(rawData, pointNames=usePNames,
-                             featureNames=useFNames, name=name,
-                             paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData, **kwargs)
-            ret = ret.copy(to=returnType)
-        # If it didn't work, report the error on the thing the user ACTUALLY
-        # wanted
-        except Exception:
-            six.reraise(einfo[0], einfo[1], einfo[2])
 
+    ret = initMethod(rawData, pointNames=usePNames,
+                     featureNames=useFNames, name=name,
+                     paths=pathsToPass, elementType=elementType,
+                     reuseData=reuseData, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':

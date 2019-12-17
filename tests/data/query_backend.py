@@ -19,7 +19,6 @@ from copy import deepcopy
 import re
 import textwrap
 from unittest.mock import patch
-from contextlib import contextmanager
 
 import numpy
 from nose.tools import *
@@ -41,7 +40,6 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
-from ..assertionHelpers import blockOperation
 
 
 preserveName = "PreserveTestName"
@@ -185,22 +183,9 @@ class QueryBackend(DataTestObject):
         assertNoNamesGenerated(toTest2)
 
 
-    ############
+    #############
     # writeFile #
-    ############
-    @contextmanager
-    def writeFileDisableAutoConvert(self, rType, fileType):
-        """
-        Raise BlockedOperationException if auto conversion is triggered.
-        """
-        if rType != 'Matrix' and fileType == 'csv':
-            with patch('nimble.data.Matrix.writeFile', blockOperation):
-                yield
-        elif rType != 'Sparse' and fileType == 'mtx':
-            with patch('nimble.data.Sparse.writeFile', blockOperation):
-                yield
-        else:
-            yield
+    #############
 
     @noLogEntryExpected
     def test_writeFile_CSVhandmade(self):
@@ -213,8 +198,7 @@ class QueryBackend(DataTestObject):
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
             readObj = self.constructor(data=tmpFile.name)
@@ -230,34 +214,11 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
-                assertNoNamesGenerated(toWrite)
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=False)
+            assertNoNamesGenerated(toWrite)
 
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-                toWrite.writeFile(tmpFile.name, fileFormat='csv')
-                assertNoNamesGenerated(toWrite)
-
-    def test_writeFile_CSVauto(self):
-        """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            pointNames = ['1', 'one', '2', '0']
-            featureNames = ['one', 'two', 'three']
-            toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-            # cripple all but cannonical implementation
-            if self.returnType != 'Matrix':
-                toWrite._writeFile_implementation = None
-
-            # call writeFile
-            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
-            # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
-
-            assert readObj.isIdentical(toWrite)
-            assert toWrite.isIdentical(readObj)
+            toWrite.writeFile(tmpFile.name, fileFormat='csv')
+            assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSV_excludeDefaultNames(self):
         def getDefNameIndex(name):
@@ -290,8 +251,7 @@ class QueryBackend(DataTestObject):
                 setter(None)
 
             with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-                with self.writeFileDisableAutoConvert(exclude.getTypeString(), 'csv'):
-                    exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+                exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
                 # read it back into a different object, then test equality
                 if axis == 'point':
@@ -324,8 +284,7 @@ class QueryBackend(DataTestObject):
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'csv'):
-                toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
             # must specify featureNames=True because 'automatic' will not detect
@@ -346,8 +305,7 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
-                toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
+            toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
             readObj = self.constructor(data=tmpFile.name)
@@ -361,32 +319,9 @@ class QueryBackend(DataTestObject):
         toWrite = self.constructor(data)
 
         with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
-            with self.writeFileDisableAutoConvert(toWrite.getTypeString(), 'mtx'):
-                toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
+            toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=False)
 
         assertNoNamesGenerated(toWrite)
-
-    def test_writeFile_MTXauto(self):
-        """ Test writeFile() will (if needed) autoconvert to Matrix to use its MTX output """
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            featureNames = ['one', 'two', 'three']
-            pointNames = ['1', 'one', '2', '0']
-            toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-            # cripple all but cannonical implementation
-            if self.returnType != 'Sparse':
-                toWrite._writeFile_implementation = None
-
-            # call writeFile
-            toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
-
-            # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
-
-            assert readObj.isIdentical(toWrite)
-            assert toWrite.isIdentical(readObj)
 
     #################
     # save/LoadData #
