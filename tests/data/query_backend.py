@@ -40,7 +40,6 @@ from .baseObject import DataTestObject
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
-from ..assertionHelpers import blockOperation
 
 
 preserveName = "PreserveTestName"
