@@ -1054,10 +1054,7 @@ class Base(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
+            cloudpickle.dump(self, file)
         # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
@@ -3632,11 +3629,11 @@ class Base(object):
 
         try:
             ret = caller._matmul__implementation(callee)
-        except Exception as e:
-            #TODO: improve how the exception is catch
+        except TypeError:
+            # help determine the source of the error
             self._numericValidation()
             other._numericValidation(right=True)
-            raise e
+            raise # exception should be raised above, but just in case
 
         if caller._pointNamesCreated():
             ret.points.setNames(caller.points.getNames(), useLog=False)
