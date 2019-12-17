@@ -1428,9 +1428,6 @@ class Points(object):
               point as a list of values. Certain fill methods can be
               imported from nimble's fill module: mean, median, mode,
               forwardFill, backwardFill, interpolation
-        arguments : dict
-            Any additional arguments being passed to the fill
-            function.
         points : identifier or list of identifiers
             Select specific points to apply fill to. If points is None,
             the fill will be applied to all points.
@@ -1444,6 +1441,9 @@ class Points(object):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+        kwarguments
+            Any additional arguments being passed to the fill
+            function.
 
         See Also
         --------

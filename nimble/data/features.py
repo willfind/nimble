@@ -1427,9 +1427,6 @@ class Features(object):
               feature as a list of values. Certain fill methods can be
               imported from nimble's fill module: mean, median, mode,
               forwardFill, backwardFill, interpolation
-        arguments : dict
-            Any additional arguments being passed to the fill
-            function.
         features : identifier or list of identifiers
             Select specific features to apply fill to. If features is
             None, the fill will be applied to all features.
@@ -1443,6 +1440,9 @@ class Features(object):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+        kwarguments
+            Any additional arguments being passed to the fill
+            function.
 
         See Also
         --------
