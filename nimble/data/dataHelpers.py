@@ -630,7 +630,7 @@ def allDataIdentical(arr1, arr2):
         test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
         test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
-    except Exception:
+    except ValueError:
         return False
 
 def createListOfDict(data, featureNames):

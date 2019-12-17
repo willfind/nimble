@@ -34,6 +34,7 @@ from nimble.helpers import generateAllPairs, countWins, inspectArguments
 from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
+from nimble.configuration import configErrors
 
 cloudpickle = ImportModule('cloudpickle')
 
@@ -463,7 +464,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ret = ''
         try:
             ret = nimble.settings.get(self.getCanonicalName(), option)
-        except Exception:
+        except configErrors:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
             pass
@@ -1267,10 +1268,7 @@ class TrainedLearner(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
+            cloudpickle.dump(self, file)
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)

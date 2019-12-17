@@ -83,7 +83,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
             try:
                 instantiated = obj()
                 instantiated.get_machine_problem_type()
-            except Exception:
+            except (SystemError, TypeError):
                 return False
 
             return True
