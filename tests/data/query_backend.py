@@ -220,27 +220,6 @@ class QueryBackend(DataTestObject):
             toWrite.writeFile(tmpFile.name, fileFormat='csv')
             assertNoNamesGenerated(toWrite)
 
-    def test_writeFile_CSVauto(self):
-        """ Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            # instantiate object
-            data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-            pointNames = ['1', 'one', '2', '0']
-            featureNames = ['one', 'two', 'three']
-            toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-            # cripple all but cannonical implementation
-            if self.returnType != 'Matrix':
-                toWrite._writeFile_implementation = None
-
-            # call writeFile
-            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
-            # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
-
-            assert readObj.isIdentical(toWrite)
-            assert toWrite.isIdentical(readObj)
-
     def test_writeFile_CSV_excludeDefaultNames(self):
         def getDefNameIndex(name):
             return int(name[len(DEFAULT_PREFIX):])
