@@ -104,7 +104,7 @@ base_logged = [
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
     'featureView', 'getTypeString', 'hashCode', 'inverse',
-    'isApproximatelyEqual', 'isIdentical', 'iterElements', 'matrixMultiply',
+    'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',

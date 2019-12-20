@@ -499,7 +499,7 @@ class Matrix(Base):
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
-    def _iterElements_implementation(self, order, only):
+    def _iterateElements_implementation(self, order, only):
         return DenseElementIterator(self, order, only)
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):

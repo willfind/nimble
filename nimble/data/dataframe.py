@@ -434,7 +434,7 @@ class DataFrame(Base):
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
 
-    def _iterElements_implementation(self, order, only):
+    def _iterateElements_implementation(self, order, only):
         return DenseElementIterator(self, order, only)
 
 class DataFrameView(BaseView, DataFrame):

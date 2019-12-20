@@ -1223,7 +1223,7 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
-    def _iterElements_implementation(self, order, only):
+    def _iterateElements_implementation(self, order, only):
         return SparseElementIterator(self, order, only)
 
 ###################
@@ -1480,5 +1480,5 @@ class SparseView(BaseView, Sparse):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
 
-    def _iterElements_implementation(self, order, only):
+    def _iterateElements_implementation(self, order, only):
         return SparseElementIterator(self.copy(), order, only)

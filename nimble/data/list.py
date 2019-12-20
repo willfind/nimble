@@ -632,7 +632,7 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
-    def _iterElements_implementation(self, order, only):
+    def _iterateElements_implementation(self, order, only):
         return DenseElementIterator(self, order, only)
 
 class ListView(BaseView, List):

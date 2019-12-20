@@ -282,7 +282,7 @@ class HighLevelDataSafe(DataTestObject):
         def emitNumNZ(point):
             ret = 0
             assert len(point) == 3
-            for value in point.iterElements(only=match.nonZero):
+            for value in point.iterateElements(only=match.nonZero):
                 ret += 1
             return ret
 
@@ -539,7 +539,7 @@ class HighLevelDataSafe(DataTestObject):
         def emitNumNZ(feature):
             ret = 0
             assert len(feature) == 4
-            for value in feature.iterElements(order='feature', only=match.nonZero):
+            for value in feature.iterateElements(order='feature', only=match.nonZero):
                 ret += 1
             return ret
 

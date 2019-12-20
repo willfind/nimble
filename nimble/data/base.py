@@ -393,13 +393,13 @@ class Base(object):
             return ElementIterator1D(self)
 
         msg = "Cannot iterate over two-dimensional objects because the "
-        msg = "iteration order is arbitrary. Try the iterElements() method."
+        msg = "iteration order is arbitrary. Try the iterateElements() method."
         raise ImproperObjectAction(msg)
 
     def __bool__(self):
         return self._pointCount > 0 and self._featureCount > 0
 
-    def iterElements(self, order='point', only=None):
+    def iterateElements(self, order='point', only=None):
         """
         Iterate over each element in this object.
 
@@ -426,16 +426,16 @@ class Base(object):
         >>> from nimble.match import nonZero, positive
         >>> rawData = [[0, 1, 2], [-2, -1, 0]]
         >>> data = nimble.createData('Matrix', rawData)
-        >>> list(data.iterElements(order='point'))
+        >>> list(data.iterateElements(order='point'))
         [0.0, 1.0, 2.0, -2.0, -1.0, 0.0]
-        >>> list(data.iterElements(order='feature'))
+        >>> list(data.iterateElements(order='feature'))
         [0.0, -2.0, 1.0, -1.0, 2.0, 0.0]
-        >>> list(data.iterElements(order='point', only=nonZero))
+        >>> list(data.iterateElements(order='point', only=nonZero))
         [1.0, 2.0, -2.0, -1.0]
-        >>> list(data.iterElements(order='feature', only=positive))
+        >>> list(data.iterateElements(order='feature', only=positive))
         [1.0, 2.0]
         """
-        return self._iterElements_implementation(order, only)
+        return self._iterateElements_implementation(order, only)
 
     def nameIsDefault(self):
         """
@@ -4483,7 +4483,7 @@ class Base(object):
             return numpy.isnan(val) or isinstance(val, complex)
 
         if all(isinstance(obj, Base) for obj in [left, right]):
-            zipLR = zip(left.iterElements(), right.iterElements())
+            zipLR = zip(left.iterateElements(), right.iterateElements())
             for l, r in zipLR:
                 if l == 0 and r < 0:
                     msg = 'Zeros cannot be raised to negative exponents'
@@ -4492,7 +4492,7 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         elif isinstance(left, Base):
-            for elem in left.iterElements():
+            for elem in left.iterateElements():
                 if elem == 0 and right < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
@@ -4500,7 +4500,7 @@ class Base(object):
                     msg = "Complex number results are not allowed"
                     raise ImproperObjectAction(msg)
         else:
-            for elem in right.iterElements():
+            for elem in right.iterateElements():
                 if left == 0 and elem < 0:
                     msg = 'Zero cannot be raised to negative exponents'
                     raise ZeroDivisionError(msg)
