@@ -1412,7 +1412,7 @@ class QueryBackend(DataTestObject):
         # test an empty object w/ more than 0 features and names reset to None
         empty = self.constructor([], featureNames=['a', 'b', 'c'])
         try:
-            empty.features.setNames(None)
+            empty.features.setNames(None, useLog=False)
         except TypeError:
             # need to change names in views manually
             empty._source.featureNames = None

@@ -122,7 +122,7 @@ class Features(object):
         """
         self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None, useLog=None):
+    def setNames(self, assignments, useLog=None):
         """
         Set or rename all of the feature names of this object.
 
@@ -132,12 +132,13 @@ class Features(object):
 
         Parameters
         ----------
-        assignments : iterable, dict
+        assignments : iterable, dict, None
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               feature names.
             * dict - The mapping for each feature name in the format
               {name:index}
+            * None - remove names from this object
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the

@@ -201,8 +201,8 @@ class Stretch(object):
             ret = ret.copy(other.getTypeString())
 
         setPts, setFts = self._getOutputNames(other)
-        ret.points.setNames(setPts)
-        ret.features.setNames(setFts)
+        ret.points.setNames(setPts, useLog=False)
+        ret.features.setNames(setFts, useLog=False)
 
         return ret
 
@@ -237,10 +237,10 @@ class StretchSparse(Stretch):
         # TODO Sparse uses elements.multiply/power which are revalidating and
         # can cause a name conflict here; evaluate avoiding the revalidation
         # For now, removing all names since already stored to be set later
-        lhs.points.setNames(None)
-        lhs.features.setNames(None)
-        rhs.points.setNames(None)
-        rhs.features.setNames(None)
+        lhs.points.setNames(None, useLog=False)
+        lhs.features.setNames(None, useLog=False)
+        rhs.points.setNames(None, useLog=False)
+        rhs.features.setNames(None, useLog=False)
 
         ret = lhs._binaryOperations_implementation(opName, rhs)
 
