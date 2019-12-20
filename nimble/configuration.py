@@ -36,6 +36,7 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 
 currentFile = inspect.getfile(inspect.currentframe())
 nimblePath = os.path.dirname(os.path.abspath(currentFile))
+configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
     """
@@ -49,7 +50,7 @@ class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
         """
         try:
             return self._comments[section][option]
-        except Exception:
+        except KeyError:
             return None
 
 
@@ -492,7 +493,7 @@ class SessionConfiguration(object):
                 if isinstance(self.changes[sec], ToDelete):
                     try:
                         self.cp.remove_section(sec)
-                    except Exception:
+                    except KeyError:
                         pass
                 else:
                     for opt in self.changes[sec]:
@@ -507,7 +508,7 @@ class SessionConfiguration(object):
                     if isinstance(self.changes[section], ToDelete):
                         try:
                             self.cp.remove_section(section)
-                        except Exception:
+                        except KeyError:
                             pass
                     else:
                         for opt in self.changes[section]:
@@ -599,7 +600,7 @@ def autoRegisterFromSettings():
         try:
             (packName, _) = key.split('.')
             (modPath, attrName) = toRegister[key].rsplit('.', 1)
-        except Exception:
+        except ValueError:
             continue
         try:
             module = importlib.import_module(modPath)
@@ -621,13 +622,10 @@ def configSafetyWrapper(toWrap):
     to wrap unit tests which intersect with configuration functionality.
     """
     def wrapped(*args, **kwargs):
-        backupFile = tempfile.TemporaryFile()
+        backupFile = tempfile.TemporaryFile('w+')
         configFilePath = os.path.join(nimble.nimblePath, 'configuration.ini')
         configurationFile = open(configFilePath, 'r')
-        if sys.version_info.major < 3:
-            backupFile.write(configurationFile.read())
-        else:
-            backupFile.write(bytes(configurationFile.read(), 'utf-8'))#python 3
+        backupFile.write(configurationFile.read())
         configurationFile.close()
 
         backupChanges = copy.copy(nimble.settings.changes)
@@ -639,11 +637,9 @@ def configSafetyWrapper(toWrap):
         finally:
             backupFile.seek(0)
             configurationFile = open(configFilePath, 'w')
-            if sys.version_info.major < 3:
-                configurationFile.write(backupFile.read())
-            else:
-                configurationFile.write(backupFile.read().decode()) # python3
+            configurationFile.write(backupFile.read())
             configurationFile.close()
+            backupFile.close()
 
             nimble.settings = nimble.configuration.loadSettings()
             nimble.settings.changes = backupChanges

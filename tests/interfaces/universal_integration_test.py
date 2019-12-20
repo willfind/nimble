@@ -343,7 +343,38 @@ def test_loadModulesFromConfigLocation():
         finally:
             sys.path = sysPathBackup
 
+def test_getParametersAndDefaultsReturnTypes():
+    for interface in nimble.interfaces.available:
+        interfaceName = interface.getCanonicalName()
+        for learner in nimble.listLearners(interfaceName):
+            params = interface._getParameterNames(learner)
+            defaults = interface._getDefaultValues(learner)
+            learnerParams = interface.getLearnerParameterNames(learner)
+            defaultParams = interface.getLearnerDefaultValues(learner)
+            fullName = interfaceName + '.' + learner
+            paramsFromTop = nimble.learnerParameters(fullName)
+            defaultsFromTop = nimble.learnerDefaultValues(fullName)
 
+            if params is not None:
+                assert isinstance(params, list)
+                assert all(isinstance(option, set) for option in params)
+                assert isinstance(defaults, list)
+                assert all(isinstance(option, dict) for option in defaults)
+
+            assert isinstance(learnerParams, list)
+            assert all(isinstance(option, set) for option in learnerParams)
+            assert isinstance(defaultParams, list)
+            assert all(isinstance(option, dict) for option in defaultParams)
+
+            # top-level will not be nested in list if only one item in list
+            if isinstance(paramsFromTop, list):
+                assert all(isinstance(option, set) for option in paramsFromTop)
+            else:
+                assert isinstance(paramsFromTop, set)
+            if isinstance(defaultsFromTop, list):
+                assert all(isinstance(option, dict) for option in defaultsFromTop)
+            else:
+                assert isinstance(defaultsFromTop, dict)
 # TODO
 #def testGetParamsOverListLearners():
 #def testGetParamDefaultsOverListLearners():

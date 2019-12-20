@@ -8,14 +8,13 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
+from nimble.utility import ImportModule
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
 from .points_view import PointsView
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
+scipy = ImportModule('scipy')
 
 class SparsePoints(SparseAxis, Points):
     """
@@ -102,8 +101,8 @@ class SparsePoints(SparseAxis, Points):
                 tmpCol.append(numRetFeatures - 1)
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self._base.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
-                                       shape=(numRetPoints, numRetFeatures))
+        self._base.data = scipy.sparse.coo_matrix(
+            (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
         self._base._sorted = None
 
     def _combineByExpandingFeatures_implementation(
@@ -124,8 +123,9 @@ class SparsePoints(SparseAxis, Points):
             tmpCol.extend([i for i in range(numRetFeatures)])
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self._base.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
-                                       shape=(len(uniqueDict), numRetFeatures))
+        shape = (len(uniqueDict), numRetFeatures)
+        self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                                  shape=shape)
         self._base._sorted = None
 
 class SparsePointsView(PointsView, AxisView, SparsePoints):
@@ -183,7 +183,7 @@ class nzIt(object):
 
                 if value != 0:
                     return value
-            except Exception:
+            except (TypeError, IndexError):
                 self._currGroup = next(self._sourceIter)
                 self._index = 0
 

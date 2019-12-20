@@ -11,6 +11,7 @@ import abc
 import functools
 import sys
 import numbers
+import warnings
 
 import numpy
 import six
@@ -18,10 +19,11 @@ from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory
-from nimble.exceptions import _prettyListString
-from nimble.exceptions import _prettyDictString
+from nimble.utility import inheritDocstringsFactory, ImportModule
+from nimble.exceptions import prettyListString
+from nimble.exceptions import prettyDictString
 from nimble.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
@@ -32,23 +34,33 @@ from nimble.helpers import generateAllPairs, countWins, inspectArguments
 from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
+from nimble.configuration import configErrors
 
-cloudpickle = nimble.importModule('cloudpickle')
+cloudpickle = ImportModule('cloudpickle')
 
 
 def captureOutput(toWrap):
     """
-    Decorator which will safely redirect standard error within the
-    wrapped function to the temp file at nimble.capturedErr.
+    Decorator which will safely ignore certain warnings.
+
+    Prevent any warnings from displaying that do not apply directly to
+    the operation being run. This can be overridden by -W options at the
+    command line or the PYTHONWARNINGS environment variable.
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
-        backupErr = sys.stderr
-        sys.stderr = nimble.capturedErr
-        try:
+        # user has not already provided warnings filters
+        if not sys.warnoptions:
+            with warnings.catch_warnings():
+                # filter out warnings that we do not need users to see
+                warnings.simplefilter('ignore', DeprecationWarning)
+                warnings.simplefilter('ignore', FutureWarning)
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
+                warnings.simplefilter('ignore', ImportWarning)
+
+                ret = toWrap(*args, **kwarguments)
+        else:
             ret = toWrap(*args, **kwarguments)
-        finally:
-            sys.stderr = backupErr
         return ret
 
     return wrapped
@@ -211,7 +223,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # want data and labels together in one object for this method
                 if isinstance(trainY, nimble.data.Base):
                     trainX = trainX.copy()
-                    trainX.features.add(trainY, useLog=False)
+                    trainX.features.append(trainY, useLog=False)
                     trainY = len(trainX.features) - 1
 
                 # Get set of unique class labels, then generate list of all
@@ -238,8 +250,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                             learnerName, pairData.copy(),
                             pairTrueLabels.copy(), arguments=arguments)
                         )
-                    pairData.features.add(pairTrueLabels, useLog=False)
-                    trainX.points.add(pairData, useLog=False)
+                    pairData.features.append(pairTrueLabels, useLog=False)
+                    trainX.points.append(pairData, useLog=False)
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
@@ -295,12 +307,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         # pass information between I/O transformation, the trainer and applier
         customDict = {}
 
-        # include default arguments and validate the arguments provided
-        allArguments = self._getAllArguments(learnerName, arguments)
+        # validate the arguments provided
+        self._validateLearnerArgumentValues(learnerName, arguments)
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
-            learnerName, trainX, trainY, None, allArguments, customDict)
+            learnerName, trainX, trainY, None, arguments, customDict)
         transTrainX, transTrainY, _, transArguments = transformedInputs
 
         transformedInputs = (transformedInputs[0], transformedInputs[1],
@@ -313,43 +325,67 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         return (trainedBackend, transformedInputs, customDict)
 
+    def _validateArgumentValues(self, name, arguments):
+        possibleParams = self._getParameterNames(name)
+        possibleDefaults = self._getDefaultValues(name)
+        bestIndex = self._chooseBestParameterSet(possibleParams,
+                                                 possibleDefaults, arguments)
+        neededParams = possibleParams[bestIndex]
+        availableDefaults = possibleDefaults[bestIndex]
+        self._argumentValueValidation(name, possibleParams, possibleDefaults,
+                                      arguments, neededParams,
+                                      availableDefaults)
 
-    def _getCompleteArguments(self, name, neededParams, availableDefaults,
-                              arguments, possibleParams, possibleDefaults):
+    def _validateLearnerArgumentValues(self, name, arguments):
+
+        possibleParams = self.getLearnerParameterNames(name)
+        possibleDefaults = self.getLearnerDefaultValues(name)
+        bestIndex = self._chooseBestParameterSet(possibleParams,
+                                                 possibleDefaults, arguments)
+        neededParams = possibleParams[bestIndex]
+        availableDefaults = possibleDefaults[bestIndex]
+        self._argumentValueValidation(name, possibleParams, possibleDefaults,
+                                      arguments, neededParams,
+                                      availableDefaults)
+
+    def _argumentValueValidation(self, name, possibleParams, possibleDefaults,
+                                 arguments, neededParams, availableDefaults):
+        if arguments is None:
+            arguments = {}
         check = arguments.copy()
         completeArgs = {}
         for param in neededParams:
             if param in check:
                 completeArgs[param] = check[param]
                 del check[param]
-            elif param in availableDefaults:
-                completeArgs[param] = availableDefaults[param]
-            else:
+            elif param not in availableDefaults:
                 msg = "MISSING LEARNING PARAMETER! "
                 msg += "When trying to validate arguments for " + name
                 msg += ", we couldn't find a value for the parameter named "
                 msg += "'" + param + "'. "
                 msg += "The allowed parameters were: "
-                msg += _prettyListString(neededParams, useAnd=True)
-                msg += ". These were choosen as the best guess given the "
-                msg += "inputs out of the following (numbered) list of "
-                msg += "possible parameter sets: "
-                msg += _prettyListString(possibleParams, numberItems=True,
-                                         itemStr=_prettyListString)
+                msg += prettyListString(neededParams, useAnd=True)
+                if len(possibleParams) > 1:
+                    msg += ". These were choosen as the best guess given the "
+                    msg += "inputs out of the following (numbered) list of "
+                    msg += "possible parameter sets: "
+                    msg += prettyListString(possibleParams, numberItems=True,
+                                            itemStr=prettyListString)
+
                 if len(availableDefaults) == 0:
-                    msg += ". Out of the allowed parameters, all required "
-                    msg += "values specified by the user"
+                    msg += ". All of the allowed parameters must be specified "
+                    msg += "by the user"
                 else:
                     msg += ". Out of the allowed parameters, the following "
-                    msg += "could be omited, which would result in the "
+                    msg += "could be omitted, which would result in the "
                     msg += "associated default value being used: "
-                    msg += _prettyDictString(availableDefaults, useAnd=True)
+                    msg += prettyDictString(availableDefaults, useAnd=True)
 
                 if len(arguments) == 0:
-                    msg += ". However, no arguments were inputed."
+                    msg += ". However, no arguments were provided."
                 else:
                     msg += ". The full mapping of inputs actually provided "
-                    msg += "was: " + _prettyDictString(arguments)
+                    msg += "was: " + prettyDictString(arguments)
 
                 raise InvalidArgumentValue(msg)
 
@@ -358,40 +394,23 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             msg += "When trying to validate arguments for "
             msg += name + ", the following list of parameter "
             msg += "names were not matched: "
-            msg += _prettyListString(list(check.keys()), useAnd=True)
+            msg += prettyListString(list(check.keys()), useAnd=True)
             msg += ". The allowed parameters were: "
-            msg += _prettyListString(neededParams, useAnd=True)
-            msg += ". These were choosen as the best guess given the "
-            msg += "inputs out of the following (numbered) list of "
-            msg += "possible parameter sets: "
-            msg += _prettyListString(possibleParams, numberItems=True,
-                                     itemStr=_prettyListString)
+            msg += prettyListString(neededParams, useAnd=True)
+            if len(possibleParams) > 1:
+                msg += ". These were choosen as the best guess given the "
+                msg += "inputs out of the following (numbered) list of "
+                msg += "possible parameter sets: "
+                msg += prettyListString(possibleParams, numberItems=True,
+                                    itemStr=prettyListString)
+
             msg += ". The full mapping of inputs actually provided was: "
-            msg += _prettyDictString(arguments) + ". "
+            msg += prettyDictString(arguments) + ". "
             msg += "If extra parameters were intended to be passed to one of "
             msg += "the arguments, be sure to group them using a nimble.Init "
             msg += "object. "
 
             raise InvalidArgumentValue(msg)
-
-        return completeArgs
-
-
-    def _getAllArguments(self, learnerName, arguments):
-        if arguments is None:
-            arguments = {}
-        learnerParams = self.getLearnerParameterNames(learnerName)
-        learnerDefaults = self.getLearnerDefaultValues(learnerName)
-        bestIndex = self._chooseBestParameterSet(learnerParams,
-                                                 learnerDefaults, arguments)
-        useParams = learnerParams[bestIndex]
-        useDefaults = learnerDefaults[bestIndex]
-
-        completeArgs = self._getCompleteArguments(
-            learnerName, useParams, useDefaults, arguments, learnerParams,
-            learnerDefaults)
-
-        return completeArgs
 
 
     def _argumentInit(self, toInit):
@@ -412,16 +431,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             else:
                 initArgs[arg] = val
 
-        allParams = self._getParameterNames(toInit.name)
-        allDefaults = self._getDefaultValues(toInit.name)
-        bestIndex = self._chooseBestParameterSet(allParams, allDefaults,
-                                                 toInit.kwargs)
-        useParams = allParams[bestIndex]
-        useDefaults = allDefaults[bestIndex]
-
         # validate arguments
-        _ = self._getCompleteArguments(toInit.name, useParams, useDefaults,
-                                       initArgs, allParams, allDefaults)
+        self._validateArgumentValues(toInit.name, initArgs)
 
         return initObject(**initArgs)
 
@@ -453,7 +464,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ret = ''
         try:
             ret = nimble.settings.get(self.getCanonicalName(), option)
-        except Exception:
+        except configErrors:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
             pass
@@ -496,17 +507,17 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             msg += "match the given input. However, from each possible "
             msg += "(numbered) parameter set, the following parameter names "
             msg += "were missing "
-            msg += _prettyListString(missing, numberItems=True,
-                                     itemStr=_prettyListString)
+            msg += prettyListString(missing, numberItems=True,
+                                     itemStr=prettyListString)
             msg += ". The following lists the required names in each of the "
             msg += "possible (numbered) parameter sets: "
-            msg += _prettyListString(nonDefaults, numberItems=True,
-                                     itemStr=_prettyListString)
+            msg += prettyListString(nonDefaults, numberItems=True,
+                                     itemStr=prettyListString)
             if len(arguments) == 0:
                 msg += ". However, no arguments were inputed."
             else:
                 msg += ". The full mapping of inputs actually provided was: "
-                msg += _prettyDictString(arguments) + ". "
+                msg += prettyDictString(arguments) + ". "
 
             raise InvalidArgumentValue(msg)
 
@@ -517,7 +528,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         invalidArguments = []
         for arg, value in newArguments.items():
             # valid argument change
-            if arg in argNames and arg in storedArguments :
+            if arg in argNames:
                 applyArgs[arg] = value
             # not a valid argument for method
             else:
@@ -526,16 +537,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             msg = "EXTRA PARAMETER! "
             if argNames:
                 msg += "The following parameter names cannot be applied: "
-                msg += _prettyListString(invalidArguments, useAnd=True)
+                msg += prettyListString(invalidArguments, useAnd=True)
                 msg += ". The allowed parameters are: "
-                msg += _prettyListString(argNames, useAnd=True)
+                msg += prettyListString(argNames, useAnd=True)
             else:
                 msg += "No parameters are accepted for this operation"
             raise InvalidArgumentValue(msg)
 
         # use stored values for any remaining arguments
         for arg in argNames:
-            if arg not in applyArgs:
+            if arg not in applyArgs and arg in storedArguments:
                 applyArgs[arg] = storedArguments[arg]
 
         return applyArgs
@@ -590,7 +601,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         -------
         List of list of param names to make the chosen call.
         """
-        return self._getParameterNamesBackend(name)
+        ret = self._getParameterNamesBackend(name)
+        if ret is not None:
+            # Backend may contain duplicates but only one value can be assigned
+            # to a parameter so we use a set.
+            ret = [set(lst) for lst in ret]
+
+        return ret
 
     @captureOutput
     @cacheWrapper
@@ -607,7 +624,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         -------
         List of list of param names
         """
-        return self._getLearnerParameterNamesBackend(learnerName)
+        ret = self._getLearnerParameterNamesBackend(learnerName)
+        if ret is not None:
+            # Backend may contain duplicates but only one value can be assigned
+            # to a parameter so we use a set.
+            ret = [set(lst) for lst in ret]
+
+        return ret
 
     @cacheWrapper
     def _getDefaultValues(self, name):
@@ -1202,7 +1225,7 @@ class TrainedLearner(object):
                 return row[rowIndex]
 
             scoreVector = scores.points.calculate(grabValue, useLog=False)
-            labels.features.add(scoreVector, useLog=False)
+            labels.features.append(scoreVector, useLog=False)
 
             ret = labels
 
@@ -1245,10 +1268,7 @@ class TrainedLearner(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
+            cloudpickle.dump(self, file)
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)
@@ -1354,22 +1374,14 @@ class TrainedLearner(object):
             has2dOutput = len(outputData) > 1
 
         merged = _mergeArguments(arguments, kwarguments)
+        self.interface._validateLearnerArgumentValues(self.learnerName,
+                                                      merged)
         for arg, value in merged.items():
             if isinstance(value, nimble.CV):
                 msg = "Cannot provide a cross-validation arguments "
                 msg += "for parameters to retrain a TrainedLearner. "
                 msg += "If wanting to perform cross-validation, use "
                 msg += "nimble.train()"
-                raise InvalidArgumentValue(msg)
-            if arg not in self.transformedArguments:
-                validArgs = list(self.transformedArguments.keys())
-                msg = "The argument '" + arg + "' is not valid. "
-                if validArgs:
-                    msg += "Valid arguments for retrain are: "
-                    msg += _prettyListString(validArgs)
-                else:
-                    msg += "There are no valid arguments to retrain "
-                    msg += "this learner"
                 raise InvalidArgumentValue(msg)
             self.arguments[arg] = value
             self.transformedArguments[arg] = value
@@ -1568,7 +1580,7 @@ class TrainedLearner(object):
         msg = msg.format(len(testX.features), self._trainXShape[1])
         if trainXIsSquare:
             msg += "or the testing data must be square-shaped"
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValueCombination(msg)
 
 
 @inheritDocstringsFactory(TrainedLearner)
@@ -1683,7 +1695,7 @@ class TrainedLearners(TrainedLearner):
                     # as it's added to results object,
                     # rename each column with its corresponding class label
                     oneLabelResults.features.setName(0, str(label), useLog=False)
-                    rawPredictions.features.add(oneLabelResults, useLog=False)
+                    rawPredictions.features.append(oneLabelResults, useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
@@ -1760,7 +1772,7 @@ class TrainedLearners(TrainedLearner):
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
                     partialResults.features.setName(0, predictionName, useLog=False)
-                    rawPredictions.features.add(partialResults, useLog=False)
+                    rawPredictions.features.append(partialResults, useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():

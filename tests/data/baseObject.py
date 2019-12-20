@@ -89,9 +89,9 @@ def viewConstructorMaker(concreteType):
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', elementType=elementType)
 
-            firstPoint.points.add(orig, useLog=False)
+            firstPoint.points.append(orig, useLog=False)
             full = firstPoint
-            full.points.add(lastPoint, useLog=False)
+            full.points.append(lastPoint, useLog=False)
 
             pStart = 1
             pEnd = len(full.points) - 2
@@ -112,7 +112,7 @@ def viewConstructorMaker(concreteType):
 
             lastFeature.transpose(useLog=False)
 
-            full.features.add(lastFeature, useLog=False)
+            full.features.append(lastFeature, useLog=False)
             fStart = None
             fEnd = len(full.features) - 2
         else:
@@ -120,9 +120,9 @@ def viewConstructorMaker(concreteType):
             fEnd = None
 
         if not origHasPts:
-            full.points.setNames(None)
+            full.points.setNames(None, useLog=False)
         if not origHasFts:
-            full.features.setNames(None)
+            full.features.setNames(None, useLog=False)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
         ret._name = orig.name

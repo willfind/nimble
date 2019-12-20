@@ -83,7 +83,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
             try:
                 instantiated = obj()
                 instantiated.get_machine_problem_type()
-            except Exception:
+            except (SystemError, TypeError):
                 return False
 
             return True
@@ -128,6 +128,10 @@ class Shogun(PredefinedInterface, UniversalInterface):
     #######################################
 
     def accessible(self):
+        try:
+            import shogun
+        except ImportError:
+            return False
         return True
 
 

@@ -10,6 +10,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
+from nimble.utility import ImportModule
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .dataHelpers import fillArrayWithCollapsedFeatures
@@ -17,9 +18,7 @@ from .dataHelpers import fillArrayWithExpandedFeatures
 from .points import Points
 from .points_view import PointsView
 
-pd = nimble.importModule('pandas')
-if pd:
-    import pandas as pd
+pd = ImportModule('pandas')
 
 class DataFramePoints(DataFrameAxis, Points):
     """
@@ -35,15 +34,16 @@ class DataFramePoints(DataFrameAxis, Points):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the points from the toAdd object below the provided index
-        in this object, the remaining points from this object will
+        Insert the points from the toInsert object below the provided
+        index in this object, the remaining points from this object will
         continue below the inserted points.
         """
         startData = self._base.data.iloc[:insertBefore, :]
         endData = self._base.data.iloc[insertBefore:, :]
-        self._base.data = pd.concat((startData, toAdd.data, endData), axis=0)
+        self._base.data = pd.concat((startData, toInsert.data, endData),
+                                    axis=0)
         self._base._updateName(axis='point')
 
     def _transform_implementation(self, function, limitTo):

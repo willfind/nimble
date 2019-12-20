@@ -6,6 +6,7 @@ from __future__ import absolute_import
 import sys
 import importlib
 import configparser
+import warnings
 
 import numpy
 import six
@@ -494,7 +495,7 @@ def collectAttributes(obj, generators, checkers, recursive=True):
                     ret[k] = val
                 # safety against any sort of error someone may have in their
                 # property code.
-                except Exception:
+                except AttributeError:
                     pass
             return ret
 
@@ -599,19 +600,21 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
 
 def modifyImportPathAndImport(directory, package):
     sysPathBackup = sys.path.copy()
-    try:
-        if directory is not None:
-            sys.path.insert(0, directory)
-
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
         try:
-            location = nimble.settings.get(package, 'location')
-            if location:
-                sys.path.insert(0, location)
-        except configparser.Error:
-            pass
+            if directory is not None:
+                sys.path.insert(0, directory)
 
-        if package == 'sciKitLearn':
-            package = 'sklearn'
-        return importlib.import_module(package)
-    finally:
-        sys.path = sysPathBackup
+            try:
+                location = nimble.settings.get(package, 'location')
+                if location:
+                    sys.path.insert(0, location)
+            except configparser.Error:
+                pass
+
+            if package == 'sciKitLearn':
+                package = 'sklearn'
+            return importlib.import_module(package)
+        finally:
+            sys.path = sysPathBackup

@@ -35,6 +35,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
+from nimble.configuration import configErrors
 from .stopwatch import Stopwatch
 
 class SessionLogger(object):
@@ -956,27 +957,38 @@ def _extractFunctionString(function):
 def _lambdaFunctionString(function):
     """
     Returns a string of a lambda function.
+
+    The lambda function would appear after a call to a nimble function,
+    such as calculate(). Because of this, some items on the source line
+    may be unrelated to lambda function. For example,
+    calculate(lambda x: x + 1, features=0). The end of the lambda
+    function occurs either when the open parenthesis from calculate is
+    closed or a comma occurs that is not nested within a data structure.
     """
     try:
         sourceLine = inspect.getsourcelines(function)[0][0]
         line = re.findall(r'lambda.*', sourceLine)[0]
         lambdaString = ""
         afterColon = False
-        openParenthesis = 1
+        # lambda always starts after open parenthesis
+        isOpen = 1
+        openers = ['(', '[', '{']
+        closers = [')', ']', '}']
         for letter in line:
-            if letter == "(":
-                openParenthesis += 1
-            elif letter == ")":
-                openParenthesis -= 1
+            if letter in openers:
+                isOpen += 1
+            elif letter in closers:
+                isOpen -= 1
             elif letter == ":":
                 afterColon = True
-            elif letter == "," and afterColon:
+            elif letter == "," and afterColon and isOpen == 1:
+                # everything else is not part of lambda
                 return lambdaString
-            if openParenthesis == 0:
+            if isOpen == 0:
                 return lambdaString
             else:
                 lambdaString += letter
-    except Exception:
+    except OSError:
         lambdaString = "<lambda>"
     return lambdaString
 
@@ -1014,7 +1026,7 @@ def initLoggerAndLogConfig():
             location = './logs-nimble'
             nimble.settings.set("logger", "location", location)
             nimble.settings.saveChanges("logger", "location")
-    except Exception:
+    except configErrors:
         location = './logs-nimble'
         nimble.settings.set("logger", "location", location)
         nimble.settings.saveChanges("logger", "location")
@@ -1023,7 +1035,7 @@ def initLoggerAndLogConfig():
 
     try:
         name = nimble.settings.get("logger", "name")
-    except Exception:
+    except configErrors:
         name = "log-nimble"
         nimble.settings.set("logger", "name", name)
         nimble.settings.saveChanges("logger", "name")
@@ -1032,7 +1044,7 @@ def initLoggerAndLogConfig():
 
     try:
         loggingEnabled = nimble.settings.get("logger", "enabledByDefault")
-    except Exception:
+    except configErrors:
         loggingEnabled = 'True'
         nimble.settings.set("logger", "enabledByDefault", loggingEnabled)
         nimble.settings.saveChanges("logger", "enabledByDefault")
@@ -1040,7 +1052,7 @@ def initLoggerAndLogConfig():
     try:
         deepCV = nimble.settings.get("logger",
                                      'enableCrossValidationDeepLogging')
-    except Exception:
+    except configErrors:
         deepCV = 'False'
         nimble.settings.set("logger", 'enableCrossValidationDeepLogging',
                             deepCV)

@@ -37,34 +37,11 @@ from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
+from nimble.utility import ImportModule, cooMatrixToArray
 
-scipy = nimble.importModule('scipy.io')
-pd = nimble.importModule('pandas')
-requests = nimble.importModule('requests')
-
-try:
-    intern = sys.intern
-    class Py2Key:
-        """
-        Key for python3.
-        """
-        __slots__ = ("value", "typestr")
-
-        def __init__(self, value):
-            self.value = value
-            self.typestr = intern(type(value).__name__)
-
-        def __lt__(self, other):
-            try:
-                return self.value < other.value
-            except TypeError:
-                return self.typestr < other.typestr
-except Exception:
-    Py2Key = None # for python2
-
-#in python3, itertools.ifilter is not there anymore. it is filter.
-if not hasattr(itertools, 'ifilter'):
-    itertools.ifilter = filter
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
+requests = ImportModule('requests')
 
 
 def findBestInterface(package):
@@ -109,7 +86,11 @@ def _learnerQuery(name, queryType):
         raise InvalidArgumentValue("Unrecognized queryType: " + queryType)
 
     interface = findBestInterface(package)
-    return getattr(interface, toCallName)(learnerName)
+    ret = getattr(interface, toCallName)(learnerName)
+
+    if len(ret) == 1:
+        return ret[0]
+    return ret
 
 
 def isAllowedRaw(data, allowLPT=False):
@@ -508,12 +489,13 @@ def convertData(returnType, rawData, pointNames, featureNames,
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = elementTypeConvert(rawData.todense(), elementType)
+        rawData = elementTypeConvert(cooMatrixToArray(rawData), elementType)
 
     if (returnType == 'Sparse'
             and is2DArray(rawData)
-            and rawData.shape[0]*rawData.shape[1] > 0):
-    #replace None to np.NaN, o.w. coo_matrix will convert None to 0
+            and rawData.shape[0]*rawData.shape[1] > 0
+            and rawData.dtype is numpy.object_):
+        #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
 
@@ -689,26 +671,11 @@ def initDataObject(
         useFNames = featureNames
     else:
         useFNames = True if featureNames is True else None
-    try:
-        ret = initMethod(rawData, pointNames=usePNames,
-                         featureNames=useFNames, name=name,
-                         paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData, **kwargs)
-    except Exception:
-        einfo = sys.exc_info()
-        #something went wrong. instead, try to auto load and then convert
-        try:
-            autoMethod = getattr(nimble.data, autoType)
-            ret = autoMethod(rawData, pointNames=usePNames,
-                             featureNames=useFNames, name=name,
-                             paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData, **kwargs)
-            ret = ret.copy(to=returnType)
-        # If it didn't work, report the error on the thing the user ACTUALLY
-        # wanted
-        except Exception:
-            six.reraise(einfo[0], einfo[1], einfo[2])
 
+    ret = initMethod(rawData, pointNames=usePNames,
+                     featureNames=useFNames, name=name,
+                     paths=pathsToPass, elementType=elementType,
+                     reuseData=reuseData, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -740,7 +707,7 @@ def initDataObject(
         # if we have all pointNames, set them now
         if (isinstance(pointNames, (list, dict))
                 and len(pointNames) == len(ret.points)):
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
             setPtNamesAfter = False
         else:
             _keepIndexValuesValidation('point', keepPoints, pointNames)
@@ -757,14 +724,14 @@ def initDataObject(
             ret = ret.points.copy(cleaned)
         # if we had a subset of pointNames can set now on the cleaned data
         if setPtNamesAfter:
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
     if keepFeatures != 'all':
         if not ftsExtracted and len(keepFeatures) == len(ret.features):
             _raiseKeepLengthConflict('feature')
         # if we have all featureNames, set them now
         if (isinstance(featureNames, (list, dict))
                 and len(featureNames) == len(ret.features)):
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
             setFtNamesAfter = False
         # otherwise we require keepFeatures to be index and set names later
         else:
@@ -783,7 +750,7 @@ def initDataObject(
             ret = ret.features.copy(cleaned)
         # if we had a subset of featureNames can set now on the cleaned data
         if setFtNamesAfter:
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
 
     return ret
 
@@ -820,9 +787,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
     # have to wait for everything to be extracted before we add the names,
     # because otherwise the lenths won't be correct
     if praw is not None:
-        ret.points.setNames(list(praw))
+        ret.points.setNames(list(praw), useLog=False)
     if fraw is not None:
-        ret.features.setNames(list(fraw))
+        ret.features.setNames(list(fraw), useLog=False)
 
     return ret
 
@@ -873,7 +840,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
-            if requests is None:
+            if not requests:
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)
@@ -884,23 +851,15 @@ def createDataFromFile(
                 msg += "Reason: {0}".format(response.reason)
                 raise InvalidArgumentValue(msg)
 
-            # check python version
-            py3 = sys.version_info[0] == 3
-            if py3:
-                toPass = StringIO(response.text, newline=None)
-                isMtxFile = isMtxFileChecker(toPass)
-                # scipy.io.mmreader needs bytes object
-                if isMtxFile:
-                    toPass = BytesIO(bytes(response.content,
-                                           response.apparent_encoding))
-            # in python 2, we can just always use BytesIO
-            else:
-                # handle universal newline
-                content = "\n".join(response.content.splitlines())
-                toPass = BytesIO(content)
-                isMtxFile = isMtxFileChecker(toPass)
+            toPass = StringIO(response.text, newline=None)
+            isMtxFile = isMtxFileChecker(toPass)
+            # scipy.io.mmreader needs bytes object
+            if isMtxFile:
+                toPass = BytesIO(bytes(response.content,
+                                       response.apparent_encoding))
+
         else:
-            toPass = open(data, 'rU')
+            toPass = open(data, 'r', newline=None)
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:
@@ -921,18 +880,22 @@ def createDataFromFile(
     else:
         directPath = None
 
-    if directPath in globals():
-        loader = globals()[directPath]
-        loaded = loader(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
-    # If we don't know, default to trying to load a value separated file
-    else:
-        loaded = _loadcsvUsingPython(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    # want to make sure we close the file if loading fails
+    try:
+        if directPath in globals():
+            loader = globals()[directPath]
+            loaded = loader(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
+        # If we don't know, default to trying to load a value separated file
+        else:
+            loaded = _loadcsvUsingPython(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
-    (retData, retPNames, retFNames, selectSuccess) = loaded
+        (retData, retPNames, retFNames, selectSuccess) = loaded
+    finally:
+        toPass.close()
 
     # auto set name if unspecified, and is possible
     if isinstance(data, six.string_types):
@@ -1000,13 +963,13 @@ def _loadmtxForAuto(
 
     openFile.seek(startPosition)
     try:
-        data = scipy.io.mmread(openFile)#python 2
-    except Exception:
+        data = scipy.io.mmread(openFile)
+    except TypeError:
         if hasattr(openFile, 'name'):
             tempName = openFile.name
         else:
             tempName = openFile.inner.name
-        data = scipy.io.mmread(tempName)#for python3, it may need this.
+        data = scipy.io.mmread(tempName)
 
     temp = (data, None, None)
 
@@ -1109,11 +1072,12 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
         rawData = scipy.sparse.csr_matrix(rawData)
 
     if rawData.shape[0] > 0:
-        firstRow = rawData[0].toarray().flatten().tolist()
+
+        firstRow = cooMatrixToArray(rawData[0]).flatten().tolist()
     else:
         firstRow = None
     if rawData.shape[0] > 1:
-        secondRow = rawData[1].toarray().flatten().tolist()
+        secondRow = cooMatrixToArray(rawData[1]).flatten().tolist()
     else:
         secondRow = None
     pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
@@ -1123,14 +1087,14 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
 
     retFNames = None
     if featureNames == 0:
-        retFNames = rawData[0].toarray().flatten().tolist()
+        retFNames = cooMatrixToArray(rawData[0]).flatten().tolist()
         retFNames = list(map(str, retFNames))
         rawData = rawData[1:]
 
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = rawData[:, 0].toarray().flatten().tolist()
+        retPNames = cooMatrixToArray(rawData[:, 0]).flatten().tolist()
         retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]
@@ -1659,7 +1623,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     # how many are skipped
     skippedLines = _advancePastComments(openFile)
     # remake the file iterator to ignore empty lines
-    filtered = itertools.ifilter(_filterCSVRow, openFile)
+    filtered = filter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
@@ -2599,7 +2563,7 @@ class KFoldCrossValidator():
                 if collectedY is None:
                     collectedY = curTestingY
                 else:
-                    collectedY.points.add(curTestingY, useLog=False)
+                    collectedY.points.append(curTestingY, useLog=False)
 
             # setup for next iteration
             argumentCombinationIterator.reset()
@@ -2614,7 +2578,7 @@ class KFoldCrossValidator():
             # combine the results objects into one, and then calc performance
             else:
                 for resultIndex in range(1, len(results)):
-                    results[0].points.add(results[resultIndex], useLog=False)
+                    results[0].points.append(results[resultIndex], useLog=False)
 
                 # TODO raise RuntimeError(
                 #     "How do we guarantee Y and results are in same order?")
@@ -3621,7 +3585,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
     # we want the data and the labels together in one object or this method
     trainX = trainX.copy()
     if isinstance(trainY, Base):
-        trainX.features.add(trainY)
+        trainX.features.append(trainY)
         trainY = len(trainX.features) - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations
@@ -3652,9 +3616,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
         else:
             predName = 'predictions-' + str(predictionFeatureID)
             partialResults.features.setName(0, predName)
-            rawPredictions.features.add(partialResults.copy(to="List"))
-        pairData.features.add(pairTrueLabels)
-        trainX.points.add(pairData)
+            rawPredictions.features.append(partialResults.copy(to="List"))
+        pairData.features.append(pairTrueLabels)
+        trainX.points.append(pairData)
         predictionFeatureID += 1
 
     #set up the return data based on which format has been requested
@@ -3794,7 +3758,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
             # as it's added to results object, rename each column with its
             # corresponding class label
             oneLabelResults.features.setName(0, str(label))
-            rawPredictions.features.add(oneLabelResults)
+            rawPredictions.features.append(oneLabelResults)
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.points.calculate(

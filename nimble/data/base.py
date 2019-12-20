@@ -32,6 +32,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
+from nimble.utility import ImportModule
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -45,27 +46,10 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
-cloudpickle = nimble.importModule('cloudpickle')
-
-mplError = None
-try:
-    import matplotlib
-    import __main__ as main
-    # for .show() to work in interactive sessions
-    # a backend different than Agg needs to be use
-    # The interactive session can choose by default e.g.,
-    # in jupyter-notebook inline is the default.
-    if hasattr(main, '__file__'):
-        # It must be agg  for non-interactive sessions
-        # otherwise the combination of matplotlib and multiprocessing
-        # produces a segfault.
-        # Open matplotlib issue here:
-        # https://github.com/matplotlib/matplotlib/issues/8795
-        # It applies for both for python 2 and 3
-        matplotlib.use('Agg')
-except ImportError as e:
-    mplError = e
+cloudpickle = ImportModule('cloudpickle')
+matplotlib = ImportModule('matplotlib')
 
 #print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
@@ -500,10 +484,11 @@ class Base(object):
 
         # by default, put back in same place
         insertBefore = index
-        # if extracted last feature, None will append
-        if insertBefore == len(self.features):
-            insertBefore = None
-        self.features.add(binaryObj, insertBefore=insertBefore, useLog=False)
+        # must use append if the object is now feature empty
+        if len(self.features) == 0:
+            self.features.append(binaryObj, useLog=False)
+        else:
+            self.features.insert(insertBefore, binaryObj, useLog=False)
 
         handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
                       self.getTypeString(),
@@ -543,9 +528,9 @@ class Base(object):
         {0: 'a', 1: 'b', 2: 'c'}
         >>> data
         Matrix(
-            [[1 0.000 1]
-             [2 1.000 2]
-             [3 2.000 3]]
+            [[1 0 1]
+             [2 1 2]
+             [3 2 3]]
             featureNames={'keep1':0, 'transform':1, 'keep2':2}
             )
         """
@@ -1014,35 +999,37 @@ class Base(object):
         includePointNames = includeNames
         if includePointNames:
             seen = False
-            for name in self.points.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.points._getNamesNoGeneration() is not None:
+                for name in self.points.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includePointNames = False
 
         includeFeatureNames = includeNames
         if includeFeatureNames:
             seen = False
-            for name in self.features.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.features._getNamesNoGeneration() is not None:
+                for name in self.features.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includeFeatureNames = False
 
-        try:
-            self._writeFile_implementation(
-                outPath, fileFormat, includePointNames, includeFeatureNames)
-        except Exception:
-            if fileFormat.lower() == "csv":
-                toOut = self.copy(to="Matrix")
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
-            if fileFormat.lower() == "mtx":
-                toOut = self.copy(to='Sparse')
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
+        if fileFormat.lower() == "csv":
+            self._writeFileCSV_implementation(
+                outPath, includePointNames, includeFeatureNames)
+        elif fileFormat.lower() == "mtx":
+            self._writeFileMTX_implementation(
+                outPath, includePointNames, includeFeatureNames)
+
+    def _writeFeatureNamesToCSV(self, openFile, includePointNames):
+        fnames = list(map(csvCommaFormat, self.features.getNames()))
+        if includePointNames:
+            fnames.insert(0, 'pointNames')
+        fnamesLine = ','.join(fnames)
+        fnamesLine += '\n'
+        openFile.write(fnamesLine)
 
     def save(self, outputPath):
         """
@@ -1067,10 +1054,7 @@ class Base(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
+            cloudpickle.dump(self, file)
         # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
@@ -1712,9 +1696,22 @@ class Base(object):
         return outFormat
 
     def _matplotlibBackendHandling(self, outPath, plotter, **kwargs):
+        import __main__ as main
+        # for .show() to work in interactive sessions
+        # a backend different than Agg needs to be use
+        # The interactive session can choose by default e.g.,
+        # in jupyter-notebook inline is the default.
+        if hasattr(main, '__file__'):
+            # It must be agg  for non-interactive sessions
+            # otherwise the combination of matplotlib and multiprocessing
+            # produces a segfault.
+            # Open matplotlib issue here:
+            # https://github.com/matplotlib/matplotlib/issues/8795
+            # It applies for both for python 2 and 3
+            matplotlib.use('Agg')
         if outPath is None:
             if matplotlib.get_backend() == 'agg':
-                import matplotlib.pyplot as plt
+                plt = matplotlib.pyplot
                 plt.switch_backend('TkAgg')
                 plotter(**kwargs)
                 plt.switch_backend('agg')
@@ -1728,11 +1725,10 @@ class Base(object):
         return p
 
     def _plot(self, outPath=None, includeColorbar=False):
-        self._validateMatPlotLibImport(mplError, 'plot')
         outFormat = self._setupOutFormatForPlotting(outPath)
 
         def plotter(d):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
 
             plt.matshow(d, cmap=matplotlib.cm.gray)
 
@@ -1791,7 +1787,6 @@ class Base(object):
 
     def _plotFeatureDistribution(self, feature, outPath=None, xMin=None,
                                  xMax=None):
-        self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
         return self._plotDistribution('feature', feature, outPath, xMin, xMax)
 
     def _plotDistribution(self, axis, identifier, outPath, xMin, xMax):
@@ -1826,7 +1821,7 @@ class Base(object):
             binCount = int(math.ceil((valMax - valMin) / binWidth))
 
         def plotter(d, xLim):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
 
             plt.hist(d, binCount)
 
@@ -1932,7 +1927,6 @@ class Base(object):
     def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
                                    xMax=None, yMin=None, yMax=None,
                                    sampleSizeForAverage=None):
-        self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
         return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax,
                                yMin, yMax, sampleSizeForAverage)
 
@@ -1991,7 +1985,7 @@ class Base(object):
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
         def plotter(inX, inY, xLim, yLim, sampleSizeForAverage):
-            import matplotlib.pyplot as plt
+            plt = matplotlib.pyplot
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
@@ -3635,11 +3629,11 @@ class Base(object):
 
         try:
             ret = caller._matmul__implementation(callee)
-        except Exception as e:
-            #TODO: improve how the exception is catch
+        except TypeError:
+            # help determine the source of the error
             self._numericValidation()
             other._numericValidation(right=True)
-            raise e
+            raise # exception should be raised above, but just in case
 
         if caller._pointNamesCreated():
             ret.points.setNames(caller.points.getNames(), useLog=False)
@@ -3647,6 +3641,45 @@ class Base(object):
             ret.features.setNames(callee.features.getNames(), useLog=False)
 
         dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
+
+        return ret
+
+    def matrixPower(self, power):
+        if not isinstance(power, (int, numpy.int)):
+            msg = 'power must be an integer'
+            raise InvalidArgumentType(msg)
+        if not len(self.points) == len(self.features):
+            msg = 'Cannot perform matrix power operations with this object. '
+            msg += 'Matrix power operations require square objects '
+            msg += '(number of points is equal to number of features)'
+            raise ImproperObjectAction(msg)
+        if power == 0:
+            operand = nimble.identity(self.getTypeString(), len(self.points))
+        elif power > 0:
+            operand = self.copy()
+            # avoid name conflict in matrixMultiply; names set later
+            operand.points.setNames(None, useLog=False)
+            operand.features.setNames(None, useLog=False)
+        else:
+            try:
+                operand = nimble.calculate.inverse(self)
+            except (InvalidArgumentType, InvalidArgumentValue) as e:
+                exceptionType = type(e)
+                msg = "Failed to calculate the matrix inverse using "
+                msg += "nimble.calculate.inverse. For safety and efficiency, "
+                msg += "matrixPower does not attempt to use pseudoInverse but "
+                msg += "it is available to users in nimble.calculate. "
+                msg += "The inverse operation failed because: " + e.value
+                raise exceptionType(msg)
+
+        ret = operand
+        # loop only applies when abs(power) > 1
+        for _ in range(abs(power) - 1):
+            ret = ret.matrixMultiply(operand)
+
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
 
         return ret
 
@@ -4665,15 +4698,6 @@ class Base(object):
                 if nameNum >= self._nextDefaultValueFeature:
                     self._nextDefaultValueFeature = nameNum + 1
 
-    def _validateMatPlotLibImport(self, error, name):
-        if error is not None:
-            msg = "The module matplotlib is required to be installed "
-            msg += "in order to call the " + name + "() method. "
-            msg += "However, when trying to import, an ImportError with "
-            msg += "the following message was raised: '"
-            msg += str(error) + "'"
-
-            raise ImportError(msg)
 
     def _validateRangeOrder(self, startName, startVal, endName, endVal):
         """
@@ -4698,8 +4722,13 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        pass
+
+    @abstractmethod
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         pass
 
     @abstractmethod

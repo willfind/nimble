@@ -6,7 +6,7 @@ In object NumericalDataSafe:
 __mul__, __rmul__,  __add__, __radd__,  __sub__, __rsub__,
 __truediv__, __rtruediv__,  __floordiv__, __rfloordiv__,
 __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__,
-__matmul__, matrixMultiply, __rmatmul__, __imatmul__
+__matmul__, matrixMultiply, __rmatmul__, __imatmul__, matrixPower
 
 In object NumericalModifying:
 elements.power, elements.multiply, __imul__, __iadd__, __isub__,
@@ -753,6 +753,86 @@ def back_sparseScalarOfOne(constructor, nimbleOp):
 
 
 class NumericalDataSafe(DataTestObject):
+
+    ###############
+    # matrixPower #
+    ###############
+
+    @raises(ImproperObjectAction)
+    def test_matrixPower_notSquare(self):
+        raw = [[1, 2, 3], [4, 5, 6]]
+        obj = self.constructor(raw)
+
+        ret = obj.matrixPower(2)
+
+    @raises(InvalidArgumentType)
+    def test_matrixPower_invalidPower(self):
+        raw = [[1, 2], [3, 4]]
+        obj = self.constructor(raw)
+
+        ret = obj.matrixPower(2.3)
+
+    @noLogEntryExpected
+    def test_matrixPower_powerOfZero(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(0)
+
+        expRaw = [[1, 0], [0, 1]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        assert ret == exp
+
+    @noLogEntryExpected
+    def test_matrixPower_positivePower(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(3)
+
+        expRaw = [[37,  54], [81, 118]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        assert ret == exp
+
+    @noLogEntryExpected
+    def test_matrixPower_negativePower(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
+
+        expRaw = [[-14.75 , 6.75], [10.125, -4.625]]
+        exp = self.constructor(expRaw, pointNames=pNames, featureNames=fNames)
+
+        # can be small differences due to inverse calculation
+        assert ret.isApproximatelyEqual(exp)
+
+    @raises(CalledFunctionException)
+    @patch('nimble.calculate.inverse', calledException)
+    def test_matrixPower_callsNimbleCalculateInverse(self):
+        raw = [[1, 2], [3, 4]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
+
+    @raises(InvalidArgumentValue)
+    def test_matrixPower_notInvertable(self):
+        raw = [[1, 1], [1, 1]]
+        pNames = ['p1', 'p2']
+        fNames = ['f1', 'f2']
+        obj = self.constructor(raw, pointNames=pNames, featureNames=fNames)
+
+        ret = obj.matrixPower(-3)
 
     ###############################
     # __matmul__ / matrixMultiply #

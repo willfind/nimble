@@ -16,11 +16,11 @@ from six.moves import range
 import numpy
 
 import nimble
-from nimble import importModule
+from nimble.utility import ImportModule
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
-pd = importModule('pandas')
+pd = ImportModule('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -632,7 +632,7 @@ def allDataIdentical(arr1, arr2):
         test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
         test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
-    except Exception:
+    except ValueError:
         return False
 
 def createListOfDict(data, featureNames):
@@ -765,3 +765,9 @@ def wrapMatchFunctionFactory(matchFunc):
     wrappedMatch.__doc__ = matchFunc.__doc__
 
     return wrappedMatch
+
+
+def csvCommaFormat(name):
+    if isinstance(name, str) and ',' in name:
+        return '"{0}"'.format(name)
+    return name
