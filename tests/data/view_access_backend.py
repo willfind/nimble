@@ -204,7 +204,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.setNames(None)
+            testObject.points.setNames(None, useLog=False)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -288,7 +288,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.setNames(None)
+            testObject.features.setNames(None, useLog=False)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

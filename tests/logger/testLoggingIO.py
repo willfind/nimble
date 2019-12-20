@@ -677,12 +677,16 @@ def testPrepTypeFunctionsUseLog():
     newPtNames = ['point' + str(i) for i in range(18)]
     dataObj.points.setNames(newPtNames)
     checkLogContents('points.setNames', 'Matrix', {'assignments': newPtNames})
+    dataObj.points.setNames(None)
+    checkLogContents('points.setNames', 'Matrix', {'assignments': None})
 
     # features.setNames
     dataObj = nimble.createData('Matrix', data, useLog=False)
     newFtNames = ['feature' + str(i) for i in range(3)]
     dataObj.features.setNames(newFtNames)
     checkLogContents('features.setNames', 'Matrix', {'assignments': newFtNames})
+    dataObj.features.setNames(None)
+    checkLogContents('features.setNames', 'Matrix', {'assignments': None})
 
 @emptyLogSafetyWrapper
 @configSafetyWrapper
