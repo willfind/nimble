@@ -16,11 +16,9 @@ from six.moves import range
 import numpy
 
 import nimble
-from nimble.utility import ImportModule
+from nimble.utility import pd
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
-
-pd = ImportModule('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -470,7 +468,7 @@ def constructIndicesList(obj, axis, values, argName=None):
     if argName is None:
         argName = axis + 's'
     # pandas DataFrames are iterable but do not iterate through the values
-    if pd and isinstance(values, pd.DataFrame):
+    if pd.nimbleAccessible() and isinstance(values, pd.DataFrame):
         msg = "A pandas DataFrame object is not a valid input "
         msg += "for '{0}'. ".format(argName)
         msg += "Only one-dimensional objects are accepted."

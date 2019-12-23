@@ -13,7 +13,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
@@ -23,9 +23,6 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -120,7 +117,7 @@ class Matrix(Base):
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -168,7 +165,7 @@ class Matrix(Base):
         if to == 'numpymatrix':
             return numpy.matrix(self.data)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycsc':
@@ -178,7 +175,7 @@ class Matrix(Base):
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(self.data)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             return pd.DataFrame(self.data.copy())

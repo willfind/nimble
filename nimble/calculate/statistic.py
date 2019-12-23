@@ -8,9 +8,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule
-
-scipy = ImportModule('scipy')
+from nimble.utility import scipy
 
 numericalTypes = (int, float, int, numpy.number)
 
@@ -307,7 +305,7 @@ def residuals(toPredict, controlVars):
     or features and InvalidArgumentValueCombination if they have a different
     number of points.
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 

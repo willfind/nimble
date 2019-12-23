@@ -17,14 +17,11 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from nimble.utility import cooMatrixToArray
 
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 returnTypes = copy.copy(nimble.data.available)
 returnTypes.append(None)
@@ -548,12 +545,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
         dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
         lolFromRaw = [fnameRow, dataRow]
         baseObj = nimble.createData("List", lolFromRaw, pointNames=False, featureNames=False)
-        if rawType == 'scipycoo':
-            npRaw = numpy.array(lolFromRaw, dtype=object)
-            finalRaw = scipy.sparse.coo_matrix(npRaw)
-        else:
-            finalRaw = baseObj.copy(to=rawType)
-
+        finalRaw = baseObj.copy(to=rawType)
         ret = nimble.createData(returnType=returnType, data=finalRaw,
                                 pointNames=pointNames, featureNames=featureNames)
 
@@ -562,12 +554,6 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 def test_automaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
-#        rawT = 'scipycoo'
-#        retT = 'List'
-#        print rawT + " " + str(retT)
-#        import pdb
-#        pdb.set_trace()
-
         # example which triggers automatic removal
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -608,12 +594,6 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
 def test_automaticByType_pname_interaction_with_fname():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
-#        rawT = 'scipycoo'
-#        retT = None
-#        print rawT + " " + str(retT)
-#        import pdb
-#        pdb.set_trace()
-
         # pnames auto triggered with auto fnames
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -900,9 +880,6 @@ def test_extractNames_NPMatrix():
 
 def test_extractNames_CooSparse():
     """ Test of createData() given scipy Coo matrix, extracting names """
-    if not scipy:
-        return
-
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -920,9 +897,6 @@ def test_extractNames_CooSparse():
 
 def test_extractNames_CscSparse():
     """ Test of createData() given scipy Csc matrix, extracting names """
-    if not scipy:
-        return
-
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -985,7 +959,7 @@ def test_names_dataUnmodified():
         assertUnmodified(scipy.sparse.coo_matrix(autoArray), 'automatic')
         assertUnmodified(scipy.sparse.coo_matrix(trueData), True)
         assertUnmodified(pd.DataFrame([[1, -1, -3]], index=['pt'],
-                                      columns=['fname0', 'fname1', 'fname2']),
+                         columns=['fname0', 'fname1', 'fname2']),
                          'automatic')
         assertUnmodified(pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23]),
                          True)
@@ -1977,8 +1951,6 @@ def test_createData_keepPF_npMatrix_simple():
 
 
 def test_createData_keepPF_spCoo_simple():
-    if not scipy:
-        return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.coo_matrix(rawList)
@@ -1994,8 +1966,6 @@ def test_createData_keepPF_spCoo_simple():
 
 
 def test_createData_keepPF_spCsc_simple():
-    if not scipy:
-        return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.csc_matrix(rawList)
@@ -2541,14 +2511,12 @@ def test_DataOutputWithMissingDataTypes1D():
         orig4.features.sort(sortBy=orig4.points.getName(0))
         orig5 = nimble.createData(t, numpy.array([1,2,"None"]))
         orig6 = nimble.createData(t, numpy.matrix([1,2,"None"]))
-        if pd:
-            orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
-            orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
-            orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
-        if scipy:
-            orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-            orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-            orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
+        orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
+        orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
+        orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+        orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+        orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
@@ -2584,11 +2552,9 @@ def test_DataOutputWithMissingDataTypes2D():
         orig4.features.sort(sortBy=orig4.points.getName(0))
         orig5 = nimble.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig6 = nimble.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
-        if pd:
-            orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-            orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
-        if scipy:
-            orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+        orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
+        orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:

@@ -40,7 +40,7 @@ def testSimpleConfidenceInverval():
     numpy.testing.assert_approx_equal(high, 251.18)
 
 @raises(PackageException)
-@mock.patch('nimble.calculate.confidence.scipy', new=None)
+@mock.patch('nimble.calculate.confidence.scipy.nimbleAccessible', new=lambda: False)
 def testCannotImportSciPy():
     pred = getPredictions()
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)

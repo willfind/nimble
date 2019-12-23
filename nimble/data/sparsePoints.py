@@ -8,13 +8,11 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
-from nimble.utility import ImportModule
+from nimble.utility import scipy
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points
 from .points_view import PointsView
-
-scipy = ImportModule('scipy')
 
 class SparsePoints(SparseAxis, Points):
     """

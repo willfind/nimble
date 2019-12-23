@@ -21,7 +21,8 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, ImportModule
+from nimble.utility import inheritDocstringsFactory
+from nimble.utility import cloudpickle
 from nimble.exceptions import prettyListString
 from nimble.exceptions import prettyDictString
 from nimble.interfaces.interface_helpers import (
@@ -35,8 +36,6 @@ from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
 from nimble.configuration import configErrors
-
-cloudpickle = ImportModule('cloudpickle')
 
 
 def captureOutput(toWrap):
@@ -1260,7 +1259,7 @@ class TrainedLearner(object):
         --------
         TODO
         """
-        if not cloudpickle:
+        if not cloudpickle.nimbleAccessible():
             msg = "To save nimble models, cloudpickle must be installed"
             raise PackageException(msg)
         extension = '.nimm'

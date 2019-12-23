@@ -15,7 +15,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -25,9 +25,6 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class List(Base):
@@ -269,7 +266,7 @@ class List(Base):
                 return numpy.matrix(emptyData)
             return numpy.matrix(self.data, dtype=elementType)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             asArray = numpy.array(self.data, dtype=elementType)
@@ -286,7 +283,7 @@ class List(Base):
                     return scipy.sparse.coo_matrix(emptyData)
                 return scipy.sparse.coo_matrix(asArray)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             if isEmpty:

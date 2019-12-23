@@ -8,12 +8,10 @@ from __future__ import absolute_import
 import numpy
 
 import nimble
-from nimble.utility import ImportModule
+from nimble.utility import scipy
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
-
-scipy = ImportModule('scipy')
 
 class SparseElements(Elements):
     """

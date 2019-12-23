@@ -260,7 +260,7 @@ def testIsNumericalPoint():
 # residuals #
 #############
 @raises(PackageException)
-@mock.patch('nimble.calculate.statistic.scipy', new=None)
+@mock.patch('nimble.calculate.statistic.scipy.nimbleAccessible', new=lambda: False)
 def test_residuals_exception_sciPyNotInstalled():
     pred = nimble.createData("Matrix", [[2],[3],[4]])
     control = nimble.createData("Matrix", [[2],[3],[4]])

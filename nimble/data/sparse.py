@@ -15,7 +15,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from nimble.utility import cooMatrixToArray
 from . import dataHelpers
 from .base import Base
@@ -28,9 +28,6 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -50,7 +47,7 @@ class Sparse(Base):
         passed further up into the hierarchy if needed.
     """
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
@@ -228,7 +225,7 @@ class Sparse(Base):
             if to == 'scipycoo':
                 return self.data.copy()
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             return pd.DataFrame(cooMatrixToArray(self.data))
