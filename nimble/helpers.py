@@ -709,7 +709,7 @@ def initDataObject(
         # if we have all pointNames, set them now
         if (isinstance(pointNames, (list, dict))
                 and len(pointNames) == len(ret.points)):
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
             setPtNamesAfter = False
         else:
             _keepIndexValuesValidation('point', keepPoints, pointNames)
@@ -726,14 +726,14 @@ def initDataObject(
             ret = ret.points.copy(cleaned)
         # if we had a subset of pointNames can set now on the cleaned data
         if setPtNamesAfter:
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
     if keepFeatures != 'all':
         if not ftsExtracted and len(keepFeatures) == len(ret.features):
             _raiseKeepLengthConflict('feature')
         # if we have all featureNames, set them now
         if (isinstance(featureNames, (list, dict))
                 and len(featureNames) == len(ret.features)):
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
             setFtNamesAfter = False
         # otherwise we require keepFeatures to be index and set names later
         else:
@@ -752,7 +752,7 @@ def initDataObject(
             ret = ret.features.copy(cleaned)
         # if we had a subset of featureNames can set now on the cleaned data
         if setFtNamesAfter:
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
 
     return ret
 
@@ -789,9 +789,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
     # have to wait for everything to be extracted before we add the names,
     # because otherwise the lenths won't be correct
     if praw is not None:
-        ret.points.setNames(list(praw))
+        ret.points.setNames(list(praw), useLog=False)
     if fraw is not None:
-        ret.features.setNames(list(fraw))
+        ret.features.setNames(list(fraw), useLog=False)
 
     return ret
 

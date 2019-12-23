@@ -116,7 +116,7 @@ class Axis(object):
                       oldIdentifier, newName)
 
 
-    def _setNames(self, assignments=None, useLog=None):
+    def _setNames(self, assignments, useLog=None):
         if isinstance(self, Points):
             names = 'pointNames'
             namesInverse = 'pointNamesInverse'
@@ -126,13 +126,13 @@ class Axis(object):
         if assignments is None:
             setattr(self._base, names, None)
             setattr(self._base, namesInverse, None)
-            return
-        count = len(self)
-        if isinstance(assignments, dict):
-            self._setNamesFromDict(assignments, count)
         else:
-            assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesFromList(assignments, count)
+            count = len(self)
+            if isinstance(assignments, dict):
+                self._setNamesFromDict(assignments, count)
+            else:
+                assignments = valuesToPythonList(assignments, 'assignments')
+                self._setNamesFromList(assignments, count)
 
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setNames'),
@@ -453,7 +453,7 @@ class Axis(object):
 
         ret = self._calculate_backend(wrappedMatch, None, matching=True)
 
-        self._setNames(self._getNamesNoGeneration())
+        self._setNames(self._getNamesNoGeneration(), useLog=False)
         if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
             if self._axis == 'point':
                 ret.features.setNames([function.__name__], useLog=False)
