@@ -115,6 +115,9 @@ class Sparse(Base):
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
+        # not equal if number of non zero values differs
+        elif self.data.nnz != other.data.nnz:
+            return False
         else:
             #let's do internal sort first then compare
             self._sortInternal('feature')
@@ -205,10 +208,7 @@ class Sparse(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if to == 'Sparse':
-                try:
-                    data = self.data.copy().astype(numpy.float)
-                except ValueError:
-                    data = self.data.copy()
+                data = self.data.copy()
             else:
                 data = cooMatrixToArray(self.data)
             # reuseData=True since we already made copies here
@@ -846,11 +846,6 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        # scipy may not raise expected exceptions for truediv
-        # TODO remove once logical operators used in Base for this
-        if 'truediv' in opName:
-            self._genericBinary_dataExamination(opName, other)
-
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -895,13 +890,13 @@ class Sparse(Base):
 
 
     def _scalarBinary_implementation(self, opName, other):
-        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        oneSafe = ['mul', '__truediv__', '__itruediv__', '__pow__', '__ipow__']
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
+        zeroSafe = ['mul', 'div', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other > 0:
+        if opName in ['__pow__', '__ipow__'] and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(

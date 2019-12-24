@@ -660,6 +660,8 @@ class Elements(object):
                 features = list(range(len(self._base.features)))
             # if unable to vectorize, iterate over each point
             values = numpy.empty([len(points), len(features)])
+            if allowBoolOutput:
+                values = values.astype(numpy.bool_)
             p = 0
             for pi in points:
                 f = 0

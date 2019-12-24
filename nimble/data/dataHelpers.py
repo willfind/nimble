@@ -623,6 +623,8 @@ def allDataIdentical(arr1, arr2):
     containing NaN values in the same positions will also be considered
     equal.
     """
+    if arr1.shape != arr2.shape:
+        return False
     try:
         # check the values that are not equal
         checkPos = arr1 != arr2
@@ -735,14 +737,30 @@ def denseCountUnique(obj, points=None, features=None):
 
 
 def wrapMatchFunctionFactory(matchFunc):
-    def wrappedMatch(value):
-        ret = matchFunc(value)
-        # in [True, False] also covers 0 and 1 and numpy number and bool types
-        if ret not in [True, False]:
-            msg = 'toMatch function must return True, False, 0 or 1'
-            raise InvalidArgumentValue(msg)
-        return bool(ret) # converts 1 and 0 to True and False
-    wrappedMatch.oneArg = True
+    try:
+        matchFunc(0, 0, 0)
+
+        def wrappedMatch(value, i, j):
+            ret = matchFunc(value, i, j)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = False
+    except TypeError:
+
+        def wrappedMatch(value):
+            ret = matchFunc(value)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = True
+
     wrappedMatch.__name__ = matchFunc.__name__
     wrappedMatch.__doc__ = matchFunc.__doc__
 
