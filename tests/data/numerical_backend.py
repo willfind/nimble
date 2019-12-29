@@ -475,11 +475,11 @@ def back_fEmptyException(callerCon, calleeCon, attr1, attr2=None):
     toCall(callee)
 
 
-def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
+def back_byZeroException(callerCon, calleeCon, opName):
     """ Test operation when other data contains zero """
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[1, 2, 3], [0, 0, 0], [6, 7, 8]]
-    if attr1.startswith('__r'):
+    if opName.startswith('__r'):
         # put zeros in lhs
         data1, data2 = data2, data1
         callee = calleeConstructor(data2, calleeCon)
@@ -489,10 +489,42 @@ def back_byZeroException(callerCon, calleeCon, attr1, attr2=None):
         callee = calleeConstructor(data2, calleeCon)
     caller = callerCon(data1)
 
-    toCall = getattr(caller, attr1)
-    if attr2 is not None:
-        toCall = getattr(toCall, attr2)
+    toCall = getattr(caller, opName)
     toCall(callee)
+
+
+def back_byInf(callerCon, calleeCon, opName):
+    """ Test operation when other data contains zero """
+    inf = numpy.inf
+    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
+    data2 = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
+    if opName.startswith('__r'):
+        # put inf in lhs
+        data1, data2 = data2, data1
+        callee = calleeConstructor(data2, calleeCon)
+    elif calleeCon is None:
+        callee = inf
+    else:
+        callee = calleeConstructor(data2, calleeCon)
+    caller = callerCon(data1)
+
+    toCall = getattr(caller, opName)
+
+    ret = toCall(callee)
+
+    if 'div' in opName:
+        exp = callerCon(numpy.zeros((3, 3)))
+    elif opName == '__rmod__' and calleeCon is None:
+        exp = callerCon([[callee] * 3] * 3)
+    elif opName == '__rmod__':
+        exp = callee.copy()
+    else:
+        exp = caller.copy()
+
+    if opName.startswith('__i'):
+        assert caller == exp
+    else:
+        assert ret == exp
 
 
 def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
@@ -650,7 +682,8 @@ def wrapAndCall(toWrap, expected, *args):
 def run_full_backendDivMod(constructor, opName, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, opName))
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, None, opName))
-
+    back_byInf(constructor, constructor, opName)
+    back_byInf(constructor, None, opName)
     run_full_backend(constructor, opName, inplace, sparsity)
 
 
@@ -1254,6 +1287,26 @@ class NumericalDataSafe(DataTestObject):
         lhsObj = self.constructor(lhs)
         lhsObj ** rhs
 
+    def test_pow_nimbleObj_inf(self):
+        inf = numpy.inf
+        lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
+        rhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        ret = lhsObj ** rhsObj
+        exp = self.constructor(numpy.zeros((3, 3)))
+        assert ret == exp
+
+    def test_pow_scalar_inf(self):
+        lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
+        rhs = numpy.inf
+        lhsObj = self.constructor(lhs)
+
+        ret = lhsObj ** rhs
+        exp = self.constructor(numpy.zeros((3, 3)))
+        assert ret == exp
+
     def test_pow_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __pow__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__pow__', False)
@@ -1289,6 +1342,16 @@ class NumericalDataSafe(DataTestObject):
         num = -0.895
         obj = self.constructor(data)
         num ** obj
+
+    def test_rpow_scalar_inf(self):
+        inf = numpy.inf
+        lhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
+        num = 0.1
+        lhsObj = self.constructor(lhs)
+
+        ret = num ** lhsObj
+        exp = self.constructor(numpy.zeros((3, 3)))
+        assert ret == exp
 
     def test_rpow_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rpow__ with scalar arg"""
@@ -2109,6 +2172,26 @@ class NumericalModifying(DataTestObject):
         rhs = -0.895
         lhsObj = self.constructor(lhs)
         lhsObj **= rhs
+
+    def test_ipow_nimbleObj_inf(self):
+        inf = numpy.inf
+        lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
+        rhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
+        lhsObj = self.constructor(lhs)
+        rhsObj = self.constructor(rhs)
+
+        lhsObj **= rhsObj
+        exp = self.constructor(numpy.zeros((3, 3)))
+        assert lhsObj == exp
+
+    def test_ipow_scalar_inf(self):
+        lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
+        rhs = numpy.inf
+        lhsObj = self.constructor(lhs)
+
+        lhsObj **= rhs
+        exp = self.constructor(numpy.zeros((3, 3)))
+        assert lhsObj == exp
 
     def test_ipow_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __ipow__ with scalar arg"""

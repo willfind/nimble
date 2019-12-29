@@ -181,7 +181,7 @@ class nzIt(object):
 
                 if value != 0:
                     return value
-            except Exception:
+            except (TypeError, IndexError):
                 self._currGroup = next(self._sourceIter)
                 self._index = 0
 

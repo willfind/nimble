@@ -665,26 +665,11 @@ def initDataObject(
         useFNames = featureNames
     else:
         useFNames = True if featureNames is True else None
-    try:
-        ret = initMethod(rawData, pointNames=usePNames,
-                         featureNames=useFNames, name=name,
-                         paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData, **kwargs)
-    except Exception as origErr:
-        einfo = sys.exc_info()
-        #something went wrong. instead, try to auto load and then convert
-        try:
-            autoMethod = getattr(nimble.data, autoType)
-            ret = autoMethod(rawData, pointNames=usePNames,
-                             featureNames=useFNames, name=name,
-                             paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData, **kwargs)
-            ret = ret.copy(to=returnType)
-        # If it didn't work, report the error on the thing the user ACTUALLY
-        # wanted
-        except Exception:
-            raise origErr
 
+    ret = initMethod(rawData, pointNames=usePNames,
+                     featureNames=useFNames, name=name,
+                     paths=pathsToPass, elementType=elementType,
+                     reuseData=reuseData, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -716,7 +701,7 @@ def initDataObject(
         # if we have all pointNames, set them now
         if (isinstance(pointNames, (list, dict))
                 and len(pointNames) == len(ret.points)):
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
             setPtNamesAfter = False
         else:
             _keepIndexValuesValidation('point', keepPoints, pointNames)
@@ -733,14 +718,14 @@ def initDataObject(
             ret = ret.points.copy(cleaned)
         # if we had a subset of pointNames can set now on the cleaned data
         if setPtNamesAfter:
-            ret.points.setNames(pointNames)
+            ret.points.setNames(pointNames, useLog=False)
     if keepFeatures != 'all':
         if not ftsExtracted and len(keepFeatures) == len(ret.features):
             _raiseKeepLengthConflict('feature')
         # if we have all featureNames, set them now
         if (isinstance(featureNames, (list, dict))
                 and len(featureNames) == len(ret.features)):
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
             setFtNamesAfter = False
         # otherwise we require keepFeatures to be index and set names later
         else:
@@ -759,7 +744,7 @@ def initDataObject(
             ret = ret.features.copy(cleaned)
         # if we had a subset of featureNames can set now on the cleaned data
         if setFtNamesAfter:
-            ret.features.setNames(featureNames)
+            ret.features.setNames(featureNames, useLog=False)
 
     return ret
 
@@ -828,7 +813,7 @@ def createDataFromFile(
                 toPass = BytesIO(bytes(response.content,
                                        response.apparent_encoding))
         else:
-            toPass = open(data, 'r')
+            toPass = open(data, 'r', newline=None)
             isMtxFile = isMtxFileChecker(toPass)
     # Case: we are given an open file already
     else:
@@ -932,13 +917,13 @@ def _loadmtxForAuto(
 
     openFile.seek(startPosition)
     try:
-        data = scipy.io.mmread(openFile)#python 2
-    except Exception:
+        data = scipy.io.mmread(openFile)
+    except TypeError:
         if hasattr(openFile, 'name'):
             tempName = openFile.name
         else:
             tempName = openFile.inner.name
-        data = scipy.io.mmread(tempName)#for python3, it may need this.
+        data = scipy.io.mmread(tempName)
 
     temp = (data, None, None)
 

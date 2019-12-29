@@ -118,9 +118,9 @@ def viewConstructorMaker(concreteType):
             fEnd = None
 
         if not origHasPts:
-            full.points.setNames(None)
+            full.points.setNames(None, useLog=False)
         if not origHasFts:
-            full.features.setNames(None)
+            full.features.setNames(None, useLog=False)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
         ret._name = orig.name

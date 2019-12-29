@@ -32,7 +32,7 @@ class FeaturesView(Features):
         readOnlyException('setName')
 
     @exceptionDocstring
-    def setNames(self, assignments=None, useLog=None):
+    def setNames(self, assignments, useLog=None):
         readOnlyException('setNames')
 
     #####################################

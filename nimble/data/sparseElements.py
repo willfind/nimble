@@ -52,7 +52,7 @@ class SparseElements(Elements):
         if preserveZeros and points is None and features is None:
             try:
                 data = function(data)
-            except Exception:
+            except (TypeError, ValueError):
                 function.otypes = [numpy.object_]
                 data = function(data)
             shape = self._base.data.shape

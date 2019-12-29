@@ -578,6 +578,8 @@ def allDataIdentical(arr1, arr2):
     containing NaN values in the same positions will also be considered
     equal.
     """
+    if arr1.shape != arr2.shape:
+        return False
     try:
         # check the values that are not equal
         checkPos = arr1 != arr2
@@ -585,7 +587,7 @@ def allDataIdentical(arr1, arr2):
         test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
         test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
-    except Exception:
+    except ValueError:
         return False
 
 def createListOfDict(data, featureNames):
@@ -690,15 +692,37 @@ def denseCountUnique(obj, points=None, features=None):
 
 
 def wrapMatchFunctionFactory(matchFunc):
-    def wrappedMatch(value):
-        ret = matchFunc(value)
-        # in [True, False] also covers 0 and 1 and numpy number and bool types
-        if ret not in [True, False]:
-            msg = 'toMatch function must return True, False, 0 or 1'
-            raise InvalidArgumentValue(msg)
-        return bool(ret) # converts 1 and 0 to True and False
-    wrappedMatch.oneArg = True
+    try:
+        matchFunc(0, 0, 0)
+
+        def wrappedMatch(value, i, j):
+            ret = matchFunc(value, i, j)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = False
+    except TypeError:
+
+        def wrappedMatch(value):
+            ret = matchFunc(value)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = True
+
     wrappedMatch.__name__ = matchFunc.__name__
     wrappedMatch.__doc__ = matchFunc.__doc__
 
     return wrappedMatch
+
+
+def csvCommaFormat(name):
+    if isinstance(name, str) and ',' in name:
+        return '"{0}"'.format(name)
+    return name

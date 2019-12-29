@@ -23,6 +23,7 @@ from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -100,6 +101,9 @@ class Sparse(Base):
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
+        # not equal if number of non zero values differs
+        elif self.data.nnz != other.data.nnz:
+            return False
         else:
             #let's do internal sort first then compare
             self._sortInternal('feature')
@@ -120,16 +124,7 @@ class Sparse(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                def combine(a, b):
-                    return a + ',' + b
-
-                fnames = self.features.getNames()
-                fnamesLine = reduce(combine, fnames)
-                fnamesLine += '\n'
-                if includePointNames:
-                    outFile.write('pointNames,')
-
-                outFile.write(fnamesLine)
+                self._writeFeatureNamesToCSV(outFile, includePointNames)
 
             # sort by rows first, then columns
             placement = numpy.lexsort((self.data.col, self.data.row))
@@ -141,13 +136,13 @@ class Sparse(Base):
             pmax = len(self.data.data)
             for i in range(len(self.points)):
                 if includePointNames:
-                    currPname = self.points.getName(i)
+                    currPname = csvCommaFormat(self.points.getName(i))
                     outFile.write(currPname)
                     outFile.write(',')
                 for j in range(len(self.features)):
                     if (pointer < pmax and i == self.data.row[pointer]
                             and j == self.data.col[pointer]):
-                        value = self.data.data[pointer]
+                        value = csvCommaFormat(self.data.data[pointer])
                         pointer = pointer + 1
                     else:
                         value = 0
@@ -156,29 +151,6 @@ class Sparse(Base):
                         outFile.write(',')
                     outFile.write(str(value))
                 outFile.write('\n')
-
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -219,10 +191,7 @@ class Sparse(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if to == 'Sparse':
-                try:
-                    data = self.data.copy().astype(numpy.float)
-                except ValueError:
-                    data = self.data.copy()
+                data = self.data.copy()
             else:
                 data = cooMatrixToArray(self.data)
             # reuseData=True since we already made copies here
@@ -827,7 +796,7 @@ class Sparse(Base):
                 #numpy may say: elementwise comparison failed; returning
                 # scalar instead, but in the future will perform
                 # elementwise comparison
-            except Exception:
+            except ValueError:
                 noZerosInData = all(i != 0 for i in self.data.data)
             assert noZerosInData
 
@@ -858,11 +827,6 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        # scipy may not raise expected exceptions for truediv
-        # TODO remove once logical operators used in Base for this
-        if 'truediv' in opName:
-            self._genericBinary_dataExamination(opName, other)
-
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -907,13 +871,13 @@ class Sparse(Base):
 
 
     def _scalarBinary_implementation(self, opName, other):
-        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        oneSafe = ['mul', '__truediv__', '__itruediv__', '__pow__', '__ipow__']
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
+        zeroSafe = ['mul', 'div', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other > 0:
+        if opName in ['__pow__', '__ipow__'] and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -1288,3 +1252,15 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
+
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileCSV_implementation(outPath, includePointNames,
+                                              includeFeatureNames)
+
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileMTX_implementation(outPath, includePointNames,
+                                              includeFeatureNames)

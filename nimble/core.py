@@ -703,7 +703,7 @@ def learnerDefaultValues(name):
 
 def listLearners(package=None):
     """
-    Get a list of learners avaliable to nimble or a specific package.
+    Get a list of learners available to nimble or a specific package.
 
     Returns a list a list of learners that are callable through nimble's
     training, applying, and testing functions. If ``package`` is
