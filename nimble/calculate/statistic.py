@@ -1,5 +1,6 @@
 import math
 import collections
+import functools
 
 import numpy
 
@@ -10,17 +11,27 @@ from nimble.utility import ImportModule
 
 scipy = ImportModule('scipy')
 
-numericalTypes = (int, float, int, numpy.number)
+numericalTypes = (int, float, numpy.number)
 
+def numericRequired(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (TypeError, ValueError):
+            if func.__name__ == 'quartiles':
+                return (None, None, None)
+            return None
+    return wrapped
 
 def proportionMissing(values):
     """
-    Calculate proportion of entries in 'values' iterator that are missing (defined
-    as being None or NaN).
+    Calculate proportion of entries in 'values' iterator that are
+    missing (defined as being None or NaN).
     """
     numMissing = 0
     numTotal = len(values)
-    for value in values:
+    for value in values.points.nonZeroIterator():
         if _isMissing(value):
             numMissing += 1
         else:
@@ -34,7 +45,8 @@ def proportionMissing(values):
 
 def proportionZero(values):
     """
-    Calculate proportion of entries in 'values' iterator that are equal to zero.
+    Calculate proportion of entries in 'values' iterator that are equal
+    to zero.
     """
     totalNum = len(values)
     nonZeroCount = 0
@@ -61,13 +73,11 @@ def maximum(values, ignoreNoneNan=True, noCompMixType=True):
     """
     return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
 
-
+@numericRequired
 def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     """
     Given a 1D vector of values, find the minimum or maximum value.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
     if minmax == 'min':
         compStr = '__lt__'
         func1 = lambda x, y: x > y
@@ -82,67 +92,53 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     count = 0
 
     #if data types are mixed and some data are not numerical, such as [1,'a']
-    if noCompMixType and featureType(values) == 'Mixed' and not (_isNumericalFeatureGuesser(values)):
+    if noCompMixType and mixedTypes(values):
         return None
     for value in nonZeroValues:
         count += 1
         if ignoreNoneNan and _isMissing(value):
             continue
-        if (hasattr(value, '__cmp__') or hasattr(value, compStr)):
+        if hasattr(value, compStr):
             if first:
-                currMin = value
+                currMinMax = value + 0 # + 0 ensures value is numeric
                 first = False
-            else:
-                if func2(value, currMin):
-                    currMin = value
-
+            elif func2(value, currMinMax):
+                currMinMax = value
     if first:
         return None
+    elif len(values) > count and func1(currMinMax, 0):
+        return 0
     else:
-        if func1(currMin, 0) and len(values) > count:
-            return 0
-        else:
-            return currMin
+        return currMinMax
 
-
+@numericRequired
 def mean(values):
     """
     Given a 1D vector of values, find the mean value.  If the values are
     not numerical, return None.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
+    if values.getTypeString() == 'Sparse':
+        runningSum = 0
+        nanCount = 0
+        for v in values.data.data:
+            if _isMissing(v):
+                nanCount += 1
+            else:
+                runningSum += v
 
-    numericalCount = 0
-    nonZeroCount = 0
-    runningSum = 0
-    totalCount = len(values)
-    nonZeroValues = values.points.nonZeroIterator()
+        count = (len(values) - nanCount)
+        if count > 0:
+            return runningSum / count
+        return
+    arr = values.copy('numpyarray').astype(numpy.float)
+    return numpy.nanmean(arr)
 
-    for value in nonZeroValues:
-        nonZeroCount += 1
-        if _isNumericalPoint(value):
-            runningSum += value
-            numericalCount += 1
-
-    if numericalCount == 0 and totalCount > nonZeroCount:
-        return 0
-    elif numericalCount == 0 and totalCount == nonZeroCount:
-        return None
-    elif numericalCount > 0 and totalCount == nonZeroCount:
-        return float(runningSum) / float(numericalCount)
-    elif numericalCount > 0 and totalCount > nonZeroCount:
-        return float(runningSum) / float(numericalCount + totalCount - nonZeroCount)
-
-
+@numericRequired
 def median(values):
     """
-    Given a 1D vector of values, find the median value of the natural ordering.
-
+    Given a 1D vector of values, find the median value of the natural
+    ordering.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
-
     #Filter out None/NaN values from list of values
     sortedValues = [x for x in values if not _isMissing(x)]
 
@@ -154,7 +150,8 @@ def median(values):
     numValues = len(sortedValues)
 
     if numValues % 2 == 0:
-        median = (float(sortedValues[(numValues // 2) - 1]) + float(sortedValues[numValues // 2])) / float(2)
+        median = (sortedValues[(numValues // 2) - 1]
+                  + sortedValues[numValues // 2]) / float(2)
     else:
         median = float(sortedValues[int(math.floor(numValues / 2))])
 
@@ -168,46 +165,47 @@ def mode(values):
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
 
-
+@numericRequired
 def standardDeviation(values, sample=False):
     """
-    Given a 1D vector of values, find the standard deviation.  If the values are
-    not numerical, return None.
+    Given a 1D vector of values, find the standard deviation.  If the
+    values are not numerical, return None.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
+    if values.getTypeString() == 'Sparse':
+        #Filter out None/NaN values from list of values
+        meanRet = mean(values)
+        nonZeroCount = 0
+        numericalCount = 0
 
-    #Filter out None/NaN values from list of values
-    meanRet = mean(values)
-    nonZeroCount = 0
-    numericalCount = 0
-    nonZeroValues = values.points.nonZeroIterator()
+        squaredDifferenceTotal = 0
+        for value in values.data.data:
+            nonZeroCount += 1
+            if not _isMissing(value):
+                numericalCount += 1
+                squaredDifferenceTotal += (meanRet - value) ** 2
 
-    squaredDifferenceTotal = 0
-    for value in nonZeroValues:
-        nonZeroCount += 1
-        if _isNumericalPoint(value):
-            numericalCount += 1
-            squaredDifferenceTotal += (meanRet - value) ** 2
+        if nonZeroCount < len(values):
+            numZeros = len(values) - nonZeroCount
+            squaredDifferenceTotal += numZeros * meanRet ** 2
+            numericalCount += numZeros
 
-    if nonZeroCount < len(values):
-        numZeros = len(values) - nonZeroCount
-        squaredDifferenceTotal += numZeros * meanRet ** 2
-        numericalCount += numZeros
+        # doing sample covariance calculation
+        if sample:
+            divisor = numericalCount - 1
+        # doing population covariance calculation
+        else:
+            divisor = numericalCount
 
-    # doing sample covariance calculation
+        if divisor == 0:
+            return 0
+
+        stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
+        return stDev
+
+    arr = values.copy('numpyarray').astype(float)
     if sample:
-        divisor = numericalCount - 1
-    # doing population covariance calculation
-    else:
-        divisor = numericalCount
-
-    if divisor == 0:
-        return 0
-
-    stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
-    return stDev
-
+        return numpy.nanstd(arr, ddof=1)
+    return numpy.nanstd(arr)
 
 def uniqueCount(values):
     """
@@ -218,32 +216,32 @@ def uniqueCount(values):
     return len(valueSet)
 
 
-def featureType(values):
+def mixedTypes(values):
     """
-        Return the type of data: string, int, float
+    Detect if vector contains a mix of numeric and non-numeric types.
     """
+    first = values[0]
+    firstType = type(first)
+    firstIsNumeric = isinstance(first, numericalTypes)
+    for val in values[1:]:
+        if _isMissing(val):
+            continue
+        if type(val) != firstType:
+            # unless both are numeric types, we identify as mixed types
+            if (isinstance(val, numericalTypes) and firstIsNumeric):
+                continue
+            return True
+    return False
 
-    # types = numpy.unique([type(value) for value in values if not _isMissing(value)])#doesn't work in python3
-    types = list(set([type(value) for value in values if not _isMissing(value)]))
-    #if all data in values are missing
-    if len(types) == 0:
-        return 'Unknown'
-    #if multiple types are in values
-    elif len(types) > 1:
-        return 'Mixed'
-    else:
-        return str(types[0]).split("'")[1]#in python2, it is like "<type 'xxx'>", while in python3, it is like "<class 'xxx'>"
 
+    return not any(hasattr(v, '__sub__') for v in value)
 
+@numericRequired
 def quartiles(values, ignoreNoneOrNan=True):
     """
     From the vector of values, return a 3-tuple containing the
     lower quartile, the median, and the upper quartile.
-
     """
-    if not _isNumericalFeatureGuesser(values):
-        return (None, None, None)
-
     if isinstance(values, nimble.data.Base):
         #conver to a horizontal array
         values = values.copy(to="numpyarray").flatten()
@@ -255,34 +253,13 @@ def quartiles(values, ignoreNoneOrNan=True):
     return tuple(ret)
 
 
-def _isMissing(point):
+def _isMissing(value):
     """
     Determine if a point is missing or not.  If the point is None or NaN, return True.
     Else return False.
     """
     #this might be the fastest way
-    return (point is None) or (point != point)
-
-
-def _isNumericalFeatureGuesser(featureVector):
-    """
-    Returns true if the vector only contains primitive numerical
-    non-complex values, returns false otherwise.
-    """
-    return all(isinstance(val, numericalTypes) for val in featureVector if val)
-
-
-def _isNumericalPoint(point):
-    """
-    Check to see if a point is a valid number that can be used in numerical calculations.
-    If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
-    return False.
-    """
-    #np.nan is in numericalTypes, but None isn't; None==None, but np.nan!=np.nan
-    if isinstance(point, numericalTypes) and (point == point):
-        return True
-    else:
-        return False
+    return (value is None) or (value != value)
 
 
 def residuals(toPredict, controlVars):

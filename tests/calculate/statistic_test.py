@@ -192,19 +192,19 @@ def testUniqueCount():
         assert retlpCorrect.isIdentical(retlp)
 
 
-def testFeatureType():
+def testMixedTypes():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
-    func = nimble.calculate.statistic.featureType
+    func = nimble.calculate.statistic.mixedTypes
     for dataType in ['List', 'DataFrame']:
         objl = createData(dataType, raw)
 
         retlf = objl.features.calculate(func)
-        retlfCorrect = createData(dataType, ['Mixed', 'Mixed', 'int'])
+        retlfCorrect = createData(dataType, [False, True, False])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.points.calculate(func)
-        retlpCorrect = createData(dataType, [['Mixed'], ['int'], ['Mixed']])
+        retlpCorrect = createData(dataType, [[True], [False], [False]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
@@ -233,24 +233,6 @@ def testIsMissing():
     ret = [func(i) for i in raw]
     retCorrect = [False, False, False, True, True, False]
     assert all([ret[i] == retCorrect[i] for i in range(len(raw))])
-
-
-def testIsNumericalFeatureGuesser():
-    func = nimble.calculate.statistic._isNumericalFeatureGuesser
-    raw = [1, 2.0, 3, np.nan, None]
-    assert func(raw)
-    raw = [1, 2.0, 3, np.nan, None, 'a']
-    assert ~func(raw)
-    raw = [1, 2.0, 3, np.nan, None, np.complex(1, 1)]
-    assert ~func(raw)
-
-
-def testIsNumericalPoint():
-    func = nimble.calculate.statistic._isNumericalPoint
-    assert func(1) and func(2.0) and func(3)
-    assert ~func(np.nan)
-    assert ~func(None)
-    assert ~func('a')
 
 
 #############
