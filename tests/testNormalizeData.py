@@ -1,9 +1,6 @@
 """
 Tests for the top level function nimble.normalizeData
-
 """
-
-from __future__ import absolute_import
 
 import nimble
 from nimble.customLearners import CustomLearner

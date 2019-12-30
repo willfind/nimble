@@ -3,7 +3,6 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble DataFrame object.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy

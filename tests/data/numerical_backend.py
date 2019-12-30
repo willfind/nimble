@@ -14,7 +14,7 @@ __itruediv__, __ifloordiv__,  __imod__, __ipow__, __imatmul__, __and__,
 __or__, __xor__
 
 """
-from __future__ import absolute_import
+
 import sys
 import numpy
 import os
@@ -22,8 +22,6 @@ import os.path
 from unittest.mock import patch
 
 from nose.tools import *
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -104,25 +102,25 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             caller = callerCon(data, pnames, fnames)
             toCall = getattr(caller, op)
             ret = toCall(num)
+        except ZeroDivisionError:
+            return
 
-            assert ret.points.getNames() == pnames
-            assert ret.features.getNames() == fnames
+        assert ret.points.getNames() == pnames
+        assert ret.features.getNames() == fnames
 
+        try:
             caller.points.setName('p1', 'p0')
-            if inplace:
-                assert 'p0' in ret.points.getNames()
-                assert 'p1' not in ret.points.getNames()
-            else:
-                assert 'p0' not in ret.points.getNames()
-                assert 'p1' in ret.points.getNames()
-            assert 'p0' in caller.points.getNames()
-            assert 'p1' not in caller.points.getNames()
-        except AssertionError:
-            einfo = sys.exc_info()
-            six.reraise(*einfo)
-        except:
-            pass
+        except ImproperObjectAction: # Views
+            return
 
+        if inplace:
+            assert 'p0' in ret.points.getNames()
+            assert 'p1' not in ret.points.getNames()
+        else:
+            assert 'p0' not in ret.points.getNames()
+            assert 'p1' in ret.points.getNames()
+        assert 'p0' in caller.points.getNames()
+        assert 'p1' not in caller.points.getNames()
 
 def back_binaryscalar_NamePath_preservations(callerCon, op):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
@@ -167,10 +165,6 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
             assert False
     except InvalidArgumentValue:
         pass
-    # if it isn't the exception we expect, pass it on
-    except:
-        einfo = sys.exc_info()
-        six.reraise(einfo[1], None, einfo[2])
 
     # names interwoven
     other = callerCon(otherRaw, pnames, False)
@@ -227,8 +221,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
         toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and attr2 is None:
-        raise ValueError("Unexpected None return")
+    assert not (ret is None and attr2 is None)
 
     # name should be default, path should be pulled from other
     if ret is not None and ret != NotImplemented:
@@ -260,8 +253,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
         toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and attr2 is None:
-        raise ValueError("Unexpected None return")
+    assert not (ret is None and attr2 is None)
 
     # name should be default, path should be pulled from caller
     if ret is not None and ret != NotImplemented:
@@ -298,8 +290,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
         toCall = getattr(toCall, attr2)
     ret = toCall(other)
 
-    if ret is None and attr2 is None:
-        raise ValueError("Unexpected None return")
+    assert not (ret is None and attr2 is None)
 
     # name should be default, path should be pulled from caller
     if ret is not None and ret != NotImplemented:
@@ -350,10 +341,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace):
     except InvalidArgumentValue:
         toCall = getattr(other, attr1)
         ret = toCall(caller)
-    # if it isn't the exception we expect, pass it on
-    except:
-        einfo = sys.exc_info()
-        six.reraise(einfo[1], None, einfo[2])
+
     assert ret.points.getNames() == other.points.getNames()
     assert ret.features.getNames() == caller.features.getNames()
 
@@ -369,10 +357,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace):
     except InvalidArgumentValue:
         toCall = getattr(other, attr1)
         ret = toCall(caller)
-    # if it isn't the exception we expect, pass it on
-    except:
-        einfo = sys.exc_info()
-        six.reraise(einfo[1], None, einfo[2])
+
     assert ret.points.getNames() == caller.points.getNames()
     assert ret.features.getNames() == other.features.getNames()
 
@@ -387,10 +372,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace):
     except InvalidArgumentValue:
         toCall = getattr(other, attr1)
         ret = toCall(caller)
-    # if it isn't the exception we expect, pass it on
-    except:
-        einfo = sys.exc_info()
-        six.reraise(einfo[1], None, einfo[2])
+
     assert ret.points.getNames() == caller.points.getNames()
     assert ret.features.getNames() == other.features.getNames()
 
@@ -420,11 +402,10 @@ def back_selfNotNumericException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception if self has non numeric data """
     data1 = [['why', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
     data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    try:
-        caller = callerCon(data1)
-        callee = calleeConstructor(data2, calleeCon)
-    except:
-        raise ImproperObjectAction("Data type doesn't support non numeric data")
+
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, calleeCon)
+
     toCall = getattr(caller, attr1)
     if attr2 is not None:
         toCall = getattr(toCall, attr2)
@@ -697,9 +678,6 @@ def wrapAndCall(toWrap, expected, *args):
         assert False # expected exception was not raised
     except expected:
         pass
-    except:
-        raise
-
 
 def run_full_backendDivMod(constructor, opName, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, opName))
@@ -1915,10 +1893,6 @@ class NumericalModifying(DataTestObject):
             assert False
         except InvalidArgumentValue:
             pass
-        # if it isn't the exception we expect, pass it on
-        except:
-            einfo = sys.exc_info()
-            six.reraise(einfo[1], None, einfo[2])
 
         # names interwoven
         other = self.constructor(otherRaw, pnames, False)

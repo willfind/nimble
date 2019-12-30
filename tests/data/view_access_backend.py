@@ -2,8 +2,6 @@
 Tests functionality that is limited only to View objects.
 """
 
-from __future__ import absolute_import
-
 import nimble
 from nimble.data import Base, BaseView
 from nimble.data.points import Points

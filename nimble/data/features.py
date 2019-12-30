@@ -10,11 +10,9 @@ with a leading underscore added to the method name. Additionally, the
 wrapping of function calls for the logger takes place in here.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
-import six
 
 import nimble
 from nimble.logger import handleLogging
@@ -1775,7 +1773,7 @@ class Features(object):
             featureNames={'category':0, 'id':1, 'quantity':2}
             )
         """
-        if not (isinstance(rule, (int, numpy.integer, six.string_types))
+        if not (isinstance(rule, (int, numpy.integer, str))
                 or hasattr(rule, '__iter__')
                 or hasattr(rule, '__call__')):
             msg = "rule must be an integer, string, iterable of integers "
@@ -1785,7 +1783,7 @@ class Features(object):
         splitList = []
         numResultingFts = len(resultingNames)
         for i, value in enumerate(self._base[:, feature]):
-            if isinstance(rule, six.string_types):
+            if isinstance(rule, str):
                 splitList.append(value.split(rule))
             elif isinstance(rule, (int, numpy.number)):
                 splitList.append([value[:rule], value[rule:]])
@@ -1793,7 +1791,7 @@ class Features(object):
                 split = []
                 startIdx = 0
                 for item in rule:
-                    if isinstance(item, six.string_types):
+                    if isinstance(item, str):
                         split.append(value[startIdx:].split(item)[0])
                         # find index of value from startIdx on, o.w. will only
                         # ever return first instance. Add len of previous

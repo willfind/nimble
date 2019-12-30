@@ -3,7 +3,6 @@ Contains functions and objects controlling how randomness is used in
 nimble functions and tests.
 """
 
-from __future__ import absolute_import
 import random
 
 import numpy

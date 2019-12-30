@@ -18,16 +18,13 @@ configuration file reflects all available options.
 
 # Note: .ini format's option names are not case sensitive?
 
-from __future__ import absolute_import
 import os
 import copy
 import sys
 import tempfile
 import inspect
 import importlib
-
-import six
-from six.moves import configparser
+import configparser
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -431,9 +428,8 @@ class SessionConfiguration(object):
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
         except InvalidArgumentValue:
-            einfo = sys.exc_info()
             if not ignore:
-                six.reraise(einfo[0], einfo[1], einfo[2])
+                raise
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.

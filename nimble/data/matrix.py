@@ -2,12 +2,9 @@
 Class extending Base, using a numpy dense matrix to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -143,10 +140,7 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        if header != '':
-            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
-        else:
-            scipy.io.mmwrite(target=outPath, a=self.data)
+        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
@@ -434,58 +428,6 @@ class Matrix(Base):
             # '*' is matrix multiplication in scipy
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
-
-
-def viewBasedApplyAlongAxis(function, axis, outerObject):
-    """
-    Applies the given function to each view along the given axis,
-    returning the results of the function in numpy array
-    """
-    if axis == "point":
-        maxVal = outerObject.data.shape[0]
-        viewMaker = outerObject.pointView
-    else:
-        if axis != "feature":
-            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
-        maxVal = outerObject.data.shape[1]
-        viewMaker = outerObject.featureView
-    ret = numpy.zeros(maxVal, dtype=numpy.float)
-    for i in range(0, maxVal):
-        funcOut = function(viewMaker(i))
-        ret[i] = funcOut
-
-    return ret
-
-def matrixBasedApplyAlongAxis(function, axis, outerObject):
-    """
-    applies the given function to the underlying numpy matrix along the
-    given axis, returning the results of the function in numpy array
-    """
-    #make sure the 3 attributes are in the function object
-    if not (hasattr(function, 'nameOfFeatureOrPoint')
-            and hasattr(function, 'valueOfFeatureOrPoint')
-            and hasattr(function, 'optr')):
-        msg = "some important attribute is missing in the input function"
-        raise AttributeError(msg)
-    if axis == "point":
-        #convert name of feature to index of feature
-        index = function.nameOfFeatureOrPoint
-        indexOfFeature = outerObject.features.getIndex(index)
-        #extract the feature from the underlying matrix
-        queryData = outerObject.data[:, indexOfFeature]
-    else:
-        if axis != "feature":
-            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
-        #convert name of point to index of point
-        index = function.nameOfFeatureOrPoint
-        indexOfPoint = outerObject.points.getIndex(index)
-        #extract the point from the underlying matrix
-        queryData = outerObject.data[indexOfPoint, :]
-    ret = function.optr(queryData, function.valueOfFeatureOrPoint)
-    #convert the result from matrix to numpy array
-    ret = ret.astype(numpy.float).A1
-
-    return ret
 
 
 class MatrixView(BaseView, Matrix):

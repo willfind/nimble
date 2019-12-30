@@ -4,7 +4,7 @@ various python packages or custom learners. Also contains the objects
 which store trained learner models and provide functionality for
 applying and testing learners.
 """
-from __future__ import absolute_import
+
 import inspect
 import copy
 import abc
@@ -14,8 +14,6 @@ import numbers
 import warnings
 
 import numpy
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -66,7 +64,7 @@ def captureOutput(toWrap):
     return wrapped
 
 
-class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
+class UniversalInterface(metaclass=abc.ABCMeta):
     """
     Metaclass defining methods and abstract methods for specific
     package or custom interfaces.
@@ -187,11 +185,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             option.
         """
         if multiClassStrategy != 'default':
-            #if we need to do multiclassification by ourselves
-            trialResult = checkClassificationStrategy(self, learnerName,
-                                                      arguments)
+            # TODO reevaluate use of checkClassificationStrategy, the if
+            # statements below expect a string output but it looks to output
+            # a boolean value. It is also susceptible to failures for binary
+            # classifiers and learners without a getScores method implemented.
+
+            # #if we need to do multiclassification by ourselves
+            # trialResult = checkClassificationStrategy(self, learnerName,
+            #                                           arguments)
             #1 VS All
-            if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+            if multiClassStrategy == 'OneVsAll': # and trialResult != 'OneVsAll':
                 #Remove true labels from from training set, if not separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
@@ -208,9 +211,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # processed labels and get predictions on the test set.
                 trainedLearners = []
                 for label in labelSet:
-                    relabeler.__defaults__ = (label,)
-                    trainLabels = trainY.points.calculate(relabeler,
-                                                          useLog=False)
+
+                    def relabeler(val):
+                        if val == label:
+                            return 1
+                        return 0
+
+                    trainLabels = trainY.elements.calculate(relabeler,
+                                                            useLog=False)
                     trainedLearner = self._train(
                         learnerName, trainX, trainLabels, arguments=arguments)
                     trainedLearner.label = label
@@ -219,10 +227,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 return TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
 
             #1 VS 1
-            if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+            if multiClassStrategy == 'OneVsOne': # and trialResult != 'OneVsOne':
                 # want data and labels together in one object for this method
+                trainX = trainX.copy()
                 if isinstance(trainY, nimble.data.Base):
-                    trainX = trainX.copy()
                     trainX.features.append(trainY, useLog=False)
                     trainY = len(trainX.features) - 1
 
@@ -256,7 +264,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
@@ -1269,9 +1277,6 @@ class TrainedLearner(object):
 
         with open(outputPath, 'wb') as file:
             cloudpickle.dump(self, file)
-        # print('session_' + outputFilename)
-        # print(globals())
-        # dill.dump_session('session_' + outputFilename)
 
     @captureOutput
     def retrain(self, trainX, trainY=None, arguments=None, useLog=None,
@@ -1387,7 +1392,7 @@ class TrainedLearner(object):
             self.transformedArguments[arg] = value
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
@@ -1821,24 +1826,6 @@ class TrainedLearners(TrainedLearner):
         else:
             raise ImproperObjectAction('Wrong multiclassification method.')
 
-
-###########
-# Helpers #
-###########
-
-def relabeler(point, label=None):
-    """
-    Determine if the point contains the label value. Returning 1 if
-    True else 0.
-
-    Used with points.calculate to convert a feature of labels into a
-    binary feature. The default for label must is set to the actual
-    label prior to calling points.calculate.
-    """
-    if point[0] != label:
-        return 0
-    else:
-        return 1
 
 #######################
 # PredefinedInterface #

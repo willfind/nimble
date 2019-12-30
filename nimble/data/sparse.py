@@ -3,13 +3,9 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 from functools import reduce
 
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -87,10 +83,6 @@ class Sparse(Base):
     def stretch(self):
         return StretchSparse(self)
 
-    def plot(self, outPath=None, includeColorbar=False):
-        toPlot = self.copy(to="Matrix")
-        toPlot.plot(outPath, includeColorbar)
-
     def _plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
         return toPlot._plot(outPath, includeColorbar)
@@ -98,12 +90,6 @@ class Sparse(Base):
     def _transpose_implementation(self):
         self.data = self.data.transpose()
         self._sorted = None
-        #_resync(self.data)
-
-    #		if self._sorted == 'point':
-    #			self._sorted = 'feature'
-    #		elif self._sorted == 'feature':
-    #			self._sorted = 'point'
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -190,10 +176,7 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        if header != '':
-            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
-        else:
-            scipy.io.mmwrite(target=outPath, a=self.data)
+        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -498,9 +481,7 @@ class Sparse(Base):
             offAxis = self.data.row
             axisVal = y
             offAxisVal = x
-        else:
-            msg = 'self._sorted is not either point nor feature.'
-            raise ImproperObjectAction(msg)
+
         #binary search
         start, end = numpy.searchsorted(axis, [axisVal, axisVal+1])
         if start == end: # axisVal is not in self.data.row
@@ -1000,9 +981,7 @@ class Sparse(Base):
         coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
                                       shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
-        if opName.startswith('__i'):
-            self.data = coo
-            return self
+
         return Sparse(coo)
 
     def _scalarZeroPreservingBinary_implementation(self, opName, other):
@@ -1029,8 +1008,7 @@ class Sparse(Base):
     ###########
 
     def _sortInternal(self, axis):
-        if axis != 'point' and axis != 'feature':
-            raise InvalidArgumentValue("invalid axis type")
+        self._validateAxis(axis)
 
         if (self._sorted == axis
                 or len(self.points) == 0
@@ -1061,9 +1039,6 @@ class Sparse(Base):
 ###################
 
 def _sortInternal_coo_matrix(obj, sortAs):
-    if sortAs != 'row-major' and sortAs != 'col-major':
-        raise InvalidArgumentValue("invalid axis type")
-
     # sort least significant axis first
     if sortAs == "row-major":
         sortPrime = obj.row
@@ -1078,36 +1053,6 @@ def _sortInternal_coo_matrix(obj, sortAs):
     obj.row = obj.row[sortKeys]
     obj.col = obj.col[sortKeys]
 
-    # newData = obj.data[sortKeys]
-    # newRow = obj.row[sortKeys]
-    # newCol = obj.col[sortKeys]
-    #
-    # n = len(newData)
-    # obj.data[:n] = newData
-    # obj.row[:n] = newRow
-    # obj.col[:n] = newCol
-
-def _numLessThan(value, toCheck): # TODO caching
-    ltCount = 0
-    for i in range(len(toCheck)):
-        if toCheck[i] < value:
-            ltCount += 1
-
-    return ltCount
-
-def _resync(obj):
-    if 0 in obj.shape:
-        obj.nnz = 0
-        obj.data = numpy.array([])
-        obj.row = numpy.array([])
-        obj.col = numpy.array([])
-        obj.shape = obj.shape
-    else:
-        obj.nnz = obj.nnz
-        obj.data = obj.data
-        obj.row = obj.row
-        obj.col = obj.col
-        obj.shape = obj.shape
 
 def removeDuplicatesNative(coo_obj):
     """
@@ -1166,14 +1111,6 @@ def removeDuplicatesNative(coo_obj):
 
     return new_coo
 
-def removeDuplicatesByConversion(coo_obj):
-    try:
-        return coo_obj.tocsr().tocoo()
-        # return coo_obj.tocsc().tocoo()
-    except TypeError:
-        msg = 'Unable to represent this configuration of data in a '
-        msg += 'Sparse object.'
-        raise TypeError(msg)
 
 class SparseVectorView(BaseView, Sparse):
     """

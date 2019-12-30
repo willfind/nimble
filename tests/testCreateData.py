@@ -6,7 +6,7 @@ import copy
 import itertools
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 from nose.tools import *
@@ -1254,12 +1254,15 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
-@raises(InvalidArgumentValue)
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_linkError(mock_get):
     for t in returnTypes:
-        url = 'http://mockrequests.nimble/linknotfound.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        try:
+            url = 'http://mockrequests.nimble/linknotfound.csv'
+            fromWeb = nimble.createData(returnType=t, data=url)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
 ###################################
 # ignoreNonNumericalFeatures flag #

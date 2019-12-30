@@ -3,14 +3,11 @@ Definitions for functions that can be used as performance functions by
 nimble. Specifically, this only contains those functions that measure
 loss; or in other words, those where smaller values indicate a higher
 level of correctness in the predicted values.
-
 """
 
-from __future__ import absolute_import
 from math import sqrt
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.data import Base

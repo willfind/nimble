@@ -10,6 +10,7 @@ other tests for that function. Otherwise, some tests for basic
 user-facing functions might be included here as well.  All tests for log
 count should make use of the wrappers in tests/assertionHelpers.py
 """
+
 import sys
 import tempfile
 

@@ -4,14 +4,12 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import copy
 import sys
 import warnings
 from unittest import mock
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface

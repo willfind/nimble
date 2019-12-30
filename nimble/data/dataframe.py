@@ -2,12 +2,7 @@
 Class extending Base, using a pandas DataFrame to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
-
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
