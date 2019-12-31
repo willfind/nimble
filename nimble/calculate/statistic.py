@@ -59,57 +59,42 @@ def proportionZero(values):
     else:
         return 0.0
 
-
-def minimum(values, ignoreNoneNan=True, noCompMixType=True):
+def minimum(values, ignoreNoneNan=True):
     """
     Given a 1D vector of values, find the minimum value.
     """
-    return _minmax(values, 'min', ignoreNoneNan, noCompMixType)
+    return _minmax(values, 'min', ignoreNoneNan)
 
-
-def maximum(values, ignoreNoneNan=True, noCompMixType=True):
+def maximum(values, ignoreNoneNan=True):
     """
     Given a 1D vector of values, find the maximum value.
     """
-    return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
+    return _minmax(values, 'max', ignoreNoneNan)
 
 @numericRequired
-def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
+def _minmax(values, minmax, ignoreNoneNan):
     """
     Given a 1D vector of values, find the minimum or maximum value.
     """
+    # convert to list not array b/c arrays can handle non numeric data
+    if values.getTypeString() == 'Sparse':
+        lst = values.data.data.tolist()
+        if len(values) > values.data.nnz:
+            lst.append(0) # if sparse object has zeros add zero to list
+    else:
+        lst = values.copy('pythonlist')
+    if minmax == 'min' and ignoreNoneNan:
+        return numpy.nanmin(lst)
     if minmax == 'min':
-        compStr = '__lt__'
-        func1 = lambda x, y: x > y
-        func2 = lambda x, y: x < y
+        return numpy.min(lst)
+    if minmax == 'max' and ignoreNoneNan:
+        return numpy.nanmax(lst)
     else:
-        compStr = '__gt__'
-        func1 = lambda x, y: x < y
-        func2 = lambda x, y: x > y
+        return numpy.max(lst)
 
-    first = True
-    nonZeroValues = values.points.nonZeroIterator()
-    count = 0
-
-    #if data types are mixed and some data are not numerical, such as [1,'a']
-    if noCompMixType and mixedTypes(values):
-        return None
-    for value in nonZeroValues:
-        count += 1
-        if ignoreNoneNan and _isMissing(value):
-            continue
-        if hasattr(value, compStr):
-            if first:
-                currMinMax = value + 0 # + 0 ensures value is numeric
-                first = False
-            elif func2(value, currMinMax):
-                currMinMax = value
-    if first:
-        return None
-    elif len(values) > count and func1(currMinMax, 0):
-        return 0
-    else:
-        return currMinMax
+def _mean_sparseBackend(nonZeroVals, lenData, numNan):
+    dataSum = numpy.nansum(nonZeroVals)
+    return dataSum / (lenData - numNan)
 
 @numericRequired
 def mean(values):
@@ -118,18 +103,9 @@ def mean(values):
     not numerical, return None.
     """
     if values.getTypeString() == 'Sparse':
-        runningSum = 0
-        nanCount = 0
-        for v in values.data.data:
-            if _isMissing(v):
-                nanCount += 1
-            else:
-                runningSum += v
-
-        count = (len(values) - nanCount)
-        if count > 0:
-            return runningSum / count
-        return
+        nonZero = values.data.data.astype(numpy.float)
+        numNan = numpy.sum(numpy.isnan(nonZero))
+        return _mean_sparseBackend(nonZero, len(values), numNan)
     arr = values.copy('numpyarray').astype(numpy.float)
     return numpy.nanmean(arr)
 
@@ -139,23 +115,8 @@ def median(values):
     Given a 1D vector of values, find the median value of the natural
     ordering.
     """
-    #Filter out None/NaN values from list of values
-    sortedValues = [x for x in values if not _isMissing(x)]
-
-    if len(sortedValues) == 0:
-        return None
-
-    sortedValues = sorted(sortedValues)
-
-    numValues = len(sortedValues)
-
-    if numValues % 2 == 0:
-        median = (sortedValues[(numValues // 2) - 1]
-                  + sortedValues[numValues // 2]) / float(2)
-    else:
-        median = float(sortedValues[int(math.floor(numValues / 2))])
-
-    return median
+    arr = values.copy('numpyarray').astype(numpy.float)
+    return numpy.nanmedian(arr)
 
 def mode(values):
     """
@@ -172,37 +133,19 @@ def standardDeviation(values, sample=False):
     values are not numerical, return None.
     """
     if values.getTypeString() == 'Sparse':
-        #Filter out None/NaN values from list of values
-        meanRet = mean(values)
-        nonZeroCount = 0
-        numericalCount = 0
+        nonZero = values.data.data.astype(numpy.float)
+        numNan = numpy.sum(numpy.isnan(nonZero))
+        meanRet = _mean_sparseBackend(nonZero, len(values), numNan)
 
-        squaredDifferenceTotal = 0
-        for value in values.data.data:
-            nonZeroCount += 1
-            if not _isMissing(value):
-                numericalCount += 1
-                squaredDifferenceTotal += (meanRet - value) ** 2
-
-        if nonZeroCount < len(values):
-            numZeros = len(values) - nonZeroCount
-            squaredDifferenceTotal += numZeros * meanRet ** 2
-            numericalCount += numZeros
-
-        # doing sample covariance calculation
+        dataSumSquared = numpy.nansum((nonZero - meanRet) ** 2)
+        zeroSumSquared = meanRet ** 2 * (len(values) - values.data.nnz)
+        divisor = len(values) - numNan
         if sample:
-            divisor = numericalCount - 1
-        # doing population covariance calculation
-        else:
-            divisor = numericalCount
+            divisor -= 1
+        var = (dataSumSquared + zeroSumSquared) / divisor
+        return numpy.sqrt(var)
 
-        if divisor == 0:
-            return 0
-
-        stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
-        return stDev
-
-    arr = values.copy('numpyarray').astype(float)
+    arr = values.copy('numpyarray').astype(numpy.float)
     if sample:
         return numpy.nanstd(arr, ddof=1)
     return numpy.nanstd(arr)
@@ -215,26 +158,6 @@ def uniqueCount(values):
     valueSet = set(values)
     return len(valueSet)
 
-
-def mixedTypes(values):
-    """
-    Detect if vector contains a mix of numeric and non-numeric types.
-    """
-    first = values[0]
-    firstType = type(first)
-    firstIsNumeric = isinstance(first, numericalTypes)
-    for val in values[1:]:
-        if _isMissing(val):
-            continue
-        if type(val) != firstType:
-            # unless both are numeric types, we identify as mixed types
-            if (isinstance(val, numericalTypes) and firstIsNumeric):
-                continue
-            return True
-    return False
-
-
-    return not any(hasattr(v, '__sub__') for v in value)
 
 @numericRequired
 def quartiles(values, ignoreNoneOrNan=True):

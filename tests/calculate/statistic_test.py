@@ -192,23 +192,6 @@ def testUniqueCount():
         assert retlpCorrect.isIdentical(retlp)
 
 
-def testMixedTypes():
-    raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
-    func = nimble.calculate.statistic.mixedTypes
-    for dataType in ['List', 'DataFrame']:
-        objl = createData(dataType, raw)
-
-        retlf = objl.features.calculate(func)
-        retlfCorrect = createData(dataType, [False, True, False])
-        assert retlf.isIdentical(retlfCorrect)
-        assert retlfCorrect.isIdentical(retlf)
-
-        retlp = objl.points.calculate(func)
-        retlpCorrect = createData(dataType, [[True], [False], [False]])
-        assert retlp.isIdentical(retlpCorrect)
-        assert retlpCorrect.isIdentical(retlp)
-
-
 def testQuartiles():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [2, 2, 3], [10, 10, 10]]
     func = nimble.calculate.statistic.quartiles
