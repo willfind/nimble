@@ -103,7 +103,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             toCall = getattr(caller, op)
             ret = toCall(num)
         except ZeroDivisionError:
-            return
+            continue
 
         assert ret.points.getNames() == pnames
         assert ret.features.getNames() == fnames
