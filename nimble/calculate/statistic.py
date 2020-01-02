@@ -14,6 +14,9 @@ scipy = ImportModule('scipy')
 numericalTypes = (int, float, numpy.number)
 
 def numericRequired(func):
+    """
+    Handles None return for functions that require numeric data.
+    """
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         try:
@@ -26,8 +29,22 @@ def numericRequired(func):
 
 def proportionMissing(values):
     """
+    The proportion of values in the vector that are missing.
+
     Calculate proportion of entries in 'values' iterator that are
-    missing (defined as being None or NaN).
+    are None or NaN.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [1, 2, float('nan'), 4, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> proportionMissing(vector)
+    0.4
     """
     numMissing = 0
     numTotal = len(values)
@@ -45,8 +62,19 @@ def proportionMissing(values):
 
 def proportionZero(values):
     """
-    Calculate proportion of entries in 'values' iterator that are equal
-    to zero.
+    The proportion of values in the vector that are equal to zero.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, 3]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> proportionZero(vector)
+    0.25
     """
     totalNum = len(values)
     nonZeroCount = 0
@@ -61,22 +89,64 @@ def proportionZero(values):
 
 def minimum(values, ignoreNoneNan=True):
     """
-    Given a 1D vector of values, find the minimum value.
+    The minimum value in a vector.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    ignoreNoneNan : bool
+        True by default ignores missing values to determine the minimum.
+        If False, NaN may be returned if a missing value is present.
+
+    See Also
+    --------
+    maximum
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> minimum(vector)
+    0.0
+    >>> minimum(vector, ignoreNoneNan=False)
+    nan
     """
     return _minmax(values, 'min', ignoreNoneNan)
 
 def maximum(values, ignoreNoneNan=True):
     """
-    Given a 1D vector of values, find the maximum value.
+    The maximum value in a vector.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    ignoreNoneNan : bool
+        True by default ignores missing values to determine the maximum.
+        If False, NaN may be returned if a missing value is present.
+
+    See Also
+    --------
+    minimum
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> maximum(vector)
+    2.0
+    >>> maximum(vector, ignoreNoneNan=False)
+    nan
     """
     return _minmax(values, 'max', ignoreNoneNan)
 
 @numericRequired
 def _minmax(values, minmax, ignoreNoneNan):
     """
-    Given a 1D vector of values, find the minimum or maximum value.
+    Backend for finding the minimum or maximum value in a vector.
     """
-    # convert to list not array b/c arrays can handle non numeric data
+    # convert to list not array b/c arrays won't error with non numeric data
     if values.getTypeString() == 'Sparse':
         lst = values.data.data.tolist()
         if len(values) > values.data.nnz:
@@ -93,34 +163,94 @@ def _minmax(values, minmax, ignoreNoneNan):
         return numpy.max(lst)
 
 def _mean_sparseBackend(nonZeroVals, lenData, numNan):
+    """
+    Backend helper for sparse mean calculation. The number of nan values
+    is needed for standard deviation calculations so this helper avoids
+    repeated attempts to determine the number of nan values in the data.
+    """
     dataSum = numpy.nansum(nonZeroVals)
     return dataSum / (lenData - numNan)
 
 @numericRequired
 def mean(values):
     """
-    Given a 1D vector of values, find the mean value.  If the values are
-    not numerical, return None.
+    The mean of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in None being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    median, mode
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), 5]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> mean(vector)
+    2.0
     """
     if values.getTypeString() == 'Sparse':
         nonZero = values.data.data.astype(numpy.float)
         numNan = numpy.sum(numpy.isnan(nonZero))
         return _mean_sparseBackend(nonZero, len(values), numNan)
-    arr = values.copy('numpyarray').astype(numpy.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
     return numpy.nanmean(arr)
 
 @numericRequired
 def median(values):
     """
-    Given a 1D vector of values, find the median value of the natural
-    ordering.
+    The median of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in None being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    mean, mode
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> median(vector)
+    2.0
     """
-    arr = values.copy('numpyarray').astype(numpy.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
     return numpy.nanmedian(arr)
 
 def mode(values):
     """
-    Given a 1D vector of values, find the most frequent value.
+    The mode of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in None being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    mean, median
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> mode(vector)
+    0.0
     """
     nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
@@ -129,8 +259,27 @@ def mode(values):
 @numericRequired
 def standardDeviation(values, sample=False):
     """
-    Given a 1D vector of values, find the standard deviation.  If the
-    values are not numerical, return None.
+    The standard deviation of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in None being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    sample : bool
+        If False, the default, the population standard deviation is
+        returned. If True, the sample standard deviation is returned.
+
+    Examples
+    --------
+    >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> standardDeviation(vector)
+    1.707825127659933
+    >>> standardDeviation(vector, sample=True)
+    1.8708286933869707
     """
     if values.getTypeString() == 'Sparse':
         nonZero = values.data.data.astype(numpy.float)
@@ -145,14 +294,14 @@ def standardDeviation(values, sample=False):
         var = (dataSumSquared + zeroSumSquared) / divisor
         return numpy.sqrt(var)
 
-    arr = values.copy('numpyarray').astype(numpy.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
     if sample:
         return numpy.nanstd(arr, ddof=1)
     return numpy.nanstd(arr)
 
 def uniqueCount(values):
     """
-    Given a 1D vector of values, calculate the number of unique values.
+    The number of unique values in the vector.
     """
     values = [x for x in values if not _isMissing(x)]
     valueSet = set(values)
@@ -162,24 +311,50 @@ def uniqueCount(values):
 @numericRequired
 def quartiles(values, ignoreNoneOrNan=True):
     """
-    From the vector of values, return a 3-tuple containing the
-    lower quartile, the median, and the upper quartile.
+    A vector's lower quartile, the median, and the upper quartile.
+
+    Return a 3-tuple (lowerQuartile, median, upperQuartile). This
+    function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in None being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    ignoreNoneNan : bool
+        True by default ignores missing values to determine the maximum.
+        If False and the tuple contains missing values, the tuple
+        (None, None, None) will be returned.
+
+    See Also
+    --------
+    median
+
+    Examples
+    --------
+    >>> raw = [1, 5, 12, 13, 14, 21, 23, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> quartiles(vector)
+    (8.5, 13.0, 17.5)
+    >>> quartiles(vector, ignoreNoneNan=False)
+    (None, None, None)
     """
     if isinstance(values, nimble.data.Base):
-        #conver to a horizontal array
-        values = values.copy(to="numpyarray").flatten()
+        values = values.copy(to="numpyarray", outputAs1D=True)
+        values = values.astype(numpy.float)
 
     if ignoreNoneOrNan:
-        values = [v for v in values if not _isMissing(v)]
-    ret = numpy.percentile(values, (25, 50, 75))
+        ret = numpy.nanpercentile(values, (25, 50, 75))
+    else:
+        ret = numpy.percentile(values, (25, 50, 75))
 
     return tuple(ret)
 
 
 def _isMissing(value):
     """
-    Determine if a point is missing or not.  If the point is None or NaN, return True.
-    Else return False.
+    Determine if a point is missing or not.  If the point is None or
+    NaN, return True. Else return False.
     """
     #this might be the fastest way
     return (value is None) or (value != value)
@@ -187,23 +362,18 @@ def _isMissing(value):
 
 def residuals(toPredict, controlVars):
     """
-    Calculate the residuals of toPredict, by a linear regression model using the controlVars.
+    Calculate the residuals by a linear regression model.
 
-    toPredict: nimble Base object, where each feature will be used as the independant
-    variable in a separate linear regression model with the controlVars as the
-    dependant variables.
-
-    controlVars: nimble Base object, with the same number of points as toPredict. Each
-    point will be used as the dependant variables to do predictions for the
-    corresponding point in toPredict.
-
-    Returns: nimble Base object of the same size as toPredict, containing the calculated
-    residuals.
-
-    Raises: InvalidArgumentType if toPredict and controlVars are not nimble
-    data objects and InvalidArgumentValue if either has nonzero points
-    or features and InvalidArgumentValueCombination if they have a different
-    number of points.
+    Parameters
+    ----------
+    toPredict : nimble Base object
+        Each feature will be used as the independent variable in a
+        separate linear regression model with the ``controlVars`` as the
+        dependent variables.
+    controlVars : nimble Base object
+        Must have the same number of points as toPredict. Each point
+        will be used as the dependant variables to do predictions for
+        the corresponding point in ``toPredict``.
     """
     if not scipy:
         msg = "scipy must be installed in order to use the residuals function."
