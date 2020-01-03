@@ -484,13 +484,15 @@ class Axis(object):
         elif convert:
             createDataKwargs['elementType'] = numpy.object_
 
+        pathPass = (self._base.absolutePath, self._base.relativePath)
+
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs)
+                                **createDataKwargs, path=pathPass)
         if self._axis != 'point':
             ret.transpose(useLog=False)
 
         if isinstance(self, Points):
-            if limitTo is not None and self._namesCreated():
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -498,7 +500,7 @@ class Axis(object):
             elif self._namesCreated():
                 ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
         else:
-            if limitTo is not None and self._namesCreated():
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -506,9 +508,6 @@ class Axis(object):
             elif self._namesCreated():
                 ret.features.setNames(self._getNamesNoGeneration(),
                                       useLog=False)
-
-        ret._absPath = self._base.absolutePath
-        ret._relPath = self._base.relativePath
 
         return ret
 
