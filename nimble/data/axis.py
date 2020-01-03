@@ -1119,6 +1119,12 @@ class Axis(object):
         self._base._incrementDefaultIfNeeded(newName, self._axis)
 
     def _setNamesFromList(self, assignments, count):
+        if len(assignments) != count:
+            msg = "assignments may only be an ordered container type, with as "
+            msg += "many entries (" + str(len(assignments)) + ") as this axis "
+            msg += "is long (" + str(count) + ")"
+            raise InvalidArgumentValue(msg)
+
         if isinstance(self, Points):
             def checkAndSet(val):
                 if val >= self._base._nextDefaultValuePoint:
@@ -1128,22 +1134,9 @@ class Axis(object):
                 if val >= self._base._nextDefaultValueFeature:
                     self._base._nextDefaultValueFeature = val + 1
 
-        if assignments is None:
-            self._setAllDefault()
-            return
-
         if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large (" + str(len(assignments))
-                msg += "); this axis is empty"
-                raise InvalidArgumentValue(msg)
             self._setNamesFromDict({}, count)
             return
-        if len(assignments) != count:
-            msg = "assignments may only be an ordered container type, with as "
-            msg += "many entries (" + str(len(assignments)) + ") as this axis "
-            msg += "is long (" + str(count) + ")"
-            raise InvalidArgumentValue(msg)
 
         for name in assignments:
             if name is not None and not isinstance(name, str):
@@ -1175,16 +1168,15 @@ class Axis(object):
         self._setNamesFromDict(assignments, count)
 
     def _setNamesFromDict(self, assignments, count):
-        if assignments is None:
-            self._setAllDefault()
-            return
         if not isinstance(assignments, dict):
             msg = "assignments may only be a dict"
             raise InvalidArgumentType(msg)
+        if len(assignments) != count:
+            msg = "assignments may only have as many entries as this " \
+                  "axis is long"
+            raise InvalidArgumentValue(msg)
+
         if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large; this axis is empty"
-                raise InvalidArgumentValue(msg)
             if isinstance(self, Points):
                 self._base.pointNames = {}
                 self._base.pointNamesInverse = []
@@ -1192,10 +1184,6 @@ class Axis(object):
                 self._base.featureNames = {}
                 self._base.featureNamesInverse = []
             return
-        if len(assignments) != count:
-            msg = "assignments may only have as many entries as this " \
-                  "axis is long"
-            raise InvalidArgumentValue(msg)
 
         # at this point, the input must be a dict
         #check input before performing any action
