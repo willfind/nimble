@@ -235,6 +235,10 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
+
+        if to == 'pythonlist':
+            return [pt.copy() for pt in self.data]
+
         elementType = self._elementType
         if elementType is None:
             arr = numpy.array(self.data)
@@ -254,8 +258,6 @@ class List(Base):
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if to == 'pythonlist':
-            return [pt.copy() for pt in self.data]
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
@@ -600,13 +602,14 @@ class ListView(BaseView, List):
                                              useLog=False)
             return intermediate.copy(to=to)
 
-        listForm = [list(pt) for pt in self.points]
+        # fastest way to generate list of view data
+        listForm = [self._source.data[i][self._fStart:self._fEnd]
+                    for i in range(self._pStart, self._pEnd)]
 
         if to not in ['List', 'pythonlist']:
             origData = self.data
             self.data = listForm
-            res = super(ListView, self)._copy_implementation(
-                to)
+            res = super(ListView, self)._copy_implementation(to)
             self.data = origData
             return res
 
