@@ -111,7 +111,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
         try:
             caller.points.setName('p1', 'p0')
         except ImproperObjectAction: # Views
-            return
+            continue
 
         if inplace:
             assert 'p0' in ret.points.getNames()
