@@ -1,9 +1,7 @@
 """
 Unit tests for scikit_learn_interface.py
-
 """
 
-from __future__ import absolute_import
 import importlib
 import inspect
 import tempfile
@@ -244,15 +242,12 @@ def testSciKitLearnListLearners():
     assert 'KMeans' in ret
     assert 'LinearRegression' in ret
 
-    toExclude = []
-
     for name in ret:
-        if name not in toExclude:
-            params = nimble.learnerParameters(toCall(name))
-            assert params is not None
-            defaults = nimble.learnerDefaultValues(toCall(name))
-            for key in defaults.keys():
-                assert key in params
+        params = nimble.learnerParameters(toCall(name))
+        assert params is not None
+        defaults = nimble.learnerDefaultValues(toCall(name))
+        for key in defaults.keys():
+            assert key in params
 
 @sklSkipDec
 @raises(InvalidArgumentValue)

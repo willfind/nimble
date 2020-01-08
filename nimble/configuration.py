@@ -18,16 +18,13 @@ configuration file reflects all available options.
 
 # Note: .ini format's option names are not case sensitive?
 
-from __future__ import absolute_import
 import os
 import copy
 import sys
 import tempfile
 import inspect
 import importlib
-
-import six
-from six.moves import configparser
+import configparser
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -36,6 +33,7 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 
 currentFile = inspect.getfile(inspect.currentframe())
 nimblePath = os.path.dirname(os.path.abspath(currentFile))
+configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
     """
@@ -49,7 +47,7 @@ class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
         """
         try:
             return self._comments[section][option]
-        except Exception:
+        except KeyError:
             return None
 
 
@@ -430,9 +428,8 @@ class SessionConfiguration(object):
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
         except InvalidArgumentValue:
-            einfo = sys.exc_info()
             if not ignore:
-                six.reraise(einfo[0], einfo[1], einfo[2])
+                raise
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.
@@ -492,7 +489,7 @@ class SessionConfiguration(object):
                 if isinstance(self.changes[sec], ToDelete):
                     try:
                         self.cp.remove_section(sec)
-                    except Exception:
+                    except KeyError:
                         pass
                 else:
                     for opt in self.changes[sec]:
@@ -507,7 +504,7 @@ class SessionConfiguration(object):
                     if isinstance(self.changes[section], ToDelete):
                         try:
                             self.cp.remove_section(section)
-                        except Exception:
+                        except KeyError:
                             pass
                     else:
                         for opt in self.changes[section]:
@@ -599,7 +596,7 @@ def autoRegisterFromSettings():
         try:
             (packName, _) = key.split('.')
             (modPath, attrName) = toRegister[key].rsplit('.', 1)
-        except Exception:
+        except ValueError:
             continue
         try:
             module = importlib.import_module(modPath)

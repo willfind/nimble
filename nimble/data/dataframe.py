@@ -2,12 +2,7 @@
 Class extending Base, using a pandas DataFrame to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
-
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -96,29 +91,6 @@ class DataFrame(Base):
 
         return allDataIdentical(self.data.values, other.data.values)
 
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. ``outPath`` is the location (including file
-        name and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
-
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
         """
@@ -159,7 +131,7 @@ class DataFrame(Base):
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        mmwrite(outPath, self.data, comment=comment)
+        mmwrite(outPath, self.data.astype(numpy.float), comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, DataFrame):

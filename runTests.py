@@ -3,10 +3,8 @@
 """
 Script acting as the canonical means to run the test suite for the entirety of
 nimble. Run as main to execute.
-
 """
 
-from __future__ import absolute_import
 import warnings
 import inspect
 import os

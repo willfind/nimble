@@ -1,13 +1,8 @@
 """
 Functions that could be useful accross multple interface test suites
-
 """
 
-from __future__ import absolute_import
 import numpy
-
-from six.moves import range
-
 
 from nimble.data import Base
 from nimble.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
@@ -48,6 +43,5 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 
         #score in bestScore >= every score in allScores
         for value in currAll:
-            if not value <= currBest[1]:
-                assert value <= currBest[1]
+            assert value <= currBest[1]
 

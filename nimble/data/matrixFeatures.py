@@ -3,8 +3,6 @@ Method implementations and helpers acting specifically on features in a
 Matrix object.
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue

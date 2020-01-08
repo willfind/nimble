@@ -6,7 +6,6 @@ create data objects, call machine learning algorithms on that
 data, and do package level configuration and information querying.
 """
 
-from __future__ import absolute_import
 import os
 import inspect
 

@@ -3,8 +3,6 @@ Tests a that base class and its subclasses are being documentated as
 expected.
 """
 
-from __future__ import absolute_import
-
 from nimble.utility import inheritDocstringsFactory
 from nimble.data import Base, Matrix, List, Sparse, DataFrame
 from nimble.interfaces.universal_interface import UniversalInterface

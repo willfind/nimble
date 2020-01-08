@@ -9,8 +9,6 @@ TODO not updated for api rework
 
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import inspect
 import sys
 import pdb
@@ -18,7 +16,6 @@ import functools
 import random
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.data import Base

@@ -1,8 +1,6 @@
-from __future__ import absolute_import
 import inspect
 from functools import wraps
 
-import six
 import numpy
 
 import nimble
@@ -19,7 +17,7 @@ def objConstructorMaker(returnType):
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             return nimble.createData(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
@@ -54,7 +52,7 @@ def viewConstructorMaker(concreteType):
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             orig = nimble.createData(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
@@ -120,9 +118,9 @@ def viewConstructorMaker(concreteType):
             fEnd = None
 
         if not origHasPts:
-            full.points.setNames(None)
+            full.points.setNames(None, useLog=False)
         if not origHasFts:
-            full.features.setNames(None)
+            full.features.setNames(None, useLog=False)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
         ret._name = orig.name

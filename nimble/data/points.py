@@ -10,7 +10,6 @@ leading underscore added to the method name. Additionally, the wrapping
 of function calls for the logger takes place in here.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 from collections import OrderedDict
 
@@ -119,7 +118,7 @@ class Points(object):
         """
         self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None, useLog=None):
+    def setNames(self, assignments, useLog=None):
         """
         Set or rename all of the point names of this object.
 
@@ -129,12 +128,13 @@ class Points(object):
 
         Parameters
         ----------
-        assignments : iterable, dict
+        assignments : iterable, dict, None
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               point names.
             * dict - The mapping for each point name in the format
               {name:index}
+            * None - remove names from this object
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the

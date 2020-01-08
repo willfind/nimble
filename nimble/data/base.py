@@ -6,9 +6,6 @@ common functions.
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import math
 import numbers
@@ -18,10 +15,6 @@ from multiprocessing import Process
 from abc import abstractmethod
 
 import numpy
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble import match
@@ -46,6 +39,7 @@ from .dataHelpers import formatIfNeeded
 from .dataHelpers import valuesToPythonList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
 cloudpickle = ImportModule('cloudpickle')
 matplotlib = ImportModule('matplotlib')
@@ -178,7 +172,7 @@ class Base(object):
             self._name = name
 
         # Set up paths
-        if paths[0] is not None and not isinstance(paths[0], six.string_types):
+        if paths[0] is not None and not isinstance(paths[0], str):
             msg = "paths[0] must be None, an absolute path or web link to "
             msg += "the file from which the data originates"
             raise InvalidArgumentType(msg)
@@ -188,7 +182,7 @@ class Base(object):
             raise InvalidArgumentValue("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
-        if paths[1] is not None and not isinstance(paths[1], six.string_types):
+        if paths[1] is not None and not isinstance(paths[1], str):
             msg = "paths[1] must be None or a relative path to the file from "
             msg += "which the data originates"
             raise InvalidArgumentType(msg)
@@ -273,7 +267,7 @@ class Base(object):
         if value is None:
             self._name = dataHelpers.nextDefaultObjectName()
         else:
-            if not isinstance(value, six.string_types):
+            if not isinstance(value, str):
                 msg = "The name of an object may only be a string or None"
                 raise ValueError(msg)
             self._name = value
@@ -635,7 +629,7 @@ class Base(object):
             return tuple([point[i] for i in by])
 
         #if by is a list, then use findKey2; o.w. use findKey1
-        if isinstance(by, (six.string_types, numbers.Number)):
+        if isinstance(by, (str, numbers.Number)):
             findKey = findKey1
         else:
             findKey = findKey2
@@ -998,35 +992,37 @@ class Base(object):
         includePointNames = includeNames
         if includePointNames:
             seen = False
-            for name in self.points.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.points._getNamesNoGeneration() is not None:
+                for name in self.points.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includePointNames = False
 
         includeFeatureNames = includeNames
         if includeFeatureNames:
             seen = False
-            for name in self.features.getNames():
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    seen = True
+            if self.features._getNamesNoGeneration() is not None:
+                for name in self.features.getNames():
+                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                        seen = True
             if not seen:
                 includeFeatureNames = False
 
-        try:
-            self._writeFile_implementation(
-                outPath, fileFormat, includePointNames, includeFeatureNames)
-        except Exception:
-            if fileFormat.lower() == "csv":
-                toOut = self.copy(to="Matrix")
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
-            if fileFormat.lower() == "mtx":
-                toOut = self.copy(to='Sparse')
-                toOut._writeFile_implementation(
-                    outPath, fileFormat, includePointNames, includeFeatureNames)
-                return
+        if fileFormat.lower() == "csv":
+            self._writeFileCSV_implementation(
+                outPath, includePointNames, includeFeatureNames)
+        elif fileFormat.lower() == "mtx":
+            self._writeFileMTX_implementation(
+                outPath, includePointNames, includeFeatureNames)
+
+    def _writeFeatureNamesToCSV(self, openFile, includePointNames):
+        fnames = list(map(csvCommaFormat, self.features.getNames()))
+        if includePointNames:
+            fnames.insert(0, 'pointNames')
+        fnamesLine = ','.join(fnames)
+        fnamesLine += '\n'
+        openFile.write(fnamesLine)
 
     def save(self, outputPath):
         """
@@ -1051,10 +1047,7 @@ class Base(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
+            cloudpickle.dump(self, file)
         # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
@@ -1689,7 +1682,7 @@ class Base(object):
 
     def _setupOutFormatForPlotting(self, outPath):
         outFormat = None
-        if isinstance(outPath, six.string_types):
+        if isinstance(outPath, str):
             (_, ext) = os.path.splitext(outPath)
             if len(ext) == 0:
                 outFormat = 'png'
@@ -2268,7 +2261,7 @@ class Base(object):
         # format is one of the accepted nimble data types
         if to is None:
             to = self.getTypeString()
-        if not isinstance(to, six.string_types):
+        if not isinstance(to, str):
             raise InvalidArgumentType("'to' must be a string")
         if to not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
             to = to.lower()
@@ -2455,7 +2448,7 @@ class Base(object):
                 values = values.copy(to=self.getTypeString())
 
         elif (dataHelpers._looksNumeric(values)
-              or isinstance(values, six.string_types)):
+              or isinstance(values, str)):
             pass  # no modifications needed
         else:
             msg = "values may only be a nimble Base object, or a single "
@@ -3638,11 +3631,11 @@ class Base(object):
 
         try:
             ret = caller._matmul__implementation(callee)
-        except Exception as e:
-            #TODO: improve how the exception is catch
+        except TypeError:
+            # help determine the source of the error
             self._numericValidation()
             other._numericValidation(right=True)
-            raise e
+            raise # exception should be raised above, but just in case
 
         if caller._pointNamesCreated():
             ret.points.setNames(caller.points.getNames(), useLog=False)
@@ -3921,27 +3914,9 @@ class Base(object):
             msg = "Cannot do " + opName + " when points or features is empty"
             raise ImproperObjectAction(msg)
 
-    def _genericBinary_dataExamination(self, opName, other):
-        """
-        Determine if an arithmetic operation can be performed successfully
-        between two objects.
-        """
-        # Test element type self
-        self._numericValidation()
-        # test element type other
-        if isinstance(other, Base):
-            other._numericValidation(right=True)
-        if opName in ['__truediv__', '__rtruediv__', '__itruediv__',
-                      '__floordiv__', '__rfloordiv__', '__ifloordiv__',
-                      '__mod__', '__rmod__', '__imod__',]:
-            self._validateDivMod(opName, other)
-
-        if opName in ['__pow__', '__rpow__', '__ipow__']:
-            self._validatePow(opName, other)
-
     def _validateDivMod(self, opName, other):
         """
-        Validate values in divmod operation will not lead to zero division.
+        Validate values will not lead to zero division.
         """
         if opName.startswith('__r'):
             toCheck = self
@@ -3957,47 +3932,25 @@ class Base(object):
             msg += "is zero"
             raise ZeroDivisionError(msg)
 
-    def _validatePow(self, opName, other):
+    def _diagnoseFailureAndRaiseException(self, opName, other, error):
         """
-        Validate values in power operation will not lead to zero division or
-        complex numbers.
+        Raise exceptions explaining why an arithmetic operation could
+        not be performed successfully between two objects.
         """
-        if opName == '__rpow__':
-            left = other
-            right = self
-        else:
-            left = self
-            right = other
-
-        def isComplex(val):
-            # numpy ops may return nan when result is a complex number
-            return numpy.isnan(val) or isinstance(val, complex)
-
-        if all(isinstance(obj, Base) for obj in [left, right]):
-            zipLR = zip(left.elements, right.elements)
-            for l, r in zipLR:
-                if l == 0 and r < 0:
-                    msg = 'Zeros cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(l ** r):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        elif isinstance(left, Base):
-            for elem in left.elements:
-                if elem == 0 and right < 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(elem ** right):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
-        else:
-            for elem in right.elements:
-                if left == 0 and elem < 0:
-                    msg = 'Zero cannot be raised to negative exponents'
-                    raise ZeroDivisionError(msg)
-                if isComplex(left ** elem):
-                    msg = "Complex number results are not allowed"
-                    raise ImproperObjectAction(msg)
+        if 'pow' in opName and isinstance(error, FloatingPointError):
+            if 'divide by zero' in str(error):
+                msg = 'Zeros cannot be raised to negative exponents'
+                raise ZeroDivisionError(msg)
+            else:
+                msg = "Complex number results are not allowed"
+                raise ImproperObjectAction(msg)
+        # Test element type self
+        self._numericValidation()
+        # test element type other
+        if isinstance(other, Base):
+            other._numericValidation(right=True)
+        # backup, above unable to identify source of error
+        raise
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
@@ -4043,7 +3996,13 @@ class Base(object):
             if opName == '__ipow__':
                 return pow(self, other)
             return NotImplemented
+
         self._genericBinary_validation(opName, other)
+        # divmod operations inconsistently raise exceptions for zero division
+        # it is more efficient to validate now than validate after operation
+        if 'div' in opName or 'mod' in opName:
+            self._validateDivMod(opName, other)
+
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
@@ -4058,11 +4017,6 @@ class Base(object):
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
 
-        # mod and floordiv operations do not raise errors for zero division
-        # TODO logical operations to check for new nan and inf after operation
-        if 'floordiv' in opName or 'mod' in opName or 'mul' in opName:
-            self._genericBinary_dataExamination(opName, other)
-
         try:
             useOp = opName
             if opName.startswith('__i'):
@@ -4071,9 +4025,8 @@ class Base(object):
                 useOp = opName[:2] + opName[3:]
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._binaryOperations_implementation(useOp, other)
-        except Exception:
-            self._genericBinary_dataExamination(opName, other)
-            raise # backup, expect call above to raise exception
+        except (TypeError, ValueError, FloatingPointError) as error:
+            self._diagnoseFailureAndRaiseException(opName, other, error)
 
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
@@ -4100,6 +4053,58 @@ class Base(object):
         ret = createDataNoValidation(self.getTypeString(), data)
 
         return ret
+
+
+    def __and__(self, other):
+        return self._genericLogicalBinary('__and__', other)
+
+    def __or__(self, other):
+        return self._genericLogicalBinary('__or__', other)
+
+    def __xor__(self, other):
+        return self._genericLogicalBinary('__xor__', other)
+
+    def __invert__(self):
+        boolObj = self._logicalValidationAndConversion()
+        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
+        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
+        ret.features.setNames(self.features._getNamesNoGeneration(),
+                              useLog=False)
+        return ret
+
+
+    def _genericLogicalBinary(self, opName, other):
+        if isinstance(other, Stretch):
+            return getattr(other, opName)(self)
+        if not isinstance(other, Base):
+            msg = 'other must be an instance of a nimble Base object'
+            raise InvalidArgumentType(msg)
+        self._genericBinary_sizeValidation(opName, other)
+        lhsBool = self._logicalValidationAndConversion()
+        rhsBool = other._logicalValidationAndConversion()
+        self._validateEqualNames('point', 'point', opName, other)
+        self._validateEqualNames('feature', 'feature', opName, other)
+
+        return lhsBool._genericBinaryOperations(opName, rhsBool)
+
+    def _logicalValidationAndConversion(self):
+        if (not hasattr(self.data, 'dtype')
+                or self.data.dtype not in [bool, numpy.bool_]):
+            validValues = match.allValues([True, False, 0, 1])
+            if not validValues(self):
+                msg = 'logical operations can only be performed on data '
+                msg += 'containing True, False, 0 and 1 values'
+                raise ImproperObjectAction(msg)
+
+            ret = self.elements.matching(lambda v: bool(v), useLog=False)
+            ret.points.setNames(self.points._getNamesNoGeneration(),
+                                useLog=False)
+            ret.features.setNames(self.features._getNamesNoGeneration(),
+                                  useLog=False)
+            return ret
+
+        return self
+
 
     @property
     def stretch(self):
@@ -4163,55 +4168,6 @@ class Base(object):
             )
         """
         return Stretch(self)
-
-
-    def __and__(self, other):
-        return self._genericLogicalBinary('__and__', other)
-
-    def __or__(self, other):
-        return self._genericLogicalBinary('__or__', other)
-
-    def __xor__(self, other):
-        return self._genericLogicalBinary('__xor__', other)
-
-    def __invert__(self):
-        boolObj = self._logicalValidationAndConversion()
-        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
-        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
-        ret.features.setNames(self.features._getNamesNoGeneration(),
-                              useLog=False)
-        return ret
-
-
-    def _genericLogicalBinary(self, opName, other):
-        if not isinstance(other, Base):
-            msg = 'other must be an instance of a nimble Base object'
-            raise InvalidArgumentType(msg)
-        self._genericBinary_sizeValidation(opName, other)
-        lhsBool = self._logicalValidationAndConversion()
-        rhsBool = other._logicalValidationAndConversion()
-        self._validateEqualNames('point', 'point', opName, other)
-        self._validateEqualNames('feature', 'feature', opName, other)
-
-        return lhsBool._genericBinaryOperations(opName, rhsBool)
-
-    def _logicalValidationAndConversion(self):
-        if (not hasattr(self.data, 'dtype')
-                or self.data.dtype not in [bool, numpy.bool_]):
-            validValues = match.allValues([True, False, 0, 1])
-            if not validValues(self):
-                msg = 'logical operations can only be performed on data '
-                msg += 'containing True, False, 0 and 1 values'
-                raise ImproperObjectAction(msg)
-
-            ret = self.elements.matching(lambda v: bool(v), useLog=False)
-            ret.points.setNames(self.points._getNamesNoGeneration(),
-                                useLog=False)
-            ret.features.setNames(self.features._getNamesNoGeneration(),
-                                  useLog=False)
-            return ret
-
-        return self
 
     ############################
     ############################
@@ -4485,7 +4441,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
+        return self.pointNames.keys() - other.pointNames.keys()
 
     def _featureNameDifference(self, other):
         """
@@ -4501,41 +4457,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                - six.viewkeys(other.featureNames))
-
-    def _pointNameIntersection(self, other):
-        """
-        Returns a set containing only those pointNames that are shared
-        by this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "pointName intersection"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
-
-        return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
-
-    def _featureNameIntersection(self, other):
-        """
-        Returns a set containing only those featureNames that are shared
-        by this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "featureName intersection"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
-
-        return (six.viewkeys(self.featureNames)
-                & six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                - other.featureNames.keys())
 
     def _pointNameSymmetricDifference(self, other):
         """
@@ -4551,7 +4474,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
+        return self.pointNames.keys() ^ other.pointNames.keys()
 
     def _featureNameSymmetricDifference(self, other):
         """
@@ -4567,8 +4490,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                ^ six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                ^ other.featureNames.keys())
 
     def _pointNameUnion(self, other):
         """
@@ -4584,7 +4507,7 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
-        return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
+        return self.pointNames.keys() | other.pointNames.keys()
 
     def _featureNameUnion(self, other):
         """
@@ -4600,8 +4523,8 @@ class Base(object):
 
         self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
-        return (six.viewkeys(self.featureNames)
-                | six.viewkeys(other.featureNames))
+        return (self.featureNames.keys()
+                | other.featureNames.keys())
 
     def _equalPointNames(self, other):
         if other is None or not isinstance(other, Base):
@@ -4799,8 +4722,13 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        pass
+
+    @abstractmethod
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
         pass
 
     @abstractmethod
@@ -4887,14 +4815,3 @@ class BaseElements(Elements):
     Access for element-based methods.
     """
     pass
-
-def cmp(x, y):
-    """
-    Comparison function.
-    """
-    if x < y:
-        return -1
-    elif x > y:
-        return 1
-    else:
-        return 0

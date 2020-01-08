@@ -1,9 +1,6 @@
-from __future__ import absolute_import
 import sys
 from unittest import mock
 
-import six
-from six.moves import range
 from nose.tools import raises
 
 import nimble
@@ -466,31 +463,27 @@ def test_frontend_CV_triggering():
 
     # confirm that the calls are being made
     try:
-        try:
-            train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                  performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
+        train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+              performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
-        try:
-            trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                          performanceFunction=fractionIncorrect, testX=trainObj,
-                          k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
+    try:
+        trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+                      performanceFunction=fractionIncorrect, testX=trainObj,
+                      k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
-        try:
-            trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                         testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=nimble.CV([1, 2]), folds=5)
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
-    except Exception:
-        einfo = sys.exc_info()
-        six.reraise(*einfo)
+    try:
+        trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+                     testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
+                     k=nimble.CV([1, 2]), folds=5)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
 
 def test_frontend_CV_triggering_success():
     #with small data set
@@ -715,3 +708,128 @@ def test_TL_getScores_testXValidation():
     # trainY is ID, testX does not contain labels; test int
     tl = nimble.train(learner, trainObj, trainObjLabels)
     out = tl.getScores(testObjData, testObjLabels)
+
+
+def test_trainAndTestOneVsOne():
+    variables = ["x1", "x2", "x3", "label"]
+    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+    data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4],
+             [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
+             [0, 0, 1, 2]]
+    trainObj1 = createData('Matrix', data=data1, featureNames=variables)
+    trainObj2 = createData('Matrix', data=data2, featureNames=variables)
+
+    testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testData2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 2]]
+    testObj1 = createData('Matrix', data=testData1)
+    testObj2 = createData('Matrix', data=testData2)
+
+    metricFunc = fractionIncorrect
+
+    results1 = trainAndTest('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3,
+                            performanceFunction=metricFunc, multiClassStrategy='OneVsOne')
+    results2 = trainAndTest('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3,
+                            performanceFunction=metricFunc, multiClassStrategy='OneVsOne')
+
+    assert results1 == 0.0
+    assert results2 == 0.25
+
+def test_trainAndTestOneVsAll():
+    variables = ["x1", "x2", "x3", "label"]
+    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+    data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4],
+             [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
+             [0, 0, 1, 2]]
+    trainObj1 = createData('Matrix', data=data1, featureNames=variables)
+    trainObj2 = createData('Matrix', data=data2, featureNames=variables)
+
+    testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testData2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 2]]
+    testObj1 = createData('Matrix', data=testData1)
+    testObj2 = createData('Matrix', data=testData2)
+
+    metricFunc = fractionIncorrect
+
+    results1 = trainAndTest('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3,
+                            performanceFunction=metricFunc, multiClassStrategy='OneVsAll')
+    results2 = trainAndTest('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3,
+                            performanceFunction=metricFunc, multiClassStrategy='OneVsAll')
+
+    assert results1 == 0.0
+    assert results2 == 0.25
+
+def test_trainAndApplyOneVsAll():
+    variables = ["x1", "x2", "x3", "label"]
+    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+
+    trainObj1 = nimble.createData('Sparse', data=data1, featureNames=variables)
+
+    testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    testObj1 = nimble.createData('Sparse', data=testData1)
+
+    results1 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='label', multiClassStrategy='OneVsAll')
+    results2 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='bestScore', multiClassStrategy='OneVsAll')
+    results3 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='allScores', multiClassStrategy='OneVsAll')
+
+    assert results1.copy(to="python list")[0][0] >= 0.0
+    assert results1.copy(to="python list")[0][0] <= 3.0
+
+    assert results2.copy(to="python list")[0][0]
+
+
+def test_trainAndApplyOneVsOne():
+    variables = ["x1", "x2", "x3", "label"]
+    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+    trainObj1 = createData('Matrix', data=data1, featureNames=variables)
+
+    testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    testObj1 = createData('Matrix', data=testData1)
+
+    results1 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='label', multiClassStrategy='OneVsOne')
+    results2 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='bestScore', multiClassStrategy='OneVsOne')
+    results3 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
+                             testX=testObj1, scoreMode='allScores', multiClassStrategy='OneVsOne')
+
+    assert results1.data[0][0] == 1
+    assert results1.data[1][0] == 2
+    assert results1.data[2][0] == 3
+    assert len(results1.data) == 3
+
+    assert results2.data[0][0] == 1
+    assert results2.data[0][1] == 2
+    assert results2.data[1][0] == 2
+    assert results2.data[1][1] == 2
+    assert results2.data[2][0] == 3
+    assert results2.data[2][1] == 2
+
+    results3FeatureMap = results3.features.getNames()
+    for i in range(len(results3.data)):
+        row = results3.data[i]
+        for j in range(len(row)):
+            score = row[j]
+            # because our input data was matrix, we have to check feature names
+            # as they would have been generated from float data
+            if i == 0:
+                if score == 2:
+                    assert results3FeatureMap[j] == str(float(1))
+            elif i == 1:
+                if score == 2:
+                    assert results3FeatureMap[j] == str(float(2))
+            else:
+                if score == 2:
+                    assert results3FeatureMap[j] == str(float(3))

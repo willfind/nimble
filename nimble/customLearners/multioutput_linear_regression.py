@@ -2,10 +2,7 @@
 Contains the MultiOutputLinearRegression custom learner class.
 """
 
-from __future__ import absolute_import
-
 import numpy
-from six.moves import range
 try:
     from sklearn.linear_model import LinearRegression
     imported = True

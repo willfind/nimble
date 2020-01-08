@@ -2,14 +2,12 @@
 Relies on being keras 2.0.8
 """
 
-from __future__ import absolute_import
 import copy
 import os
 import sys
 import logging
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -462,23 +460,10 @@ To install keras
 
         try:
             (args, v, k, d) = inspectArguments(namedModule)
-            (args, d) = removeFromTailMatchedLists(args, d, ignore)
-            if 'random_state' in args:
-                index = args.index('random_state')
-                negdex = index - len(args)
-                d[negdex] = nimble.randomness.generateSubsidiarySeed()
+            args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:
-            try:
-                (args, v, k, d) = inspectArguments(namedModule.__init__)
-                (args, d) = removeFromTailMatchedLists(args, d, ignore)
-                if 'random_state' in args:
-                    index = args.index('random_state')
-                    negdex = index - len(args)
-                    d[negdex] = nimble.randomness.generateSubsidiarySeed()
-                return (args, v, k, d)
-            except TypeError:
-                return self._paramQueryHardCoded(name, parent, ignore)
+            return self._paramQueryHardCoded(name, parent, ignore)
 
 
     def _paramQueryHardCoded(self, name, parent, ignore):

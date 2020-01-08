@@ -3,7 +3,6 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble List object.
 """
 
-from __future__ import absolute_import
 import copy
 from abc import abstractmethod
 

@@ -2,7 +2,6 @@
 Base class for a CustomLearner.
 """
 
-from __future__ import absolute_import
 import copy
 
 import nimble

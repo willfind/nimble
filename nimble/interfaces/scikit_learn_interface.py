@@ -4,14 +4,12 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import copy
 import sys
 import warnings
 from unittest import mock
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -273,6 +271,19 @@ To install scikit-learn
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
+
+        def dtypeConvert(obj):
+            """
+            Most learners need numeric dtypes so attempt to convert from
+            object dtype if possible, otherwise return object as-is.
+            """
+            if obj.dtype == numpy.object_:
+                try:
+                    obj = obj.astype(numpy.float)
+                except ValueError:
+                    pass
+            return obj
+
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()

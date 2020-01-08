@@ -3,8 +3,6 @@ Method implementations and helpers acting specifically on features in a
 Sparse object.
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 import nimble
@@ -149,7 +147,7 @@ class nzIt(object):
 
                 if value != 0:
                     return value
-            except Exception:
+            except (TypeError, IndexError):
                 self._currGroup = next(self._sourceIter)
                 self._index = 0
 

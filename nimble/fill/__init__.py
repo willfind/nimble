@@ -2,7 +2,6 @@
 Collection of functions primarily providing various methods for filling
 values in the data with other values.
 """
-from __future__ import absolute_import
 
 from .fill import factory
 from .fill import constant

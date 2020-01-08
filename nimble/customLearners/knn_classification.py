@@ -8,8 +8,6 @@ training points with lowest distances to the point you are predicting).
 If there is a tie, use k=1
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 from nimble.customLearners import CustomLearner

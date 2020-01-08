@@ -2,19 +2,16 @@
 Contains the CustomLearner class.
 """
 
-from __future__ import absolute_import
 import abc
 import inspect
 
 import numpy
-import six
-from six.moves import range
 
 from nimble.helpers import inspectArguments
 from nimble.utility import dtypeConvert
 
 
-class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
+class CustomLearner(metaclass=abc.ABCMeta):
     """
     Base class defining a hierarchy of objects which encapsulate what is
     needed to be a single learner callable through the Custom Universal
@@ -99,7 +96,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
             msg = "The classmethod options must return a list of stings"
             raise TypeError(msg)
         for name in options:
-            if not isinstance(name, six.string_types):
+            if not isinstance(name, str):
                 msg = "The classmethod options must return a list of stings"
                 raise TypeError(msg)
 
