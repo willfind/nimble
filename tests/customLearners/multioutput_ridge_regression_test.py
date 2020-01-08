@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import nimble
 
 # test for failure to import?

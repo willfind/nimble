@@ -3,16 +3,12 @@ Any method, object, or constant that might be used by multiple tests or
 the main data wrapper objects defined in this module
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 import math
 import numbers
 import inspect
 import re
 
-import six
-from six.moves import range
 import numpy
 
 import nimble
@@ -36,7 +32,7 @@ def isAllowedSingleElement(x):
     This function is to determine if an element is an allowed single
     element.
     """
-    if isinstance(x, (numbers.Number, six.string_types)):
+    if isinstance(x, (numbers.Number, str)):
         return True
 
     if hasattr(x, '__len__'):#not a single element
@@ -147,47 +143,11 @@ def mergeNonDefaultNames(baseSource, otherSource):
     return ptNames, ftNames
 
 
-def reorderToMatchList(dataObject, matchList, axis):
-    """
-    Helper which will reorder the data object along the specified axis
-    so that instead of being in an order corresponding to a sorted
-    version of matchList, it will be in the order of the given
-    matchList.
-
-    matchList must contain only indices, not name based identifiers.
-    """
-    if axis.lower() == "point":
-        sortFunc = dataObject.points.sort
-    else:
-        sortFunc = dataObject.features.sort
-
-    sortedList = copy.copy(matchList)
-    sortedList.sort()
-    mappedOrig = {}
-    for i in range(len(matchList)):
-        mappedOrig[matchList[i]] = i
-
-    if axis == 'point':
-        def indexGetter(x):
-            return dataObject.points.getIndex(x.points.getName(0))
-    else:
-        def indexGetter(x):
-            return dataObject.features.getIndex(x.features.getName(0))
-
-    def scorer(viewObj):
-        index = indexGetter(viewObj)
-        return mappedOrig[sortedList[index]]
-
-    sortFunc(sortHelper=scorer, useLog=False)
-
-    return dataObject
-
-
 def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of
     # the numpy string implementation.
-    if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
+    if not hasattr(val, '__truediv__') or isinstance(val, str):
         return False
     return True
 
@@ -339,7 +299,7 @@ def validateInputString(string, accepted, paramName):
     msg += "' was given instead. Note: casing and whitespace is "
     msg += "ignored when checking the " + paramName
 
-    if not isinstance(string, six.string_types):
+    if not isinstance(string, str):
         raise InvalidArgumentType(msg)
 
     cleanFuncName = cleanKeywordInput(string)
@@ -357,7 +317,7 @@ def readOnlyException(name):
     """
     msg = "The " + name + " method is disallowed for View objects. View "
     msg += "objects are read only, yet this method modifies the object"
-    raise TypeError(msg)
+    raise ImproperObjectAction(msg)
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exceptionDocstringFactory(cls):
@@ -370,19 +330,15 @@ def exceptionDocstringFactory(cls):
     """
     def exceptionDocstring(func):
         name = func.__name__
-        try:
-            baseDoc = getattr(cls, name).__doc__
-            if baseDoc is not None:
-                viewMsg = "The {0} method is object modifying ".format(name)
-                viewMsg += "and will always raise an exception for view "
-                viewMsg += "objects.\n\n"
-                viewMsg += "For reference, the docstring for this method "
-                viewMsg += "when objects can be modified is below:\n"
-                func.__doc__ = viewMsg + baseDoc
-        except AttributeError:
-            # ignore built-in functions that differ between py2 and py3
-            # (__idiv__ vs __itruediv__, __ifloordiv__)
-            pass
+        baseDoc = getattr(cls, name).__doc__
+        if baseDoc is not None:
+            viewMsg = "The {0} method is object modifying ".format(name)
+            viewMsg += "and will always raise an exception for view "
+            viewMsg += "objects.\n\n"
+            viewMsg += "For reference, the docstring for this method "
+            viewMsg += "when objects can be modified is below:\n"
+            func.__doc__ = viewMsg + baseDoc
+
         return func
     return exceptionDocstring
 
@@ -447,7 +403,7 @@ def valuesToPythonList(values, argName):
     """
     if isinstance(values, list):
         return values
-    if isinstance(values, (int, numpy.integer, six.string_types)):
+    if isinstance(values, (int, numpy.integer, str)):
         return [values]
     valuesList = []
     try:
@@ -465,7 +421,6 @@ def constructIndicesList(obj, axis, values, argName=None):
     Construct a list of indices from a valid integer (python or numpy) or
     string, or an iterable, list-like container of valid integers and/or
     strings
-
     """
     if argName is None:
         argName = axis + 's'
@@ -623,6 +578,8 @@ def allDataIdentical(arr1, arr2):
     containing NaN values in the same positions will also be considered
     equal.
     """
+    if arr1.shape != arr2.shape:
+        return False
     try:
         # check the values that are not equal
         checkPos = arr1 != arr2
@@ -630,7 +587,7 @@ def allDataIdentical(arr1, arr2):
         test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
         test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
         return numpy.isnan(test1).all() and numpy.isnan(test2).all()
-    except Exception:
+    except ValueError:
         return False
 
 def createListOfDict(data, featureNames):
@@ -735,14 +692,30 @@ def denseCountUnique(obj, points=None, features=None):
 
 
 def wrapMatchFunctionFactory(matchFunc):
-    def wrappedMatch(value):
-        ret = matchFunc(value)
-        # in [True, False] also covers 0 and 1 and numpy number and bool types
-        if ret not in [True, False]:
-            msg = 'toMatch function must return True, False, 0 or 1'
-            raise InvalidArgumentValue(msg)
-        return bool(ret) # converts 1 and 0 to True and False
-    wrappedMatch.oneArg = True
+    try:
+        matchFunc(0, 0, 0)
+
+        def wrappedMatch(value, i, j):
+            ret = matchFunc(value, i, j)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = False
+    except TypeError:
+
+        def wrappedMatch(value):
+            ret = matchFunc(value)
+            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            if ret not in [True, False]:
+                msg = 'toMatch function must return True, False, 0 or 1'
+                raise InvalidArgumentValue(msg)
+            return bool(ret) # converts 1 and 0 to True and False
+
+        wrappedMatch.oneArg = True
+
     wrappedMatch.__name__ = matchFunc.__name__
     wrappedMatch.__doc__ = matchFunc.__doc__
 
@@ -864,3 +837,8 @@ class SparseElementIterator(DenseElementIterator):
             raise StopIteration
         else:
             return super(SparseElementIterator, self).__next__()
+
+def csvCommaFormat(name):
+    if isinstance(name, str) and ',' in name:
+        return '"{0}"'.format(name)
+    return name

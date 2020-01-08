@@ -3,11 +3,8 @@ Functions for creating a nice string representation of the tables
 generated in .data_set_analyzer.
 """
 
-from __future__ import absolute_import
 import copy
 import math
-
-from six.moves import range
 
 
 class TableError(Exception):

@@ -4,14 +4,12 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import copy
 import sys
 import warnings
 from unittest import mock
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -273,6 +271,19 @@ To install scikit-learn
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
+
+        def dtypeConvert(obj):
+            """
+            Most learners need numeric dtypes so attempt to convert from
+            object dtype if possible, otherwise return object as-is.
+            """
+            if obj.dtype == numpy.object_:
+                try:
+                    obj = obj.astype(numpy.float)
+                except ValueError:
+                    pass
+            return obj
+
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
@@ -283,17 +294,14 @@ To install scikit-learn
                 trainX = trainX.copy().data
             else:
                 trainX = trainX.copy(to='numpy array')
+            trainX = dtypeConvert(trainX)
 
         if trainY is not None:
             if len(trainY.features) > 1:
                 trainY = (trainY.copy(to='numpy array'))
             else:
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
-            if trainY.dtype == numpy.object_:
-                try:
-                    trainY = trainY.astype(numpy.float)
-                except ValueError:
-                    pass
+            trainY = dtypeConvert(trainY)
 
         if testX is not None:
             mustCopyTestX = ['StandardScaler']
@@ -304,6 +312,7 @@ To install scikit-learn
                 testX = testX.copy().data
             else:
                 testX = testX.copy(to='numpy array')
+            testX = dtypeConvert(testX)
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':

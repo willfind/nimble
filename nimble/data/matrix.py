@@ -2,14 +2,10 @@
 Class extending Base, using a numpy dense matrix to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 import itertools
-from functools import reduce
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble import match
@@ -24,6 +20,7 @@ from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
 from .dataHelpers import DenseElementIterator
 
@@ -127,28 +124,6 @@ class Matrix(Base):
 
         return allDataIdentical(self.data, other.data)
 
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -157,27 +132,18 @@ class Matrix(Base):
         designated path.
         """
         with open(outPath, 'w') as outFile:
-
             if includeFeatureNames:
-                def combine(a, b):
-                    return a + ',' + b
-
-                fnames = self.features.getNames()
-                fnamesLine = reduce(combine, fnames)
-                fnamesLine += '\n'
-                if includePointNames:
-                    outFile.write('pointNames,')
-
-                outFile.write(fnamesLine)
-
-        with open(outPath, 'ab') as outFile:#python3 need this.
+                self._writeFeatureNamesToCSV(outFile, includePointNames)
             if includePointNames:
-                pnames = numpy2DArray(self.points.getNames())
-                pnames = pnames.transpose()
-
-                viewData = self.data.view()
+                pnames = list(map(csvCommaFormat, self.points.getNames()))
+                pnames = numpy2DArray(pnames).transpose()
+                if not numpy.issubdtype(self.data.dtype, numpy.number):
+                    vectorizeCommas = numpy.vectorize(csvCommaFormat,
+                                                      otypes=[object])
+                    viewData = vectorizeCommas(self.data).view()
+                else:
+                    viewData = self.data.view()
                 toWrite = numpy.concatenate((pnames, viewData), 1)
-
                 numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
             else:
                 numpy.savetxt(outFile, self.data, delimiter=',')
@@ -207,10 +173,7 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        if header != '':
-            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
-        else:
-            scipy.io.mmwrite(target=outPath, a=self.data)
+        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
@@ -501,58 +464,6 @@ class Matrix(Base):
 
     def _iterateElements_implementation(self, order, only):
         return DenseElementIterator(self, order, only)
-
-def viewBasedApplyAlongAxis(function, axis, outerObject):
-    """
-    Applies the given function to each view along the given axis,
-    returning the results of the function in numpy array
-    """
-    if axis == "point":
-        maxVal = outerObject.data.shape[0]
-        viewMaker = outerObject.pointView
-    else:
-        if axis != "feature":
-            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
-        maxVal = outerObject.data.shape[1]
-        viewMaker = outerObject.featureView
-    ret = numpy.zeros(maxVal, dtype=numpy.float)
-    for i in range(0, maxVal):
-        funcOut = function(viewMaker(i))
-        ret[i] = funcOut
-
-    return ret
-
-def matrixBasedApplyAlongAxis(function, axis, outerObject):
-    """
-    applies the given function to the underlying numpy matrix along the
-    given axis, returning the results of the function in numpy array
-    """
-    #make sure the 3 attributes are in the function object
-    if not (hasattr(function, 'nameOfFeatureOrPoint')
-            and hasattr(function, 'valueOfFeatureOrPoint')
-            and hasattr(function, 'optr')):
-        msg = "some important attribute is missing in the input function"
-        raise AttributeError(msg)
-    if axis == "point":
-        #convert name of feature to index of feature
-        index = function.nameOfFeatureOrPoint
-        indexOfFeature = outerObject.features.getIndex(index)
-        #extract the feature from the underlying matrix
-        queryData = outerObject.data[:, indexOfFeature]
-    else:
-        if axis != "feature":
-            raise InvalidArgumentValue("axis must be 'point' or 'feature'")
-        #convert name of point to index of point
-        index = function.nameOfFeatureOrPoint
-        indexOfPoint = outerObject.points.getIndex(index)
-        #extract the point from the underlying matrix
-        queryData = outerObject.data[indexOfPoint, :]
-    ret = function.optr(queryData, function.valueOfFeatureOrPoint)
-    #convert the result from matrix to numpy array
-    ret = ret.astype(numpy.float).A1
-
-    return ret
-
 
 class MatrixView(BaseView, Matrix):
     """

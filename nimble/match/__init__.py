@@ -2,7 +2,6 @@
 Collection of functions primarily determining if a data value or entire
 data object satisfy a given condition.
 """
-from __future__ import absolute_import
 
 from .match import convertMatchToFunction
 from .match import missing

@@ -7,13 +7,11 @@ not allowed as a Kernel.
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import importlib
 import copy
 import sys
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -407,14 +405,13 @@ To install mlpy
             ignore = []
         namedModule = self._searcher.findInPackage(parent, name)
 
-        # for python 3
         # in python 3, inspectArguments(mlpy.KNN.__init__) works,
         # but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
         excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc',
                        'KernelAdatron'.lower(), 'ClassTree'.lower(),
                        'MFastHCluster'.lower(), 'kmeans']
-        if sys.version_info.major > 2 and 'kernel' not in name.lower():
+        if 'kernel' not in name.lower():
             if parent is None or parent.lower() in excludeList:
                 return self._paramQueryHardCoded(name, parent, ignore)
 

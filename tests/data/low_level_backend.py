@@ -19,15 +19,13 @@ points.getIndices, features.getIndices, constructIndicesList, copy
 features.hasName, points.hasName, __bool__
 """
 
-from __future__ import absolute_import
 import numpy
 import pandas
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
-from six.moves import range
 from nose.tools import *
 
 from nimble import createData
@@ -480,10 +478,12 @@ class LowLevelBackend(object):
         toTest.points.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
     def test_points_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
-        toTest.points.setNames(['a', 'b', 'c'])
+        # need to use mock.patch as context manager after object creation
+        # because Base.__init__ also calls valuesToPythonList
+        with mock.patch('nimble.data.axis.valuesToPythonList', calledException):
+            toTest.points.setNames(['a', 'b', 'c'])
 
     def test_points_setNames_emptyDataAndList(self):
         """ Test points.setNames() when both the data and the list are empty """
@@ -610,10 +610,12 @@ class LowLevelBackend(object):
         toTest.features.setNames(toAssign)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
     def test_features_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
-        toTest.features.setNames(['a', 'b', 'c'])
+        # need to use mock.patch as context manager after object creation
+        # because Base.__init__ also calls valuesToPythonList
+        with mock.patch('nimble.data.axis.valuesToPythonList', calledException):
+            toTest.features.setNames(['a', 'b', 'c'])
 
     def test_features_setNames_emptyDataAndDict(self):
         """ Test features.setNames() when both the data and the dict are empty """
@@ -1158,11 +1160,13 @@ class LowLevelBackend(object):
         assert constructIndicesList(toTest, 'feature', mixFts1D) == expected
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
-    def test_points_setNames_calls_valuesToPythonList(self):
+    def test_constructIndicesList_calls_valuesToPythonList(self):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
-        constructIndicesList(toTest, ['p1', 'p2', 'p3'])
+        # need to use mock.patch as context manager after object creation
+        # because Base.__init__ also calls valuesToPythonList
+        with mock.patch('nimble.data.dataHelpers.valuesToPythonList', calledException):
+            constructIndicesList(toTest, 'point', pointNames)
 
     def testconstructIndicesList_pythonList(self):
         self.constructIndicesList_backend(lambda lst: lst)

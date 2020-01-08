@@ -9,7 +9,6 @@ checking, and are excluded from __all__ and the automatically generated
 documentation.
 """
 
-from __future__ import absolute_import
 from .base import Base
 from .base_view import BaseView
 from .list import List

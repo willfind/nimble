@@ -2,7 +2,6 @@
 Linear algebra functions that can be used with nimble base objects.
 """
 
-from __future__ import absolute_import
 import re
 
 import numpy

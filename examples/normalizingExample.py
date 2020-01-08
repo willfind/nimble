@@ -4,8 +4,6 @@ datasets.
 
 """
 
-from __future__ import absolute_import
-
 from nimble import trainAndApply
 from nimble import normalizeData
 from nimble import createData

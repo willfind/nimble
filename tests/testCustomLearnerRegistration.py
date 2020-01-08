@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-import six.moves.configparser
+import configparser
 import tempfile
 import os
 from unittest import mock
@@ -187,7 +186,7 @@ def testEffectToSettings():
     try:
         assert tempSettings.get(regSec, opName) == opValue
         assert False  # expected NoOptionError
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     nimble.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
@@ -197,7 +196,7 @@ def testEffectToSettings():
     try:
         assert nimble.settings.get(regSec, opName) == opValue
         assert False
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
 # test that registering a sample custom learner with option names
@@ -236,7 +235,7 @@ def testDeregisterWithSettingsChanges():
     try:
         nimble.settings.get('Foo', loveName + '.option')
         assert False
-    except six.moves.configparser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
     nimble.deregisterCustomLearner("Foo", 'UncallableLearner')
@@ -245,7 +244,7 @@ def testDeregisterWithSettingsChanges():
     try:
         nimble.settings.get('Foo', loveName + '.option')
         assert False
-    except six.moves.configparser.NoSectionError:
+    except configparser.NoSectionError:
         pass
 
 

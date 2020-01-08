@@ -1,15 +1,12 @@
 """
 Functions (and their helpers) used to analyze arbitrary performance
 functions.
-
 """
 
-from __future__ import absolute_import
 import inspect
 import math
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue

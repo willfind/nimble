@@ -3,8 +3,6 @@ Tests for the user facing functions for cross validation and
 the backend helpers they rely on.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import math
 import sys
 from unittest import mock
@@ -13,7 +11,6 @@ import numpy
 import nose
 from nose.tools import *
 from nose.plugins.attrib import attr
-from six.moves import range
 
 import nimble
 from nimble import crossValidate

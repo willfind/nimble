@@ -2,7 +2,6 @@
 Make available any interfaces accessible to the user.
 """
 
-from __future__ import absolute_import
 import os
 
 from nimble import nimblePath

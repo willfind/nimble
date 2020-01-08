@@ -9,17 +9,6 @@ for Shogun ML.
 # * different feature types (streaming, for other problem types)
 # *
 
-from __future__ import absolute_import
-from __future__ import print_function
-from six.moves import range
-try:
-    import clang
-    import clang.cindex
-
-    clangAvailable = True
-except ImportError:
-    clangAvailable = False
-
 import importlib
 import numpy
 import copy
@@ -83,7 +72,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
             try:
                 instantiated = obj()
                 instantiated.get_machine_problem_type()
-            except Exception:
+            except (SystemError, TypeError):
                 return False
 
             return True

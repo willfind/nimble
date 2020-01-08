@@ -7,8 +7,6 @@ objects; the versions here are functions, and take any inputs as
 arguments.
 """
 
-from __future__ import absolute_import
-
 from .confidence import confidenceIntervalHelper
 from .loss import fractionIncorrect
 from .loss import meanAbsoluteError

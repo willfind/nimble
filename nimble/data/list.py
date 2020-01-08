@@ -2,15 +2,11 @@
 Class extending Base, using a list of lists to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 import copy
 import itertools
 from functools import reduce
 
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -24,6 +20,7 @@ from .listFeatures import ListFeatures, ListFeaturesView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
 from .dataHelpers import DenseElementIterator
 
@@ -191,29 +188,6 @@ class List(Base):
                 return False
         return True
 
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
-
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
         """
@@ -222,28 +196,19 @@ class List(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                def combine(a, b):
-                    return a + ',' + b
-
-                fnames = self.features.getNames()
-                fnamesLine = reduce(combine, fnames)
-                fnamesLine += '\n'
-                if includePointNames:
-                    outFile.write('pointNames,')
-
-                outFile.write(fnamesLine)
+                self._writeFeatureNamesToCSV(outFile, includePointNames)
 
             for point in self.points:
                 first = True
                 if includePointNames:
-                    currPname = point.points.getName(0)
+                    currPname = csvCommaFormat(point.points.getName(0))
                     outFile.write(currPname)
                     first = False
 
                 for value in point:
                     if not first:
                         outFile.write(',')
-                    outFile.write(str(value))
+                    outFile.write(str(csvCommaFormat(value)))
                     first = False
                 outFile.write('\n')
 
@@ -719,14 +684,6 @@ class FeatureViewer(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    def copy(self):
-        """
-        Create a copy of this FeatureViewer.
-        """
-        ret = FeatureViewer(self.source, self.fStart, self.fRange)
-        ret.setLimit(self.limit)
-        return ret
 
 class ListPassThrough(object):
     """

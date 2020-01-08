@@ -3,9 +3,6 @@ Method implementations and helpers acting specifically on points in a
 DataFrame object.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-
 import numpy
 
 import nimble
