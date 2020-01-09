@@ -464,9 +464,9 @@ def test_transformElements():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_calculateTODO():
+def test_calculateOnElements():
     def wrapped(obj, useLog):
-        return obj.calculateTODO(lambda x: len(x), features=0, useLog=useLog)
+        return obj.calculateOnElements(lambda x: len(x), features=0, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

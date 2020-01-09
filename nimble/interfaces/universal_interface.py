@@ -217,7 +217,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                             return 1
                         return 0
 
-                    trainLabels = trainY.calculateTODO(relabeler, useLog=False)
+                    trainLabels = trainY.calculateOnElements(relabeler,
+                                                             useLog=False)
                     trainedLearner = self._train(
                         learnerName, trainX, trainLabels, arguments=arguments)
                     trainedLearner.label = label

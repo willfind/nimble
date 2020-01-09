@@ -8,7 +8,7 @@ objects provided.
 Methods tested in this file:
 
 In object HighLevelDataSafe:
-points.calculate, features.calculate, calculateTODO, points.count,
+points.calculate, features.calculate, calculateOnElements, points.count,
 features.count, countElements, countUniqueElements, points.unique,
 features.unique, points.mapReduce, features.mapReduce,
 isApproximatelyEqual, trainAndTestSets, points.repeat,
@@ -592,41 +592,41 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(toString)
         assert ret == exp
 
-    ##################
-    # .calculateTODO #
-    ##################
+    #######################
+    # calculateOnElements #
+    #######################
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.base.constructIndicesList', calledException)
-    def test_calculateTODO_calls_constructIndicesList1(self):
+    def test_calculateOnElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        ret = toTest.calculateTODO(noChange, points=['a', 'b'])
+        ret = toTest.calculateOnElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.base.constructIndicesList', calledException)
-    def test_calculateTODO_calls_constructIndicesList2(self):
+    def test_calculateOnElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        ret = toTest.calculateTODO(noChange, features=['a', 'b'])
+        ret = toTest.calculateOnElements(noChange, features=['a', 'b'])
 
     @raises(InvalidArgumentValue)
-    def test_calculateTODO_invalidElementReturned(self):
+    def test_calculateOnElements_invalidElementReturned(self):
         data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
         toTest = self.constructor(data)
-        toTest.calculateTODO(lambda e: [e])
+        toTest.calculateOnElements(lambda e: [e])
 
-    def test_calculateTODO_NamePath_preservation(self):
+    def test_calculateOnElements_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, name=preserveName, path=preservePair)
 
-        ret = toTest.calculateTODO(passThrough)
+        ret = toTest.calculateOnElements(passThrough)
 
         assert toTest.name == preserveName
         assert toTest.absolutePath == preserveAPath
@@ -637,10 +637,10 @@ class HighLevelDataSafe(DataTestObject):
         assert ret.relativePath == preserveRPath
 
     @oneLogEntryExpected
-    def test_calculateTODO_passthrough(self):
+    def test_calculateOnElements_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(passThrough)
+        ret = toTest.calculateOnElements(passThrough)
         retRaw = ret.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
@@ -649,10 +649,10 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
 
-    def test_calculateTODO_plusOnePreserve(self):
+    def test_calculateOnElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(plusOne, preserveZeros=True)
+        ret = toTest.calculateOnElements(plusOne, preserveZeros=True)
         retRaw = ret.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
@@ -661,40 +661,40 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
 
-    def test_calculateTODO_plusOneExclude(self):
+    def test_calculateOnElements_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(plusOneOnlyEven, skipNoneReturnValues=True)
+        ret = toTest.calculateOnElements(plusOneOnlyEven, skipNoneReturnValues=True)
         retRaw = ret.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
         assert [5, 5, 7] in retRaw
         assert [7, 9, 9] in retRaw
 
-    def test_calculateTODO_plusOneLimited(self):
+    def test_calculateOnElements_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-        ret = toTest.calculateTODO(plusOneOnlyEven, points='4', features=[1, 'three'],
+        ret = toTest.calculateOnElements(plusOneOnlyEven, points='4', features=[1, 'three'],
                                              skipNoneReturnValues=True)
         retRaw = ret.copy(to="python list")
 
         assert [5, 7] in retRaw
 
-    def test_calculateTODO_All_zero(self):
+    def test_calculateOnElements_All_zero(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret1 = toTest.calculateTODO(lambda x: 0)
-        ret2 = toTest.calculateTODO(lambda x: 0, preserveZeros=True)
+        ret1 = toTest.calculateOnElements(lambda x: 0)
+        ret2 = toTest.calculateOnElements(lambda x: 0, preserveZeros=True)
 
         expData = [[0,0,0],[0,0,0],[0,0,0]]
         expObj = self.constructor(expData)
         assert ret1 == expObj
         assert ret2 == expObj
 
-    def test_calculateTODO_String_conversion_manipulations(self):
+    def test_calculateOnElements_String_conversion_manipulations(self):
         def allString(val):
             return str(val)
 
@@ -708,43 +708,43 @@ class HighLevelDataSafe(DataTestObject):
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, elementType=object)
-        ret0A = toTest.calculateTODO(allString)
-        ret0B = toTest.calculateTODO(allString, preserveZeros=True)
+        ret0A = toTest.calculateOnElements(allString)
+        ret0B = toTest.calculateOnElements(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
         exp0Obj = self.constructor(exp0Data, elementType=object)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
-        ret1 = toTest.calculateTODO(f1)
+        ret1 = toTest.calculateOnElements(f1)
 
         exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
         exp1Obj = self.constructor(exp1Data)
 
         assert ret1 == exp1Obj
 
-        ret2 = ret1.calculateTODO(f2)
+        ret2 = ret1.calculateOnElements(f2)
 
         exp2Obj = self.constructor(data)
 
         assert ret2 == exp2Obj
 
-    def test_calculateTODO_dictionaryMapping(self):
+    def test_calculateOnElements_dictionaryMapping(self):
         data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         reverseMap = {k: v for k, v in zip(range(9), range(8, -1, -1))}
 
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(reverseMap)
+        ret = toTest.calculateOnElements(reverseMap)
         exp = self.constructor([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(reverseMap, points=[0, 2], features=[1, 2])
+        ret = toTest.calculateOnElements(reverseMap, points=[0, 2], features=[1, 2])
         exp = self.constructor([[7, 6], [1, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(reverseMap, preserveZeros=True)
+        ret = toTest.calculateOnElements(reverseMap, preserveZeros=True)
         exp = self.constructor([[0, 7, 6], [5, 4, 3], [2, 1, 0]])
         assert ret == exp
 
@@ -752,16 +752,16 @@ class HighLevelDataSafe(DataTestObject):
         reverseMap[7] = None
 
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(reverseMap, skipNoneReturnValues=True)
+        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=True)
         exp = self.constructor([[8, 7, 2], [5, 4, 3], [2, 7, 0]])
         assert ret == exp
 
         toTest = self.constructor(data)
-        ret = toTest.calculateTODO(reverseMap, skipNoneReturnValues=False)
+        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=False)
         exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
         assert ret == exp
 
-    def test_calculateTODO_zerosReturned(self):
+    def test_calculateOnElements_zerosReturned(self):
 
         def returnAllZero(elem):
             return 0
@@ -769,7 +769,7 @@ class HighLevelDataSafe(DataTestObject):
         orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
         exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        ret1 = orig1.calculateTODO(returnAllZero)
+        ret1 = orig1.calculateOnElements(returnAllZero)
         assert ret1 == exp1
 
         def invert(elem):
@@ -778,16 +778,16 @@ class HighLevelDataSafe(DataTestObject):
         orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
 
-        ret2 = orig2.calculateTODO(invert)
+        ret2 = orig2.calculateOnElements(invert)
         assert ret2 == exp2
 
         orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        ret3 = orig3.calculateTODO(invert, preserveZeros=True)
+        ret3 = orig3.calculateOnElements(invert, preserveZeros=True)
         assert ret3 == exp3
 
-    def test_calculateTODO_conversionWhenIntType(self):
+    def test_calculateOnElements_conversionWhenIntType(self):
 
         def addTenth(elem):
             return elem + 0.1
@@ -796,10 +796,10 @@ class HighLevelDataSafe(DataTestObject):
                                 elementType=int)
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
-        ret = orig.calculateTODO(addTenth)
+        ret = orig.calculateOnElements(addTenth)
         assert ret == exp
 
-    def test_calculateTODO_stringReturnsPreserved(self):
+    def test_calculateOnElements_stringReturnsPreserved(self):
 
         def toString(e):
             return str(e)
@@ -809,7 +809,7 @@ class HighLevelDataSafe(DataTestObject):
         exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
                                elementType=object)
 
-        ret = orig.calculateTODO(toString)
+        ret = orig.calculateOnElements(toString)
         assert ret == exp
 
     ######################

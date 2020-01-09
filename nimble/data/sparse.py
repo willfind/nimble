@@ -112,8 +112,9 @@ class Sparse(Base):
         # perserveZeros is always False in this helper, skipNoneReturnValues
         # is being hijacked by the wrapper: even if it was False, Sparse can't
         # contain None values.
-        ret = self.calculateTODO(wrapper, None, None, preserveZeros=False,
-                             skipNoneReturnValues=True, useLog=False)
+        ret = self.calculateOnElements(wrapper, None, None,
+                                       preserveZeros=False,
+                                       skipNoneReturnValues=True, useLog=False)
 
         pnames = self.points._getNamesNoGeneration()
         fnames = self.features._getNamesNoGeneration()
@@ -1073,7 +1074,7 @@ class Sparse(Base):
                 other._numericValidation(right=True)
                 raise
 
-        return caller.calculateTODO(powFromRight, useLog=False)
+        return caller.calculateOnElements(powFromRight, useLog=False)
 
     def _genericFloordiv_implementation(self, opName, other):
         """

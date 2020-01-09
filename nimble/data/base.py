@@ -722,9 +722,9 @@ class Base(object):
                       toTransform, points, features, preserveZeros,
                       skipNoneReturnValues)
 
-    def calculateTODO(self, toCalculate, points=None, features=None,
-                  preserveZeros=False, skipNoneReturnValues=False,
-                  outputType=None, useLog=None):
+    def calculateOnElements(self, toCalculate, points=None, features=None,
+                            preserveZeros=False, skipNoneReturnValues=False,
+                            outputType=None, useLog=None):
         """
         Return a new object with a calculation applied to each element.
 
@@ -775,7 +775,7 @@ class Base(object):
         Simple calculation on all elements.
 
         >>> data = nimble.ones('Matrix', 5, 5)
-        >>> twos = data.calculateTODO(lambda elem: elem + 1)
+        >>> twos = data.calculateOnElements(lambda elem: elem + 1)
         >>> twos
         Matrix(
             [[2.000 2.000 2.000 2.000 2.000]
@@ -788,9 +788,9 @@ class Base(object):
         Calculate while preserving zero values.
 
         >>> data = nimble.identity('Sparse', 5)
-        >>> addTenDiagonal = data.calculateTODO(lambda x: x + 10,
-        ...                                          preserveZeros=True)
-        >>> addTenDiagonal
+        >>> addTen = data.calculateOnElements(lambda x: x + 10,
+        ...                                   preserveZeros=True)
+        >>> addTen
         Sparse(
             [[11.000   0      0      0      0   ]
              [  0    11.000   0      0      0   ]
@@ -802,9 +802,9 @@ class Base(object):
         Calculate on a subset of points and features.
 
         >>> data = nimble.ones('List', 4, 4)
-        >>> calc = data.calculateTODO(lambda elem: elem + 1,
-        ...                                points=[0, 1],
-        ...                                features=[0, 2])
+        >>> calc = data.calculateOnElements(lambda elem: elem + 1,
+        ...                                 points=[0, 1],
+        ...                                 features=[0, 2])
         >>> calc
         List(
             [[2.000 2.000]
@@ -826,15 +826,15 @@ class Base(object):
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> dontSkip = data.calculateTODO(addTenToEvens)
+        >>> dontSkip = data.calculateOnElements(addTenToEvens)
         >>> dontSkip
         Matrix(
             [[ nan   12.000  nan  ]
              [14.000  nan   16.000]
              [ nan   18.000  nan  ]]
             )
-        >>> skip = data.calculateTODO(addTenToEvens,
-        ...                                skipNoneReturnValues=True)
+        >>> skip = data.calculateOnElements(addTenToEvens,
+        ...                                 skipNoneReturnValues=True)
         >>> skip
         Matrix(
             [[1.000  12.000 3.000 ]
@@ -850,8 +850,8 @@ class Base(object):
                                       preserveZeros, skipNoneReturnValues,
                                       outputType)
 
-        handleLogging(useLog, 'prep', 'calculateTODO',
-                      self.getTypeString(), Base.calculateTODO,
+        handleLogging(useLog, 'prep', 'calculateOnElements',
+                      self.getTypeString(), Base.calculateOnElements,
                       toCalculate, points, features, preserveZeros,
                       skipNoneReturnValues, outputType)
 
@@ -1027,10 +1027,12 @@ class Base(object):
         20
         """
         if hasattr(condition, '__call__'):
-            ret = self.calculateTODO(condition, outputType='Matrix', useLog=False)
+            ret = self.calculateOnElements(condition, outputType='Matrix',
+                                           useLog=False)
         elif isinstance(condition, str):
             func = lambda x: eval('x'+condition)
-            ret = self.calculateTODO(func, outputType='Matrix', useLog=False)
+            ret = self.calculateOnElements(func, outputType='Matrix',
+                                           useLog=False)
         else:
             msg = 'function can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -1193,8 +1195,8 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        valueObj = self.calculateTODO(hashCodeFunc, preserveZeros=True,
-                                           outputType='Matrix', useLog=False)
+        valueObj = self.calculateOnElements(hashCodeFunc, preserveZeros=True,
+                                            outputType='Matrix', useLog=False)
         valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
                / float(self._pointCount * self._featureCount))
@@ -3052,8 +3054,9 @@ class Base(object):
             )
         """
         if returnModified:
-            modified = self.calculateTODO(match, points=points,
-                                               features=features, useLog=False)
+            modified = self.calculateOnElements(match, points=points,
+                                                features=features,
+                                                useLog=False)
             modNames = [name + "_modified" for name
                         in modified.features.getNames()]
             modified.features.setNames(modNames, useLog=False)
@@ -4379,7 +4382,7 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.calculateTODO(abs, useLog=False)
+        ret = self.calculateOnElements(abs, useLog=False)
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -4399,7 +4402,7 @@ class Base(object):
         Validate the object elements are all numeric.
         """
         try:
-            self.calculateTODO(dataHelpers._checkNumeric, useLog=False)
+            self.calculateOnElements(dataHelpers._checkNumeric, useLog=False)
         except ValueError:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"

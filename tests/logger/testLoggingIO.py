@@ -440,11 +440,11 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('transformElements', "Matrix",
                      {'toTransform': 'lambda x: x', 'features': [0]})
 
-    # calculateTODO
+    # calculateOnElements
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    calculated = dataObj.calculateTODO(lambda x: len(x), features=0)
-    checkLogContents('calculateTODO', "Matrix", {'toCalculate': "lambda x: len(x)",
-                                                 'features': 0})
+    calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
+    checkLogContents('calculateOnElements', "Matrix",
+                     {'toCalculate': "lambda x: len(x)", 'features': 0})
 
     ###################
     # Points/Features #
@@ -754,9 +754,9 @@ def testFailedLambdaStringConversion():
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    calculated = dataObj.calculateTODO(lambda x: len(x), features=0)
-    checkLogContents('calculateTODO', "Matrix", {'toCalculate': "<lambda>",
-                                                 'features': 0})
+    calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
+    checkLogContents('calculateOnElements', "Matrix",
+                     {'toCalculate': "<lambda>", 'features': 0})
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
