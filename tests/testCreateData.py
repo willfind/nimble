@@ -6,7 +6,7 @@ import copy
 import itertools
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 from nose.tools import *
@@ -17,12 +17,14 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
+from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
+
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 returnTypes = copy.copy(nimble.data.available)
 returnTypes.append(None)
@@ -65,18 +67,18 @@ def test_createData_raw_stringConversion():
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
+        rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
+        toTest = nimble.createData(t, rawData)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
 def test_createData_raw_noStringConversion():
-    """
-    """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']], elementType=object)
+        rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
+        toTest = nimble.createData(t, rawData, elementType=object)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
@@ -102,15 +104,16 @@ def test_createData_raw_pointAndFeatureIterators():
     for t in returnTypes:
         pNames = IterNext(['1', '4'])
         fNames = IterNext(['a', 'b', 'c'])
-        toTest1 = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
-                                    featureNames=fNames)
+        rawData = [[1,2,3], [4,5,6]]
+        toTest1 = nimble.createData(t, rawData, pointNames=pNames,
+                                        featureNames=fNames)
         assert toTest1.points.getNames() == ['1', '4']
         assert toTest1.features.getNames() == ['a', 'b', 'c']
 
         pNames = GetItemOnly(['1', '4'])
         fNames = GetItemOnly(['a', 'b', 'c'])
-        toTest2 = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames,
-                                    featureNames=fNames)
+        toTest2 = nimble.createData(t, rawData, pointNames=pNames,
+                                        featureNames=fNames)
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
 
@@ -186,6 +189,27 @@ def test_createData_CSV_data_ListOnly_noComment():
         fromCSV = nimble.createData(returnType="List", data=tmpCSV.name, name=objName)
 
         assert fromList == fromCSV
+
+def test_createData_CSV_data_unicodeCharacters():
+    """ Test of createData() loading a csv file with unicode characters """
+    for t in returnTypes:
+        data = [['P', "\u2119"] ,['Y', "\u01B4" ],['T', "\u2602"],
+                ['H', "\u210C"], ['O', "\u00F8"], ['N', "\u1F24"]]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("P,\u2119\n")
+            tmpCSV.write("Y,\u01B4\n")
+            tmpCSV.write("T,\u2602\n")
+            tmpCSV.write("H,\u210C\n")
+            tmpCSV.write("O,\u00F8\n")
+            tmpCSV.write("N,\u1F24\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
 
 
 def test_createData_MTXArr_data():
@@ -837,7 +861,6 @@ def test_extractNames_pythonList():
     for t in returnTypes:
         inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
         specRaw = [[1, -1, -3]]
-
         inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.createData(
@@ -888,7 +911,6 @@ def test_extractNames_CooSparse():
         inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.coo_matrix(specRaw)
-
         inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.createData(
@@ -897,7 +919,7 @@ def test_extractNames_CooSparse():
 
 
 def test_extractNames_CscSparse():
-    """ Test of createData() given scipy Coo matrix, extracting names """
+    """ Test of createData() given scipy Csc matrix, extracting names """
     if not scipy:
         return
 
@@ -909,7 +931,6 @@ def test_extractNames_CscSparse():
         inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
-
         inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.createData(
@@ -924,7 +945,6 @@ def test_extractNames_pandasDataFrame():
     for t in returnTypes:
         inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
         specRaw = pd.DataFrame([[1, -1, -3]])
-
         inData = nimble.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.createData(
@@ -998,7 +1018,7 @@ def test_createData_CSV_passedOpen():
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            openFile = open(tmpCSV.name, 'rU')
+            openFile = open(tmpCSV.name, 'r')
             fromCSV = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1008,10 +1028,12 @@ def test_createData_CSV_passedOpen():
             assert fromCSV.absolutePath == openFile.name
             assert fromCSV.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(openFile.name, 'rU')
+            openFile = open(openFile.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromCSV = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromCSV.name.startswith(nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
@@ -1031,7 +1053,7 @@ def test_createData_MTXArr_passedOpen():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            openFile = open(tmpMTXArr.name, 'rU')
+            openFile = open(tmpMTXArr.name, 'r')
             fromMTXArr = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1044,10 +1066,12 @@ def test_createData_MTXArr_passedOpen():
             assert fromMTXArr.absolutePath == openFile.name
             assert fromMTXArr.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXArr.name, 'rU')
+            openFile = open(tmpMTXArr.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXArr = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromMTXArr.name.startswith(
                 nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
@@ -1068,7 +1092,7 @@ def test_createData_MTXCoo_passedOpen():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            openFile = open(tmpMTXCoo.name, 'rU')
+            openFile = open(tmpMTXCoo.name, 'r')
             fromMTXCoo = nimble.createData(returnType=t, data=openFile, name=objName)
             openFile.close()
 
@@ -1081,10 +1105,12 @@ def test_createData_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath == openFile.name
             assert fromMTXCoo.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXCoo.name, 'rU')
+            openFile = open(tmpMTXCoo.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXCoo = nimble.createData(
                 returnType=t, data=namelessOpenFile)
+            openFile.close()
+            namelessOpenFile.close()
             assert fromMTXCoo.name.startswith(
                 nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None
@@ -1228,12 +1254,15 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
-@raises(InvalidArgumentValue)
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_linkError(mock_get):
     for t in returnTypes:
-        url = 'http://mockrequests.nimble/linknotfound.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        try:
+            url = 'http://mockrequests.nimble/linknotfound.csv'
+            fromWeb = nimble.createData(returnType=t, data=url)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
 ###################################
 # ignoreNonNumericalFeatures flag #

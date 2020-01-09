@@ -2,10 +2,6 @@
 Contains the MultiOutputRidgeRegression custom learner class.
 """
 
-from __future__ import absolute_import
-
-from six.moves import range
-
 import nimble
 from nimble.customLearners import CustomLearner
 
@@ -37,6 +33,6 @@ class MultiOutputRidgeRegression(CustomLearner):
             if results is None:
                 results = curr
             else:
-                results.features.add(curr, useLog=False)
+                results.features.append(curr, useLog=False)
 
         return results

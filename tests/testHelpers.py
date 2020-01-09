@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import math
 from math import fabs
 
 import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
-from six.moves import range
 
 import nimble
 from nimble import learnerType
@@ -21,9 +18,6 @@ from nimble.helpers import findBestInterface
 from nimble.helpers import FoldIterator
 from nimble.helpers import sumAbsoluteDifference
 from nimble.helpers import generateClusteredPoints
-from nimble.helpers import trainAndTestOneVsOne
-from nimble.helpers import trainAndApplyOneVsOne
-from nimble.helpers import trainAndApplyOneVsAll
 from nimble.helpers import _mergeArguments
 from nimble.helpers import computeMetrics
 from nimble.helpers import inspectArguments
@@ -86,8 +80,8 @@ class FoldIteratorTester(object):
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.points.add(fold1Test)
-        fold2Train.points.add(fold2Test)
+        fold1Train.points.append(fold1Test)
+        fold2Train.points.append(fold2Test)
 
     def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
         """ Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
@@ -108,8 +102,8 @@ class FoldIteratorTester(object):
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
 
-        fold1Train.points.add(fold1Test)
-        fold2Train.points.add(fold2Test)
+        fold1Train.points.append(fold1Test)
+        fold2Train.points.append(fold2Test)
 
         assert fold1NoneTrain is None
         assert fold1NoneTest is None
@@ -379,113 +373,6 @@ def testSumDifferenceFunction():
     if not discrepencyEffectivelyZero:
         raise AssertionError("difference result should be " + str(18 * 0.1 * 2) + ' but it is ' + str(diffResult))
     # assert(diffResult == 18 * 0.1 * 2)
-
-
-def testtrainAndTestOneVsOne():
-    variables = ["x1", "x2", "x3", "label"]
-    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
-             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4],
-             [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
-             [0, 0, 1, 2]]
-    trainObj1 = createData('Matrix', data=data1, featureNames=variables)
-    trainObj2 = createData('Matrix', data=data2, featureNames=variables)
-
-    testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testData2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = createData('Matrix', data=testData1)
-    testObj2 = createData('Matrix', data=testData2)
-
-    metricFunc = fractionIncorrect
-
-    results1 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3,
-                                    performanceFunction=metricFunc)
-    results2 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3,
-                                    performanceFunction=metricFunc)
-
-    assert results1 == 0.0
-    assert results2 == 0.25
-
-
-def testtrainAndApplyOneVsAll():
-    variables = ["x1", "x2", "x3", "label"]
-    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
-             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4], [0, 1, 1, 4],
-             [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
-             [0, 0, 1, 2]]
-    trainObj1 = createData('Sparse', data=data1, featureNames=variables)
-    trainObj2 = createData('Sparse', data=data2, featureNames=variables)
-
-    testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    testData2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 1]]
-    testObj1 = createData('Sparse', data=testData1)
-    testObj2 = createData('Sparse', data=testData2)
-
-    results1 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='label')
-    results2 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
-    results3 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
-
-    print("Results 1 output: " + str(results1.data))
-    print("Results 2 output: " + str(results2.data))
-    print("Results 3 output: " + str(results3.data))
-
-    assert results1.copy(to="python list")[0][0] >= 0.0
-    assert results1.copy(to="python list")[0][0] <= 3.0
-
-    assert results2.copy(to="python list")[0][0]
-
-
-def testtrainAndApplyOneVsOne():
-    variables = ["x1", "x2", "x3", "label"]
-    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
-             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    trainObj1 = createData('Matrix', data=data1, featureNames=variables)
-
-    testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    testObj1 = createData('Matrix', data=testData1)
-
-    #	metricFuncs = []
-    #	metricFuncs.append(fractionIncorrect)
-
-    results1 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='label')
-    results2 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
-    results3 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
-
-    assert results1.data[0][0] == 1.0
-    assert results1.data[1][0] == 2.0
-    assert results1.data[2][0] == 3.0
-    assert len(results1.data) == 3
-
-    assert results2.data[0][0] == 1.0
-    assert results2.data[0][1] == 2
-    assert results2.data[1][0] == 2.0
-    assert results2.data[1][1] == 2
-    assert results2.data[2][0] == 3.0
-    assert results2.data[2][1] == 2
-
-    results3FeatureMap = results3.features.getNames()
-    for i in range(len(results3.data)):
-        row = results3.data[i]
-        for j in range(len(row)):
-            score = row[j]
-            # because our input data was matrix, we have to check feature names
-            # as they would have been generated from float data
-            if i == 0:
-                if score == 2:
-                    assert results3FeatureMap[j] == str(float(1))
-            elif i == 1:
-                if score == 2:
-                    assert results3FeatureMap[j] == str(float(2))
-            else:
-                if score == 2:
-                    assert results3FeatureMap[j] == str(float(3))
-
 
 @raises(InvalidArgumentValueCombination)
 def testMergeArgumentsException():

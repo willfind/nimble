@@ -6,7 +6,6 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.importExternalLibraries import importModule
 from . import dataHelpers
 from .dataHelpers import createDataNoValidation
 
@@ -142,6 +141,9 @@ class Stretch(object):
                 msg += "performed if one object is a single point and the "
                 msg += "other is a single feature"
                 raise ImproperObjectAction(msg)
+            # divmod operations inconsistently raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                self._source._validateDivMod(opName, other._source)
         else:
             stretchPossible = True
             if self._numPts == 1 and self._numFts == 1:
@@ -163,39 +165,19 @@ class Stretch(object):
                 raise InvalidArgumentValueCombination(msg)
             self._source._validateEqualNames(matchAxis, matchAxis, opName,
                                              other)
-
-    def _stretchArithmetic_dataExamination(self, opName, other):
-        sBase = self._source
-        if isinstance(other, Stretch):
-            oBase = other._source
-        else:
-            oBase = other
-
-        if self._numPts == 1:
-            fullSelf = sBase.points.repeat(len(oBase.points), True)
-        else:
-            fullSelf = sBase.features.repeat(len(oBase.features), True)
-        if not isinstance(other, Stretch):
-            fullOther = other
-        elif other._numPts == 1:
-            fullOther = oBase.points.repeat(self._numPts, True)
-        else:
-            fullOther = oBase.features.repeat(self._numFts, True)
-
-        fullSelf._genericBinary_dataExamination(opName, fullOther)
+            # divmod operations inconsistently raise errors for zero division
+            if 'div' in opName or 'mod' in opName:
+                self._source._validateDivMod(opName, other)
 
     def _stretchArithmetic(self, opName, other):
         self._stretchArithmetic_validation(opName, other)
-        # mod and floordiv operations do not raise errors for zero division
-        # TODO use logical operations to check for nan and inf after operation
-        if 'floordiv' in opName or 'mod' in opName:
-            self._stretchArithmetic_dataExamination(opName, other)
+
         try:
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
-        except Exception as e:
-            self._stretchArithmetic_dataExamination(opName, other)
-            raise # backup, expect dataExamination to raise exception
+        except (TypeError, ValueError, FloatingPointError) as error:
+            self._source._diagnoseFailureAndRaiseException(opName, other,
+                                                           error)
 
         if (opName.startswith('__r')
                 and ret.getTypeString() != other.getTypeString()):
@@ -213,6 +195,26 @@ class Stretch(object):
 
         return self._source._binaryOperations_implementation(opName, other)
 
+    def __and__(self, other):
+        return self._stretchLogical('__and__', other)
+
+    def __or__(self, other):
+        return self._stretchLogical('__or__', other)
+
+    def __xor__(self, other):
+        return self._stretchLogical('__xor__', other)
+
+    def _stretchLogical(self, opName, other):
+        self._stretchArithmetic_validation(opName, other)
+        if isinstance(other, Stretch):
+            oBase = other._source
+        else:
+            oBase = other
+        lhsBool = self._source._logicalValidationAndConversion()
+        rhsBool = oBase._logicalValidationAndConversion()
+
+        return lhsBool.stretch._stretchArithmetic_implementation(opName,
+                                                                 rhsBool)
 
 class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):
@@ -238,11 +240,9 @@ class StretchSparse(Stretch):
         # TODO Sparse uses elements.multiply/power which are revalidating and
         # can cause a name conflict here; evaluate avoiding the revalidation
         # For now, removing all names since already stored to be set later
-        lhs.points.setNames(None)
-        lhs.features.setNames(None)
-        rhs.points.setNames(None)
-        rhs.features.setNames(None)
+        lhs.points.setNames(None, useLog=False)
+        lhs.features.setNames(None, useLog=False)
+        rhs.points.setNames(None, useLog=False)
+        rhs.features.setNames(None, useLog=False)
 
-        ret = lhs._binaryOperations_implementation(opName, rhs)
-
-        return ret
+        return lhs._binaryOperations_implementation(opName, rhs)

@@ -10,6 +10,7 @@ other tests for that function. Otherwise, some tests for basic
 user-facing functions might be included here as well.  All tests for log
 count should make use of the wrappers in tests/assertionHelpers.py
 """
+
 import sys
 import tempfile
 
@@ -42,7 +43,7 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault, importModule
+#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
     'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
@@ -50,8 +51,8 @@ nimble_logged = [
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'importModule', 'listLearners', 'learnerParameters',
-    'learnerDefaultValues', 'learnerType', 'ones', 'registerCustomLearner',
+    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
+    'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
@@ -113,9 +114,9 @@ base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
-    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
-    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'splitByParsing', 'matching',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
+    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
+    'shuffle', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -125,10 +126,10 @@ features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
-    'add', 'calculate', 'copy', 'delete', 'extract', 'fill', 'mapReduce',
-    'normalize', 'retain', 'setName', 'setNames', 'shuffle', 'sort',
-    'transform', 'combineByExpandingFeatures', 'splitByCollapsingFeatures',
-    'matching',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
+    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
+    'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'splitByCollapsingFeatures',
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -205,10 +206,6 @@ def test_showLog_logCount():
     def wrapped(obj):
         return nimble.showLog()
     captureOutput(wrapped)
-
-@noLogEntryExpected
-def test_importModule_logCount():
-    pd = nimble.importModule('pandas')
 
 @noLogEntryExpected
 def test_CV_logCount():
@@ -351,13 +348,12 @@ def testAllClassesDunderFunctions():
 ###########
 
 def captureOutput(toCall):
-    tmpFile = tempfile.TemporaryFile(mode='w')
-    backupOut = sys.stdout
-    sys.stdout = tmpFile
-    try:
-        for rType in nimble.data.available:
-            obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
-            ret = toCall(obj)
-    finally:
-        sys.stdout = backupOut
-        tmpFile.close()
+    with tempfile.TemporaryFile(mode='w') as tmpFile:
+        backupOut = sys.stdout
+        sys.stdout = tmpFile
+        try:
+            for rType in nimble.data.available:
+                obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+                ret = toCall(obj)
+        finally:
+            sys.stdout = backupOut

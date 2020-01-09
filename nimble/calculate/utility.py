@@ -1,15 +1,12 @@
 """
 Functions (and their helpers) used to analyze arbitrary performance
 functions.
-
 """
 
-from __future__ import absolute_import
 import inspect
 import math
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -247,7 +244,7 @@ def _generatePredicted(knowns, predictionType):
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
         scores = nimble.createData(returnType="List", data=scores,
                                    featureNames=['LabelScore'], useLog=False)
-        workingCopy.features.add(scores, useLog=False)
+        workingCopy.features.append(scores, useLog=False)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
     else:

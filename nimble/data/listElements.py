@@ -3,7 +3,6 @@ Method implementations and helpers acting specifically on each element
 List object.
 """
 
-from __future__ import absolute_import
 import itertools
 
 from .elements import Elements

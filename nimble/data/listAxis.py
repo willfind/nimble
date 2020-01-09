@@ -3,7 +3,6 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble List object.
 """
 
-from __future__ import absolute_import
 import copy
 from abc import abstractmethod
 
@@ -134,7 +133,7 @@ class ListAxis(Axis):
     ####################
 
     @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         pass
 
     # @abstractmethod

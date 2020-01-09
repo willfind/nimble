@@ -1,10 +1,6 @@
 """
 Unit tests for shogun_interface.py
-
 """
-
-from __future__ import absolute_import
-from six.moves import range
 
 import distutils
 import json
@@ -34,12 +30,13 @@ from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.interfaces.shogun_interface import checkProcessFailure
+from nimble.utility import ImportModule
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
+scipy = ImportModule('scipy')
 
 shogunSkipDec = SkipMissing('shogun')
 

@@ -1,14 +1,14 @@
-from __future__ import division
-from __future__ import absolute_import
 import math
+import collections
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from nimble.utility import ImportModule
 
-scipy = nimble.importModule('scipy')
+scipy = ImportModule('scipy')
 
 numericalTypes = (int, float, int, numpy.number)
 
@@ -164,7 +164,6 @@ def mode(values):
     """
     Given a 1D vector of values, find the most frequent value.
     """
-    collections = nimble.importModule('collections')
     nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
@@ -306,7 +305,7 @@ def residuals(toPredict, controlVars):
     or features and InvalidArgumentValueCombination if they have a different
     number of points.
     """
-    if scipy is None:
+    if not scipy:
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 
@@ -337,7 +336,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.features.add(nimble.ones(workingType, cvP, 1), useLog=False)
+    workingCV.features.append(nimble.ones(workingType, cvP, 1), useLog=False)
     workingCV = workingCV.copy(to="numpy array")
     workingTP = toPredict.copy(to="numpy array")
 

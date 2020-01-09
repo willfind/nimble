@@ -3,8 +3,6 @@ Tests for the user facing functions for cross validation and
 the backend helpers they rely on.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import math
 import sys
 from unittest import mock
@@ -13,7 +11,6 @@ import numpy
 import nose
 from nose.tools import *
 from nose.plugins.attrib import attr
-from six.moves import range
 
 import nimble
 from nimble import crossValidate
@@ -140,7 +137,7 @@ def test_crossValidate_reasonable_results():
     assert crossValidator.bestResult < .001
 
     index = len(X.features)
-    X.features.add(Y)
+    X.features.append(Y)
     crossValidator = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, folds=5)
     #assert error essentially zero since there's no noise
     assert crossValidator.bestResult < .001
@@ -180,7 +177,7 @@ def test_crossValidate_2d_api_check():
 
     index = len(X.features)
     combined = X.copy()
-    combined.features.add(Y)
+    combined.features.append(Y)
     combined.features.setNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
     crossValidator = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, folds=5)
     #assert error essentially zero since there's no noise

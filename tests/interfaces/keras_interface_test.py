@@ -5,8 +5,6 @@ Cannot test for expected result equality due to inability to control for
 randomness in Keras.
 """
 
-from __future__ import absolute_import
-
 import numpy as np
 from nose.tools import raises
 
@@ -14,10 +12,11 @@ import nimble
 from nimble import createData
 from nimble.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
+from nimble.utility import ImportModule
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
-keras = nimble.importExternalLibraries.importModule("keras")
+keras = ImportModule("keras")
 
 keraSkipDec = SkipMissing('Keras')
 

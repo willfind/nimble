@@ -2,8 +2,6 @@
 Collect the interfaces that will be accessible to the user.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import importlib
 import abc
@@ -49,7 +47,6 @@ def collect(modulePath):
     Collect the interfaces which import properly.
     """
     predefinedInterfaces = collectPredefinedInterfaces(modulePath)
-
     # now have a list of predefined interfaces, which we try to instantiate
     instantiated = []
     for toInstantiate in predefinedInterfaces:

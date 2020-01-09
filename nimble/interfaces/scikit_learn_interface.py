@@ -4,14 +4,12 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-from __future__ import absolute_import
 import copy
 import sys
 import warnings
 from unittest import mock
 
 import numpy
-from six.moves import range
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
@@ -22,7 +20,6 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory
-from nimble.importExternalLibraries import importModule
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -56,12 +53,19 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
-            # each pkg is a tuple (importer, moduleName, isPackage)
-            # we want to ignore anything not in __all__ to prevent trying
-            # to import libraries outside of scikit-learn dependencies
             sklAll = self.skl.__all__
-            return [pkg for pkg in packages if pkg[1].split('.')[1] in sklAll
-                    and importModule(pkg[1]) is not None]
+            ret = []
+            # each pkg is a tuple (importer, moduleName, isPackage)
+            # we want to ignore anything not in __all__ and any private
+            # modules to prevent trying to import libraries outside of
+            # scikit-learn dependencies
+            for pkg in packages:
+                nameSplit = pkg[1].split('.')
+                allPublic = all(not n.startswith('_') for n in nameSplit)
+                if nameSplit[1] in sklAll and allPublic:
+                    ret.append(pkg)
+
+            return ret
 
         with mock.patch('pkgutil.walk_packages', mockWalkPackages):
             try:
@@ -267,6 +271,19 @@ To install scikit-learn
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
+
+        def dtypeConvert(obj):
+            """
+            Most learners need numeric dtypes so attempt to convert from
+            object dtype if possible, otherwise return object as-is.
+            """
+            if obj.dtype == numpy.object_:
+                try:
+                    obj = obj.astype(numpy.float)
+                except ValueError:
+                    pass
+            return obj
+
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
@@ -277,17 +294,14 @@ To install scikit-learn
                 trainX = trainX.copy().data
             else:
                 trainX = trainX.copy(to='numpy array')
+            trainX = dtypeConvert(trainX)
 
         if trainY is not None:
             if len(trainY.features) > 1:
                 trainY = (trainY.copy(to='numpy array'))
             else:
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
-            if trainY.dtype == numpy.object_:
-                try:
-                    trainY = trainY.astype(numpy.float)
-                except ValueError:
-                    pass
+            trainY = dtypeConvert(trainY)
 
         if testX is not None:
             mustCopyTestX = ['StandardScaler']
@@ -298,6 +312,7 @@ To install scikit-learn
                 testX = testX.copy().data
             else:
                 testX = testX.copy(to='numpy array')
+            testX = dtypeConvert(testX)
 
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':
@@ -334,8 +349,8 @@ To install scikit-learn
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         if self._versionSplit[1] < 19:
-            msg = "nimble was tested using sklearn 0.19 and above, we cannot be "
-            msg += "sure of success for version {0}".format(self.version())
+            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
+            msg += "be sure of success for version {0}".format(self.version())
             warnings.warn(msg)
 
         # init learner

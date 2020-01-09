@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import numpy
 
 import nimble
@@ -77,7 +75,7 @@ def backend_match_anyAll(anyOrAll, func, data):
             assert func(toTest)
         else:
             allMatching = toTest[:,2]
-            allMatching.features.add(allMatching, useLog=False)
+            allMatching.features.append(allMatching, useLog=False)
             assert func(allMatching)
         # test by feature
         for i, feature in enumerate(toTest.features):

@@ -3,18 +3,15 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
-from __future__ import division
-from __future__ import absolute_import
 from functools import reduce
 
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import ImportModule
 from nimble.utility import cooMatrixToArray
 from . import dataHelpers
 from .base import Base
@@ -26,13 +23,10 @@ from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
+from .dataHelpers import csvCommaFormat
 
-scipy = nimble.importModule('scipy')
-if scipy is not None:
-    from scipy.sparse import coo_matrix
-    from scipy.io import mmwrite
-
-pd = nimble.importModule('pandas')
+scipy = ImportModule('scipy')
+pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -89,10 +83,6 @@ class Sparse(Base):
     def stretch(self):
         return StretchSparse(self)
 
-    def plot(self, outPath=None, includeColorbar=False):
-        toPlot = self.copy(to="Matrix")
-        toPlot.plot(outPath, includeColorbar)
-
     def _plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
         return toPlot._plot(outPath, includeColorbar)
@@ -100,12 +90,6 @@ class Sparse(Base):
     def _transpose_implementation(self):
         self.data = self.data.transpose()
         self._sorted = None
-        #_resync(self.data)
-
-    #		if self._sorted == 'point':
-    #			self._sorted = 'feature'
-    #		elif self._sorted == 'feature':
-    #			self._sorted = 'point'
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -117,6 +101,9 @@ class Sparse(Base):
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
+        # not equal if number of non zero values differs
+        elif self.data.nnz != other.data.nnz:
+            return False
         else:
             #let's do internal sort first then compare
             self._sortInternal('feature')
@@ -135,70 +122,35 @@ class Sparse(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        outFile = open(outPath, 'w')
+        with open(outPath, 'w') as outFile:
+            if includeFeatureNames:
+                self._writeFeatureNamesToCSV(outFile, includePointNames)
 
-        if includeFeatureNames:
-            def combine(a, b):
-                return a + ',' + b
+            # sort by rows first, then columns
+            placement = numpy.lexsort((self.data.col, self.data.row))
+            self.data.data[placement]
+            self.data.row[placement]
+            self.data.col[placement]
 
-            fnames = self.features.getNames()
-            fnamesLine = reduce(combine, fnames)
-            fnamesLine += '\n'
-            if includePointNames:
-                outFile.write('pointNames,')
-
-            outFile.write(fnamesLine)
-
-        # sort by rows first, then columns
-        placement = numpy.lexsort((self.data.col, self.data.row))
-        self.data.data[placement]
-        self.data.row[placement]
-        self.data.col[placement]
-
-        pointer = 0
-        pmax = len(self.data.data)
-        for i in range(len(self.points)):
-            if includePointNames:
-                currPname = self.points.getName(i)
-                outFile.write(currPname)
-                outFile.write(',')
-            for j in range(len(self.features)):
-                if (pointer < pmax and i == self.data.row[pointer]
-                        and j == self.data.col[pointer]):
-                    value = self.data.data[pointer]
-                    pointer = pointer + 1
-                else:
-                    value = 0
-
-                if j != 0:
+            pointer = 0
+            pmax = len(self.data.data)
+            for i in range(len(self.points)):
+                if includePointNames:
+                    currPname = csvCommaFormat(self.points.getName(i))
+                    outFile.write(currPname)
                     outFile.write(',')
-                outFile.write(str(value))
-            outFile.write('\n')
+                for j in range(len(self.features)):
+                    if (pointer < pmax and i == self.data.row[pointer]
+                            and j == self.data.col[pointer]):
+                        value = csvCommaFormat(self.data.data[pointer])
+                        pointer = pointer + 1
+                    else:
+                        value = 0
 
-        outFile.close()
-
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. outPath is the location (including file name
-        and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
+                    if j != 0:
+                        outFile.write(',')
+                    outFile.write(str(value))
+                outFile.write('\n')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -224,10 +176,7 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        if header != '':
-            mmwrite(target=outPath, a=self.data, comment=header)
-        else:
-            mmwrite(target=outPath, a=self.data)
+        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -242,10 +191,7 @@ class Sparse(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if to == 'Sparse':
-                try:
-                    data = self.data.copy().astype(numpy.float)
-                except ValueError:
-                    data = self.data.copy()
+                data = self.data.copy()
             else:
                 data = cooMatrixToArray(self.data)
             # reuseData=True since we already made copies here
@@ -437,7 +383,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), (1, numElem))
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), (1, numElem))
 
     def _flattenToOneFeature_implementation(self):
         self._sortInternal('feature')
@@ -451,7 +397,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), (numElem, 1))
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), (numElem, 1))
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         # only one feature, so both sorts are the same order
@@ -469,7 +415,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         # only one feature, so both sorts are the same order
@@ -487,7 +433,7 @@ class Sparse(Base):
         data = self.data.data
         row = self.data.row
         col = self.data.col
-        self.data = coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut
@@ -535,9 +481,7 @@ class Sparse(Base):
             offAxis = self.data.row
             axisVal = y
             offAxisVal = x
-        else:
-            msg = 'self._sorted is not either point nor feature.'
-            raise ImproperObjectAction(msg)
+
         #binary search
         start, end = numpy.searchsorted(axis, [axisVal, axisVal+1])
         if start == end: # axisVal is not in self.data.row
@@ -723,8 +667,8 @@ class Sparse(Base):
         self._featureCount = numFts
         self._pointCount = numPts
 
-        self.data = coo_matrix((mergedData, (mergedRow, mergedCol)),
-                               shape=(numPts, numFts))
+        self.data = scipy.sparse.coo_matrix(
+            (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
 
         self._sorted = None
 
@@ -739,8 +683,9 @@ class Sparse(Base):
             binaryRow.append(ptIdx)
             binaryCol.append(ftIdx)
             binaryData.append(1)
-        binaryCoo = coo_matrix((binaryData, (binaryRow, binaryCol)),
-                               shape=(len(self.points), len(uniqueVals)))
+        shape = (len(self.points), len(uniqueVals))
+        binaryCoo = scipy.sparse.coo_matrix(
+            (binaryData, (binaryRow, binaryCol)), shape=shape)
         self._sorted = None
         return Sparse(binaryCoo)
 
@@ -851,7 +796,7 @@ class Sparse(Base):
                 #numpy may say: elementwise comparison failed; returning
                 # scalar instead, but in the future will perform
                 # elementwise comparison
-            except Exception:
+            except ValueError:
                 noZerosInData = all(i != 0 for i in self.data.data)
             assert noZerosInData
 
@@ -882,11 +827,6 @@ class Sparse(Base):
         Directs the operation to the best implementation available,
         preserving the sparse representation whenever possible.
         """
-        # scipy may not raise expected exceptions for truediv
-        # TODO remove once logical operators used in Base for this
-        if 'truediv' in opName:
-            self._genericBinary_dataExamination(opName, other)
-
         # scipy mul and pow operators are not elementwise
         if 'mul' in opName:
             return self._genericMul_implementation(opName, other)
@@ -931,13 +871,13 @@ class Sparse(Base):
 
 
     def _scalarBinary_implementation(self, opName, other):
-        oneSafe = ['__truediv__', '__itruediv__', 'mul', '__pow__', '__ipow__']
+        oneSafe = ['mul', '__truediv__', '__itruediv__', '__pow__', '__ipow__']
         if any(name in opName for name in oneSafe) and other == 1:
             selfData = self._getSparseData()
             return Sparse(selfData)
-        zeroSafe = ['mul', 'truediv', 'floordiv', 'mod']
+        zeroSafe = ['mul', 'div', 'mod']
         zeroPreserved = any(name in opName for name in zeroSafe)
-        if 'pow' in opName and opName != '__rpow__' and other > 0:
+        if opName in ['__pow__', '__ipow__'] and other > 0:
             zeroPreserved = True
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
@@ -1038,12 +978,10 @@ class Sparse(Base):
             ret = numpy.mod(otherData, selfData.data)
         else:
             ret = numpy.mod(selfData.data, otherData)
-        coo = coo_matrix((ret, (selfData.row, selfData.col)),
-                         shape=self.shape)
+        coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
+                                      shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
-        if opName.startswith('__i'):
-            self.data = coo
-            return self
+
         return Sparse(coo)
 
     def _scalarZeroPreservingBinary_implementation(self, opName, other):
@@ -1056,8 +994,8 @@ class Sparse(Base):
         """
         selfData = self._getSparseData()
         ret = getattr(selfData.data, opName)(other)
-        coo = coo_matrix((ret, (selfData.row, selfData.col)),
-                         shape=self.shape)
+        coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
+                                      shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
         if opName.startswith('__i'):
             self.data = coo
@@ -1070,8 +1008,7 @@ class Sparse(Base):
     ###########
 
     def _sortInternal(self, axis):
-        if axis != 'point' and axis != 'feature':
-            raise InvalidArgumentValue("invalid axis type")
+        self._validateAxis(axis)
 
         if (self._sorted == axis
                 or len(self.points) == 0
@@ -1102,9 +1039,6 @@ class Sparse(Base):
 ###################
 
 def _sortInternal_coo_matrix(obj, sortAs):
-    if sortAs != 'row-major' and sortAs != 'col-major':
-        raise InvalidArgumentValue("invalid axis type")
-
     # sort least significant axis first
     if sortAs == "row-major":
         sortPrime = obj.row
@@ -1119,36 +1053,6 @@ def _sortInternal_coo_matrix(obj, sortAs):
     obj.row = obj.row[sortKeys]
     obj.col = obj.col[sortKeys]
 
-    # newData = obj.data[sortKeys]
-    # newRow = obj.row[sortKeys]
-    # newCol = obj.col[sortKeys]
-    #
-    # n = len(newData)
-    # obj.data[:n] = newData
-    # obj.row[:n] = newRow
-    # obj.col[:n] = newCol
-
-def _numLessThan(value, toCheck): # TODO caching
-    ltCount = 0
-    for i in range(len(toCheck)):
-        if toCheck[i] < value:
-            ltCount += 1
-
-    return ltCount
-
-def _resync(obj):
-    if 0 in obj.shape:
-        obj.nnz = 0
-        obj.data = numpy.array([])
-        obj.row = numpy.array([])
-        obj.col = numpy.array([])
-        obj.shape = obj.shape
-    else:
-        obj.nnz = obj.nnz
-        obj.data = obj.data
-        obj.row = obj.row
-        obj.col = obj.col
-        obj.shape = obj.shape
 
 def removeDuplicatesNative(coo_obj):
     """
@@ -1202,18 +1106,11 @@ def removeDuplicatesNative(coo_obj):
     # happened and use the object dtype instead.
     if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
         dataNP = numpy.array(data, dtype='O')
-    new_coo = coo_matrix((dataNP, (rows, cols)), shape=coo_obj.shape)
+    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
+                                      shape=coo_obj.shape)
 
     return new_coo
 
-def removeDuplicatesByConversion(coo_obj):
-    try:
-        return coo_obj.tocsr().tocoo()
-        # return coo_obj.tocsc().tocoo()
-    except TypeError:
-        msg = 'Unable to represent this configuration of data in a '
-        msg += 'Sparse object.'
-        raise TypeError(msg)
 
 class SparseVectorView(BaseView, Sparse):
     """
@@ -1274,9 +1171,9 @@ class SparseView(BaseView, Sparse):
                 keepRow = list(map(lambda x: x - self._pStart, keepRow))
             if self._fStart > 0:
                 keepCol = list(map(lambda x: x - self._fStart, keepCol))
-
-            coo = coo_matrix((keepData, (keepRow, keepCol)),
-                             shape=(len(self.points), len(self.features)))
+            shape = (len(self.points), len(self.features))
+            coo = scipy.sparse.coo_matrix((keepData, (keepRow, keepCol)),
+                                          shape=shape)
             pNames = None
             fNames = None
             if self._pointNamesCreated():
@@ -1355,3 +1252,15 @@ class SparseView(BaseView, Sparse):
         if isinstance(other, BaseView):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
+
+    def _writeFileCSV_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileCSV_implementation(outPath, includePointNames,
+                                              includeFeatureNames)
+
+    def _writeFileMTX_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        selfConv = self.copy(to="Sparse")
+        selfConv._writeFileMTX_implementation(outPath, includePointNames,
+                                              includeFeatureNames)

@@ -3,8 +3,6 @@ Method implementations and helpers acting specifically on features in a
 List object.
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue
@@ -28,13 +26,13 @@ class ListFeatures(ListAxis, Features):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the features from the toAdd object to the right of the
+        Insert the features from the toInsert object to the right of the
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        insert = toAdd.copy('pythonlist')
+        insert = toInsert.copy('pythonlist')
         if insertBefore != 0 and insertBefore != len(self):
             breakIdx = insertBefore - 1
             restartIdx = insertBefore
@@ -50,7 +48,7 @@ class ListFeatures(ListAxis, Features):
             allData = list(map(lambda pt: pt[0] + pt[1], zip(start, insert)))
 
         self._base.data = allData
-        self._base._numFeatures += len(toAdd.features)
+        self._base._numFeatures += len(toInsert.features)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):

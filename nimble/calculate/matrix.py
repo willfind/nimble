@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from nimble.data import Base
 from nimble.exceptions import InvalidArgumentType
 
