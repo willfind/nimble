@@ -22,7 +22,7 @@ from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
-from .dataHelpers import DenseElementIterator
+from .dataHelpers import NimbleElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -598,7 +598,15 @@ class List(Base):
         return List(ret)
 
     def _iterateElements_implementation(self, order, only):
-        return DenseElementIterator(self, order, only)
+        if order == 'point':
+            iterOrder = 'C'
+        else:
+            iterOrder = 'F'
+        flags = ["refs_ok", "zerosize_ok"]
+        iterator = numpy.nditer(numpy.array(self.data, dtype=numpy.object_),
+                                order=iterOrder, flags=flags)
+        return NimbleElementIterator(iterator, only)
+
 
 class ListView(BaseView, List):
     """

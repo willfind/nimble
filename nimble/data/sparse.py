@@ -24,7 +24,7 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
-from .dataHelpers import SparseElementIterator
+from .dataHelpers import NimbleElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -1167,7 +1167,21 @@ class Sparse(Base):
         return selfData
 
     def _iterateElements_implementation(self, order, only):
-        return SparseElementIterator(self, order, only)
+        flags = ["refs_ok", "zerosize_ok"]
+        if only is not None and not only(0): # we can ignore zeros
+            if order == 'point':
+                self._sortInternal('point')
+            else:
+                self._sortInternal('feature')
+            iterator = numpy.nditer(self.data.data, flags=flags)
+        else:
+            if order == 'point':
+                iterOrder = 'C'
+            else:
+                iterOrder = 'F'
+            iterator = numpy.nditer(cooMatrixToArray(self.data),
+                                    order=iterOrder, flags=flags)
+        return NimbleElementIterator(iterator, only)
 
 ###################
 # Generic Helpers #
@@ -1395,4 +1409,5 @@ class SparseView(BaseView, Sparse):
                                               includeFeatureNames)
 
     def _iterateElements_implementation(self, order, only):
-        return SparseElementIterator(self.copy(), order, only)
+        selfConv = self.copy(to="Sparse")
+        return selfConv._iterateElements_implementation(order, only)

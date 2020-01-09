@@ -19,7 +19,7 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
-from .dataHelpers import DenseElementIterator
+from .dataHelpers import NimbleElementIterator
 
 pd = ImportModule('pandas')
 scipy = ImportModule('scipy')
@@ -408,7 +408,13 @@ class DataFrame(Base):
             self.data.columns = list(range(len(self.data.columns)))
 
     def _iterateElements_implementation(self, order, only):
-        return DenseElementIterator(self, order, only)
+        if order == 'point':
+            iterOrder = 'C'
+        else:
+            iterOrder = 'F'
+        flags = ["refs_ok", "zerosize_ok"]
+        iterator = numpy.nditer(self.data.values, order=iterOrder, flags=flags)
+        return NimbleElementIterator(iterator, only)
 
 class DataFrameView(BaseView, DataFrame):
     """

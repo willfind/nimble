@@ -786,57 +786,35 @@ class ElementIterator1D(object):
             return value
         raise StopIteration
 
-class DenseElementIterator(object):
+class NimbleElementIterator(object):
+    """
+    Modify data level iterators to extract the correct data and limit
+    the iterator output if necessary.
 
-    def __init__(self, source, order='point', only=None):
-        self.source = source
-        if order not in ['point', 'feature']:
-            raise InvalidArgumentValue('order must be point or feature')
-        if only is not None and not callable(only):
-            msg = 'only must be a function returning a boolean value'
+    Parameters
+    ----------
+    iterator : numpy.nditer
+        A numpy.nditer iterator that provides access to each element.
+    only : function, None
+        The function which indicates whether __next__ should return the
+        value. If None, every value is returned.
+    """
+    def __init__(self, iterator, only):
+        if not isinstance(iterator, numpy.nditer):
+            msg = 'iterator must be an instance of numpy.nditer'
             raise InvalidArgumentType(msg)
-        self.order = order
-        if order == 'point':
-            self.outerAxis = source.points
-            self.innerAxis = source.features
-        else:
-            self.outerAxis = source.features
-            self.innerAxis = source.points
+        self.iterator = iterator
         self.only = only
-        self.outerIdx = 0
-        self.innerIdx = 0
-
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        while self.outerIdx < len(self.outerAxis):
-            while self.innerIdx < len(self.innerAxis):
-                if self.order == 'point':
-                    value = self.source[self.outerIdx, self.innerIdx]
-                else:
-                    value = self.source[self.innerIdx, self.outerIdx]
-                self.innerIdx += 1
-                if self.only is None or self.only(value):
-                    return value
-            self.innerIdx = 0
-            self.outerIdx += 1
-        raise StopIteration
-
-class SparseElementIterator(DenseElementIterator):
-
-    def __next__(self):
-        if self.only is not None and not self.only(0):
-            self.source._sortInternal(self.order)
-            while self.outerIdx < self.source.data.nnz:
-                value = self.source.data.data[self.outerIdx]
-                self.outerIdx += 1
-                if self.only(value):
-                    return value
-            raise StopIteration
-        else:
-            return super(SparseElementIterator, self).__next__()
+        while True:
+            # numpy.nditer returns an array containing item we want
+            val = next(self.iterator).item()
+            if self.only is None or self.only(val):
+                return val
 
 def csvCommaFormat(name):
     if isinstance(name, str) and ',' in name:

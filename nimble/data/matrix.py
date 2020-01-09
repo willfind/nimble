@@ -22,7 +22,7 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
-from .dataHelpers import DenseElementIterator
+from .dataHelpers import NimbleElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -463,7 +463,13 @@ class Matrix(Base):
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
     def _iterateElements_implementation(self, order, only):
-        return DenseElementIterator(self, order, only)
+        if order == 'point':
+            iterOrder = 'C'
+        else:
+            iterOrder = 'F'
+        flags = ["refs_ok", "zerosize_ok"]
+        iterator = numpy.nditer(self.data, order=iterOrder, flags=flags)
+        return NimbleElementIterator(iterator, only)
 
 class MatrixView(BaseView, Matrix):
     """
