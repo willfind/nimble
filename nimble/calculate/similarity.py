@@ -218,7 +218,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
 
     knownLabels = set()
     confusionDict = {}
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+    for kVal, pVal in zip(knownValues.iterateElements(),
+                          predictedValues.iterateElements()):
         knownLabels.add(kVal)
         if (kVal, pVal) in confusionDict:
             confusionDict[(kVal, pVal)] += 1
