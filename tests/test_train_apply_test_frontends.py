@@ -97,6 +97,34 @@ def test_trainAndTest_dataInputs():
     out4 = nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObj, 3, fractionIncorrect)
     assert out4 == exp
 
+def test_TrainedLearnerTest_dataInputs():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+             for _pt in range(numPoints)]
+    trainObj = createData('Matrix', data=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testObj = createData('Matrix', data=testData, featureNames=variables)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    learner = 'Custom.KNNClassifier'
+    tl = nimble.train(learner, trainObjData, trainObjLabels)
+    # Expected outcome
+    exp = nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
+                              testObjLabels, fractionIncorrect)
+    # testX contains labels
+    out1 = tl.test(testObj, 3, fractionIncorrect)
+    out2 = tl.test(testObj, 'label', fractionIncorrect)
+    assert out1 == exp
+    assert out2 == exp
+    # testX no labels
+    out3 = tl.test(testObjData, testObjLabels, fractionIncorrect)
+    assert out3 == exp
+
 #todo set seed and verify that you can regenerate error several times with
 #crossValidate.bestArguments, trainAndApply, and your own computeMetrics
 def test_trainAndTest():

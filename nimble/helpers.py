@@ -488,7 +488,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
     if (returnType == 'Sparse'
             and is2DArray(rawData)
             and rawData.shape[0]*rawData.shape[1] > 0
-            and rawData.dtype is numpy.object_):
+            and rawData.dtype == object):
         #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
