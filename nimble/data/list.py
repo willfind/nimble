@@ -314,15 +314,15 @@ class List(Base):
                 return pd.DataFrame(emptyData)
             return pd.DataFrame(self.data, dtype=elementType)
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
-        if not isinstance(values, Base):
-            values = [values] * (featureEnd - featureStart + 1)
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
+        if not isinstance(replaceWith, Base):
+            values = [replaceWith] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
         else:
             for p in range(pointStart, pointEnd + 1):
-                fill = values.data[p - pointStart]
+                fill = replaceWith.data[p - pointStart]
                 self.data[p][featureStart:featureEnd + 1] = fill
 
     def _flattenToOnePoint_implementation(self):

@@ -211,16 +211,16 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return pd.DataFrame(self.data.copy())
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         """
         """
-        if not isinstance(values, Base):
-            values = values * numpy.ones((pointEnd - pointStart + 1,
-                                          featureEnd - featureStart + 1))
+        if not isinstance(replaceWith, Base):
+            values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
+                                               featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
-            values = values.data.values
+            values = replaceWith.data.values
 
         # pandas is exclusive
         pointEnd += 1

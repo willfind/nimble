@@ -328,20 +328,20 @@ class Sparse(Base):
                 raise PackageException(msg)
             return pd.DataFrame(cooMatrixToArray(self.data))
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         # sort values or call helper as needed
-        constant = not isinstance(values, Base)
+        constant = not isinstance(replaceWith, Base)
         if constant:
-            if values == 0:
-                self._fillWith_zeros_implementation(pointStart, featureStart,
-                                                    pointEnd, featureEnd)
+            if replaceWith == 0:
+                self._replaceRectangle_zeros_implementation(
+                    pointStart, featureStart, pointEnd, featureEnd)
                 return
         else:
-            values._sortInternal('point')
+            replaceWith._sortInternal('point')
 
         # this has to be after the possible call to
-        # _fillWith_zeros_implementation; it is uncessary for that helper
+        # _replaceRectangle_zeros_implementation; unnecessary for that helper
         self._sortInternal('point')
 
         self_i = 0
@@ -355,7 +355,7 @@ class Sparse(Base):
             valsEnd = ((pointEnd - pointStart + 1)
                        * (featureEnd - featureStart + 1))
         else:
-            valsEnd = len(values.data.data)
+            valsEnd = len(replaceWith.data.data)
 
         # Adjust self_i so that it begins at the values that might need to be
         # replaced, or, if no such values exist, set self_i such that the main
@@ -401,7 +401,7 @@ class Sparse(Base):
             locationVP = pointStart
             locationVF = featureStart
             if constant:
-                vData = values
+                vData = replaceWith
                 # uses truncation of int division
                 locationVP += vals_i / (featureEnd - featureStart + 1)
                 locationVF += vals_i % (featureEnd - featureStart + 1)
@@ -409,9 +409,9 @@ class Sparse(Base):
                 locationVP += pointEnd + 1
                 locationVF += featureEnd + 1
             else:
-                vData = values.data.data[vals_i]
-                locationVP += values.data.row[vals_i]
-                locationVF += values.data.col[vals_i]
+                vData = replaceWith.data.data[vals_i]
+                locationVP += replaceWith.data.row[vals_i]
+                locationVF += replaceWith.data.col[vals_i]
 
             pCmp = locationSP - locationVP
             fCmp = locationSF - locationVF
@@ -552,8 +552,8 @@ class Sparse(Base):
         # array down to size???
         pass
 
-    def _fillWith_zeros_implementation(self, pointStart, featureStart,
-                                       pointEnd, featureEnd):
+    def _replaceRectangle_zeros_implementation(self, pointStart, featureStart,
+                                               pointEnd, featureEnd):
         # walk through col listing and partition all data: extract, and kept,
         # reusing the sparse matrix underlying structure to save space
         copyIndex = 0

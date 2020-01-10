@@ -9,7 +9,7 @@ In object StructureModifying:
 __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
-points.transform, features.transform, transformElements, fillWith,
+points.transform, features.transform, transformElements, replaceRectangle,
 flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
 unflattenFromOneFeature, points.append, features.append,
 """
@@ -8464,30 +8464,30 @@ class StructureModifying(StructureShared):
         orig.transformElements(toString)
         assert orig == exp
 
-    ##############
-    # fillWith() #
-    ##############
+    ######################
+    # replaceRectangle() #
+    ######################
 
-    # fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd)
+    # replaceRectangle(self, values, pointStart, featureStart, pointEnd, featureEnd)
 
-    def test_fillWith_acceptableValues(self):
+    def test_replaceRectangle_acceptableValues(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         try:
-            toTest.fillWith(set([1, 3]), 0, 0, 0, 1)
+            toTest.replaceRectangle(set([1, 3]), 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
 
         try:
-            toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
+            toTest.replaceRectangle(lambda x: x * x, 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
 
 
-    def test_fillWith_sizeMismatch(self):
+    def test_replaceRectangle_sizeMismatch(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
@@ -8495,7 +8495,7 @@ class StructureModifying(StructureShared):
         val = self.constructor(raw)
 
         try:
-            toTest.fillWith(val, 0, 0, 1, 1)
+            toTest.replaceRectangle(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
@@ -8503,59 +8503,59 @@ class StructureModifying(StructureShared):
         val.transpose()
 
         try:
-            toTest.fillWith(val, 0, 0, 1, 1)
+            toTest.replaceRectangle(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
 
 
-    def test_fillWith_invalidID(self):
+    def test_replaceRectangle_invalidID(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         val = 1
 
         try:
-            toTest.fillWith(val, "hello", 0, 1, 1)
+            toTest.replaceRectangle(val, "hello", 0, 1, 1)
             assert False  # expected KeyError
         except KeyError:
             pass
         try:
-            toTest.fillWith(val, 0, "Wrong", 1, 1)
+            toTest.replaceRectangle(val, 0, "Wrong", 1, 1)
             assert False  # expected KeyError
         except KeyError:
             pass
         try:
-            toTest.fillWith(val, 0, 0, 2, 1)
+            toTest.replaceRectangle(val, 0, 0, 2, 1)
             assert False  # expected IndexError
         except IndexError:
             pass
         try:
-            toTest.fillWith(val, 0, 0, 1, -12)
+            toTest.replaceRectangle(val, 0, 0, 1, -12)
             assert False  # expected IndexError
         except IndexError as iav:
             pass
 
 
-    def test_fillWith_start_lessThan_end(self):
+    def test_replaceRectangle_start_lessThan_end(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         val = 1
 
         try:
-            toTest.fillWith(val, 1, 0, 0, 1)
+            toTest.replaceRectangle(val, 1, 0, 0, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
         try:
-            toTest.fillWith(val, 0, 1, 1, 0)
+            toTest.replaceRectangle(val, 0, 1, 1, 0)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
 
     @oneLogEntryExpected
-    def test_fillWith_fullObjectFill(self):
+    def test_replaceRectangle_fullObjectFill(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
@@ -8563,7 +8563,7 @@ class StructureModifying(StructureShared):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.fillWith(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
+        ret = toTest.replaceRectangle(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
         assert ret is None
 
         arg *= 10
@@ -8573,7 +8573,7 @@ class StructureModifying(StructureShared):
         assertNoNamesGenerated(toTest)
 
     @twoLogEntriesExpected
-    def test_fillWith_vectorFill(self):
+    def test_replaceRectangle_vectorFill(self):
         raw = [[1, 2], [3, 4]]
         toTestP = self.constructor(raw)
         toTestF = self.constructor(raw)
@@ -8590,14 +8590,14 @@ class StructureModifying(StructureShared):
         expF = [[-1, 2], [-3, 4]]
         expF = self.constructor(expF)
 
-        toTestP.fillWith(valP, 0, 0, 0, 1)
+        toTestP.replaceRectangle(valP, 0, 0, 0, 1)
         assert toTestP == expP
 
-        toTestF.fillWith(valF, 0, 0, 1, 0)
+        toTestF.replaceRectangle(valF, 0, 0, 1, 0)
         assert toTestF == expF
 
 
-    def test_fillWith_offsetSquare(self):
+    def test_replaceRectangle_offsetSquare(self):
         raw = [[11, 12, 13], [21, 22, 23], [31, 32, 33]]
         base = self.constructor(raw)
         trialRaw = [[0, 0], [0, 0]]
@@ -8607,28 +8607,28 @@ class StructureModifying(StructureShared):
         for p, f in leftCorner:
             toTest = base.copy()
 
-            toTest.fillWith(trial, p, f, p + 1, f + 1)
+            toTest.replaceRectangle(trial, p, f, p + 1, f + 1)
             assert toTest[p, f] == 0
             assert toTest[p + 1, f] == 0
             assert toTest[p, f + 1] == 0
             assert toTest[p + 1, f + 1] == 0
 
     @logCountAssertionFactory(4)
-    def test_fillWith_constants(self):
+    def test_replaceRectangle_constants(self):
         toTest0 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         exp0 = self.constructor([[0, 1, 1], [0, 1, 1], [0, 0, 0]])
-        toTest0.fillWith(1, 0, 1, 1, 2)
+        toTest0.replaceRectangle(1, 0, 1, 1, 2)
         assert toTest0 == exp0
 
         toTest1 = self.constructor([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
         exp1 = self.constructor([[1, 0, 1], [1, 0, 1], [1, 0, 1]])
-        toTest1.fillWith(0, 0, 1, 2, 1)
+        toTest1.replaceRectangle(0, 0, 1, 2, 1)
         assert toTest1 == exp1
 
         toTestI = self.constructor([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         expi = self.constructor([[1, 0, 2], [0, 1, 0], [2, 0, 1]])
-        toTestI.fillWith(2, 0, 2, 0, 2)
-        toTestI.fillWith(2, 2, 0, 2, 0)
+        toTestI.replaceRectangle(2, 0, 2, 0, 2)
+        toTestI.replaceRectangle(2, 2, 0, 2, 0)
         assert toTestI == expi
 
 
@@ -8640,7 +8640,7 @@ class StructureModifying(StructureShared):
         for t in nimble.data.available:
             toTest = self.constructor(raw)
             arg = nimble.createData(t, fill)
-            toTest.fillWith(arg, 0, 0, 1, 1)
+            toTest.replaceRectangle(arg, 0, 0, 1, 1)
             assert toTest == exp
 
     ###########################################

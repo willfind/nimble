@@ -189,9 +189,9 @@ class BaseView(Base):
         readOnlyException("referenceDataFrom")
 
     @exceptionDocstring
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
-                 useLog=None):
-        readOnlyException("fillWith")
+    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
+                         featureEnd, useLog=None):
+        readOnlyException("replaceRectangle")
 
     @exceptionDocstring
     def fillUsingAllData(self, match, fill, points=None, features=None,

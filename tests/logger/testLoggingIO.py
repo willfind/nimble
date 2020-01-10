@@ -386,11 +386,11 @@ def testPrepTypeFunctionsUseLog():
     dataObj.transpose()
     checkLogContents('transpose', 'List')
 
-    # fillWith
+    # replaceRectangle
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    dataObj.fillWith(1, 2, 0, 4, 0)
-    checkLogContents('fillWith', "Matrix",
-        {'values': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
+    dataObj.replaceRectangle(1, 2, 0, 4, 0)
+    checkLogContents('replaceRectangle', "Matrix",
+        {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
     # fillUsingAllData

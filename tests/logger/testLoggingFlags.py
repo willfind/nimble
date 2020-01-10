@@ -372,9 +372,9 @@ def test_transpose():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_fillWith():
+def test_replaceRectangle():
     def wrapped(obj, useLog):
-        obj.fillWith(1, 2, 0, 4, 0, useLog=useLog)
+        obj.replaceRectangle(1, 2, 0, 4, 0, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

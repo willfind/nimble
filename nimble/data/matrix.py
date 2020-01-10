@@ -211,13 +211,13 @@ class Matrix(Base):
             return pd.DataFrame(self.data.copy())
 
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
-        if not isinstance(values, Base):
-            values = values * numpy.ones((pointEnd - pointStart + 1,
-                                          featureEnd - featureStart + 1))
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
+        if not isinstance(replaceWith, Base):
+            values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
+                                               featureEnd - featureStart + 1))
         else:
-            values = values.data
+            values = replaceWith.data
 
         # numpy is exclusive
         pointEnd += 1

@@ -90,7 +90,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.fillWith(self, [99, 99, 99], 0, 0, 0, 2)
+            testObject.replaceRectangle(self, [99, 99, 99], 0, 0, 0, 2)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

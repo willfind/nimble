@@ -2874,8 +2874,8 @@ class Base(object):
         return self.copy()
 
 
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
-                 useLog=None):
+    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
+                         featureEnd, useLog=None):
         """
         Replace values in the data with other values.
 
@@ -2921,7 +2921,7 @@ class Base(object):
 
         >>> data = nimble.ones('Matrix', 5, 5)
         >>> filler = nimble.zeros('Matrix', 3, 3)
-        >>> data.fillWith(filler, 0, 0, 2, 2)
+        >>> data.replaceRectangle(filler, 0, 0, 2, 2)
         >>> data
         Matrix(
             [[0.000 0.000 0.000 1.000 1.000]
@@ -2945,43 +2945,51 @@ class Base(object):
             msg += "or equal to featureEnd (" + str(featureEnd) + ")."
             raise InvalidArgumentValueCombination(msg)
 
-        if isinstance(values, Base):
+        if isinstance(replaceWith, Base):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
-            if len(values.points) != prange:
-                msg = "When the values argument is a nimble Base object, the "
-                msg += "size of values must match the range of modification. "
-                msg += "There are " + str(len(values.points)) + " points in "
-                msg += "values, yet pointStart (" + str(pointStart) + ")"
-                msg += "and pointEnd (" + str(pointEnd) + ") define a range "
-                msg += "of length " + str(prange)
+            raiseException = False
+            if len(replaceWith.points) != prange:
+                raiseException = True
+                axis = 'point'
+                axisLen = len(replaceWith.points)
+                start = pointStart
+                end = pointEnd
+                rangeLen = prange
+            elif len(replaceWith.features) != frange:
+                raiseException = True
+                axis = 'feature'
+                axisLen = len(replaceWith.features)
+                start = featureStart
+                end = featureEnd
+                rangeLen = frange
+            if raiseException:
+                msg = "When the replaceWith argument is a nimble Base object, "
+                msg += "the size of replaceWith must match the range of "
+                msg += "modification. There are {axisLen} {axis}s in "
+                msg += "replaceWith, yet {axis}Start ({start}) and {axis}End "
+                msg += "({end}) define a range of length {rangeLen}"
+                msg = msg.format(axis=axis, axisLen=axisLen, start=start,
+                                 end=end, rangeLen=rangeLen)
                 raise InvalidArgumentValueCombination(msg)
-            if len(values.features) != frange:
-                msg = "When the values argument is a nimble Base object, the "
-                msg += "size of values must match the range of modification. "
-                msg += "There are " + str(len(values.features)) + " features "
-                msg += "in values, yet featureStart (" + str(featureStart)
-                msg += ") and featureEnd (" + str(featureEnd) + ") define a "
-                msg += "range of length " + str(frange)
-                raise InvalidArgumentValueCombination(msg)
-            if values.getTypeString() != self.getTypeString():
-                values = values.copy(to=self.getTypeString())
+            if replaceWith.getTypeString() != self.getTypeString():
+                replaceWith = replaceWith.copy(to=self.getTypeString())
 
-        elif (dataHelpers._looksNumeric(values)
-              or isinstance(values, str)):
+        elif (dataHelpers._looksNumeric(replaceWith)
+              or isinstance(replaceWith, str)):
             pass  # no modifications needed
         else:
-            msg = "values may only be a nimble Base object, or a single "
+            msg = "replaceWith may only be a nimble Base object, or a single "
             msg += "numeric value, yet we received something of "
-            msg += str(type(values))
+            msg += str(type(replaceWith))
             raise InvalidArgumentType(msg)
 
-        self._fillWith_implementation(values, psIndex, fsIndex,
-                                      peIndex, feIndex)
+        self._replaceRectangle_implementation(replaceWith, psIndex, fsIndex,
+                                              peIndex, feIndex)
 
-        handleLogging(useLog, 'prep', "fillWith",
-                      self.getTypeString(), Base.fillWith, values, pointStart,
-                      featureStart, pointEnd, featureEnd)
+        handleLogging(useLog, 'prep', "replaceRectangle",
+                      self.getTypeString(), Base.replaceRectangle, replaceWith,
+                      pointStart, featureStart, pointEnd, featureEnd)
 
 
     def fillUsingAllData(self, match, fill, points=None, features=None,
@@ -3027,7 +3035,7 @@ class Base(object):
 
         See Also
         --------
-        fillWith, nimble.data.points.Points.fill,
+        replaceRectangle, nimble.data.points.Points.fill,
         nimble.data.features.Features.fill
 
         Examples
@@ -5244,8 +5252,8 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         pass
 
     @abstractmethod
