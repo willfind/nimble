@@ -1812,6 +1812,15 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
+    @oneLogEntryExpected
+    def test_matchingElements_pfLimited(self):
+        raw = [[1, 2, -3], [-1, -2, 3]]
+        obj = self.constructor(raw)
+        matches = obj.matchingElements(lambda x: x > 0, points=0, features=[1, 2])
+        expRaw = [[True, False]]
+        expected = self.constructor(expRaw)
+        assert matches == expected
+
     @logCountAssertionFactory(4)
     def test_matchingElements_varietyOfFuncs(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]

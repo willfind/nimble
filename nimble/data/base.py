@@ -857,7 +857,8 @@ class Base(object):
 
         return ret
 
-    def matchingElements(self, toMatch, useLog=None):
+    def matchingElements(self, toMatch, points=None, features=None,
+                         useLog=None):
         """
         Return an object of boolean values identifying matching values.
 
@@ -870,6 +871,19 @@ class Base(object):
         toMatch : function
             * function - in the form of toMatch(elementValue) which
               returns True, False, 0 or 1.
+        points : point, list of points
+            The subset of points to limit the matching to. If None,
+            the matching will apply to all points.
+        features : feature, list of features
+            The subset of features to limit the matching to. If None,
+            the matching will apply to all features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -900,15 +914,15 @@ class Base(object):
         """
         wrappedMatch = wrapMatchFunctionFactory(toMatch)
 
-        ret = self._calculate_backend(wrappedMatch, allowBoolOutput=True)
+        ret = self._calculate_backend(wrappedMatch, points, features,
+                                      allowBoolOutput=True)
 
         ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
         ret.features.setNames(self.features._getNamesNoGeneration(),
                               useLog=False)
 
-        handleLogging(useLog, 'prep', 'matchingElements',
-                      self.getTypeString(), Base.matchingElements,
-                      toMatch)
+        handleLogging(useLog, 'prep', 'matchingElements', self.getTypeString(),
+                      Base.matchingElements, toMatch)
 
         return ret
 
